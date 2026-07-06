@@ -4,10 +4,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  SceneLayerFragment,
-  ColorMap,
-} from "@/mikro-next/api/graphql";
+import { ColorMap } from "@/mikro-next/api/graphql";
+import { ImageLayerFragment } from "../../layers/layerGuards";
 import {
   Select,
   SelectContent,
@@ -33,6 +31,7 @@ import {
 } from "./colormap-utils";
 import { HistogramSlider } from "./HistogramSlider";
 import { DimPill } from "./DimPill";
+import { RenderGraphSection } from "./rendergraph/RenderNodeEditor";
 import { useViewerStore } from "../../store/viewerStore";
 import {
   absoluteToNormalized,
@@ -83,6 +82,7 @@ export const LayerCard = ({
   const [isExpanded, setIsExpanded] = useState(isSelected);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isLodDebugOpen, setIsLodDebugOpen] = useState(false);
+  const [isRenderGraphOpen, setIsRenderGraphOpen] = useState(false);
   const climMin = layer.climMin ?? 0;
   const climMax = layer.climMax ?? 1;
   const dirty = isLayerDirty(layer, originalLayer);
@@ -106,7 +106,7 @@ export const LayerCard = ({
     [previewGradient],
   );
 
-  const dims: { label: string; key: keyof SceneLayerFragment }[] = [
+  const dims: { label: string; key: keyof ImageLayerFragment }[] = [
     { label: "X", key: "xDim" },
     { label: "Y", key: "yDim" },
     { label: "Z", key: "zDim" },
@@ -114,8 +114,8 @@ export const LayerCard = ({
   ];
 
   const swapDims = (
-    keyA: keyof SceneLayerFragment,
-    keyB: keyof SceneLayerFragment,
+    keyA: keyof ImageLayerFragment,
+    keyB: keyof ImageLayerFragment,
   ) => {
     onUpdate({
       ...layer,
@@ -429,6 +429,27 @@ export const LayerCard = ({
                           )}
                         </div>
                       )}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+
+              <Collapsible open={isRenderGraphOpen} onOpenChange={setIsRenderGraphOpen}>
+                <div className="rounded-md border border-dashed border-white/10 bg-black/10">
+                  <CollapsibleTrigger asChild>
+                    <button className="flex w-full items-center gap-1.5 px-2 py-1.5 text-[10px] text-white/60 transition-colors hover:text-white/85">
+                      <span>Render graph</span>
+                      <span className="text-white/35">channels, transfer, blend & projection</span>
+                      <ChevronDown
+                        className={`ml-auto h-3 w-3 transition-transform duration-200 ${
+                          isRenderGraphOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="border-t border-white/10 px-2 py-2 text-[10px] text-white/85">
+                      <RenderGraphSection layer={layer} />
                     </div>
                   </CollapsibleContent>
                 </div>

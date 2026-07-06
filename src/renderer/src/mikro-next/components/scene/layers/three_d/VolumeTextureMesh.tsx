@@ -2,10 +2,25 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
+import { ProjectionMode } from '@/mikro-next/api/graphql';
 import { useSceneStoreApi } from '../../store/sceneStore';
 import { useViewerStore } from '../../store/viewerStore';
 
 export type VolumeRenderMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMaterial>;
+
+// Projection mode -> shader int (see the raymarch switch in the fragment shader).
+const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
+  switch (mode) {
+    case ProjectionMode.AttenuatedMip:
+      return 1;
+    case ProjectionMode.Volume:
+      return 2;
+    case ProjectionMode.Isosurface:
+      return 3;
+    default:
+      return 0; // MIP
+  }
+};
 
 type VolumeTextureMeshProps = {
   texture: THREE.Data3DTexture;
@@ -45,8 +60,10 @@ export const VolumeTextureMesh = ({
   const initialLayer = sceneStoreApi.getState().layers.find((candidate) => candidate.id === layerId);
   const initialClimMin = initialLayer?.climMin ?? 0.0;
   const initialClimMax = initialLayer?.climMax ?? 1.0;
+  const initialProjection = projectionModeToInt(initialLayer?.projection);
   const climMinRef = useRef<number>(initialClimMin);
   const climMaxRef = useRef<number>(initialClimMax);
+  const projectionRef = useRef<number>(initialProjection);
 
   const validSpatialIndices = useMemo(
     () => [xIdx, yIdx, zIdx].filter((index) => index !== -1),
@@ -103,17 +120,26 @@ export const VolumeTextureMesh = ({
 
       const nextMin = nextLayer.climMin ?? 0.0;
       const nextMax = nextLayer.climMax ?? 1.0;
+      const nextProjection = projectionModeToInt(nextLayer.projection);
 
-      if (nextMin === climMinRef.current && nextMax === climMaxRef.current) return;
+      if (
+        nextMin === climMinRef.current &&
+        nextMax === climMaxRef.current &&
+        nextProjection === projectionRef.current
+      ) {
+        return;
+      }
 
       climMinRef.current = nextMin;
       climMaxRef.current = nextMax;
+      projectionRef.current = nextProjection;
 
       const material = materialRef.current;
       if (!material) return;
 
       material.uniforms.climMin.value = nextMin;
       material.uniforms.climMax.value = nextMax;
+      material.uniforms.projectionMode.value = nextProjection;
       material.uniformsNeedUpdate = true;
       invalidate();
     });
@@ -149,6 +175,8 @@ export const VolumeTextureMesh = ({
       dataScale: { value: dataScale },
       dimRemap: { value: dimRemapMat },
       uPickingPass: { value: false },
+      projectionMode: { value: initialProjection },
+      isoThreshold: { value: 0.5 },
     }),
     [
       colorMapTexture,
@@ -216,6 +244,8 @@ export const VolumeTextureMesh = ({
             uniform float dataScale;
             uniform mat3 dimRemap;
             uniform bool uPickingPass;
+            uniform int projectionMode;   // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISOSURFACE
+            uniform float isoThreshold;
 
             out vec4 FragColor;
 
@@ -280,7 +310,13 @@ export const VolumeTextureMesh = ({
               t += delta * jitter;
 
               vec3 p = vOrigin + t * rayDir;
-              float maxRawValue = 0.0;
+              float maxRawValue = 0.0;        // MIP accumulator
+              float attenuatedMax = 0.0;      // ATTENUATED_MIP accumulator (normalized)
+              vec3 volColor = vec3(0.0);      // VOLUME front-to-back color (premultiplied)
+              float volAlpha = 0.0;           // VOLUME accumulated alpha
+              bool isoHit = false;            // ISOSURFACE
+              vec3 isoColor = vec3(0.0);
+              float rayLen = max(bounds.y - bounds.x, 0.00001);
               vec3 hitPosition = vec3(0.0);
               bool hit = false;
 
@@ -301,7 +337,29 @@ export const VolumeTextureMesh = ({
                     hitPosition = clamp(p, vec3(-0.5), vec3(0.5));
                     break;
                   }
+                } else if (projectionMode == 1) {
+                  // Attenuated MIP: weight samples by depth so nearer ones dominate.
+                  float n = computeNormalized(rawValue);
+                  float depthFrac = (t - bounds.x) / rayLen;
+                  attenuatedMax = max(attenuatedMax, n * exp(-1.5 * depthFrac));
+                } else if (projectionMode == 2) {
+                  // Volume: front-to-back alpha compositing.
+                  float n = computeNormalized(rawValue);
+                  vec4 c = texture(colormapTexture, vec2(n, 0.5));
+                  float a = c.a * opacity * n;
+                  volColor += (1.0 - volAlpha) * a * c.rgb;
+                  volAlpha += (1.0 - volAlpha) * a;
+                  if (volAlpha >= 0.98) break;
+                } else if (projectionMode == 3) {
+                  // Isosurface: stop at the first sample above the threshold.
+                  float n = computeNormalized(rawValue);
+                  if (n >= isoThreshold) {
+                    isoHit = true;
+                    isoColor = texture(colormapTexture, vec2(n, 0.5)).rgb;
+                    break;
+                  }
                 } else {
+                  // MIP (default).
                   maxRawValue = max(maxRawValue, rawValue);
                 }
 
@@ -316,7 +374,20 @@ export const VolumeTextureMesh = ({
                 return;
               }
 
-              float normalized = computeNormalized(maxRawValue);
+              if (projectionMode == 2) {
+                if (volAlpha < 0.01) discard;
+                FragColor = vec4(volColor, 1.0);
+                return;
+              }
+
+              if (projectionMode == 3) {
+                if (!isoHit) discard;
+                FragColor = vec4(isoColor * opacity, 1.0);
+                return;
+              }
+
+              // MIP / ATTENUATED_MIP.
+              float normalized = (projectionMode == 1) ? attenuatedMax : computeNormalized(maxRawValue);
 
               vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
               if (color.a * normalized < 0.01) discard;

@@ -100,8 +100,6 @@ export type ADatasetFilter = {
   name?: InputMaybe<StrFilterLookup>;
   /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by visibility scope */
-  scope?: InputMaybe<ScopeKind>;
   /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -373,17 +371,30 @@ export type BigFileUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+/** Composites its children using an in-layer blend mode */
+export type BlendNode = LayerRenderNode & {
+  __typename?: 'BlendNode';
+  blending: Blending;
+  children: Array<LayerRenderNode>;
+  kind: Scalars['String']['output'];
+  /** An optional human-readable label for the node */
+  label?: Maybe<Scalars['String']['output']>;
+};
+
 /** The blending mode used to combine multiple channels or layers into a composite image. */
 export enum Blending {
   /** Additive blending, where the color values of overlapping layers are summed. */
   Additive = 'ADDITIVE',
   /** Multiplicative blending, where the color values of overlapping layers are multiplied. */
-  Multiplicative = 'MULTIPLICATIVE'
+  Multiplicative = 'MULTIPLICATIVE',
+  /** Alpha-over compositing: the layer is blended over the layers below using its opacity. */
+  Normal = 'NORMAL'
 }
 
 export enum BlendingChoices {
   Additive = 'ADDITIVE',
-  Multiplicative = 'MULTIPLICATIVE'
+  Multiplicative = 'MULTIPLICATIVE',
+  Normal = 'NORMAL'
 }
 
 /** Detector */
@@ -516,6 +527,18 @@ export type ChannelLabel = {
   __typename?: 'ChannelLabel';
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
+};
+
+/** A single intensity channel of the layer's lens, with its own transfer function */
+export type ChannelSourceNode = LayerRenderNode & {
+  __typename?: 'ChannelSourceNode';
+  intensityDim?: Maybe<Scalars['String']['output']>;
+  intensityIndex: Scalars['Int']['output'];
+  kind: Scalars['String']['output'];
+  /** An optional human-readable label for the node */
+  label?: Maybe<Scalars['String']['output']>;
+  transfer: TransferFunction;
+  visible: Scalars['Boolean']['output'];
 };
 
 /** A channel view describes an acquisition channel of an image, carrying its name and optical properties such as emission and excitation wavelengths. */
@@ -849,17 +872,59 @@ export type CreateDatasetInput = {
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel) */
+export type CreateIntensityLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  colormap?: InputMaybe<ColorMap>;
+  gamma?: InputMaybe<Scalars['Float']['input']>;
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  intensityIndex?: InputMaybe<Scalars['Int']['input']>;
+  lens: Scalars['ID']['input'];
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Create a label layer that renders an instance / segmentation map, mapping discrete integer labels to distinct colors */
+export type CreateLabelLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  intensityIndex?: InputMaybe<Scalars['Int']['input']>;
+  lens: Scalars['ID']['input'];
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input type for creating an image from an array-like object */
 export type CreateLayerInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
   climMax?: InputMaybe<Scalars['Float']['input']>;
   climMin?: InputMaybe<Scalars['Float']['input']>;
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   colormap?: InputMaybe<ColorMap>;
   intensityDim?: InputMaybe<Scalars['String']['input']>;
   lens: Scalars['ID']['input'];
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  renderGraph?: InputMaybe<LayerRenderGraphInput>;
   scene: Scalars['ID']['input'];
   tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
   xDim?: InputMaybe<Scalars['String']['input']>;
   yDim?: InputMaybe<Scalars['String']['input']>;
   zDim?: InputMaybe<Scalars['String']['input']>;
@@ -869,6 +934,39 @@ export type CreateLayerInput = {
 export type CreateLensInput = {
   dataset: Scalars['ID']['input'];
   slices: Array<SliceInput>;
+};
+
+/** Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene */
+export type CreateMeshLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  materialColor?: InputMaybe<Array<Scalars['Int']['input']>>;
+  mesh: Scalars['ID']['input'];
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  wireframe?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table */
+export type CreatePointLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  colorColumn?: InputMaybe<Scalars['String']['input']>;
+  colormap?: InputMaybe<ColorMap>;
+  idColumn?: InputMaybe<Scalars['String']['input']>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  pointSize?: InputMaybe<Scalars['Float']['input']>;
+  scene: Scalars['ID']['input'];
+  sizeColumn?: InputMaybe<Scalars['String']['input']>;
+  tColumn?: InputMaybe<Scalars['String']['input']>;
+  table: Scalars['ID']['input'];
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xColumn: Scalars['String']['input'];
+  yColumn: Scalars['String']['input'];
+  zColumn?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for creating an RGB render context for an image */
@@ -889,12 +987,88 @@ export type CreateRgbContextInput = {
   z?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** Create a layer that composites three channels of a lens as red, green and blue */
+export type CreateRgbLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blueIndex?: InputMaybe<Scalars['Int']['input']>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  greenIndex?: InputMaybe<Scalars['Int']['input']>;
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  lens: Scalars['ID']['input'];
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  redIndex?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input type for creating a scene from an array-like object */
 export type CreateSceneInput = {
   blending?: InputMaybe<Blending>;
   name: Scalars['String']['input'];
   spatialUnit?: InputMaybe<SpatialUnit>;
   temporalUnit?: InputMaybe<TemporalUnit>;
+};
+
+/** Create a layer that renders the vector geometry of a data ROI in a scene */
+export type CreateShapeLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  dataRoi: Scalars['ID']['input'];
+  fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
+  filled?: InputMaybe<Scalars['Boolean']['input']>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  strokeColor?: InputMaybe<Array<Scalars['Int']['input']>>;
+  strokeWidth?: InputMaybe<Scalars['Float']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Create a layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id */
+export type CreateTrackLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  colorByColumn?: InputMaybe<Scalars['String']['input']>;
+  colormap?: InputMaybe<ColorMap>;
+  lineWidth?: InputMaybe<Scalars['Float']['input']>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  tColumn?: InputMaybe<Scalars['String']['input']>;
+  table: Scalars['ID']['input'];
+  trackIdColumn: Scalars['String']['input'];
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xColumn: Scalars['String']['input'];
+  yColumn: Scalars['String']['input'];
+  zColumn?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface) over its z-axis */
+export type CreateVolumeLayerInput = {
+  affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  colormap?: InputMaybe<ColorMap>;
+  gamma?: InputMaybe<Scalars['Float']['input']>;
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  intensityIndex?: InputMaybe<Scalars['Int']['input']>;
+  lens: Scalars['ID']['input'];
+  mode?: InputMaybe<ProjectionMode>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  scene: Scalars['ID']['input'];
+  tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+  xDim?: InputMaybe<Scalars['String']['input']>;
+  yDim?: InputMaybe<Scalars['String']['input']>;
+  zDim?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A single scale of a dataset's multiscale pyramid: a zarr-backed array described by its shape, chunk shape, scale factors and pyramid level */
@@ -1064,8 +1238,6 @@ export type DatasetFilter = {
   parentless?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by whether the current user has pinned the item */
   pinned?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Filter by visibility scope */
-  scope?: InputMaybe<ScopeKind>;
   /** Search by name (full-text search) */
   search?: InputMaybe<Scalars['String']['input']>;
   /** Filter by tag names */
@@ -1589,8 +1761,6 @@ export type FileFilter = {
   notDerived?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by visibility scope */
-  scope?: InputMaybe<ScopeKind>;
   /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
   size?: InputMaybe<IntFilterLookup>;
@@ -2194,8 +2364,6 @@ export type ImageFilter = {
   owner?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by whether the current user has pinned the item */
   pinned?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Filter by visibility scope */
-  scope?: InputMaybe<ScopeKind>;
   /** Search by name (full-text search) */
   search?: InputMaybe<Scalars['String']['input']>;
   store?: InputMaybe<ZarrStoreFilter>;
@@ -2211,6 +2379,33 @@ export enum ImageKind {
   Unknown = 'UNKNOWN',
   Voxel = 'VOXEL'
 }
+
+/** A layer that renders array (lens) data as an alpha-blended image, with a composable render graph plus flat colormap/contrast settings. */
+export type ImageLayer = Layer & {
+  __typename?: 'ImageLayer';
+  affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
+  blending: Blending;
+  climMax?: Maybe<Scalars['Float']['output']>;
+  climMin?: Maybe<Scalars['Float']['output']>;
+  color?: Maybe<Array<Scalars['Int']['output']>>;
+  colormap?: Maybe<ColorMap>;
+  gamma?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  intensityDim?: Maybe<Scalars['String']['output']>;
+  kind: LayerKind;
+  lens: Lens;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
+  /** The composable in-layer render graph, if this layer defines one */
+  renderGraph?: Maybe<LayerRenderGraph>;
+  scene: Scene;
+  status: PlacementStatus;
+  tDim?: Maybe<Scalars['String']['output']>;
+  visible: Scalars['Boolean']['output'];
+  xDim?: Maybe<Scalars['String']['output']>;
+  yDim?: Maybe<Scalars['String']['output']>;
+  zDim?: Maybe<Scalars['String']['output']>;
+};
 
 export type ImageOrder =
   { createdAt: Ordering; id?: never; name?: never; }
@@ -2554,23 +2749,17 @@ export type LaserElement = OpticalElement & {
   serialNumber?: Maybe<Scalars['String']['output']>;
 };
 
-/** The placement of a lens in a scene, including rendering settings such as colormap, contrast limits and an affine transformation matrix */
+/** A layer placed in a scene and alpha-blended over the layers below it. The concrete kind (ImageLayer, ShapeLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings. */
 export type Layer = {
-  __typename?: 'Layer';
   affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
-  climMax?: Maybe<Scalars['Float']['output']>;
-  climMin?: Maybe<Scalars['Float']['output']>;
-  color?: Maybe<Array<Scalars['Int']['output']>>;
-  colormap?: Maybe<ColorMap>;
+  blending: Blending;
   id: Scalars['ID']['output'];
-  intensityDim: Scalars['String']['output'];
-  lens: Lens;
+  kind: LayerKind;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
   scene: Scene;
   status: PlacementStatus;
-  tDim?: Maybe<Scalars['String']['output']>;
-  xDim: Scalars['String']['output'];
-  yDim: Scalars['String']['output'];
-  zDim?: Maybe<Scalars['String']['output']>;
+  visible: Scalars['Boolean']['output'];
 };
 
 export type LayerFilter = {
@@ -2582,7 +2771,8 @@ export type LayerFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Filter by the lens this layer renders */
+  kind?: InputMaybe<LayerKindChoices>;
+  /** Filter image layers by the lens they render */
   lens?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the scene this layer is placed in */
   scene?: InputMaybe<Scalars['ID']['input']>;
@@ -2590,8 +2780,62 @@ export type LayerFilter = {
   validity?: InputMaybe<PlacementValidity>;
 };
 
+/** The kind of a layer, discriminating which data source it renders and which rendering settings apply. */
+export enum LayerKind {
+  /** An image layer rendering array (lens) data through a composable render graph. */
+  Image = 'IMAGE',
+  /** A mesh layer rendering a 3D surface reconstruction. */
+  Mesh = 'MESH',
+  /** A point layer rendering a point cloud (e.g. SMLM localisations, centroids) from columns of a table. */
+  Point = 'POINT',
+  /** A shape layer rendering the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths). */
+  Shape = 'SHAPE',
+  /** A track layer rendering trajectories from columns of a table, grouped by a track id. */
+  Track = 'TRACK'
+}
+
+export enum LayerKindChoices {
+  Image = 'IMAGE',
+  Mesh = 'MESH',
+  Point = 'POINT',
+  Shape = 'SHAPE',
+  Track = 'TRACK'
+}
+
+/** A node in a layer's internal render graph. A 'channel' node carries an intensity source and transfer function; a 'blend' node composites its children. */
+export type LayerNodeInput = {
+  blending?: InputMaybe<Blending>;
+  children?: InputMaybe<Array<LayerNodeInput>>;
+  intensityDim?: InputMaybe<Scalars['String']['input']>;
+  intensityIndex?: InputMaybe<Scalars['Int']['input']>;
+  kind: Scalars['String']['input'];
+  label?: InputMaybe<Scalars['String']['input']>;
+  mode?: InputMaybe<ProjectionMode>;
+  transfer?: InputMaybe<TransferFunctionInput>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type LayerOrder =
   { id: Ordering; };
+
+/** The composable render recipe inside a single layer, rooted at a blend node */
+export type LayerRenderGraph = {
+  __typename?: 'LayerRenderGraph';
+  root: BlendNode;
+};
+
+/** The composable render recipe inside a single layer, rooted at a blend node */
+export type LayerRenderGraphInput = {
+  root: LayerNodeInput;
+};
+
+/** A node in a layer's internal render graph */
+export type LayerRenderNode = {
+  /** The discriminator of the node, either 'channel' or 'blend' */
+  kind: Scalars['String']['output'];
+  /** An optional human-readable label for the node */
+  label?: Maybe<Scalars['String']['output']>;
+};
 
 /** A Lens is a way of looking at a dataset: a dimensional selection (slices) over a dataset that defines a view of its data */
 export type Lens = {
@@ -2944,6 +3188,23 @@ export type MeshInput = {
   name: Scalars['String']['input'];
 };
 
+/** A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene. */
+export type MeshLayer = Layer & {
+  __typename?: 'MeshLayer';
+  affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
+  blending: Blending;
+  id: Scalars['ID']['output'];
+  kind: LayerKind;
+  materialColor?: Maybe<Array<Scalars['Int']['output']>>;
+  mesh: Mesh;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
+  scene: Scene;
+  status: PlacementStatus;
+  visible: Scalars['Boolean']['output'];
+  wireframe: Scalars['Boolean']['output'];
+};
+
 export type MeshOrder =
   { createdAt: Ordering; id?: never; name?: never; }
   |  { createdAt?: never; id: Ordering; name?: never; }
@@ -3068,28 +3329,38 @@ export type Mutation = {
   createInstanceMaskView: InstanceMaskView;
   /** Create a new instrument configuration */
   createInstrument: Instrument;
+  /** Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel) */
+  createIntensityLayer: ImageLayer;
+  /** Create a label layer that renders an instance / segmentation map of discrete labels */
+  createLabelLayer: ImageLayer;
   /** Create a new view for label data */
   createLabelView: LabelView;
   /** Create a new layer from an existing lens with optional affine transformation and colormap settings */
-  createLayer: Layer;
+  createLayer: ImageLayer;
   /** Create a new lens from an existing dataset and slicing constraints */
   createLens: Lens;
   /** Create a new view for masked data */
   createMaskView: MaskView;
   /** Create a new mesh */
   createMesh: Mesh;
+  /** Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene */
+  createMeshLayer: MeshLayer;
   /** Create a new multi-well plate configuration */
   createMultiWellPlate: MultiWellPlate;
   /** Create a new microscope objective configuration */
   createObjective: Objective;
   /** Create a new view for optical settings */
   createOpticsView: OpticsView;
+  /** Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table */
+  createPointLayer: PointLayer;
   /** Create a new reference view for image data */
   createReferenceView: ReferenceView;
   /** Create a new render tree for image visualization */
   createRenderTree: RenderTree;
   /** Create a new RGB context for image visualization */
   createRgbContext: RgbContext;
+  /** Create a layer that composites three channels of a lens as red, green and blue */
+  createRgbLayer: ImageLayer;
   /** Create a new view for RGB image data */
   createRgbView: RgbView;
   /** Create a new region of interest */
@@ -3098,14 +3369,20 @@ export type Mutation = {
   createRoiView: RoiView;
   /** Create a new scene from an existing lens with optional blending mode */
   createScene: Scene;
+  /** Create a layer that renders the vector geometry of a data ROI in a scene */
+  createShapeLayer: ShapeLayer;
   /** Create a new state snapshot */
   createSnapshot: Snapshot;
   /** Create a new stage for organizing data */
   createStage: Stage;
   /** Create a new view for temporal data */
   createTimepointView: TimepointView;
+  /** Create a layer that renders trajectories from columns of a table, grouped by a track id */
+  createTrackLayer: TrackLayer;
   /** Create a new collection of views to organize related views */
   createViewCollection: ViewCollection;
+  /** Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface) */
+  createVolumeLayer: ImageLayer;
   /** Create a new view for well position data */
   createWellPositionView: WellPositionView;
   /** Delete an existing affine transformation view */
@@ -3245,7 +3522,7 @@ export type Mutation = {
   /** Update an existing image's metadata */
   updateImage: Image;
   /** Update an existing layer's lens, scene, affine transformation, and colormap settings */
-  updateLayer: Layer;
+  updateLayer: ImageLayer;
   /** Update settings of an existing RGB context */
   updateRgbContext: RgbContext;
   /** Update an existing RGB view */
@@ -3325,6 +3602,16 @@ export type MutationCreateInstrumentArgs = {
 };
 
 
+export type MutationCreateIntensityLayerArgs = {
+  input: CreateIntensityLayerInput;
+};
+
+
+export type MutationCreateLabelLayerArgs = {
+  input: CreateLabelLayerInput;
+};
+
+
 export type MutationCreateLabelViewArgs = {
   input: LabelViewInput;
 };
@@ -3350,6 +3637,11 @@ export type MutationCreateMeshArgs = {
 };
 
 
+export type MutationCreateMeshLayerArgs = {
+  input: CreateMeshLayerInput;
+};
+
+
 export type MutationCreateMultiWellPlateArgs = {
   input: MultiWellPlateInput;
 };
@@ -3365,6 +3657,11 @@ export type MutationCreateOpticsViewArgs = {
 };
 
 
+export type MutationCreatePointLayerArgs = {
+  input: CreatePointLayerInput;
+};
+
+
 export type MutationCreateReferenceViewArgs = {
   input: ReferenceViewInput;
 };
@@ -3377,6 +3674,11 @@ export type MutationCreateRenderTreeArgs = {
 
 export type MutationCreateRgbContextArgs = {
   input: CreateRgbContextInput;
+};
+
+
+export type MutationCreateRgbLayerArgs = {
+  input: CreateRgbLayerInput;
 };
 
 
@@ -3400,6 +3702,11 @@ export type MutationCreateSceneArgs = {
 };
 
 
+export type MutationCreateShapeLayerArgs = {
+  input: CreateShapeLayerInput;
+};
+
+
 export type MutationCreateSnapshotArgs = {
   input: SnapshotInput;
 };
@@ -3415,8 +3722,18 @@ export type MutationCreateTimepointViewArgs = {
 };
 
 
+export type MutationCreateTrackLayerArgs = {
+  input: CreateTrackLayerInput;
+};
+
+
 export type MutationCreateViewCollectionArgs = {
   input: ViewCollectionInput;
+};
+
+
+export type MutationCreateVolumeLayerArgs = {
+  input: CreateVolumeLayerInput;
 };
 
 
@@ -4778,6 +5095,30 @@ export type PlaneInfo = {
   label: Scalars['String']['output'];
 };
 
+/** A layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table. */
+export type PointLayer = Layer & {
+  __typename?: 'PointLayer';
+  affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
+  blending: Blending;
+  colorColumn?: Maybe<Scalars['String']['output']>;
+  colormap?: Maybe<ColorMap>;
+  id: Scalars['ID']['output'];
+  idColumn?: Maybe<Scalars['String']['output']>;
+  kind: LayerKind;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
+  pointSize?: Maybe<Scalars['Float']['output']>;
+  scene: Scene;
+  sizeColumn?: Maybe<Scalars['String']['output']>;
+  status: PlacementStatus;
+  tColumn?: Maybe<Scalars['String']['output']>;
+  table: Table;
+  visible: Scalars['Boolean']['output'];
+  xColumn?: Maybe<Scalars['String']['output']>;
+  yColumn?: Maybe<Scalars['String']['output']>;
+  zColumn?: Maybe<Scalars['String']['output']>;
+};
+
 export enum PortRole {
   Input = 'INPUT',
   Output = 'OUTPUT'
@@ -4794,6 +5135,28 @@ export type Pose3D = {
 export type Pose3DInput = {
   orientation?: InputMaybe<EulerInput>;
   position?: InputMaybe<Vec3Input>;
+};
+
+/** The 3D projection / rendering mode applied to a volumetric (z-stacked) render node. */
+export enum ProjectionMode {
+  /** Attenuated maximum intensity projection, weighting samples by depth so nearer samples dominate. */
+  AttenuatedMip = 'ATTENUATED_MIP',
+  /** Isosurface rendering: a surface is extracted at a threshold value. */
+  Isosurface = 'ISOSURFACE',
+  /** Maximum intensity projection: each output pixel takes the maximum value along the z-axis. */
+  Mip = 'MIP',
+  /** Alpha volume rendering: samples along z are alpha-composited front-to-back. */
+  Volume = 'VOLUME'
+}
+
+/** Projects the composite of its children through the z-axis using a 3D rendering mode */
+export type ProjectionNode = LayerRenderNode & {
+  __typename?: 'ProjectionNode';
+  children: Array<LayerRenderNode>;
+  kind: Scalars['String']['output'];
+  /** An optional human-readable label for the node */
+  label?: Maybe<Scalars['String']['output']>;
+  mode: ProjectionMode;
 };
 
 /** A provenance event for a model. */
@@ -4897,7 +5260,7 @@ export type Query = {
   labelViews: Array<LabelView>;
   /** Get a single layer by ID */
   layer: Layer;
-  /** List layers (placements of a lens inside a scene) */
+  /** List layers placed in scenes (a heterogeneous list of layer kinds) */
   layers: Array<Layer>;
   /** Get a single lens by ID */
   lens: Lens;
@@ -6105,7 +6468,7 @@ export enum ScanDirection {
 export type Scene = {
   __typename?: 'Scene';
   id: Scalars['ID']['output'];
-  /** The layers placed in this scene */
+  /** The layers placed in this scene (a heterogeneous list of layer kinds) */
   layers: Array<Layer>;
   name: Scalars['String']['output'];
   spatialUnit: SpatialUnit;
@@ -6142,24 +6505,31 @@ export type SceneOrder =
   { id: Ordering; name?: never; }
   |  { id?: never; name: Ordering; };
 
-/** The visibility scope of an object, determining which users can see it. */
-export enum ScopeKind {
-  /** The object is visible only to its creator. */
-  Me = 'ME',
-  /** The object is visible to everyone in the organization. */
-  Org = 'ORG',
-  /** The object is visible to everyone. */
-  Public = 'PUBLIC',
-  /** The object is visible only to users it was explicitly shared with. */
-  Shared = 'SHARED'
-}
-
 export type Selector = {
   c?: InputMaybe<DimSelector>;
   t?: InputMaybe<DimSelector>;
   x?: InputMaybe<DimSelector>;
   y?: InputMaybe<DimSelector>;
   z?: InputMaybe<DimSelector>;
+};
+
+/** A layer that renders the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths), placed and styled in a scene. */
+export type ShapeLayer = Layer & {
+  __typename?: 'ShapeLayer';
+  affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
+  blending: Blending;
+  dataRoi: DataRoi;
+  fillColor?: Maybe<Array<Scalars['Int']['output']>>;
+  filled: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+  kind: LayerKind;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
+  scene: Scene;
+  status: PlacementStatus;
+  strokeColor?: Maybe<Array<Scalars['Int']['output']>>;
+  strokeWidth?: Maybe<Scalars['Float']['output']>;
+  visible: Scalars['Boolean']['output'];
 };
 
 /** A slice along a named dimension, with optional start, stop and step */
@@ -6707,6 +7077,54 @@ export type TimepointViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id. */
+export type TrackLayer = Layer & {
+  __typename?: 'TrackLayer';
+  affineMatrix?: Maybe<Scalars['FourByFourMatrix']['output']>;
+  blending: Blending;
+  colorByColumn?: Maybe<Scalars['String']['output']>;
+  colormap?: Maybe<ColorMap>;
+  id: Scalars['ID']['output'];
+  kind: LayerKind;
+  lineWidth?: Maybe<Scalars['Float']['output']>;
+  opacity: Scalars['Float']['output'];
+  order: Scalars['Int']['output'];
+  scene: Scene;
+  status: PlacementStatus;
+  tColumn?: Maybe<Scalars['String']['output']>;
+  table: Table;
+  trackIdColumn?: Maybe<Scalars['String']['output']>;
+  visible: Scalars['Boolean']['output'];
+  xColumn?: Maybe<Scalars['String']['output']>;
+  yColumn?: Maybe<Scalars['String']['output']>;
+  zColumn?: Maybe<Scalars['String']['output']>;
+};
+
+/** How a single channel's intensities are mapped to color before compositing */
+export type TransferFunction = {
+  __typename?: 'TransferFunction';
+  categorical?: Maybe<Scalars['Boolean']['output']>;
+  climMax?: Maybe<Scalars['Float']['output']>;
+  climMin?: Maybe<Scalars['Float']['output']>;
+  color?: Maybe<Array<Scalars['Int']['output']>>;
+  colormap?: Maybe<ColorMap>;
+  gamma?: Maybe<Scalars['Float']['output']>;
+  invert?: Maybe<Scalars['Boolean']['output']>;
+  opacity?: Maybe<Scalars['Float']['output']>;
+};
+
+/** Transfer-function settings for a channel source in a layer render graph */
+export type TransferFunctionInput = {
+  categorical?: InputMaybe<Scalars['Boolean']['input']>;
+  climMax?: InputMaybe<Scalars['Float']['input']>;
+  climMin?: InputMaybe<Scalars['Float']['input']>;
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  colormap?: InputMaybe<ColorMap>;
+  gamma?: InputMaybe<Scalars['Float']['input']>;
+  invert?: InputMaybe<Scalars['Boolean']['input']>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type TreeInput = {
   children: Array<TreeNodeInput>;
   id?: InputMaybe<Scalars['String']['input']>;
@@ -6754,6 +7172,7 @@ export type UpdateImageInput = {
 /** Input type for creating an image from an array-like object */
 export type UpdateLayerInput = {
   affineMatrix?: InputMaybe<Array<Array<Scalars['Float']['input']>>>;
+  blending?: InputMaybe<Blending>;
   climMax?: InputMaybe<Scalars['Float']['input']>;
   climMin?: InputMaybe<Scalars['Float']['input']>;
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
@@ -6761,8 +7180,12 @@ export type UpdateLayerInput = {
   id: Scalars['ID']['input'];
   intensityDim?: InputMaybe<Scalars['String']['input']>;
   lens?: InputMaybe<Scalars['ID']['input']>;
+  opacity?: InputMaybe<Scalars['Float']['input']>;
+  order?: InputMaybe<Scalars['Int']['input']>;
+  renderGraph?: InputMaybe<LayerRenderGraphInput>;
   scene?: InputMaybe<Scalars['ID']['input']>;
   tDim?: InputMaybe<Scalars['String']['input']>;
+  visible?: InputMaybe<Scalars['Boolean']['input']>;
   xDim?: InputMaybe<Scalars['String']['input']>;
   yDim?: InputMaybe<Scalars['String']['input']>;
   zDim?: InputMaybe<Scalars['String']['input']>;
@@ -7159,7 +7582,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | Task | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | ScaleView | Scene | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -7224,13 +7647,37 @@ export type InstanceMaskViewLabelFragment = { __typename?: 'InstanceMaskViewLabe
 
 export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
 
-export type SceneLayerFragment = { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> } };
+export type TransferFunctionFragment = { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null };
 
-export type ListSceneFragment = { __typename?: 'Scene', id: string, name: string };
+export type ChannelSourceNodeFragment = { __typename?: 'ChannelSourceNode', intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } };
+
+type RenderNodeCommon_BlendNode_Fragment = { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null };
+
+type RenderNodeCommon_ChannelSourceNode_Fragment = { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } };
+
+type RenderNodeCommon_ProjectionNode_Fragment = { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null };
+
+export type RenderNodeCommonFragment = RenderNodeCommon_BlendNode_Fragment | RenderNodeCommon_ChannelSourceNode_Fragment | RenderNodeCommon_ProjectionNode_Fragment;
+
+export type LayerRenderGraphFragment = { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } };
+
+type SceneLayer_ImageLayer_Fragment = { __typename: 'ImageLayer', gamma?: number | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim?: string | null, yDim?: string | null, zDim?: string | null, intensityDim?: string | null, tDim?: string | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> }, renderGraph?: { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } } | null };
+
+type SceneLayer_MeshLayer_Fragment = { __typename: 'MeshLayer', materialColor?: Array<number> | null, wireframe: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } } } };
+
+type SceneLayer_PointLayer_Fragment = { __typename: 'PointLayer', xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, sizeColumn?: string | null, colorColumn?: string | null, idColumn?: string | null, pointSize?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+
+type SceneLayer_ShapeLayer_Fragment = { __typename: 'ShapeLayer', strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth?: number | null, filled: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, dataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } };
+
+type SceneLayer_TrackLayer_Fragment = { __typename: 'TrackLayer', trackIdColumn?: string | null, xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, colorByColumn?: string | null, lineWidth?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+
+export type SceneLayerFragment = SceneLayer_ImageLayer_Fragment | SceneLayer_MeshLayer_Fragment | SceneLayer_PointLayer_Fragment | SceneLayer_ShapeLayer_Fragment | SceneLayer_TrackLayer_Fragment;
 
 export type DimSliceFragment = { __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null };
 
 export type SceneLensFragment = { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> };
+
+export type ListSceneFragment = { __typename?: 'Scene', id: string, name: string };
 
 type OpticalElement_BeamSplitterElement_Fragment = { __typename?: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> };
 
@@ -7310,7 +7757,7 @@ export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, v
 
 export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
-export type SceneFragment = { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> } }> };
+export type SceneFragment = { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename: 'ImageLayer', gamma?: number | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim?: string | null, yDim?: string | null, zDim?: string | null, intensityDim?: string | null, tDim?: string | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> }, renderGraph?: { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } } | null } | { __typename: 'MeshLayer', materialColor?: Array<number> | null, wireframe: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } } } } | { __typename: 'PointLayer', xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, sizeColumn?: string | null, colorColumn?: string | null, idColumn?: string | null, pointSize?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } } | { __typename: 'ShapeLayer', strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth?: number | null, filled: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, dataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } } | { __typename: 'TrackLayer', trackIdColumn?: string | null, xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, colorByColumn?: string | null, lineWidth?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } }> };
 
 export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } };
 
@@ -7702,7 +8149,7 @@ export type UpdateLaterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> } } };
+export type UpdateLaterMutation = { __typename?: 'Mutation', updateLayer: { __typename: 'ImageLayer', gamma?: number | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim?: string | null, yDim?: string | null, zDim?: string | null, intensityDim?: string | null, tDim?: string | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> }, renderGraph?: { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } } | null } };
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
   input: MultiWellPlateInput;
@@ -8184,7 +8631,7 @@ export type GetSceneQueryVariables = Exact<{
 }>;
 
 
-export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename?: 'Layer', id: string, affineMatrix?: any | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim: string, yDim: string, zDim?: string | null, intensityDim: string, tDim?: string | null, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> } }> } };
+export type GetSceneQuery = { __typename?: 'Query', scene: { __typename?: 'Scene', id: string, spatialUnit: SpatialUnit, temporalUnit: TemporalUnit, name: string, layers: Array<{ __typename: 'ImageLayer', gamma?: number | null, climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, xDim?: string | null, yDim?: string | null, zDim?: string | null, intensityDim?: string | null, tDim?: string | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, lens: { __typename?: 'Lens', id: string, shape: Array<number>, dims: Array<string>, slices: Array<{ __typename?: 'Slice', dim: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, dims: Array<string>, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, scaleFactors?: Array<number> | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> }, renderGraph?: { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityDim?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } } | null } | { __typename: 'MeshLayer', materialColor?: Array<number> | null, wireframe: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } } } } | { __typename: 'PointLayer', xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, sizeColumn?: string | null, colorColumn?: string | null, idColumn?: string | null, pointSize?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } } | { __typename: 'ShapeLayer', strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth?: number | null, filled: boolean, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, dataRoi: { __typename?: 'DataRoi', id: any, name: string, kind: RoiKind, vectors: Array<Array<number>>, xDim: string, yDim: string, zDim?: string | null, dataset: { __typename?: 'ADataset', id: string, name: string } } } | { __typename: 'TrackLayer', trackIdColumn?: string | null, xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, colorByColumn?: string | null, lineWidth?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, status: PlacementStatus, affineMatrix?: any | null, blending: Blending, opacity: number, visible: boolean, order: number, table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } }> } };
 
 export type GetScenesQueryVariables = Exact<{
   filters?: InputMaybe<SceneFilter>;
@@ -8415,21 +8862,6 @@ export const GeneralParquetAccessGrantFragmentDoc = gql`
   expiresIn
   region
   bucket
-}
-    `;
-export const DataRoiFragmentDoc = gql`
-    fragment DataRoi on DataRoi {
-  id
-  name
-  kind
-  dataset {
-    id
-    name
-  }
-  vectors
-  xDim
-  yDim
-  zDim
 }
     `;
 export const ListDataRoiFragmentDoc = gql`
@@ -8823,15 +9255,6 @@ export const CcdElementFragmentDoc = gql`
   pixelSizeUm
 }
     ${OpticalElementFragmentDoc}`;
-export const MeshFragmentDoc = gql`
-    fragment Mesh on Mesh {
-  id
-  name
-  store {
-    ...BigFileStore
-  }
-}
-    ${BigFileStoreFragmentDoc}`;
 export const ListMeshFragmentDoc = gql`
     fragment ListMesh on Mesh {
   id
@@ -9116,67 +9539,96 @@ export const SceneLensFragmentDoc = gql`
     ${DimSliceFragmentDoc}
 ${ZarrStoreFragmentDoc}
 ${LightpathGraphFragmentDoc}`;
-export const SceneLayerFragmentDoc = gql`
-    fragment SceneLayer on Layer {
-  id
-  lens {
-    ...SceneLens
-  }
-  affineMatrix
+export const TransferFunctionFragmentDoc = gql`
+    fragment TransferFunction on TransferFunction {
   climMin
   climMax
   colormap
   color
-  xDim
-  yDim
-  zDim
+  gamma
+  opacity
+  invert
+  categorical
+}
+    `;
+export const ChannelSourceNodeFragmentDoc = gql`
+    fragment ChannelSourceNode on ChannelSourceNode {
   intensityDim
-  tDim
-}
-    ${SceneLensFragmentDoc}`;
-export const SceneFragmentDoc = gql`
-    fragment Scene on Scene {
-  id
-  spatialUnit
-  temporalUnit
-  layers {
-    ...SceneLayer
+  intensityIndex
+  visible
+  transfer {
+    ...TransferFunction
   }
-  name
 }
-    ${SceneLayerFragmentDoc}`;
-export const AffineTransformationViewFragmentDoc = gql`
-    fragment AffineTransformationView on AffineTransformationView {
-  ...View
+    ${TransferFunctionFragmentDoc}`;
+export const RenderNodeCommonFragmentDoc = gql`
+    fragment RenderNodeCommon on LayerRenderNode {
+  kind
+  label
+  ... on ChannelSourceNode {
+    ...ChannelSourceNode
+  }
+  ... on BlendNode {
+    blending
+  }
+  ... on ProjectionNode {
+    mode
+  }
+}
+    ${ChannelSourceNodeFragmentDoc}`;
+export const LayerRenderGraphFragmentDoc = gql`
+    fragment LayerRenderGraph on LayerRenderGraph {
+  root {
+    ...RenderNodeCommon
+    children {
+      ...RenderNodeCommon
+      ... on BlendNode {
+        children {
+          ...RenderNodeCommon
+          ... on BlendNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+          ... on ProjectionNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+        }
+      }
+      ... on ProjectionNode {
+        children {
+          ...RenderNodeCommon
+          ... on BlendNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+          ... on ProjectionNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    ${RenderNodeCommonFragmentDoc}`;
+export const DataRoiFragmentDoc = gql`
+    fragment DataRoi on DataRoi {
   id
-  affineMatrix
-  stage {
+  name
+  kind
+  dataset {
     id
     name
   }
-}
-    ${ViewFragmentDoc}`;
-export const StageFragmentDoc = gql`
-    fragment Stage on Stage {
-  id
-  affineViews {
-    ...AffineTransformationView
-    image {
-      id
-      store {
-        shape
-      }
-      name
-    }
-  }
-  pinned
-  name
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const ListStageFragmentDoc = gql`
-    fragment ListStage on Stage {
-  id
-  name
+  vectors
+  xDim
+  yDim
+  zDim
 }
     `;
 export const ParquetStoreFragmentDoc = gql`
@@ -9237,6 +9689,138 @@ export const TableFragmentDoc = gql`
 ${AccessorFragmentDoc}
 ${ImageAccessorFragmentDoc}
 ${LabelAccessorFragmentDoc}`;
+export const MeshFragmentDoc = gql`
+    fragment Mesh on Mesh {
+  id
+  name
+  store {
+    ...BigFileStore
+  }
+}
+    ${BigFileStoreFragmentDoc}`;
+export const SceneLayerFragmentDoc = gql`
+    fragment SceneLayer on Layer {
+  __typename
+  id
+  kind
+  status
+  affineMatrix
+  blending
+  opacity
+  visible
+  order
+  ... on ImageLayer {
+    lens {
+      ...SceneLens
+    }
+    gamma
+    climMin
+    climMax
+    colormap
+    color
+    xDim
+    yDim
+    zDim
+    intensityDim
+    tDim
+    renderGraph {
+      ...LayerRenderGraph
+    }
+  }
+  ... on ShapeLayer {
+    dataRoi {
+      ...DataRoi
+    }
+    strokeColor
+    fillColor
+    strokeWidth
+    filled
+  }
+  ... on PointLayer {
+    table {
+      ...Table
+    }
+    xColumn
+    yColumn
+    zColumn
+    tColumn
+    sizeColumn
+    colorColumn
+    idColumn
+    pointSize
+    colormap
+  }
+  ... on TrackLayer {
+    table {
+      ...Table
+    }
+    trackIdColumn
+    xColumn
+    yColumn
+    zColumn
+    tColumn
+    colorByColumn
+    lineWidth
+    colormap
+  }
+  ... on MeshLayer {
+    mesh {
+      ...Mesh
+    }
+    materialColor
+    wireframe
+  }
+}
+    ${SceneLensFragmentDoc}
+${LayerRenderGraphFragmentDoc}
+${DataRoiFragmentDoc}
+${TableFragmentDoc}
+${MeshFragmentDoc}`;
+export const SceneFragmentDoc = gql`
+    fragment Scene on Scene {
+  id
+  spatialUnit
+  temporalUnit
+  layers {
+    ...SceneLayer
+  }
+  name
+}
+    ${SceneLayerFragmentDoc}`;
+export const AffineTransformationViewFragmentDoc = gql`
+    fragment AffineTransformationView on AffineTransformationView {
+  ...View
+  id
+  affineMatrix
+  stage {
+    id
+    name
+  }
+}
+    ${ViewFragmentDoc}`;
+export const StageFragmentDoc = gql`
+    fragment Stage on Stage {
+  id
+  affineViews {
+    ...AffineTransformationView
+    image {
+      id
+      store {
+        shape
+      }
+      name
+    }
+  }
+  pinned
+  name
+}
+    ${AffineTransformationViewFragmentDoc}`;
+export const ListStageFragmentDoc = gql`
+    fragment ListStage on Stage {
+  id
+  name
+}
+    `;
 export const ListTableFragmentDoc = gql`
     fragment ListTable on Table {
   origins {

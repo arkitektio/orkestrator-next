@@ -5,6 +5,17 @@ import { getChunkWorker } from '../../../../../lib/zarr/runner';
 import { workerPool } from '../../../../workers/pool';
 import type { ChunkData } from '../../stores/types';
 import { useSceneStore } from '../../store/sceneStore';
+import { buildColormapAtlas } from '../../zarr/colormaps';
+import { Blending } from '@/mikro-next/api/graphql';
+
+// Max channels a single layer's render graph can composite in one shader pass.
+const MAX_CHANNELS = 16;
+
+const blendModeToInt = (blend: Blending | undefined): number => {
+  if (blend === Blending.Multiplicative) return 1;
+  if (blend === Blending.Normal) return 2;
+  return 0; // ADDITIVE
+};
 
 
 // --- Helper: Strict WebGL2 Memory Configuration ---
@@ -20,7 +31,7 @@ function getTextureConfig(rawData: any) {
 }
 
 // --- 1. Individual Chunk Renderer with Single Texture Lookup ---
-export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, colorMapTexture: THREE.Texture | null }) => {
+export const ChunkPlane = ({ chunk }: { chunk: ChunkData, colorMapTexture?: THREE.Texture | null }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
@@ -187,37 +198,108 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
     };
   }, [texture]);
 
-  // FIXED: The high-performance update loop.
-  // Pushes new values straight to the GPU without re-rendering the component structure.
+
+  // zIdx is really the intensity/channel axis (dimensionOrder = [x, y, intensity]).
+  // Its position among the sorted memory axes decides which sampler3D coordinate
+  // component (x/y/z) selects the intensity slice.
+  const intensityComponent = zIdx === fastestIdx ? 0 : zIdx === middleIdx ? 1 : 2;
+  const intensitySize = Math.max(1, actualSizes[2]);
+
+  // --- Multi-channel derivation from the layer's render graph ---
+  const channelData = useMemo(() => {
+    const channels = (layer?.channels ?? []).slice(0, MAX_CHANNELS);
+    const numChannels = channels.length;
+
+    const atlas = buildColormapAtlas(
+      numChannels > 0
+        ? channels.map((c) => ({ colormap: c.transfer.colormap, color: c.transfer.color }))
+        : [{ colormap: layer?.colormap, color: layer?.color }],
+    );
+
+    const intensityCoord = new Array<number>(MAX_CHANNELS).fill(0);
+    const climMin = new Array<number>(MAX_CHANNELS).fill(0);
+    const climMax = new Array<number>(MAX_CHANNELS).fill(1);
+    const gamma = new Array<number>(MAX_CHANNELS).fill(1);
+    const opacity = new Array<number>(MAX_CHANNELS).fill(1);
+    const visible = new Array<number>(MAX_CHANNELS).fill(0);
+    const invert = new Array<number>(MAX_CHANNELS).fill(0);
+    const row = new Array<number>(MAX_CHANNELS).fill(0);
+
+    const rows = Math.max(1, numChannels);
+    channels.forEach((c, i) => {
+      const idx = c.intensityIndex ?? 0;
+      intensityCoord[i] = Math.min(0.999, Math.max(0, (idx + 0.5) / intensitySize));
+      climMin[i] = c.transfer.climMin ?? 0;
+      climMax[i] = c.transfer.climMax ?? 1;
+      gamma[i] = c.transfer.gamma ?? 1;
+      opacity[i] = c.transfer.opacity ?? 1;
+      visible[i] = c.visible ? 1 : 0;
+      invert[i] = c.transfer.invert ? 1 : 0;
+      row[i] = (i + 0.5) / rows;
+    });
+
+    return {
+      atlas,
+      numChannels,
+      blendMode: blendModeToInt(layer?.blend),
+      intensityCoord,
+      climMin,
+      climMax,
+      gamma,
+      opacity,
+      visible,
+      invert,
+      row,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer?.channels, layer?.blend, layer?.colormap, layer?.color, intensitySize]);
+
+  // Dispose the atlas when it is replaced or the component unmounts.
   useEffect(() => {
-    if (materialRef.current) {
-      if (layer?.climMin !== undefined) {
-        materialRef.current.uniforms.climMin.value = layer.climMin;
-      }
-      if (layer?.climMax !== undefined) {
-        materialRef.current.uniforms.climMax.value = layer.climMax;
-      }
-      if (colorMapTexture) {
-        materialRef.current.uniforms.colormapTexture.value = colorMapTexture;
-      }
-    }
-  }, [layer?.climMin, layer?.climMax, colorMapTexture]);
+    const atlas = channelData.atlas;
+    return () => atlas.dispose();
+  }, [channelData]);
 
-
+  // High-performance update loop: push new channel/transfer values straight to
+  // the GPU without re-rendering the component structure.
+  useEffect(() => {
+    const u = materialRef.current?.uniforms;
+    if (!u) return;
+    u.colormapAtlas.value = channelData.atlas;
+    u.numChannels.value = channelData.numChannels;
+    u.blendMode.value = channelData.blendMode;
+    u.intensityAxis.value = intensityComponent;
+    u.chIntensityCoord.value = channelData.intensityCoord;
+    u.chClimMin.value = channelData.climMin;
+    u.chClimMax.value = channelData.climMax;
+    u.chGamma.value = channelData.gamma;
+    u.chOpacity.value = channelData.opacity;
+    u.chVisible.value = channelData.visible;
+    u.chInvert.value = channelData.invert;
+    u.chRow.value = channelData.row;
+  }, [channelData, intensityComponent]);
 
   // Define the initial uniforms ONCE using useMemo so they aren't recreated every render
   const initialUniforms = useMemo(() => ({
     colorTexture: { value: texture },
-    colormapTexture: { value: colorMapTexture },
+    colormapAtlas: { value: channelData.atlas },
     minValue: { value: chunk.min_value },
     maxValue: { value: chunk.max_value },
-    climMin: { value: layer?.climMin ?? 0.0 },
-    climMax: { value: layer?.climMax ?? 1.0 },
-    opacity: { value: 1 },
-    gamma: { value: 1.0 },
+    numChannels: { value: channelData.numChannels },
+    blendMode: { value: channelData.blendMode },
+    intensityAxis: { value: intensityComponent },
+    chIntensityCoord: { value: channelData.intensityCoord },
+    chClimMin: { value: channelData.climMin },
+    chClimMax: { value: channelData.climMax },
+    chGamma: { value: channelData.gamma },
+    chOpacity: { value: channelData.opacity },
+    chVisible: { value: channelData.visible },
+    chInvert: { value: channelData.invert },
+    chRow: { value: channelData.row },
     useDiscrete: { value: 0.0 },
     dataScale: { value: dataScale },
     dimRemap: { value: dimRemapMat },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [texture, chunk.min_value, chunk.max_value, dataScale, dimRemapMat]);
 
 
@@ -279,16 +361,25 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
             precision highp float;
             precision highp sampler3D;
 
+            #define MAX_CHANNELS ${MAX_CHANNELS}
+
             in vec3 vUv;
 
             uniform sampler3D colorTexture;
-            uniform sampler2D colormapTexture;
+            uniform sampler2D colormapAtlas;
             uniform float minValue;
             uniform float maxValue;
-            uniform float climMin;
-            uniform float climMax;
-            uniform float opacity;
-            uniform float gamma;
+            uniform int numChannels;
+            uniform int blendMode;      // 0 additive, 1 multiplicative, 2 normal
+            uniform int intensityAxis;  // which texCoord component selects a channel slice
+            uniform float chIntensityCoord[MAX_CHANNELS];
+            uniform float chClimMin[MAX_CHANNELS];
+            uniform float chClimMax[MAX_CHANNELS];
+            uniform float chGamma[MAX_CHANNELS];
+            uniform float chOpacity[MAX_CHANNELS];
+            uniform float chVisible[MAX_CHANNELS];
+            uniform float chInvert[MAX_CHANNELS];
+            uniform float chRow[MAX_CHANNELS];
             uniform float useDiscrete;
             uniform float dataScale;
             uniform mat3 dimRemap;
@@ -299,25 +390,54 @@ export const ChunkPlane = ({ chunk, colorMapTexture }: { chunk: ChunkData, color
               vec3 uvw = vUv;
               uvw.y = 1.0 - uvw.y;
 
-              vec3 texCoord = dimRemap * uvw;
-              float val = texture(colorTexture, texCoord).r;
-              float rawValue = val * dataScale;
+              // Spatial (x,y) texture coordinate; the intensity component is
+              // overridden per channel below to pick that channel's slice.
+              vec3 baseCoord = dimRemap * uvw;
 
-              float normalized;
-              if (useDiscrete > 0.5) {
-                normalized = mod(rawValue, 256.0) / 255.0;
-              } else {
-                float baseNorm = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 1.0);
-                float climRange = max(climMax - climMin, 0.00001);
+              // Multiplicative starts from white; additive/normal from black.
+              vec3 accum = (blendMode == 1) ? vec3(1.0) : vec3(0.0);
 
-                normalized = clamp((baseNorm - climMin) / climRange, 0.0, 0.999);
-                normalized = pow(normalized, gamma);
+              for (int i = 0; i < MAX_CHANNELS; i++) {
+                if (i >= numChannels) break;
+                if (chVisible[i] < 0.5) continue;
+
+                vec3 texCoord = baseCoord;
+                if (intensityAxis == 0) texCoord.x = chIntensityCoord[i];
+                else if (intensityAxis == 1) texCoord.y = chIntensityCoord[i];
+                else texCoord.z = chIntensityCoord[i];
+
+                float rawValue = texture(colorTexture, texCoord).r * dataScale;
+
+                float normalized;
+                if (useDiscrete > 0.5) {
+                  normalized = mod(rawValue, 256.0) / 255.0;
+                } else {
+                  float baseNorm = clamp((rawValue - minValue) / (maxValue - minValue), 0.0, 1.0);
+                  float climRange = max(chClimMax[i] - chClimMin[i], 0.00001);
+                  normalized = clamp((baseNorm - chClimMin[i]) / climRange, 0.0, 0.999);
+                  normalized = pow(normalized, max(chGamma[i], 0.0001));
+                }
+                if (chInvert[i] > 0.5) normalized = 1.0 - normalized;
+
+                vec3 color = texture(colormapAtlas, vec2(normalized, chRow[i])).rgb;
+                float weight = chOpacity[i] * normalized;
+
+                if (blendMode == 1) {
+                  // Multiplicative: darken by each channel's contribution.
+                  accum *= mix(vec3(1.0), color, weight);
+                } else if (blendMode == 2) {
+                  // Normal: alpha-over compositing within the layer.
+                  accum = accum * (1.0 - weight) + color * weight;
+                } else {
+                  // Additive: premultiplied sum (matches the legacy single-channel path).
+                  accum += color * weight;
+                }
               }
 
-              vec4 color = texture(colormapTexture, vec2(normalized, 0.5));
-
-
-              FragColor = vec4(color.rgb, color.a * opacity * normalized);
+              // Output premultiplied color; the mesh uses AdditiveBlending
+              // (src.rgb * src.a + dst) so alpha = 1.0 adds 'accum' as-is,
+              // reproducing the original single-channel result.
+              FragColor = vec4(accum, 1.0);
             }
           `}
         />

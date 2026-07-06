@@ -2,13 +2,23 @@ import { Card } from "@/components/ui/card";
 import { OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { EffectComposer, Vignette } from '@react-three/postprocessing';
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
 import { rgbaToCss } from "../lib/color";
 import { computeRootCentroidFit, FitCamera } from "../lib/fitCamera";
+import {
+  DEFAULT_WEIGHTS,
+  DominanceWeights,
+  IMPORTANCE_MUTED,
+  useImportanceColors,
+} from "../lib/importance";
 import { useNeuronPanelStore } from "../lib/neuronPanelStore";
+import { buildNetworkLayout, SegmentGeom } from "../lib/networkLayout";
 import { toBase } from "../lib/quantities";
+import { ImportanceControl } from "./ImportanceControl";
+import { HoveredNet, NetworkLayer, NetworkTooltip } from "./NetworkLayer3D";
+import { NetworkControl } from "./NetworkControl";
 
 // --- Types & Helpers ---
 type CompartmentMap = Record<string, CompartmentFragment>;
@@ -443,6 +453,38 @@ const PanelOverlay = ({
 export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }) => {
   const segments = useNeuronLayout(model);
 
+  // Importance heatmap: hover the control to preview, click to pin. Settings
+  // tune the dominance blend weights (which refetch the score).
+  const [weights, setWeights] = useState<DominanceWeights>(DEFAULT_WEIGHTS);
+  const [pinned, setPinned] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const importanceActive = pinned || previewing;
+  const importance = useImportanceColors(model, weights);
+
+  // Network layer (synapses / stimulators / connections). Positions are joined
+  // against the section geometry the layout already computed.
+  const [showNetwork, setShowNetwork] = useState(true);
+  const [hoveredNet, setHoveredNet] = useState<HoveredNet | null>(null);
+  const segmentGeom = useMemo<Map<string, SegmentGeom>>(
+    () =>
+      new Map(
+        segments.map((s) => [
+          s.section.id,
+          {
+            start: s.start,
+            end: s.end,
+            radius: toBase(s.section.diam, "length", 1) / 2,
+          },
+        ]),
+      ),
+    [segments],
+  );
+  const network = useMemo(
+    () => buildNetworkLayout(model.config, segmentGeom),
+    [model.config, segmentGeom],
+  );
+  useCursor(Boolean(hoveredNet));
+
   const compartmentMap = useMemo(() => Object.fromEntries(model.config.cells.flatMap((cell) => cell.biophysics.compartments.map((c) => [c.id, c]))), [model]);
   const sectionMap = useMemo(
     () => new Map(segments.map((seg) => [seg.section.id, seg.section])),
@@ -477,9 +519,18 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
             section={seg.section}
             start={seg.start}
             end={seg.end}
-            color={seg.color}
+            color={
+              importanceActive
+                ? importance.colors.get(seg.section.id) ?? IMPORTANCE_MUTED
+                : seg.color
+            }
           />
         ))}
+
+        {showNetwork && network.hasData && (
+          <NetworkLayer network={network} onHover={setHoveredNet} />
+        )}
+        {hoveredNet && <NetworkTooltip hovered={hoveredNet} />}
 
         <PanelProjector nodes={nodes} />
 
@@ -489,6 +540,36 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
       </Canvas>
 
       <PanelOverlay sectionMap={sectionMap} compartmentMap={compartmentMap} nodes={nodes} />
+
+      {(importance.hasData || network.hasData) && (
+        <div className="pointer-events-auto absolute left-3 top-3 flex flex-col gap-2">
+          {importance.hasData && (
+            <ImportanceControl
+              variant="dark"
+              weights={weights}
+              onWeightsChange={setWeights}
+              active={importanceActive}
+              pinned={pinned}
+              onPreviewChange={setPreviewing}
+              onTogglePin={() => setPinned((p) => !p)}
+              min={importance.min}
+              max={importance.max}
+            />
+          )}
+          {network.hasData && (
+            <NetworkControl
+              show={showNetwork}
+              onToggle={() => setShowNetwork((v) => !v)}
+              counts={{
+                synapses: network.synapses.length,
+                stimulators: network.stimulators.length,
+                connections: network.connections.length,
+              }}
+              unmatched={network.unmatchedSynapses}
+            />
+          )}
+        </div>
+      )}
 
       {hasPanels && (
         <button

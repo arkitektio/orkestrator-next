@@ -6,6 +6,7 @@ import { RefObject } from "react";
 import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import * as THREE from 'three';
 import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
+import { isImageLayer } from "../layers/layerGuards";
 
 type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 
@@ -103,6 +104,7 @@ function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZa
   const descriptors = new Map<string, SceneZarrStoreDescriptor>();
 
   for (const layer of scene.layers) {
+    if (!isImageLayer(layer)) continue;
     for (const dataArray of layer.lens.dataset.dataArrays) {
       descriptors.set(dataArray.store.id, {
         bucket: dataArray.store.bucket,

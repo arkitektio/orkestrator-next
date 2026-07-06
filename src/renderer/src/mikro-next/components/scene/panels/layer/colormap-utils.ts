@@ -1,5 +1,5 @@
 import { ColorMap } from "@/mikro-next/api/graphql";
-import { SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { ImageLayerFragment } from "../../layers/layerGuards";
 import {
   colormapGradientCSS as sceneColormapGradientCSS,
   resolveBaseColorRgb,
@@ -25,8 +25,8 @@ export const colormapGradientCSS = (
 };
 
 export const isLayerDirty = (
-  current: SceneLayerFragment,
-  original: SceneLayerFragment | undefined,
+  current: ImageLayerFragment,
+  original: ImageLayerFragment | undefined,
 ): boolean => {
   if (!original) return true;
   const currentColor = resolveBaseColorRgb(current.color);

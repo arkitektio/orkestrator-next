@@ -20,12 +20,19 @@ import {
   EditableCompartment,
   EditableModelConfig,
   EditableModelWide,
+  EditableNetConnection,
+  EditableNetStimulator,
+  EditableNetSynapse,
 } from "../lib/modelSerialization";
 import { rgbaToCss } from "../lib/color";
+import { buildNetworkLayout, SegmentGeom } from "../lib/networkLayout";
 import { toBase } from "../lib/quantities";
 import { CompartmentEditor } from "./editor/CompartmentEditor";
 import { MechanismCatalogProvider } from "./editor/MechanismCatalog";
 import { ModelConfigPanel } from "./editor/ModelConfigPanel";
+import { NetworkEditor } from "./editor/NetworkEditor";
+import { NetworkControl } from "./NetworkControl";
+import { HoveredNet, NetworkLayer, NetworkTooltip } from "./NetworkLayer3D";
 import { QuantityInput } from "./QuantityInput";
 
 // --- Types & Helpers ---
@@ -336,6 +343,9 @@ export const NeuronEditor = ({
     cm: initialModel.config.cm,
     ions: initialModel.config.ions ?? [],
     mechanismGlobals: initialModel.config.mechanismGlobals ?? [],
+    netSynapses: initialModel.config.netSynapses ?? [],
+    netStimulators: initialModel.config.netStimulators ?? [],
+    netConnections: initialModel.config.netConnections ?? [],
   }));
   const patchModelWide = (update: Partial<EditableModelWide>) =>
     setModelWide(prev => ({ ...prev, ...update }));
@@ -568,6 +578,94 @@ export const NeuronEditor = ({
     }
   };
 
+  // --- Network layer CRUD (model-config level; round-trips via modelWide) ---
+
+  const synapses = modelWide.netSynapses ?? [];
+  const stimulators = modelWide.netStimulators ?? [];
+  const connections = modelWide.netConnections ?? [];
+
+  const addSynapse = () => {
+    const newSynapse: EditableNetSynapse = {
+      __typename: "Exp2Synapse",
+      id: uuidv4(),
+      cell: activeCellId ?? "",
+      location: sections[0]?.id ?? "",
+      position: 0.5,
+      e: "0 mV",
+      tau1: "0.5 ms",
+      tau2: "2 ms",
+      delay: null,
+    };
+    patchModelWide({ netSynapses: [...synapses, newSynapse] });
+  };
+  const updateSynapse = (id: string, update: Partial<EditableNetSynapse>) =>
+    patchModelWide({
+      netSynapses: synapses.map((s) => (s.id === id ? { ...s, ...update } : s)),
+    });
+  const removeSynapse = (id: string) => {
+    patchModelWide({
+      netSynapses: synapses.filter((s) => s.id !== id),
+      // Drop connections that referenced the removed synapse.
+      netConnections: connections.filter((c) => c.synapse !== id),
+    });
+  };
+
+  const addStimulator = () => {
+    const newStimulator: EditableNetStimulator = {
+      __typename: "NetStimulator",
+      id: uuidv4(),
+      start: "100 ms",
+      number: 1,
+      interval: null,
+    };
+    patchModelWide({ netStimulators: [...stimulators, newStimulator] });
+  };
+  const updateStimulator = (
+    id: string,
+    update: Partial<EditableNetStimulator>,
+  ) =>
+    patchModelWide({
+      netStimulators: stimulators.map((s) =>
+        s.id === id ? { ...s, ...update } : s,
+      ),
+    });
+  const removeStimulator = (id: string) => {
+    patchModelWide({
+      netStimulators: stimulators.filter((s) => s.id !== id),
+      netConnections: connections.filter((c) => c.netStimulator !== id),
+    });
+  };
+
+  const addConnection = () => {
+    if (stimulators.length === 0 || synapses.length === 0) {
+      toast.error("Add a stimulator and a synapse first");
+      return;
+    }
+    const newConnection: EditableNetConnection = {
+      __typename: "SynapticConnection",
+      id: uuidv4(),
+      netStimulator: stimulators[0].id,
+      synapse: synapses[0].id,
+      weight: "0.001 µS",
+      delay: null,
+      threshold: null,
+    };
+    patchModelWide({ netConnections: [...connections, newConnection] });
+  };
+  const updateConnection = (
+    id: string,
+    update: Partial<EditableNetConnection>,
+  ) =>
+    patchModelWide({
+      netConnections: connections.map((c) =>
+        c.id === id ? { ...c, ...update } : c,
+      ),
+    });
+  const removeConnection = (id: string) =>
+    patchModelWide({
+      netConnections: connections.filter((c) => c.id !== id),
+    });
+
   // Compartment id → CSS color, so the live 3D view (and the section swatches)
   // reflect compartment colors as they're edited.
   const categoryColor = useMemo(() => {
@@ -582,6 +680,31 @@ export const NeuronEditor = ({
   const segments = useNeuronLayout(sections, categoryColor);
   const colorMap = useMemo(() => new Map(segments.map(s => [s.id, s.color])), [segments]);
   const { points, target } = useMemo(() => computeRootCentroidFit(segments), [segments]);
+
+  // Network layer (synapses / stimulators / connections) — placed against the
+  // live section geometry so it tracks edits. Net data comes from the original
+  // model (the editor doesn't mutate it here).
+  const [showNetwork, setShowNetwork] = useState(true);
+  const [hoveredNet, setHoveredNet] = useState<HoveredNet | null>(null);
+  const segmentGeom = useMemo<Map<string, SegmentGeom>>(
+    () =>
+      new Map(
+        segments.map((s) => [
+          s.section.id,
+          {
+            start: s.start,
+            end: s.end,
+            radius: toBase(s.section.diam, "length", 1) / 2,
+          },
+        ]),
+      ),
+    [segments],
+  );
+  const network = useMemo(
+    () => buildNetworkLayout(modelWide, segmentGeom),
+    [modelWide, segmentGeom],
+  );
+  useCursor(Boolean(hoveredNet));
 
   return (
     <MechanismCatalogProvider>
@@ -631,10 +754,11 @@ export const NeuronEditor = ({
           </div>
 
           <Tabs defaultValue="topology" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid grid-cols-3 flex-none">
-              <TabsTrigger value="topology">Topology</TabsTrigger>
-              <TabsTrigger value="biophysics">Biophysics</TabsTrigger>
-              <TabsTrigger value="model">Model</TabsTrigger>
+            <TabsList className="grid grid-cols-4 flex-none">
+              <TabsTrigger value="topology" className="text-xs">Topology</TabsTrigger>
+              <TabsTrigger value="biophysics" className="text-xs">Biophysics</TabsTrigger>
+              <TabsTrigger value="network" className="text-xs">Network</TabsTrigger>
+              <TabsTrigger value="model" className="text-xs">Model</TabsTrigger>
             </TabsList>
 
             <TabsContent value="topology" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
@@ -886,6 +1010,24 @@ export const NeuronEditor = ({
               )}
             </TabsContent>
 
+            <TabsContent value="network" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
+              <NetworkEditor
+                synapses={synapses}
+                stimulators={stimulators}
+                connections={connections}
+                sectionIds={sections.map((s) => s.id)}
+                onAddSynapse={addSynapse}
+                onUpdateSynapse={updateSynapse}
+                onRemoveSynapse={removeSynapse}
+                onAddStimulator={addStimulator}
+                onUpdateStimulator={updateStimulator}
+                onRemoveStimulator={removeStimulator}
+                onAddConnection={addConnection}
+                onUpdateConnection={updateConnection}
+                onRemoveConnection={removeConnection}
+              />
+            </TabsContent>
+
             <TabsContent value="model" className="flex-1 overflow-y-auto pr-2 -mr-2 mt-2">
               <ModelConfigPanel value={modelWide} patch={patchModelWide} />
             </TabsContent>
@@ -908,7 +1050,27 @@ export const NeuronEditor = ({
             onAddChild={addSection}
           />
         ))}
+
+        {showNetwork && network.hasData && (
+          <NetworkLayer network={network} onHover={setHoveredNet} />
+        )}
+        {hoveredNet && <NetworkTooltip hovered={hoveredNet} />}
       </Canvas>
+
+      {network.hasData && (
+        <div className="absolute top-4 right-4 z-10">
+          <NetworkControl
+            show={showNetwork}
+            onToggle={() => setShowNetwork((v) => !v)}
+            counts={{
+              synapses: network.synapses.length,
+              stimulators: network.stimulators.length,
+              connections: network.connections.length,
+            }}
+            unmatched={network.unmatchedSynapses}
+          />
+        </div>
+      )}
     </div>
     </MechanismCatalogProvider>
   );

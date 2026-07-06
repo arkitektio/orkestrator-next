@@ -1,13 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { useSelectionStore } from "../store/layerStore";
 import { useViewStore } from "../store/viewStore";
-import { useSceneStore } from "../store/sceneStore";
+import { LayerState, useSceneStore } from "../store/sceneStore";
 import { useMemo } from "react";
 import * as THREE from "three";
-import { SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
-import { useViewerStore } from "../store/viewerStore";
 
 const DimBadge = ({ label, value }: { label: string; value: string | null | undefined }) => (
   <div className="flex items-center gap-1">
@@ -20,8 +17,8 @@ const LayerDimForm = ({
   layer,
   onUpdate,
 }: {
-  layer: SceneLayerFragment;
-  onUpdate: (updatedLayer: SceneLayerFragment) => void;
+  layer: LayerState;
+  onUpdate: (updatedLayer: LayerState) => void;
 }) => {
   const rollDimensions = () => {
     const keys = ["xDim", "yDim", "zDim", "intensityDim"] as const;
@@ -59,8 +56,8 @@ const ContrastLimitForm = ({
   layer,
   onUpdate,
 }: {
-  layer: SceneLayerFragment;
-  onUpdate: (updatedLayer: SceneLayerFragment) => void;
+  layer: LayerState;
+  onUpdate: (updatedLayer: LayerState) => void;
 }) => {
 
   return (
@@ -77,7 +74,7 @@ const ContrastLimitForm = ({
   );
 };
 
-export const ScenePanel = (props) => {
+export const ScenePanel = () => {
   const selectedFrameId = useSelectionStore((s) => s.selectedLayerId);
   const updateLayer = useSceneStore((s) => s.updateLayer);
   const layers = useSceneStore((s) => s.layers);
@@ -117,7 +114,7 @@ export const ScenePanel = (props) => {
     };
   }, [affineMatrix, viewProjectionMatrix, viewportSize, hasAffineMatrix, selectedFrameId]);
 
-  if (!screenPos) {
+  if (!screenPos || !selectedLayer) {
     return null;
   }
 

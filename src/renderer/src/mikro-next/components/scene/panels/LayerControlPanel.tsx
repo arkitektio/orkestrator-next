@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
 
-import {
-  SceneLayerFragment,
-  useUpdateLaterMutation,
-} from "@/mikro-next/api/graphql";
+import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
 import { Layers } from "lucide-react";
 import { useState } from "react";
 import { useSelectionStore } from "../store/layerStore";
-import { useSceneStore } from "../store/sceneStore";
+import { LayerState, useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 import { isLayerDirty } from "./layer/colormap-utils";
 import { LayerCard } from "./layer/LayerCard";
@@ -25,7 +22,7 @@ export const LayerControlPanel = () => {
   const [updateLater] = useUpdateLaterMutation();
   const [open, setOpen] = useState(false);
 
-  const saveLayer = (layer: SceneLayerFragment) => {
+  const saveLayer = (layer: LayerState) => {
     updateLater({
       variables: {
         input: {

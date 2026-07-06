@@ -27,6 +27,15 @@ fragment Connection on Connection {
   childEnd
 }
 
+fragment SectionDominance on SectionDominance {
+  cellId
+  sectionId
+  category
+  globalScore
+  conductanceLoad
+  electrotonicDistance
+}
+
 fragment Ion on Ion {
   ion
   style
@@ -109,6 +118,37 @@ fragment DetailNeuronModel on NeuronModel {
         }
       }
     }
+    netSynapses {
+      id
+      cell
+      location
+      position
+      ... on Exp2Synapse {
+        tau1
+        tau2
+        e
+        delay
+      }
+    }
+    netStimulators {
+      id
+      interval
+      number
+      start
+    }
+    netConnections {
+      id
+      delay
+      weight
+      threshold
+      ... on SynapticConnection {
+        netStimulator
+        synapse
+      }
+    }
+  }
+  sectionDominance {
+    ...SectionDominance
   }
   description
   comparisons {

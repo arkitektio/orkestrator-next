@@ -74,8 +74,8 @@ export function VisibilityManager() {
                   }
                 }
 
-                const xIdx = layer.lens.dims.indexOf(layer.xDim)
-                const yIdx = layer.lens.dims.indexOf(layer.yDim)
+                const xIdx = layer.lens.dims.indexOf(layer.xDim ?? "")
+                const yIdx = layer.lens.dims.indexOf(layer.yDim ?? "")
                 const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0
                 const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0
 

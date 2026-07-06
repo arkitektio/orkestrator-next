@@ -1,22 +1,148 @@
-fragment SceneLayer on Layer {
-  id
-  lens {
-    ...SceneLens
-  }
-  affineMatrix
+fragment TransferFunction on TransferFunction {
   climMin
   climMax
   colormap
   color
-  xDim
-  yDim
-  zDim
-  intensityDim
-  tDim
+  gamma
+  opacity
+  invert
+  categorical
 }
 
+fragment ChannelSourceNode on ChannelSourceNode {
+  intensityDim
+  intensityIndex
+  visible
+  transfer {
+    ...TransferFunction
+  }
+}
 
-fragment ListScene on Scene {
+fragment RenderNodeCommon on LayerRenderNode {
+  kind
+  label
+  ... on ChannelSourceNode {
+    ...ChannelSourceNode
+  }
+  ... on BlendNode {
+    blending
+  }
+  ... on ProjectionNode {
+    mode
+  }
+}
+
+# GraphQL cannot express unbounded recursion, so the render-graph tree is
+# expanded to a fixed depth (root BlendNode + 3 nested levels). Real graphs are
+# shallow (Blend -> [Channel] or Blend -> Projection -> [Channel]).
+fragment LayerRenderGraph on LayerRenderGraph {
+  root {
+    ...RenderNodeCommon
+    children {
+      ...RenderNodeCommon
+      ... on BlendNode {
+        children {
+          ...RenderNodeCommon
+          ... on BlendNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+          ... on ProjectionNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+        }
+      }
+      ... on ProjectionNode {
+        children {
+          ...RenderNodeCommon
+          ... on BlendNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+          ... on ProjectionNode {
+            children {
+              ...RenderNodeCommon
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+fragment SceneLayer on Layer {
+  __typename
   id
-  name
+  kind
+  status
+  affineMatrix
+  blending
+  opacity
+  visible
+  order
+  ... on ImageLayer {
+    lens {
+      ...SceneLens
+    }
+    gamma
+    climMin
+    climMax
+    colormap
+    color
+    xDim
+    yDim
+    zDim
+    intensityDim
+    tDim
+    renderGraph {
+      ...LayerRenderGraph
+    }
+  }
+  ... on ShapeLayer {
+    dataRoi {
+      ...DataRoi
+    }
+    strokeColor
+    fillColor
+    strokeWidth
+    filled
+  }
+  ... on PointLayer {
+    table {
+      ...Table
+    }
+    xColumn
+    yColumn
+    zColumn
+    tColumn
+    sizeColumn
+    colorColumn
+    idColumn
+    pointSize
+    colormap
+  }
+  ... on TrackLayer {
+    table {
+      ...Table
+    }
+    trackIdColumn
+    xColumn
+    yColumn
+    zColumn
+    tColumn
+    colorByColumn
+    lineWidth
+    colormap
+  }
+  ... on MeshLayer {
+    mesh {
+      ...Mesh
+    }
+    materialColor
+    wireframe
+  }
 }

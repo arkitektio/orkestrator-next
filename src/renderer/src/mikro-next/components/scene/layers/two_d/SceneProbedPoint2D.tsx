@@ -114,16 +114,16 @@ function resolveMarkerState(
       return acc;
     }, {});
 
-    const xPos = dims.indexOf(layer.xDim);
-    const yPos = dims.indexOf(layer.yDim);
+    const xPos = dims.indexOf(layer.xDim ?? "");
+    const yPos = dims.indexOf(layer.yDim ?? "");
     const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
 
     if (xPos === -1 || yPos === -1 || zPos === -1) {
       return null;
     }
 
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim], arr.shape[xPos]);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim], arr.shape[yPos]);
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], arr.shape[xPos]);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], arr.shape[yPos]);
     const zSelection = resolveSpatialSelection(sliceMap[layer.zDim as string], arr.shape[zPos]);
     const scaleX = dataArray.scaleFactors?.[xPos] ?? 1;
     const scaleY = dataArray.scaleFactors?.[yPos] ?? 1;

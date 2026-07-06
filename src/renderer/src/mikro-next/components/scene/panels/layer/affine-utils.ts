@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { ImageLayerFragment } from "../../layers/layerGuards";
 
 /**
  * Convert a raw affine matrix (number[][]) to a THREE.Matrix4.
@@ -46,12 +46,12 @@ export function affineToMatrix4(raw: number[][] | null | undefined): THREE.Matri
 }
 
 /** Build a THREE.Matrix4 from the raw affine matrix stored on a layer (x,y,z convention) */
-export function buildAffineMatrix(layer: SceneLayerFragment): THREE.Matrix4 {
+export function buildAffineMatrix(layer: ImageLayerFragment): THREE.Matrix4 {
   return affineToMatrix4(layer.affineMatrix);
 }
 
 /** Get the number of Z voxels for a layer, or null if the layer has no Z dimension */
-export function getLayerZSize(layer: SceneLayerFragment): number | null {
+export function getLayerZSize(layer: ImageLayerFragment): number | null {
   if (!layer.zDim) return null;
   const idx = layer.lens.dims.indexOf(layer.zDim);
   if (idx === -1) return null;

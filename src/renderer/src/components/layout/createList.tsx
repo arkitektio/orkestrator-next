@@ -15,6 +15,7 @@ import { OffsetPaginationInput } from "@/lok-next/api/graphql";
 import { Smart } from "@/providers/smart/builder";
 import { BsCaretLeft, BsCaretRight } from "react-icons/bs";
 import { Refetcher } from "../ui/refetcher";
+import { GroupableListRenderer, GroupByDef } from "./GroupableListRenderer";
 
 // --- Types ---
 
@@ -46,6 +47,10 @@ export interface GeneratedListProps<TFilters, TOrder, TOrdering> {
   emptyDescription?: string;
   defaultLimit?: number;
   cardProps?: Record<string, any>;
+  // When set, items are rendered as titled sections instead of a flat grid.
+  // Typed as `any` at this boundary because `TItem` is not reliably inferred by
+  // the factory; the group-by definitions are strongly typed at their def site.
+  groupBy?: GroupByDef<any>;
 }
 
 
@@ -249,15 +254,12 @@ export const createList = <
             </EmptyContent>
           </Empty>
         ) : (
-          <ListLayout.Grid>
-            {listData.map((item, index) => (
-              <ItemComponent
-                key={item.id || index}
-                item={item}
-                {...cardProps}
-              />
-            ))}
-          </ListLayout.Grid>
+          <GroupableListRenderer<TItem>
+            items={listData}
+            groupBy={props.groupBy}
+            ItemComponent={ItemComponent}
+            cardProps={cardProps}
+          />
         )}
 
       </ListLayout.Root>

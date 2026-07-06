@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
@@ -25,7 +26,8 @@ export const NeuronModelPage = asDetailQueryRoute(
         }}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit"> Edit</ElektroNeuronModel.DetailLink>
+            <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit" className={buttonVariants({ variant: "outline" })}>Edit</ElektroNeuronModel.DetailLink>
+            <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="tree" className={buttonVariants({ variant: "outline" })}>Tree View</ElektroNeuronModel.DetailLink>
             <ExportModelButton object={data.neuronModel} />
             <ElektroNeuronModel.ObjectButton object={data.neuronModel} />
           </div>

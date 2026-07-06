@@ -31,7 +31,11 @@ fragment ListSimulation on Simulation {
   duration
   dt
   createdAt
+  creator {
+    sub
+  }
   model {
+    id
     name
   }
 }

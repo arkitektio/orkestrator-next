@@ -56,9 +56,6 @@ input ADatasetFilter {
   """Filter by the creator's subject ID"""
   owner: ID
 
-  """Filter by visibility scope"""
-  scope: ScopeKind
-
   """Search by name (case-insensitive substring)"""
   search: String
 }
@@ -361,6 +358,16 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
+"""Composites its children using an in-layer blend mode"""
+type BlendNode implements LayerRenderNode {
+  blending: Blending!
+  children: [LayerRenderNode!]!
+  kind: String!
+
+  """An optional human-readable label for the node"""
+  label: String
+}
+
 """
 The blending mode used to combine multiple channels or layers into a composite image.
 """
@@ -374,11 +381,17 @@ enum Blending {
   Multiplicative blending, where the color values of overlapping layers are multiplied.
   """
   MULTIPLICATIVE
+
+  """
+  Alpha-over compositing: the layer is blended over the layers below using its opacity.
+  """
+  NORMAL
 }
 
 enum BlendingChoices {
   ADDITIVE
   MULTIPLICATIVE
+  NORMAL
 }
 
 """Detector"""
@@ -509,6 +522,20 @@ The channel truth: a human-readable label for a channel, pinned to a coordinate 
 type ChannelLabel {
   id: ID!
   label: String!
+}
+
+"""
+A single intensity channel of the layer's lens, with its own transfer function
+"""
+type ChannelSourceNode implements LayerRenderNode {
+  intensityDim: String
+  intensityIndex: Int!
+  kind: String!
+
+  """An optional human-readable label for the node"""
+  label: String
+  transfer: TransferFunction!
+  visible: Boolean!
 }
 
 """
@@ -917,17 +944,63 @@ input CreateDatasetInput {
   parent: ID = null
 }
 
+"""
+Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel)
+"""
+input CreateIntensityLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  climMax: Float = null
+  climMin: Float = null
+  colormap: ColorMap = null
+  gamma: Float = null
+  intensityDim: String = null
+  intensityIndex: Int = 0
+  lens: ID!
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  tDim: String = null
+  visible: Boolean = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
+}
+
+"""
+Create a label layer that renders an instance / segmentation map, mapping discrete integer labels to distinct colors
+"""
+input CreateLabelLayerInput {
+  affineMatrix: [[Float!]!] = null
+  intensityDim: String = null
+  intensityIndex: Int = 0
+  lens: ID!
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  tDim: String = null
+  visible: Boolean = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
+}
+
 """Input type for creating an image from an array-like object"""
 input CreateLayerInput {
   affineMatrix: [[Float!]!] = null
+  blending: Blending = null
   climMax: Float = null
   climMin: Float = null
   color: [Int!] = null
   colormap: ColorMap = null
   intensityDim: String = null
   lens: ID!
+  opacity: Float = null
+  order: Int = null
+  renderGraph: LayerRenderGraphInput = null
   scene: ID!
   tDim: String = null
+  visible: Boolean = null
   xDim: String = null
   yDim: String = null
   zDim: String = null
@@ -937,6 +1010,43 @@ input CreateLayerInput {
 input CreateLensInput {
   dataset: ID!
   slices: [SliceInput!]!
+}
+
+"""
+Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene
+"""
+input CreateMeshLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  materialColor: [Int!] = null
+  mesh: ID!
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  visible: Boolean = null
+  wireframe: Boolean = null
+}
+
+"""
+Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
+"""
+input CreatePointLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  colorColumn: String = null
+  colormap: ColorMap = null
+  idColumn: String = null
+  opacity: Float = null
+  order: Int = null
+  pointSize: Float = null
+  scene: ID!
+  sizeColumn: String = null
+  tColumn: String = null
+  table: ID!
+  visible: Boolean = null
+  xColumn: String!
+  yColumn: String!
+  zColumn: String = null
 }
 
 """Input for creating an RGB render context for an image"""
@@ -963,12 +1073,96 @@ input CreateRGBContextInput {
   z: Int = null
 }
 
+"""
+Create a layer that composites three channels of a lens as red, green and blue
+"""
+input CreateRgbLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blueIndex: Int = 2
+  climMax: Float = null
+  climMin: Float = null
+  greenIndex: Int = 1
+  intensityDim: String = null
+  lens: ID!
+  opacity: Float = null
+  order: Int = null
+  redIndex: Int = 0
+  scene: ID!
+  tDim: String = null
+  visible: Boolean = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
+}
+
 """Input type for creating a scene from an array-like object"""
 input CreateSceneInput {
   blending: Blending = null
   name: String!
   spatialUnit: SpatialUnit = null
   temporalUnit: TemporalUnit = null
+}
+
+"""
+Create a layer that renders the vector geometry of a data ROI in a scene
+"""
+input CreateShapeLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  dataRoi: ID!
+  fillColor: [Int!] = null
+  filled: Boolean = null
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  strokeColor: [Int!] = null
+  strokeWidth: Float = null
+  visible: Boolean = null
+}
+
+"""
+Create a layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id
+"""
+input CreateTrackLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  colorByColumn: String = null
+  colormap: ColorMap = null
+  lineWidth: Float = null
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  tColumn: String = null
+  table: ID!
+  trackIdColumn: String!
+  visible: Boolean = null
+  xColumn: String!
+  yColumn: String!
+  zColumn: String = null
+}
+
+"""
+Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface) over its z-axis
+"""
+input CreateVolumeLayerInput {
+  affineMatrix: [[Float!]!] = null
+  blending: Blending = null
+  climMax: Float = null
+  climMin: Float = null
+  colormap: ColorMap = null
+  gamma: Float = null
+  intensityDim: String = null
+  intensityIndex: Int = 0
+  lens: ID!
+  mode: ProjectionMode = null
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  tDim: String = null
+  visible: Boolean = null
+  xDim: String = null
+  yDim: String = null
+  zDim: String = null
 }
 
 """
@@ -1131,9 +1325,6 @@ input DatasetFilter {
 
   """Filter by whether the current user has pinned the item"""
   pinned: Boolean
-
-  """Filter by visibility scope"""
-  scope: ScopeKind
 
   """Search by name (full-text search)"""
   search: String
@@ -1713,9 +1904,6 @@ input FileFilter {
 
   """Filter by the creator's subject ID"""
   owner: ID
-
-  """Filter by visibility scope"""
-  scope: ScopeKind
 
   """Search by name (case-insensitive substring)"""
   search: String
@@ -2348,9 +2536,6 @@ input ImageFilter {
   """Filter by whether the current user has pinned the item"""
   pinned: Boolean
 
-  """Filter by visibility scope"""
-  scope: ScopeKind
-
   """Search by name (full-text search)"""
   search: String
   store: ZarrStoreFilter
@@ -2366,6 +2551,35 @@ enum ImageKind {
   RGB
   UNKNOWN
   VOXEL
+}
+
+"""
+A layer that renders array (lens) data as an alpha-blended image, with a composable render graph plus flat colormap/contrast settings.
+"""
+type ImageLayer implements Layer {
+  affineMatrix: FourByFourMatrix
+  blending: Blending!
+  climMax: Float
+  climMin: Float
+  color: [Int!]
+  colormap: ColorMap
+  gamma: Float
+  id: ID!
+  intensityDim: String
+  kind: LayerKind!
+  lens: Lens!
+  opacity: Float!
+  order: Int!
+
+  """The composable in-layer render graph, if this layer defines one"""
+  renderGraph: LayerRenderGraph
+  scene: Scene!
+  status: PlacementStatus!
+  tDim: String
+  visible: Boolean!
+  xDim: String
+  yDim: String
+  zDim: String
 }
 
 """
@@ -2740,23 +2954,18 @@ type LaserElement implements OpticalElement {
 }
 
 """
-The placement of a lens in a scene, including rendering settings such as colormap, contrast limits and an affine transformation matrix
+A layer placed in a scene and alpha-blended over the layers below it. The concrete kind (ImageLayer, ShapeLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
 """
-type Layer {
+interface Layer {
   affineMatrix: FourByFourMatrix
-  climMax: Float
-  climMin: Float
-  color: [Int!]
-  colormap: ColorMap
+  blending: Blending!
   id: ID!
-  intensityDim: String!
-  lens: Lens!
+  kind: LayerKind!
+  opacity: Float!
+  order: Int!
   scene: Scene!
   status: PlacementStatus!
-  tDim: String
-  xDim: String!
-  yDim: String!
-  zDim: String
+  visible: Boolean!
 }
 
 input LayerFilter {
@@ -2769,8 +2978,9 @@ input LayerFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
+  kind: LayerKindChoices
 
-  """Filter by the lens this layer renders"""
+  """Filter image layers by the lens they render"""
   lens: ID
 
   """Filter by the scene this layer is placed in"""
@@ -2779,8 +2989,82 @@ input LayerFilter {
   validity: PlacementValidity
 }
 
+"""
+The kind of a layer, discriminating which data source it renders and which rendering settings apply.
+"""
+enum LayerKind {
+  """
+  An image layer rendering array (lens) data through a composable render graph.
+  """
+  IMAGE
+
+  """A mesh layer rendering a 3D surface reconstruction."""
+  MESH
+
+  """
+  A point layer rendering a point cloud (e.g. SMLM localisations, centroids) from columns of a table.
+  """
+  POINT
+
+  """
+  A shape layer rendering the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths).
+  """
+  SHAPE
+
+  """
+  A track layer rendering trajectories from columns of a table, grouped by a track id.
+  """
+  TRACK
+}
+
+enum LayerKindChoices {
+  IMAGE
+  MESH
+  POINT
+  SHAPE
+  TRACK
+}
+
+"""
+A node in a layer's internal render graph. A 'channel' node carries an intensity source and transfer function; a 'blend' node composites its children.
+"""
+input LayerNodeInput {
+  blending: Blending = null
+  children: [LayerNodeInput!] = null
+  intensityDim: String = null
+  intensityIndex: Int = null
+  kind: String!
+  label: String = null
+  mode: ProjectionMode = null
+  transfer: TransferFunctionInput = null
+  visible: Boolean = null
+}
+
 input LayerOrder @oneOf {
   id: Ordering
+}
+
+"""
+The composable render recipe inside a single layer, rooted at a blend node
+"""
+type LayerRenderGraph {
+  root: BlendNode!
+}
+
+"""
+The composable render recipe inside a single layer, rooted at a blend node
+"""
+input LayerRenderGraphInput {
+  root: LayerNodeInput!
+}
+
+"""A node in a layer's internal render graph"""
+interface LayerRenderNode {
+  """The discriminator of the node, either 'channel' or 'blend'"""
+  kind: String!
+
+  """An optional human-readable label for the node"""
+  label: String
 }
 
 """
@@ -3150,6 +3434,24 @@ input MeshInput {
 }
 
 """
+A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
+"""
+type MeshLayer implements Layer {
+  affineMatrix: FourByFourMatrix
+  blending: Blending!
+  id: ID!
+  kind: LayerKind!
+  materialColor: [Int!]
+  mesh: Mesh!
+  opacity: Float!
+  order: Int!
+  scene: Scene!
+  status: PlacementStatus!
+  visible: Boolean!
+  wireframe: Boolean!
+}
+
+"""
 The `MeshLike` scalar type represents a reference to a mesh previously created by the user n a datalayer
 """
 scalar MeshLike
@@ -3310,13 +3612,23 @@ type Mutation {
   """Create a new instrument configuration"""
   createInstrument(input: InstrumentInput!): Instrument!
 
+  """
+  Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel)
+  """
+  createIntensityLayer(input: CreateIntensityLayerInput!): ImageLayer!
+
+  """
+  Create a label layer that renders an instance / segmentation map of discrete labels
+  """
+  createLabelLayer(input: CreateLabelLayerInput!): ImageLayer!
+
   """Create a new view for label data"""
   createLabelView(input: LabelViewInput!): LabelView!
 
   """
   Create a new layer from an existing lens with optional affine transformation and colormap settings
   """
-  createLayer(input: CreateLayerInput!): Layer!
+  createLayer(input: CreateLayerInput!): ImageLayer!
 
   """Create a new lens from an existing dataset and slicing constraints"""
   createLens(input: CreateLensInput!): Lens!
@@ -3327,6 +3639,11 @@ type Mutation {
   """Create a new mesh"""
   createMesh(input: MeshInput!): Mesh!
 
+  """
+  Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene
+  """
+  createMeshLayer(input: CreateMeshLayerInput!): MeshLayer!
+
   """Create a new multi-well plate configuration"""
   createMultiWellPlate(input: MultiWellPlateInput!): MultiWellPlate!
 
@@ -3336,6 +3653,11 @@ type Mutation {
   """Create a new view for optical settings"""
   createOpticsView(input: OpticsViewInput!): OpticsView!
 
+  """
+  Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
+  """
+  createPointLayer(input: CreatePointLayerInput!): PointLayer!
+
   """Create a new reference view for image data"""
   createReferenceView(input: ReferenceViewInput!): ReferenceView!
 
@@ -3344,6 +3666,11 @@ type Mutation {
 
   """Create a new RGB context for image visualization"""
   createRgbContext(input: CreateRGBContextInput!): RGBContext!
+
+  """
+  Create a layer that composites three channels of a lens as red, green and blue
+  """
+  createRgbLayer(input: CreateRgbLayerInput!): ImageLayer!
 
   """Create a new view for RGB image data"""
   createRgbView(input: RGBViewInput!): RGBView!
@@ -3357,6 +3684,11 @@ type Mutation {
   """Create a new scene from an existing lens with optional blending mode"""
   createScene(input: CreateSceneInput!): Scene!
 
+  """
+  Create a layer that renders the vector geometry of a data ROI in a scene
+  """
+  createShapeLayer(input: CreateShapeLayerInput!): ShapeLayer!
+
   """Create a new state snapshot"""
   createSnapshot(input: SnapshotInput!): Snapshot!
 
@@ -3366,8 +3698,18 @@ type Mutation {
   """Create a new view for temporal data"""
   createTimepointView(input: TimepointViewInput!): TimepointView!
 
+  """
+  Create a layer that renders trajectories from columns of a table, grouped by a track id
+  """
+  createTrackLayer(input: CreateTrackLayerInput!): TrackLayer!
+
   """Create a new collection of views to organize related views"""
   createViewCollection(input: ViewCollectionInput!): ViewCollection!
+
+  """
+  Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface)
+  """
+  createVolumeLayer(input: CreateVolumeLayerInput!): ImageLayer!
 
   """Create a new view for well position data"""
   createWellPositionView(input: WellPositionViewInput!): WellPositionView!
@@ -3585,7 +3927,7 @@ type Mutation {
   """
   Update an existing layer's lens, scene, affine transformation, and colormap settings
   """
-  updateLayer(input: UpdateLayerInput!): Layer!
+  updateLayer(input: UpdateLayerInput!): ImageLayer!
 
   """Update settings of an existing RGB context"""
   updateRgbContext(input: UpdateRGBContextInput!): RGBContext!
@@ -4852,6 +5194,31 @@ type PlaneInfo {
   label: String!
 }
 
+"""
+A layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table.
+"""
+type PointLayer implements Layer {
+  affineMatrix: FourByFourMatrix
+  blending: Blending!
+  colorColumn: String
+  colormap: ColorMap
+  id: ID!
+  idColumn: String
+  kind: LayerKind!
+  opacity: Float!
+  order: Int!
+  pointSize: Float
+  scene: Scene!
+  sizeColumn: String
+  status: PlacementStatus!
+  tColumn: String
+  table: Table!
+  visible: Boolean!
+  xColumn: String
+  yColumn: String
+  zColumn: String
+}
+
 enum PortRole {
   INPUT
   OUTPUT
@@ -4867,6 +5234,41 @@ type Pose3D {
 input Pose3DInput {
   orientation: EulerInput = null
   position: Vec3Input = null
+}
+
+"""
+The 3D projection / rendering mode applied to a volumetric (z-stacked) render node.
+"""
+enum ProjectionMode {
+  """
+  Attenuated maximum intensity projection, weighting samples by depth so nearer samples dominate.
+  """
+  ATTENUATED_MIP
+
+  """Isosurface rendering: a surface is extracted at a threshold value."""
+  ISOSURFACE
+
+  """
+  Maximum intensity projection: each output pixel takes the maximum value along the z-axis.
+  """
+  MIP
+
+  """
+  Alpha volume rendering: samples along z are alpha-composited front-to-back.
+  """
+  VOLUME
+}
+
+"""
+Projects the composite of its children through the z-axis using a 3D rendering mode
+"""
+type ProjectionNode implements LayerRenderNode {
+  children: [LayerRenderNode!]!
+  kind: String!
+
+  """An optional human-readable label for the node"""
+  label: String
+  mode: ProjectionMode!
 }
 
 """A provenance event for a model."""
@@ -5050,7 +5452,7 @@ type Query {
   """Get a single layer by ID"""
   layer(id: ID!): Layer!
 
-  """List layers (placements of a lens inside a scene)"""
+  """List layers placed in scenes (a heterogeneous list of layer kinds)"""
   layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
 
   """Get a single lens by ID"""
@@ -5996,7 +6398,7 @@ The absolute coordinate universe in which layers are placed, with defined spatia
 type Scene {
   id: ID!
 
-  """The layers placed in this scene"""
+  """The layers placed in this scene (a heterogeneous list of layer kinds)"""
   layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   name: String!
   spatialUnit: SpatialUnit!
@@ -6030,27 +6432,32 @@ input SceneOrder @oneOf {
   name: Ordering
 }
 
-"""The visibility scope of an object, determining which users can see it."""
-enum ScopeKind {
-  """The object is visible only to its creator."""
-  ME
-
-  """The object is visible to everyone in the organization."""
-  ORG
-
-  """The object is visible to everyone."""
-  PUBLIC
-
-  """The object is visible only to users it was explicitly shared with."""
-  SHARED
-}
-
 input Selector {
   c: DimSelector = null
   t: DimSelector = null
   x: DimSelector = null
   y: DimSelector = null
   z: DimSelector = null
+}
+
+"""
+A layer that renders the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths), placed and styled in a scene.
+"""
+type ShapeLayer implements Layer {
+  affineMatrix: FourByFourMatrix
+  blending: Blending!
+  dataRoi: DataRoi!
+  fillColor: [Int!]
+  filled: Boolean!
+  id: ID!
+  kind: LayerKind!
+  opacity: Float!
+  order: Int!
+  scene: Scene!
+  status: PlacementStatus!
+  strokeColor: [Int!]
+  strokeWidth: Float
+  visible: Boolean!
 }
 
 """A slice along a named dimension, with optional start, stop and step"""
@@ -6678,6 +7085,58 @@ input TimepointViewInput {
   zMin: Int = null
 }
 
+"""
+A layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id.
+"""
+type TrackLayer implements Layer {
+  affineMatrix: FourByFourMatrix
+  blending: Blending!
+  colorByColumn: String
+  colormap: ColorMap
+  id: ID!
+  kind: LayerKind!
+  lineWidth: Float
+  opacity: Float!
+  order: Int!
+  scene: Scene!
+  status: PlacementStatus!
+  tColumn: String
+  table: Table!
+  trackIdColumn: String
+  visible: Boolean!
+  xColumn: String
+  yColumn: String
+  zColumn: String
+}
+
+"""
+How a single channel's intensities are mapped to color before compositing
+"""
+type TransferFunction {
+  categorical: Boolean
+  climMax: Float
+  climMin: Float
+  color: [Int!]
+  colormap: ColorMap
+  gamma: Float
+  invert: Boolean
+  opacity: Float
+}
+
+"""
+Transfer-function settings for a channel source in a layer render graph
+"""
+input TransferFunctionInput {
+  categorical: Boolean = null
+  climMax: Float = null
+  climMin: Float = null
+  color: [Int!] = null
+  colormap: ColorMap = null
+  gamma: Float = null
+  invert: Boolean = null
+  opacity: Float = null
+}
+
 input TreeInput {
   children: [TreeNodeInput!]!
   id: String = "root"
@@ -6731,6 +7190,7 @@ input UpdateImageInput {
 """Input type for creating an image from an array-like object"""
 input UpdateLayerInput {
   affineMatrix: [[Float!]!] = null
+  blending: Blending = null
   climMax: Float = null
   climMin: Float = null
   color: [Int!] = null
@@ -6738,8 +7198,12 @@ input UpdateLayerInput {
   id: ID!
   intensityDim: String = null
   lens: ID = null
+  opacity: Float = null
+  order: Int = null
+  renderGraph: LayerRenderGraphInput = null
   scene: ID = null
   tDim: String = null
+  visible: Boolean = null
   xDim: String = null
   yDim: String = null
   zDim: String = null
@@ -7183,7 +7647,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | InstanceMaskView | Instrument | LabelAccessor | LabelView | Layer | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | Snapshot | Stage | Table | Task | TimepointView | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

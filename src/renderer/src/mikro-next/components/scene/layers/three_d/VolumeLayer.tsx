@@ -118,7 +118,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       const arr = getArrayForStoreId(dataArray.store.id);
       const sliceMap = layer.lens.slices.reduce((acc, slice) => ({ ...acc, [slice.dim]: slice }), {} as Record<string, DimSliceFragment>);
 
-      const pos = [dims.indexOf(layer.xDim), dims.indexOf(layer.yDim), layer.zDim ? dims.indexOf(layer.zDim) : -1];
+      const pos = [dims.indexOf(layer.xDim ?? ""), dims.indexOf(layer.yDim ?? ""), layer.zDim ? dims.indexOf(layer.zDim) : -1];
       if (pos.includes(-1)) return setVolumeTexture(null);
 
       const spatialDims = new Set([layer.xDim, layer.yDim, layer.zDim].filter(Boolean));

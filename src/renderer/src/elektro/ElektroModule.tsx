@@ -18,6 +18,7 @@ import ModelWorkspacePage from "./pages/ModelWorkspacePage";
 import ModelWorkspacesPage from "./pages/ModelWorkspacesPage";
 import NeuronModelEditorPage from "./pages/NeuronModelEditorPage";
 import NeuronModelPage from "./pages/NeuronModelPage";
+import NeuronModelTreePage from "./pages/NeuronModelTreePage";
 import NeuronModelsPage from "./pages/NeuronModelsPage";
 import RecordingPage from "./pages/RecordingPage";
 import SimulationPage from "./pages/SimulationPage";
@@ -55,6 +56,7 @@ export const ElektroModule: React.FC<Props> = (props) => {
           <Route path="stimuli/:id" element={<StimulusPage />} />
           <Route path="neuronmodels/:id" element={<NeuronModelPage />} />
           <Route path="neuronmodels/:id/edit" element={<NeuronModelEditorPage />} />
+          <Route path="neuronmodels/:id/tree" element={<NeuronModelTreePage />} />
           <Route
             path="modelcollections/:id"
             element={<ModelCollectionPage />}

@@ -126,10 +126,10 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       return acc;
     }, {} as Record<string, DimSliceFragment>);
 
-    const xPos = dims.indexOf(layer.xDim);
-    const yPos = dims.indexOf(layer.yDim);
+    const xPos = dims.indexOf(layer.xDim ?? "");
+    const yPos = dims.indexOf(layer.yDim ?? "");
     const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
-    const intensityPos = dims.indexOf(layer.intensityDim);
+    const intensityPos = dims.indexOf(layer.intensityDim ?? "");
 
     const colormapTexture = getColorMapTexture(layer.colormap, layer.color);
 
@@ -379,8 +379,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
 
     const { arr, scaleFactors } = level;
     const dims = zarrCache.current.dims;
-    const xPos = dims.indexOf(layer.xDim);
-    const yPos = dims.indexOf(layer.yDim);
+    const xPos = dims.indexOf(layer.xDim ?? "");
+    const yPos = dims.indexOf(layer.yDim ?? "");
     const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
     if (xPos === -1 || yPos === -1 || zPos === -1) return null;
 
@@ -389,8 +389,8 @@ export const PlaneLayer = ({ layerId }: { layerId: string }) => {
       return acc;
     }, {} as Record<string, DimSliceFragment>);
 
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim], arr.shape[xPos]);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim], arr.shape[yPos]);
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], arr.shape[xPos]);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], arr.shape[yPos]);
 
     let zSelection = resolveSpatialSelection(
       layer.zDim ? sliceMap[layer.zDim] : undefined,

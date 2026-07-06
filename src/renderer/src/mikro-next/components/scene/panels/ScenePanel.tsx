@@ -52,28 +52,6 @@ const LayerDimForm = ({
   );
 };
 
-const ContrastLimitForm = ({
-  layer,
-  onUpdate,
-}: {
-  layer: LayerState;
-  onUpdate: (updatedLayer: LayerState) => void;
-}) => {
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-muted-foreground text-xs">Contrast Limits</span>
-      </div>
-      <Button variant="outline" size="xs" onClick={() => onUpdate({ ...layer, climMin: 0.0, climMax: 0.2 })}>
-        Reset
-      </Button>
-
-
-    </div>
-  );
-};
-
 export const ScenePanel = () => {
   const selectedFrameId = useSelectionStore((s) => s.selectedLayerId);
   const updateLayer = useSceneStore((s) => s.updateLayer);
@@ -123,8 +101,8 @@ export const ScenePanel = () => {
       className="absolute text-xs scale-90 z-20 shadow-2xl backdrop-blur-md p-4 flex flex-col gap-2 "
       style={{ left: screenPos.x, top: screenPos.y }}
     >
+      {/* Contrast editing lives in the layer's render graph (LayerControlPanel). */}
       <LayerDimForm layer={selectedLayer} onUpdate={updateLayer} />
-      <ContrastLimitForm layer={selectedLayer} onUpdate={updateLayer} />
     </Card>
   );
 };

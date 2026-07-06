@@ -1,4 +1,4 @@
 {
-  "maxErrors": 1989,
+  "maxErrors": 1988,
   "comment": "No-regression ceiling for `yarn typecheck:ci` (tsconfig.typecheck.json, full renderer). Lower this as the backlog shrinks; never raise it. Goal: 0."
 }

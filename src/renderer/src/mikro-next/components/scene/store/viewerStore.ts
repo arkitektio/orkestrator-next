@@ -27,6 +27,7 @@ export interface TrackableObject {
 // for the store's many consumers.
 export type { LayerViewRange } from "../core/visibility";
 import type { LayerViewRange } from "../core/visibility";
+import type { LayerChunkPlan } from "../core/chunkPlanning";
 
 export interface ProbedCoordinate {
   layerId: string;
@@ -79,6 +80,9 @@ export interface ViewerState {
   /** Null while every layer fits the render-cost budget. */
   renderBudget: RenderBudgetInfo | null;
   setRenderBudget: (info: RenderBudgetInfo | null) => void;
+  /** Declarative per-layer 2D chunk plans, written by the chunk-plan tracker. */
+  chunkPlans: Record<string, LayerChunkPlan>;
+  setChunkPlans: (plans: Record<string, LayerChunkPlan>) => void;
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
@@ -137,6 +141,8 @@ function createViewerStoreInternal(
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
     renderBudget: null,
     setRenderBudget: (info) => set({ renderBudget: info }),
+    chunkPlans: {},
+    setChunkPlans: (plans) => set({ chunkPlans: plans }),
     register: (ref) => set((state) => ({
       trackables: new Set(state.trackables).add(ref),
     })),

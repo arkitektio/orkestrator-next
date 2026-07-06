@@ -17,7 +17,9 @@ export type ChunkData = {
   chunkKey: string;
   min_value: number;
   max_value: number;
-  cLimMin: number;
-  cLimMax: number;
-  colormapTexture: THREE.Texture
+  // Unused by ChunkPlane (it derives its colormap atlas from the layer's
+  // render graph); kept optional for legacy callers.
+  cLimMin?: number;
+  cLimMax?: number;
+  colormapTexture?: THREE.Texture
 }

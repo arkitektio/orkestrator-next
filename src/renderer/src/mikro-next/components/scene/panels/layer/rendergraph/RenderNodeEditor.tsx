@@ -33,6 +33,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
+import { HistogramSlider } from "../HistogramSlider";
+import {
+  absoluteToNormalized,
+  getLayerDtypeRange,
+  normalizedToAbsolute,
+} from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
 import {
   BLEND_KIND,
@@ -91,16 +97,92 @@ const colorToObj = (color: number[] | null) => ({
   b: Math.round(color?.[2] ?? 255),
 });
 
+/**
+ * Histogram-backed contrast editor for a channel's transfer. Transfer clims
+ * are normalized [0,1]; the slider works in absolute data values, converted
+ * via the layer's dtype range. Histogram data comes from the layer's active
+ * anchor (first anchor carrying a value histogram).
+ */
+const TransferHistogram = ({
+  layer,
+  transfer,
+  onClimChange,
+}: {
+  layer: LayerState;
+  transfer: TransferFn;
+  onClimChange: (climMin: number, climMax: number) => void;
+}) => {
+  const [dtypeMin, dtypeMax] = getLayerDtypeRange(layer);
+  const anchor = layer.lens.activeAnchors.find((a) => a.valueHistogram);
+  const vh = anchor?.valueHistogram;
+
+  return (
+    <HistogramSlider
+      bins={vh?.bins ?? []}
+      histogram={vh?.histogram ?? []}
+      valueMin={normalizedToAbsolute(transfer.climMin ?? 0, dtypeMin, dtypeMax)}
+      valueMax={normalizedToAbsolute(transfer.climMax ?? 1, dtypeMin, dtypeMax)}
+      colormap={transfer.colormap}
+      baseColor={transfer.color}
+      p1={vh?.p1 ?? null}
+      p99={vh?.p99 ?? null}
+      histMin={vh?.min ?? dtypeMin}
+      histMax={vh?.max ?? dtypeMax}
+      dtypeMin={dtypeMin}
+      dtypeMax={dtypeMax}
+      onChange={(nextMin, nextMax) =>
+        onClimChange(
+          absoluteToNormalized(nextMin, dtypeMin, dtypeMax),
+          absoluteToNormalized(nextMax, dtypeMin, dtypeMax),
+        )
+      }
+    />
+  );
+};
+
 const TransferEditor = ({
   transfer,
   onChange,
+  layer,
 }: {
   transfer: TransferFn;
   onChange: (t: TransferFn) => void;
+  layer?: LayerState;
 }) => {
   const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
   return (
     <div className="flex flex-col gap-2 pl-1">
+      {layer ? (
+        <TransferHistogram
+          layer={layer}
+          transfer={transfer}
+          onClimChange={(climMin, climMax) => set({ climMin, climMax })}
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1 flex-1">
+            <span className="text-muted-foreground">Clim min</span>
+            <Input
+              type="number"
+              className="h-7 text-xs"
+              value={transfer.climMin ?? 0}
+              step={0.01}
+              onChange={(e) => set({ climMin: e.target.value === "" ? null : Number(e.target.value) })}
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <span className="text-muted-foreground">Clim max</span>
+            <Input
+              type="number"
+              className="h-7 text-xs"
+              value={transfer.climMax ?? 1}
+              step={0.01}
+              onChange={(e) => set({ climMax: e.target.value === "" ? null : Number(e.target.value) })}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-1">
         <span className="text-muted-foreground">Colormap</span>
         <Select
@@ -110,7 +192,7 @@ const TransferEditor = ({
           <SelectTrigger className="h-7 text-xs">
             <div
               className="h-3 w-full rounded"
-              style={{ background: colormapGradientCSS(transfer.colormap ?? ColorMap.Viridis) }}
+              style={{ background: colormapGradientCSS(transfer.colormap ?? ColorMap.Viridis, 18, transfer.color) }}
             />
           </SelectTrigger>
           <SelectContent>
@@ -119,7 +201,7 @@ const TransferEditor = ({
                 <div className="flex items-center gap-2">
                   <div
                     className="h-3 w-10 rounded"
-                    style={{ background: colormapGradientCSS(cm) }}
+                    style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
                   />
                   {cm.charAt(0) + cm.slice(1).toLowerCase()}
                 </div>
@@ -127,29 +209,6 @@ const TransferEditor = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col gap-1 flex-1">
-          <span className="text-muted-foreground">Clim min</span>
-          <Input
-            type="number"
-            className="h-7 text-xs"
-            value={transfer.climMin ?? 0}
-            step={0.01}
-            onChange={(e) => set({ climMin: e.target.value === "" ? null : Number(e.target.value) })}
-          />
-        </div>
-        <div className="flex flex-col gap-1 flex-1">
-          <span className="text-muted-foreground">Clim max</span>
-          <Input
-            type="number"
-            className="h-7 text-xs"
-            value={transfer.climMax ?? 1}
-            step={0.01}
-            onChange={(e) => set({ climMax: e.target.value === "" ? null : Number(e.target.value) })}
-          />
-        </div>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -208,10 +267,12 @@ const ChannelNodeEditor = ({
   node,
   onChange,
   onRemove,
+  layer,
 }: {
   node: ChannelRenderNode;
   onChange: (n: ChannelRenderNode) => void;
   onRemove?: () => void;
+  layer?: LayerState;
 }) => {
   const [open, setOpen] = useState(true);
   return (
@@ -263,6 +324,7 @@ const ChannelNodeEditor = ({
           <TransferEditor
             transfer={node.transfer}
             onChange={(transfer) => onChange({ ...node, transfer })}
+            layer={layer}
           />
         </CollapsibleContent>
       </Collapsible>
@@ -289,11 +351,13 @@ const ContainerNodeEditor = ({
   onChange,
   onRemove,
   isRoot,
+  layer,
 }: {
   node: BlendRenderNode | ProjectionRenderNode;
   onChange: (n: BlendRenderNode | ProjectionRenderNode) => void;
   onRemove?: () => void;
   isRoot?: boolean;
+  layer?: LayerState;
 }) => {
   const [open, setOpen] = useState(true);
   const setChild = (index: number, child: RenderNode | null) => {
@@ -361,6 +425,7 @@ const ContainerNodeEditor = ({
               node={child}
               onChange={(c) => setChild(i, c)}
               onRemove={() => setChild(i, null)}
+              layer={layer}
             />
           ))}
           <AddChildButtons onAdd={addChild} />
@@ -374,19 +439,22 @@ export const RenderNodeEditor = ({
   node,
   onChange,
   onRemove,
+  layer,
 }: {
   node: RenderNode;
   onChange: (n: RenderNode) => void;
   onRemove?: () => void;
+  layer?: LayerState;
 }) => {
   if (node.type === "channel") {
-    return <ChannelNodeEditor node={node} onChange={onChange} onRemove={onRemove} />;
+    return <ChannelNodeEditor node={node} onChange={onChange} onRemove={onRemove} layer={layer} />;
   }
   return (
     <ContainerNodeEditor
       node={node}
       onChange={onChange}
       onRemove={onRemove}
+      layer={layer}
     />
   );
 };
@@ -408,15 +476,40 @@ export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
   const [updateLater, { loading }] = useUpdateLaterMutation();
   const updateStoreLayer = useSceneStore((s) => s.updateLayer);
 
+  // The render graph is the single rendering truth. Every edit is pushed to
+  // the scene store immediately (live preview); the flat climMin/colormap/…
+  // fields are DERIVED from the primary channel here — they exist only for
+  // the single-channel 3D shader path and display chrome, and are never
+  // written directly by any panel.
+  const pushPreview = (nextRoot: BlendRenderNode) => {
+    const channels = flattenChannels(nextRoot);
+    const primary = channels[0]?.transfer;
+    updateStoreLayer({
+      ...layer,
+      channels,
+      blend: nextRoot.blending,
+      projection: resolveProjectionMode(nextRoot),
+      climMin: primary?.climMin ?? layer.climMin,
+      climMax: primary?.climMax ?? layer.climMax,
+      colormap: primary?.colormap ?? layer.colormap,
+      color: primary?.color ?? layer.color,
+      gamma: primary?.gamma ?? layer.gamma,
+      intensityDim: channels[0]?.intensityDim ?? layer.intensityDim,
+    });
+  };
+
   const change = (n: BlendRenderNode | ProjectionRenderNode) => {
     // The root is always a blend node.
-    setRoot(n.type === "blend" ? n : { ...root, children: n.children });
+    const nextRoot = n.type === "blend" ? n : { ...root, children: n.children };
+    setRoot(nextRoot);
     setDirty(true);
+    pushPreview(nextRoot);
   };
 
   const reset = () => {
     setRoot(initial);
     setDirty(false);
+    pushPreview(initial);
   };
 
   const save = async () => {
@@ -444,7 +537,7 @@ export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <ContainerNodeEditor node={root} onChange={change} isRoot />
+      <ContainerNodeEditor node={root} onChange={change} isRoot layer={layer} />
       {dirty && (
         <div className="flex items-center gap-2">
           <Button size="sm" className="h-7 text-xs" onClick={save} disabled={loading}>

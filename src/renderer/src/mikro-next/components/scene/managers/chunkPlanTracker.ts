@@ -68,7 +68,7 @@ export function startChunkPlanTracking({ viewerStore, sceneStore }: ChunkPlanSto
             shape: arr.shape,
             chunks: arr.chunks,
             dtype: String(arr.dtype),
-            store: arr.store,
+            storeId: dataArray.store.id,
             scaleFactors: dataArray.scaleFactors ?? undefined,
           };
         });

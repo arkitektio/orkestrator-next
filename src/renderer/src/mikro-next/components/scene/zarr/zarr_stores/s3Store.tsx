@@ -1,28 +1,7 @@
 import { type AbsolutePath } from "@zarrita/storage";
-import { FetchStore } from "zarrita";
 import { LRUCache } from "../caches/in_memory_lru";
-import { AwsClient } from "aws4fetch";
 import { fetchS3Path, isExpiredS3FetchConfig, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
-import {
-  RequestZarrAccessDocument,
-  RequestZarrAccessMutation,
-  RequestZarrAccessMutationVariables,
-} from "@/mikro-next/api/graphql";
-import type { MikroClient, ZarrStore } from "./type";
-
-
-type ZarrAccessGrant = {
-  accessKey: string;
-  secretKey: string;
-  sessionToken: string;
-  bucket: string;
-  key: string;
-};
-
-type AccessRequester = (
-  storeId: string,
-  client: MikroClient,
-) => Promise<ZarrAccessGrant>;
+import type { ZarrStore } from "./type";
 
 
 class AsyncLockManager {
@@ -59,31 +38,6 @@ export class KeyError extends Error {
     this.__zarr__ = "KeyError";
     Object.setPrototypeOf(this, KeyError.prototype);
   }
-}
-
-export function joinUrlParts(...args: string[]) {
-  return args
-    .map((part, i) => {
-      if (i === 0) {
-        return part.trim().replace(/[\/]*$/g, "");
-      } else {
-        return part.trim().replace(/(^[\/]*|[\/]*$)/g, "");
-      }
-    })
-    .filter((x) => x.length)
-    .join("/");
-}
-
-function resolve(root: string | URL, path: AbsolutePath): URL {
-  const base = typeof root === "string" ? new URL(root) : root;
-  if (!base.pathname.endsWith("/")) {
-    // ensure trailing slash so that base is resolved as _directory_
-    base.pathname += "/";
-  }
-  const resolved = new URL(path.slice(1), base);
-  // copy search params to new URL
-  resolved.search = base.search;
-  return resolved;
 }
 
 async function handle_response(
@@ -187,115 +141,6 @@ export class ConfiguredS3Store implements ZarrStore {
   }
 }
 
-export class CachedS3Store extends FetchStore {
-  private aws: AwsClient | null = null;
-  private cache: LRUCache<string, ArrayBuffer>;
-  private lockManager: AsyncLockManager;
-  private initPromise: Promise<void> | null = null;
-  private storeId: string;
-  private mikroClient: MikroClient;
-  private datalayer: string;
-  private requestAccess: AccessRequester;
-
-  constructor(storeId: string, mikroClient: MikroClient, datalayer: string, options: any = {}) {
-    super(datalayer, options);
-    this.storeId = storeId;
-    this.mikroClient = mikroClient;
-    this.datalayer = datalayer;
-    this.cache = global_cache;
-    this.lockManager = new AsyncLockManager();
-    this.requestAccess = options.requestAccess ?? defaultRequestAccess;
-  }
-
-  private async ensureInitialized(): Promise<void> {
-    if (this.aws) return;
-    if (this.initPromise) return this.initPromise;
-
-    this.initPromise = (async () => {
-      const credentials = await this.requestAccess(this.storeId, this.mikroClient);
-
-      this.aws = new AwsClient({
-        accessKeyId: credentials.accessKey,
-        secretAccessKey: credentials.secretKey,
-        sessionToken: credentials.sessionToken,
-        service: "s3",
-      });
-
-      this.url = this.datalayer + "/" + credentials.bucket + "/" + credentials.key;
-    })();
-
-    return this.initPromise;
-  }
-
-  async get(key: AbsolutePath, options: RequestInit = {}) {
-    await this.ensureInitialized();
-
-    const cacheKey = key + this.url;
-
-    // Check cache first
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return new Uint8Array(cached);
-    }
-
-    // Use async lock to prevent duplicate requests
-    return this.lockManager.withLock(cacheKey, async () => {
-      // Double-check cache in case another request filled it
-      const cachedAfterLock = this.cache.get(cacheKey);
-      if (cachedAfterLock) {
-        return new Uint8Array(cachedAfterLock);
-      }
-
-      const href = resolve(this.url, key).href;
-      const response = await this.aws!.fetch(href, { ...options });
-      const result = await handle_response(response);
-
-      if (result) {
-        // Cache the result - convert to ArrayBuffer if it's not already
-        const bufferToCache =
-          result instanceof Uint8Array
-            ? result.buffer.slice(
-                result.byteOffset,
-                result.byteOffset + result.byteLength,
-              )
-            : result;
-        this.cache.set(cacheKey, bufferToCache as ArrayBuffer);
-      }
-
-      return result;
-    });
-  }
-
-  // Cache management methods
-  clearCache(): void {
-    this.cache.clear();
-  }
-
-  getCacheStats(): { size: number; maxSize: number } {
-    return {
-      size: this.cache.size(),
-      maxSize: this.cache.getMaxSize(),
-    };
-  }
-
-  // Check if an item is cached
-  isCached(key: string): boolean {
-    return this.cache.has(key) || this.cache.has(`getItem:${key}`);
-  }
-}
-
-const defaultRequestAccess: AccessRequester = async (storeId, mikroClient) => {
-  const access = await mikroClient.mutate<RequestZarrAccessMutation, RequestZarrAccessMutationVariables>({
-    mutation: RequestZarrAccessDocument,
-    variables: { input: { storeId } },
-  });
-
-  const credentials = access.data?.requestZarrAccess;
-  if (!credentials) throw new Error("Failed to obtain Zarr access credentials");
-
-  return credentials;
-};
-
 export interface Zattrs {
   fileversion: string;
 }
@@ -338,20 +183,3 @@ export interface XArrayMetadata {
   metadata: Metadata;
   zarr_consolidated_format: number;
 }
-
-type Labels = [...string[], "y", "x"];
-function getAxisLabelsAndChannelAxis(
-  xarray_metadata: XArrayMetadata,
-  arr: ZarrArray,
-): { labels: Labels; channel_axis: number } {
-  // type cast string[] to Labels
-  const labels = xarray_metadata.metadata["data/.zattrs"]
-    ._ARRAY_DIMENSIONS as Labels;
-
-  const channel_axis = labels.indexOf("c");
-  return { labels, channel_axis };
-}
-
-
-
-export type SelectionLoader = (s: any) => Promise<ZarrArray>;

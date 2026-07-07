@@ -4,7 +4,6 @@ import type { DataType } from "zarrita";
 
 import type { ChunkData } from "../stores/types";
 import { mapDTypeToMinMax, mapDTypeToTextureBytes } from "../stores/utils";
-import type { ZarrStore } from "../zarr/zarr_stores/type";
 import { calculateChunkGrid } from "../zarr/utils";
 import { buildAffineMatrix } from "./worldTransform";
 import { resolveAxisIndices } from "./dims";
@@ -42,7 +41,7 @@ export type PlanLevel = {
   shape: readonly number[];
   chunks: readonly number[];
   dtype: string;
-  store: ZarrStore;
+  storeId: string;
   scaleFactors?: readonly number[] | null;
 };
 
@@ -203,7 +202,6 @@ export function planLayerChunks({
     levelIndex: number,
     levelZ: number | null,
     chunk_coords: number[],
-    mapping: ChunkData["indexer"],
     role: PlannedChunk["role"],
   ): PlannedChunk => {
     const level = levels[levelIndex];
@@ -211,13 +209,12 @@ export function planLayerChunks({
     return {
       frame_id: layer.id,
       dimensionOrder: [xPos, yPos, intensityPos],
-      store: level.store,
+      storeId: level.storeId,
       chunkCoords: chunk_coords,
       // The z index is part of the identity: when a chunk spans multiple z
       // slices, moving the slider must remount/re-upload even though the
       // chunk coordinates are unchanged.
       chunkKey: `${levelIndex}-${chunk_coords.join("/")}${levelZ !== null ? `/z${levelZ}` : ""}`,
-      indexer: mapping,
       chunk_shape: [...level.chunks],
       arrayShape: [...level.shape],
       min_value: minValue,
@@ -241,7 +238,7 @@ export function planLayerChunks({
     const selection = buildSelection(levelIndex, levelZ, viewRect);
     if (!selection) return [];
     return calculateChunkGrid(selection, [...level.shape], [...level.chunks]).map(
-      ({ chunk_coords, mapping }) => makeChunk(levelIndex, levelZ, chunk_coords, mapping, role),
+      ({ chunk_coords }) => makeChunk(levelIndex, levelZ, chunk_coords, role),
     );
   };
 

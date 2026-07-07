@@ -5,7 +5,6 @@ import type { LayerChunkPlan } from "../core/chunkPlanning";
 import type { LayerState } from "../core/layerModel";
 import type { SceneState } from "../store/sceneStore";
 import type { ViewerState, LayerViewRange } from "../store/viewerStore";
-import type { ZarrStore } from "../zarr/zarr_stores/type";
 
 const LAYER_ID = "layer-1";
 
@@ -33,9 +32,9 @@ const layer = {
 } as unknown as LayerState;
 
 // Fake opened zarr arrays matching the 2-level pyramid fixture.
-const ARRAYS: Record<string, { shape: number[]; chunks: number[]; dtype: string; store: ZarrStore }> = {
-  "store-0": { shape: [512, 512, 1], chunks: [256, 256, 1], dtype: "float32", store: {} as ZarrStore },
-  "store-1": { shape: [256, 256, 1], chunks: [256, 256, 1], dtype: "float32", store: {} as ZarrStore },
+const ARRAYS: Record<string, { shape: number[]; chunks: number[]; dtype: string }> = {
+  "store-0": { shape: [512, 512, 1], chunks: [256, 256, 1], dtype: "float32" },
+  "store-1": { shape: [256, 256, 1], chunks: [256, 256, 1], dtype: "float32" },
 };
 
 const FULL_VIEW: LayerViewRange = { xRange: [0, 512], yRange: [0, 512], zRange: null, scale: 2 };

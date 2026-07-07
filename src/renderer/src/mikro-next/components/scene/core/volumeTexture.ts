@@ -40,29 +40,3 @@ export function createVolumeTextureBuffer(dtype: string, elementCount: number): 
     internalFormat: "R32F",
   };
 }
-
-/**
- * Texture config for an already-loaded chunk buffer (unifies the two
- * `getTextureConfig` helpers formerly inline in ChunkPlane and the volume path).
- */
-export function textureConfigFromArray(rawData: unknown): {
-  data: Uint8Array | Float32Array;
-  type: THREE.TextureDataType;
-  internalFormat: "R8" | "R32F";
-  dataScale: number;
-} {
-  if (rawData instanceof Uint8Array || rawData instanceof Uint8ClampedArray) {
-    return {
-      data: rawData instanceof Uint8ClampedArray ? new Uint8Array(rawData.buffer) : rawData,
-      type: THREE.UnsignedByteType,
-      internalFormat: "R8",
-      dataScale: 255.0,
-    };
-  }
-  if (rawData instanceof Float32Array) {
-    return { data: rawData, type: THREE.FloatType, internalFormat: "R32F", dataScale: 1.0 };
-  }
-  throw new Error(
-    `Unexpected chunk data type: ${(rawData as { constructor?: { name?: string } })?.constructor?.name ?? typeof rawData}`,
-  );
-}

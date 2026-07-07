@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { MikroClient, ZarrStore } from "../zarr/zarr_stores/type";
+import { MikroClient } from "../zarr/zarr_stores/type";
 import { RefObject } from "react";
 import * as THREE from 'three';
 import { SceneFragment } from "@/mikro-next/api/graphql";
@@ -50,7 +50,6 @@ export interface ViewerState {
   showScaleBar: boolean;
   showScaleGrid: boolean;
   worldUnitsPerPixel: number;
-  getArray: (store: ZarrStore) => OpenedZarrArray;
   getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   currentZ: number;
   frustumNear: number;
@@ -94,17 +93,13 @@ export interface ViewerState {
   setShowScaleGrid: (show: boolean) => void;
   setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
-  setFrustum: (near: number, far: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
   /** Fit the camera so that the given layer fills the viewport */
   fitToLayer: (layerId: string) => void;
 }
 
 
-function createViewerStoreInternal(
-  arraysByStoreId: Map<string, OpenedZarrArray>,
-  arraysByStore: WeakMap<object, OpenedZarrArray>,
-) {
+function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>) {
   return createStore<ViewerState>((set, get) => ({
     trackables: new Set(),
     visibleLayers: [],
@@ -160,23 +155,6 @@ function createViewerStoreInternal(
     frustumNear: 0.1,
     frustumFar: 100000,
     canvas: null,
-    getArray: (store) => {
-      const key = store as object;
-      const cachedByStore = arraysByStore.get(key);
-      if (cachedByStore) {
-        return cachedByStore;
-      }
-
-      if ("storeId" in store && typeof (store as { storeId?: unknown }).storeId === "string") {
-        const cachedByStoreId = arraysByStoreId.get((store as { storeId: string }).storeId);
-        if (cachedByStoreId) {
-          arraysByStore.set(key, cachedByStoreId);
-          return cachedByStoreId;
-        }
-      }
-
-      throw new Error("Zarr array is not initialized for this store")
-    },
     getArrayForStoreId: (storeId) => {
       const array = arraysByStoreId.get(storeId);
       if (!array) {
@@ -185,7 +163,6 @@ function createViewerStoreInternal(
       return array;
     },
     setCurrentZ: (z) => set({ currentZ: z }),
-    setFrustum: (near, far) => set({ frustumNear: near, frustumFar: far }),
     registerCanvas: (ctx) => set({ canvas: ctx }),
     fitToLayer: (layerId) => {
       const { trackables, canvas } = get();
@@ -217,15 +194,8 @@ export async function createViewerStore(
   datalayer: string,
 ) {
   const storesById = await createConfiguredSceneStores(scene, client, datalayer);
-  const { arraysByStoreId, arraysByStore } = await openSceneArrays(storesById);
-  return createViewerStoreInternal(arraysByStoreId, arraysByStore);
-}
-
-export function createViewerStoreSync() {
-  return createViewerStoreInternal(
-    new Map<string, OpenedZarrArray>(),
-    new WeakMap<object, OpenedZarrArray>(),
-  );
+  const arraysByStoreId = await openSceneArrays(storesById);
+  return createViewerStoreInternal(arraysByStoreId);
 }
 
 function isSameProbe(left: ProbedCoordinate, right: ProbedCoordinate): boolean {

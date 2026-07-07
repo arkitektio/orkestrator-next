@@ -1,16 +1,12 @@
 // --- 1. Local Types ---
-import type { ZarrStore } from "../zarr/zarr_stores/type";
-import { IndexerProjection } from "./indexer";
-
 
 export type ChunkData = {
   level: number;
   scaleFactors?: number[];
   frame_id: string;
-  store: ZarrStore;
+  storeId: string;
   dimensionOrder: number[];
   chunkCoords: number[];
-  indexer: IndexerProjection[];
   chunk_shape: number[];
   arrayShape: number[];
   chunkKey: string;

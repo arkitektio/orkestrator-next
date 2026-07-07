@@ -37,7 +37,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
   const [texture, setTexture] = useState<THREE.Data3DTexture | null>(null);
   const [dataScale, setDataScale] = useState<number>(1.0);
   const isDebug = useViewerStore((s) => s.debug);
-  const getArray = useViewerStore((s) => s.getArray);
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
 
   // FIXED: Create a ref to directly mutate the shader uniforms
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -92,7 +92,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
       const chunkLoadStartedAt = performance.now();
       try {
         const openStartedAt = performance.now();
-        const arr = await getArray(chunk.store);
+        const arr = getArrayForStoreId(chunk.storeId);
         const openMs = performance.now() - openStartedAt;
         if (abortController.signal.aborted) return;
 
@@ -182,7 +182,7 @@ export const ChunkPlane = ({ chunk }: { chunk: ChunkData }) => {
     // objects on every pan tick and identity-keyed deps would abort and
     // restart every in-flight load. Same key ⇒ same coords/store/level.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chunk.chunkKey, getArray]);
+  }, [chunk.chunkKey, getArrayForStoreId]);
 
   useEffect(() => {
     return () => {

@@ -4,12 +4,16 @@ import * as THREE from "three";
 import { useRef, useEffect } from "react";
 
 interface CameraMatrixSyncProps {
-  debounceMs?: number;
+  /** Max cadence (ms) at which camera data is pushed DURING continuous motion. */
+  throttleMs?: number;
+  /** Trailing delay (ms) for the final push once the camera settles. */
+  settleMs?: number;
   threshold?: number;
 }
 
 export const CameraMatrixSync = ({
-  debounceMs = 150,
+  throttleMs = 60,
+  settleMs = 150,
   threshold = 0.00001
 }: CameraMatrixSyncProps) => {
   const updateCameraData = useViewStore((s) => s.updateCameraData);
@@ -17,6 +21,7 @@ export const CameraMatrixSync = ({
   const matrixRef = useRef(new THREE.Matrix4());
   const previousFrameMatrix = useRef(new THREE.Matrix4());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastEmitRef = useRef(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -25,7 +30,7 @@ export const CameraMatrixSync = ({
     };
   }, []);
 
-  useFrame(({ camera, size }) => {
+  useFrame(({ camera, size, clock }) => {
     // 1. CRITICAL: Force update the projection matrix.
     // This ensures Zoom and FOV changes are reflected in the matrix elements.
     camera.updateProjectionMatrix();
@@ -54,16 +59,25 @@ export const CameraMatrixSync = ({
     // 5. Update previous state for next frame check
     previousFrameMatrix.current.copy(matrixRef.current);
 
-    // 6. Debounce logic
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
     // Capture the state at this exact moment
     const snapshot = matrixRef.current.clone();
     const currentSize = { width: size.width, height: size.height };
+    const nowMs = clock.getElapsedTime() * 1000;
 
+    // 6a. Trailing settle: guarantees a final, crisp update once the camera
+    // comes to rest (the last motion frame may fall inside the throttle gap).
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       updateCameraData(snapshot, currentSize);
-    }, debounceMs);
+    }, settleMs);
+
+    // 6b. Leading throttle: push DURING continuous motion at a bounded cadence
+    // so panning retriggers the (linked) visibility + chunk-planning pipeline
+    // live, instead of only after the camera stops.
+    if (nowMs - lastEmitRef.current >= throttleMs) {
+      lastEmitRef.current = nowMs;
+      updateCameraData(snapshot, currentSize);
+    }
   });
 
   return null;

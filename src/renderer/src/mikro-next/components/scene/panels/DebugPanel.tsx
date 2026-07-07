@@ -23,7 +23,7 @@ export const DebugPanel = () => {
   }, {} as Record<string, typeof renderedChunks[string][]>);
 
   return (
-    <div className="absolute top-2 left-2 z-50 w-64 max-h-[80vh] overflow-y-auto bg-background/80 backdrop-blur-md border border-border/50 text-xs p-2 rounded shadow-lg pointer-events-auto">
+    <div className="absolute top-16 left-2 z-50 w-64 max-h-[70vh] overflow-y-auto bg-background/80 backdrop-blur-md border border-border/50 text-xs p-2 rounded shadow-lg pointer-events-auto">
       <h3 className="font-bold border-b border-border/50 pb-1 mb-2">Debug: Rendered Chunks</h3>
       {renderBudget && (
         <div className="mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200">

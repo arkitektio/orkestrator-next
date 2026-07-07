@@ -3,7 +3,8 @@ import type { Slice } from "zarrita";
 import type { DataType } from "zarrita";
 
 import type { ChunkData } from "../stores/types";
-import { mapDTypeToMinMax, mapDTypeToTextureBytes } from "../stores/utils";
+import { mapDTypeToTextureBytes } from "../stores/utils";
+import { resolveLayerDataRange } from "./dataRange";
 import { calculateChunkGrid } from "../zarr/utils";
 import { buildAffineMatrix } from "./worldTransform";
 import { resolveAxisIndices } from "./dims";
@@ -205,7 +206,7 @@ export function planLayerChunks({
     role: PlannedChunk["role"],
   ): PlannedChunk => {
     const level = levels[levelIndex];
-    const [minValue, maxValue] = mapDTypeToMinMax(level.dtype as DataType);
+    const [minValue, maxValue] = resolveLayerDataRange(layer, level.dtype);
     return {
       frame_id: layer.id,
       dimensionOrder: [xPos, yPos, intensityPos],

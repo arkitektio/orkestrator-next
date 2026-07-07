@@ -10,11 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { RgbColorPicker } from "react-colorful";
 import {
   Blending,
@@ -96,6 +91,9 @@ const colorToObj = (color: number[] | null) => ({
   g: Math.round(color?.[1] ?? 255),
   b: Math.round(color?.[2] ?? 255),
 });
+
+const formatColormapName = (cm: ColorMap) =>
+  cm.charAt(0) + cm.slice(1).toLowerCase();
 
 /**
  * Histogram-backed contrast editor for a channel's transfer. Transfer clims
@@ -189,11 +187,16 @@ const TransferEditor = ({
           value={transfer.colormap ?? ColorMap.Viridis}
           onValueChange={(v) => set({ colormap: v as ColorMap })}
         >
-          <SelectTrigger className="h-7 text-xs">
-            <div
-              className="h-3 w-full rounded"
-              style={{ background: colormapGradientCSS(transfer.colormap ?? ColorMap.Viridis, 18, transfer.color) }}
-            />
+          <SelectTrigger className="h-7 w-full text-xs">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div
+                className="h-3 w-10 shrink-0 rounded"
+                style={{ background: colormapGradientCSS(transfer.colormap ?? ColorMap.Viridis, 18, transfer.color) }}
+              />
+              <span className="truncate">
+                {formatColormapName(transfer.colormap ?? ColorMap.Viridis)}
+              </span>
+            </div>
           </SelectTrigger>
           <SelectContent>
             {COLORMAP_OPTIONS.map((cm) => (
@@ -203,13 +206,25 @@ const TransferEditor = ({
                     className="h-3 w-10 rounded"
                     style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
                   />
-                  {cm.charAt(0) + cm.slice(1).toLowerCase()}
+                  {formatColormapName(cm)}
                 </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
+      {/* Base color only affects the Intensity colormap (a black→color ramp);
+          show its picker inline when Intensity is selected. */}
+      {(transfer.colormap ?? ColorMap.Viridis) === ColorMap.Intensity && (
+        <div className="flex flex-col gap-1">
+          <span className="text-muted-foreground">Base color</span>
+          <RgbColorPicker
+            color={colorToObj(transfer.color)}
+            onChange={(c) => set({ color: [c.r, c.g, c.b] })}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
@@ -247,18 +262,6 @@ const TransferEditor = ({
         <span className="text-muted-foreground">Categorical</span>
         <Switch checked={!!transfer.categorical} onCheckedChange={(v) => set({ categorical: v })} />
       </div>
-
-      <Collapsible>
-        <CollapsibleTrigger className="text-muted-foreground text-left hover:text-foreground">
-          Base color
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2">
-          <RgbColorPicker
-            color={colorToObj(transfer.color)}
-            onChange={(c) => set({ color: [c.r, c.g, c.b] })}
-          />
-        </CollapsibleContent>
-      </Collapsible>
     </div>
   );
 };
@@ -277,28 +280,32 @@ const ChannelNodeEditor = ({
   const [open, setOpen] = useState(true);
   return (
     <div className="rounded border border-border/60 bg-background/40 p-2">
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex items-center gap-2">
-          <CollapsibleTrigger className="flex items-center gap-1 flex-1 text-left">
-            <ChevronRight
-              className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`}
-            />
-            <Layers className="h-3 w-3" />
-            <span className="font-medium">
-              {node.label || `Channel ${node.intensityIndex}`}
-            </span>
-          </CollapsibleTrigger>
-          <Switch
-            checked={node.visible}
-            onCheckedChange={(v) => onChange({ ...node, visible: v })}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-1 text-left"
+        >
+          <ChevronRight
+            className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`}
           />
-          {onRemove && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-        <CollapsibleContent className="pt-2 flex flex-col gap-2">
+          <Layers className="h-3 w-3" />
+          <span className="font-medium">
+            {node.label || `Channel ${node.intensityIndex}`}
+          </span>
+        </button>
+        <Switch
+          checked={node.visible}
+          onCheckedChange={(v) => onChange({ ...node, visible: v })}
+        />
+        {onRemove && (
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+      {open && (
+        <div className="pt-2 flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <div className="flex flex-col gap-1 flex-1">
               <span className="text-muted-foreground">Intensity index</span>
@@ -326,8 +333,8 @@ const ChannelNodeEditor = ({
             onChange={(transfer) => onChange({ ...node, transfer })}
             layer={layer}
           />
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      )}
     </div>
   );
 };
@@ -370,15 +377,19 @@ const ContainerNodeEditor = ({
 
   return (
     <div className={isRoot ? "" : "rounded border border-border/60 bg-background/40 p-2"}>
-      <Collapsible open={open} onOpenChange={setOpen}>
+      <div>
         <div className="flex items-center gap-2">
-          <CollapsibleTrigger className="flex items-center gap-1 flex-1 text-left">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="flex flex-1 items-center gap-1 text-left"
+          >
             <ChevronRight
               className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`}
             />
             {node.type === "blend" ? <Blend className="h-3 w-3" /> : <Box className="h-3 w-3" />}
             <span className="font-medium capitalize">{node.label || node.type}</span>
-          </CollapsibleTrigger>
+          </button>
           {node.type === "blend" ? (
             <Select
               value={node.blending}
@@ -418,19 +429,21 @@ const ContainerNodeEditor = ({
             </Button>
           )}
         </div>
-        <CollapsibleContent className="pt-2 flex flex-col gap-2 pl-3 border-l border-border/50 ml-1">
-          {node.children.map((child, i) => (
-            <RenderNodeEditor
-              key={i}
-              node={child}
-              onChange={(c) => setChild(i, c)}
-              onRemove={() => setChild(i, null)}
-              layer={layer}
-            />
-          ))}
-          <AddChildButtons onAdd={addChild} />
-        </CollapsibleContent>
-      </Collapsible>
+        {open && (
+          <div className="pt-2 flex flex-col gap-2 pl-3 border-l border-border/50 ml-1">
+            {node.children.map((child, i) => (
+              <RenderNodeEditor
+                key={i}
+                node={child}
+                onChange={(c) => setChild(i, c)}
+                onRemove={() => setChild(i, null)}
+                layer={layer}
+              />
+            ))}
+            <AddChildButtons onAdd={addChild} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

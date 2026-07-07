@@ -15,7 +15,7 @@ import { LayerState } from '../../store/sceneStore';
 import { useViewerStore, useViewerStoreApi } from '../../store/viewerStore';
 import { useViewStoreApi } from '../../store/viewStore';
 import { BasicIndexer } from '../../stores/indexer';
-import { mapDTypeToMinMax } from '../../stores/utils';
+import { resolveLayerDataRange } from '../../core/dataRange';
 import { getColorMapTexture } from '../../zarr/colormaps';
 import { VolumeTextureMesh, type VolumeRenderMesh } from './VolumeTextureMesh';
 
@@ -239,7 +239,7 @@ export const VolumeLayer = ({ layer }: { layer: LayerState }) => {
       // Determine buffer configuration directly from data type (no more 'fidelity')
       const texConfig = createVolumeTextureBuffer(arr.dtype, elementCount);
       const texDims = getTextureDimensions(outputShape, outputAxis as [number, number, number]);
-      const [minValue, maxValue] = mapDTypeToMinMax(arr.dtype);
+      const [minValue, maxValue] = resolveLayerDataRange(layer, arr.dtype);
 
       const texture = new THREE.Data3DTexture(texConfig.data, texDims.width, texDims.height, texDims.depth);
       texture.format = THREE.RedFormat;

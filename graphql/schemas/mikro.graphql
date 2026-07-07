@@ -989,15 +989,11 @@ input CreateLabelLayerInput {
 input CreateLayerInput {
   affineMatrix: [[Float!]!] = null
   blending: Blending = null
-  climMax: Float = null
-  climMin: Float = null
-  color: [Int!] = null
-  colormap: ColorMap = null
   intensityDim: String = null
   lens: ID!
   opacity: Float = null
   order: Int = null
-  renderGraph: LayerRenderGraphInput = null
+  renderGraph: LayerRenderGraphInput!
   scene: ID!
   tDim: String = null
   visible: Boolean = null
@@ -2554,16 +2550,11 @@ enum ImageKind {
 }
 
 """
-A layer that renders array (lens) data as an alpha-blended image, with a composable render graph plus flat colormap/contrast settings.
+A layer that renders array (lens) data as an alpha-blended image. Its rendering is described entirely by the composable render graph.
 """
 type ImageLayer implements Layer {
   affineMatrix: FourByFourMatrix
   blending: Blending!
-  climMax: Float
-  climMin: Float
-  color: [Int!]
-  colormap: ColorMap
-  gamma: Float
   id: ID!
   intensityDim: String
   kind: LayerKind!
@@ -7191,10 +7182,6 @@ input UpdateImageInput {
 input UpdateLayerInput {
   affineMatrix: [[Float!]!] = null
   blending: Blending = null
-  climMax: Float = null
-  climMin: Float = null
-  color: [Int!] = null
-  colormap: ColorMap = null
   id: ID!
   intensityDim: String = null
   lens: ID = null

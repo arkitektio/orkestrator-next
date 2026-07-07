@@ -176,11 +176,12 @@ const findProjectionMode = (node: RenderNode): ProjectionMode | null => {
 };
 
 /**
- * Build a single-channel render graph from an image layer's flat fields. Used as
- * a fallback for layers that predate the render-graph model (renderGraph null),
- * so the renderer/editor always has a graph to work with.
+ * Build a default single-channel render graph for a layer that has no
+ * `renderGraph` (e.g. legacy layers), so the renderer/editor always has a graph
+ * to work with. The transfer uses defaults — the server no longer carries flat
+ * clim/colormap/color/gamma fields; the render graph is the only source.
  */
-export const graphFromFlatFields = (layer: ImageLayerFragment): BlendRenderNode => ({
+export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode => ({
   type: "blend",
   kind: BLEND_KIND,
   label: null,
@@ -193,23 +194,14 @@ export const graphFromFlatFields = (layer: ImageLayerFragment): BlendRenderNode 
       intensityDim: layer.intensityDim ?? null,
       intensityIndex: 0,
       visible: layer.visible ?? true,
-      transfer: {
-        climMin: layer.climMin ?? DEFAULT_TRANSFER.climMin,
-        climMax: layer.climMax ?? DEFAULT_TRANSFER.climMax,
-        colormap: layer.colormap ?? DEFAULT_TRANSFER.colormap,
-        color: layer.color ?? null,
-        gamma: layer.gamma ?? null,
-        opacity: null,
-        invert: null,
-        categorical: null,
-      },
+      transfer: { ...DEFAULT_TRANSFER },
     },
   ],
 });
 
-/** The render graph for a layer: its own graph, or the flat-field fallback. */
+/** The render graph for a layer: its own graph, or the default fallback. */
 export const resolveLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
-  parseRenderGraph(layer.renderGraph) ?? graphFromFlatFields(layer);
+  parseRenderGraph(layer.renderGraph) ?? defaultLayerGraph(layer);
 
 const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
   climMin: transfer.climMin,

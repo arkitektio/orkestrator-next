@@ -10,7 +10,6 @@ import { LayerViewRangesOverlay } from "./overlays/LayerViewRangesOverlay";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
-import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { DebugPanel } from "./panels/DebugPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
@@ -32,7 +31,10 @@ import { TwoDScene } from "./TwoDScene";
 import { ThreeDScene } from "./ThreeDScene";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
+  // `select-none` on the canvas surface stops a drag (pan / ROI draw / probe)
+  // from ever turning into a text selection. Overlays keep normal selection.
   return <Canvas
+        className="select-none [-webkit-user-select:none]"
         frameloop="demand">{children}</Canvas>;
 };
 
@@ -154,7 +156,6 @@ export const Scene = (props: { scene: SceneFragment }) => {
               </GizmoHelper>
             </SceneWrapper>
 
-            <ScenePanel/>
             <LayerControlPanel />
             <DebugPanel />
             <SelectedPointPanel />

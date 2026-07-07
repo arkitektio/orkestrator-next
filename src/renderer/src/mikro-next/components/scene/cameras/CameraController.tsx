@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore } from "../store/viewerStore";
 
@@ -7,6 +8,14 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
 } from "@react-three/drei";
+
+// Left-drag pans (default OrbitControls maps LEFT to rotate). Rotate moves to
+// the right button so 3D pan mode can still orbit; in 2D rotate is disabled.
+const PAN_MOUSE_BUTTONS = {
+  LEFT: THREE.MOUSE.PAN,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.ROTATE,
+} as const;
 
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
@@ -59,6 +68,7 @@ export const CameraController = () => {
             enablePan={enablePan}
             enableZoom={true}
             zoomToCursor={cameraControllerMode === "CURSOR_ORBIT"}
+            mouseButtons={enablePan ? PAN_MOUSE_BUTTONS : undefined}
           />
         )
       ) : (
@@ -69,6 +79,7 @@ export const CameraController = () => {
           enablePan={interactionMode === "PAN"}
           enableZoom={true}
           screenSpacePanning={true}
+          mouseButtons={PAN_MOUSE_BUTTONS}
         />
       )}
     </>

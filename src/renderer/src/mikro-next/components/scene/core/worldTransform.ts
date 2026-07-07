@@ -68,6 +68,28 @@ export function voxelToPhysicalZ(
   return pt.z;
 }
 
+/**
+ * Whether a layer's physical Z span excludes the current viewing plane, i.e. the
+ * layer has no data at `currentZ`. Layers without a Z dimension (or a single Z
+ * slice) are never out-of-plane. Uses a half-voxel tolerance so the boundary
+ * slices still count as in-plane. Mirrors how `ZSliderPanel` derives per-layer
+ * physical Z ranges.
+ */
+export function isLayerOutOfPlane(
+  layer: ImageLayerFragment,
+  currentZ: number,
+): boolean {
+  const zSize = getLayerZSize(layer);
+  if (zSize == null || zSize <= 1) return false;
+  const affine = buildAffineMatrix(layer);
+  const z0 = voxelToPhysicalZ(affine, 0);
+  const zEnd = voxelToPhysicalZ(affine, zSize - 1);
+  const min = Math.min(z0, zEnd);
+  const max = Math.max(z0, zEnd);
+  const tol = Math.abs(zEnd - z0) / Math.max(1, zSize - 1) / 2;
+  return currentZ < min - tol || currentZ > max + tol;
+}
+
 /** Convert a physical Z coordinate to the closest voxel Z index, clamped to [0, maxZ] */
 export function physicalToVoxelZ(
   affine: THREE.Matrix4,

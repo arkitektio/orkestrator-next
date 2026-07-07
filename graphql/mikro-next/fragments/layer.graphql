@@ -88,11 +88,6 @@ fragment SceneLayer on Layer {
     lens {
       ...SceneLens
     }
-    gamma
-    climMin
-    climMax
-    colormap
-    color
     xDim
     yDim
     zDim

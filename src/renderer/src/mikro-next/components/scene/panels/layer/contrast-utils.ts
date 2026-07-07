@@ -1,16 +1,14 @@
-import type { DataType } from 'zarrita'
-
 import type { LayerState } from '../../store/sceneStore'
-import { mapDTypeToMinMax } from '../../stores/utils'
+import { resolveLayerDataRange } from '../../core/dataRange'
 
 const FALLBACK_RANGE: [number, number] = [0, 1]
 
 export function getLayerDtypeRange(layer: LayerState): [number, number] {
-  const dtype = layer.lens.dataset.dataArrays[0]?.store.dtype as DataType | null | undefined
+  const dtype = layer.lens.dataset.dataArrays[0]?.store.dtype
   if (!dtype) return FALLBACK_RANGE
 
   try {
-    return mapDTypeToMinMax(dtype)
+    return resolveLayerDataRange(layer, dtype)
   } catch {
     return FALLBACK_RANGE
   }

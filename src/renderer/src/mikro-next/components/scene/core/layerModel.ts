@@ -1,9 +1,8 @@
-import { Blending, ProjectionMode } from "@/mikro-next/api/graphql";
+import { Blending, ColorMap, ProjectionMode } from "@/mikro-next/api/graphql";
 import { ImageLayerFragment } from "./layerGuards";
 import {
   ChannelRenderNode,
   flattenChannels,
-  primaryChannelRenderFields,
   resolveLayerGraph,
   resolveProjectionMode,
 } from "./renderGraph";
@@ -27,13 +26,25 @@ export type LayerState = ImageLayerFragment & {
   blend: Blending;
   /** Projection mode (from a ProjectionNode in the graph, else MIP) for 3D. */
   projection: ProjectionMode;
+  /**
+   * Primary-channel render fields, DERIVED from the render graph (the single
+   * rendering truth) and kept flat for the single-channel 3D shader path and
+   * display chrome. The server no longer carries these on ImageLayer — they
+   * come exclusively from the graph here.
+   */
+  climMin: number;
+  climMax: number;
+  colormap: ColorMap | null;
+  color: number[] | null;
+  gamma: number | null;
 };
 
 /**
  * Resolve an `ImageLayerFragment` (+ its default volume LOD) into `LayerState`:
- * flatten the render graph (or a single-channel fallback from the flat fields)
- * into a channel list, and fold the primary channel's transfer onto the flat
- * fields for the single-channel render path.
+ * flatten the render graph (or a default single-channel fallback) into a channel
+ * list, and fold the primary channel's transfer onto the flat fields for the
+ * single-channel render path. The render graph is the only source of these
+ * fields — the server-side flat properties were removed.
  */
 export const normalizeLayer = (
   layer: ImageLayerFragment,
@@ -41,14 +52,15 @@ export const normalizeLayer = (
 ): LayerState => {
   const graph = resolveLayerGraph(layer);
   const channels = flattenChannels(graph);
-  const primary = primaryChannelRenderFields(layer.renderGraph);
+  const primary = channels[0];
+  const transfer = primary?.transfer;
   return {
     ...layer,
-    climMin: primary?.climMin ?? layer.climMin ?? 0,
-    climMax: primary?.climMax ?? layer.climMax ?? 1,
-    colormap: primary?.colormap ?? layer.colormap,
-    color: primary?.color ?? layer.color,
-    gamma: primary?.gamma ?? layer.gamma,
+    climMin: transfer?.climMin ?? 0,
+    climMax: transfer?.climMax ?? 1,
+    colormap: transfer?.colormap ?? null,
+    color: transfer?.color ?? null,
+    gamma: transfer?.gamma ?? null,
     intensityDim: primary?.intensityDim ?? layer.intensityDim,
     channels,
     blend: graph.blending,

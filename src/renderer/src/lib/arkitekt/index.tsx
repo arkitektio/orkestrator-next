@@ -100,6 +100,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
     useConnect: () => useArkitektActions().connect,
     useDisconnect: () => useArkitektActions().disconnect,
     useReconnect: () => useArkitektActions().reconnect,
+    useReportStatus: () => useArkitektActions().reportStatus,
     useCancelConnection: () => useArkitektActions().cancelConnection,
     useManifest: () => realManifest,
     useConnectedManifest: () => useArkitektStore((s) => s.connection?.manifest),

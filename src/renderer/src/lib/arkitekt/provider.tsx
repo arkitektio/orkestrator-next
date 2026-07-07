@@ -668,6 +668,29 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
     }
   }, [store]);
 
+  // Re-probe the currently-connected services and report the resulting
+  // fakts-status back to the coordination server (same path as connect()).
+  const reportStatus = useCallback<AppFunctions["reportStatus"]>(async () => {
+    const conn = store.getState().connection;
+    if (!conn) return null;
+
+    const { aliasReports } = await buildAliases({
+      fakts: conn.fakts,
+      manifest: conn.manifest,
+      controller: new AbortController(),
+      serviceBuilderMap,
+    });
+
+    const functional = Object.values(aliasReports).every((r) => r.valid);
+    const ok = await report(conn.fakts.auth.report_url, {
+      alias_reports: aliasReports,
+      token: conn.fakts.auth.client_token,
+      functional,
+    });
+
+    return { ok, functional, alias_reports: aliasReports };
+  }, [store, serviceBuilderMap]);
+
   const actions = useMemo<AppFunctions>(
     () => ({
       connect,
@@ -678,8 +701,9 @@ export const ArkitektProvider = <T extends ServiceBuilderMap, S extends ServiceB
       retryModule,
       clearServiceCache,
       clearAllServiceCaches,
+      reportStatus,
     }),
-    [connect, disconnect, reconnect, cancelConnection, retryService, retryModule, clearServiceCache, clearAllServiceCaches],
+    [connect, disconnect, reconnect, cancelConnection, retryService, retryModule, clearServiceCache, clearAllServiceCaches, reportStatus],
   );
 
   // ── ONE useEffect: detect cached fakts, hydrate, then run health checks ──

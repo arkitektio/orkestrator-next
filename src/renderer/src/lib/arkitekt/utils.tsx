@@ -126,7 +126,7 @@ export const enhanceManifest = async (
 export const report = async (
   url: string,
   reportRequest: ReportRequest,
-): Promise<void> => {
+): Promise<boolean> => {
   try {
     const response = await fetch(`${url}`, {
       method: "POST",
@@ -141,8 +141,10 @@ export const report = async (
         `Report request failed: ${response.status} ${response.statusText}`,
       );
     }
+    return response.ok;
   } catch (e) {
     console.error("Report request error:", e);
+    return false;
   }
 }
 

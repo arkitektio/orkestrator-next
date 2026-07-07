@@ -41,6 +41,7 @@ import {
   Minus,
   Plus,
   Search,
+  Send,
   Server,
   Settings,
   Pin,
@@ -48,6 +49,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 import { ServiceRuntimeState } from "@/lib/arkitekt/types";
 import { Settings as UserSettings } from "@/providers/settings/validator";
@@ -248,10 +250,34 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const fakts = Arkitekt.useFakts();
   const services = Arkitekt.useAvailableServices();
   const configurationIssues = Arkitekt.useConfigurationIssues();
+  const reportStatus = Arkitekt.useReportStatus();
   const localActionEntries = useLocalActionEntries();
   const pinnedActionIds = usePinnedActionIds();
   const togglePinnedAction = useTogglePinnedAction();
   const [pinnedActionSearch, setPinnedActionSearch] = useState("");
+  const [reporting, setReporting] = useState(false);
+
+  const handleReportStatus = async () => {
+    setReporting(true);
+    try {
+      const result = await reportStatus();
+      if (!result) {
+        toast.error("Not connected — nothing to report.");
+      } else if (!result.ok) {
+        toast.error("Failed to reach the coordination server.");
+      } else if (result.functional) {
+        toast.success("Reported status: all services reachable.");
+      } else {
+        toast.warning("Status reported, but some services are unreachable.");
+      }
+    } catch (error) {
+      toast.error(
+        `Failed to report status: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setReporting(false);
+    }
+  };
 
 
   const form = useForm<UserSettings>({
@@ -300,6 +326,15 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     <PageLayout
       pageActions={
         <>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleReportStatus}
+            disabled={reporting || !fakts}
+          >
+            <Send className="w-4 h-4" />
+            {reporting ? "Reporting…" : "Report Status"}
+          </Button>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-2">

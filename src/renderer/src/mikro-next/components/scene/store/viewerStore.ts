@@ -28,6 +28,8 @@ export interface TrackableObject {
 export type { LayerViewRange } from "../core/visibility";
 import type { LayerViewRange } from "../core/visibility";
 import type { LayerChunkPlan } from "../core/chunkPlanning";
+import type { LayerNodePlan } from "../core/octree/nodePlanning";
+import type { BrickResidencyManager } from "../managers/brickResidency";
 
 export interface ProbedCoordinate {
   layerId: string;
@@ -78,6 +80,20 @@ export interface ViewerState {
   chunkPlans: Record<string, LayerChunkPlan>;
   setChunkPlans: (plans: Record<string, LayerChunkPlan>) => void;
 
+  /** Migration flag: run the pyramidal octree (brick pool) renderer path. */
+  useOctreeRenderer: boolean;
+  setUseOctreeRenderer: (enabled: boolean) => void;
+  /** Declarative per-layer octree node plans, written by the node-plan tracker. */
+  nodePlans: Record<string, LayerNodePlan>;
+  setNodePlans: (plans: Record<string, LayerNodePlan>) => void;
+  /** Bumped by the brick residency manager whenever bricks become resident —
+   * the node-plan tracker's replan trigger (replaces renderedChunks feedback). */
+  residencyVersion: number;
+  bumpResidencyVersion: () => void;
+  /** Handle to the brick residency manager (owned by BrickSystemProvider). */
+  brickSystem: BrickResidencyManager | null;
+  registerBrickSystem: (manager: BrickResidencyManager | null) => void;
+
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
   setVisible: (visibleSet: Set<string>) => void
@@ -125,6 +141,14 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setRenderBudget: (info) => set({ renderBudget: info }),
     chunkPlans: {},
     setChunkPlans: (plans) => set({ chunkPlans: plans }),
+    useOctreeRenderer: false,
+    setUseOctreeRenderer: (enabled) => set({ useOctreeRenderer: enabled }),
+    nodePlans: {},
+    setNodePlans: (plans) => set({ nodePlans: plans }),
+    residencyVersion: 0,
+    bumpResidencyVersion: () => set((state) => ({ residencyVersion: state.residencyVersion + 1 })),
+    brickSystem: null,
+    registerBrickSystem: (manager) => set({ brickSystem: manager }),
     register: (ref) => set((state) => ({
       trackables: new Set(state.trackables).add(ref),
     })),

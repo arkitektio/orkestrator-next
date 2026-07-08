@@ -11,6 +11,11 @@ export const DebugPanel = () => {
   const renderBudget = useViewerStore((s) => s.renderBudget);
   const lodBias = useViewerStore((s) => s.lodBias);
   const setLodBias = useViewerStore((s) => s.setLodBias);
+  const useOctreeRenderer = useViewerStore((s) => s.useOctreeRenderer);
+  const setUseOctreeRenderer = useViewerStore((s) => s.setUseOctreeRenderer);
+  const nodePlans = useViewerStore((s) => s.nodePlans);
+  const brickSystem = useViewerStore((s) => s.brickSystem);
+  useViewerStore((s) => s.residencyVersion); // refresh residency stats
   const layers = useSceneStore((s) => s.layers);
   const [isControlsOpen, setIsControlsOpen] = useState(true);
 
@@ -56,10 +61,67 @@ export const DebugPanel = () => {
                   className="py-1"
                 />
               </div>
+              <label className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground font-medium">
+                <span>Octree renderer</span>
+                <input
+                  type="checkbox"
+                  checked={useOctreeRenderer}
+                  onChange={(e) => setUseOctreeRenderer(e.target.checked)}
+                />
+              </label>
             </div>
           </CollapsibleContent>
         </div>
       </Collapsible>
+      {useOctreeRenderer && Object.keys(nodePlans).length > 0 && (
+        <div className="mb-3">
+          <h4 className="font-bold border-b border-border/50 pb-1 mb-2">Octree Node Plans</h4>
+          {Object.entries(nodePlans).map(([layerId, plan]) => {
+            const countsByLevel = plan.nodes.reduce<Record<number, number>>((acc, node) => {
+              acc[node.level] = (acc[node.level] ?? 0) + 1;
+              return acc;
+            }, {});
+            const pool = brickSystem?.getLayerPool(layerId) ?? null;
+            return (
+              <div key={layerId} className="mb-2">
+                <div className="font-semibold text-[10px] text-muted-foreground uppercase opacity-80 mb-0.5">
+                  {layerId}
+                </div>
+                <div className="flex flex-wrap items-center gap-1 text-[9px]">
+                  <span className="bg-accent px-1 rounded">{plan.mode}</span>
+                  <span className="bg-accent px-1 rounded">target L{plan.targetLevel}</span>
+                  {plan.slabZ !== null && (
+                    <span className="bg-accent px-1 rounded">slab z {plan.slabZ}</span>
+                  )}
+                  <span className="bg-accent px-1 rounded">
+                    {(plan.planBytes / (1024 * 1024)).toFixed(1)} MB
+                  </span>
+                  {Object.entries(countsByLevel).map(([level, count]) => (
+                    <span key={level} className="px-1 rounded border border-border/50">
+                      L{level}×{count}
+                    </span>
+                  ))}
+                  {pool && (
+                    <>
+                      <span className="px-1 rounded border border-border/50">
+                        slots {pool.pool.size}/{pool.pool.capacity}
+                      </span>
+                      <span className="px-1 rounded border border-border/50">
+                        empty {pool.emptyValues.size}
+                      </span>
+                      {(pool.queue.length > 0 || pool.inFlight.size > 0) && (
+                        <span className="px-1 rounded border border-amber-500/50 text-amber-300">
+                          ↓{pool.inFlight.size} ⇡{pool.queue.length}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {layers.map(layer => {
         const chunks = chunksByLayerId[layer.id] || [];
         if (chunks.length === 0) return null;

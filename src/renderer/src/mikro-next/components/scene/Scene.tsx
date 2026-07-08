@@ -23,6 +23,8 @@ import { createSelectionStore, SelectionStoreContext } from "./store/selectionSt
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
+import { BrickSystemProvider } from "./managers/BrickSystemProvider";
+import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
 import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSelectionStore";
@@ -150,6 +152,9 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <ScaleGrid />
 
               <SceneModeContent />
+
+              <BrickSystemProvider />
+              <BrickResidencyOverlay />
 
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
                 <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}/>

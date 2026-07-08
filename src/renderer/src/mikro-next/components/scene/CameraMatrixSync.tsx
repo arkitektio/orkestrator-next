@@ -62,13 +62,22 @@ export const CameraMatrixSync = ({
     // Capture the state at this exact moment
     const snapshot = matrixRef.current.clone();
     const currentSize = { width: size.width, height: size.height };
+    const worldPos = camera.getWorldPosition(new THREE.Vector3());
+    const perspective = (camera as THREE.PerspectiveCamera).isPerspectiveCamera === true;
+    const pose = {
+      position: [worldPos.x, worldPos.y, worldPos.z] as [number, number, number],
+      isPerspective: perspective,
+      fovY: perspective
+        ? THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
+        : 0,
+    };
     const nowMs = clock.getElapsedTime() * 1000;
 
     // 6a. Trailing settle: guarantees a final, crisp update once the camera
     // comes to rest (the last motion frame may fall inside the throttle gap).
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      updateCameraData(snapshot, currentSize);
+      updateCameraData(snapshot, currentSize, pose);
     }, settleMs);
 
     // 6b. Leading throttle: push DURING continuous motion at a bounded cadence
@@ -76,7 +85,7 @@ export const CameraMatrixSync = ({
     // live, instead of only after the camera stops.
     if (nowMs - lastEmitRef.current >= throttleMs) {
       lastEmitRef.current = nowMs;
-      updateCameraData(snapshot, currentSize);
+      updateCameraData(snapshot, currentSize, pose);
     }
   });
 

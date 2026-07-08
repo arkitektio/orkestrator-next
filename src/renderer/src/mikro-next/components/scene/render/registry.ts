@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { SceneLayerFragment } from "@/mikro-next/api/graphql";
-import { PlaneLayer as ImagePlaneLayer } from "../layers/two_d/PlaneLayer";
+import { ImagePlaneLayer } from "./image/ImagePlaneLayer";
 import { ImageVolumeLayer } from "./image/ImageVolumeLayer";
 import {
   MeshLayerRenderer,

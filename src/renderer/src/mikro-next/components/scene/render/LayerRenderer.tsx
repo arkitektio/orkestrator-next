@@ -24,6 +24,7 @@ export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
   const sceneLayers = useSceneStore((s) => s.sceneLayers);
   const imageLayers = useSceneStore((s) => s.layers);
   const setRenderBudget = useViewerStore((s) => s.setRenderBudget);
+  const useOctreeRenderer = useViewerStore((s) => s.useOctreeRenderer);
 
   const selection = useMemo(() => {
     // Hidden image layers neither render nor consume budget (visibility
@@ -35,8 +36,11 @@ export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
 
     const entries = candidates.map((layer) => {
       const normalized = imageLayerById.get(layer.id);
+      // The brick-pool renderer bounds image-layer GPU memory by construction
+      // (each layer's atlas is sized from a budget share), so cost culling
+      // only applies to the legacy monolithic-texture path.
       const costBytes =
-        isImageLayer(layer) && normalized
+        isImageLayer(layer) && normalized && !useOctreeRenderer
           ? estimateImageLayerRenderCostBytes(normalized, mode)
           : 0;
       return { id: layer.id, costBytes, layer };
@@ -47,7 +51,7 @@ export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
       budgetBytes,
       ...selectLayersWithinBudget(entries, budgetBytes, MAX_DISPLAYABLE_LAYERS),
     };
-  }, [sceneLayers, imageLayers, mode]);
+  }, [sceneLayers, imageLayers, mode, useOctreeRenderer]);
 
   // Surface culling decisions so layers don't silently vanish.
   useEffect(() => {

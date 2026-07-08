@@ -60,10 +60,12 @@ export const SceneOverlay = () => {
   const isDebug = useViewerStore((state) => state.debug);
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
+  const useOctreeRenderer = useViewerStore((state) => state.useOctreeRenderer);
 
   const setDebug = useViewerStore((state) => state.setDebug);
   const setShowScaleBar = useViewerStore((state) => state.setShowScaleBar);
   const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
+  const setUseOctreeRenderer = useViewerStore((state) => state.setUseOctreeRenderer);
 
   const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
 
@@ -122,6 +124,11 @@ export const SceneOverlay = () => {
               onChange={setShowScaleGrid}
             />
             <SettingRow label="Debug" checked={isDebug} onChange={setDebug} />
+            <SettingRow
+              label="Octree renderer"
+              checked={useOctreeRenderer}
+              onChange={setUseOctreeRenderer}
+            />
           </PopoverContent>
         </Popover>
       </div>

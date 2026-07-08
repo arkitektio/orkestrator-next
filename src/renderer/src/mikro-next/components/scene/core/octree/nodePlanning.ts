@@ -127,7 +127,6 @@ export function planLayerNodes({
     typeof layer.fixedLOD === "number" && layer.fixedLOD >= 0 && layer.fixedLOD < numLevels
       ? layer.fixedLOD
       : null;
-  const minLevel = fixedLOD ?? 0;
 
   const slotBytesByLevel = levels.map((level) =>
     brickSlotBytes(spec, mapDTypeToTextureBytes(level.dtype as DataType)),
@@ -190,6 +189,37 @@ export function planLayerNodes({
       ],
     };
   }
+
+  // --- Budget floor on refinement -------------------------------------------
+  // The finest level a plan may request is bounded by the DATA VOLUME the
+  // visible region implies at that level, not just by GPU slot bytes: with
+  // pathological chunkings (e.g. plane-chunked SPIM stacks, [2,2048,2048])
+  // any fine-level brick fetch decodes whole plane chunks, so an eager plan
+  // can pull the entire full-resolution volume. Requiring the visible voxels
+  // at the level to fit the layer's byte share keeps first-view loads at the
+  // coarse levels; zooming in shrinks the visible box and unlocks finer
+  // levels naturally. An explicit fixedLOD overrides the floor.
+  const visibleBytesAtLevel = (levelIndex: number): number => {
+    const level = levels[levelIndex];
+    const bytesPerVoxel = mapDTypeToTextureBytes(level.dtype as DataType);
+    let voxels = 1;
+    for (const axis of [0, 1, 2] as const) {
+      if (mode === "2D" && axis === 2) continue; // single slab
+      const visible = visibleBox
+        ? Math.max(0, visibleBox.max[axis] - visibleBox.min[axis]) / level.scale[axis]
+        : level.spatialShape[axis];
+      voxels *= Math.min(level.spatialShape[axis], Math.max(1, visible));
+    }
+    return voxels * bytesPerVoxel;
+  };
+  let budgetMinLevel = coarsest;
+  for (let levelIndex = 0; levelIndex <= coarsest; levelIndex++) {
+    if (visibleBytesAtLevel(levelIndex) <= maxPlanBytes) {
+      budgetMinLevel = levelIndex;
+      break;
+    }
+  }
+  const minLevel = fixedLOD ?? budgetMinLevel;
 
   // --- Per-node screen footprint --------------------------------------------
   const footprintPxPerBaseVoxel = (baseBox: VoxelBox): number => {

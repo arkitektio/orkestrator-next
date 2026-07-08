@@ -230,6 +230,26 @@ describe("planLayerNodes (3D octree)", () => {
     expect(fineTargets.every((n) => n.coords[0] <= 1)).toBe(true);
   });
 
+  it("caps the finest level by visible data volume, not just slot bytes", () => {
+    // L0 in full view = 256³ = 16.7 MB of data; a 3 MB share must stay at L1
+    // (2.1 MB) even though the screen footprint asks for full resolution —
+    // this is what stops plane-chunked datasets from streaming their whole
+    // fine level on first view.
+    const p = planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VOL_VIEW,
+      camera: null,
+      lodBias: 1,
+      currentZ: undefined,
+      maxPlanBytes: 3_000_000,
+    });
+    expect(p.targetLevel).toBe(1);
+    expect(p.nodes.every((n) => n.level === 1 && n.role === "target")).toBe(true);
+  });
+
   it("3D budget degrades refinement instead of overflowing", () => {
     const coarseOnly = planLayerNodes({
       layer: volLayer,

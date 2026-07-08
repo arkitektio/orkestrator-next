@@ -21,10 +21,9 @@ import type { ViewState } from "../store/viewStore";
  * bursts into one recompute per animation frame, and write plans back only
  * when they changed (per-layer identity preserved via `sameNodePlan`).
  *
- * Unlike the 2D chunk planner there is no rendered-chunk feedback loop — the
- * shader falls back to coarser resident bricks per sample. The only feedback
- * input is `residencyVersion` (bricks became resident → the plan's byte-
- * budgeted "keep" set may change).
+ * Unlike the 2D chunk planner there is no rendered-chunk feedback loop at
+ * all — the shader falls back to coarser resident bricks per sample, and
+ * plans are a pure function of view/z/mode/layers.
  *
  * Gated on `viewerStore.useOctreeRenderer` so the legacy planners keep sole
  * ownership until the flag flips (shadow-mode: toggle it in the DebugPanel).
@@ -151,24 +150,24 @@ export function startNodePlanTracking({
 
   // Trigger only on the planner's inputs; our own setNodePlans writes don't
   // touch these references and thus don't reschedule.
+  // NOTE: residencyVersion is deliberately NOT a trigger — plans are a pure
+  // function of view/z/mode/layers, so replanning per upload batch would just
+  // churn the main thread while bricks stream in.
   const initialViewer = viewerStore.getState();
   let lastViewRanges = initialViewer.layerViewRanges;
   let lastLodBias = initialViewer.lodBias;
   let lastCurrentZ = initialViewer.currentZ;
-  let lastResidencyVersion = initialViewer.residencyVersion;
   let lastFlag = initialViewer.useOctreeRenderer;
   const unsubscribeViewer = viewerStore.subscribe((state) => {
     if (
       state.layerViewRanges !== lastViewRanges ||
       state.lodBias !== lastLodBias ||
       state.currentZ !== lastCurrentZ ||
-      state.residencyVersion !== lastResidencyVersion ||
       state.useOctreeRenderer !== lastFlag
     ) {
       lastViewRanges = state.layerViewRanges;
       lastLodBias = state.lodBias;
       lastCurrentZ = state.currentZ;
-      lastResidencyVersion = state.residencyVersion;
       lastFlag = state.useOctreeRenderer;
       schedule();
     }

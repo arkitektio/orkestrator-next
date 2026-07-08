@@ -64,6 +64,11 @@ const FRAME_UPLOAD_BUDGET_BYTES = 16 * 1024 * 1024;
 const FRAME_UPLOAD_BUDGET_BRICKS = 24;
 const PAGE_TEXTURE_MAX_EXTENT = 2048;
 const MIN_POOL_HEADROOM_SLOTS = 64;
+/** Concurrent brick fetches per layer — bounds worker-task fan-out and the
+ * per-fetch main-thread overhead when a plan wants hundreds of bricks. */
+const MAX_INFLIGHT_BRICKS = 12;
+/** Residency bumps are throttled while streaming (they re-render consumers). */
+const RESIDENCY_BUMP_INTERVAL_MS = 150;
 
 type PendingBrick = {
   key: string;
@@ -87,7 +92,11 @@ export type LayerBrickPool = {
   pool: BrickPoolState;
   protectedKeys: Set<string>;
   inFlight: Map<string, AbortController>;
+  /** Plan nodes waiting for a free fetch slot (refreshed per reconcile). */
+  pendingFetch: PlannedNode[];
   queue: PendingBrick[];
+  /** Keys currently in `queue` (O(1) membership for reconcile). */
+  queuedKeys: Set<string>;
   /** Uniform bricks: page-mapped EMPTY, no slot; value = the uniform fill. */
   emptyValues: Map<string, number>;
   /** Per-dim fixed chunk coords / in-chunk offsets for non-spatial dims. */
@@ -114,6 +123,7 @@ export type ResidentBrickInfo = {
 export class BrickResidencyManager {
   private readonly pools = new Map<string, LayerBrickPool>();
   private disposed = false;
+  private lastResidencyBumpAt = 0;
 
   constructor(private readonly deps: Deps) {}
 
@@ -251,19 +261,37 @@ export class BrickResidencyManager {
       }
     }
     pool.queue = pool.queue.filter((pending) => planKeys.has(pending.key));
+    pool.queuedKeys = new Set(pool.queue.map((pending) => pending.key));
 
     // Fetch every planned node that isn't resident yet — coarse levels first
-    // (they are the fallback), then plan priority (near-first).
-    const wanted = plan.nodes
+    // (they are the fallback), then plan priority (near-first). Only
+    // MAX_INFLIGHT_BRICKS run concurrently; the rest wait in pendingFetch.
+    pool.pendingFetch = plan.nodes
       .filter(
         (node) =>
           !pool.pool.has(node.key) &&
           !pool.emptyValues.has(node.key) &&
           !pool.inFlight.has(node.key) &&
-          !pool.queue.some((pending) => pending.key === node.key),
+          !pool.queuedKeys.has(node.key),
       )
       .sort((a, b) => b.level - a.level || a.priority - b.priority);
-    for (const node of wanted) void this.fetchBrick(pool, node);
+    this.startNextFetches(pool);
+  }
+
+  private startNextFetches(pool: LayerBrickPool): void {
+    while (pool.inFlight.size < MAX_INFLIGHT_BRICKS && pool.pendingFetch.length > 0) {
+      const node = pool.pendingFetch.shift()!;
+      if (
+        !pool.protectedKeys.has(node.key) ||
+        pool.pool.has(node.key) ||
+        pool.emptyValues.has(node.key) ||
+        pool.inFlight.has(node.key) ||
+        pool.queuedKeys.has(node.key)
+      ) {
+        continue;
+      }
+      void this.fetchBrick(pool, node);
+    }
   }
 
   private ensurePool(
@@ -379,7 +407,9 @@ export class BrickResidencyManager {
       pool: new BrickPoolState(atlas.slotGrid),
       protectedKeys: new Set(),
       inFlight: new Map(),
+      pendingFetch: [],
       queue: [],
+      queuedKeys: new Set(),
       emptyValues: new Map(),
       fixedChunkCoords,
       fixedOffsets,
@@ -458,6 +488,7 @@ export class BrickResidencyManager {
         uniformValue: result.uniformValue,
         bytes: output.byteLength,
       });
+      pool.queuedKeys.add(node.key);
       this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -465,6 +496,7 @@ export class BrickResidencyManager {
       }
     } finally {
       pool.inFlight.delete(node.key);
+      if (!this.disposed) this.startNextFetches(pool);
     }
   }
 
@@ -482,6 +514,7 @@ export class BrickResidencyManager {
         bricks < FRAME_UPLOAD_BUDGET_BRICKS
       ) {
         const pending = pool.queue.shift()!;
+        pool.queuedKeys.delete(pending.key);
         // Stale bricks (plan moved on before upload) are dropped, not mapped.
         if (!pool.protectedKeys.has(pending.key)) continue;
 
@@ -519,7 +552,18 @@ export class BrickResidencyManager {
     }
 
     if (uploadedAny) {
-      this.deps.viewerStore.getState().bumpResidencyVersion();
+      // Throttle version bumps while streaming — every bump re-renders the
+      // React consumers (layer components, overlay, DebugPanel). The final
+      // batch always bumps so consumers settle on the complete state.
+      const streaming =
+        [...this.pools.values()].some(
+          (pool) => pool.queue.length > 0 || pool.inFlight.size > 0 || pool.pendingFetch.length > 0,
+        );
+      const now = performance.now();
+      if (!streaming || now - this.lastResidencyBumpAt > RESIDENCY_BUMP_INTERVAL_MS) {
+        this.lastResidencyBumpAt = now;
+        this.deps.viewerStore.getState().bumpResidencyVersion();
+      }
       this.deps.invalidate();
     } else if ([...this.pools.values()].some((pool) => pool.queue.length > 0)) {
       // Budget exhausted with work left: keep the demand frameloop running.
@@ -530,7 +574,9 @@ export class BrickResidencyManager {
   private flushPool(pool: LayerBrickPool, nextSliceSignature: string): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
+    pool.pendingFetch = [];
     pool.queue = [];
+    pool.queuedKeys.clear();
     pool.emptyValues.clear();
     pool.pool.clear();
     clearPageTable(pool.pageTable);

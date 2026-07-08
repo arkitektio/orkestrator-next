@@ -41,6 +41,15 @@ const scheduleFrame: (callback: () => void) => void =
     ? (callback) => requestAnimationFrame(callback)
     : (callback) => setTimeout(callback, 0);
 
+/**
+ * Min interval between replans. During a 3D orbit the camera stream fires
+ * every ~60ms; replanning (and the fetch/abort churn each new plan causes)
+ * at that cadence fights the interaction for the main thread. Bricks keep
+ * rendering from the previous plan meanwhile — the shader's coarse fallback
+ * covers newly exposed regions until the next replan lands.
+ */
+const MIN_REPLAN_INTERVAL_MS = 200;
+
 export function startNodePlanTracking({
   viewerStore,
   sceneStore,
@@ -49,6 +58,8 @@ export function startNodePlanTracking({
 }: NodePlanStores): () => void {
   let stopped = false;
   let scheduled = false;
+  let lastRecomputeAt = 0;
+  let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
   const recompute = () => {
     const viewerState = viewerStore.getState();
@@ -143,10 +154,23 @@ export function startNodePlanTracking({
 
   const schedule = () => {
     if (stopped || scheduled) return;
+    const sinceLast = performance.now() - lastRecomputeAt;
+    if (sinceLast < MIN_REPLAN_INTERVAL_MS) {
+      if (pendingTimer === null) {
+        pendingTimer = setTimeout(() => {
+          pendingTimer = null;
+          schedule();
+        }, MIN_REPLAN_INTERVAL_MS - sinceLast);
+      }
+      return;
+    }
     scheduled = true;
     scheduleFrame(() => {
       scheduled = false;
-      if (!stopped) recompute();
+      if (!stopped) {
+        lastRecomputeAt = performance.now();
+        recompute();
+      }
     });
   };
 
@@ -203,6 +227,7 @@ export function startNodePlanTracking({
 
   return () => {
     stopped = true;
+    if (pendingTimer !== null) clearTimeout(pendingTimer);
     unsubscribeViewer();
     unsubscribeScene();
     unsubscribeView();

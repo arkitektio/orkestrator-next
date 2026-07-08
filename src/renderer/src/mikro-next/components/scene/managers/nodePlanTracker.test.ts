@@ -87,7 +87,8 @@ const makeStores = (useOctreeRenderer = true) => {
   return { viewerStore, sceneStore, viewStore, modeStore };
 };
 
-const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+// Long enough to cross the tracker's MIN_REPLAN_INTERVAL_MS debounce.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 280));
 
 describe("startNodePlanTracking", () => {
   it("plans coarsest immediately, then refines when a view range arrives", async () => {

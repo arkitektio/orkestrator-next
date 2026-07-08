@@ -62,8 +62,11 @@ import {
  * like `CanvasContext`, referenced from the store by handle only.
  */
 
-const FRAME_UPLOAD_BUDGET_BYTES = 16 * 1024 * 1024;
-const FRAME_UPLOAD_BUDGET_BRICKS = 24;
+// Per-frame texSubImage3D budget. Kept modest: each brick also memcpys into
+// the CPU mirror, so 16 MB budgets meant ~30 MB of memory traffic inside a
+// single interactive frame — visible as pan hitches.
+const FRAME_UPLOAD_BUDGET_BYTES = 6 * 1024 * 1024;
+const FRAME_UPLOAD_BUDGET_BRICKS = 12;
 const PAGE_TEXTURE_MAX_EXTENT = 2048;
 const MIN_POOL_HEADROOM_SLOTS = 64;
 /** Concurrent brick fetches per layer — bounds worker-task fan-out and the
@@ -129,9 +132,12 @@ export type ResidentBrickInfo = {
 export type BrickSystemStats = {
   bricksFetched: number;
   chunkRequests: number;
+  /** Bytes of FIRST-SEEN chunks only — approximates unique decode volume
+   * (cache hits and shared in-flight awaits are not re-counted). */
   bytesDecoded: number;
   fetchMs: number;
   repackMs: number;
+  uploadMs: number;
   bricksUploaded: number;
   bytesUploaded: number;
   emptyBricks: number;
@@ -158,6 +164,7 @@ export class BrickResidencyManager {
     bytesDecoded: 0,
     fetchMs: 0,
     repackMs: 0,
+    uploadMs: 0,
     bricksUploaded: 0,
     bytesUploaded: 0,
     emptyBricks: 0,
@@ -165,6 +172,8 @@ export class BrickResidencyManager {
     staleDrops: 0,
     fetchErrors: 0,
   };
+  /** Chunk keys already counted toward bytesDecoded. */
+  private readonly countedChunkKeys = new Set<string>();
 
   constructor(private readonly deps: Deps) {}
 
@@ -536,7 +545,10 @@ export class BrickResidencyManager {
       cache: this.chunkCache,
     })
       .then((chunk) => {
-        this.stats.bytesDecoded += (chunk.data as { byteLength?: number }).byteLength ?? 0;
+        if (!this.countedChunkKeys.has(key)) {
+          this.countedChunkKeys.add(key);
+          this.stats.bytesDecoded += (chunk.data as { byteLength?: number }).byteLength ?? 0;
+        }
         return chunk as Chunk<DataType>;
       })
       .finally(() => {
@@ -632,6 +644,7 @@ export class BrickResidencyManager {
   /** Called from the provider's useFrame: bounded texture uploads per frame. */
   drainUploads(): void {
     if (this.disposed) return;
+    const drainStartedAt = performance.now();
     let bytes = 0;
     let bricks = 0;
     let uploadedAny = false;
@@ -686,6 +699,8 @@ export class BrickResidencyManager {
 
       flushPageTable(this.deps.renderer, pool.pageTable);
     }
+
+    if (uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
 
     if (uploadedAny) {
       // Throttle version bumps while streaming — every bump re-renders the

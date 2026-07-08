@@ -124,13 +124,88 @@ export type ResidentBrickInfo = {
   empty: boolean;
 };
 
+export type BrickSystemStats = {
+  bricksFetched: number;
+  chunkRequests: number;
+  bytesDecoded: number;
+  fetchMs: number;
+  repackMs: number;
+  bricksUploaded: number;
+  bytesUploaded: number;
+  emptyBricks: number;
+  evictions: number;
+  staleDrops: number;
+  fetchErrors: number;
+};
+
 export class BrickResidencyManager {
   private readonly pools = new Map<string, LayerBrickPool>();
   private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
   private disposed = false;
   private lastResidencyBumpAt = 0;
+  readonly stats: BrickSystemStats = {
+    bricksFetched: 0,
+    chunkRequests: 0,
+    bytesDecoded: 0,
+    fetchMs: 0,
+    repackMs: 0,
+    bricksUploaded: 0,
+    bytesUploaded: 0,
+    emptyBricks: 0,
+    evictions: 0,
+    staleDrops: 0,
+    fetchErrors: 0,
+  };
 
   constructor(private readonly deps: Deps) {}
+
+  /** Structured snapshot for the DebugPanel's copyable report. */
+  buildDebugReport(): Record<string, unknown> {
+    return {
+      stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
+      pools: [...this.pools.values()].map((pool) => {
+        const residentByLevel: Record<number, number> = {};
+        for (const key of pool.pool.keys()) {
+          const { level } = parseNodeKey(key);
+          residentByLevel[level] = (residentByLevel[level] ?? 0) + 1;
+        }
+        return {
+          layerId: pool.layerId,
+          mode: pool.mode,
+          spec: {
+            payload: pool.spec.payload,
+            border: pool.spec.border,
+            stored: pool.spec.stored,
+            channels: pool.spec.channelCount,
+          },
+          levels: pool.geometry.levels.map((level) => ({
+            spatialShape: level.spatialShape,
+            spatialChunks: level.spatialChunks,
+            scale: level.scale,
+            dtype: level.dtype,
+            storeId: level.storeId,
+          })),
+          atlas: {
+            kind: pool.atlas.kind,
+            size: pool.atlas.size,
+            slotGrid: pool.atlas.slotGrid,
+            capacity: pool.atlas.capacity,
+            bytes: pool.atlas.backing.byteLength,
+          },
+          pageTableSize: pool.pageTable.layout.size,
+          slotsUsed: pool.pool.size,
+          residentByLevel,
+          emptyBricks: pool.emptyValues.size,
+          inFlight: pool.inFlight.size,
+          uploadQueue: pool.queue.length,
+          pendingFetch: pool.pendingFetch.length,
+          protectedKeys: pool.protectedKeys.size,
+          dataRange: [pool.minValue, pool.maxValue],
+          sliceSignature: pool.sliceSignature,
+        };
+      }),
+    };
+  }
 
   /** Subscribe to node plans; returns the unsubscribe handle. */
   start(): () => void {
@@ -428,6 +503,7 @@ export class BrickResidencyManager {
   private async fetchBrick(pool: LayerBrickPool, node: PlannedNode): Promise<void> {
     const controller = new AbortController();
     pool.inFlight.set(node.key, controller);
+    const fetchStartedAt = performance.now();
 
     try {
       const level = pool.geometry.levels[node.level];
@@ -470,11 +546,16 @@ export class BrickResidencyManager {
       const chunks = await Promise.all(fetches);
       if (controller.signal.aborted || this.disposed) return;
 
+      this.stats.chunkRequests += fetches.length;
+      this.stats.fetchMs += performance.now() - fetchStartedAt;
+      for (const chunk of chunks) this.stats.bytesDecoded += chunk.data.byteLength;
+
       const stored = pool.spec.stored;
       const elementCount = stored[0] * stored[1] * stored[2] * pool.spec.channelCount;
       const output: BrickArray =
         pool.atlas.kind === "r8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
 
+      const repackStartedAt = performance.now();
       const result = repackBrick({
         spec: pool.spec,
         level,
@@ -485,6 +566,8 @@ export class BrickResidencyManager {
         chunks,
         output,
       });
+      this.stats.repackMs += performance.now() - repackStartedAt;
+      this.stats.bricksFetched += 1;
 
       pool.queue.push({
         key: node.key,
@@ -498,6 +581,7 @@ export class BrickResidencyManager {
       this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
     } catch (error) {
       if (!controller.signal.aborted) {
+        this.stats.fetchErrors += 1;
         console.warn(`[bricks] fetch failed for ${pool.layerId} ${node.key}`, error);
       }
     } finally {
@@ -522,13 +606,17 @@ export class BrickResidencyManager {
         const pending = pool.queue.shift()!;
         pool.queuedKeys.delete(pending.key);
         // Stale bricks (plan moved on before upload) are dropped, not mapped.
-        if (!pool.protectedKeys.has(pending.key)) continue;
+        if (!pool.protectedKeys.has(pending.key)) {
+          this.stats.staleDrops += 1;
+          continue;
+        }
 
         if (pending.uniformValue !== null) {
           // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
           const encoded = encodeEmptyValue(pending.uniformValue, pool);
           setPageEntry(pool.pageTable, pending.level, pending.coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
           pool.emptyValues.set(pending.key, pending.uniformValue);
+          this.stats.emptyBricks += 1;
           uploadedAny = true;
           continue;
         }
@@ -539,6 +627,7 @@ export class BrickResidencyManager {
         if (acquired.evictedKey) {
           const evicted = parseNodeKey(acquired.evictedKey);
           setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
+          this.stats.evictions += 1;
         }
 
         writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data);
@@ -551,6 +640,8 @@ export class BrickResidencyManager {
         );
         bytes += pending.bytes;
         bricks += 1;
+        this.stats.bricksUploaded += 1;
+        this.stats.bytesUploaded += pending.bytes;
         uploadedAny = true;
       }
 

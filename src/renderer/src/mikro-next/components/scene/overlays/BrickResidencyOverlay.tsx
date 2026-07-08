@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { nodeBaseBox } from "../core/octree/nodeAddress";
 import { buildVolumeVoxelToWorld } from "../core/octree/voxelFrame";
@@ -71,6 +71,16 @@ export function BrickResidencyOverlay() {
     // residencyVersion is the rebuild trigger even though it's not read here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debug, enabled, brickSystem, layers, residencyVersion]);
+
+  // Wireframe geometries are rebuilt per residency change — dispose the
+  // superseded generation or every streaming batch leaks GPU buffers.
+  useEffect(() => {
+    return () => {
+      for (const group of groups) {
+        for (const segment of group.segments) segment.geometry.dispose();
+      }
+    };
+  }, [groups]);
 
   if (groups.length === 0) return null;
 

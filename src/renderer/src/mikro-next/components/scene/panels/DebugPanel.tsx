@@ -1,9 +1,12 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ClipboardCopy } from "lucide-react";
 import { useState } from "react";
-import { useViewerStore } from "../store/viewerStore";
+import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
+import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
+import { useViewStoreApi } from "../store/viewStore";
 
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
@@ -17,9 +20,62 @@ export const DebugPanel = () => {
   const brickSystem = useViewerStore((s) => s.brickSystem);
   useViewerStore((s) => s.residencyVersion); // refresh residency stats
   const layers = useSceneStore((s) => s.layers);
+  const displayMode = useModeStore((s) => s.displayMode);
+  const viewerStoreApi = useViewerStoreApi();
+  const viewStoreApi = useViewStoreApi();
   const [isControlsOpen, setIsControlsOpen] = useState(true);
+  const [reportCopied, setReportCopied] = useState(false);
 
   if (!isDebug) return null;
+
+  /** One paste-able JSON blob covering planner + residency + camera state. */
+  const copyDebugReport = () => {
+    const viewerState = viewerStoreApi.getState();
+    const viewState = viewStoreApi.getState();
+    const report = {
+      generatedAt: new Date().toISOString(),
+      displayMode,
+      lodBias: viewerState.lodBias,
+      currentZ: viewerState.currentZ,
+      budgetBytes: getInitialVolumeTextureBudgetBytes(),
+      useOctreeRenderer: viewerState.useOctreeRenderer,
+      viewportSize: viewState.viewportSize,
+      cameraPose: viewState.cameraPose,
+      layerViewRanges: viewerState.layerViewRanges,
+      plans: Object.fromEntries(
+        Object.entries(viewerState.nodePlans).map(([layerId, plan]) => {
+          const byLevelRole: Record<string, number> = {};
+          for (const node of plan.nodes) {
+            const bucket = `L${node.level}:${node.role}`;
+            byLevelRole[bucket] = (byLevelRole[bucket] ?? 0) + 1;
+          }
+          return [
+            layerId,
+            {
+              mode: plan.mode,
+              targetLevel: plan.targetLevel,
+              slabZ: plan.slabZ,
+              planBytes: plan.planBytes,
+              nodeCount: plan.nodes.length,
+              byLevelRole,
+            },
+          ];
+        }),
+      ),
+      brickSystem: viewerState.brickSystem?.buildDebugReport() ?? null,
+    };
+    const json = JSON.stringify(report, null, 2);
+    console.log("[octree debug report]", report);
+    navigator.clipboard
+      .writeText(json)
+      .then(() => {
+        setReportCopied(true);
+        setTimeout(() => setReportCopied(false), 1500);
+      })
+      .catch(() => {
+        /* console.log above is the fallback */
+      });
+  };
 
   const chunksByLayerId = Object.values(renderedChunks).reduce((acc, chunk) => {
     if (!acc[chunk.layerId]) acc[chunk.layerId] = [];
@@ -69,6 +125,13 @@ export const DebugPanel = () => {
                   onChange={(e) => setUseOctreeRenderer(e.target.checked)}
                 />
               </label>
+              <button
+                className="flex w-full items-center justify-center gap-1 rounded border border-border/50 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-white/10 transition-colors"
+                onClick={copyDebugReport}
+              >
+                <ClipboardCopy className="h-3 w-3" />
+                {reportCopied ? "Copied!" : "Copy debug report"}
+              </button>
             </div>
           </CollapsibleContent>
         </div>
@@ -76,6 +139,30 @@ export const DebugPanel = () => {
       {useOctreeRenderer && Object.keys(nodePlans).length > 0 && (
         <div className="mb-3">
           <h4 className="font-bold border-b border-border/50 pb-1 mb-2">Octree Node Plans</h4>
+          {brickSystem && (
+            <div className="mb-2 flex flex-wrap gap-1 text-[9px] text-muted-foreground">
+              <span className="px-1 rounded border border-border/50">
+                fetched {brickSystem.stats.bricksFetched}
+              </span>
+              <span className="px-1 rounded border border-border/50">
+                uploaded {brickSystem.stats.bricksUploaded}
+              </span>
+              <span className="px-1 rounded border border-border/50">
+                decoded {(brickSystem.stats.bytesDecoded / (1024 * 1024)).toFixed(0)} MB
+              </span>
+              <span className="px-1 rounded border border-border/50">
+                repack {brickSystem.stats.repackMs.toFixed(0)} ms
+              </span>
+              <span className="px-1 rounded border border-border/50">
+                evict {brickSystem.stats.evictions}
+              </span>
+              {brickSystem.stats.fetchErrors > 0 && (
+                <span className="px-1 rounded border border-red-500/50 text-red-300">
+                  errors {brickSystem.stats.fetchErrors}
+                </span>
+              )}
+            </div>
+          )}
           {Object.entries(nodePlans).map(([layerId, plan]) => {
             const countsByLevel = plan.nodes.reduce<Record<number, number>>((acc, node) => {
               acc[node.level] = (acc[node.level] ?? 0) + 1;

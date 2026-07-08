@@ -141,7 +141,9 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setRenderBudget: (info) => set({ renderBudget: info }),
     chunkPlans: {},
     setChunkPlans: (plans) => set({ chunkPlans: plans }),
-    useOctreeRenderer: false,
+    // Default ON for the scenegrapher branch — the legacy renderers remain
+    // reachable by toggling this off in the view-settings popover.
+    useOctreeRenderer: true,
     setUseOctreeRenderer: (enabled) => set({ useOctreeRenderer: enabled }),
     nodePlans: {},
     setNodePlans: (plans) => set({ nodePlans: plans }),

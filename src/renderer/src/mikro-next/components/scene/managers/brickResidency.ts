@@ -6,6 +6,7 @@ import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange } from "../core/dataRange";
 import { resolveCollapsedSelection } from "../core/selection";
 import { encodeEmptyValue } from "../glsl/brickTraversal";
+import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
 import { repackBrick, type BrickArray, type RepackChunk } from "../core/octree/brickRepack";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
@@ -69,6 +70,9 @@ const MIN_POOL_HEADROOM_SLOTS = 64;
 const MAX_INFLIGHT_BRICKS = 12;
 /** Residency bumps are throttled while streaming (they re-render consumers). */
 const RESIDENCY_BUMP_INTERVAL_MS = 150;
+/** Byte cap for decoded chunks held for repacking (the runner's default
+ * cache is count-bounded and can pin GBs of plane-chunked SABs). */
+const DECODED_CHUNK_CACHE_BYTES = 384 * 1024 * 1024;
 
 type PendingBrick = {
   key: string;
@@ -122,6 +126,7 @@ export type ResidentBrickInfo = {
 
 export class BrickResidencyManager {
   private readonly pools = new Map<string, LayerBrickPool>();
+  private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
   private disposed = false;
   private lastResidencyBumpAt = 0;
 
@@ -451,6 +456,7 @@ export class BrickResidencyManager {
               priority: node.level,
               signal: controller.signal,
               useSharedArrayBuffer: true,
+              cache: this.chunkCache,
             }).then((chunk) => ({
               coords: spatial,
               channelChunk,

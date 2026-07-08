@@ -7,7 +7,6 @@ import {
 } from "../../glsl/brickTraversal";
 import { CHANNEL_UNIFORMS_GLSL, buildChannelUniformData } from "./channelUniforms";
 import { buildAffineMatrix } from "../../core/worldTransform";
-import { hasValidSpatialAxes, resolveAxisIndices } from "../../core/dims";
 import {
   buildSliceMap,
   resolveSpatialSelection,
@@ -41,7 +40,6 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
-  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
   const currentZ = useViewerStore((s) => s.currentZ);
   const plan = useViewerStore((s) => s.nodePlans[layerId]);
   // Re-render when residency changes so the pool handle appears/rebuilds.
@@ -131,48 +129,38 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [pool, pool?.structureSignature]);
 
   // --- Probing (PlaneLayer parity, targetLod → plan.targetLevel) ------------
+  // Reads shapes/scales from the pool's (deduplicated) level geometry — the
+  // raw dataArrays list may contain duplicate resolutions, so its indices do
+  // not align with plan levels.
   const resolveProbeGeometryContext = useCallback((): ProbeGeometryContext | null => {
-    if (!layer) return null;
+    if (!layer || !pool) return null;
 
-    const targetLod = plan?.targetLevel ?? Math.max(0, layer.lens.dataset.dataArrays.length - 1);
-    const dataArray = layer.lens.dataset.dataArrays[targetLod];
-    if (!dataArray) return null;
-
-    let arr: ReturnType<typeof getArrayForStoreId>;
-    try {
-      arr = getArrayForStoreId(dataArray.store.id);
-    } catch {
-      return null;
-    }
-    const scaleFactors = dataArray.scaleFactors ?? undefined;
-
-    const dims = layer.lens.dataset.dims;
-    const { xPos, yPos, zPos } = resolveAxisIndices(dims, layer);
-    if (!hasValidSpatialAxes({ xPos, yPos, zPos })) return null;
+    const levelIndex = Math.min(
+      plan?.targetLevel ?? pool.geometry.levels.length - 1,
+      pool.geometry.levels.length - 1,
+    );
+    const level = pool.geometry.levels[levelIndex];
+    const [shapeX, shapeY, shapeZ] = level.spatialShape;
+    const [scaleX, scaleY, scaleZ] = level.scale;
 
     const sliceMap = buildSliceMap(layer.lens.slices);
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], arr.shape[xPos]);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], arr.shape[yPos]);
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], shapeX);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], shapeY);
 
     let zSelection = resolveSpatialSelection(
       layer.zDim ? sliceMap[layer.zDim] : undefined,
-      arr.shape[zPos],
+      shapeZ,
     );
     if (currentZ !== undefined && Number.isFinite(currentZ)) {
       const inv = buildAffineMatrix(layer).clone().invert();
       const pt = new THREE.Vector3(0, 0, currentZ).applyMatrix4(inv);
-      const zScale = scaleFactors && scaleFactors.length > zPos ? scaleFactors[zPos] : 1;
-      const zIndex = Math.max(0, Math.min(arr.shape[zPos] - 1, Math.round(pt.z / zScale)));
+      const zIndex = Math.max(0, Math.min(shapeZ - 1, Math.round(pt.z / scaleZ)));
       zSelection = { start: zIndex, step: 1, length: 1 };
     }
 
-    const scaleX = scaleFactors && scaleFactors.length > xPos ? scaleFactors[xPos] : 1;
-    const scaleY = scaleFactors && scaleFactors.length > yPos ? scaleFactors[yPos] : 1;
-    const scaleZ = scaleFactors && scaleFactors.length > zPos ? scaleFactors[zPos] : 1;
-
-    const totalX = arr.shape[xPos] * scaleX;
-    const totalY = arr.shape[yPos] * scaleY;
-    const totalZ = arr.shape[zPos] * scaleZ;
+    const totalX = shapeX * scaleX;
+    const totalY = shapeY * scaleY;
+    const totalZ = shapeZ * scaleZ;
 
     const width = xSelection.length * xSelection.step * scaleX;
     const height = ySelection.length * ySelection.step * scaleY;
@@ -190,7 +178,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       ],
       volumeSize: [width, height, depth],
     };
-  }, [plan?.targetLevel, currentZ, layer, getArrayForStoreId]);
+  }, [plan?.targetLevel, currentZ, layer, pool]);
 
   const updateProbe = useCallback(
     (localPoint: THREE.Vector3 | null, save: boolean) => {

@@ -191,26 +191,37 @@ export function planLayerNodes({
   }
 
   // --- Budget floor on refinement -------------------------------------------
-  // The finest level a plan may request is bounded by the DATA VOLUME the
-  // visible region implies at that level, not just by GPU slot bytes: with
-  // pathological chunkings (e.g. plane-chunked SPIM stacks, [2,2048,2048])
-  // any fine-level brick fetch decodes whole plane chunks, so an eager plan
-  // can pull the entire full-resolution volume. Requiring the visible voxels
-  // at the level to fit the layer's byte share keeps first-view loads at the
-  // coarse levels; zooming in shrinks the visible box and unlocks finer
-  // levels naturally. An explicit fixedLOD overrides the floor.
+  // The finest level a plan may request is bounded by the DECODED CHUNK BYTES
+  // the visible region implies at that level, not just by GPU slot bytes:
+  // fetch granularity is the zarr chunk, so with pathological chunkings
+  // (e.g. plane-chunked SPIM stacks, [2,2048,2048]) any fine-level brick pull
+  // decodes whole 2048² planes and an eager plan streams the entire
+  // full-resolution volume. Counting chunk-aligned coverage at decode width
+  // (the worker promotes everything except uint8 to float32) keeps first-view
+  // loads at the coarse levels; zooming in shrinks the visible box and
+  // unlocks finer levels naturally. An explicit fixedLOD overrides the floor.
   const visibleBytesAtLevel = (levelIndex: number): number => {
     const level = levels[levelIndex];
-    const bytesPerVoxel = mapDTypeToTextureBytes(level.dtype as DataType);
+    const dtype = level.dtype;
+    const decodedBytesPerVoxel =
+      dtype.includes("u1") || dtype.includes("i1") || dtype.includes("8") ? 1 : 4;
     let voxels = 1;
     for (const axis of [0, 1, 2] as const) {
-      if (mode === "2D" && axis === 2) continue; // single slab
-      const visible = visibleBox
-        ? Math.max(0, visibleBox.max[axis] - visibleBox.min[axis]) / level.scale[axis]
-        : level.spatialShape[axis];
-      voxels *= Math.min(level.spatialShape[axis], Math.max(1, visible));
+      const chunkExtent = Math.max(1, level.spatialChunks[axis]);
+      const gridExtent = Math.ceil(level.spatialShape[axis] / chunkExtent);
+      let chunkCount: number;
+      if (mode === "2D" && axis === 2) {
+        chunkCount = 1; // single slab → one chunk row along z
+      } else if (visibleBox) {
+        const lo = visibleBox.min[axis] / level.scale[axis];
+        const hi = visibleBox.max[axis] / level.scale[axis];
+        chunkCount = Math.max(1, Math.ceil(hi / chunkExtent) - Math.floor(lo / chunkExtent));
+      } else {
+        chunkCount = gridExtent;
+      }
+      voxels *= Math.min(gridExtent, chunkCount) * chunkExtent;
     }
-    return voxels * bytesPerVoxel;
+    return voxels * decodedBytesPerVoxel;
   };
   let budgetMinLevel = coarsest;
   for (let levelIndex = 0; levelIndex <= coarsest; levelIndex++) {

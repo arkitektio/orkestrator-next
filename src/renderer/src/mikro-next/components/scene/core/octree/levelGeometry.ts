@@ -70,11 +70,25 @@ const axisExtent = (values: readonly number[], pos: number): number =>
 export function buildLayerLevelGeometry(
   dims: readonly string[],
   layer: LayerAxisDims,
-  levels: readonly LevelSource[],
+  allLevels: readonly LevelSource[],
 ): LayerLevelGeometry | null {
   const axes = resolveAxisIndices([...dims], layer);
   const { xPos, yPos, zPos, intensityPos } = axes;
-  if (levels.length === 0 || xPos === -1 || yPos === -1) return null;
+  if (allLevels.length === 0 || xPos === -1 || yPos === -1) return null;
+
+  // Some pyramids carry duplicate resolutions (e.g. two level-0 dataArrays,
+  // one without scaleFactors and one with [1,1,1,1], in different stores).
+  // Keeping both would plan and FETCH the same resolution twice — and the
+  // ancestor-chain logic would treat the duplicate as a distinct LOD. Keep
+  // the first entry per unique spatial shape.
+  const seenShapes = new Set<string>();
+  const levels = allLevels.filter((level) => {
+    const shapeKey = `${axisExtent(level.shape, xPos)}:${axisExtent(level.shape, yPos)}:${axisExtent(level.shape, zPos)}`;
+    if (seenShapes.has(shapeKey)) return false;
+    seenShapes.add(shapeKey);
+    return true;
+  });
+  if (levels.length === 0) return null;
 
   const channelCount =
     intensityPos !== -1

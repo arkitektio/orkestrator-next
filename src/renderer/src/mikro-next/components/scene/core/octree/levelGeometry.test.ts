@@ -58,6 +58,20 @@ describe("buildLayerLevelGeometry", () => {
     expect(geo.channelCount).toBe(16);
   });
 
+  it("drops duplicate-resolution levels (double level-0 dataArrays)", () => {
+    // Real pyramids sometimes ship level 0 twice: once without scaleFactors
+    // and once with [1,1,1,1] in a different store. Planning both would
+    // double-fetch the full resolution.
+    const geo = buildLayerLevelGeometry(DIMS, LAYER, [
+      LEVELS[0],
+      { ...LEVELS[0], storeId: "s0-duplicate", scaleFactors: [1, 1, 1, 1] },
+      LEVELS[1],
+    ])!;
+    expect(geo.levels).toHaveLength(2);
+    expect(geo.levels.map((l) => l.storeId)).toEqual(["s0", "s1"]);
+    expect(geo.levels[1].scale).toEqual([2, 2, 1]);
+  });
+
   it("returns null without spatial axes or levels", () => {
     expect(buildLayerLevelGeometry(DIMS, LAYER, [])).toBeNull();
     expect(

@@ -64,8 +64,17 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   useViewerStore((s) => s.residencyVersion); // pool appears/rebuilds → re-render
   const brickSystem = useViewerStore((s) => s.brickSystem);
 
-  const cameraPose = useViewStore((s) => s.cameraPose);
-  const viewportSize = useViewStore((s) => s.viewportSize);
+  // Scalar selectors ONLY: cameraPose/viewportSize are new objects on every
+  // camera write (~16/s during an orbit) and would re-render all volume
+  // layers continuously. The footprint scale depends on fov + viewport
+  // height alone (both constant while orbiting); the camera position reaches
+  // the shader through vOrigin.
+  const pxPerVoxelAtUnitDistance = useViewStore((s) =>
+    s.cameraPose?.isPerspective && s.cameraPose.fovY > 0
+      ? s.viewportSize.height / (2 * Math.tan(s.cameraPose.fovY / 2))
+      : 0,
+  );
+  const cameraMoving = useViewStore((s) => s.cameraMoving);
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
   const interactionMode = useModeStore((s) => s.interactionMode);
@@ -95,12 +104,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     const atlas = channelData.atlas;
     return () => atlas.dispose();
   }, [channelData]);
-
-  /** Perspective LOD footprint scale (0 disables the per-sample path). */
-  const pxPerVoxelAtUnitDistance =
-    cameraPose?.isPerspective && cameraPose.fovY > 0
-      ? viewportSize.height / (2 * Math.tan(cameraPose.fovY / 2))
-      : 0;
 
   // Step sizing from the plan's finest requested level.
   const marchParams = useMemo(() => {
@@ -137,9 +140,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     u.uLodBias.value = lodBias;
     u.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     u.uMinDelta.value = marchParams.minDelta;
+    // Coarser ray steps while the camera moves; the settle emission restores
+    // full quality ≤150 ms after the drag ends.
+    u.uStepScale.value = cameraMoving ? 3 : 1;
     u.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
-  }, [channelData, plan, lodBias, pxPerVoxelAtUnitDistance, marchParams, layer?.projection, invalidate]);
+  }, [channelData, plan, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, marchParams, layer?.projection, invalidate]);
 
   const initialUniforms = useMemo(() => {
     if (!pool) return null;
@@ -162,6 +168,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       uLodBias: { value: lodBias },
       uPxPerVoxelAtUnitDist: { value: pxPerVoxelAtUnitDistance },
       uMinDelta: { value: marchParams.minDelta },
+      uStepScale: { value: 1 },
       uBaseShape: {
         value: new THREE.Vector3(
           pool.geometry.levels[0].spatialShape[0],
@@ -317,6 +324,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
             uniform float uLodBias;
             uniform float uPxPerVoxelAtUnitDist; // 0 → orthographic footprint
             uniform float uMinDelta;        // base voxels per step at target LOD
+            uniform float uStepScale;       // >1 while the camera moves (quality scaling)
             uniform vec3 uBaseShape;
             uniform int projectionMode;     // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
             uniform float isoThreshold;
@@ -376,7 +384,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
               bounds.x = max(bounds.x, 0.0);
 
               float rayLen = max(bounds.y - bounds.x, 0.00001);
-              float delta = max(rayLen / float(MAX_STEPS), uMinDelta);
+              float delta = max(rayLen / float(MAX_STEPS), uMinDelta) * max(uStepScale, 1.0);
 
               float t = bounds.x + delta * rand(gl_FragCoord.xy);
 

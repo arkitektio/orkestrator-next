@@ -28,8 +28,23 @@ export function uploadTexSubImage3D(
     if (!props.__webglTexture) return false;
   }
 
-  const previous = gl.getParameter(gl.TEXTURE_BINDING_3D) as WebGLTexture | null;
-  gl.bindTexture(gl.TEXTURE_3D, props.__webglTexture);
+  // Prefer three's internal state tracker for binding: it keeps three's
+  // binding cache coherent (no restore needed) and avoids a per-upload
+  // gl.getParameter query, which can be a sync point under ANGLE. Fall back
+  // to query + restore when the internal API is unavailable.
+  const state = (
+    renderer as unknown as {
+      state?: { bindTexture?: (target: number, texture: WebGLTexture | null) => void };
+    }
+  ).state;
+  const boundViaState = typeof state?.bindTexture === "function";
+  let previous: WebGLTexture | null = null;
+  if (boundViaState) {
+    state!.bindTexture!(gl.TEXTURE_3D, props.__webglTexture);
+  } else {
+    previous = gl.getParameter(gl.TEXTURE_BINDING_3D) as WebGLTexture | null;
+    gl.bindTexture(gl.TEXTURE_3D, props.__webglTexture);
+  }
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0);
   gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, 0);
@@ -60,6 +75,6 @@ export function uploadTexSubImage3D(
     data as ArrayBufferView<ArrayBuffer>,
   );
 
-  gl.bindTexture(gl.TEXTURE_3D, previous);
+  if (!boundViaState) gl.bindTexture(gl.TEXTURE_3D, previous);
   return true;
 }

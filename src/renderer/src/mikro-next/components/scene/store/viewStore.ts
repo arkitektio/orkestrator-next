@@ -16,11 +16,15 @@ export interface ViewState {
   viewProjectionMatrix: THREE.Matrix4 | null;
   viewportSize: { width: number; height: number };
   cameraPose: CameraPose | null;
+  /** True while the camera is in continuous motion (throttled emissions);
+   * false once the trailing settle emission lands. Render-quality scaling. */
+  cameraMoving: boolean;
 
   updateCameraData: (
     matrix: THREE.Matrix4,
     size: { width: number; height: number },
     pose?: CameraPose,
+    moving?: boolean,
   ) => void;
 }
 
@@ -29,13 +33,15 @@ export const createViewStore = () =>
     viewProjectionMatrix: null,
     viewportSize: { width: 0, height: 0 },
     cameraPose: null,
+    cameraMoving: false,
 
-    updateCameraData: (matrix, size, pose) =>
+    updateCameraData: (matrix, size, pose, moving) =>
 
       set({
         viewProjectionMatrix: matrix,
         viewportSize: size,
         cameraPose: pose ?? null,
+        cameraMoving: moving ?? false,
       }),
   }));
 

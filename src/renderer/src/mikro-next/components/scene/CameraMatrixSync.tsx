@@ -77,7 +77,7 @@ export const CameraMatrixSync = ({
     // comes to rest (the last motion frame may fall inside the throttle gap).
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      updateCameraData(snapshot, currentSize, pose);
+      updateCameraData(snapshot, currentSize, pose, false); // settled
     }, settleMs);
 
     // 6b. Leading throttle: push DURING continuous motion at a bounded cadence
@@ -85,7 +85,7 @@ export const CameraMatrixSync = ({
     // live, instead of only after the camera stops.
     if (nowMs - lastEmitRef.current >= throttleMs) {
       lastEmitRef.current = nowMs;
-      updateCameraData(snapshot, currentSize, pose);
+      updateCameraData(snapshot, currentSize, pose, true); // in motion
     }
   });
 

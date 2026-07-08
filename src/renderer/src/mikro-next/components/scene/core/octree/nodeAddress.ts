@@ -34,6 +34,21 @@ export function brickGridForLevel(
   ];
 }
 
+/**
+ * Total bricks across every level — the hard ceiling on how many atlas slots
+ * a layer can ever occupy (for one slice signature). Small datasets must be
+ * pool-sized by this, not by the device budget share, or a 1.5 MB debug
+ * volume happily allocates a multi-hundred-MB atlas.
+ */
+export function totalBrickCount(geo: LayerLevelGeometry, spec: BrickSpec): number {
+  let total = 0;
+  for (let level = 0; level < geo.levels.length; level++) {
+    const grid = brickGridForLevel(geo, spec, level);
+    total += grid[0] * grid[1] * grid[2];
+  }
+  return total;
+}
+
 /** Payload box in level voxels, clamped to the level shape (edge bricks). */
 export function nodeVoxelBox(
   geo: LayerLevelGeometry,

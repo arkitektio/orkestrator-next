@@ -22,6 +22,7 @@ import {
   nodeKey,
   nodeVoxelBox,
   parseNodeKey,
+  totalBrickCount,
 } from "../core/octree/nodeAddress";
 import type { LayerNodePlan, PlannedNode } from "../core/octree/nodePlanning";
 import {
@@ -317,13 +318,23 @@ export class BrickResidencyManager {
     const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
     const budgetShare = getInitialVolumeTextureBudgetBytes() / planCount;
     const coarsestGrid = brickGridForLevel(geometry, spec, geometry.levels.length - 1);
-    const minSlots = coarsestGrid[0] * coarsestGrid[1] * coarsestGrid[2] + MIN_POOL_HEADROOM_SLOTS;
     const gl = this.deps.renderer.getContext() as WebGL2RenderingContext;
     const maxTextureExtent = Math.min(
       PAGE_TEXTURE_MAX_EXTENT,
       gl.getParameter(gl.MAX_3D_TEXTURE_SIZE) as number,
     );
-    const desiredSlots = Math.max(minSlots, Math.floor(budgetShare / slotBytes));
+    // The pool can never need more slots than the pyramid has bricks — cap
+    // there so small datasets get small atlases (the budget share only binds
+    // for genuinely large pyramids).
+    const maxUsefulSlots = totalBrickCount(geometry, spec);
+    const minSlots = Math.min(
+      maxUsefulSlots,
+      coarsestGrid[0] * coarsestGrid[1] * coarsestGrid[2] + MIN_POOL_HEADROOM_SLOTS,
+    );
+    const desiredSlots = Math.min(
+      maxUsefulSlots,
+      Math.max(minSlots, Math.floor(budgetShare / slotBytes)),
+    );
 
     const atlas = createBrickAtlas({
       spec,

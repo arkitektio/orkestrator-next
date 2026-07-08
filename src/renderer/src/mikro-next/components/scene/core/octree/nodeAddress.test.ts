@@ -10,6 +10,7 @@ import {
   nodeKey,
   nodeVoxelBox,
   parseNodeKey,
+  totalBrickCount,
 } from "./nodeAddress";
 
 const DIMS = ["c", "z", "y", "x"];
@@ -88,6 +89,13 @@ describe("childrenOf", () => {
 
   it("returns nothing at the finest level", () => {
     expect(childrenOf(GEO, SPEC, 0, [0, 0, 0])).toEqual([]);
+  });
+});
+
+describe("totalBrickCount", () => {
+  it("sums every level's grid — the atlas slot ceiling for small datasets", () => {
+    // L0: 10×8×1 = 80, L1: 5×4×1 = 20.
+    expect(totalBrickCount(GEO, SPEC)).toBe(100);
   });
 });
 

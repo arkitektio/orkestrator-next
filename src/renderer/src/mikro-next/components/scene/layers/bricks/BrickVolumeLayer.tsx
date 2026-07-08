@@ -46,7 +46,7 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
   }
 };
 
-const MAX_RAY_STEPS = 512;
+const MAX_RAY_STEPS = 256;
 
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const groupRef = useRef<THREE.Group>(null!);
@@ -111,7 +111,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         (level.spatialShape[1] * level.scale[1]) ** 2 +
         (level.spatialShape[2] * level.scale[2]) ** 2,
     );
-    const minDelta = Math.max(0.5 * level.scale[0], diag / MAX_RAY_STEPS);
+    // Sample at ~1 voxel of the finest requested level; the step cap bounds
+    // fragment cost on large volumes (coarser sampling far out is what the
+    // per-sample LOD is for).
+    const minDelta = Math.max(level.scale[0], diag / MAX_RAY_STEPS);
     return { minDelta, steps: MAX_RAY_STEPS };
   }, [pool, plan]);
 

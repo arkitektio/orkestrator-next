@@ -1,8 +1,9 @@
 import * as THREE from "three";
+import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
-import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange } from "../core/dataRange";
 import { resolveCollapsedSelection } from "../core/selection";
 import { encodeEmptyValue } from "../glsl/brickTraversal";
@@ -71,8 +72,9 @@ const MAX_INFLIGHT_BRICKS = 12;
 /** Residency bumps are throttled while streaming (they re-render consumers). */
 const RESIDENCY_BUMP_INTERVAL_MS = 150;
 /** Byte cap for decoded chunks held for repacking (the runner's default
- * cache is count-bounded and can pin GBs of plane-chunked SABs). */
-const DECODED_CHUNK_CACHE_BYTES = 384 * 1024 * 1024;
+ * cache is count-bounded and can pin GBs of plane-chunked SABs). Sized above
+ * a typical plane-chunked working set so repacks don't thrash the cache. */
+const DECODED_CHUNK_CACHE_BYTES = 512 * 1024 * 1024;
 
 type PendingBrick = {
   key: string;
@@ -141,6 +143,13 @@ export type BrickSystemStats = {
 export class BrickResidencyManager {
   private readonly pools = new Map<string, LayerBrickPool>();
   private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
+  /** In-flight decoded-chunk promises, shared across bricks: without this,
+   * N concurrent bricks touching the same plane chunk decode it N times
+   * (observed 73× fetch amplification on plane-chunked SPIM data). */
+  private readonly inFlightChunks = new Map<string, Promise<Chunk<DataType>>>();
+  /** Chunk fetches outlive individual brick aborts (shared!); this cancels
+   * them all on dispose. */
+  private readonly fetchAbort = new AbortController();
   private disposed = false;
   private lastResidencyBumpAt = 0;
   readonly stats: BrickSystemStats = {
@@ -424,7 +433,10 @@ export class BrickResidencyManager {
 
     const bytesPerVoxel = atlasKindForDtype(geometry.levels[0].dtype) === "r8" ? 1 : 4;
     const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
-    const budgetShare = getInitialVolumeTextureBudgetBytes() / planCount;
+    const budgetShare = Math.min(
+      MAX_LAYER_POOL_BYTES,
+      getInitialVolumeTextureBudgetBytes() / planCount,
+    );
     const coarsestGrid = brickGridForLevel(geometry, spec, geometry.levels.length - 1);
     const gl = this.deps.renderer.getContext() as WebGL2RenderingContext;
     const maxTextureExtent = Math.min(
@@ -500,6 +512,40 @@ export class BrickResidencyManager {
     return pool;
   }
 
+  /**
+   * Decoded-chunk fetch with in-flight sharing: every brick wanting the same
+   * chunk awaits ONE decode. Deliberately not bound to a brick's abort
+   * signal — a shared result may still serve other bricks (or the cache);
+   * the manager-level signal cancels everything on dispose.
+   */
+  private fetchChunkShared(
+    arr: Parameters<typeof getChunkWorker>[0],
+    storeId: string,
+    chunkCoords: number[],
+    priority: number,
+  ): Promise<Chunk<DataType>> {
+    const key = `${storeId}:${chunkCoords.join(",")}`;
+    const existing = this.inFlightChunks.get(key);
+    if (existing) return existing;
+
+    const promise = getChunkWorker(arr, chunkCoords, {
+      pool: workerPool,
+      priority,
+      signal: this.fetchAbort.signal,
+      useSharedArrayBuffer: true,
+      cache: this.chunkCache,
+    })
+      .then((chunk) => {
+        this.stats.bytesDecoded += (chunk.data as { byteLength?: number }).byteLength ?? 0;
+        return chunk as Chunk<DataType>;
+      })
+      .finally(() => {
+        this.inFlightChunks.delete(key);
+      });
+    this.inFlightChunks.set(key, promise);
+    return promise;
+  }
+
   private async fetchBrick(pool: LayerBrickPool, node: PlannedNode): Promise<void> {
     const controller = new AbortController();
     pool.inFlight.set(node.key, controller);
@@ -527,13 +573,7 @@ export class BrickResidencyManager {
             return pool.fixedChunkCoords[d];
           });
           fetches.push(
-            getChunkWorker(arr, chunkCoords, {
-              pool: workerPool,
-              priority: node.level,
-              signal: controller.signal,
-              useSharedArrayBuffer: true,
-              cache: this.chunkCache,
-            }).then((chunk) => ({
+            this.fetchChunkShared(arr, level.storeId, chunkCoords, node.level).then((chunk) => ({
               coords: spatial,
               channelChunk,
               data: chunk.data as BrickArray,
@@ -548,7 +588,6 @@ export class BrickResidencyManager {
 
       this.stats.chunkRequests += fetches.length;
       this.stats.fetchMs += performance.now() - fetchStartedAt;
-      for (const chunk of chunks) this.stats.bytesDecoded += chunk.data.byteLength;
 
       const stored = pool.spec.stored;
       const elementCount = stored[0] * stored[1] * stored[2] * pool.spec.channelCount;
@@ -689,6 +728,8 @@ export class BrickResidencyManager {
 
   dispose(): void {
     this.disposed = true;
+    this.fetchAbort.abort();
+    this.inFlightChunks.clear();
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
   }

@@ -36,6 +36,11 @@ export function uploadTexSubImage3D(
   gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0);
   gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
   gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, 0);
+  // three sets these per 2D-texture upload (e.g. flipY colormap atlases) and
+  // leaves them dangling; WebGL2 forbids both for 3D texture uploads. three
+  // re-applies them on its own uploads, so forcing them off here is safe.
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 
   const format =
     kind === "rgba8ui" ? gl.RGBA_INTEGER : gl.RED;

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
-import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveBrickSpec } from "../core/octree/brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "../core/octree/levelGeometry";
 import {
@@ -69,8 +69,10 @@ export function startNodePlanTracking({
     const plannableLayers = layers.filter(
       (layer) => layer.visible !== false && (layer.lens.dataset.dataArrays?.length ?? 0) > 0,
     );
-    const maxPlanBytes =
-      getInitialVolumeTextureBudgetBytes() / Math.max(1, plannableLayers.length);
+    const maxPlanBytes = Math.min(
+      MAX_LAYER_POOL_BYTES,
+      getInitialVolumeTextureBudgetBytes() / Math.max(1, plannableLayers.length),
+    );
 
     for (const layer of plannableLayers) {
       let levels: LevelSource[];

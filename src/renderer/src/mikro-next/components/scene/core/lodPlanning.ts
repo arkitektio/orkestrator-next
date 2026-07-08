@@ -9,6 +9,16 @@ import { ImageLayerFragment } from "./layerGuards";
  */
 
 const DEFAULT_VOLUME_TEXTURE_BUDGET_BYTES = 512 * 1024 * 1024;
+
+/**
+ * Hard per-layer ceiling for the octree brick pool (atlas bytes AND the node
+ * plan's slot-byte budget — they must agree so a plan always fits its pool).
+ * Deliberately far below the device budget share: the pool is a view-driven
+ * cache, and pre-allocating half-GB zeroed float32 atlases per layer (as a
+ * 1.5 GB device budget implies) costs more in memory pressure than the extra
+ * cache headroom ever returns.
+ */
+export const MAX_LAYER_POOL_BYTES = 128 * 1024 * 1024;
 const MIN_VOLUME_TEXTURE_BUDGET_BYTES = 256 * 1024 * 1024;
 const MAX_VOLUME_TEXTURE_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
 const DEVICE_MEMORY_TEXTURE_FRACTION = 0.18;

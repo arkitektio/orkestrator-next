@@ -399,6 +399,15 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
               // always cross the ray, whatever the per-sample LOD picks.
               float floorDelta = rayLen / float(MAX_STEPS);
 
+              // Reference step for VOLUME opacity correction: the finest-shown
+              // level's settled pitch (indexed by uDesiredLevel, WITHOUT
+              // uStepScale). Any sample taken with a larger step — deeper LOD, or
+              // the coarser steps used while the camera moves — is rescaled below
+              // by stepLen/refStep so accumulated opacity stays step-size
+              // invariant instead of dimming. See core/opacityCorrection.ts.
+              float refStep = max(max(uMinDelta, floorDelta),
+                                  0.75 * uLevelScale[uDesiredLevel].x);
+
               // Jitter must not depend on rayLen or uStepScale: both change
               // between frames (camera motion, moving↔settled toggle) and a
               // per-frame noise realization reads as full-screen shimmer.
@@ -478,7 +487,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
                     attenuatedColor = sampleColor;
                   }
                 } else if (projectionMode == 2) {
-                  float a = sampleNorm;
+                  // Step-size (opacity) correction — mirrors
+                  // core/opacityCorrection.ts (keep in lockstep). Without it,
+                  // coarser LOD / camera-moving frames take fewer, larger steps
+                  // and accumulate less opacity, so the volume renders dimmer.
+                  float a = 1.0 - pow(max(1.0 - sampleNorm, 0.0),
+                                      stepLen / max(refStep, 1e-5));
                   volColor += (1.0 - volAlpha) * a * sampleColor;
                   volAlpha += (1.0 - volAlpha) * a;
                   if (volAlpha >= 0.98) break;

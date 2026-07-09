@@ -360,6 +360,20 @@ sampled, so 512 steps stay affordable), and **jitter must be
 motion-invariant** (`t = bounds.x + rand(gl_FragCoord) · uMinDelta` — no
 rayLen, no uStepScale).
 
+Consequence for VOLUME projection: since `stepLen` varies with per-sample LOD
+and `uStepScale`, front-to-back opacity accumulation must be **step-size
+corrected** or coarse levels / camera-moving frames render dimmer (fewer, larger
+steps accumulate less opacity). The volume accumulator uses
+`a = 1 − (1 − sampleNorm)^(stepLen / refStep)` where `refStep` is the
+finest-shown level's settled pitch (`uDesiredLevel`, no `uStepScale`) — identity
+at the finest settled sample, brighter as the step grows. Mirrored/tested by
+`core/opacityCorrection.ts` (+ `.test.ts`). MIP/AttenuatedMIP are `max()` and
+need no correction; **MIP coarse-dimming is a separate, inherent effect** — a
+mean-downsampled zarr pyramid stores lower peaks and normalization is
+LOD-independent (`brickResidency.ts` `pool.minValue/maxValue` from level 0), so
+coarse MIP is faithfully dimmer. Not fixable in the renderer; the real fix is a
+max-downsampled pyramid upstream.
+
 **P15 — Slab z must floor-divide from ONE base z, and levels that don't
 cover the slab must drop out of the chain.** Two live failures, same shape
 (refinement silently stuck at the coarsest level for *certain* z values):

@@ -46,7 +46,7 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
   }
 };
 
-const MAX_RAY_STEPS = 256;
+const MAX_RAY_STEPS = 512;
 
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const groupRef = useRef<THREE.Group>(null!);
@@ -105,20 +105,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return () => atlas.dispose();
   }, [channelData]);
 
-  // Step sizing from the plan's finest requested level.
+  // Step sizing from the plan's finest requested level: half a voxel of that
+  // level. The actual per-sample step adapts to the LOD sampled at that point
+  // (see stepLen in the shader); the in-shader rayLen/MAX_STEPS floor
+  // guarantees every ray reaches its exit within the loop bound.
   const marchParams = useMemo(() => {
     if (!pool || !plan) return { minDelta: 1, steps: 128 };
     const level = pool.geometry.levels[Math.min(plan.targetLevel, pool.geometry.levels.length - 1)];
-    const diag = Math.sqrt(
-      (level.spatialShape[0] * level.scale[0]) ** 2 +
-        (level.spatialShape[1] * level.scale[1]) ** 2 +
-        (level.spatialShape[2] * level.scale[2]) ** 2,
-    );
-    // Sample at ~1 voxel of the finest requested level; the step cap bounds
-    // fragment cost on large volumes (coarser sampling far out is what the
-    // per-sample LOD is for).
-    const minDelta = Math.max(level.scale[0], diag / MAX_RAY_STEPS);
-    return { minDelta, steps: MAX_RAY_STEPS };
+    return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
   }, [pool, plan]);
 
   // Dynamic uniform pushes (no material rebuild).
@@ -142,7 +136,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     u.uMinDelta.value = marchParams.minDelta;
     // Coarser ray steps while the camera moves; the settle emission restores
     // full quality ≤150 ms after the drag ends.
-    u.uStepScale.value = cameraMoving ? 3 : 1;
+    u.uStepScale.value = cameraMoving ? 2 : 1;
     u.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
   }, [channelData, plan, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, marchParams, layer?.projection, invalidate]);
@@ -384,9 +378,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
               bounds.x = max(bounds.x, 0.0);
 
               float rayLen = max(bounds.y - bounds.x, 0.00001);
-              float delta = max(rayLen / float(MAX_STEPS), uMinDelta) * max(uStepScale, 1.0);
+              // Termination guarantee: MAX_STEPS steps of at least this size
+              // always cross the ray, whatever the per-sample LOD picks.
+              float floorDelta = rayLen / float(MAX_STEPS);
 
-              float t = bounds.x + delta * rand(gl_FragCoord.xy);
+              // Jitter must not depend on rayLen or uStepScale: both change
+              // between frames (camera motion, moving↔settled toggle) and a
+              // per-frame noise realization reads as full-screen shimmer.
+              float t = bounds.x + rand(gl_FragCoord.xy) * uMinDelta;
 
               float bestNorm = 0.0;          // MIP accumulator (composited)
               vec3 bestColor = vec3(0.0);
@@ -403,6 +402,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
                 if (t > bounds.y) break;
                 vec3 pB = originB + t * dirB;
                 int lvl = desiredLevelAt(pB, originB);
+
+                // LOD-adaptive step: fine-voxel pitch where fine data is
+                // sampled (near camera), coarse pitch far out — quality lands
+                // exactly where the per-sample LOD puts the data.
+                float stepLen = max(max(uMinDelta, floorDelta),
+                                    0.75 * uLevelScale[lvl].x) * max(uStepScale, 1.0);
 
                 // Per-sample channel composite (ChunkPlane semantics).
                 vec3 sampleColor = (blendMode == 1) ? vec3(1.0) : vec3(0.0);
@@ -438,7 +443,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
                 // known-uniform brick contributing nothing — jump to the
                 // desired-level brick's exit instead of stepping through it.
                 if (bestStatus == 0 || (!anyResident && sampleNorm <= 0.001)) {
-                  t += max(delta, brickExitRel(pB, invD, lvl) + 0.01);
+                  t += max(stepLen, brickExitRel(pB, invD, lvl) + 0.01);
                   continue;
                 }
 
@@ -473,7 +478,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
                   }
                 }
 
-                t += delta;
+                t += stepLen;
               }
 
               if (uPickingPass) {

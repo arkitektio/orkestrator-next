@@ -20,12 +20,22 @@ export type AxisIndices = {
 };
 
 export function resolveAxisIndices(dims: string[], layer: LayerAxisDims): AxisIndices {
-  return {
-    xPos: dims.indexOf(layer.xDim ?? ""),
-    yPos: dims.indexOf(layer.yDim ?? ""),
-    zPos: layer.zDim ? dims.indexOf(layer.zDim) : -1,
-    intensityPos: dims.indexOf(layer.intensityDim ?? ""),
-  };
+  const xPos = dims.indexOf(layer.xDim ?? "");
+  const yPos = dims.indexOf(layer.yDim ?? "");
+  const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
+  let intensityPos = dims.indexOf(layer.intensityDim ?? "");
+  // A dim cannot be both spatial and the channel axis. Misconfigured layers
+  // (seen live: intensityDim === zDim === "z" on a single-channel 256³ stack)
+  // otherwise explode into phantom channels — min(extent, 16) of them — which
+  // multiply every brick slot, fetch and atlas 16×. Degrade to "no channel
+  // dim" instead.
+  if (
+    intensityPos !== -1 &&
+    (intensityPos === xPos || intensityPos === yPos || intensityPos === zPos)
+  ) {
+    intensityPos = -1;
+  }
+  return { xPos, yPos, zPos, intensityPos };
 }
 
 /** True when x, y and z axes were all resolved (the usual "bail if -1" guard). */

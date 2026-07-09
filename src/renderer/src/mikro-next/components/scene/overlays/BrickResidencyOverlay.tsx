@@ -22,13 +22,12 @@ const BOX_EDGES: [number, number][] = [
 
 export function BrickResidencyOverlay() {
   const debug = useViewerStore((s) => s.debug);
-  const enabled = useViewerStore((s) => s.useOctreeRenderer);
   const residencyVersion = useViewerStore((s) => s.residencyVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
   const layers = useSceneStore((s) => s.layers);
 
   const groups = useMemo(() => {
-    if (!debug || !enabled || !brickSystem) return [];
+    if (!debug || !brickSystem) return [];
     const residency = brickSystem.snapshotResidency();
 
     return layers.flatMap((layer) => {
@@ -70,7 +69,7 @@ export function BrickResidencyOverlay() {
     });
     // residencyVersion is the rebuild trigger even though it's not read here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debug, enabled, brickSystem, layers, residencyVersion]);
+  }, [debug, brickSystem, layers, residencyVersion]);
 
   // Wireframe geometries are rebuilt per residency change — dispose the
   // superseded generation or every streaming batch leaks GPU buffers.

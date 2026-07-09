@@ -58,6 +58,20 @@ describe("buildLayerLevelGeometry", () => {
     expect(geo.channelCount).toBe(16);
   });
 
+  it("ignores an intensityDim that collides with a spatial dim", () => {
+    // Seen live: a layer configured with intensityDim === zDim === "z" on a
+    // single-channel 256³ stack — without the guard this becomes 16 phantom
+    // channels that multiply every brick slot and fetch 16×.
+    const geo = buildLayerLevelGeometry(
+      ["z", "y", "x"],
+      { xDim: "x", yDim: "y", zDim: "z", intensityDim: "z" },
+      [{ shape: [256, 256, 256], chunks: [76, 256, 256], dtype: "float32", storeId: "s0" }],
+    )!;
+    expect(geo.axes.intensityPos).toBe(-1);
+    expect(geo.channelCount).toBe(1);
+    expect(geo.levels[0].spatialShape).toEqual([256, 256, 256]);
+  });
+
   it("drops duplicate-resolution levels (double level-0 dataArrays)", () => {
     // Real pyramids sometimes ship level 0 twice: once without scaleFactors
     // and once with [1,1,1,1] in a different store. Planning both would

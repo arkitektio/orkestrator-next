@@ -4,22 +4,17 @@ import { ChevronDown, ClipboardCopy } from "lucide-react";
 import { useState } from "react";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { useModeStore } from "../store/modeStore";
-import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
 import { useViewStoreApi } from "../store/viewStore";
 
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
-  const renderedChunks = useViewerStore((s) => s.renderedChunks);
   const renderBudget = useViewerStore((s) => s.renderBudget);
   const lodBias = useViewerStore((s) => s.lodBias);
   const setLodBias = useViewerStore((s) => s.setLodBias);
-  const useOctreeRenderer = useViewerStore((s) => s.useOctreeRenderer);
-  const setUseOctreeRenderer = useViewerStore((s) => s.setUseOctreeRenderer);
   const nodePlans = useViewerStore((s) => s.nodePlans);
   const brickSystem = useViewerStore((s) => s.brickSystem);
   useViewerStore((s) => s.residencyVersion); // refresh residency stats
-  const layers = useSceneStore((s) => s.layers);
   const displayMode = useModeStore((s) => s.displayMode);
   const viewerStoreApi = useViewerStoreApi();
   const viewStoreApi = useViewStoreApi();
@@ -38,7 +33,6 @@ export const DebugPanel = () => {
       lodBias: viewerState.lodBias,
       currentZ: viewerState.currentZ,
       budgetBytes: getInitialVolumeTextureBudgetBytes(),
-      useOctreeRenderer: viewerState.useOctreeRenderer,
       viewportSize: viewState.viewportSize,
       cameraPose: viewState.cameraPose,
       layerViewRanges: viewerState.layerViewRanges,
@@ -77,15 +71,9 @@ export const DebugPanel = () => {
       });
   };
 
-  const chunksByLayerId = Object.values(renderedChunks).reduce((acc, chunk) => {
-    if (!acc[chunk.layerId]) acc[chunk.layerId] = [];
-    acc[chunk.layerId].push(chunk);
-    return acc;
-  }, {} as Record<string, typeof renderedChunks[string][]>);
-
   return (
     <div className="absolute top-16 left-2 z-50 w-64 max-h-[70vh] overflow-y-auto bg-background/80 backdrop-blur-md border border-border/50 text-xs p-2 rounded shadow-lg pointer-events-auto">
-      <h3 className="font-bold border-b border-border/50 pb-1 mb-2">Debug: Rendered Chunks</h3>
+      <h3 className="font-bold border-b border-border/50 pb-1 mb-2">Debug: Octree Renderer</h3>
       {renderBudget && (
         <div className="mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200">
           Render budget exceeded: {(renderBudget.usedBytes / (1024 * 1024)).toFixed(0)} /{" "}
@@ -117,14 +105,6 @@ export const DebugPanel = () => {
                   className="py-1"
                 />
               </div>
-              <label className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground font-medium">
-                <span>Octree renderer</span>
-                <input
-                  type="checkbox"
-                  checked={useOctreeRenderer}
-                  onChange={(e) => setUseOctreeRenderer(e.target.checked)}
-                />
-              </label>
               <button
                 className="flex w-full items-center justify-center gap-1 rounded border border-border/50 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-white/10 transition-colors"
                 onClick={copyDebugReport}
@@ -136,7 +116,7 @@ export const DebugPanel = () => {
           </CollapsibleContent>
         </div>
       </Collapsible>
-      {useOctreeRenderer && Object.keys(nodePlans).length > 0 && (
+      {Object.keys(nodePlans).length > 0 && (
         <div className="mb-3">
           <h4 className="font-bold border-b border-border/50 pb-1 mb-2">Octree Node Plans</h4>
           {brickSystem && (
@@ -209,30 +189,6 @@ export const DebugPanel = () => {
           })}
         </div>
       )}
-      {layers.map(layer => {
-        const chunks = chunksByLayerId[layer.id] || [];
-        if (chunks.length === 0) return null;
-
-        // Sort by level ascending, then by key
-        chunks.sort((a, b) => a.level !== b.level ? a.level - b.level : a.chunkKey.localeCompare(b.chunkKey));
-
-        return (
-          <div key={layer.id} className="mb-3">
-            <div className="font-semibold text-[10px] text-muted-foreground uppercase opacity-80 mb-1">{layer.id}</div>
-            <div className="flex flex-col gap-0.5">
-              {chunks.map(c => (
-                <div key={c.chunkKey} className="flex justify-between items-center rounded px-1 group hover:bg-white/10 transition-colors">
-                  <span className="font-mono truncate mr-2" title={c.chunkKey}>{c.chunkKey}</span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="bg-accent px-1 rounded text-[9px]">LOD {c.level}</span>
-                    <span className={`w-2 h-2 rounded-full ${c.status === 'rendered' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} title={c.status} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 };

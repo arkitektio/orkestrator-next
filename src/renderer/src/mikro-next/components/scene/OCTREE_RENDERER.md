@@ -1,10 +1,10 @@
 # The pyramidal octree (brick pool) renderer
 
-Design notes for the renderer behind the `useOctreeRenderer` flag (default **on**
-on this branch). It replaces both legacy paths — the per-chunk 2D tile meshes
-(`ChunkPlane`) and the monolithic single-LOD 3D volume texture
-(`VolumeTextureMesh`) — with one hierarchical, view-dependent streaming system
-in the style of Neuroglancer / BigVolumeViewer.
+Design notes for the scene renderer. It replaced both legacy paths — the
+per-chunk 2D tile meshes (`ChunkPlane`) and the monolithic single-LOD 3D
+volume texture (`VolumeTextureMesh`), both deleted at cutover — with one
+hierarchical, view-dependent streaming system in the style of
+Neuroglancer / BigVolumeViewer.
 
 This document has two halves: **concepts** (how it works, and why each piece is
 shaped the way it is) and **pitfalls** (everything that bit us during live
@@ -81,7 +81,9 @@ A node is one brick on one pyramid level, keyed `"level:bx:by:bz"` on that
 level's own brick grid. Channels are **not** part of the key — all channels of
 a brick live stacked inside one atlas slot. Non-spatial dims (t, extra slices)
 fold into the layer's slice signature; a signature change flushes the layer's
-residency wholesale.
+residency wholesale. `currentZ` is deliberately NOT in the signature — z is a
+spatial axis of the brick address (the page table holds every slab), so
+z-scrubbing keeps residency and revisited slabs render instantly (see P15).
 
 **A brick is not a zarr chunk.** The fetch unit stays the zarr chunk (keeps
 the worker pipeline and caches untouched); `chunksTouchingBrick` maps a brick's
@@ -245,14 +247,18 @@ Keep the two in sync when touching either.
 | GPU | `render/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `glsl/brickTraversal.ts`, `layers/bricks/channelUniforms.ts` |
 | Materials | `layers/bricks/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
-| Flag switches | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (legacy vs. brick) |
-| Debug | `panels/DebugPanel.tsx` (toggle, plan/pool/lifetime stats, **Copy debug report**), `overlays/BrickResidencyOverlay.tsx` (per-level wireframes) |
-| Store | `store/viewerStore.ts` (`useOctreeRenderer`, `nodePlans`, `residencyVersion`, `brickSystem`), `store/viewStore.ts` (`cameraPose`, `cameraMoving`) |
+| Registry entries | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
+| Debug | `panels/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `overlays/BrickResidencyOverlay.tsx` (per-level wireframes) |
+| Store | `store/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `store/viewStore.ts` (`cameraPose`, `cameraMoving`) |
 | Cache | `zarr/caches/byteBudgetChunkCache.ts` |
 
-Legacy paths (`ChunkPlane`, `PlaneLayer`, `VolumeLayer`, `VolumeTextureMesh`,
-`chunkPlanning`, `chunkPlanTracker`) still exist behind the flag; deletion
-(Phase 6) is blocked on visual-parity sign-off.
+The legacy paths (`ChunkPlane`, `PlaneLayer`, `VolumeLayer`,
+`VolumeTextureMesh`, `core/chunkPlanning.ts`, `managers/chunkPlanTracker.ts`,
+`core/volumeTexture.ts`) and the `useOctreeRenderer` migration flag were
+deleted at cutover; `buildSliceSignature` survives in
+`core/sliceSignature.ts`. Kept: `core/slab.ts`, `core/viewportPlanning.ts`,
+`core/probeMath.ts`, `core/lodPlanning.ts` (budget source +
+`planDefaultVolumeLods` for `fixedLOD` defaults).
 
 ---
 
@@ -354,6 +360,36 @@ sampled, so 512 steps stay affordable), and **jitter must be
 motion-invariant** (`t = bounds.x + rand(gl_FragCoord) · uMinDelta` — no
 rayLen, no uStepScale).
 
+**P15 — Slab z must floor-divide from ONE base z, and levels that don't
+cover the slab must drop out of the chain.** Two live failures, same shape
+(refinement silently stuck at the coarsest level for *certain* z values):
+(a) computing each level's slab as `round(localZ / scaleZ)` independently —
+for z=150 with scales 32/16 that yields slab 5 coarse but slab 9 fine, and 9
+is a child of brick 4, not 5, so the DFS finds no matching children. Derive
+every level's index by floor-division from the same base index (floor chains
+compose: `floor(floor(z/a)/b) = floor(z/ab)`), which also matches the shader
+(`floor(baseZ / scale)` per level). (b) truncated pyramids genuinely LOSE
+tail slices at coarse levels (81 base slices → z shape 2 at scale 32 covers
+only base z < 64): for z=76 the coarsest level has no data at all. Clamping
+to its last slice shows the wrong z and stalls the chain exactly like (a) —
+instead, such levels drop out and the DFS roots at the coarsest level that
+still covers the slab.
+
+Related change: `currentZ` is NOT part of the residency slice signature — z
+is a spatial axis of the brick address (the page table holds every slab), so
+z-scrubbing must not flush the layer; revisited slabs come straight from the
+pool. Flushing per z was legacy ChunkPlane semantics and made every slider
+step a multi-second refetch on plane-chunked data.
+
+**P16 — Guard axis-mapping collisions from layer config.** `intensityDim` is
+server/user data; a live layer shipped `intensityDim === zDim === "z"` on a
+single-channel 256³ stack. The geometry builder read the z extent as the
+channel count → 16 phantom channels → every brick slot, fetch and atlas
+inflated 16× (4 MB slots, a 512 MB atlas blowing straight through the 128 MB
+pool cap, since the coarsest-level slot floor overrides the byte budget).
+`resolveAxisIndices` now resolves an intensity axis that collides with a
+spatial axis to -1 (no channel dim). Trust nothing about dim mappings.
+
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without
 an effect-cleanup `dispose()`, that's an unbounded GPU leak on exactly the
@@ -368,12 +404,10 @@ mask everything downstream, so check touched files individually).
 
 ## 5. Status & what's deliberately deferred
 
-Done and verified: phases 0–5 of the migration plan, three rounds of live
-performance hardening, 143 scene tests green, typecheck at baseline.
-
-**Blocked:** Phase 6 (delete legacy renderers + the flag) awaits visual-parity
-sign-off in the live app (2D + all four 3D projection modes vs. legacy via the
-flag).
+Done and verified: all six migration phases (including the Phase 6 cutover:
+legacy renderers, trackers, and the migration flag deleted), three rounds of
+live performance hardening plus the grain/flicker fix (P14), scene tests
+green, typecheck at baseline.
 
 **Deferred on purpose** (measured as non-bottlenecks or memory trade-offs; do
 not implement without cause):

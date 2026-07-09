@@ -23,7 +23,7 @@ export type BrickAtlas = {
   capacity: number;
   /** Texture extents in texels. */
   size: Vec3;
-  /** Hardware-normalization factor (255 for R8, 1 for R32F), like volumeTexture. */
+  /** Hardware-normalization factor (255 for R8, 1 for R32F). */
   dataScale: number;
   backing: BrickArray;
 };

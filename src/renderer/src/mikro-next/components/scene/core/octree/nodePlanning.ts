@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { DataType } from "zarrita";
 import { mapDTypeToTextureBytes } from "../../stores/utils";
-import { buildSliceSignature } from "../chunkPlanning";
+import { buildSliceSignature } from "../sliceSignature";
 import { PREFETCH_MARGIN, expandVoxelRange } from "../viewportPlanning";
 import { affineToMatrix4 } from "../worldTransform";
 import type { LayerState } from "../layerModel";
@@ -107,7 +107,7 @@ export function planLayerNodes({
   currentZ,
   maxPlanBytes = Number.POSITIVE_INFINITY,
 }: PlanLayerNodesInput): LayerNodePlan {
-  const sliceSignature = buildSliceSignature(layer, currentZ);
+  const sliceSignature = buildSliceSignature(layer);
   const levels = geometry.levels;
   const numLevels = levels.length;
   const coarsest = numLevels - 1;
@@ -139,12 +139,37 @@ export function planLayerNodes({
       ? new THREE.Vector3(0, 0, currentZ).applyMatrix4(layerAffineInverse).z
       : null;
 
-  /** Level z voxel of the slab; "out-of-range" hides the layer at this level. */
+  /** Nearest base-level slice for the slider position ("out-of-range" hides
+   * the layer). Chosen ONCE at base resolution; every coarser level derives
+   * its slab from this by floor-division below. */
+  const baseSlabZ = ((): number | "out-of-range" | null => {
+    if (localZ === null) return null;
+    const zIndex = Math.round(localZ / levels[0].scale[2]);
+    if (zIndex < 0 || zIndex > levels[0].spatialShape[2] - 1) return "out-of-range";
+    return zIndex;
+  })();
+
+  /** Level z voxel of the slab. Floor-divided from the SAME base z at every
+   * level — rounding localZ per level instead can pick a coarse brick whose
+   * children don't contain the finer level's slab (e.g. z=150, scales 32/16:
+   * round(150/32)=5 but round(150/16)=9, a child of brick 4), which stalls
+   * refinement at the coarsest level. Floor chains are self-consistent and
+   * match the shader, which samples every level at floor(baseZ / scale).
+   *
+   * "out-of-range" means this LEVEL does not cover the slab. Truncated
+   * pyramids genuinely lose tail slices at coarse levels (e.g. 81 base
+   * slices → z shape 2 at scale 32 covers only base z < 64): such levels
+   * must drop out of the slab chain, NOT clamp to their last slice —
+   * a clamped brick shows the wrong z and its children never contain the
+   * finer slab, stalling refinement. */
   const resolveLevelZ = (levelIndex: number): number | "out-of-range" => {
-    if (localZ === null) return 0;
-    const scaleZ = levels[levelIndex].scale[2];
-    const zIndex = Math.round(localZ / scaleZ);
-    if (zIndex < 0 || zIndex > levels[levelIndex].spatialShape[2] - 1) return "out-of-range";
+    if (baseSlabZ === null) return 0;
+    if (baseSlabZ === "out-of-range") return "out-of-range";
+    if (levelIndex === 0) return baseSlabZ;
+    const zIndex = Math.floor(
+      (baseSlabZ * levels[0].scale[2]) / levels[levelIndex].scale[2],
+    );
+    if (zIndex > levels[levelIndex].spatialShape[2] - 1) return "out-of-range";
     return zIndex;
   };
 
@@ -165,9 +190,18 @@ export function planLayerNodes({
         ? 0
         : null;
 
-  if (mode === "2D" && slabBrickZ(coarsest) === null) {
-    // Slider outside this layer's stack: render nothing (matches 2D planner).
+  if (mode === "2D" && baseSlabZ === "out-of-range") {
+    // Slider outside this layer's stack: render nothing.
     return empty(coarsest, null);
+  }
+
+  // Truncated pyramids can lose tail slices at coarse levels (81 base slices
+  // → z shape 2 at scale 32 covers only base z < 64). For a slab beyond that
+  // coverage, root the DFS at the coarsest level that still HAS the slab —
+  // levels above it simply have no data for this z.
+  let rootLevel = coarsest;
+  if (mode === "2D") {
+    while (rootLevel > 0 && slabBrickZ(rootLevel) === null) rootLevel--;
   }
 
   // --- Visible region in base voxels ---------------------------------------
@@ -285,10 +319,17 @@ export function planLayerNodes({
     let children: Vec3[] = [];
     if (level > minLevel && wantFiner(level, baseBox)) {
       const childSlab = slabBrickZ(level - 1);
-      children = childrenOf(geometry, spec, level, coords).filter((child) => {
-        if (mode === "2D" && childSlab !== null && child[2] !== childSlab) return false;
-        return nodeVisible(nodeBaseBox(geometry, spec, level - 1, child));
-      });
+      // 2D with a real z axis: a child level that doesn't cover the slab
+      // (childSlab null) must not be refined into — its bricks would show a
+      // different z. Cannot happen below rootLevel with monotone pyramid
+      // coverage, but guard against irregular level shapes.
+      const childCoversSlab = mode !== "2D" || zPos === -1 || childSlab !== null;
+      children = !childCoversSlab
+        ? []
+        : childrenOf(geometry, spec, level, coords).filter((child) => {
+            if (mode === "2D" && childSlab !== null && child[2] !== childSlab) return false;
+            return nodeVisible(nodeBaseBox(geometry, spec, level - 1, child));
+          });
       const childBytes = children.length * slotBytesByLevel[level - 1];
       if (
         children.length === 0 ||
@@ -313,13 +354,13 @@ export function planLayerNodes({
       .forEach(({ child }) => visit(level - 1, child));
   };
 
-  // Roots: coarsest-level bricks overlapping the visible region (all of them
-  // when no view range exists yet — parity with the 2D planner's "coarsest
-  // backdrop before visibility" behavior; refinement needs a footprint, which
-  // also needs the view range or a perspective camera).
-  const rootGrid = brickGridForLevel(geometry, spec, coarsest);
-  const rootScale = levels[coarsest].scale;
-  const rootSlab = slabBrickZ(coarsest);
+  // Roots: bricks of the coarsest slab-covering level overlapping the
+  // visible region (all of them when no view range exists yet — "coarsest
+  // backdrop before visibility"; refinement needs a footprint, which also
+  // needs the view range or a perspective camera).
+  const rootGrid = brickGridForLevel(geometry, spec, rootLevel);
+  const rootScale = levels[rootLevel].scale;
+  const rootSlab = slabBrickZ(rootLevel);
 
   const rootRange = (axis: 0 | 1 | 2): [number, number] => {
     if (!visibleBox) return [0, rootGrid[axis]];
@@ -341,11 +382,11 @@ export function planLayerNodes({
         const coords: Vec3 = [x, y, z];
         roots.push({
           coords,
-          dist: boxCenterDistanceSq(nodeBaseBox(geometry, spec, coarsest, coords), focus),
+          dist: boxCenterDistanceSq(nodeBaseBox(geometry, spec, rootLevel, coords), focus),
         });
       }
   roots.sort((a, b) => a.dist - b.dist);
-  for (const root of roots) visit(coarsest, root.coords);
+  for (const root of roots) visit(rootLevel, root.coords);
 
   return { mode, sliceSignature, targetLevel, slabZ: slabZOut, nodes, planBytes };
 }

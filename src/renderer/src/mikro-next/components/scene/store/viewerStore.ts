@@ -27,7 +27,6 @@ export interface TrackableObject {
 // for the store's many consumers.
 export type { LayerViewRange } from "../core/visibility";
 import type { LayerViewRange } from "../core/visibility";
-import type { LayerChunkPlan } from "../core/chunkPlanning";
 import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
 
@@ -69,25 +68,18 @@ export interface ViewerState {
 
   lodBias: number;
   setLodBias: (bias: number) => void;
-  renderedChunks: Record<string, { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' }>;
-  setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
   lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
   setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
   /** Null while every layer fits the render-cost budget. */
   renderBudget: RenderBudgetInfo | null;
   setRenderBudget: (info: RenderBudgetInfo | null) => void;
-  /** Declarative per-layer 2D chunk plans, written by the chunk-plan tracker. */
-  chunkPlans: Record<string, LayerChunkPlan>;
-  setChunkPlans: (plans: Record<string, LayerChunkPlan>) => void;
 
-  /** Migration flag: run the pyramidal octree (brick pool) renderer path. */
-  useOctreeRenderer: boolean;
-  setUseOctreeRenderer: (enabled: boolean) => void;
   /** Declarative per-layer octree node plans, written by the node-plan tracker. */
   nodePlans: Record<string, LayerNodePlan>;
   setNodePlans: (plans: Record<string, LayerNodePlan>) => void;
-  /** Bumped by the brick residency manager whenever bricks become resident —
-   * the node-plan tracker's replan trigger (replaces renderedChunks feedback). */
+  /** Bumped by the brick residency manager whenever bricks become resident,
+   * so brick-consuming components (layers, overlays, DebugPanel) re-render.
+   * Deliberately NOT a node-plan replan trigger. */
   residencyVersion: number;
   bumpResidencyVersion: () => void;
   /** Handle to the brick residency manager (owned by BrickSystemProvider). */
@@ -125,26 +117,10 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     probeThreshold: 0.01,
     lodBias: 1,
     setLodBias: (bias) => set({ lodBias: bias }),
-    renderedChunks: {},
-    setChunkStatus: (chunkId, info) => set((state) => {
-      const next = { ...state.renderedChunks };
-      if (!info) {
-        delete next[chunkId];
-      } else {
-        next[chunkId] = info;
-      }
-      return { renderedChunks: next };
-    }),
     lodDebugInfo: {},
     setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
     renderBudget: null,
     setRenderBudget: (info) => set({ renderBudget: info }),
-    chunkPlans: {},
-    setChunkPlans: (plans) => set({ chunkPlans: plans }),
-    // Default ON for the scenegrapher branch — the legacy renderers remain
-    // reachable by toggling this off in the view-settings popover.
-    useOctreeRenderer: true,
-    setUseOctreeRenderer: (enabled) => set({ useOctreeRenderer: enabled }),
     nodePlans: {},
     setNodePlans: (plans) => set({ nodePlans: plans }),
     residencyVersion: 0,

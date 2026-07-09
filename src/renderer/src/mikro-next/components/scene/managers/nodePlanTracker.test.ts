@@ -46,19 +46,17 @@ type ViewerSubset = Pick<
   | "lodBias"
   | "currentZ"
   | "residencyVersion"
-  | "useOctreeRenderer"
   | "nodePlans"
   | "getArrayForStoreId"
   | "setNodePlans"
 >;
 
-const makeStores = (useOctreeRenderer = true) => {
+const makeStores = () => {
   const viewerStore = createStore<ViewerSubset>((set) => ({
     layerViewRanges: {},
     lodBias: 1,
     currentZ: 0,
     residencyVersion: 0,
-    useOctreeRenderer,
     nodePlans: {},
     getArrayForStoreId: ((storeId: string) => {
       const arr = ARRAYS[storeId];
@@ -107,21 +105,6 @@ describe("startNodePlanTracking", () => {
     expect(plan.targetLevel).toBe(0);
     expect(plan.nodes.filter((n) => n.role === "target")).toHaveLength(4);
     expect(plan.nodes.filter((n) => n.role === "keep").map((n) => n.key)).toEqual(["1:0:0:0"]);
-
-    stop();
-  });
-
-  it("stays inert (and clears plans) while the flag is off", async () => {
-    const stores = makeStores(false);
-    const stop = startNodePlanTracking(stores);
-    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
-    await settle();
-
-    expect(stores.viewerStore.getState().nodePlans).toEqual({});
-
-    stores.viewerStore.setState({ useOctreeRenderer: true });
-    await settle();
-    expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBeDefined();
 
     stop();
   });

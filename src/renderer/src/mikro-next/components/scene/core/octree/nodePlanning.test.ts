@@ -150,6 +150,127 @@ describe("planLayerNodes (2D z slabs)", () => {
     expect(p.nodes).toEqual([]);
     expect(p.slabZ).toBeNull();
   });
+
+  it("keeps the slab chain consistent across a deep z-downsampled pyramid", () => {
+    // Regression: rounding localZ per level (round(150/32)=5 vs
+    // round(150/16)=9, a child of brick 4) picked a coarse root whose
+    // children never contained the finer slab, stalling refinement at the
+    // coarsest level. Slabs must floor-divide from ONE base z.
+    const deepLevels: LevelSource[] = [1, 2, 4, 8, 16, 32].map((s, i) => ({
+      shape: [256 / s, 256 / s, 256 / s],
+      chunks: [256 / s, 256 / s, i === 0 ? 76 : 256 / s],
+      dtype: "float32",
+      storeId: `d${i}`,
+      scaleFactors: i === 0 ? undefined : [s, s, s],
+    }));
+    const deepLayer = {
+      id: "layer-deep",
+      affineMatrix: null,
+      xDim: "x",
+      yDim: "y",
+      zDim: "z",
+      intensityDim: null,
+      fixedLOD: null,
+      lens: {
+        slices: [],
+        dims: ["z", "y", "x"],
+        shape: [256, 256, 256],
+        dataset: { dims: ["z", "y", "x"], dataArrays: [] },
+      },
+    } as unknown as LayerState;
+    const deepGeo = buildLayerLevelGeometry(["z", "y", "x"], deepLayer, deepLevels)!;
+    const deepSpec = resolveBrickSpec(deepGeo, "2D");
+
+    const p = planLayerNodes({
+      layer: deepLayer,
+      geometry: deepGeo,
+      spec: deepSpec,
+      mode: "2D",
+      viewRange: { xRange: [0, 256], yRange: [0, 256], zRange: null, scale: 2.84 },
+      camera: null,
+      lodBias: 1,
+      currentZ: 150,
+      maxPlanBytes: 128 * 1024 * 1024,
+    });
+
+    expect(p.slabZ).toBe(150);
+    expect(p.targetLevel).toBe(0);
+    expect(keysByRole(p.nodes, "target")).toEqual(["0:0:0:150"]);
+    // Ancestor slabs floor-divide from base z 150: 75, 37, 18, 9, 4.
+    expect(keysByRole(p.nodes, "keep")).toEqual([
+      "5:0:0:4",
+      "4:0:0:9",
+      "3:0:0:18",
+      "2:0:0:37",
+      "1:0:0:75",
+    ]);
+  });
+
+  it("roots below coarse levels that don't cover the slab (truncated pyramid)", () => {
+    // Regression, seen live: 81 base slices truncate to z shape 2 at scale
+    // 32, so the coarsest level covers only base z < 64. For z=76 the old
+    // code clamped to the coarsest level's last slice (wrong z) and its
+    // children never contained the finer slab → stuck at lowest resolution.
+    // The DFS must instead root at the coarsest level that HAS the slab.
+    const spimLevels: LevelSource[] = (
+      [
+        [2048, 81, 1],
+        [1024, 40, 2],
+        [512, 20, 4],
+        [256, 10, 8],
+        [128, 5, 16],
+        [64, 2, 32],
+      ] as const
+    ).map(([xy, z, s], i) => ({
+      shape: [z, xy, xy],
+      chunks: [Math.min(z, 2), xy, xy],
+      dtype: "uint16",
+      storeId: `p${i}`,
+      scaleFactors: i === 0 ? undefined : [s, s, s],
+    }));
+    const spimLayer = {
+      id: "layer-spim",
+      affineMatrix: null,
+      xDim: "x",
+      yDim: "y",
+      zDim: "z",
+      intensityDim: null,
+      fixedLOD: null,
+      lens: {
+        slices: [],
+        dims: ["z", "y", "x"],
+        shape: [81, 2048, 2048],
+        dataset: { dims: ["z", "y", "x"], dataArrays: [] },
+      },
+    } as unknown as LayerState;
+    const spimGeo = buildLayerLevelGeometry(["z", "y", "x"], spimLayer, spimLevels)!;
+    const spimSpec = resolveBrickSpec(spimGeo, "2D");
+
+    const p = planLayerNodes({
+      layer: spimLayer,
+      geometry: spimGeo,
+      spec: spimSpec,
+      mode: "2D",
+      viewRange: { xRange: [583, 1465], yRange: [660, 1388], zRange: null, scale: 1.7 },
+      camera: null,
+      lodBias: 1,
+      currentZ: 76,
+      maxPlanBytes: 128 * 1024 * 1024,
+    });
+
+    expect(p.slabZ).toBe(76);
+    expect(p.targetLevel).toBe(0);
+    // No node may reference level 5 — it has no data for base z 76.
+    expect(p.nodes.some((n) => n.level === 5)).toBe(false);
+    // The chain roots at L4 (slab 4 = floor(76/16)) and every level's slab
+    // floor-divides from base z 76.
+    expect(keysByRole(p.nodes, "keep")).toContain("4:0:0:4");
+    const slabForLevel: Record<number, number> = { 0: 76, 1: 38, 2: 19, 3: 9, 4: 4 };
+    for (const node of p.nodes) {
+      expect(node.coords[2]).toBe(slabForLevel[node.level]);
+    }
+    expect(p.nodes.filter((n) => n.role === "target").every((n) => n.level === 0)).toBe(true);
+  });
 });
 
 describe("planLayerNodes (3D octree)", () => {

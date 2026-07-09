@@ -16,17 +16,14 @@ import type { ViewerState } from "../store/viewerStore";
 import type { ViewState } from "../store/viewStore";
 
 /**
- * Store-level driver for the octree node planner (`core/octree/nodePlanning`),
- * mirroring `chunkPlanTracker.ts`: subscribe to the planning inputs, coalesce
- * bursts into one recompute per animation frame, and write plans back only
- * when they changed (per-layer identity preserved via `sameNodePlan`).
+ * Store-level driver for the octree node planner (`core/octree/nodePlanning`):
+ * subscribe to the planning inputs, coalesce bursts into one recompute per
+ * animation frame (debounced), and write plans back only when they changed
+ * (per-layer identity preserved via `sameNodePlan`).
  *
- * Unlike the 2D chunk planner there is no rendered-chunk feedback loop at
- * all — the shader falls back to coarser resident bricks per sample, and
- * plans are a pure function of view/z/mode/layers.
- *
- * Gated on `viewerStore.useOctreeRenderer` so the legacy planners keep sole
- * ownership until the flag flips (shadow-mode: toggle it in the DebugPanel).
+ * There is no rendered-feedback loop — the shader falls back to coarser
+ * resident bricks per sample, so plans are a pure function of
+ * view/z/mode/layers.
  */
 
 type NodePlanStores = {
@@ -63,12 +60,6 @@ export function startNodePlanTracking({
 
   const recompute = () => {
     const viewerState = viewerStore.getState();
-
-    if (!viewerState.useOctreeRenderer) {
-      if (Object.keys(viewerState.nodePlans).length > 0) viewerState.setNodePlans({});
-      return;
-    }
-
     const layers = sceneStore.getState().layers;
     const mode = modeStore.getState().displayMode;
     const { viewProjectionMatrix, viewportSize, cameraPose } = viewStore.getState();
@@ -183,18 +174,15 @@ export function startNodePlanTracking({
   let lastViewRanges = initialViewer.layerViewRanges;
   let lastLodBias = initialViewer.lodBias;
   let lastCurrentZ = initialViewer.currentZ;
-  let lastFlag = initialViewer.useOctreeRenderer;
   const unsubscribeViewer = viewerStore.subscribe((state) => {
     if (
       state.layerViewRanges !== lastViewRanges ||
       state.lodBias !== lastLodBias ||
-      state.currentZ !== lastCurrentZ ||
-      state.useOctreeRenderer !== lastFlag
+      state.currentZ !== lastCurrentZ
     ) {
       lastViewRanges = state.layerViewRanges;
       lastLodBias = state.lodBias;
       lastCurrentZ = state.currentZ;
-      lastFlag = state.useOctreeRenderer;
       schedule();
     }
   });

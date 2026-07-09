@@ -1,3 +1,7 @@
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
 import { useState } from "react";
 import { isLayerOutOfPlane } from "../core/worldTransform";
@@ -7,6 +11,81 @@ import { LayerState, useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
+import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
+
+/**
+ * One expandable layer card. Owns the layer's render-graph editing state (so it
+ * survives collapsing) and shares it between the header — which hosts the tiny
+ * Save button — and the unfolded editor body.
+ */
+const LayerCard = ({
+  layer,
+  expanded,
+  originalLayer,
+  isArmed,
+  viewportPercent,
+  onSelect,
+  onToggleArm,
+  onUpdate,
+  onFocus,
+  onSaveDims,
+  onClose,
+}: {
+  layer: LayerState;
+  expanded: boolean;
+  originalLayer: LayerState | undefined;
+  isArmed: boolean;
+  viewportPercent?: number;
+  onSelect: () => void;
+  onToggleArm: () => void;
+  onUpdate: (updated: LayerState) => void;
+  onFocus: (layerId: string) => void;
+  onSaveDims: (layer: LayerState) => void;
+  onClose: () => void;
+}) => {
+  const editor = useRenderGraphEditor(layer);
+  return (
+    <Collapsible
+      open={expanded}
+      className={`overflow-hidden rounded-lg border backdrop-blur-md bg-black transition-colors ${
+        expanded
+          ? "border-black/10 bg-black/60"
+          : "border-black/10 bg-black/40 hover:border-black/20 hover:bg-black/70"
+      }`}
+    >
+      <LayerRow
+        embedded
+        layer={layer}
+        originalLayer={originalLayer}
+        isArmed={isArmed}
+        isSelected={expanded}
+        viewportPercent={viewportPercent}
+        graphDirty={editor.dirty}
+        savingGraph={editor.loading}
+        onSaveGraph={editor.save}
+        onSelect={onSelect}
+        onToggleArm={onToggleArm}
+        onUpdate={onUpdate}
+        onFocus={onFocus}
+      />
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+        <div className="border-t border-white/10">
+          <LayerGraphFlyout
+            inline
+            editor={editor}
+            layer={layer}
+            originalLayer={originalLayer}
+            isArmed={isArmed}
+            onUpdate={onUpdate}
+            onToggleArm={onToggleArm}
+            onSave={onSaveDims}
+            onClose={onClose}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
 
 export const LayerControlPanel = () => {
   const layers = useSceneStore((s) => s.layers);
@@ -19,6 +98,7 @@ export const LayerControlPanel = () => {
   const toggleArmedLayerId = useSelectionStore((s) => s.toggleArmedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
+  const layerViewRanges = useViewerStore((s) => s.layerViewRanges);
   const currentZ = useViewerStore((s) => s.currentZ);
   const displayMode = useModeStore((s) => s.displayMode);
   const [updateLater] = useUpdateLaterMutation();
@@ -51,48 +131,59 @@ export const LayerControlPanel = () => {
   const isInView = (l: LayerState) =>
     inViewSet.has(l.id) &&
     !(displayMode === "2D" && isLayerOutOfPlane(l, currentZ));
-  const inViewLayers = layers.filter(isInView);
+
+  // Rough share of the viewport each layer covers (see LayerViewRange
+  // viewportFraction); missing = off-view, which sorts to the bottom.
+  const coverageOf = (id: string) => layerViewRanges[id]?.viewportFraction ?? -1;
+  const byCoverageDesc = (a: LayerState, b: LayerState) =>
+    coverageOf(b.id) - coverageOf(a.id);
+
+  // Layers are listed most-covering first, so the dominant layer is on top.
+  const inViewLayers = layers.filter(isInView).sort(byCoverageDesc);
   const offscreenLayers = layers.filter((l) => !isInView(l));
   // Only layers currently in view are shown by default; the rest stay collapsed
   // behind the "+N off-view" toggle.
-  const shownLayers = showOffscreen ? layers : inViewLayers;
+  const shownLayers = showOffscreen
+    ? [...layers].sort(byCoverageDesc)
+    : inViewLayers;
 
-  const selectedLayer = layers.find((l) => l.id === selectedLayerId) ?? null;
+  // A layer's editor is unfolded when the user explicitly selected it, when it
+  // is the only layer in view, or when it covers more than 60% of the viewport.
+  // The last case is per-layer, so several overlapping layers can be unfolded at
+  // the same time (no single "selected" fallback).
+  const isExpanded = (layer: LayerState) =>
+    layer.id === selectedLayerId ||
+    inViewLayers.length === 1 ||
+    coverageOf(layer.id) > 0.45;
 
-  const renderRow = (layer: LayerState) => (
-    <LayerRow
-      key={layer.id}
-      layer={layer}
-      originalLayer={originalLayers.find((o) => o.id === layer.id)}
-      isArmed={armedLayerIds.includes(layer.id)}
-      isSelected={layer.id === selectedLayerId}
-      onSelect={() =>
-        setSelectedLayerId(layer.id === selectedLayerId ? null : layer.id)
-      }
-      onToggleArm={() => toggleArmedLayerId(layer.id)}
-      onUpdate={updateLayer}
-      onFocus={fitToLayer}
-    />
-  );
+  // The row IS the button: selecting it unfolds the editor inline within the
+  // same card (one border around header + body), rather than popping a
+  // separate flyout window.
+  const renderRow = (layer: LayerState) => {
+    const fraction = layerViewRanges[layer.id]?.viewportFraction;
+    return (
+      <LayerCard
+        key={layer.id}
+        layer={layer}
+        expanded={isExpanded(layer)}
+        originalLayer={originalLayers.find((o) => o.id === layer.id)}
+        isArmed={armedLayerIds.includes(layer.id)}
+        viewportPercent={fraction != null ? Math.round(fraction * 100) : undefined}
+        onSelect={() =>
+          setSelectedLayerId(layer.id === selectedLayerId ? null : layer.id)
+        }
+        onToggleArm={() => toggleArmedLayerId(layer.id)}
+        onUpdate={updateLayer}
+        onFocus={fitToLayer}
+        onSaveDims={saveLayer}
+        onClose={() => setSelectedLayerId(null)}
+      />
+    );
+  };
 
   return (
-    <div className="pointer-events-none absolute right-3 top-16 bottom-3 z-30 flex flex-row items-start justify-end gap-2">
-      {selectedLayer && (
-        <div className="pointer-events-auto flex max-h-full">
-          <LayerGraphFlyout
-            key={selectedLayer.id}
-            layer={selectedLayer}
-            originalLayer={originalLayers.find((o) => o.id === selectedLayer.id)}
-            isArmed={armedLayerIds.includes(selectedLayer.id)}
-            onUpdate={updateLayer}
-            onToggleArm={() => toggleArmedLayerId(selectedLayer.id)}
-            onSave={saveLayer}
-            onClose={() => setSelectedLayerId(null)}
-          />
-        </div>
-      )}
-
-      <div className="pointer-events-auto flex w-56 max-h-full flex-col gap-1 overflow-y-auto">
+    <div className="pointer-events-none flex min-h-0 flex-1 flex-col items-stretch">
+      <div className="pointer-events-auto flex max-h-full flex-col gap-1 overflow-y-auto">
         {shownLayers.map(renderRow)}
 
         {offscreenLayers.length > 0 && (

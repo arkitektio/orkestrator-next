@@ -25,6 +25,7 @@ import LabelViewCard from "../cards/LabelViewCard";
 import LightpathViewCard from "../cards/LightpathViewCard";
 import MaskViewCard from "../cards/MaskViewCard";
 import ROIViewCard from "../cards/ROIViewCard";
+import TimepointViewCard from "../cards/TimepointViewCard";
 import TransformationViewCard from "../cards/TransformationViewCard";
 import WellPositionViewCard from "../cards/WellPositionViewCard";
 import { AutoZoomCamera } from "./cameras/AutoZoomCamera";
@@ -226,6 +227,9 @@ export const ActiveImageViews = (props: {
           )}
           {view.__typename == "HistogramView" && (
             <HistogramViewCard view={view} key={"histogram-" + view.id} />
+          )}
+          {view.__typename == "TimepointView" && (
+            <TimepointViewCard view={view} key={"timepoint-" + view.id} />
           )}
         </>
       ))}

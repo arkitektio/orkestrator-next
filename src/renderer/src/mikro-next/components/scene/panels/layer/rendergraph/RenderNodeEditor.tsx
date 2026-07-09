@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RgbColorPicker } from "react-colorful";
 import {
   Blending,
@@ -20,11 +33,10 @@ import {
 import {
   Blend,
   Box,
+  Check,
+  ChevronDown,
   ChevronRight,
   Layers,
-  Plus,
-  RotateCcw,
-  Save,
   Trash2,
 } from "lucide-react";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
@@ -32,11 +44,8 @@ import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
 import {
-  BLEND_KIND,
   BlendRenderNode,
-  CHANNEL_KIND,
   ChannelRenderNode,
-  PROJECTION_KIND,
   ProjectionRenderNode,
   RenderNode,
   TransferFn,
@@ -47,43 +56,6 @@ import {
   serializeRenderGraph,
 } from "../../../core/renderGraph";
 
-const newChannel = (): ChannelRenderNode => ({
-  type: "channel",
-  kind: CHANNEL_KIND,
-  label: null,
-  intensityDim: null,
-  intensityIndex: 0,
-  visible: true,
-  transfer: {
-    // null clim = full base-native range (resolved per-consumer). Clim is stored
-    // in absolute base-native value units.
-    climMin: null,
-    climMax: null,
-    colormap: ColorMap.Viridis,
-    color: null,
-    gamma: null,
-    opacity: null,
-    invert: null,
-    categorical: null,
-  },
-});
-
-const newBlend = (): BlendRenderNode => ({
-  type: "blend",
-  kind: BLEND_KIND,
-  label: null,
-  blending: Blending.Additive,
-  children: [],
-});
-
-const newProjection = (): ProjectionRenderNode => ({
-  type: "projection",
-  kind: PROJECTION_KIND,
-  label: null,
-  mode: ProjectionMode.Mip,
-  children: [],
-});
-
 const colorToObj = (color: number[] | null) => ({
   r: Math.round(color?.[0] ?? 255),
   g: Math.round(color?.[1] ?? 255),
@@ -92,6 +64,92 @@ const colorToObj = (color: number[] | null) => ({
 
 const formatColormapName = (cm: ColorMap) =>
   cm.charAt(0) + cm.slice(1).toLowerCase();
+
+/**
+ * Compact, searchable colormap picker. A small gradient/name button opens a
+ * searchable list in a popover. When the Intensity colormap is active, a
+ * separate swatch button exposes the base color in its own popover (never
+ * rendered underneath the picker).
+ */
+const ColormapControl = ({
+  transfer,
+  onChange,
+}: {
+  transfer: TransferFn;
+  onChange: (t: TransferFn) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
+  const current = transfer.colormap ?? ColorMap.Viridis;
+  const isIntensity = current === ColorMap.Intensity;
+  const rgb = colorToObj(transfer.color);
+  return (
+    <div className="flex items-center gap-1.5">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex h-6 min-w-0 flex-1 items-center gap-2 rounded border border-border/60 bg-background/40 px-1.5 text-[10px] transition-colors hover:bg-background/60"
+          >
+            <div
+              className="h-3 w-8 shrink-0 rounded"
+              style={{ background: colormapGradientCSS(current, 18, transfer.color) }}
+            />
+            <span className="truncate">{formatColormapName(current)}</span>
+            <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-52 p-0">
+          <Command>
+            <CommandInput placeholder="Search colormap…" className="h-8 text-xs" />
+            <CommandList>
+              <CommandEmpty>No colormap found.</CommandEmpty>
+              <CommandGroup>
+                {COLORMAP_OPTIONS.map((cm) => (
+                  <CommandItem
+                    key={cm}
+                    value={formatColormapName(cm)}
+                    onSelect={() => {
+                      set({ colormap: cm });
+                      setOpen(false);
+                    }}
+                    className="gap-2 text-xs"
+                  >
+                    <div
+                      className="h-3 w-8 shrink-0 rounded"
+                      style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
+                    />
+                    <span className="flex-1 truncate">{formatColormapName(cm)}</span>
+                    {cm === current && <Check className="h-3 w-3 shrink-0" />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {isIntensity && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title="Base color"
+              className="h-6 w-6 shrink-0 rounded border border-border/60"
+              style={{ background: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` }}
+            />
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-auto p-2">
+            <RgbColorPicker
+              color={rgb}
+              onChange={(c) => set({ color: [c.r, c.g, c.b] })}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
+  );
+};
 
 /**
  * Levels-style contrast editor for a channel's transfer (black point /
@@ -180,50 +238,7 @@ const TransferEditor = ({
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <span className="text-muted-foreground">Colormap</span>
-        <Select
-          value={transfer.colormap ?? ColorMap.Viridis}
-          onValueChange={(v) => set({ colormap: v as ColorMap })}
-        >
-          <SelectTrigger className="h-7 w-full text-xs">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <div
-                className="h-3 w-10 shrink-0 rounded"
-                style={{ background: colormapGradientCSS(transfer.colormap ?? ColorMap.Viridis, 18, transfer.color) }}
-              />
-              <span className="truncate">
-                {formatColormapName(transfer.colormap ?? ColorMap.Viridis)}
-              </span>
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {COLORMAP_OPTIONS.map((cm) => (
-              <SelectItem key={cm} value={cm} className="text-xs">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-3 w-10 rounded"
-                    style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
-                  />
-                  {formatColormapName(cm)}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Base color only affects the Intensity colormap (a black→color ramp);
-          show its picker inline when Intensity is selected. */}
-      {(transfer.colormap ?? ColorMap.Viridis) === ColorMap.Intensity && (
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground">Base color</span>
-          <RgbColorPicker
-            color={colorToObj(transfer.color)}
-            onChange={(c) => set({ color: [c.r, c.g, c.b] })}
-          />
-        </div>
-      )}
+      <ColormapControl transfer={transfer} onChange={onChange} />
 
       {/* Gamma lives in the Levels editor (midtone stop) when a histogram is
           available; keep the plain slider only for the layer-less fallback. */}
@@ -243,6 +258,25 @@ const TransferEditor = ({
         </div>
       )}
 
+    </div>
+  );
+};
+
+/**
+ * The opacity / invert / categorical knobs — advanced transfer controls kept out
+ * of the default histogram-first view. Rendered inside the channel's "Advanced"
+ * disclosure alongside the intensity source fields.
+ */
+const AdvancedTransferControls = ({
+  transfer,
+  onChange,
+}: {
+  transfer: TransferFn;
+  onChange: (t: TransferFn) => void;
+}) => {
+  const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
+  return (
+    <>
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Opacity</span>
@@ -265,7 +299,7 @@ const TransferEditor = ({
         <span className="text-muted-foreground">Categorical</span>
         <Switch checked={!!transfer.categorical} onCheckedChange={(v) => set({ categorical: v })} />
       </div>
-    </div>
+    </>
   );
 };
 
@@ -281,9 +315,22 @@ const ChannelNodeEditor = ({
   layer?: LayerState;
 }) => {
   const [open, setOpen] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Tint the whole channel card with its colormap ramp (or the intensity
+  // base-color ramp) so channels are identifiable at a glance.
+  const tint = colormapGradientCSS(
+    node.transfer.colormap ?? ColorMap.Viridis,
+    18,
+    node.transfer.color,
+  );
   return (
-    <div className="rounded border border-border/60 bg-background/40 p-2">
-      <div className="flex items-center gap-2">
+    <div className="relative overflow-hidden rounded border border-border/10 bg-background/50 p-2">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.28] "
+        style={{ background: tint }}
+      />
+      <div className="relative flex items-center gap-2">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -297,10 +344,6 @@ const ChannelNodeEditor = ({
             {node.label || `Channel ${node.intensityIndex}`}
           </span>
         </button>
-        <Switch
-          checked={node.visible}
-          onCheckedChange={(v) => onChange({ ...node, visible: v })}
-        />
         {onRemove && (
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
             <Trash2 className="h-3 w-3" />
@@ -308,53 +351,61 @@ const ChannelNodeEditor = ({
         )}
       </div>
       {open && (
-        <div className="pt-2 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1 flex-1">
-              <span className="text-muted-foreground">Intensity index</span>
-              <Input
-                type="number"
-                className="h-7 text-xs"
-                value={node.intensityIndex}
-                onChange={(e) => onChange({ ...node, intensityIndex: Number(e.target.value) })}
-              />
-            </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <span className="text-muted-foreground">Intensity dim</span>
-              <Input
-                className="h-7 text-xs"
-                value={node.intensityDim ?? ""}
-                placeholder="c"
-                onChange={(e) =>
-                  onChange({ ...node, intensityDim: e.target.value || null })
-                }
-              />
-            </div>
-          </div>
+        <div className="relative pt-2 flex flex-col gap-2">
+          {/* Histogram-first: the levels/colormap editor is the primary control. */}
           <TransferEditor
             transfer={node.transfer}
             onChange={(transfer) => onChange({ ...node, transfer })}
             layer={layer}
           />
+
+          {/* Intensity source + opacity/invert/categorical are advanced knobs,
+              hidden by default to keep the histogram the focus. */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex items-center gap-1 self-start text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronRight
+              className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+            />
+            Advanced
+          </button>
+          {showAdvanced && (
+            <div className="flex flex-col gap-2 pl-1">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-1 flex-1">
+                  <span className="text-muted-foreground">Intensity index</span>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs"
+                    value={node.intensityIndex}
+                    onChange={(e) => onChange({ ...node, intensityIndex: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <span className="text-muted-foreground">Intensity dim</span>
+                  <Input
+                    className="h-7 text-xs"
+                    value={node.intensityDim ?? ""}
+                    placeholder="c"
+                    onChange={(e) =>
+                      onChange({ ...node, intensityDim: e.target.value || null })
+                    }
+                  />
+                </div>
+              </div>
+              <AdvancedTransferControls
+                transfer={node.transfer}
+                onChange={(transfer) => onChange({ ...node, transfer })}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
-
-const AddChildButtons = ({ onAdd }: { onAdd: (n: RenderNode) => void }) => (
-  <div className="flex items-center gap-1">
-    <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onAdd(newChannel())}>
-      <Plus className="h-3 w-3 mr-1" /> Channel
-    </Button>
-    <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onAdd(newBlend())}>
-      <Plus className="h-3 w-3 mr-1" /> Blend
-    </Button>
-    <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onAdd(newProjection())}>
-      <Plus className="h-3 w-3 mr-1" /> Projection
-    </Button>
-  </div>
-);
 
 const ContainerNodeEditor = ({
   node,
@@ -376,10 +427,48 @@ const ContainerNodeEditor = ({
       : node.children.filter((_, i) => i !== index);
     onChange({ ...node, children });
   };
-  const addChild = (child: RenderNode) => onChange({ ...node, children: [...node.children, child] });
+
+  const childEditors = node.children.map((child, i) => (
+    <RenderNodeEditor
+      key={i}
+      node={child}
+      onChange={(c) => setChild(i, c)}
+      onRemove={() => setChild(i, null)}
+      layer={layer}
+    />
+  ));
+
+  // Root blend: not a collapsible tree. The blend mode is a quiet vertical
+  // selector pinned to the far-left spine (clickable, but it doesn't stand out);
+  // the channels stack to its right and are always visible.
+  if (isRoot && node.type === "blend") {
+    return (
+      <div className="flex items-stretch gap-2">
+        <Select
+          value={node.blending}
+          onValueChange={(v) => onChange({ ...node, blending: v as Blending })}
+        >
+          <SelectTrigger
+            className="h-full w-4 shrink-0 justify-center gap-0 self-stretch rounded border-0 bg-transparent px-0 py-1 text-[9px] uppercase tracking-widest text-muted-foreground/60 shadow-none transition-colors hover:text-foreground focus:ring-0 [writing-mode:vertical-rl] [&>svg]:hidden"
+            title="Blend mode"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(Blending).map((b) => (
+              <SelectItem key={b} value={b} className="text-xs">
+                {b.charAt(0) + b.slice(1).toLowerCase()}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex min-w-0 flex-1 flex-col">{childEditors}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className={isRoot ? "" : "rounded border border-border/60 bg-background/40 p-2"}>
+    <div className={isRoot ? "" : "rounded border border-border/60 bg-background/40"}>
       <div>
         <div className="flex items-center gap-2">
           <button
@@ -433,17 +522,8 @@ const ContainerNodeEditor = ({
           )}
         </div>
         {open && (
-          <div className="pt-2 flex flex-col gap-2 pl-3 border-l border-border/50 ml-1">
-            {node.children.map((child, i) => (
-              <RenderNodeEditor
-                key={i}
-                node={child}
-                onChange={(c) => setChild(i, c)}
-                onRemove={() => setChild(i, null)}
-                layer={layer}
-              />
-            ))}
-            <AddChildButtons onAdd={addChild} />
+          <div className="pt-2 flex flex-col gap-2 pl-3 border-l border-border/50 ml-1 bg-black/5">
+            {childEditors}
           </div>
         )}
       </div>
@@ -476,14 +556,22 @@ export const RenderNodeEditor = ({
 };
 
 /**
- * The render-node "aspect" for an image layer: view/edit the layer's
- * `renderGraph` (channel sources, transfer functions, blend & projection nodes)
- * and persist it via `updateLayer`.
+ * Editing state for a layer's render graph, lifted out of the panel body so the
+ * live `root` / `dirty` / `save` can be shared with the collapsed header (which
+ * hosts the tiny Save button). Owned by the always-mounted LayerCard, so unsaved
+ * edits survive collapsing the card.
  */
-export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
+export interface RenderGraphEditor {
+  root: BlendRenderNode;
+  dirty: boolean;
+  loading: boolean;
+  change: (n: BlendRenderNode | ProjectionRenderNode) => void;
+  save: () => Promise<void>;
+}
+
+export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
   const initial = useMemo(
     () => resolveLayerGraph(layer),
-    // Re-seed when the layer identity or its persisted graph changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [layer.id, layer.renderGraph],
   );
@@ -491,6 +579,14 @@ export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
   const [dirty, setDirty] = useState(false);
   const [updateLater, { loading }] = useUpdateLaterMutation();
   const updateStoreLayer = useSceneStore((s) => s.updateLayer);
+
+  // Re-seed from the persisted graph when it changes externally and there are no
+  // unsaved edits. The editor no longer remounts on expand (it lives in the
+  // always-mounted card), so this replaces the old mount-time re-seed.
+  useEffect(() => {
+    if (!dirty) setRoot(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   // The render graph is the single rendering truth. Every edit is pushed to
   // the scene store immediately (live preview); the flat climMin/colormap/…
@@ -522,12 +618,6 @@ export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
     pushPreview(nextRoot);
   };
 
-  const reset = () => {
-    setRoot(initial);
-    setDirty(false);
-    pushPreview(initial);
-  };
-
   const save = async () => {
     const result = await updateLater({
       variables: { input: { id: layer.id, renderGraph: serializeRenderGraph(root) } },
@@ -551,19 +641,22 @@ export const RenderGraphSection = ({ layer }: { layer: LayerState }) => {
     setDirty(false);
   };
 
-  return (
-    <div className="flex flex-col gap-2">
-      <ContainerNodeEditor node={root} onChange={change} isRoot layer={layer} />
-      {dirty && (
-        <div className="flex items-center gap-2">
-          <Button size="sm" className="h-7 text-xs" onClick={save} disabled={loading}>
-            <Save className="h-3 w-3 mr-1" /> Save render graph
-          </Button>
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={reset}>
-            <RotateCcw className="h-3 w-3 mr-1" /> Reset
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+  return { root, dirty, loading, change, save };
 };
+
+/**
+ * The render-node "aspect" for an image layer: the editable tree of channel
+ * sources, transfer functions, blend & projection nodes. Controlled — the
+ * editing state (and the Save action) lives in `useRenderGraphEditor`.
+ */
+export const RenderGraphSection = ({
+  editor,
+  layer,
+}: {
+  editor: RenderGraphEditor;
+  layer: LayerState;
+}) => (
+  <div className="flex flex-col">
+    <ContainerNodeEditor node={editor.root} onChange={editor.change} isRoot layer={layer} />
+  </div>
+);

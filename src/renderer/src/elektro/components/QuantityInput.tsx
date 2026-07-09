@@ -17,7 +17,7 @@ import {
   Dimension,
   formatQuantity,
   parseQuantity,
-} from "../lib/quantities";
+} from "@/lib/quantities";
 
 export interface QuantityInputProps {
   /** Wire value, e.g. "100 ms". `null` / "" renders an empty magnitude. */

@@ -6,13 +6,12 @@ import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
-import { LayerViewRangesOverlay } from "./overlays/LayerViewRangesOverlay";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
+import { ProbeThresholdPanel } from "./panels/ProbeThresholdPanel";
 import { DebugPanel } from "./panels/DebugPanel";
-import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeStore";
@@ -161,17 +160,21 @@ export const Scene = (props: { scene: SceneFragment }) => {
               </GizmoHelper>
             </SceneWrapper>
 
-            <LayerControlPanel />
+            {/* Scene controls + layer list stack as one top-right column, so the
+                control card can be any height (2D/3D) without overlapping the
+                layer list, which just takes the remaining space. */}
+            <div className="pointer-events-none absolute right-3 top-3 bottom-3 z-30 flex w-72 flex-col gap-2">
+              <SceneOverlay />
+              <ProbeThresholdPanel />
+              <LayerControlPanel />
+            </div>
             <DebugPanel />
-            <SelectedPointPanel />
             <SelectedRoiPanel />
             <ZSliderPanel />
             <VisibilityManager/>
             <ScaleBar />
 
-            <SceneOverlay />
             <RoiToolbar />
-            <LayerViewRangesOverlay />
           </PanelProvider>
         </div>
                 </RoiSelectionStoreContext.Provider>

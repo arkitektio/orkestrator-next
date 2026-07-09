@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
 import { FitCamera } from "../lib/fitCamera";
-import { toBase } from "../lib/quantities";
+import { toBase } from "@/lib/quantities";
 import { RecordingMarker } from "../model_render/RecordingMarker";
 import { StimulusMarker } from "../model_render/StimulusMarker";
 import { interpolateCoords } from "../model_render/utils";

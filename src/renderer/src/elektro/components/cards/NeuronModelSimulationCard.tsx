@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ElektroSimulation } from "@/linkers";
 import { ListSimulationFragment } from "../../api/graphql";
-import { toBase } from "../../lib/quantities";
+import { toBase } from "@/lib/quantities";
 import Timestamp from "react-timestamp";
 import { Badge } from "@/components/ui/badge";
 

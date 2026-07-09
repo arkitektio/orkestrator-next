@@ -16,6 +16,12 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       apolloReactHooksImportFrom: "@/lib/mikro/funcs"
+      scalars:
+        # Pint-like quantity scalars: unit-bearing strings ("100 ms", "1 µm").
+        # Mapped to named types in ./api/scalars.ts so generated fields read as
+        # `Duration`/`Length` rather than `any`. Parse via @/lib/quantities.
+        Duration: "@/mikro-next/api/scalars#Duration"
+        Length: "@/mikro-next/api/scalars#Length"
   src/main/schemas/mikro.ts:
     plugins:
       - "typescript"

@@ -145,9 +145,9 @@ type AffineTransformationView implements View {
   isGlobal: Boolean!
   isotropic: Boolean!
   pixelSize: ThreeDVector!
-  pixelSizeX: Micrometers!
-  pixelSizeY: Micrometers!
-  pixelSizeZ: Micrometers!
+  pixelSizeX: Length!
+  pixelSizeY: Length!
+  pixelSizeZ: Length!
   position: ThreeDVector!
   stage: Stage!
   tMax: Int
@@ -426,8 +426,8 @@ type Camera {
   model: String
   name: String!
   organization: DjangoModelType!
-  pixelSizeX: Micrometers
-  pixelSizeY: Micrometers
+  pixelSizeX: Length
+  pixelSizeY: Length
 
   """Provenance entries for this camera"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
@@ -470,11 +470,11 @@ input CameraInput {
   """The name of the camera"""
   name: String = null
 
-  """The physical pixel size in x direction (micrometers)"""
-  pixelSizeX: Micrometers = null
+  """The physical pixel size in x direction (e.g. '6.5 µm')"""
+  pixelSizeX: Length = null
 
-  """The physical pixel size in y direction (micrometers)"""
-  pixelSizeY: Micrometers = null
+  """The physical pixel size in y direction (e.g. '6.5 µm')"""
+  pixelSizeY: Length = null
 
   """The sensor size in x direction (pixels)"""
   sensorSizeX: Int = null
@@ -557,11 +557,11 @@ type ChannelView implements View {
     types: [ViewKind!]
   ): [View!]!
 
-  """The emission wavelength of the channel in nanometers"""
-  emissionWavelength: Float
+  """The emission wavelength of the channel"""
+  emissionWavelength: Length
 
-  """The excitation wavelength of the channel in nanometers"""
-  excitationWavelength: Float
+  """The excitation wavelength of the channel"""
+  excitationWavelength: Length
   id: ID!
   image: Image!
   isGlobal: Boolean!
@@ -594,11 +594,11 @@ input ChannelViewInput {
   """The collection this view belongs to"""
   collection: ID = null
 
-  """The emission wavelength of the channel in nanometers"""
-  emissionWavelength: Float = null
+  """The emission wavelength of the channel (e.g. '509 nm')"""
+  emissionWavelength: Length = null
 
-  """The excitation wavelength of the channel in nanometers"""
-  excitationWavelength: Float = null
+  """The excitation wavelength of the channel (e.g. '488 nm')"""
+  excitationWavelength: Length = null
 
   """The ID of the image this view is for"""
   image: ID!
@@ -1340,9 +1340,21 @@ input DatasetOrder @oneOf {
 """Date with time (isoformat)"""
 scalar DateTime
 
+"""Input for deleting an array dataset by ID"""
+input DeleteADatasetInput {
+  """The ID of the array dataset to delete"""
+  id: ID!
+}
+
 """Input for deleting a camera by ID"""
 input DeleteCameraInput {
   """The ID of the camera to delete"""
+  id: ID!
+}
+
+"""Input for deleting a data array by ID"""
+input DeleteDataArrayInput {
+  """The ID of the data array to delete"""
   id: ID!
 }
 
@@ -1382,6 +1394,18 @@ input DeleteInstrumentInput {
   id: ID!
 }
 
+"""Input for deleting a layer by ID"""
+input DeleteLayerInput {
+  """The ID of the layer to delete"""
+  id: ID!
+}
+
+"""Input for deleting a lens by ID"""
+input DeleteLensInput {
+  """The ID of the lens to delete"""
+  id: ID!
+}
+
 """Input for deleting a mesh by ID"""
 input DeleteMeshInput {
   """The ID of the mesh to delete"""
@@ -1406,9 +1430,21 @@ input DeleteRGBContextInput {
   id: ID!
 }
 
+"""Input for deleting a render tree by ID"""
+input DeleteRenderTreeInput {
+  """The ID of the render tree to delete"""
+  id: ID!
+}
+
 """Input for deleting a ROI by ID"""
 input DeleteRoiInput {
   """The ID of the ROI to delete"""
+  id: ID!
+}
+
+"""Input for deleting a scene by ID"""
+input DeleteSceneInput {
+  """The ID of the scene to delete"""
   id: ID!
 }
 
@@ -1655,6 +1691,9 @@ enum DuckDBDataType {
   """Array of variable-length strings"""
   VARCHAR_ARRAY
 }
+
+"""A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``)."""
+scalar Duration
 
 enum ElementKind {
   APERTURE
@@ -3058,6 +3097,9 @@ interface LayerRenderNode {
   label: String
 }
 
+"""A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``)."""
+scalar Length
+
 """
 A Lens is a way of looking at a dataset: a dimensional selection (slices) over a dataset that defines a view of its data
 """
@@ -3463,14 +3505,6 @@ type MetaSchema {
 """The `MetricMap` scalar type represents a matrix values as specified by"""
 scalar MetricMap
 
-"""
-The `Micrometers` scalar type represents a matrix valuesas specified by
-"""
-scalar Micrometers
-
-"""The `Matrix` scalar type represents a matrix values as specified by"""
-scalar Milliseconds
-
 """Mirror"""
 type MirrorElement implements OpticalElement {
   angleDeg: Float
@@ -3705,6 +3739,9 @@ type Mutation {
   """Create a new view for well position data"""
   createWellPositionView(input: WellPositionViewInput!): WellPositionView!
 
+  """Delete an existing array dataset"""
+  deleteAdataset(input: DeleteADatasetInput!): ID!
+
   """Delete an existing affine transformation view"""
   deleteAffineTransformationView(input: DeleteViewInput!): ID!
 
@@ -3713,6 +3750,9 @@ type Mutation {
 
   """Delete an existing channel view"""
   deleteChannelView(input: DeleteViewInput!): ID!
+
+  """Delete an existing data array"""
+  deleteDataArray(input: DeleteDataArrayInput!): ID!
 
   """Delete an existing data ROI"""
   deleteDataRoi(input: DeleteDataRoiInput!): Boolean!
@@ -3735,6 +3775,12 @@ type Mutation {
   """Delete an existing instrument"""
   deleteInstrument(input: DeleteInstrumentInput!): ID!
 
+  """Delete an existing layer"""
+  deleteLayer(input: DeleteLayerInput!): ID!
+
+  """Delete an existing lens"""
+  deleteLens(input: DeleteLensInput!): ID!
+
   """Delete an existing mesh"""
   deleteMesh(input: DeleteMeshInput!): ID!
 
@@ -3747,6 +3793,9 @@ type Mutation {
   """Delete an existing optics view"""
   deleteOpticsView(input: DeleteViewInput!): ID!
 
+  """Delete an existing render tree"""
+  deleteRenderTree(input: DeleteRenderTreeInput!): ID!
+
   """Delete an existing RGB context"""
   deleteRgbContext(input: DeleteRGBContextInput!): ID!
 
@@ -3755,6 +3804,9 @@ type Mutation {
 
   """Delete an existing region of interest"""
   deleteRoi(input: DeleteRoiInput!): ID!
+
+  """Delete an existing scene"""
+  deleteScene(input: DeleteSceneInput!): ID!
 
   """Delete an existing snapshot"""
   deleteSnapshot(input: DeleteSnaphotInput!): ID!
@@ -4445,11 +4497,11 @@ input PartialChannelViewInput {
   """The collection this view belongs to"""
   collection: ID = null
 
-  """The emission wavelength of the channel in nanometers"""
-  emissionWavelength: Float = null
+  """The emission wavelength of the channel (e.g. '509 nm')"""
+  emissionWavelength: Length = null
 
-  """The excitation wavelength of the channel in nanometers"""
-  excitationWavelength: Float = null
+  """The excitation wavelength of the channel (e.g. '488 nm')"""
+  excitationWavelength: Length = null
 
   """The name of the channel"""
   name: String = null
@@ -4995,14 +5047,14 @@ input PartialTimepointViewInput {
   """The index of the timepoint since the start of the era"""
   indexSinceStart: Int = null
 
-  """The time in ms since the start of the era"""
-  msSinceStart: Milliseconds = null
-
   """The maximum t coordinate of the view"""
   tMax: Int = null
 
   """The minimum t coordinate of the view"""
   tMin: Int = null
+
+  """The time since the start of the era (e.g. '100 ms')"""
+  timeSinceStart: Duration = null
 
   """The maximum x coordinate of the view"""
   xMax: Int = null
@@ -6972,7 +7024,7 @@ type TimeBucket {
 }
 
 """
-A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start.
+A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a time offset or frame index since its start.
 """
 type TimepointView implements View {
   """The accessor"""
@@ -6991,9 +7043,9 @@ type TimepointView implements View {
   image: Image!
   indexSinceStart: Int
   isGlobal: Boolean!
-  msSinceStart: Milliseconds
   tMax: Int
   tMin: Int
+  timeSinceStart: Duration
   xMax: Int
   xMin: Int
   yMax: Int
@@ -7020,10 +7072,10 @@ input TimepointViewFilter {
   images: [ID!]
   indexSinceStart: Int
   isGlobal: Boolean
-  msSinceStart: Float
 
   """Search by the name of the image this view belongs to"""
   search: String
+  timeSinceStart: Int
 }
 
 """
@@ -7048,14 +7100,14 @@ input TimepointViewInput {
   """The index of the timepoint since the start of the era"""
   indexSinceStart: Int = null
 
-  """The time in ms since the start of the era"""
-  msSinceStart: Milliseconds = null
-
   """The maximum t coordinate of the view"""
   tMax: Int = null
 
   """The minimum t coordinate of the view"""
   tMin: Int = null
+
+  """The time since the start of the era (e.g. '100 ms')"""
+  timeSinceStart: Duration = null
 
   """The maximum x coordinate of the view"""
   xMax: Int = null

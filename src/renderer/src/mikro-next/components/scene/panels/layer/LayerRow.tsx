@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Crosshair, Eye, EyeOff, Focus } from "lucide-react";
+import { Crosshair, Eye, EyeOff, Focus, Save } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { isLayerDirty } from "./colormap-utils";
 import { layerSwatchBackground } from "./renderGraphSwatch";
@@ -19,6 +19,11 @@ export const LayerRow = ({
   onToggleArm,
   onUpdate,
   onFocus,
+  embedded = false,
+  viewportPercent,
+  graphDirty = false,
+  savingGraph = false,
+  onSaveGraph,
 }: {
   layer: LayerState;
   originalLayer: LayerState | undefined;
@@ -28,6 +33,23 @@ export const LayerRow = ({
   onToggleArm: () => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
+  /**
+   * Rough percentage of the viewport this layer occupies, shown as a small
+   * badge. Undefined for off-view layers (no coverage entry).
+   */
+  viewportPercent?: number;
+  /**
+   * When true the row is the header of an already-styled card (the expandable
+   * layer card), so it drops its own border / background / rounding and just
+   * renders the flex header inline.
+   */
+  embedded?: boolean;
+  /** The render graph has unsaved edits — surfaces a tiny Save button. */
+  graphDirty?: boolean;
+  /** Save mutation in flight (disables the button). */
+  savingGraph?: boolean;
+  /** Persist the unsaved render-graph edits. */
+  onSaveGraph?: () => void;
 }) => {
   const dirty = isLayerDirty(layer, originalLayer);
   const label =
@@ -37,10 +59,14 @@ export const LayerRow = ({
 
   return (
     <div
-      className={`group flex items-center gap-2 rounded-lg border px-2 py-1.5 backdrop-blur-md transition-colors cursor-pointer ${
-        isSelected
-          ? "border-white/40 bg-white/10"
-          : "border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5"
+      className={`group flex items-center gap-2 px-2 py-1.5 cursor-pointer ${
+        embedded
+          ? "transition-colors"
+          : `rounded-lg border backdrop-blur-md transition-colors ${
+              isSelected
+                ? "border-white/40 bg-white/10"
+                : "border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5"
+            }`
       } ${hidden ? "opacity-50" : ""}`}
       onClick={onSelect}
     >
@@ -51,6 +77,27 @@ export const LayerRow = ({
       <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
         {label}
       </span>
+      {graphDirty && onSaveGraph && (
+        <button
+          className="shrink-0 rounded p-0.5 text-yellow-300/90 transition-colors hover:text-yellow-200 disabled:opacity-50"
+          title="Save changes"
+          disabled={savingGraph}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSaveGraph();
+          }}
+        >
+          <Save className="h-3 w-3" />
+        </button>
+      )}
+      {viewportPercent != null && (
+        <span
+          className="shrink-0 text-[10px] tabular-nums text-white/40"
+          title="Rough share of the viewport this layer covers"
+        >
+          {viewportPercent > 0 ? `${viewportPercent}%` : "<1%"}
+        </span>
+      )}
       {dirty && (
         <span
           className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-400"

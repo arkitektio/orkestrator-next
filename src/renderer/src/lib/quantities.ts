@@ -1,11 +1,12 @@
-// Pint-like quantity helpers for the elektro module.
+// Pint-like quantity helpers, shared across modules (elektro, mikro, …).
 //
-// The elektro GraphQL wire format carries physical quantities as strings with an
-// explicit unit — `Duration` ("100 ms"), `Length` ("1 µm"), `ElectricPotential`
+// Several GraphQL backends carry physical quantities as strings with an explicit
+// unit — `Duration` ("100 ms"), `Length` ("1 µm"), `ElectricPotential`
 // ("-70 mV"), `ElectricalConductance` ("5 nS") and `Frequency` ("50 Hz"). In the
-// generated TS these all map to `any`, so nothing stops the rest of the app from
-// doing arithmetic on what is actually a string. This module is the single place
-// that parses, formats and unit-converts those strings.
+// generated TS these map to named string aliases (see each module's
+// `api/scalars.ts`), so nothing stops the rest of the app from doing arithmetic
+// on what is actually a string. This module is the single place that parses,
+// formats and unit-converts those strings.
 
 export type Dimension =
   | "time"

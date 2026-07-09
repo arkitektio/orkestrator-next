@@ -15,7 +15,7 @@ import {
 } from "../lib/importance";
 import { useNeuronPanelStore } from "../lib/neuronPanelStore";
 import { buildNetworkLayout, SegmentGeom } from "../lib/networkLayout";
-import { toBase } from "../lib/quantities";
+import { toBase } from "@/lib/quantities";
 import { ImportanceControl } from "./ImportanceControl";
 import { HoveredNet, NetworkLayer, NetworkTooltip } from "./NetworkLayer3D";
 import { NetworkControl } from "./NetworkControl";

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { DetailNeuronModelFragment } from "../api/graphql";
-import { toBase } from "./quantities";
+import { toBase } from "@/lib/quantities";
 
 /**
  * Geometry for the neuron model's "network" layer — the point processes that

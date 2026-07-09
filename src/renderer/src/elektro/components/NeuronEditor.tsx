@@ -26,7 +26,7 @@ import {
 } from "../lib/modelSerialization";
 import { rgbaToCss } from "../lib/color";
 import { buildNetworkLayout, SegmentGeom } from "../lib/networkLayout";
-import { toBase } from "../lib/quantities";
+import { toBase } from "@/lib/quantities";
 import { CompartmentEditor } from "./editor/CompartmentEditor";
 import { MechanismCatalogProvider } from "./editor/MechanismCatalog";
 import { ModelConfigPanel } from "./editor/ModelConfigPanel";

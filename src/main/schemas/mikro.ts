@@ -21,6 +21,8 @@ export type Scalars = {
   ArrayLike: { input: any; output: any; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``). */
+  Duration: { input: any; output: any; }
   /** The `FileLike` scalar type represents a reference to a big file storage previously created by the user n a datalayer */
   FileLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
@@ -35,14 +37,12 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   /** The `LabelsLike` scalar type represents a reference to a labels object previously created by the user n a datalayer */
   LabelsLike: { input: any; output: any; }
+  /** A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``). */
+  Length: { input: any; output: any; }
   /** The `MeshLike` scalar type represents a reference to a mesh previously created by the user n a datalayer */
   MeshLike: { input: any; output: any; }
   /** The `MetricMap` scalar type represents a matrix values as specified by */
   MetricMap: { input: any; output: any; }
-  /** The `Micrometers` scalar type represents a matrix valuesas specified by */
-  Micrometers: { input: any; output: any; }
-  /** The `Matrix` scalar type represents a matrix values as specified by */
-  Milliseconds: { input: any; output: any; }
   /** The `ParquetLike` scalar type represents a reference to a parquet objected stored previously created by the user on a datalayer */
   ParquetLike: { input: any; output: any; }
   /** The `Vector` scalar type represents a matrix values as specified by */
@@ -179,9 +179,9 @@ export type AffineTransformationView = View & {
   isGlobal: Scalars['Boolean']['output'];
   isotropic: Scalars['Boolean']['output'];
   pixelSize: Scalars['ThreeDVector']['output'];
-  pixelSizeX: Scalars['Micrometers']['output'];
-  pixelSizeY: Scalars['Micrometers']['output'];
-  pixelSizeZ: Scalars['Micrometers']['output'];
+  pixelSizeX: Scalars['Length']['output'];
+  pixelSizeY: Scalars['Length']['output'];
+  pixelSizeZ: Scalars['Length']['output'];
   position: Scalars['ThreeDVector']['output'];
   stage: Stage;
   tMax?: Maybe<Scalars['Int']['output']>;
@@ -424,8 +424,8 @@ export type Camera = {
   model?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   organization: DjangoModelType;
-  pixelSizeX?: Maybe<Scalars['Micrometers']['output']>;
-  pixelSizeY?: Maybe<Scalars['Micrometers']['output']>;
+  pixelSizeX?: Maybe<Scalars['Length']['output']>;
+  pixelSizeY?: Maybe<Scalars['Length']['output']>;
   /** Provenance entries for this camera */
   provenanceEntries: Array<ProvenanceEntry>;
   sensorSizeX?: Maybe<Scalars['Int']['output']>;
@@ -474,10 +474,10 @@ export type CameraInput = {
   model?: InputMaybe<Scalars['String']['input']>;
   /** The name of the camera */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** The physical pixel size in x direction (micrometers) */
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  /** The physical pixel size in y direction (micrometers) */
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
+  /** The physical pixel size in x direction (e.g. '6.5 µm') */
+  pixelSizeX?: InputMaybe<Scalars['Length']['input']>;
+  /** The physical pixel size in y direction (e.g. '6.5 µm') */
+  pixelSizeY?: InputMaybe<Scalars['Length']['input']>;
   /** The sensor size in x direction (pixels) */
   sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
   /** The sensor size in y direction (pixels) */
@@ -551,10 +551,10 @@ export type ChannelView = View & {
   cMin?: Maybe<Scalars['Int']['output']>;
   /** All views of this image */
   congruentViews: Array<View>;
-  /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: Maybe<Scalars['Float']['output']>;
-  /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: Maybe<Scalars['Float']['output']>;
+  /** The emission wavelength of the channel */
+  emissionWavelength?: Maybe<Scalars['Length']['output']>;
+  /** The excitation wavelength of the channel */
+  excitationWavelength?: Maybe<Scalars['Length']['output']>;
   id: Scalars['ID']['output'];
   image: Image;
   isGlobal: Scalars['Boolean']['output'];
@@ -587,10 +587,10 @@ export type ChannelViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
-  /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: InputMaybe<Scalars['Float']['input']>;
-  /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: InputMaybe<Scalars['Float']['input']>;
+  /** The emission wavelength of the channel (e.g. '509 nm') */
+  emissionWavelength?: InputMaybe<Scalars['Length']['input']>;
+  /** The excitation wavelength of the channel (e.g. '488 nm') */
+  excitationWavelength?: InputMaybe<Scalars['Length']['input']>;
   /** The ID of the image this view is for */
   image: Scalars['ID']['input'];
   /** The name of the channel */
@@ -1246,9 +1246,21 @@ export type DatasetOrder =
   |  { createdAt?: never; id: Ordering; name?: never; }
   |  { createdAt?: never; id?: never; name: Ordering; };
 
+/** Input for deleting an array dataset by ID */
+export type DeleteADatasetInput = {
+  /** The ID of the array dataset to delete */
+  id: Scalars['ID']['input'];
+};
+
 /** Input for deleting a camera by ID */
 export type DeleteCameraInput = {
   /** The ID of the camera to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting a data array by ID */
+export type DeleteDataArrayInput = {
+  /** The ID of the data array to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -1288,6 +1300,18 @@ export type DeleteInstrumentInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a layer by ID */
+export type DeleteLayerInput = {
+  /** The ID of the layer to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting a lens by ID */
+export type DeleteLensInput = {
+  /** The ID of the lens to delete */
+  id: Scalars['ID']['input'];
+};
+
 /** Input for deleting a mesh by ID */
 export type DeleteMeshInput = {
   /** The ID of the mesh to delete */
@@ -1312,9 +1336,21 @@ export type DeleteRgbContextInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting a render tree by ID */
+export type DeleteRenderTreeInput = {
+  /** The ID of the render tree to delete */
+  id: Scalars['ID']['input'];
+};
+
 /** Input for deleting a ROI by ID */
 export type DeleteRoiInput = {
   /** The ID of the ROI to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting a scene by ID */
+export type DeleteSceneInput = {
+  /** The ID of the scene to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -3375,12 +3411,16 @@ export type Mutation = {
   createVolumeLayer: ImageLayer;
   /** Create a new view for well position data */
   createWellPositionView: WellPositionView;
+  /** Delete an existing array dataset */
+  deleteAdataset: Scalars['ID']['output'];
   /** Delete an existing affine transformation view */
   deleteAffineTransformationView: Scalars['ID']['output'];
   /** Delete an existing camera */
   deleteCamera: Scalars['ID']['output'];
   /** Delete an existing channel view */
   deleteChannelView: Scalars['ID']['output'];
+  /** Delete an existing data array */
+  deleteDataArray: Scalars['ID']['output'];
   /** Delete an existing data ROI */
   deleteDataRoi: Scalars['Boolean']['output'];
   /** Delete an existing dataset */
@@ -3395,6 +3435,10 @@ export type Mutation = {
   deleteImage: Scalars['ID']['output'];
   /** Delete an existing instrument */
   deleteInstrument: Scalars['ID']['output'];
+  /** Delete an existing layer */
+  deleteLayer: Scalars['ID']['output'];
+  /** Delete an existing lens */
+  deleteLens: Scalars['ID']['output'];
   /** Delete an existing mesh */
   deleteMesh: Scalars['ID']['output'];
   /** Delete an existing multi-well plate configuration */
@@ -3403,12 +3447,16 @@ export type Mutation = {
   deleteObjective: Scalars['ID']['output'];
   /** Delete an existing optics view */
   deleteOpticsView: Scalars['ID']['output'];
+  /** Delete an existing render tree */
+  deleteRenderTree: Scalars['ID']['output'];
   /** Delete an existing RGB context */
   deleteRgbContext: Scalars['ID']['output'];
   /** Delete an existing RGB view */
   deleteRgbView: Scalars['ID']['output'];
   /** Delete an existing region of interest */
   deleteRoi: Scalars['ID']['output'];
+  /** Delete an existing scene */
+  deleteScene: Scalars['ID']['output'];
   /** Delete an existing snapshot */
   deleteSnapshot: Scalars['ID']['output'];
   /** Delete an existing stage */
@@ -3732,6 +3780,11 @@ export type MutationCreateWellPositionViewArgs = {
 };
 
 
+export type MutationDeleteAdatasetArgs = {
+  input: DeleteADatasetInput;
+};
+
+
 export type MutationDeleteAffineTransformationViewArgs = {
   input: DeleteViewInput;
 };
@@ -3744,6 +3797,11 @@ export type MutationDeleteCameraArgs = {
 
 export type MutationDeleteChannelViewArgs = {
   input: DeleteViewInput;
+};
+
+
+export type MutationDeleteDataArrayArgs = {
+  input: DeleteDataArrayInput;
 };
 
 
@@ -3782,6 +3840,16 @@ export type MutationDeleteInstrumentArgs = {
 };
 
 
+export type MutationDeleteLayerArgs = {
+  input: DeleteLayerInput;
+};
+
+
+export type MutationDeleteLensArgs = {
+  input: DeleteLensInput;
+};
+
+
 export type MutationDeleteMeshArgs = {
   input: DeleteMeshInput;
 };
@@ -3802,6 +3870,11 @@ export type MutationDeleteOpticsViewArgs = {
 };
 
 
+export type MutationDeleteRenderTreeArgs = {
+  input: DeleteRenderTreeInput;
+};
+
+
 export type MutationDeleteRgbContextArgs = {
   input: DeleteRgbContextInput;
 };
@@ -3814,6 +3887,11 @@ export type MutationDeleteRgbViewArgs = {
 
 export type MutationDeleteRoiArgs = {
   input: DeleteRoiInput;
+};
+
+
+export type MutationDeleteSceneArgs = {
+  input: DeleteSceneInput;
 };
 
 
@@ -4543,10 +4621,10 @@ export type PartialChannelViewInput = {
   cMin?: InputMaybe<Scalars['Int']['input']>;
   /** The collection this view belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
-  /** The emission wavelength of the channel in nanometers */
-  emissionWavelength?: InputMaybe<Scalars['Float']['input']>;
-  /** The excitation wavelength of the channel in nanometers */
-  excitationWavelength?: InputMaybe<Scalars['Float']['input']>;
+  /** The emission wavelength of the channel (e.g. '509 nm') */
+  emissionWavelength?: InputMaybe<Scalars['Length']['input']>;
+  /** The excitation wavelength of the channel (e.g. '488 nm') */
+  excitationWavelength?: InputMaybe<Scalars['Length']['input']>;
   /** The name of the channel */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The maximum t coordinate of the view */
@@ -4917,12 +4995,12 @@ export type PartialTimepointViewInput = {
   era?: InputMaybe<Scalars['ID']['input']>;
   /** The index of the timepoint since the start of the era */
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  /** The time in ms since the start of the era */
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum t coordinate of the view */
   tMin?: InputMaybe<Scalars['Int']['input']>;
+  /** The time since the start of the era (e.g. '100 ms') */
+  timeSinceStart?: InputMaybe<Scalars['Duration']['input']>;
   /** The maximum x coordinate of the view */
   xMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum x coordinate of the view */
@@ -6981,7 +7059,7 @@ export type TimeBucket = {
   ts: Scalars['DateTime']['output'];
 };
 
-/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start. */
+/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a time offset or frame index since its start. */
 export type TimepointView = View & {
   __typename?: 'TimepointView';
   /** The accessor */
@@ -6995,9 +7073,9 @@ export type TimepointView = View & {
   image: Image;
   indexSinceStart?: Maybe<Scalars['Int']['output']>;
   isGlobal: Scalars['Boolean']['output'];
-  msSinceStart?: Maybe<Scalars['Milliseconds']['output']>;
   tMax?: Maybe<Scalars['Int']['output']>;
   tMin?: Maybe<Scalars['Int']['output']>;
+  timeSinceStart?: Maybe<Scalars['Duration']['output']>;
   xMax?: Maybe<Scalars['Int']['output']>;
   xMin?: Maybe<Scalars['Int']['output']>;
   yMax?: Maybe<Scalars['Int']['output']>;
@@ -7007,7 +7085,7 @@ export type TimepointView = View & {
 };
 
 
-/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a millisecond offset or frame index since its start. */
+/** A view anchoring an image region in real time: it places the region within an era (a named time epoch on the microscope) at a time offset or frame index since its start. */
 export type TimepointViewCongruentViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<ViewKind>>;
@@ -7028,9 +7106,9 @@ export type TimepointViewFilter = {
   images?: InputMaybe<Array<Scalars['ID']['input']>>;
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
   isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Float']['input']>;
   /** Search by the name of the image this view belongs to */
   search?: InputMaybe<Scalars['String']['input']>;
+  timeSinceStart?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** Input for creating a timepoint view on an existing image, referenced by ID */
@@ -7047,12 +7125,12 @@ export type TimepointViewInput = {
   image: Scalars['ID']['input'];
   /** The index of the timepoint since the start of the era */
   indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  /** The time in ms since the start of the era */
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
   /** The maximum t coordinate of the view */
   tMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum t coordinate of the view */
   tMin?: InputMaybe<Scalars['Int']['input']>;
+  /** The time since the start of the era (e.g. '100 ms') */
+  timeSinceStart?: InputMaybe<Scalars['Duration']['input']>;
   /** The maximum x coordinate of the view */
   xMax?: InputMaybe<Scalars['Int']['input']>;
   /** The minimum x coordinate of the view */
@@ -7803,7 +7881,7 @@ type View_WellPositionView_Fragment = { __typename?: 'WellPositionView', xMin?: 
 
 export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_DerivedView_Fragment | View_FileView_Fragment | View_HistogramView_Fragment | View_InstanceMaskView_Fragment | View_LabelView_Fragment | View_LightpathView_Fragment | View_MaskView_Fragment | View_OpticsView_Fragment | View_RgbView_Fragment | View_RoiView_Fragment | View_ReferenceView_Fragment | View_ScaleView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
 
-export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null };
+export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, excitationWavelength?: any | null, emissionWavelength?: any | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null };
 
 export type LightpathViewFragment = { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } };
 
@@ -7817,7 +7895,7 @@ export type AffineTransformationViewFragment = { __typename?: 'AffineTransformat
 
 export type RgbViewFragment = { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> };
 
-export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } };
+export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, timeSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } };
 
 export type OpticsViewFragment = { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null };
 
@@ -7838,8 +7916,8 @@ export type HistogramViewFragment = { __typename?: 'HistogramView', id: string, 
 export type CreateCameraMutationVariables = Exact<{
   serialNumber: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
+  pixelSizeX?: InputMaybe<Scalars['Length']['input']>;
+  pixelSizeY?: InputMaybe<Scalars['Length']['input']>;
   sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
   sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -7850,8 +7928,8 @@ export type CreateCameraMutation = { __typename?: 'Mutation', createCamera: { __
 export type EnsureCameraMutationVariables = Exact<{
   serialNumber: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
+  pixelSizeX?: InputMaybe<Scalars['Length']['input']>;
+  pixelSizeY?: InputMaybe<Scalars['Length']['input']>;
   sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
   sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -8695,7 +8773,7 @@ export type ActiveImageViewsQueryVariables = Exact<{
 }>;
 
 
-export type ActiveImageViewsQuery = { __typename?: 'Query', activeViews: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } | null } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
+export type ActiveImageViewsQuery = { __typename?: 'Query', activeViews: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: any | null, emissionWavelength?: any | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } | null } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, timeSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
 
 export type ListFileViewsQueryVariables = Exact<{
   file: Scalars['ID']['input'];
@@ -9877,7 +9955,7 @@ export const TimepointViewFragmentDoc = gql`
     fragment TimepointView on TimepointView {
   ...View
   id
-  msSinceStart
+  timeSinceStart
   indexSinceStart
   era {
     ...Era
@@ -9961,7 +10039,7 @@ export const ContinousScanViewFragmentDoc = gql`
 }
     ${ViewFragmentDoc}`;
 export const CreateCameraDocument = gql`
-    mutation CreateCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
+    mutation CreateCamera($serialNumber: String!, $name: String, $pixelSizeX: Length, $pixelSizeY: Length, $sensorSizeX: Int, $sensorSizeY: Int) {
   createCamera(
     input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
   ) {
@@ -9971,7 +10049,7 @@ export const CreateCameraDocument = gql`
 }
     `;
 export const EnsureCameraDocument = gql`
-    mutation EnsureCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
+    mutation EnsureCamera($serialNumber: String!, $name: String, $pixelSizeX: Length, $pixelSizeY: Length, $sensorSizeX: Int, $sensorSizeY: Int) {
   ensureCamera(
     input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
   ) {

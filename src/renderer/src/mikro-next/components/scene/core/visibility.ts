@@ -17,6 +17,11 @@ export interface LayerViewRange {
   zRange: [number, number] | null;
   /** Screen pixels per image pixel (how many viewer pixels one voxel occupies) */
   scale: number;
+  /**
+   * Rough fraction of the viewport this layer covers (0..1). A fast, imprecise
+   * estimate: the layer's frustum-clipped world box projected to an NDC 2D AABB.
+   */
+  viewportFraction: number;
 }
 
 /** Structural subset of viewerStore's TrackableObject. */
@@ -42,6 +47,7 @@ export type SceneVisibilityResult = {
 const frustum = new THREE.Frustum();
 const box = new THREE.Box3();
 const corner = new THREE.Vector3();
+const ndcCorner = new THREE.Vector3();
 
 export function computeSceneVisibility({
   projScreenMatrix,
@@ -152,7 +158,46 @@ function computeLayerViewRange(
     yRange: [Math.max(0, Math.floor(voxelYMin)), Math.min(yMax, Math.ceil(voxelYMax))],
     zRange,
     scale,
+    viewportFraction: estimateViewportFraction(visibleWorldBox, projScreenMatrix),
   };
+}
+
+/**
+ * Rough, fast estimate of how much of the viewport a layer covers (0..1).
+ * Projects the 8 corners of the frustum-clipped world box to NDC, takes the 2D
+ * AABB, clamps it to the [-1,1] NDC square, and returns its area over the full
+ * viewport area (2×2 = 4). Not precise — deliberately cheap (8 matrix-vector
+ * products). The box is pre-clipped to the frustum, so corners project cleanly.
+ */
+function estimateViewportFraction(
+  visibleWorldBox: THREE.Box3,
+  projScreenMatrix: THREE.Matrix4,
+): number {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (let ix = 0; ix <= 1; ix++) {
+    for (let iy = 0; iy <= 1; iy++) {
+      for (let iz = 0; iz <= 1; iz++) {
+        ndcCorner
+          .set(
+            ix === 0 ? visibleWorldBox.min.x : visibleWorldBox.max.x,
+            iy === 0 ? visibleWorldBox.min.y : visibleWorldBox.max.y,
+            iz === 0 ? visibleWorldBox.min.z : visibleWorldBox.max.z,
+          )
+          .applyMatrix4(projScreenMatrix);
+        if (ndcCorner.x < minX) minX = ndcCorner.x;
+        if (ndcCorner.x > maxX) maxX = ndcCorner.x;
+        if (ndcCorner.y < minY) minY = ndcCorner.y;
+        if (ndcCorner.y > maxY) maxY = ndcCorner.y;
+      }
+    }
+  }
+  const clampedW = Math.min(1, maxX) - Math.max(-1, minX);
+  const clampedH = Math.min(1, maxY) - Math.max(-1, minY);
+  const fraction = (Math.max(0, clampedW) * Math.max(0, clampedH)) / 4;
+  return Math.min(1, Math.max(0, fraction));
 }
 
 /** Value equality for a visible-id set against the store's string array. */
@@ -174,6 +219,8 @@ export function sameViewRanges(
     if (!b) return false;
     return (
       a.scale === b.scale &&
+      // Compare the rounded percent so sub-1% jitter doesn't churn the store.
+      Math.round(a.viewportFraction * 100) === Math.round(b.viewportFraction * 100) &&
       a.xRange[0] === b.xRange[0] &&
       a.xRange[1] === b.xRange[1] &&
       a.yRange[0] === b.yRange[0] &&

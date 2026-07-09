@@ -67,50 +67,36 @@ export const SceneOverlay = () => {
 
   const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
 
+  // One control card, styled like the layer cards below it. Holds the display
+  // (2D/3D) toggle, the view-settings/debug popover, the camera-controller modes
+  // (3D only) and the interaction-mode switches, so every scene control lives in
+  // a single top-right card that stacks above the layer list.
   return (
-    <>
-      {/* Display + view settings — top left. */}
-      <div className="absolute left-4 top-4 z-10 flex flex-row gap-2">
+    <div className="pointer-events-auto flex flex-col gap-2 rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
+      {/* Display toggle + view settings/debug. */}
+      <div className="flex items-center gap-2">
         <Button
           variant={"outline"}
           size={"xs"}
-          className="bg-black w-11 tabular-nums"
+          className="h-7 w-11 bg-black tabular-nums"
           onClick={() => setDisplayMode(nextDisplayMode)}
           title={`Switch to ${nextDisplayMode} view`}
         >
           <span className="text-xs font-bold">{displayMode}</span>
         </Button>
 
-        {displayMode === "3D" && (
-          <ButtonGroup>
-            {cameraControllerModeOptions.map((mode) => (
-              <Button
-                variant={"outline"}
-                size={"xs"}
-                className="bg-black"
-                key={mode.value}
-                onClick={() => setCameraControllerMode(mode.value)}
-                disabled={cameraControllerMode === mode.value}
-                title={mode.description}
-              >
-                <span className="text-xs font-bold">{mode.label}</span>
-              </Button>
-            ))}
-          </ButtonGroup>
-        )}
-
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant={isDebug ? "destructive" : "outline"}
               size={"xs"}
-              className={isDebug ? "" : "bg-black"}
+              className={isDebug ? "ml-auto h-7" : "ml-auto h-7 bg-black"}
               title="View settings"
             >
               <Settings2 className="h-3.5 w-3.5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-48">
+          <PopoverContent align="end" className="w-48">
             <SettingRow
               label="Scale bar"
               checked={showScaleBar}
@@ -126,8 +112,27 @@ export const SceneOverlay = () => {
         </Popover>
       </div>
 
-      {/* Interaction modes — compact, iconified control on the right. */}
-      <ButtonGroup className="absolute right-3 top-3 z-10">
+      {/* Camera controller modes — 3D only. */}
+      {displayMode === "3D" && (
+        <ButtonGroup className="w-full">
+          {cameraControllerModeOptions.map((mode) => (
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              className="h-7 flex-1 bg-black"
+              key={mode.value}
+              onClick={() => setCameraControllerMode(mode.value)}
+              disabled={cameraControllerMode === mode.value}
+              title={mode.description}
+            >
+              <span className="text-xs font-bold">{mode.label}</span>
+            </Button>
+          ))}
+        </ButtonGroup>
+      )}
+
+      {/* Interaction modes — iconified switches. */}
+      <ButtonGroup className="w-full">
         {interactionModeOptions.map((mode) => {
           const Icon = INTERACTION_ICONS[mode.value];
           const active = interactionMode === mode.value;
@@ -136,7 +141,7 @@ export const SceneOverlay = () => {
               key={mode.value}
               variant={active ? "default" : "outline"}
               size={"xs"}
-              className={active ? "h-7 w-7 p-0" : "h-7 w-7 p-0 bg-black"}
+              className={active ? "h-7 flex-1 p-0" : "h-7 flex-1 bg-black p-0"}
               onClick={() => setInteractionMode(mode.value)}
               title={mode.label}
             >
@@ -145,6 +150,6 @@ export const SceneOverlay = () => {
           );
         })}
       </ButtonGroup>
-    </>
+    </div>
   );
 };

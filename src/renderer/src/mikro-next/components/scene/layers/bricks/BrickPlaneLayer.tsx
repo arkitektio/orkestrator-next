@@ -65,9 +65,23 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   // --- Channel derivation (ChunkPlane parity) -------------------------------
   const channelData = useMemo(
-    () => buildChannelUniformData(layer, Math.max(0, (pool?.spec.channelCount ?? 1) - 1)),
+    () =>
+      buildChannelUniformData(
+        layer,
+        Math.max(0, (pool?.spec.channelCount ?? 1) - 1),
+        pool?.minValue ?? 0,
+        pool?.maxValue ?? 1,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [layer?.channels, layer?.blend, layer?.colormap, layer?.color, pool?.spec.channelCount],
+    [
+      layer?.channels,
+      layer?.blend,
+      layer?.colormap,
+      layer?.color,
+      pool?.spec.channelCount,
+      pool?.minValue,
+      pool?.maxValue,
+    ],
   );
 
   useEffect(() => {

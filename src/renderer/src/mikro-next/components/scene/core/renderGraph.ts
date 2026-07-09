@@ -82,8 +82,10 @@ type FragmentNode = {
 };
 
 const DEFAULT_TRANSFER: TransferFn = {
-  climMin: 0,
-  climMax: 1,
+  // null clim = "full base-native range", resolved by each consumer against the
+  // layer's data range. Clim is stored in absolute base-native value units.
+  climMin: null,
+  climMax: null,
   colormap: ColorMap.Viridis,
   color: null,
   gamma: null,

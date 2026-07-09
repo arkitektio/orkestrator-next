@@ -1,5 +1,6 @@
 import { Blending } from "@/mikro-next/api/graphql";
 import type { LayerState } from "../../core/layerModel";
+import { climToUnit } from "../../core/dataRange";
 import { buildColormapAtlas } from "../../zarr/colormaps";
 
 /**
@@ -34,6 +35,10 @@ export type ChannelUniformData = {
 export function buildChannelUniformData(
   layer: LayerState | undefined,
   maxChannelIndex: number,
+  // Base-native data range (pool.minValue/maxValue). Channel clim is stored in
+  // absolute base-native units and normalized into the shader's [0,1] space here.
+  minValue: number = 0,
+  maxValue: number = 1,
 ): ChannelUniformData {
   const channels = (layer?.channels ?? []).slice(0, MAX_CHANNELS);
   const numChannels = channels.length;
@@ -56,8 +61,8 @@ export function buildChannelUniformData(
   const rows = Math.max(1, numChannels);
   channels.forEach((c, i) => {
     channelIndex[i] = Math.min(maxChannelIndex, Math.max(0, c.intensityIndex ?? 0));
-    climMin[i] = c.transfer.climMin ?? 0;
-    climMax[i] = c.transfer.climMax ?? 1;
+    climMin[i] = climToUnit(c.transfer.climMin, minValue, maxValue, 0);
+    climMax[i] = climToUnit(c.transfer.climMax, minValue, maxValue, 1);
     gamma[i] = c.transfer.gamma ?? 1;
     opacity[i] = c.transfer.opacity ?? 1;
     visible[i] = c.visible ? 1 : 0;

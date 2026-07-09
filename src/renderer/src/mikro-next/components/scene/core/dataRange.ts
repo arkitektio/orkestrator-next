@@ -33,3 +33,22 @@ export function resolveLayerDataRange(
   }
   return mapDTypeToMinMax(dtype as DataType);
 }
+
+/**
+ * Normalize an absolute contrast value into the `[0,1]` range the raymarch math
+ * (GLSL `channelNormalize` and its CPU mirrors) applies clim in. `clim` is stored
+ * in absolute base-native value units; `min`/`max` are the layer's base-native
+ * range (`resolveLayerDataRange` / `pool.minValue`/`maxValue`). `null` means
+ * "full range" — `0` for the low bound, `1` for the high bound.
+ */
+export function climToUnit(
+  clim: number | null | undefined,
+  min: number,
+  max: number,
+  fallback: 0 | 1,
+): number {
+  if (clim == null) return fallback;
+  const span = max - min;
+  if (span <= 0) return fallback;
+  return Math.min(Math.max((clim - min) / span, 0), 1);
+}

@@ -9,6 +9,7 @@ import {
 } from "../../glsl/brickTraversal";
 import { GLSL_RAND } from "../../glsl/common";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
+import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import { useModeStore } from "../../store/modeStore";
@@ -95,9 +96,23 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const pool = brickSystem?.getLayerPool(layerId) ?? null;
 
   const channelData = useMemo(
-    () => buildChannelUniformData(layer, Math.max(0, (pool?.spec.channelCount ?? 1) - 1)),
+    () =>
+      buildChannelUniformData(
+        layer,
+        Math.max(0, (pool?.spec.channelCount ?? 1) - 1),
+        pool?.minValue ?? 0,
+        pool?.maxValue ?? 1,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [layer?.channels, layer?.blend, layer?.colormap, layer?.color, pool?.spec.channelCount],
+    [
+      layer?.channels,
+      layer?.blend,
+      layer?.colormap,
+      layer?.color,
+      pool?.spec.channelCount,
+      pool?.minValue,
+      pool?.maxValue,
+    ],
   );
 
   useEffect(() => {
@@ -198,8 +213,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       channel: channelData.channelIndex[0] ?? 0,
       minValue: pool.minValue,
       maxValue: pool.maxValue,
-      climMin: layer?.climMin ?? 0,
-      climMax: layer?.climMax ?? 1,
+      // layer.climMin/climMax are absolute base-native; marchResidentBricks works
+      // in the shader's normalized [0,1] space.
+      climMin: climToUnit(layer?.climMin, pool.minValue, pool.maxValue, 0),
+      climMax: climToUnit(layer?.climMax, pool.minValue, pool.maxValue, 1),
       gamma: layer?.gamma ?? 1,
       threshold: viewerStoreApi.getState().probeThreshold,
       sample: (baseVoxel, desiredLevel, channel) =>

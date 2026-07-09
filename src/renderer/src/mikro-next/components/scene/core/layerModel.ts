@@ -1,5 +1,6 @@
 import { Blending, ColorMap, ProjectionMode } from "@/mikro-next/api/graphql";
 import { ImageLayerFragment } from "./layerGuards";
+import { resolveLayerDataRange } from "./dataRange";
 import {
   ChannelRenderNode,
   flattenChannels,
@@ -54,10 +55,23 @@ export const normalizeLayer = (
   const channels = flattenChannels(graph);
   const primary = channels[0];
   const transfer = primary?.transfer;
+  // Clim is stored in absolute base-native units; null = "full range". Resolve
+  // null against the layer's base-native data range so the flat single-channel
+  // fields (used by the 3D shader path + CPU probe march) stay concrete.
+  const dtype = layer.lens?.dataset?.dataArrays?.[0]?.store?.dtype;
+  let baseMin = 0;
+  let baseMax = 1;
+  if (dtype) {
+    try {
+      [baseMin, baseMax] = resolveLayerDataRange(layer, dtype);
+    } catch {
+      // keep [0,1] fallback
+    }
+  }
   return {
     ...layer,
-    climMin: transfer?.climMin ?? 0,
-    climMax: transfer?.climMax ?? 1,
+    climMin: transfer?.climMin ?? baseMin,
+    climMax: transfer?.climMax ?? baseMax,
     colormap: transfer?.colormap ?? null,
     color: transfer?.color ?? null,
     gamma: transfer?.gamma ?? null,

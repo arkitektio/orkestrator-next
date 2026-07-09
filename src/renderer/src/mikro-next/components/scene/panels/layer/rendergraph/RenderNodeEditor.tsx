@@ -28,12 +28,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
-import { HistogramSlider } from "../HistogramSlider";
-import {
-  absoluteToNormalized,
-  getLayerDtypeRange,
-  normalizedToAbsolute,
-} from "../contrast-utils";
+import { LevelsEditor } from "../LevelsEditor";
+import { getLayerDtypeRange } from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
 import {
   BLEND_KIND,
@@ -59,8 +55,10 @@ const newChannel = (): ChannelRenderNode => ({
   intensityIndex: 0,
   visible: true,
   transfer: {
-    climMin: 0,
-    climMax: 1,
+    // null clim = full base-native range (resolved per-consumer). Clim is stored
+    // in absolute base-native value units.
+    climMin: null,
+    climMax: null,
     colormap: ColorMap.Viridis,
     color: null,
     gamma: null,
@@ -96,30 +94,36 @@ const formatColormapName = (cm: ColorMap) =>
   cm.charAt(0) + cm.slice(1).toLowerCase();
 
 /**
- * Histogram-backed contrast editor for a channel's transfer. Transfer clims
- * are normalized [0,1]; the slider works in absolute data values, converted
+ * Levels-style contrast editor for a channel's transfer (black point /
+ * gamma midtone / white point over the full-range histogram). Transfer clims
+ * are normalized [0,1]; the editor works in absolute data values, converted
  * via the layer's dtype range. Histogram data comes from the layer's active
  * anchor (first anchor carrying a value histogram).
  */
 const TransferHistogram = ({
   layer,
   transfer,
-  onClimChange,
+  onLevelsChange,
 }: {
   layer: LayerState;
   transfer: TransferFn;
-  onClimChange: (climMin: number, climMax: number) => void;
+  onLevelsChange: (climMin: number, climMax: number, gamma: number) => void;
 }) => {
   const [dtypeMin, dtypeMax] = getLayerDtypeRange(layer);
   const anchor = layer.lens.activeAnchors.find((a) => a.valueHistogram);
   const vh = anchor?.valueHistogram;
 
+  // Clim is stored in absolute base-native units, exactly the space the editor
+  // works in — so pass it straight through (null = full range).
   return (
-    <HistogramSlider
+    <LevelsEditor
       bins={vh?.bins ?? []}
       histogram={vh?.histogram ?? []}
-      valueMin={normalizedToAbsolute(transfer.climMin ?? 0, dtypeMin, dtypeMax)}
-      valueMax={normalizedToAbsolute(transfer.climMax ?? 1, dtypeMin, dtypeMax)}
+      value={{
+        min: transfer.climMin ?? dtypeMin,
+        max: transfer.climMax ?? dtypeMax,
+        gamma: transfer.gamma ?? 1,
+      }}
       colormap={transfer.colormap}
       baseColor={transfer.color}
       p1={vh?.p1 ?? null}
@@ -128,12 +132,7 @@ const TransferHistogram = ({
       histMax={vh?.max ?? dtypeMax}
       dtypeMin={dtypeMin}
       dtypeMax={dtypeMax}
-      onChange={(nextMin, nextMax) =>
-        onClimChange(
-          absoluteToNormalized(nextMin, dtypeMin, dtypeMax),
-          absoluteToNormalized(nextMax, dtypeMin, dtypeMax),
-        )
-      }
+      onChange={(next) => onLevelsChange(next.min, next.max, next.gamma)}
     />
   );
 };
@@ -154,7 +153,7 @@ const TransferEditor = ({
         <TransferHistogram
           layer={layer}
           transfer={transfer}
-          onClimChange={(climMin, climMax) => set({ climMin, climMax })}
+          onLevelsChange={(climMin, climMax, gamma) => set({ climMin, climMax, gamma })}
         />
       ) : (
         <div className="flex items-center gap-2">
@@ -226,19 +225,23 @@ const TransferEditor = ({
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Gamma</span>
-          <span className="font-mono">{(transfer.gamma ?? 1).toFixed(2)}</span>
+      {/* Gamma lives in the Levels editor (midtone stop) when a histogram is
+          available; keep the plain slider only for the layer-less fallback. */}
+      {!layer && (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Gamma</span>
+            <span className="font-mono">{(transfer.gamma ?? 1).toFixed(2)}</span>
+          </div>
+          <Slider
+            min={0.1}
+            max={3}
+            step={0.05}
+            value={[transfer.gamma ?? 1]}
+            onValueChange={([g]) => set({ gamma: g })}
+          />
         </div>
-        <Slider
-          min={0.1}
-          max={3}
-          step={0.05}
-          value={[transfer.gamma ?? 1]}
-          onValueChange={([g]) => set({ gamma: g })}
-        />
-      </div>
+      )}
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">

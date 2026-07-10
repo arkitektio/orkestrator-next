@@ -45,6 +45,24 @@ export class WorkerPool {
     this.nextSequence = 0
   }
 
+  /**
+   * Eagerly spawn up to `count` workers into never-used (`null`) slots so
+   * module-worker cold start (spawn + codec-bundle eval) overlaps scene
+   * setup instead of serializing in front of the first chunk fetches.
+   * Idempotent: live workers are untouched; repeat calls only fill remaining
+   * `null` slots. Fills from the END because checkout `pop()`s from there —
+   * pre-warmed workers are the first ones handed to tasks.
+   */
+  prewarm(factory: () => Worker, count = this.workerQueue.length): void {
+    let spawned = 0
+    for (let i = this.workerQueue.length - 1; i >= 0 && spawned < count; i--) {
+      if (this.workerQueue[i] === null) {
+        this.workerQueue[i] = factory()
+        spawned++
+      }
+    }
+  }
+
   enqueue<T>(
     taskInput: WorkerPoolTaskInput<T>,
     options?: WorkerPoolTaskOptions,

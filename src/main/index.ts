@@ -93,6 +93,17 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     registerIssueIpc();
+    // Inside your app.whenReady() or before creating the window
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Cross-Origin-Embedder-Policy': ['require-corp'],
+          'Cross-Origin-Opener-Policy': ['same-origin']
+        }
+      })
+    })
+    
     windowManager.createMainWindow(icon);
 
     if (!electronAgent) {
@@ -110,16 +121,7 @@ if (!gotTheLock) {
       }
     }
 
-    // Inside your app.whenReady() or before creating the window
-session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  callback({
-    responseHeaders: {
-      ...details.responseHeaders,
-      'Cross-Origin-Embedder-Policy': ['require-corp'],
-      'Cross-Origin-Opener-Policy': ['same-origin']
-    }
-  })
-})
+    
 
   });
 }

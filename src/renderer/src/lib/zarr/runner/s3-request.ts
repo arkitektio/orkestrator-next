@@ -72,6 +72,38 @@ async function deriveSigningKey(
   return hmacSha256(kService, 'aws4_request')
 }
 
+/**
+ * SigV4 signing keys change only with (credentials, UTC date, region) — at
+ * most once per day per store — but every chunk request needs one, and a
+ * fresh derivation is 4 sequential `crypto.subtle` HMAC round-trips (8 async
+ * calls). Memoize the derivation PROMISE per (accessKey, date, region) so
+ * concurrent first requests share one derivation; ~6 crypto ops per chunk
+ * drop to 2. Module state — this file runs inside each decode worker, so the
+ * memo is naturally per-worker. Date rollover self-handles via the key.
+ */
+const signingKeyMemo = new Map<string, Promise<Uint8Array>>()
+const SIGNING_KEY_MEMO_MAX = 8
+
+function deriveSigningKeyCached(
+  config: S3FetchConfig,
+  dateStamp: string,
+): Promise<Uint8Array> {
+  // accessKey identifies the credential set (a secret rotation issues a new
+  // access key alongside it); the secret itself stays out of the map key.
+  const memoKey = `${config.accessKey}|${dateStamp}|${config.region}`
+  const cached = signingKeyMemo.get(memoKey)
+  if (cached) return cached
+  const derived = deriveSigningKey(config.secretKey, dateStamp, config.region)
+  if (signingKeyMemo.size >= SIGNING_KEY_MEMO_MAX) {
+    const oldest = signingKeyMemo.keys().next().value
+    if (oldest !== undefined) signingKeyMemo.delete(oldest)
+  }
+  signingKeyMemo.set(memoKey, derived)
+  // A failed derivation must not poison the memo.
+  derived.catch(() => signingKeyMemo.delete(memoKey))
+  return derived
+}
+
 function canonicalQueryString(url: URL): string {
   const entries = Array.from(url.searchParams.entries()).sort(([leftKey, leftValue], [rightKey, rightValue]) => {
     if (leftKey !== rightKey) {
@@ -173,11 +205,7 @@ async function signRequest(
     await sha256Hex(canonicalRequest),
   ].join('\n')
 
-  const signingKey = await deriveSigningKey(
-    config.secretKey,
-    dateStamp,
-    config.region,
-  )
+  const signingKey = await deriveSigningKeyCached(config, dateStamp)
   const signature = toHex(await hmacSha256(signingKey, stringToSign))
 
   requestHeaders.set(

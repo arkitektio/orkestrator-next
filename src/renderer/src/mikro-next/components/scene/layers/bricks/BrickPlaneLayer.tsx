@@ -1,3 +1,4 @@
+import { useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
@@ -14,6 +15,7 @@ import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
+import { getBackendTexture, type SceneRenderer } from "../../render/gpu/sceneRenderer";
 
 /**
  * Brick-pool replacement for `PlaneLayer` + per-chunk `ChunkPlane` meshes:
@@ -50,6 +52,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // only (see BrickVolumeLayer), never the streaming residency counter.
   useViewerStore((s) => s.poolsVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
+  const isDebug = useViewerStore((s) => s.debug);
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const camera = useThree((state) => state.camera);
   const viewerStoreApi = useViewerStoreApi();
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
@@ -89,13 +95,18 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     ],
   );
 
-  useEffect(() => {
-    const atlas = channelData.atlas;
-    return () => atlas.dispose();
-  }, [channelData]);
+  // NOTE: the colormap atlas is NOT disposed per channelData change — the
+  // material stays bound to one long-lived texture whose contents
+  // `updateChannelNodes` refreshes in place (disposing a still-bound texture
+  // made WebGPU sample its default white texture → gray composites). The
+  // bound texture is disposed with the bundle below.
 
-  /** Continuous base-voxel z of the displayed slab's center. */
-  const slabBaseZ = planSlabZ !== null && planSlabZ !== undefined ? planSlabZ + 0.5 : 0.5;
+  /** INTEGER base-voxel z of the displayed slab. The shader's slab mode
+   * applies the planner's floor chain per level itself (nodePlanning
+   * `slabLevelZ` ↔ makeSampleBrickEx slabZ) — adding 0.5 here made the two
+   * disagree at non-integer z scales (fetched z=1, sampled z=2). planSlabZ is
+   * in level-0 slices; scale to base voxels like `slabLevelZ` does. */
+  const slabBaseZ = (planSlabZ ?? 0) * (pool?.geometry.levels[0]?.scale[2] ?? 1);
 
   // TSL node material (WebGPU + WebGL2-fallback backends). Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
@@ -114,7 +125,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   useEffect(() => {
     const material = bundle?.material;
-    return () => material?.dispose();
+    return () => {
+      material?.dispose();
+      // Whatever atlas is bound at teardown (adoption keeps it long-lived).
+      bundle?.nodes.colormapAtlas.value?.dispose();
+    };
   }, [bundle]);
 
   // Push dynamic values straight to the uniform nodes (no material rebuild).
@@ -125,8 +140,76 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     bundle.nodes.maxValue.value = pool?.maxValue ?? 1;
     bundle.nodes.uDesiredLevel.value = planTargetLevel;
     bundle.nodes.uSlabBaseZ.value = slabBaseZ;
+
+    // Channel-compositor diagnostic (debug overlay on): the exact uniform +
+    // colormap-row state the shader consumes, one line per update. Pair with
+    // the debug report's channelSlabProbe (atlas slab contents) to separate
+    // LUT bugs / repack bugs / shader-tap bugs when channels look wrong.
+    if (isDebug) {
+      const atlasData = channelData.atlas.image.data as Uint8Array;
+      const rows = Math.max(1, channelData.numChannels);
+      console.log(`[bricks] ${layerId} channel uniforms`, {
+        numChannels: channelData.numChannels,
+        channelIndex: channelData.channelIndex.slice(0, rows),
+        visible: channelData.visible.slice(0, rows),
+        row: channelData.row.slice(0, rows),
+        climMin: channelData.climMin.slice(0, rows),
+        climMax: channelData.climMax.slice(0, rows),
+        // Center texel of each LUT row — the tint the shader multiplies by
+        // the channel's normalized intensity.
+        rowColors: Array.from({ length: rows }, (_, r) => {
+          const idx = (r * 256 + 128) * 4;
+          return [atlasData[idx], atlasData[idx + 1], atlasData[idx + 2]];
+        }),
+        // Backend GPU handles (of the BOUND textures): false = three is
+        // sampling its default texture (silent-substitution family).
+        colormapAtlasOnGpu: !!getBackendTexture(
+          gl as unknown as SceneRenderer,
+          bundle.nodes.colormapAtlas.value,
+        ),
+        brickAtlasOnGpu: pool
+          ? !!getBackendTexture(gl as unknown as SceneRenderer, pool.atlas.texture)
+          : null,
+        slabDepth: pool?.spec.stored[2],
+        channelCount: pool?.spec.channelCount,
+        slabBaseZ,
+        targetLevel: planTargetLevel,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, channelData, planTargetLevel, slabBaseZ]);
+  }, [bundle, channelData, planTargetLevel, slabBaseZ, isDebug]);
+
+  // Debug: dump the GENERATED fragment shader (WGSL on WebGPU) once per
+  // material — ground truth for how TSL compiled the channel loop /
+  // uniform-array indexing (the CPU-side uniform state can be perfect while
+  // the codegen collapses e.g. `element(i)` — this is how we catch it).
+  useEffect(() => {
+    if (!isDebug || !bundle) return;
+    const group = groupRef.current;
+    const mesh = group?.children.find((child) => (child as THREE.Mesh).isMesh);
+    if (!mesh) return;
+    const debugApi = (
+      gl as unknown as {
+        debug?: {
+          getShaderAsync?: (
+            scene: THREE.Scene,
+            camera: THREE.Camera,
+            object: THREE.Object3D,
+          ) => Promise<{ fragmentShader: string | null }>;
+        };
+      }
+    ).debug;
+    if (!debugApi?.getShaderAsync) return;
+    void debugApi
+      .getShaderAsync(scene, camera, mesh)
+      .then(({ fragmentShader }) => {
+        console.log(`[bricks] ${layerId} fragment shader\n`, fragmentShader);
+      })
+      .catch((error) => {
+        console.warn(`[bricks] ${layerId} shader dump failed`, error);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDebug, bundle]);
 
   // --- Probing (PlaneLayer parity, targetLod → plan.targetLevel) ------------
   // Reads shapes/scales from the pool's (deduplicated) level geometry — the

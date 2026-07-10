@@ -55,7 +55,11 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     settledStepScale: 1,
     activeStepScale: 2,
     uploadBudgetMs: 4,
-    maxInflightBricks: 12,
+    // 16 (was 12): the decode pool scales to hardwareConcurrency (4–24) and
+    // each brick fans out to ≥1 chunk task — 12 under-subscribed it on fast
+    // machines/networks. Judge against timeToSharpMs; GPU-side cost stays
+    // capped by the drain budget regardless of arrival rate.
+    maxInflightBricks: 16,
     residencyBumpMs: 150,
   },
   [TIER_MEDIUM]: {

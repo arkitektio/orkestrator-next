@@ -22,6 +22,10 @@ export const CameraMatrixSync = ({
   const previousFrameMatrix = useRef(new THREE.Matrix4());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastEmitRef = useRef(0);
+  // Last-seen projection inputs (NaN-initialized so the first frame always
+  // updates). Order matches writes in the frame callback below.
+  const projSigRef = useRef<Float64Array>(new Float64Array(14).fill(Number.NaN));
+  const projSigScratch = useRef<Float64Array>(new Float64Array(14));
 
   // Cleanup on unmount
   useEffect(() => {
@@ -31,9 +35,43 @@ export const CameraMatrixSync = ({
   }, []);
 
   useFrame(({ camera, size, clock }) => {
-    // 1. CRITICAL: Force update the projection matrix.
-    // This ensures Zoom and FOV changes are reflected in the matrix elements.
-    camera.updateProjectionMatrix();
+    // 1. CRITICAL: keep the projection matrix in sync with Zoom/FOV changes —
+    // but only RECOMPUTE it when a projection input actually changed. During
+    // multi-second streaming bursts the demand loop renders at full cadence
+    // with a stationary camera; an unconditional updateProjectionMatrix()
+    // every frame is pure waste. The signature must cover EVERY input
+    // updateProjectionMatrix reads (zoom changes were silently missed once
+    // before) — perspective: fov/aspect/near/far/zoom/film*; ortho:
+    // left/right/top/bottom/near/far/zoom — plus canvas size and view-offset
+    // enablement.
+    const cam = camera as THREE.PerspectiveCamera & THREE.OrthographicCamera;
+    const sig = projSigScratch.current;
+    sig[0] = cam.zoom ?? 0;
+    sig[1] = cam.near ?? 0;
+    sig[2] = cam.far ?? 0;
+    sig[3] = cam.fov ?? 0;
+    sig[4] = cam.aspect ?? 0;
+    sig[5] = cam.left ?? 0;
+    sig[6] = cam.right ?? 0;
+    sig[7] = cam.top ?? 0;
+    sig[8] = cam.bottom ?? 0;
+    sig[9] = cam.filmGauge ?? 0;
+    sig[10] = cam.filmOffset ?? 0;
+    sig[11] = cam.view && cam.view.enabled ? 1 : 0;
+    sig[12] = size.width;
+    sig[13] = size.height;
+    const prevSig = projSigRef.current;
+    let projectionDirty = false;
+    for (let i = 0; i < sig.length; i++) {
+      if (sig[i] !== prevSig[i]) {
+        projectionDirty = true;
+        break;
+      }
+    }
+    if (projectionDirty) {
+      camera.updateProjectionMatrix();
+      prevSig.set(sig);
+    }
 
     // 2. Calculate the combined View-Projection Matrix
     matrixRef.current.multiplyMatrices(

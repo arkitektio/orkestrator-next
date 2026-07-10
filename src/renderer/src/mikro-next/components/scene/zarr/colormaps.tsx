@@ -669,9 +669,22 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
-    // A channel with no named colormap but an explicit color is a black->color
-    // linear ramp (the standard per-channel microscopy tint, e.g. RGB composites).
-    // Only fall back to a named/Viridis colormap when no color is given.
+    // RESPONSE-CURVE CONVENTION (deliberate, user-validated): every NAMED
+    // colormap row — including INTENSITY-with-base-color and the monochrome
+    // family (Cyan, Red, Grey, …) — bakes its self-contained ramp
+    // (`sampleColorMapRgb`, e.g. cyan × t). The compositor multiplies the row
+    // sample by normalized intensity once more, giving named colormaps an
+    // intensity² response. That squared curve is the ORIGINAL renderer look
+    // and reads as "true to life" on screen (it approximates the gamma
+    // encoding the additive output path never applies); a linear
+    // constant-row factoring was tried and rejected — midtones washed out.
+    // What matters for consistency: INTENSITY+color goes through the SAME
+    // sampleColorMapRgb ramp as its named-colormap twin (Intensity+cyan ≡
+    // Cyan), so identical hues render identically.
+    //
+    // The ONLY constant-tint rows are colorless-colormap channels with an
+    // explicit color (legacy per-channel tint without a named map): those
+    // have always rendered linearly via the compositor's single multiply.
     const tintColor =
       channel?.colormap == null && channel?.color ? channel.color : null;
 

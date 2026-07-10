@@ -57,6 +57,13 @@ export function createBrickAtlas(opts: {
   desiredSlots: number;
   maxExtent: number;
   filter: "linear" | "nearest";
+  /**
+   * Native-WebGPU-backend only: let the GPU repack kernel `textureStore`
+   * into the atlas. Applied only for r32f — `r8unorm` is not a core
+   * storage-texture format, so an r8 atlas with this usage would fail
+   * `createTexture` validation (r8 goes through a staging buffer in Phase B).
+   */
+  computeStorage?: boolean;
 }): BrickAtlas {
   const { spec, dtype, desiredSlots, maxExtent, filter } = opts;
   const kind = atlasKindForDtype(dtype);
@@ -98,6 +105,15 @@ export function createBrickAtlas(opts: {
   texture.unpackAlignment = 1;
   texture.flipY = false;
   texture.needsUpdate = true; // one full (zero) allocation upload
+
+  if (opts.computeStorage && kind === "r32f") {
+    // In three r184 this flag's ONLY effect on a sampled Data3DTexture is
+    // adding GPUTextureUsage.STORAGE_BINDING at createTexture
+    // (WebGPUTextureUtils.js) — sampling bindings key off isData3DTexture and
+    // node code off isStorageTextureNode, both unaffected. Verified against
+    // r184 source; the gpu-repack parity self-test guards three upgrades.
+    (texture as THREE.Data3DTexture & { isStorageTexture?: boolean }).isStorageTexture = true;
+  }
 
   return {
     texture,

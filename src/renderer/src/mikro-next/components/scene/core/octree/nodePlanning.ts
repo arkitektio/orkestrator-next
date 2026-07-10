@@ -51,6 +51,43 @@ export type LayerNodePlan = {
   planBytes: number;
 };
 
+/**
+ * The ONE 2D slab z-mapping convention: base slab z (an integer base-level
+ * slice index) → level z voxel, by flooring the base-voxel position. Shared
+ * verbatim by the planner (`resolveLevelZ`) and — reimplemented in TSL — the
+ * plane shader (`brickNodeMaterials.ts` `makeSampleBrickEx` slab mode). The
+ * two MUST agree per level or the shader looks up bricks the planner never
+ * fetched (silent coarse fallback, zoom-dependent at non-integer z scales).
+ */
+export const slabLevelZ = (
+  baseSlabZ: number,
+  baseScaleZ: number,
+  levelScaleZ: number,
+): number => Math.floor((baseSlabZ * baseScaleZ) / levelScaleZ);
+
+/**
+ * Brick z of the slab `baseSlabZ + dz` at a level (the z±1 prefetch): null
+ * when the neighbor slab is outside the base stack or the level does not
+ * cover it (truncated pyramid, same drop-out rule as `resolveLevelZ`).
+ * Composes `slabLevelZ` with the payload division so the prefetch targets
+ * EXACTLY the brick the planner would fetch when the user scrubs there.
+ */
+export const adjacentSlabBrickZ = (
+  baseSlabZ: number,
+  dz: number,
+  baseScaleZ: number,
+  levelScaleZ: number,
+  levelShapeZ: number,
+  payloadZ: number,
+  baseShapeZ: number,
+): number | null => {
+  const neighborBase = baseSlabZ + dz;
+  if (neighborBase < 0 || neighborBase > baseShapeZ - 1) return null;
+  const levelZ = slabLevelZ(neighborBase, baseScaleZ, levelScaleZ);
+  if (levelZ < 0 || levelZ > levelShapeZ - 1) return null;
+  return Math.floor(levelZ / payloadZ);
+};
+
 export type NodeCamera = {
   /** Camera frustum transformed into the layer's base-voxel frame. */
   voxelFrustum: THREE.Frustum;
@@ -150,11 +187,16 @@ export function planLayerNodes({
   })();
 
   /** Level z voxel of the slab. Floor-divided from the SAME base z at every
-   * level — rounding localZ per level instead can pick a coarse brick whose
-   * children don't contain the finer level's slab (e.g. z=150, scales 32/16:
-   * round(150/32)=5 but round(150/16)=9, a child of brick 4), which stalls
-   * refinement at the coarsest level. Floor chains are self-consistent and
-   * match the shader, which samples every level at floor(baseZ / scale).
+   * level (`slabLevelZ`) — rounding localZ per level instead can pick a
+   * coarse brick whose children don't contain the finer level's slab (e.g.
+   * z=150, scales 32/16: round(150/32)=5 but round(150/16)=9, a child of
+   * brick 4), which stalls refinement at the coarsest level. Floor chains
+   * are self-consistent, and the 2D plane shader mirrors EXACTLY this
+   * mapping (`makeSampleBrickEx` slab mode: floor(baseZ / scale), + 0.5
+   * only to recenter INSIDE the chosen level texel) — sampling
+   * floor((baseZ + 0.5) / scale) instead lands one texel past the planned
+   * brick at non-integer z scales (e.g. scale 4.22, baseZ 8: planner 1,
+   * shader 2 → UNMAPPED → silent coarse fallback that flips with zoom).
    *
    * "out-of-range" means this LEVEL does not cover the slab. Truncated
    * pyramids genuinely lose tail slices at coarse levels (e.g. 81 base
@@ -166,9 +208,7 @@ export function planLayerNodes({
     if (baseSlabZ === null) return 0;
     if (baseSlabZ === "out-of-range") return "out-of-range";
     if (levelIndex === 0) return baseSlabZ;
-    const zIndex = Math.floor(
-      (baseSlabZ * levels[0].scale[2]) / levels[levelIndex].scale[2],
-    );
+    const zIndex = slabLevelZ(baseSlabZ, levels[0].scale[2], levels[levelIndex].scale[2]);
     if (zIndex > levels[levelIndex].spatialShape[2] - 1) return "out-of-range";
     return zIndex;
   };

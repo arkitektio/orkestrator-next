@@ -49,6 +49,16 @@ import {
   type BrickAtlas,
 } from "../render/bricks/gpu/brickAtlas";
 import {
+  createGpuRepacker,
+  isGpuRepackEnabled,
+  type GpuFlushOutcome,
+  type GpuRepacker,
+} from "../render/bricks/gpu/computeRepack";
+import {
+  runGpuRepackSelfTest,
+  type GpuRepackSelfTestResult,
+} from "../render/bricks/gpu/computeRepackSelfTest";
+import {
   clearPageTable,
   createPageTableTexture,
   disposePageTable,
@@ -89,14 +99,25 @@ const DECODED_CHUNK_CACHE_BYTES = (() => {
     : 512 * 1024 * 1024;
 })();
 
+/** A decoded chunk plus its shared-cache key (doubles as the GPU-buffer key). */
+type GpuQueuedChunk = RepackChunk & { cacheKey: string };
+
 type PendingBrick = {
   key: string;
   level: number;
   coords: Vec3;
-  data: BrickArray;
+  /** CPU path: the repacked brick ready for upload. Null on the GPU path. */
+  data: BrickArray | null;
   uniformValue: number | null;
   bytes: number;
+  /** GPU path: raw decoded chunks; the repack runs as a compute dispatch at
+   * drain time, once a slot is acquired. */
+  gpu: { chunks: GpuQueuedChunk[] } | null;
 };
+
+/** Identifies a dispatched brick across the async min/max readback; every
+ * field is re-validated against the CURRENT mapping when the readback lands. */
+type GpuBrickToken = { layerId: string; key: string; slotIndex: number };
 
 export type LayerBrickPool = {
   layerId: string;
@@ -124,6 +145,10 @@ export type LayerBrickPool = {
   /** Layer data range (raw value space) — shader normalization + EMPTY encode. */
   minValue: number;
   maxValue: number;
+  /** True once any slot was written by the GPU repack kernel: the CPU atlas
+   * mirror no longer reflects atlas contents, so `sampleResident` must not
+   * read it (probes degrade to null until the Phase D chunk-cache probe). */
+  atlasMirrorStale: boolean;
 };
 
 type Deps = {
@@ -149,6 +174,11 @@ export type BrickSystemStats = {
   bytesDecoded: number;
   fetchMs: number;
   repackMs: number;
+  /** GPU-repacked bricks (compute dispatch instead of worker + upload). */
+  gpuBricks: number;
+  /** Wall time from batch submit to min/max readback (overlaps rendering —
+   * not main-thread time; compare against repackMs+uploadMs per brick). */
+  gpuRepackMs: number;
   uploadMs: number;
   bricksUploaded: number;
   bytesUploaded: number;
@@ -176,6 +206,8 @@ export class BrickResidencyManager {
     bytesDecoded: 0,
     fetchMs: 0,
     repackMs: 0,
+    gpuBricks: 0,
+    gpuRepackMs: 0,
     uploadMs: 0,
     bricksUploaded: 0,
     bytesUploaded: 0,
@@ -188,13 +220,39 @@ export class BrickResidencyManager {
   private readonly countedChunkKeys = new Set<string>();
   /** Layers already warned about a non-viable pool (one warning per layer). */
   private readonly warnedUnviable = new Set<string>();
+  /** undefined = not yet attempted; null = unavailable (WebGL2 backend or
+   * disabled via the localStorage kill switch) — the CPU worker path then
+   * handles every brick. */
+  private gpuRepacker: GpuRepacker<GpuBrickToken> | null | undefined;
 
   constructor(private readonly deps: Deps) {}
+
+  private ensureGpuRepacker(): GpuRepacker<GpuBrickToken> | null {
+    if (this.gpuRepacker === undefined) {
+      this.gpuRepacker = isGpuRepackEnabled()
+        ? createGpuRepacker<GpuBrickToken>(this.deps.renderer)
+        : null;
+    }
+    return this.gpuRepacker;
+  }
+
+  /** Dev-only (DebugPanel): GPU↔CPU repack parity check on the live renderer. */
+  runGpuRepackSelfTest(): Promise<GpuRepackSelfTestResult> {
+    return runGpuRepackSelfTest(this.deps.renderer);
+  }
 
   /** Structured snapshot for the DebugPanel's copyable report. */
   buildDebugReport(): Record<string, unknown> {
     return {
       stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
+      gpuRepack:
+        this.gpuRepacker === undefined
+          ? "not-attempted"
+          : this.gpuRepacker === null
+            ? "unavailable"
+            : this.gpuRepacker.ready()
+              ? "ready"
+              : "pending-or-broken",
       pools: [...this.pools.values()].map((pool) => {
         const residentByLevel: Record<number, number> = {};
         for (const key of pool.pool.keys()) {
@@ -313,6 +371,10 @@ export class BrickResidencyManager {
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
+      // GPU-repacked slots never touch the CPU mirror — reading it would
+      // return stale zeros, which is worse than no reading. Phase D replaces
+      // this path with a decoded-chunk-cache read.
+      if (pool.atlasMirrorStale) return null;
 
       const clampedChannel = Math.min(Math.max(channel, 0), spec.channelCount - 1);
       const texel: Vec3 = [
@@ -520,14 +582,24 @@ export class BrickResidencyManager {
       Math.max(minSlots, Math.floor(budgetShare / slotBytes)),
     );
 
+    const gpuRepacker = this.ensureGpuRepacker();
     const atlas = createBrickAtlas({
       spec,
       dtype: geometry.levels[0].dtype,
       desiredSlots,
       maxExtent: maxTextureExtent,
       filter: spec.border > 0 ? "linear" : "nearest",
+      computeStorage: gpuRepacker !== null,
     });
     const pageTable = createPageTableTexture(layout);
+
+    if (gpuRepacker && atlas.kind === "r32f") {
+      // Create the backend GPUTexture (with STORAGE_BINDING) now, so compute
+      // dispatches never race the first draw's lazy texture creation.
+      (
+        this.deps.renderer as unknown as { initTexture?: (texture: unknown) => void }
+      ).initTexture?.(atlas.texture);
+    }
 
     // Fixed (collapsed) indices for every non-spatial, non-channel dim.
     const dims = layer.lens.dataset.dims;
@@ -571,6 +643,7 @@ export class BrickResidencyManager {
       fixedOffsets,
       minValue,
       maxValue,
+      atlasMirrorStale: false,
     };
     this.pools.set(layer.id, pool);
     // Pool LIFECYCLE event (not streaming progress): this is what layer
@@ -632,7 +705,7 @@ export class BrickResidencyManager {
       const channelChunkCount =
         intensityPos !== -1 ? Math.ceil(pool.spec.channelCount / channelsPerChunk) : 1;
 
-      const fetches: Promise<RepackChunk>[] = [];
+      const fetches: Promise<GpuQueuedChunk>[] = [];
       for (const spatial of spatialChunks) {
         for (let channelChunk = 0; channelChunk < channelChunkCount; channelChunk++) {
           const chunkCoords = pool.geometry.dims.map((_, d) => {
@@ -649,6 +722,9 @@ export class BrickResidencyManager {
               data: chunk.data as BrickArray,
               shape: chunk.shape,
               stride: chunk.stride,
+              // Same key as fetchChunkShared — the GPU chunk-buffer cache
+              // mirrors the decoded-chunk cache's identity.
+              cacheKey: `${level.storeId}:${chunkCoords.join(",")}`,
             })),
           );
         }
@@ -662,35 +738,53 @@ export class BrickResidencyManager {
       const stored = pool.spec.stored;
       const elementCount = stored[0] * stored[1] * stored[2] * pool.spec.channelCount;
 
-      // Repack runs OFF the UI thread (worker pool); SAB-backed chunks travel
-      // zero-copy, the output brick comes back as a transferable. repackMs is
-      // wall time (queue + worker), not main-thread time.
-      const repackStartedAt = performance.now();
-      const result = await this.deps.repack.repack({
-        kind: pool.atlas.kind,
-        elementCount,
-        input: {
-          spec: pool.spec,
-          level,
-          axes: pool.geometry.axes,
-          brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
-          fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
-          fixedOffsets: pool.fixedOffsets,
-          chunks,
-        },
-      });
-      this.stats.repackMs += performance.now() - repackStartedAt;
-      if (controller.signal.aborted || this.disposed) return;
+      let pending: PendingBrick;
+      const gpuRepacker = this.ensureGpuRepacker();
+      if (gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks)) {
+        // GPU path: the repack IS the upload (a compute dispatch straight
+        // into the atlas slot at drain time) — only chunk handles queue here.
+        pending = {
+          key: node.key,
+          level: node.level,
+          coords: node.coords,
+          data: null,
+          uniformValue: null,
+          bytes: elementCount * 4, // r32f stored brick
+          gpu: { chunks },
+        };
+      } else {
+        // Repack runs OFF the UI thread (worker pool); SAB-backed chunks travel
+        // zero-copy, the output brick comes back as a transferable. repackMs is
+        // wall time (queue + worker), not main-thread time.
+        const repackStartedAt = performance.now();
+        const result = await this.deps.repack.repack({
+          kind: pool.atlas.kind,
+          elementCount,
+          input: {
+            spec: pool.spec,
+            level,
+            axes: pool.geometry.axes,
+            brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
+            fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
+            fixedOffsets: pool.fixedOffsets,
+            chunks,
+          },
+        });
+        this.stats.repackMs += performance.now() - repackStartedAt;
+        if (controller.signal.aborted || this.disposed) return;
+        pending = {
+          key: node.key,
+          level: node.level,
+          coords: node.coords,
+          data: result.data,
+          uniformValue: result.uniformValue,
+          bytes: result.data.byteLength,
+          gpu: null,
+        };
+      }
       this.stats.bricksFetched += 1;
 
-      pool.queue.push({
-        key: node.key,
-        level: node.level,
-        coords: node.coords,
-        data: result.data,
-        uniformValue: result.uniformValue,
-        bytes: result.data.byteLength,
-      });
+      pool.queue.push(pending);
       pool.queuedKeys.add(node.key);
       this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
     } catch (error) {
@@ -753,7 +847,31 @@ export class BrickResidencyManager {
           this.stats.evictions += 1;
         }
 
-        writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data);
+        if (pending.gpu) {
+          // Compute repack straight into the slot. The page entry goes
+          // RESIDENT optimistically — content is correct either way; the
+          // min/max readback demotes uniform bricks to EMPTY a few frames
+          // later (applyGpuOutcome).
+          this.gpuRepacker!.dispatch({
+            atlas: pool.atlas,
+            input: {
+              spec: pool.spec,
+              level: pool.geometry.levels[pending.level],
+              axes: pool.geometry.axes,
+              brickBox: nodeVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
+              fetchBox: fetchVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
+              fixedOffsets: pool.fixedOffsets,
+              chunks: pending.gpu.chunks,
+            },
+            chunkKeys: pending.gpu.chunks.map((chunk) => chunk.cacheKey),
+            slotCoords: acquired.slot.coords,
+            token: { layerId: pool.layerId, key: pending.key, slotIndex: acquired.slot.index },
+          });
+          this.stats.gpuBricks += 1;
+          pool.atlasMirrorStale = true;
+        } else {
+          writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
+        }
         setPageEntry(
           pool.pageTable,
           pending.level,
@@ -769,6 +887,18 @@ export class BrickResidencyManager {
       }
 
       flushPageTable(this.deps.renderer, pool.pageTable);
+    }
+
+    // Submit this frame's compute-repack batch (before R3F renders, so the
+    // page entries flushed above and the brick contents land in the same
+    // frame). The min/max readback resolves asynchronously.
+    const gpuFlush = this.gpuRepacker ? this.gpuRepacker.flush() : null;
+    if (gpuFlush) {
+      const flushStartedAt = performance.now();
+      void gpuFlush.then((outcome) => {
+        this.stats.gpuRepackMs += performance.now() - flushStartedAt;
+        this.applyGpuOutcome(outcome);
+      });
     }
 
     if (uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
@@ -798,6 +928,65 @@ export class BrickResidencyManager {
     }
   }
 
+  /**
+   * Min/max-readback continuation for a GPU repack batch: EMPTY demotion of
+   * uniform bricks and unmapping of failed dispatches. Lands a few frames
+   * after the dispatch, so every token re-validates against the CURRENT slot
+   * mapping — an evicted/remapped/flushed brick is silently skipped.
+   */
+  private applyGpuOutcome(outcome: GpuFlushOutcome<GpuBrickToken>): void {
+    if (this.disposed) return;
+    const touchedPools = new Set<LayerBrickPool>();
+
+    for (const result of outcome.results) {
+      if (result.uniformValue === null) continue;
+      const pool = this.resolveGpuToken(result.token);
+      if (!pool) continue;
+      const { level, coords } = parseNodeKey(result.token.key);
+      // Uniform brick: the same EMPTY demotion the CPU path applies before
+      // acquiring a slot — just deferred to the readback; the slot frees up.
+      const encoded = encodeEmptyValue(result.uniformValue, pool);
+      setPageEntry(pool.pageTable, level, coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
+      pool.pool.release(result.token.key);
+      pool.emptyValues.set(result.token.key, result.uniformValue);
+      this.stats.emptyBricks += 1;
+      touchedPools.add(pool);
+    }
+
+    for (const token of outcome.failed) {
+      const pool = this.resolveGpuToken(token);
+      if (!pool) continue;
+      const { level, coords } = parseNodeKey(token.key);
+      // The dispatch never wrote the slot: unmap it and requeue the fetch.
+      // A failed batch marks the repacker broken, so the retry repacks on
+      // the CPU path.
+      setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
+      pool.pool.release(token.key);
+      this.stats.fetchErrors += 1;
+      if (pool.protectedKeys.has(token.key)) {
+        pool.pendingFetch.unshift({ key: token.key, level, coords, role: "target", priority: 0 });
+        this.startNextFetches(pool);
+      }
+      touchedPools.add(pool);
+    }
+
+    if (touchedPools.size > 0) {
+      for (const pool of touchedPools) flushPageTable(this.deps.renderer, pool.pageTable);
+      this.deps.viewerStore.getState().bumpResidencyVersion();
+      this.deps.invalidate();
+    }
+  }
+
+  /** The pool for a GPU token, iff the brick still occupies the slot it was
+   * dispatched into (nothing evicted, remapped, flushed, or disposed since). */
+  private resolveGpuToken(token: GpuBrickToken): LayerBrickPool | null {
+    const pool = this.pools.get(token.layerId);
+    if (!pool) return null;
+    const slot = pool.pool.slotOf(token.key);
+    if (!slot || slot.index !== token.slotIndex) return null;
+    return pool;
+  }
+
   private flushPool(pool: LayerBrickPool, nextSliceSignature: string): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
@@ -823,6 +1012,8 @@ export class BrickResidencyManager {
     this.disposed = true;
     this.fetchAbort.abort();
     this.inFlightChunks.clear();
+    this.gpuRepacker?.dispose();
+    this.gpuRepacker = null;
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
     // Don't leave the governor thinking a torn-down scene is still streaming.

@@ -9,6 +9,7 @@ import {
   type QualityTier,
 } from "../core/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
+import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/gpu/computeRepack";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
@@ -30,10 +31,29 @@ export const DebugPanel = () => {
   const [reportCopied, setReportCopied] = useState(false);
   const recording = usePerfRecording();
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
+  const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
+  const [gpuSelfTest, setGpuSelfTest] = useState<string | null>(null);
   // Tier/override/streaming flips only — rare (P17-clean).
   useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
 
   if (!isDebug) return null;
+
+  const toggleGpuRepack = () => {
+    const next = !gpuRepackOn;
+    setGpuRepackEnabled(next);
+    setGpuRepackOn(next);
+  };
+
+  const runGpuSelfTest = () => {
+    const manager = viewerStoreApi.getState().brickSystem;
+    if (!manager) return;
+    setGpuSelfTest("running…");
+    void manager.runGpuRepackSelfTest().then((result) => {
+      setGpuSelfTest(
+        `${result.supported ? (result.pass ? "PASS" : "FAIL") : "n/a"} — ${result.detail}`,
+      );
+    });
+  };
 
   const togglePerfRecording = () => {
     if (perfMonitor.isRecording()) {
@@ -229,6 +249,12 @@ export const DebugPanel = () => {
               <span className="px-1 rounded border border-border/50">
                 repack {brickSystem.stats.repackMs.toFixed(0)} ms
               </span>
+              {brickSystem.stats.gpuBricks > 0 && (
+                <span className="px-1 rounded border border-border/50">
+                  gpu {brickSystem.stats.gpuBricks} / {brickSystem.stats.gpuRepackMs.toFixed(0)}{" "}
+                  ms
+                </span>
+              )}
               {/* Per-brick texSubImage3D cost — the P19 signal (≪1 ms on a
                   dGPU; ~17 ms on ANGLE-Metal integrated GPUs). */}
               <span className="px-1 rounded border border-border/50">
@@ -245,6 +271,27 @@ export const DebugPanel = () => {
                 <span className="px-1 rounded border border-red-500/50 text-red-300">
                   errors {brickSystem.stats.fetchErrors}
                 </span>
+              )}
+            </div>
+          )}
+          {brickSystem && (
+            <div className="mb-2 flex flex-wrap items-center gap-1 text-[9px]">
+              <button
+                onClick={toggleGpuRepack}
+                title="Compute-shader repack for r32f atlases (WebGPU backend). Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                gpu repack: {gpuRepackOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={runGpuSelfTest}
+                title="Repack one synthetic brick on GPU and CPU; compare voxel-for-voxel."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                parity self-test
+              </button>
+              {gpuSelfTest && (
+                <span className="basis-full text-muted-foreground">{gpuSelfTest}</span>
               )}
             </div>
           )}

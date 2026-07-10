@@ -129,10 +129,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     ],
   );
 
-  useEffect(() => {
-    const atlas = channelData.atlas;
-    return () => atlas.dispose();
-  }, [channelData]);
+  // NOTE: the colormap atlas is NOT disposed per channelData change — the
+  // material stays bound to one long-lived texture whose contents
+  // `updateChannelNodes` refreshes in place (disposing a still-bound texture
+  // made WebGPU sample its default white texture → gray composites). The
+  // bound texture is disposed with the bundle below.
 
   // Step sizing from the plan's finest requested level: half a voxel of that
   // level. The actual per-sample step adapts to the LOD sampled at that point
@@ -161,7 +162,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   useEffect(() => {
     const material = bundle?.material;
-    return () => material?.dispose();
+    return () => {
+      material?.dispose();
+      // Whatever atlas is bound at teardown (adoption keeps it long-lived).
+      bundle?.nodes.colormapAtlas.value?.dispose();
+    };
   }, [bundle]);
 
   // Dynamic uniform-node pushes (no material rebuild).

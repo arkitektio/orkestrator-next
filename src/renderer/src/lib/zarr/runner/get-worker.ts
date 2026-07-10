@@ -245,6 +245,24 @@ export function getStoreId(store: Readable): string {
   return `store_${storeIdMap.get(store)}`
 }
 
+/**
+ * Chunk objects the store could not provide get a fill-value substitute — a
+ * legitimate zarr convention for genuinely-sparse arrays, but ALSO how a
+ * missing/partially-uploaded store silently renders as blank data (e.g. ONE
+ * blank channel when channels are chunked separately). Warn once per path so
+ * "missing data" is never invisible.
+ */
+const warnedFillChunkPaths = new Set<string>()
+
+function warnFillChunk(chunkPath: string, fillValue: unknown): void {
+  if (warnedFillChunkPaths.has(chunkPath)) return
+  warnedFillChunkPaths.add(chunkPath)
+  console.warn(
+    `[zarr] chunk object missing from store — substituting fill value ` +
+      `${String(fillValue ?? 0)}: ${chunkPath}`,
+  )
+}
+
 export function createCacheKey<D extends DataType, Store extends Readable>(
   arr: ZarrArray<D, Store>,
   encodeChunkKey: (chunk_coords: number[]) => string,
@@ -977,6 +995,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         cache.set(cacheKey, fetchedChunk)
         chunkToReturn = fetchedChunk
       } else {
+        warnFillChunk(chunkPath, fillValue)
         const fillStartedAt = performance.now()
         const fillChunkStrides = get_strides(edgeChunkShape)
         const fillChunkSize = edgeChunkShape.reduce(
@@ -1204,6 +1223,7 @@ export async function getWorker<
             cache.set(cacheKey, fetchedChunk)
             chunkToWrite = fetchedChunk
           } else {
+            warnFillChunk(chunkPath, fillValue)
             const fillStartedAt = performance.now()
             const fillChunkShape = edgeChunkShape
             const fillChunkStrides = get_strides(fillChunkShape)

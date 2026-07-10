@@ -241,6 +241,26 @@ export class BrickResidencyManager {
     return runGpuRepackSelfTest(this.deps.renderer);
   }
 
+  /** Debug-report probe: every channel slab's raw value at two fixed voxels
+   * (volume center and quarter point), read from the atlas CPU mirror via
+   * `sampleResident`. Null entries = nothing resident there (or the mirror is
+   * stale on the GPU-repack path). */
+  private probeChannelSlabs(
+    pool: LayerBrickPool,
+  ): { voxel: Vec3; values: (number | null)[] }[] {
+    const [sx, sy, sz] = pool.geometry.levels[0].spatialShape;
+    const voxels: Vec3[] = [
+      [Math.floor(sx / 2), Math.floor(sy / 2), Math.floor(sz / 2)],
+      [Math.floor(sx / 4), Math.floor(sy / 4), Math.floor(sz / 4)],
+    ];
+    return voxels.map((voxel) => ({
+      voxel,
+      values: Array.from({ length: pool.spec.channelCount }, (_, channel) =>
+        this.sampleResident(pool.layerId, voxel, 0, channel),
+      ),
+    }));
+  }
+
   /** Structured snapshot for the DebugPanel's copyable report. */
   buildDebugReport(): Record<string, unknown> {
     return {
@@ -292,6 +312,12 @@ export class BrickResidencyManager {
           protectedKeys: pool.protectedKeys.size,
           dataRange: [pool.minValue, pool.maxValue],
           sliceSignature: pool.sliceSignature,
+          // Raw atlas values per channel slab at two fixed voxels (CPU mirror
+          // of the shader's channel tap). Identical values across channels of
+          // a multi-channel layer at both probes = the slabs hold the same
+          // data (repack/fetch); differing values = slabs are fine and a
+          // wrong channel on screen is a shader/uniform bug.
+          channelSlabProbe: this.probeChannelSlabs(pool),
         };
       }),
     };

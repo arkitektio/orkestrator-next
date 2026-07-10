@@ -669,11 +669,20 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
-    // A channel with no named colormap but an explicit color is a black->color
-    // linear ramp (the standard per-channel microscopy tint, e.g. RGB composites).
-    // Only fall back to a named/Viridis colormap when no color is given.
+    // A channel with no named colormap — or the explicit INTENSITY colormap —
+    // plus a color is the standard per-channel microscopy tint (e.g. RGB
+    // composites). The row must hold the CONSTANT color: the brick compositor
+    // multiplies the row sample by the channel's normalized intensity, so an
+    // intensity RAMP here (what `sampleColorMapRgb(Intensity, t, color)`
+    // returns — correct for self-contained LUT consumers) would double-count
+    // intensity and crush the image to intensity². Only fall back to a
+    // named/Viridis colormap when no color is given.
     const tintColor =
-      channel?.colormap == null && channel?.color ? channel.color : null;
+      channel?.colormap === ColorMap.Intensity
+        ? resolveBaseColorRgb(channel.color) // INTENSITY sans color = white
+        : channel?.colormap == null && channel?.color
+          ? channel.color
+          : null;
 
     for (let x = 0; x < width; x++) {
       const t = x / (width - 1);

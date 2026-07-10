@@ -124,9 +124,11 @@ function simulateDispatch(
   }
 }
 
+const brickElementCount = (input: RepackDispatchInput) =>
+  input.spec.stored[0] * input.spec.stored[1] * input.spec.stored[2] * input.spec.channelCount;
+
 function simulateBrick(input: RepackDispatchInput) {
-  const elementCount =
-    SPEC.stored[0] * SPEC.stored[1] * SPEC.stored[2] * SPEC.channelCount;
+  const elementCount = brickElementCount(input);
   const out = new Float32Array(elementCount);
   const writes = new Uint8Array(elementCount);
   const minmax = { min: MINMAX_INIT_MIN, max: MINMAX_INIT_MAX };
@@ -138,9 +140,7 @@ function simulateBrick(input: RepackDispatchInput) {
 }
 
 function cpuBrick(input: RepackDispatchInput) {
-  const output = new Float32Array(
-    SPEC.stored[0] * SPEC.stored[1] * SPEC.stored[2] * SPEC.channelCount,
-  );
+  const output = new Float32Array(brickElementCount(input));
   const result = repackBrick({ ...input, output });
   return { output, result };
 }
@@ -202,6 +202,97 @@ describe("buildKernelDispatches parity with repackBrick", () => {
       max: 0,
       uniformValue: 0,
     });
+  });
+});
+
+describe("buildKernelDispatches parity — packed & interleaved channel layouts", () => {
+  // Packed c-first: one chunk carries ALL channel slabs (scene-15 coarse
+  // levels). channelsPerChunk = 3 → slab separation rests entirely on
+  // stride[intensityPos], which the channel-per-chunk fixtures never use.
+  const packedInput = (): RepackDispatchInput => {
+    const geo = buildLayerLevelGeometry(DIMS, LAYER, [
+      { shape: [3, 4, 12, 12], chunks: [3, 4, 8, 8], dtype: "float32", storeId: "p0" },
+    ])!;
+    const spec: BrickSpec = { payload: [4, 4, 4], border: 1, stored: [6, 6, 6], channelCount: 3 };
+    const chunks: RepackChunk[] = ([[0, 0], [1, 0], [0, 1], [1, 1]] as const).map(([cx, cy]) => {
+      const data = new Float32Array(3 * 4 * 8 * 8);
+      for (let c = 0; c < 3; c++)
+        for (let z = 0; z < 4; z++)
+          for (let y = 0; y < 8; y++)
+            for (let x = 0; x < 8; x++) {
+              const gx = cx * 8 + x;
+              const gy = cy * 8 + y;
+              data[((c * 4 + z) * 8 + y) * 8 + x] =
+                gx < 12 && gy < 12 ? voxelValue(c, z, gy, gx) : -999;
+            }
+      return {
+        coords: [cx, cy, 0] as [number, number, number],
+        channelChunk: 0,
+        data: data as unknown as RepackChunk["data"],
+        shape: [3, 4, 8, 8],
+        stride: [256, 64, 8, 1],
+      };
+    });
+    return {
+      spec,
+      level: geo.levels[0],
+      axes: geo.axes,
+      brickBox: nodeVoxelBox(geo, spec, 0, [1, 1, 0]),
+      fetchBox: fetchVoxelBox(geo, spec, 0, [1, 1, 0]),
+      fixedOffsets: [0, 0, 0, 0],
+      chunks,
+    };
+  };
+
+  // Interleaved c-last: dims [y, x, c] (scene-2 astronaut layout) — no z
+  // axis (zPos = -1, strideZ 0) and strideC = 1.
+  const interleavedInput = (): RepackDispatchInput => {
+    const geo = buildLayerLevelGeometry(
+      ["y", "x", "c"],
+      { xDim: "x", yDim: "y", zDim: null, intensityDim: "c" },
+      [{ shape: [12, 12, 3], chunks: [8, 8, 3], dtype: "float32", storeId: "i0" }],
+    )!;
+    const spec: BrickSpec = { payload: [4, 4, 1], border: 0, stored: [4, 4, 1], channelCount: 3 };
+    const chunks: RepackChunk[] = ([[0, 0], [1, 0], [0, 1], [1, 1]] as const).map(([cx, cy]) => {
+      const data = new Float32Array(8 * 8 * 3);
+      for (let y = 0; y < 8; y++)
+        for (let x = 0; x < 8; x++)
+          for (let c = 0; c < 3; c++) {
+            const gx = cx * 8 + x;
+            const gy = cy * 8 + y;
+            data[(y * 8 + x) * 3 + c] = gx < 12 && gy < 12 ? voxelValue(c, 0, gy, gx) : -999;
+          }
+      return {
+        coords: [cx, cy, 0] as [number, number, number],
+        channelChunk: 0,
+        data: data as unknown as RepackChunk["data"],
+        shape: [8, 8, 3],
+        stride: [24, 3, 1],
+      };
+    });
+    return {
+      spec,
+      level: geo.levels[0],
+      axes: geo.axes,
+      brickBox: nodeVoxelBox(geo, spec, 0, [1, 1, 0]),
+      fetchBox: fetchVoxelBox(geo, spec, 0, [1, 1, 0]),
+      fixedOffsets: [0, 0, 0],
+      chunks,
+    };
+  };
+
+  it.each([
+    ["packed c-first", packedInput],
+    ["interleaved c-last", interleavedInput],
+  ])("%s matches the CPU repack voxel-for-voxel", (_label, makeIt) => {
+    const input = makeIt();
+    const gpu = simulateBrick(input);
+    const cpu = cpuBrick(input);
+    expect([...gpu.out]).toEqual([...cpu.output]);
+    expect(gpu.min).toBe(cpu.result.min);
+    expect(gpu.max).toBe(cpu.result.max);
+    expect(gpu.uniformValue).toBe(cpu.result.uniformValue);
+    expect([...gpu.writes].every((count) => count === 1)).toBe(true);
   });
 });
 

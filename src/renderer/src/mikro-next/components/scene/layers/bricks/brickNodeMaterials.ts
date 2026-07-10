@@ -201,30 +201,88 @@ function copyChannelArrays(
 
 /** Copy fresh channel data into the existing uniform nodes (no rebuild). */
 export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUniformData): void {
-  nodes.colormapAtlas.value = data.atlas;
+  adoptColormapAtlas(nodes, data.atlas);
   nodes.numChannels.value = data.numChannels;
   nodes.blendMode.value = data.blendMode;
   copyChannelArrays(nodes, data);
 }
 
 /**
+ * Take over a freshly built colormap atlas WITHOUT swapping the bound
+ * texture object: same-size updates copy the texel data into the texture the
+ * material is already bound to (`needsUpdate` re-upload) and dispose the
+ * incoming one.
+ *
+ * Why not `nodes.colormapAtlas.value = data.atlas` (the previous code)? The
+ * layers rebuild the atlas as a NEW DataTexture on every channel-data change
+ * and used to dispose the old one — the texture the compiled material was
+ * still bound to. On the WebGPU backend that leaves the bind group pointing
+ * at a destroyed GPUTexture, which three silently replaces with its default
+ * (white) texture: every channel then samples the SAME white tint and an RGB
+ * composite collapses to gray. In-place adoption keeps one long-lived
+ * texture bound for the material's whole life; only a row-count change (rare:
+ * render-graph channel add/remove) swaps the object, disposing the old one
+ * AFTER the swap.
+ */
+function adoptColormapAtlas(nodes: ChannelNodesPublic, atlas: THREE.DataTexture): void {
+  const bound = nodes.colormapAtlas.value as THREE.DataTexture;
+  if (bound === atlas) return;
+  const boundImage = bound.image as { width: number; height: number; data: Uint8Array };
+  const nextImage = atlas.image as { width: number; height: number; data: Uint8Array };
+  if (boundImage.width === nextImage.width && boundImage.height === nextImage.height) {
+    boundImage.data.set(nextImage.data);
+    bound.needsUpdate = true;
+    atlas.dispose();
+  } else {
+    nodes.colormapAtlas.value = atlas;
+    bound.dispose();
+  }
+}
+
+/**
  * TSL port of `sampleBrickEx`: sample the finest resident brick at or coarser
  * than desiredLevel. Returns vec2(status, rawValue) with status 0 = nothing
  * resident (transparent), 1 = resident sample, 2 = uniform EMPTY brick.
+ *
+ * `slabZ` (2D plane material only): `baseVoxel.z` is the INTEGER base slab
+ * index, and the level z is picked with the planner's floor chain
+ * (`nodePlanning.slabLevelZ`: floor(baseZ / scale), then +0.5 to recenter
+ * inside the chosen level texel). Sampling floor((baseZ + 0.5) / scale)
+ * instead disagrees with the planner at non-integer z scales (scale 4.22,
+ * baseZ 8: planner fetched z=1, shader read z=2) — the lookup lands on an
+ * UNMAPPED entry and silently falls back to a coarser level, flipping with
+ * zoom.
+ *
+ * ⚠ TSL INLINES this Fn into its caller (no setLayout), so this internal
+ * Loop's iterator is declared INSIDE the caller's channel loop. The iterator
+ * is therefore explicitly named `sbLvl` — with TSL's default name (`i`,
+ * shared by every unnamed Loop) it SHADOWED the channel loop's `i`, and the
+ * inlined `channel` argument (`chParamsA.element(i)`) silently indexed by
+ * RESIDENT LEVEL instead of channel: every compositor slot showed slot 0's
+ * channel at the finest LOD, and the displayed channel FLIPPED WITH ZOOM as
+ * the resident level changed. Callers must also pass loop-dependent
+ * arguments as `.toVar()`s (see the channel loops), never raw element(i)
+ * expressions.
  */
-function makeSampleBrickEx(t: any) {
+function makeSampleBrickEx(t: any, opts?: { slabZ?: boolean }) {
   return Fn(([baseVoxel, desiredLevel, channel]: any[]) => {
     const result = vec2(0.0, 0.0).toVar("sampleResult");
 
-    Loop({ start: int(0), end: t.uNumLevels, type: "int", condition: "<" }, ({ i }) => {
-      If(int(i).lessThan(desiredLevel), () => {
+    Loop(
+      { start: int(0), end: t.uNumLevels, type: "int", condition: "<", name: "sbLvl" },
+      ({ sbLvl }: any) => {
+      If(int(sbLvl).lessThan(desiredLevel), () => {
         Continue();
       });
 
-      const levelScale = vec3(t.uLevelScale.element(i)).toVar();
-      const levelShape = vec3(t.uLevelShape.element(i)).toVar();
+      const levelScale = vec3(t.uLevelScale.element(sbLvl)).toVar();
+      const levelShape = vec3(t.uLevelShape.element(sbLvl)).toVar();
+      const scaledVoxel = vec3(baseVoxel).div(levelScale).toVar();
+      if (opts?.slabZ) {
+        scaledVoxel.z.assign(floor(scaledVoxel.z).add(0.5));
+      }
       const levelVoxel = clamp(
-        vec3(baseVoxel).div(levelScale),
+        scaledVoxel,
         vec3(0.0),
         levelShape.sub(0.5001),
       ).toVar();
@@ -234,7 +292,7 @@ function makeSampleBrickEx(t: any) {
       // texture_3d. Entry components are rgba8unorm floats; decode bytes with
       // round(v * 255).
       const entry = vec4(
-        texture3DLoad(t.pageTable, ivec3(t.uPageOffset.element(i)).add(brick)),
+        texture3DLoad(t.pageTable, ivec3(t.uPageOffset.element(sbLvl)).add(brick)),
       ).toVar();
       const flag = int(entry.a.mul(255.0).add(0.5)).toVar();
 
@@ -332,11 +390,13 @@ export function createPlaneNodeMaterial(
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
   c.maxValue.value = dataRange.maxValue;
-  const sampleBrickEx = makeSampleBrickEx(t);
+  const sampleBrickEx = makeSampleBrickEx(t, { slabZ: true });
   const channelNormalize = makeChannelNormalize(c);
 
   const uDesiredLevel = uniform(0, "int");
-  const uSlabBaseZ = uniform(0.5, "float");
+  /** INTEGER base slab z — the slab-mode sampler does the per-level floor +
+   * recenter itself (see makeSampleBrickEx), so no +0.5 here. */
+  const uSlabBaseZ = uniform(0, "float");
   const uBaseShape = uniform(new THREE.Vector3(1, 1, 1), "vec3");
 
   const material = new NodeMaterial();
@@ -357,23 +417,28 @@ export function createPlaneNodeMaterial(
       vec3(0.0),
     ).toVar("accum");
 
-    Loop({ start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<" }, ({ i }) => {
-      If(int(i).greaterThanEqual(c.numChannels), () => {
+    Loop(
+      { start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<", name: "ch" },
+      ({ ch }: any) => {
+      If(int(ch).greaterThanEqual(c.numChannels), () => {
         Break();
       });
-      const paramsB = vec4(c.chParamsB.element(i)).toVar(); // (opacity, visible, invert, row)
+      const paramsB = vec4(c.chParamsB.element(ch)).toVar(); // (opacity, visible, invert, row)
       If(paramsB.y.lessThan(0.5), () => {
         Continue();
       });
 
-      const sampled = vec2(
-        sampleBrickEx(baseVoxel, uDesiredLevel, int(vec4(c.chParamsA.element(i)).x)),
-      ).toVar();
+      // The slab index MUST be materialized into a var BEFORE the (inlined)
+      // sampleBrickEx call — a raw `element(ch)` argument would be evaluated
+      // inside the inlined level loop, where an unnamed iterator can shadow
+      // `ch` (see makeSampleBrickEx).
+      const slabIndex = int(vec4(c.chParamsA.element(ch)).x).toVar();
+      const sampled = vec2(sampleBrickEx(baseVoxel, uDesiredLevel, slabIndex)).toVar();
       If(sampled.x.lessThan(0.5), () => {
         Continue(); // nothing resident yet: transparent
       });
 
-      const normalized = float(channelNormalize(i, sampled.y)).toVar();
+      const normalized = float(channelNormalize(ch, sampled.y)).toVar();
       const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
       const weight = paramsB.x.mul(normalized);
 
@@ -462,20 +527,25 @@ export function createVolumeNodeMaterial(
       const dist = max(distance(vec3(baseVoxel), vec3(cameraBase)), 1.0);
       const pxPerBaseVoxel = float(uPxPerVoxelAtUnitDist).div(dist);
       const found = bool(false).toVar();
-      Loop({ start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<" }, ({ i }) => {
-        If(found.not(), () => {
-          If(
-            pxPerBaseVoxel
-              .mul(vec3(t.uLevelScale.element(i)).x)
-              .mul(uLodBias)
-              .greaterThanEqual(1.0),
-            () => {
-              out.assign(max(int(i), int(uDesiredLevel)));
-              found.assign(true);
-            },
-          );
-        });
-      });
+      // Unique iterator name: this Fn inlines into the ray loop (see the
+      // makeSampleBrickEx shadowing note).
+      Loop(
+        { start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<", name: "dlv" },
+        ({ dlv }: any) => {
+          If(found.not(), () => {
+            If(
+              pxPerBaseVoxel
+                .mul(vec3(t.uLevelScale.element(dlv)).x)
+                .mul(uLodBias)
+                .greaterThanEqual(1.0),
+              () => {
+                out.assign(max(int(dlv), int(uDesiredLevel)));
+                found.assign(true);
+              },
+            );
+          });
+        },
+      );
     });
     return out;
   });
@@ -553,18 +623,21 @@ export function createVolumeNodeMaterial(
       const bestStatus = float(0.0).toVar();
       const anyResident = bool(false).toVar();
 
-      Loop({ start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<" }, ({ i }) => {
-        If(int(i).greaterThanEqual(c.numChannels), () => {
+      Loop(
+        { start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<", name: "ch" },
+        ({ ch }: any) => {
+        If(int(ch).greaterThanEqual(c.numChannels), () => {
           Break();
         });
-        const paramsB = vec4(c.chParamsB.element(i)).toVar(); // (opacity, visible, invert, row)
+        const paramsB = vec4(c.chParamsB.element(ch)).toVar(); // (opacity, visible, invert, row)
         If(paramsB.y.lessThan(0.5), () => {
           Continue();
         });
 
-        const sampled = vec2(
-          sampleBrickEx(pB, lvl, int(vec4(c.chParamsA.element(i)).x)),
-        ).toVar();
+        // Materialized BEFORE the inlined sampleBrickEx call — see the 2D
+        // compositor / makeSampleBrickEx for the iterator-shadowing hazard.
+        const slabIndex = int(vec4(c.chParamsA.element(ch)).x).toVar();
+        const sampled = vec2(sampleBrickEx(pB, lvl, slabIndex)).toVar();
         bestStatus.assign(max(bestStatus, sampled.x));
         If(sampled.x.lessThan(0.5), () => {
           Continue();
@@ -573,7 +646,7 @@ export function createVolumeNodeMaterial(
           anyResident.assign(true);
         });
 
-        const normalized = float(channelNormalize(i, sampled.y)).toVar();
+        const normalized = float(channelNormalize(ch, sampled.y)).toVar();
         const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
         const weight = paramsB.x.mul(normalized);
         sampleNorm.assign(max(sampleNorm, normalized));

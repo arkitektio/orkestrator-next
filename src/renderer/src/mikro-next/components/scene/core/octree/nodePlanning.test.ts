@@ -4,7 +4,7 @@ import type { LayerState } from "../layerModel";
 import type { LayerViewRange } from "../visibility";
 import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
-import { planLayerNodes, sameNodePlan, type NodeCamera } from "./nodePlanning";
+import { planLayerNodes, sameNodePlan, slabLevelZ, type NodeCamera } from "./nodePlanning";
 
 const makeLayer = (
   overrides: Partial<{ fixedLOD: number | null; zDim: string | null }> = {},
@@ -108,6 +108,26 @@ describe("planLayerNodes (2D quadtree)", () => {
     const targets = keysByRole(p.nodes, "target");
     // View center ≈ (130,130): brick (0,0) is closest.
     expect(targets[0]).toBe("0:0:0:0");
+  });
+});
+
+describe("slabLevelZ (planner ↔ shader slab convention)", () => {
+  it("floors the base z, NOT the slab center, at non-integer z scales", () => {
+    // Real pyramid (38 z slices → 9): scale 38/9 ≈ 4.222. The shader used to
+    // sample floor((baseZ + 0.5) / scale), which lands one level texel past
+    // the planned brick for slabs like baseZ 8 — the page-table lookup then
+    // hits UNMAPPED and silently falls back to a coarser level, flipping as
+    // zoom changes the level chain. Planner and shader must both floor the
+    // raw base z (makeSampleBrickEx slab mode adds 0.5 only AFTER flooring,
+    // to recenter inside the chosen texel).
+    const scale = 38 / 9;
+    expect(slabLevelZ(8, 1, scale)).toBe(1);
+    expect(Math.floor((8 + 0.5) / scale)).toBe(2); // the old shader behavior
+    // Half-integer scales hit the same boundary (19 → 9, scale 9.5, baseZ 9).
+    expect(slabLevelZ(9, 1, 9.5)).toBe(0);
+    expect(Math.floor((9 + 0.5) / 9.5)).toBe(1);
+    // Integer scales are unaffected by the convention choice.
+    expect(slabLevelZ(150, 1, 32)).toBe(4);
   });
 });
 

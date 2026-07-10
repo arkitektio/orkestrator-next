@@ -16,6 +16,7 @@ import {
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
+import { perfMonitor } from "../../managers/perfMonitor";
 
 /**
  * Brick-pool replacement for `PlaneLayer` + per-chunk `ChunkPlane` meshes:
@@ -35,6 +36,7 @@ type ProbeGeometryContext = {
 };
 
 export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
+  perfMonitor.countRender("BrickPlaneLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
 

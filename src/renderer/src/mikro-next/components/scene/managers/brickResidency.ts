@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
+import { perfMonitor } from "./perfMonitor";
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange } from "../core/dataRange";
 import { resolveCollapsedSelection } from "../core/selection";
-import { encodeEmptyValue } from "../glsl/brickTraversal";
+import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
 import { repackBrick, type BrickArray, type RepackChunk } from "../core/octree/brickRepack";
@@ -290,7 +291,12 @@ export class BrickResidencyManager {
       const key = nodeKey(level, brick);
 
       const emptyValue = pool.emptyValues.get(key);
-      if (emptyValue !== undefined) return emptyValue;
+      if (emptyValue !== undefined) {
+        // The GPU only has the 8-bit page-table encoding of this value; mirror
+        // the same encode→decode round-trip so the CPU march matches the
+        // rendered image (OCTREE_RENDERER.md P11).
+        return decodeEmptyValue(encodeEmptyValue(emptyValue, pool), pool);
+      }
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
@@ -701,6 +707,7 @@ export class BrickResidencyManager {
     }
 
     if (uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
+    if (bricks > 0) perfMonitor.markUpload(bricks, bytes); // no-op unless recording
 
     if (uploadedAny) {
       // Throttle version bumps while streaming — every bump re-renders the

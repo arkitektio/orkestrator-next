@@ -90,6 +90,16 @@ export async function runChunkLoaderQueue<T>(
   await Promise.all(runners);
 }
 
+/**
+ * ⚠️ LEGACY / DEAD CODE — not used by the brick-pool (octree) renderer, which
+ * probes via `marchResidentBricks` + `BrickResidencyManager.sampleResident`.
+ *
+ * This walks a single monolithic 3D texture and, critically, assumes the texture
+ * is HARDWARE-NORMALIZED (see the `sampleValue / 65535` and `/ 255` below). The
+ * octree brick atlas stores RAW values in an R32F texture (`dataScale = 1`), so
+ * this normalization is WRONG for it — do NOT rewire this into brick sampling.
+ * Kept only until the old volume-probe UI is removed.
+ */
 export function marchVolumeTexture({
   colorMapTexture,
   dataScale,

@@ -110,9 +110,41 @@ describe("equality helpers", () => {
   });
 
   it("sameViewRanges compares ranges by value", () => {
-    const range = { xRange: [0, 10] as [number, number], yRange: [0, 5] as [number, number], zRange: null, scale: 1 };
+    const range = {
+      xRange: [0, 10] as [number, number],
+      yRange: [0, 5] as [number, number],
+      zRange: null,
+      scale: 1,
+      viewportFraction: 0.5,
+    };
     expect(sameViewRanges({ a: range }, { a: { ...range, xRange: [0, 10] } })).toBe(true);
     expect(sameViewRanges({ a: range }, { a: { ...range, scale: 2 } })).toBe(false);
     expect(sameViewRanges({ a: range }, {})).toBe(false);
+  });
+
+  it("sameViewRanges ignores viewportFraction (cosmetic, not a planning input)", () => {
+    // viewportFraction jitters continuously during an orbit; it must NOT gate the
+    // hot store write or the whole LayerControlPanel subtree re-renders per tick.
+    const range = {
+      xRange: [0, 10] as [number, number],
+      yRange: [0, 5] as [number, number],
+      zRange: null,
+      scale: 1,
+      viewportFraction: 0.1,
+    };
+    expect(sameViewRanges({ a: range }, { a: { ...range, viewportFraction: 0.9 } })).toBe(true);
+  });
+
+  it("sameViewRanges treats sub-1% scale jitter as equal (orbit foreshortening)", () => {
+    const range = {
+      xRange: [0, 10] as [number, number],
+      yRange: [0, 5] as [number, number],
+      zRange: null,
+      scale: 2,
+      viewportFraction: 0.5,
+    };
+    // 0.5% change -> ignored; 2% change -> a real LOD-relevant change.
+    expect(sameViewRanges({ a: range }, { a: { ...range, scale: 2.01 } })).toBe(true);
+    expect(sameViewRanges({ a: range }, { a: { ...range, scale: 2.04 } })).toBe(false);
   });
 });

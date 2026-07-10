@@ -9,6 +9,7 @@ import {
 } from "../../glsl/brickTraversal";
 import { GLSL_RAND } from "../../glsl/common";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
+import { perfMonitor } from "../../managers/perfMonitor";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { buildAffineMatrix } from "../../core/worldTransform";
@@ -50,6 +51,7 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
 const MAX_RAY_STEPS = 512;
 
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
+  perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);

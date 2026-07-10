@@ -1,4 +1,5 @@
 import type { StoreApi } from "zustand/vanilla";
+import { perfMonitor } from "./perfMonitor";
 import {
   computeSceneVisibility,
   sameViewRanges,
@@ -45,6 +46,7 @@ export function startVisibilityTracking({
     const { viewProjectionMatrix, viewportSize } = viewStore.getState();
     if (!viewProjectionMatrix) return;
 
+    perfMonitor.markVisibilityRecompute(); // no-op unless a perf recording is armed
     const viewerState = viewerStore.getState();
     const { visibleIds, ranges } = computeSceneVisibility({
       projScreenMatrix: viewProjectionMatrix,

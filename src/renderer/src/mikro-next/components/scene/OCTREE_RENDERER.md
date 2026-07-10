@@ -332,10 +332,39 @@ cache *hit* as a decode — a 4.96 GB phantom that sent diagnosis down the wrong
 path for a round. Count first-seen chunk keys only. Bad telemetry is worse
 than none; the debug report is the primary remote-diagnosis tool.
 
-**P11 — EMPTY-brick values are raw, not scaled.** The uniform value from the
-repack min/max scan is already in raw data units; running it through
-`dataScale` before 8-bit encoding double-applied normalization. Encode raw,
-normalize in the shader like every other sample.
+**P11 — EMPTY-brick values are raw, not scaled — and only 8-bit precise.** The
+uniform value from the repack min/max scan is already in raw data units; running
+it through `dataScale` before 8-bit encoding double-applied normalization. Encode
+raw (`encodeEmptyValue`), normalize in the shader like every other sample.
+
+Because an EMPTY brick survives only as ONE 8-bit page-table byte
+(`round((v-min)/(max-min)·255)`), the value the GPU renders is the encode→decode
+round-trip, **not** the raw value — a quantization of ≈`(max-min)/255` raw units
+(≈257 for uint16 over `[0,65535]`, so uniform uint16 bricks with a narrow useful
+window band). This is inherent to the 8-bit page encoding. The CPU probe path
+(`sampleResident`) applies the SAME round-trip (`decodeEmptyValue(encodeEmptyValue
+(v))`) so `marchResidentBricks` stays in lockstep with the rendered image rather
+than reporting the exact-but-not-rendered raw value. Tested in
+`glsl/brickTraversal.test.ts`.
+
+**Atlas format must mirror the worker's promotion, not the dtype string.**
+`atlasKindForDtype` (`render/bricks/gpu/brickAtlas.ts`) picks R8 only for unsigned
+8-bit and R32F for everything else — matching the codec worker's DEFAULT-fidelity
+promotion (`lib/zarr/runner/codec-worker.ts`: only `Uint8Array` stays uint8, all
+else → `Float32Array`). An earlier `dtype.includes("8")` test wrongly routed
+`int8` (a signed Float32Array) into a Uint8 R8 atlas, wrapping its negatives. Two
+standing constraints: (1) the scene never sets `textureFidelity`, so it assumes
+`'default'` — the `'low'`/`'high'` paths per-chunk-normalize to uint8/uint16 and
+would break both this format choice and the global `pool.minValue/maxValue`
+normalization; (2) `uint16` is (still) promoted to raw-valued float32 in R32F —
+native `R16` atlases remain deferred (§5). Tested in `brickAtlas.test.ts`.
+
+**Contrast limits are raw dtype units.** `climToUnit` (`core/dataRange.ts`) maps an
+absolute clim into the shader's `[0,1]` via `pool.minValue/maxValue`. This is
+correct ONLY if `channel.transfer.climMin/Max` and `layer.climMin/Max` arrive in
+raw dtype units (e.g. 0..4000 for a uint16 layer, not a normalized 0..1). A
+normalized clim on a uint16 layer collapses to ~0 after `climToUnit` with
+`[0,65535]`. See [[clim-absolute-native-units]].
 
 **P12 — Guard the coordinate frames.** `buildVolumeVoxelToWorld` centers
 x/y/z and flips y (the 3D frame). The 2D slab z is **uncentered**, matching

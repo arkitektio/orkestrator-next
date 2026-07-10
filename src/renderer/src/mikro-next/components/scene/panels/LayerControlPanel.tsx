@@ -3,8 +3,9 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
-import { useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { isLayerOutOfPlane } from "../core/worldTransform";
+import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { LayerState, useSceneStore } from "../store/sceneStore";
@@ -17,8 +18,14 @@ import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
  * One expandable layer card. Owns the layer's render-graph editing state (so it
  * survives collapsing) and shares it between the header — which hosts the tiny
  * Save button — and the unfolded editor body.
+ *
+ * Memoized: the panel re-renders whenever `layerViewRanges` changes (which can
+ * still happen when a layer's integer view range or LOD scale changes), but the
+ * card owns the heavy `useRenderGraphEditor` hook and subtree, so it must only
+ * re-render when ITS props change. All callbacks are passed in already-stable
+ * (id-parameterized) so the shallow prop compare actually skips.
  */
-const LayerCard = ({
+const LayerCard = memo(function LayerCard({
   layer,
   expanded,
   originalLayer,
@@ -36,14 +43,20 @@ const LayerCard = ({
   originalLayer: LayerState | undefined;
   isArmed: boolean;
   viewportPercent?: number;
-  onSelect: () => void;
-  onToggleArm: () => void;
+  onSelect: (id: string) => void;
+  onToggleArm: (id: string) => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
   onSaveDims: (layer: LayerState) => void;
   onClose: () => void;
-}) => {
+}) {
+  perfMonitor.countRender("LayerCard"); // no-op unless a perf recording is armed
   const editor = useRenderGraphEditor(layer);
+  // Adapt the stable id-parameterized panel handlers to the zero-arg forms the
+  // children expect. Created inside the memoized card, so they only churn when
+  // the card actually re-renders.
+  const handleSelect = () => onSelect(layer.id);
+  const handleToggleArm = () => onToggleArm(layer.id);
   return (
     <Collapsible
       open={expanded}
@@ -63,8 +76,8 @@ const LayerCard = ({
         graphDirty={editor.dirty}
         savingGraph={editor.loading}
         onSaveGraph={editor.save}
-        onSelect={onSelect}
-        onToggleArm={onToggleArm}
+        onSelect={handleSelect}
+        onToggleArm={handleToggleArm}
         onUpdate={onUpdate}
         onFocus={onFocus}
       />
@@ -77,7 +90,7 @@ const LayerCard = ({
             originalLayer={originalLayer}
             isArmed={isArmed}
             onUpdate={onUpdate}
-            onToggleArm={onToggleArm}
+            onToggleArm={handleToggleArm}
             onSave={onSaveDims}
             onClose={onClose}
           />
@@ -85,9 +98,10 @@ const LayerCard = ({
       </CollapsibleContent>
     </Collapsible>
   );
-};
+});
 
 export const LayerControlPanel = () => {
+  perfMonitor.countRender("LayerControlPanel"); // no-op unless a perf recording is armed
   const layers = useSceneStore((s) => s.layers);
   const originalLayers = useSceneStore((s) => s.originalLayers);
   const updateLayer = useSceneStore((s) => s.updateLayer);
@@ -104,22 +118,44 @@ export const LayerControlPanel = () => {
   const [updateLater] = useUpdateLaterMutation();
   const [showOffscreen, setShowOffscreen] = useState(false);
 
+  // Stable handlers so the memoized LayerCard actually skips re-render during a
+  // pan/orbit. The zustand actions (setSelectedLayerId, toggleArmedLayerId,
+  // updateLayer, fitToLayer, markLayerClean) are already stable refs; these wrap
+  // them without capturing per-render values (selection is read via a ref).
+  const selectedRef = useRef(selectedLayerId);
+  selectedRef.current = selectedLayerId;
+
+  const handleSelect = useCallback(
+    (id: string) => setSelectedLayerId(selectedRef.current === id ? null : id),
+    [setSelectedLayerId],
+  );
+  const handleToggleArm = useCallback(
+    (id: string) => toggleArmedLayerId(id),
+    [toggleArmedLayerId],
+  );
+  const handleClose = useCallback(
+    () => setSelectedLayerId(null),
+    [setSelectedLayerId],
+  );
   // Contrast/colormap/color live in the render graph (saved by the render-graph
   // editor); this persists only the dimension mapping.
-  const saveLayer = (layer: LayerState) => {
-    updateLater({
-      variables: {
-        input: {
-          id: layer.id,
-          xDim: layer.xDim,
-          yDim: layer.yDim,
-          zDim: layer.zDim,
-          intensityDim: layer.intensityDim,
+  const handleSaveDims = useCallback(
+    (layer: LayerState) => {
+      updateLater({
+        variables: {
+          input: {
+            id: layer.id,
+            xDim: layer.xDim,
+            yDim: layer.yDim,
+            zDim: layer.zDim,
+            intensityDim: layer.intensityDim,
+          },
         },
-      },
-    });
-    markLayerClean(layer.id);
-  };
+      });
+      markLayerClean(layer.id);
+    },
+    [updateLater, markLayerClean],
+  );
 
   if (layers.length === 0) return null;
 
@@ -169,14 +205,12 @@ export const LayerControlPanel = () => {
         originalLayer={originalLayers.find((o) => o.id === layer.id)}
         isArmed={armedLayerIds.includes(layer.id)}
         viewportPercent={fraction != null ? Math.round(fraction * 100) : undefined}
-        onSelect={() =>
-          setSelectedLayerId(layer.id === selectedLayerId ? null : layer.id)
-        }
-        onToggleArm={() => toggleArmedLayerId(layer.id)}
+        onSelect={handleSelect}
+        onToggleArm={handleToggleArm}
         onUpdate={updateLayer}
         onFocus={fitToLayer}
-        onSaveDims={saveLayer}
-        onClose={() => setSelectedLayerId(null)}
+        onSaveDims={handleSaveDims}
+        onClose={handleClose}
       />
     );
   };

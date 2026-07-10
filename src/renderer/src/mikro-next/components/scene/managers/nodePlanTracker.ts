@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
+import { perfMonitor } from "./perfMonitor";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveBrickSpec } from "../core/octree/brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "../core/octree/levelGeometry";
@@ -160,6 +161,7 @@ export function startNodePlanTracking({
       scheduled = false;
       if (!stopped) {
         lastRecomputeAt = performance.now();
+        perfMonitor.markReplan(); // no-op unless a perf recording is armed
         recompute();
       }
     });

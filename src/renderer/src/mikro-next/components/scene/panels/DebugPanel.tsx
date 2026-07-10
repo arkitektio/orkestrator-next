@@ -1,8 +1,10 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
-import { ChevronDown, ClipboardCopy } from "lucide-react";
+import { ChevronDown, ClipboardCopy, Circle, Square } from "lucide-react";
 import { useState } from "react";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
+import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
 import { useViewStoreApi } from "../store/viewStore";
@@ -20,8 +22,20 @@ export const DebugPanel = () => {
   const viewStoreApi = useViewStoreApi();
   const [isControlsOpen, setIsControlsOpen] = useState(true);
   const [reportCopied, setReportCopied] = useState(false);
+  const recording = usePerfRecording();
+  const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
 
   if (!isDebug) return null;
+
+  const togglePerfRecording = () => {
+    if (perfMonitor.isRecording()) {
+      perfMonitor.stopRecording();
+      setLastSession(perfMonitor.buildSessionReport());
+    } else {
+      setLastSession(null);
+      perfMonitor.startRecording();
+    }
+  };
 
   /** One paste-able JSON blob covering planner + residency + camera state. */
   const copyDebugReport = () => {
@@ -57,6 +71,9 @@ export const DebugPanel = () => {
         }),
       ),
       brickSystem: viewerState.brickSystem?.buildDebugReport() ?? null,
+      // The opt-in CPU/GPU recording (Start/End report). Null when no session
+      // has been captured. This is the "last few seconds" perf window.
+      perfSession: perfMonitor.buildSessionReport(),
     };
     const json = JSON.stringify(report, null, 2);
     console.log("[octree debug report]", report);
@@ -112,6 +129,29 @@ export const DebugPanel = () => {
                 <ClipboardCopy className="h-3 w-3" />
                 {reportCopied ? "Copied!" : "Copy debug report"}
               </button>
+
+              {/* Opt-in CPU/GPU perf recording. Nothing is sampled until Start is
+                  pressed; the render hot path pays only a boolean check otherwise. */}
+              <button
+                className={`flex w-full items-center justify-center gap-1 rounded border px-2 py-1 text-[10px] font-medium transition-colors ${
+                  recording
+                    ? "border-red-500/60 bg-red-500/15 text-red-200 hover:bg-red-500/25"
+                    : "border-border/50 text-muted-foreground hover:bg-white/10"
+                }`}
+                onClick={togglePerfRecording}
+              >
+                {recording ? (
+                  <>
+                    <Square className="h-3 w-3 fill-current" /> End report (recording…)
+                  </>
+                ) : (
+                  <>
+                    <Circle className="h-3 w-3 fill-current" /> Start perf report
+                  </>
+                )}
+              </button>
+
+              {lastSession && <PerfSessionSummary report={lastSession} />}
             </div>
           </CollapsibleContent>
         </div>
@@ -187,6 +227,59 @@ export const DebugPanel = () => {
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** Compact readout of the most recent perf recording (CPU vs GPU + hot renders). */
+const PerfSessionSummary = ({ report }: { report: PerfSessionReport }) => {
+  const topRenders = Object.entries(report.renderCounts).slice(0, 4);
+  return (
+    <div className="space-y-1 rounded border border-border/50 bg-background/40 px-2 py-1.5 text-[9px] text-muted-foreground">
+      <div className="flex flex-wrap gap-1">
+        <span className="rounded bg-accent px-1">
+          {(report.durationMs / 1000).toFixed(1)}s · {report.frameCount}f ·{" "}
+          {report.fps.toFixed(0)} fps
+        </span>
+        {report.truncated && (
+          <span className="rounded border border-amber-500/50 px-1 text-amber-300">
+            capped
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        <span className="rounded border border-border/50 px-1">
+          CPU {report.cpuMs.avg.toFixed(1)}/{report.cpuMs.max.toFixed(0)}ms (avg/max)
+        </span>
+        <span className="rounded border border-border/50 px-1">
+          GPU{" "}
+          {report.gpuMs
+            ? `${report.gpuMs.avg.toFixed(1)}/${report.gpuMs.max.toFixed(0)}ms`
+            : "n/a"}
+        </span>
+        {report.jankFrames > 0 && (
+          <span className="rounded border border-red-500/50 px-1 text-red-300">
+            {report.jankFrames} jank
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        <span className="rounded border border-border/50 px-1">
+          replans {report.replans}
+        </span>
+        <span className="rounded border border-border/50 px-1">
+          vis {report.visibilityRecomputes}
+        </span>
+      </div>
+      {topRenders.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {topRenders.map(([name, count]) => (
+            <span key={name} className="rounded border border-border/50 px-1">
+              {name} ×{count}
+            </span>
+          ))}
         </div>
       )}
     </div>

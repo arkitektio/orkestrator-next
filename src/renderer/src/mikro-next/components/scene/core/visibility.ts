@@ -205,7 +205,24 @@ export function sameVisibleIds(previous: readonly string[], next: Set<string>): 
   return previous.length === next.size && previous.every((id) => next.has(id));
 }
 
-/** Value equality for two range maps (skip store writes when nothing changed). */
+/** Relative equality for the px-per-voxel scale (1% tolerance). */
+function sameScale(a: number, b: number): boolean {
+  const magnitude = Math.max(Math.abs(a), Math.abs(b), 1e-6);
+  return Math.abs(a - b) <= 0.01 * magnitude;
+}
+
+/**
+ * Value equality for two range maps (skip store writes when nothing changed).
+ *
+ * Only the fields that drive planning are compared: the integer voxel ranges and
+ * `scale`. Two fields are deliberately handled with care because they jitter
+ * continuously during a 3D orbit and would otherwise rewrite `layerViewRanges`
+ * every camera tick — which re-renders the whole `LayerControlPanel` subtree:
+ *  - `scale` is compared with a 1% relative tolerance (sub-1% wobble is ignored).
+ *  - `viewportFraction` is NOT compared at all: it is cosmetic-only (the panel's
+ *    coverage sort / badge) and NOT a planning input, so it must never gate the
+ *    hot store write. The panel reads whatever value was last published.
+ */
 export function sameViewRanges(
   previous: Record<string, LayerViewRange>,
   next: Record<string, LayerViewRange>,
@@ -218,9 +235,7 @@ export function sameViewRanges(
     const b = next[key];
     if (!b) return false;
     return (
-      a.scale === b.scale &&
-      // Compare the rounded percent so sub-1% jitter doesn't churn the store.
-      Math.round(a.viewportFraction * 100) === Math.round(b.viewportFraction * 100) &&
+      sameScale(a.scale, b.scale) &&
       a.xRange[0] === b.xRange[0] &&
       a.xRange[1] === b.xRange[1] &&
       a.yRange[0] === b.yRange[0] &&

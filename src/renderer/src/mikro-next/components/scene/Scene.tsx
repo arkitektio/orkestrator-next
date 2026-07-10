@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
+import { PerfFrameProbe } from "./PerfFrameProbe";
 import { CameraController } from "./cameras/CameraController";
 import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
@@ -142,6 +143,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
               {/* The Camera Matrix Sync ensures that we can access the view matrix outside in html world */}
               <CameraMatrixSync />
+              <PerfFrameProbe />
               <CameraController />
               <CanvasSync />
 

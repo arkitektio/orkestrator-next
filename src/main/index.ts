@@ -16,7 +16,7 @@ import { AppManager } from "./modules/AppManager";
 import { UploadService } from "./modules/UploadService";
 import { BigFileUploadService } from "./modules/BigFileUploadService";
 import { BigFileDownloadService } from "./modules/BigFileDownloadService";
-import { session } from "electron";
+import { session, protocol, net } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
@@ -103,7 +103,28 @@ if (!gotTheLock) {
         }
       })
     })
-    
+
+    // In the packaged app the renderer is loaded via loadFile() (file://),
+    // and onHeadersReceived above does not reliably apply COOP/COEP to that
+    // navigation response (especially out of an asar archive) — without it,
+    // window.crossOriginIsolated is false and SharedArrayBuffer is undefined,
+    // breaking the worker-accelerated zarr chunk decoding pipeline. Overriding
+    // the file: protocol handler gives full control over the Response headers
+    // for every file:// request, including the top-level document.
+    protocol.handle("file", async (request) => {
+      const response = await net.fetch(request.url, {
+        bypassCustomProtocolHandlers: true,
+      })
+      const headers = new Headers(response.headers)
+      headers.set("Cross-Origin-Opener-Policy", "same-origin")
+      headers.set("Cross-Origin-Embedder-Policy", "require-corp")
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      })
+    })
+
     windowManager.createMainWindow(icon);
 
     if (!electronAgent) {

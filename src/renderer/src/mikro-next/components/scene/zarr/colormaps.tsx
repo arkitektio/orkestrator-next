@@ -1,4 +1,4 @@
-import { ColorMap, SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { ColorMap } from "@/mikro-next/api/graphql";
 import * as THREE from "three";
 
 export const createColormapTexture = (colors: number[][]) => {
@@ -653,9 +653,63 @@ const getContinuousColorMapTexture = (
 
 
 
+/**
+ * Build a colormap atlas: a 256 x N RGBA LUT where row `c` is the LUT for
+ * channel `c` (its colormap tinted by its base color). A multi-channel shader
+ * samples `texture(atlas, vec2(t, (c + 0.5) / N))` to look up channel `c`'s
+ * color for a normalized intensity `t`. Rows are sampled at their exact centers
+ * so LinearFilter on the row axis still returns the correct row.
+ */
+export const buildColormapAtlas = (
+  channels: { colormap: ColorMap | null | undefined; color?: number[] | null }[],
+): THREE.DataTexture => {
+  const width = 256;
+  const height = Math.max(1, channels.length);
+  const data = new Uint8Array(width * height * 4);
+
+  for (let row = 0; row < height; row++) {
+    const channel = channels[row];
+    // A channel with no named colormap but an explicit color is a black->color
+    // linear ramp (the standard per-channel microscopy tint, e.g. RGB composites).
+    // Only fall back to a named/Viridis colormap when no color is given.
+    const tintColor =
+      channel?.colormap == null && channel?.color ? channel.color : null;
+
+    for (let x = 0; x < width; x++) {
+      const t = x / (width - 1);
+      let r: number;
+      let g: number;
+      let b: number;
+      if (tintColor) {
+        // Constant channel color; the shader scales it by the channel's
+        // normalized intensity (so 0 -> black, 1 -> full color). A ramp here
+        // would double-count intensity and crush the image.
+        r = (tintColor[0] ?? 0) / 255;
+        g = (tintColor[1] ?? 0) / 255;
+        b = (tintColor[2] ?? 0) / 255;
+      } else {
+        [r, g, b] = sampleColorMapRgb(channel?.colormap, t, channel?.color);
+      }
+      const idx = (row * width + x) * 4;
+      data[idx] = Math.round(r * 255);
+      data[idx + 1] = Math.round(g * 255);
+      data[idx + 2] = Math.round(b * 255);
+      data[idx + 3] = 255;
+    }
+  }
+
+  const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.needsUpdate = true;
+  return texture;
+};
+
 export const getColorMapTexture = (
-  colormap: SceneLayerFragment["colormap"] | null | undefined,
-  color?: SceneLayerFragment["color"] | null,
+  colormap: ColorMap | null | undefined,
+  color?: Array<number> | null,
 ) => {
   const resolvedColormap = colormap ?? ColorMap.Viridis;
 

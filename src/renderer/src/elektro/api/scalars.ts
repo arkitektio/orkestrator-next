@@ -6,7 +6,7 @@
 // wire format carries the magnitude *and* unit together, e.g. "100 ms", "1 µm",
 // "-70 mV", "5 nS", "50 Hz".
 //
-// Parse / format / unit-convert these via `../lib/quantities.ts` (`parseQuantity`,
+// Parse / format / unit-convert these via `@/lib/quantities` (`parseQuantity`,
 // `formatQuantity`, `toBase`) — never do arithmetic on them directly.
 
 /** A quantity of time, e.g. "5 ms", "2 s". */
@@ -47,7 +47,7 @@ export type Temperature = string;
  * A physical quantity of *any* dimension, magnitude + unit together, e.g.
  * "0.12 S/cm2", "-54.3 mV", "2 mM". Unlike the dimension-locked scalars it keeps
  * whatever unit the value carries; validating it against an expected dimension is
- * the caller's job. Parse / format via `../lib/quantities.ts`.
+ * the caller's job. Parse / format via `@/lib/quantities`.
  */
 export type GenericQuantity = string;
 
@@ -57,7 +57,7 @@ export type Unit = string;
 /**
  * A pint dimensionality string, e.g. "[length]", "[current] / [length] ** 2",
  * "dimensionless". NOTE: this is distinct from the editor-local `Dimension`
- * *union* in `../lib/quantities.ts` (`"length" | "voltage" | …`) — that one names
+ * *union* in `@/lib/quantities` (`"length" | "voltage" | …`) — that one names
  * a curated unit table; this one is the backend's raw pint dimensionality.
  */
 export type Dimension = string;

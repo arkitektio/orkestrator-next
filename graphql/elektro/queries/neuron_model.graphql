@@ -4,6 +4,24 @@ query DetailNeuronModel($id: ID!) {
   }
 }
 
+query SectionDominance(
+  $id: ID!
+  $weightAxial: Float
+  $weightCapacitance: Float
+  $weightConductance: Float
+) {
+  neuronModel(id: $id) {
+    id
+    sectionDominance(
+      weightAxial: $weightAxial
+      weightCapacitance: $weightCapacitance
+      weightConductance: $weightConductance
+    ) {
+      ...SectionDominance
+    }
+  }
+}
+
 query ListNeuronModels(
   $pagination: OffsetPaginationInput
   $filters: NeuronModelFilter

@@ -1,29 +1,32 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
+import { PerfFrameProbe } from "./PerfFrameProbe";
+import { QualityAdapter } from "./cameras/QualityAdapter";
 import { CameraController } from "./cameras/CameraController";
+import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
-import { LayerViewRangesOverlay } from "./overlays/LayerViewRangesOverlay";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
-import { ScenePanel } from "./panels/ScenePanel";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
+import { ProbeThresholdPanel } from "./panels/ProbeThresholdPanel";
 import { DebugPanel } from "./panels/DebugPanel";
-import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
-import { createSelectionStore, SelectionStoreContext } from "./store/layerStore";
+import { createViewerStore, ViewerStoreContext, useViewerStore } from "./store/viewerStore";
+import { createSelectionStore, SelectionStoreContext } from "./store/selectionStore";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
 import { VisibilityManager } from "./managers/VisibilityManager";
+import { BrickSystemProvider } from "./managers/BrickSystemProvider";
+import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
 import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSelectionStore";
@@ -32,7 +35,10 @@ import { TwoDScene } from "./TwoDScene";
 import { ThreeDScene } from "./ThreeDScene";
 
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
+  // `select-none` on the canvas surface stops a drag (pan / ROI draw / probe)
+  // from ever turning into a text selection. Overlays keep normal selection.
   return <Canvas
+        className="select-none [-webkit-user-select:none]"
         frameloop="demand">{children}</Canvas>;
 };
 
@@ -40,6 +46,17 @@ const SceneModeContent = () => {
   const displayMode = useModeStore((state) => state.displayMode);
 
   return displayMode === "2D" ? <TwoDScene /> : <ThreeDScene />;
+};
+
+/**
+ * Mount-gate for debug consumers. The DebugPanel and BrickResidencyOverlay
+ * subscribe to streaming-cadence state (`residencyVersion`, `nodePlans`); when
+ * mounted with debug off they still re-render (to null) on every bump. Gating
+ * the MOUNT here means those subscriptions don't exist at all outside debug.
+ */
+const WhenDebug = ({ children }: { children: ReactNode }) => {
+  const debug = useViewerStore((s) => s.debug);
+  return debug ? <>{children}</> : null;
 };
 
 
@@ -139,7 +156,12 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
               {/* The Camera Matrix Sync ensures that we can access the view matrix outside in html world */}
               <CameraMatrixSync />
+              <PerfFrameProbe />
               <CameraController />
+              {/* Must follow CameraController: fits the as-loaded scene extent
+                  before the first painted frame (and on 2D/3D remounts). */}
+              <InitialCameraFit />
+              <QualityAdapter />
               <CanvasSync />
 
               {/* Interaction Layers */}
@@ -149,23 +171,33 @@ export const Scene = (props: { scene: SceneFragment }) => {
 
               <SceneModeContent />
 
+              <BrickSystemProvider />
+              <WhenDebug>
+                <BrickResidencyOverlay />
+              </WhenDebug>
+
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
                 <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}/>
               </GizmoHelper>
             </SceneWrapper>
 
-            <ScenePanel/>
-            <LayerControlPanel />
-            <DebugPanel />
-            <SelectedPointPanel />
+            {/* Scene controls + layer list stack as one top-right column, so the
+                control card can be any height (2D/3D) without overlapping the
+                layer list, which just takes the remaining space. */}
+            <div className="pointer-events-none absolute right-3 top-3 bottom-3 z-30 flex w-72 flex-col gap-2">
+              <SceneOverlay />
+              <ProbeThresholdPanel />
+              <LayerControlPanel />
+            </div>
+            <WhenDebug>
+              <DebugPanel />
+            </WhenDebug>
             <SelectedRoiPanel />
             <ZSliderPanel />
             <VisibilityManager/>
             <ScaleBar />
 
-            <SceneOverlay />
             <RoiToolbar />
-            <LayerViewRangesOverlay />
           </PanelProvider>
         </div>
                 </RoiSelectionStoreContext.Provider>

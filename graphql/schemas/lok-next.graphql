@@ -40,7 +40,7 @@ type App {
   """
   The releases of the app. A release is a version of the app that can be installed by a user.
   """
-  releases: [Release!]!
+  releases(ordering: [ReleaseOrdering!]! = []): [Release!]!
 }
 
 """App(id, name, identifier, logo)"""
@@ -57,6 +57,11 @@ input AppFilter {
 The App identifier is a unique identifier for an app. It is used to identify the app in the database and in the code. We encourage you to use the reverse domain name notation. E.g. `com.example.myapp`
 """
 scalar AppIdentifier
+
+input AppOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
 
 input CancelInviteInput {
   id: ID!
@@ -91,11 +96,13 @@ type Client {
   logo: MediaStore
 
   """
-  The mappings of the client. A mapping is a mapping of a service to a service instance. This is used to configure the composition.
+  The mappings of the client. A mapping is a mapping of a service to a service instance. This is used to configure the hub.
   """
-  mappings: [ServiceInstanceMapping!]!
+  mappings(ordering: [ServiceInstanceMappingOrdering!]! = []): [ServiceInstanceMapping!]!
 
-  """The name of the client. This is a human readable name of the client."""
+  """
+  A human-readable label for the client that folds in the app, version, operator and device — e.g. `com.example.app:v0.1.1 by Johannes on my-laptop`.
+  """
   name: String!
 
   """The node this runs on"""
@@ -137,7 +144,7 @@ type Client {
 }
 
 """
-Client(id, composition, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, manifest)
+Client(id, hub, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, last_healthy_report, manifest)
 """
 input ClientFilter {
   AND: ClientFilter
@@ -145,8 +152,6 @@ input ClientFilter {
   NOT: ClientFilter
   OR: ClientFilter
   ids: [ID!]
-
-  """Operational role: human INTERFACE vs autonomous task-receiving AGENT."""
   role: ClientRole
   search: String
 }
@@ -155,6 +160,13 @@ enum ClientKind {
   DESKTOP
   DEVELOPMENT
   WEBSITE
+}
+
+input ClientOrdering @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  lastReportedAt: Ordering
+  name: Ordering
 }
 
 enum ClientRole {
@@ -168,6 +180,11 @@ An Organization is a group of users that can work together on a project.
 type ComChannel {
   id: ID!
   user: User!
+}
+
+input ComChannelOrdering @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 """
@@ -185,7 +202,7 @@ paragraphs.
 """
 type Comment {
   """The children of this comment"""
-  children: [Comment!]!
+  children(ordering: [CommentOrdering!]! = []): [Comment!]!
 
   """The time this comment got created"""
   createdAt: DateTime!
@@ -200,7 +217,7 @@ type Comment {
   identifier: Identifier!
 
   """The users that got mentioned in this comment"""
-  mentions(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  mentions(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
 
   """The object id of the object, on its associated service"""
   object: String!
@@ -214,6 +231,11 @@ type Comment {
 
   """The user that created this comment"""
   user: User!
+}
+
+input CommentOrdering @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 """A Communication"""
@@ -332,7 +354,7 @@ enum DescendantKind {
 }
 
 input DevelopmentClientInput {
-  composition: ID = null
+  hub: ID = null
   layers: [String!] = ["web"]
   manifest: ManifestInput!
   role: ClientRole = null
@@ -340,10 +362,10 @@ input DevelopmentClientInput {
 
 """Device(id, node_id, name, organization)"""
 type Device {
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [Client!]!
+  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
 
   """The device groups that belong to this device."""
-  deviceGroups(filters: DeviceGroupFilter, pagination: OffsetPaginationInput): [DeviceGroup!]!
+  deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
   id: ID!
   name: String
   nodeId: ID!
@@ -367,7 +389,7 @@ type DeviceGroup {
   description: String
 
   """The devices that belong to this device group."""
-  devices(filters: DeviceFilter, pagination: OffsetPaginationInput): [Device!]!
+  devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]!
   id: ID!
 
   """The name of the device group."""
@@ -382,6 +404,16 @@ input DeviceGroupFilter {
   OR: DeviceGroupFilter
   ids: [ID!]
   search: String
+}
+
+input DeviceGroupOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+input DeviceOrdering @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 type DjangoModelType {
@@ -419,6 +451,11 @@ input GroupFilter {
   ids: [ID!]
   name: StrFilterLookup
   search: String
+}
+
+input GroupOrdering @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n\n\n\n"
@@ -486,6 +523,11 @@ type InstanceAlias {
   ssl: Boolean!
 }
 
+input InstanceAliasOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
 """
 A single-use magic invite link that allows one person to join an organization.
 """
@@ -494,7 +536,7 @@ type Invite {
   createdAt: DateTime!
   createdBy: User!
   createdFor: Organization!
-  createdMembershipts(filters: MembershipFilter, pagination: OffsetPaginationInput): [Membership!]!
+  createdMembershipts(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
   declinedBy: User
   email: String
   expiresAt: DateTime
@@ -503,12 +545,17 @@ type Invite {
   """Get the full URL for accepting this invite"""
   inviteUrl: String!
   respondedAt: DateTime
-  roles(filters: RoleFilter, pagination: OffsetPaginationInput): [Role!]!
+  roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
   status: String!
   token: String!
 
   """Check if the invite is still valid and pending"""
   valid: Boolean!
+}
+
+input InviteOrdering @oneOf {
+  createdAt: Ordering
+  id: Ordering
 }
 
 """
@@ -529,7 +576,7 @@ type Layer {
   """
   The instances of the service. A service instance is a configured instance of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.
   """
-  instances(filters: ServiceInstanceFilter, pagination: OffsetPaginationInput): [ServiceInstance!]!
+  instances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
 
   """
   The logo of the service. This should be a url to a logo that can be used to represent the service.
@@ -550,6 +597,11 @@ input LayerFilter {
   OR: LayerFilter
   ids: [ID!]
   search: String
+}
+
+input LayerOrdering @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 """
@@ -577,12 +629,19 @@ input LinkingRequestInput {
 }
 
 input ManifestInput {
+  authors: [String!]! = []
+  description: String = null
+  homepage: String = null
   identifier: String!
+  keywords: [String!]! = []
+  license: String = null
   logo: String = null
   nodeId: String = null
   publicSources: [PublicSourceInput!] = null
+  repoUrl: String = null
   requirements: [RequirementInput!]! = []
   scopes: [String!]! = []
+  title: String = null
   version: String!
 }
 
@@ -610,7 +669,7 @@ type Membership {
   organization: Organization!
 
   """The roles that the user has in the organization"""
-  roles(filters: RoleFilter, pagination: OffsetPaginationInput): [Role!]!
+  roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
   user: User!
 }
 
@@ -623,6 +682,10 @@ input MembershipFilter {
   ids: [ID!]
   name: StrFilterLookup
   search: String
+}
+
+input MembershipOrdering @oneOf {
+  id: Ordering
 }
 
 """A mention of a user"""
@@ -685,7 +748,7 @@ input NotifyUserInput {
 }
 
 """
-OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg)
+OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg, membership_is_subject, email_template)
 """
 type Oauth2Client {
   clientId: String!
@@ -697,12 +760,21 @@ input OffsetPaginationInput {
   offset: Int! = 0
 }
 
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
 """
 An Organization is a group of users that can work together on a project.
 """
 type Organization {
   """The users that are currently active in the organization"""
-  activeUsers(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  activeUsers(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
 
   """The logo of the organization"""
   avatar: MediaStore
@@ -712,10 +784,10 @@ type Organization {
   id: ID!
 
   """the invites for this organization"""
-  invites(filters: OrganizationFilter, pagination: OffsetPaginationInput): [Invite!]!
+  invites(filters: OrganizationFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
 
   """the memberships of people"""
-  memberships(filters: MembershipFilter, pagination: OffsetPaginationInput): [Membership!]!
+  memberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
 
   """The name of this organization"""
   name: String!
@@ -726,7 +798,7 @@ type Organization {
   slug: String!
 
   """The users that are part of the organization"""
-  users(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
 }
 
 """__doc__"""
@@ -738,6 +810,11 @@ input OrganizationFilter {
   ids: [ID!]
   name: StrFilterLookup
   search: String
+}
+
+input OrganizationOrdering @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n"
@@ -814,23 +891,23 @@ enum PublicSourceKind {
 type Query {
   _service: _Service!
   app(clientId: ID = null, id: ID = null, identifier: AppIdentifier = null): App!
-  apps(filters: AppFilter, pagination: OffsetPaginationInput): [App!]!
+  apps(filters: AppFilter, ordering: [AppOrdering!]! = [], pagination: OffsetPaginationInput): [App!]!
   client(clientId: ID = null, id: ID = null): Client!
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [Client!]!
+  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
   comment(id: ID!): Comment!
-  comments: [Comment!]!
+  comments(ordering: [CommentOrdering!]! = []): [Comment!]!
   commentsFor(identifier: Identifier!, object: ID!): [Comment!]!
   device(id: ID!): Device!
   deviceByDeviceId(id: ID!): Device!
   deviceGroup(id: ID!): DeviceGroup!
-  deviceGroups(filters: DeviceGroupFilter, pagination: OffsetPaginationInput): [DeviceGroup!]!
-  devices(filters: DeviceFilter, pagination: OffsetPaginationInput): [Device!]!
+  deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
+  devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]!
   group(id: ID!): Group!
-  groups(filters: GroupFilter, pagination: OffsetPaginationInput): [Group!]!
+  groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
   hallo: String!
-  invites(filters: OrganizationFilter, pagination: OffsetPaginationInput): [Invite!]!
+  invites(filters: OrganizationFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
   layer(id: ID!): Layer!
-  layers(filters: LayerFilter, pagination: OffsetPaginationInput): [Layer!]!
+  layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   me: User!
   message(id: ID!): SystemMessage!
   myActiveMessages: [SystemMessage!]!
@@ -841,27 +918,27 @@ type Query {
   mycontext: Context!
   mygroups: [Group!]!
   organization(id: ID!): Organization!
-  organizations(filters: OrganizationFilter, pagination: OffsetPaginationInput): [Organization!]!
+  organizations(filters: OrganizationFilter, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [Organization!]!
   redeemToken(id: ID!): RedeemToken!
-  redeemTokens(filters: RedeemTokenFilter, pagination: OffsetPaginationInput): [RedeemToken!]!
+  redeemTokens(filters: RedeemTokenFilter, ordering: [RedeemTokenOrdering!]! = [], pagination: OffsetPaginationInput): [RedeemToken!]!
   release(clientId: ID = null, id: ID = null, identifier: AppIdentifier = null, version: Version = null): Release!
-  releases: [Release!]!
+  releases(ordering: [ReleaseOrdering!]! = []): [Release!]!
   role(id: ID!): Role!
-  roles(filters: RoleFilter, pagination: OffsetPaginationInput): [Role!]!
+  roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
   scopes: [Scope!]!
   service(id: ID!): Service!
   serviceInstance(id: ID!): ServiceInstance!
-  serviceInstances(filters: ServiceInstanceFilter, pagination: OffsetPaginationInput): [ServiceInstance!]!
+  serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
   serviceRelease(id: ID!): ServiceRelease!
-  serviceReleases(filters: ServiceReleaseFilter, pagination: OffsetPaginationInput): [ServiceRelease!]!
-  services(filters: ServiceFilter, pagination: OffsetPaginationInput): [Service!]!
+  serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]!
+  services(filters: ServiceFilter, ordering: [ServiceOrdering!]! = [], pagination: OffsetPaginationInput): [Service!]!
   stash(id: ID!): Stash!
   stashItem(id: ID!): StashItem!
-  stashItems(filters: StashItemFilter, pagination: OffsetPaginationInput): [StashItem!]!
-  stashes(filters: StashFilter, pagination: OffsetPaginationInput): [Stash!]!
+  stashItems(filters: StashItemFilter, ordering: [StashItemOrdering!]! = [], pagination: OffsetPaginationInput): [StashItem!]!
+  stashes(filters: StashFilter, ordering: [StashOrdering!]! = [], pagination: OffsetPaginationInput): [Stash!]!
   user(id: ID!): User!
   userStats(filters: UserFilter = null): UserStats!
-  users(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
 }
 
 """
@@ -903,6 +980,11 @@ input RedeemTokenInput {
   token: String = null
 }
 
+input RedeemTokenOrdering @oneOf {
+  createdAt: Ordering
+  id: Ordering
+}
+
 input RegisterComChannelInput {
   token: String!
 }
@@ -915,7 +997,7 @@ type Release {
   app: App!
 
   """The clients of the release"""
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [Client!]!
+  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
   id: ID!
 
   """
@@ -944,9 +1026,14 @@ type Release {
   version: Version!
 }
 
+input ReleaseOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
 input RenderInput {
   client: ID!
-  composition: ID = null
+  hub: ID = null
   manifest: ManifestInput = null
   request: LinkingRequestInput = null
 }
@@ -995,6 +1082,10 @@ input RoleFilter {
   search: String
 }
 
+input RoleOrdering @oneOf {
+  id: Ordering
+}
+
 """
 A scope that can be assigned to a client. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions.
 """
@@ -1039,7 +1130,7 @@ type Service {
   """
   The releases of the service. A service release is a specific version of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.
   """
-  releases(filters: ServiceReleaseFilter, pagination: OffsetPaginationInput): [ServiceRelease!]!
+  releases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]!
 }
 
 """Service(id, name, identifier, logo, description)"""
@@ -1064,19 +1155,19 @@ type ServiceInstance {
   """
   The aliases of the instance. An alias is a way to reach the instance. Clients can use these aliases to check if they can reach the instance. An alias can be an absolute alias (e.g. 'example.com') or a relative alias (e.g. 'example.com/path'). If the alias is relative, it will be relative to the layer's domain, port and path.
   """
-  aliases: [InstanceAlias!]!
+  aliases(ordering: [InstanceAliasOrdering!]! = []): [InstanceAlias!]!
 
   """The groups that are allowed to use this instance."""
-  allowedGroups(filters: GroupFilter, pagination: OffsetPaginationInput): [Group!]!
+  allowedGroups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
 
   """The users that are allowed to use this instance."""
-  allowedUsers(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  allowedUsers(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
 
   """The groups that are denied to use this instance."""
-  deniedGroups(filters: GroupFilter, pagination: OffsetPaginationInput): [Group!]!
+  deniedGroups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
 
   """The users that are denied to use this instance."""
-  deniedUsers(filters: UserFilter, pagination: OffsetPaginationInput): [User!]!
+  deniedUsers(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
   id: ID!
 
   """
@@ -1090,9 +1181,9 @@ type ServiceInstance {
   logo: MediaStore
 
   """
-  The mappings of the composition. A mapping is a mapping of a service to a service instance. This is used to configure the composition.
+  The mappings of the hub. A mapping is a mapping of a service to a service instance. This is used to configure the hub.
   """
-  mappings: [ServiceInstanceMapping!]!
+  mappings(ordering: [ServiceInstanceMappingOrdering!]! = []): [ServiceInstanceMapping!]!
 
   """
   The name of the instance. This is a human readable name of the instance.
@@ -1104,7 +1195,7 @@ type ServiceInstance {
 }
 
 """
-ServiceInstance(id, composition, release, logo, instance_id, private_key, steward, organization, device, template, public_key, token)
+ServiceInstance(id, hub, release, logo, instance_id, private_key, steward, organization, device, template, public_key, token)
 """
 input ServiceInstanceFilter {
   AND: ServiceInstanceFilter
@@ -1137,6 +1228,19 @@ type ServiceInstanceMapping {
   optional: Boolean!
 }
 
+input ServiceInstanceMappingOrdering @oneOf {
+  id: Ordering
+}
+
+input ServiceInstanceOrdering @oneOf {
+  id: Ordering
+}
+
+input ServiceOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
 """
 A ServiceRelease is a specific release of a Service. It contains the configuration for a particular version of the service.
 """
@@ -1150,7 +1254,7 @@ type ServiceRelease {
   """
   The instances of the service. A service instance is a configured instance of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.
   """
-  instances(filters: ServiceInstanceFilter, pagination: OffsetPaginationInput): [ServiceInstance!]!
+  instances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
 
   """The service that this release belongs to."""
   service: Service!
@@ -1171,13 +1275,17 @@ input ServiceReleaseFilter {
   search: String
 }
 
+input ServiceReleaseOrdering @oneOf {
+  id: Ordering
+}
+
 "\nA Stash\n"
 type Stash {
   createdAt: DateTime!
   description: String
   id: ID!
   isActive: Boolean!
-  items(filters: StashItemFilter, pagination: OffsetPaginationInput): [StashItem!]!
+  items(filters: StashItemFilter, ordering: [StashItemOrdering!]! = [], pagination: OffsetPaginationInput): [StashItem!]!
   name: String!
 
   """The number of items in the stash"""
@@ -1223,6 +1331,18 @@ input StashItemInput {
   description: String = null
   identifier: String!
   object: String!
+}
+
+input StashItemOrdering @oneOf {
+  id: Ordering
+  updatedAt: Ordering
+}
+
+input StashOrdering @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+  updatedAt: Ordering
 }
 
 input StrFilterLookup {
@@ -1319,20 +1439,20 @@ type User {
   avatar: String
 
   """The communication channels that the user has"""
-  comChannels(filters: OrganizationFilter, pagination: OffsetPaginationInput): [ComChannel!]!
+  comChannels(filters: OrganizationFilter, ordering: [ComChannelOrdering!]! = [], pagination: OffsetPaginationInput): [ComChannel!]!
   email: String
   firstName: String
 
   """
   The groups this user belongs to. A user will get all permissions granted to each of their groups.
   """
-  groups(filters: GroupFilter, pagination: OffsetPaginationInput): [Group!]!
+  groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
   id: ID!
   lastName: String
   managedClients: [DjangoModelType!]!
 
   """The memberships of the user in organizations"""
-  memberships(filters: MembershipFilter, pagination: OffsetPaginationInput): [Membership!]!
+  memberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
   profile: Profile!
 
   """Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."""
@@ -1360,6 +1480,10 @@ input UserFilter {
 
   """Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."""
   username: StrFilterLookup
+}
+
+input UserOrdering @oneOf {
+  id: Ordering
 }
 
 type UserStats {

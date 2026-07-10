@@ -179,6 +179,13 @@ export type AppFunctions = {
   retryModule: (moduleKey: string) => Promise<void>;
   clearServiceCache: (serviceKey: string) => Promise<void>;
   clearAllServiceCaches: () => Promise<void>;
+  reportStatus: () => Promise<ReportResult | null>;
+};
+
+export type ReportResult = {
+  ok: boolean;
+  functional: boolean;
+  alias_reports: { [key: string]: AliasReport };
 };
 
 export type ArkitektContextType<

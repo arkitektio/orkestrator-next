@@ -2,15 +2,20 @@ import {
   CellInput,
   CompartmentInput,
   ConnectionInput,
+  ConnectionKind,
   CoordInput,
   DetailNeuronModelFragment,
   IonInput,
   MechanismGlobalParamInput,
   ModelConfigInput,
+  NetConnectionInput,
+  NetStimulatorInput,
+  NetSynapseInput,
   SectionInput,
   SectionParamMapInput,
+  SynapseKind,
 } from "../api/graphql";
-import { toBase } from "./quantities";
+import { toBase } from "@/lib/quantities";
 
 // The editor works on the `config` object read via `DetailNeuronModelFragment`.
 // These aliases pin the exact runtime shapes so the serializer can map them to
@@ -23,6 +28,13 @@ export type EditableSection = EditableCell["topology"]["sections"][number];
 export type EditableCompartment = EditableCell["biophysics"]["compartments"][number];
 export type EditableIon = EditableCompartment["ions"][number];
 export type EditableMechanismGlobal = EditableConfig["mechanismGlobals"][number];
+export type EditableNetSynapse = NonNullable<EditableConfig["netSynapses"]>[number];
+export type EditableNetStimulator = NonNullable<
+  EditableConfig["netStimulators"]
+>[number];
+export type EditableNetConnection = NonNullable<
+  EditableConfig["netConnections"]
+>[number];
 
 /**
  * What `NeuronEditor.onSave` hands back: the (possibly edited) config. `cells`
@@ -38,7 +50,16 @@ export type EditableModelConfig = Pick<EditableConfig, "cells"> &
  */
 export type EditableModelWide = Pick<
   EditableConfig,
-  "temperature" | "vInit" | "label" | "ra" | "cm" | "ions" | "mechanismGlobals"
+  | "temperature"
+  | "vInit"
+  | "label"
+  | "ra"
+  | "cm"
+  | "ions"
+  | "mechanismGlobals"
+  | "netSynapses"
+  | "netStimulators"
+  | "netConnections"
 >;
 
 // --- Serialization -------------------------------------------------------
@@ -114,6 +135,40 @@ const serializeCompartment = (compartment: EditableCompartment): CompartmentInpu
   ),
 });
 
+// The synapse input carries `kind` (not read back on the Exp2Synapse type) and,
+// unlike the fragment, has no `delay` — so it's dropped on the way out.
+const serializeNetSynapse = (s: EditableNetSynapse): NetSynapseInput => ({
+  id: s.id,
+  cell: s.cell,
+  location: s.location,
+  position: s.position,
+  e: s.e,
+  tau1: s.tau1,
+  tau2: s.tau2,
+  kind: SynapseKind.Exp2Syn,
+});
+
+const serializeNetStimulator = (
+  st: EditableNetStimulator,
+): NetStimulatorInput => ({
+  id: st.id,
+  number: st.number,
+  start: st.start,
+  ...(st.interval != null ? { interval: st.interval } : {}),
+});
+
+const serializeNetConnection = (
+  c: EditableNetConnection,
+): NetConnectionInput => ({
+  id: c.id,
+  netStimulator: c.netStimulator,
+  synapse: c.synapse,
+  kind: ConnectionKind.Synapse,
+  ...(c.weight != null ? { weight: c.weight } : {}),
+  ...(c.delay != null ? { delay: c.delay } : {}),
+  ...(c.threshold != null ? { threshold: c.threshold } : {}),
+});
+
 const serializeCell = (cell: EditableCell): CellInput => ({
   id: cell.id,
   topology: {
@@ -141,6 +196,15 @@ export const serializeModelConfig = (config: EditableModelConfig): ModelConfigIn
   if (config.ions != null) input.ions = config.ions.map(serializeIon);
   if (config.mechanismGlobals != null) {
     input.mechanismGlobals = config.mechanismGlobals.map(serializeMechanismGlobal);
+  }
+  if (config.netSynapses != null) {
+    input.netSynapses = config.netSynapses.map(serializeNetSynapse);
+  }
+  if (config.netStimulators != null) {
+    input.netStimulators = config.netStimulators.map(serializeNetStimulator);
+  }
+  if (config.netConnections != null) {
+    input.netConnections = config.netConnections.map(serializeNetConnection);
   }
   return input;
 };

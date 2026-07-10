@@ -14,7 +14,7 @@ import {
   type ListDataRoiFragment,
   RoiKind,
 } from "@/mikro-next/api/graphql";
-import { buildAffineMatrix } from "../panels/layer/affine-utils";
+import { buildAffineMatrix } from "../core/worldTransform";
 
 const ROI_RENDER_Z = 0.15;
 const MIN_DEPTH = 0.001;

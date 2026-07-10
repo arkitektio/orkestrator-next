@@ -4,7 +4,7 @@ import { createScopedStoreHooks } from "./createScopedStore";
 
 export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META" | "PROBE" | "AUTO_PROBE";
 export type DisplayMode = "2D" | "3D";
-export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL";
+export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL" | "PROBE_ORBIT";
 
 export type DisplayModeOption = {
   label: string;
@@ -82,6 +82,11 @@ export const cameraControllerModeOptions: CameraControllerModeOption[] = [
     label: "Arcball",
     value: "ARCBALL",
     description: "Arcball controller for pointer-centered 3D rotation",
+  },
+  {
+    label: "Probe Orbit",
+    value: "PROBE_ORBIT",
+    description: "Cursor orbit that pivots around the last probed point",
   },
 ];
 

@@ -1,31 +1,11 @@
-import { VolumeLayer } from "./VolumeLayer";
 import { SceneProbedPoint } from "./SceneProbedPoint";
-import { useMemo } from "react";
-import { useSceneStore } from "../../store/sceneStore";
+import { LayerRenderer } from "../../render/LayerRenderer";
 
-const MAX_DISPLAYABLE = 10;
-
-
-export const SceneVolume = () => {
-  const layers = useSceneStore((s) => s.layers);
-
-
-  const renderedAbleFrames = useMemo(() => {
-    return layers
-      .filter((layer) => layer.visible !== false)
-      .slice(0, MAX_DISPLAYABLE);
-  }, [layers]);
-
-  // 2. Map over them. React handles all mounting, fetching, and unmounting automatically.
-  return (
-    <group>
-      {renderedAbleFrames?.map((frame) => (
-        <VolumeLayer
-          key={`${frame.id}:${frame.fixedLOD == null ? 'auto' : frame.fixedLOD}`}
-          layer={frame}
-        />
-      ))}
-      <SceneProbedPoint />
-    </group>
-  );
-};
+// 3D layer content is dispatched per layer __typename by the render registry;
+// the image entry (ImageVolumeLayer) applies the visibility + LOD-key logic.
+export const SceneVolume = () => (
+  <group>
+    <LayerRenderer mode="3D" />
+    <SceneProbedPoint />
+  </group>
+);

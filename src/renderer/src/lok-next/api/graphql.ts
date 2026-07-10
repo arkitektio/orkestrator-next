@@ -67,6 +67,12 @@ export type App = {
   releases: Array<Release>;
 };
 
+
+/** An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`. */
+export type AppReleasesArgs = {
+  ordering?: Array<ReleaseOrdering>;
+};
+
 /** App(id, name, identifier, logo) */
 export type AppFilter = {
   AND?: InputMaybe<AppFilter>;
@@ -76,6 +82,10 @@ export type AppFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type AppOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type CancelInviteInput = {
   id: Scalars['ID']['input'];
@@ -98,9 +108,9 @@ export type Client = {
   kind: ClientKind;
   /** The logo of the release. This should be a url to a logo that can be used to represent the release. */
   logo?: Maybe<MediaStore>;
-  /** The mappings of the client. A mapping is a mapping of a service to a service instance. This is used to configure the composition. */
+  /** The mappings of the client. A mapping is a mapping of a service to a service instance. This is used to configure the hub. */
   mappings: Array<ServiceInstanceMapping>;
-  /** The name of the client. This is a human readable name of the client. */
+  /** A human-readable label for the client that folds in the app, version, operator and device — e.g. `com.example.app:v0.1.1 by Johannes on my-laptop`. */
   name: Scalars['String']['output'];
   /** The node this runs on */
   node?: Maybe<Device>;
@@ -122,14 +132,24 @@ export type Client = {
   user?: Maybe<User>;
 };
 
-/** Client(id, composition, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, manifest) */
+
+/**
+ * A client is a way of authenticating users with a release.
+ *  The strategy of authentication is defined by the kind of client. And allows for different authentication flow.
+ *  E.g a client can be a DESKTOP app, that might be used by multiple users, or a WEBSITE that wants to connect to a user's account,
+ *  but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
+ */
+export type ClientMappingsArgs = {
+  ordering?: Array<ServiceInstanceMappingOrdering>;
+};
+
+/** Client(id, hub, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, last_healthy_report, manifest) */
 export type ClientFilter = {
   AND?: InputMaybe<ClientFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ClientFilter>;
   OR?: InputMaybe<ClientFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Operational role: human INTERFACE vs autonomous task-receiving AGENT. */
   role?: InputMaybe<ClientRole>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -139,6 +159,12 @@ export enum ClientKind {
   Development = 'DEVELOPMENT',
   Website = 'WEBSITE'
 }
+
+export type ClientOrdering =
+  { createdAt: Ordering; id?: never; lastReportedAt?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; lastReportedAt?: never; name?: never; }
+  |  { createdAt?: never; id?: never; lastReportedAt: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; lastReportedAt?: never; name: Ordering; };
 
 export enum ClientRole {
   Agent = 'AGENT',
@@ -151,6 +177,10 @@ export type ComChannel = {
   id: Scalars['ID']['output'];
   user: User;
 };
+
+export type ComChannelOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 /**
  * Comments represent the comments of a user on a specific data item
@@ -203,10 +233,33 @@ export type Comment = {
  * of the underlying comment data including potential mentions, or links, or
  * paragraphs.
  */
+export type CommentChildrenArgs = {
+  ordering?: Array<CommentOrdering>;
+};
+
+
+/**
+ * Comments represent the comments of a user on a specific data item
+ * tart are identified by the unique combination of `identifier` and `object`.
+ * E.g a comment for an Image on the Mikro services would be serverd as
+ * `@mikro/image:imageID`.
+ *
+ * Comments always belong to the user that created it. Comments in threads
+ * get a parent attribute set, that points to the immediate parent.
+ *
+ * Each comment contains multiple descendents, that make up a *rich* representation
+ * of the underlying comment data including potential mentions, or links, or
+ * paragraphs.
+ */
 export type CommentMentionsArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type CommentOrdering =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 /** A Communication */
 export type Communication = {
@@ -314,7 +367,7 @@ export enum DescendantKind {
 }
 
 export type DevelopmentClientInput = {
-  composition?: InputMaybe<Scalars['ID']['input']>;
+  hub?: InputMaybe<Scalars['ID']['input']>;
   layers?: InputMaybe<Array<Scalars['String']['input']>>;
   manifest: ManifestInput;
   role?: InputMaybe<ClientRole>;
@@ -335,6 +388,7 @@ export type Device = {
 /** Device(id, node_id, name, organization) */
 export type DeviceClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
+  ordering?: Array<ClientOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -342,6 +396,7 @@ export type DeviceClientsArgs = {
 /** Device(id, node_id, name, organization) */
 export type DeviceDeviceGroupsArgs = {
   filters?: InputMaybe<DeviceGroupFilter>;
+  ordering?: Array<DeviceGroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -371,6 +426,7 @@ export type DeviceGroup = {
 /** A DeviceGroup is a group of compute nodes that can be used to run clients. DeviceGroups can be used to group compute nodes by location, hardware type, or any other criteria. */
 export type DeviceGroupDevicesArgs = {
   filters?: InputMaybe<DeviceFilter>;
+  ordering?: Array<DeviceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -383,6 +439,14 @@ export type DeviceGroupFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type DeviceGroupOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
+export type DeviceOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
@@ -423,6 +487,10 @@ export type GroupFilter = {
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type GroupOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 /**
  *
@@ -468,6 +536,10 @@ export type InstanceAlias = {
   ssl: Scalars['Boolean']['output'];
 };
 
+export type InstanceAliasOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
 /** A single-use magic invite link that allows one person to join an organization. */
 export type Invite = {
   __typename?: 'Invite';
@@ -494,6 +566,7 @@ export type Invite = {
 /** A single-use magic invite link that allows one person to join an organization. */
 export type InviteCreatedMembershiptsArgs = {
   filters?: InputMaybe<MembershipFilter>;
+  ordering?: Array<MembershipOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -501,8 +574,13 @@ export type InviteCreatedMembershiptsArgs = {
 /** A single-use magic invite link that allows one person to join an organization. */
 export type InviteRolesArgs = {
   filters?: InputMaybe<RoleFilter>;
+  ordering?: Array<RoleOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type InviteOrdering =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
 
 /** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
 export type Layer = {
@@ -524,6 +602,7 @@ export type Layer = {
 /** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
 export type LayerInstancesArgs = {
   filters?: InputMaybe<ServiceInstanceFilter>;
+  ordering?: Array<ServiceInstanceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -536,6 +615,10 @@ export type LayerFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type LayerOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 /** A leaf of text. This is the most basic descendant and always ends a tree. */
 export type LeafDescendant = Descendant & {
@@ -558,12 +641,19 @@ export type LinkingRequestInput = {
 };
 
 export type ManifestInput = {
+  authors?: Array<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  homepage?: InputMaybe<Scalars['String']['input']>;
   identifier: Scalars['String']['input'];
+  keywords?: Array<Scalars['String']['input']>;
+  license?: InputMaybe<Scalars['String']['input']>;
   logo?: InputMaybe<Scalars['String']['input']>;
   nodeId?: InputMaybe<Scalars['String']['input']>;
   publicSources?: InputMaybe<Array<PublicSourceInput>>;
+  repoUrl?: InputMaybe<Scalars['String']['input']>;
   requirements?: Array<RequirementInput>;
   scopes?: Array<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
   version: Scalars['String']['input'];
 };
 
@@ -618,6 +708,7 @@ export type Membership = {
  */
 export type MembershipRolesArgs = {
   filters?: InputMaybe<RoleFilter>;
+  ordering?: Array<RoleOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -631,6 +722,9 @@ export type MembershipFilter = {
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type MembershipOrdering =
+  { id: Ordering; };
 
 /** A mention of a user */
 export type MentionDescendant = Descendant & {
@@ -836,7 +930,7 @@ export type NotifyUserInput = {
   user: Scalars['ID']['input'];
 };
 
-/** OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg) */
+/** OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg, membership_is_subject, email_template) */
 export type Oauth2Client = {
   __typename?: 'Oauth2Client';
   clientId: Scalars['String']['output'];
@@ -847,6 +941,15 @@ export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
+
+export enum Ordering {
+  Asc = 'ASC',
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
+}
 
 /** An Organization is a group of users that can work together on a project. */
 export type Organization = {
@@ -876,6 +979,7 @@ export type Organization = {
 /** An Organization is a group of users that can work together on a project. */
 export type OrganizationActiveUsersArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -883,6 +987,7 @@ export type OrganizationActiveUsersArgs = {
 /** An Organization is a group of users that can work together on a project. */
 export type OrganizationInvitesArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<InviteOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -890,6 +995,7 @@ export type OrganizationInvitesArgs = {
 /** An Organization is a group of users that can work together on a project. */
 export type OrganizationMembershipsArgs = {
   filters?: InputMaybe<MembershipFilter>;
+  ordering?: Array<MembershipOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -897,6 +1003,7 @@ export type OrganizationMembershipsArgs = {
 /** An Organization is a group of users that can work together on a project. */
 export type OrganizationUsersArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -910,6 +1017,10 @@ export type OrganizationFilter = {
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type OrganizationOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 /**
  *
@@ -1051,6 +1162,7 @@ export type QueryAppArgs = {
 
 export type QueryAppsArgs = {
   filters?: InputMaybe<AppFilter>;
+  ordering?: Array<AppOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1063,12 +1175,18 @@ export type QueryClientArgs = {
 
 export type QueryClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
+  ordering?: Array<ClientOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryCommentArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommentsArgs = {
+  ordering?: Array<CommentOrdering>;
 };
 
 
@@ -1095,12 +1213,14 @@ export type QueryDeviceGroupArgs = {
 
 export type QueryDeviceGroupsArgs = {
   filters?: InputMaybe<DeviceGroupFilter>;
+  ordering?: Array<DeviceGroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryDevicesArgs = {
   filters?: InputMaybe<DeviceFilter>;
+  ordering?: Array<DeviceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1112,12 +1232,14 @@ export type QueryGroupArgs = {
 
 export type QueryGroupsArgs = {
   filters?: InputMaybe<GroupFilter>;
+  ordering?: Array<GroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryInvitesArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<InviteOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1129,6 +1251,7 @@ export type QueryLayerArgs = {
 
 export type QueryLayersArgs = {
   filters?: InputMaybe<LayerFilter>;
+  ordering?: Array<LayerOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1150,6 +1273,7 @@ export type QueryOrganizationArgs = {
 
 export type QueryOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1161,6 +1285,7 @@ export type QueryRedeemTokenArgs = {
 
 export type QueryRedeemTokensArgs = {
   filters?: InputMaybe<RedeemTokenFilter>;
+  ordering?: Array<RedeemTokenOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1173,6 +1298,11 @@ export type QueryReleaseArgs = {
 };
 
 
+export type QueryReleasesArgs = {
+  ordering?: Array<ReleaseOrdering>;
+};
+
+
 export type QueryRoleArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1180,6 +1310,7 @@ export type QueryRoleArgs = {
 
 export type QueryRolesArgs = {
   filters?: InputMaybe<RoleFilter>;
+  ordering?: Array<RoleOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1196,6 +1327,7 @@ export type QueryServiceInstanceArgs = {
 
 export type QueryServiceInstancesArgs = {
   filters?: InputMaybe<ServiceInstanceFilter>;
+  ordering?: Array<ServiceInstanceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1207,12 +1339,14 @@ export type QueryServiceReleaseArgs = {
 
 export type QueryServiceReleasesArgs = {
   filters?: InputMaybe<ServiceReleaseFilter>;
+  ordering?: Array<ServiceReleaseOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryServicesArgs = {
   filters?: InputMaybe<ServiceFilter>;
+  ordering?: Array<ServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1229,12 +1363,14 @@ export type QueryStashItemArgs = {
 
 export type QueryStashItemsArgs = {
   filters?: InputMaybe<StashItemFilter>;
+  ordering?: Array<StashItemOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryStashesArgs = {
   filters?: InputMaybe<StashFilter>;
+  ordering?: Array<StashOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1251,6 +1387,7 @@ export type QueryUserStatsArgs = {
 
 export type QueryUsersArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1292,6 +1429,10 @@ export type RedeemTokenInput = {
   token?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type RedeemTokenOrdering =
+  { createdAt: Ordering; id?: never; }
+  |  { createdAt?: never; id: Ordering; };
+
 export type RegisterComChannelInput = {
   token: Scalars['String']['input'];
 };
@@ -1320,12 +1461,17 @@ export type Release = {
 /** A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle. */
 export type ReleaseClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
+  ordering?: Array<ClientOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type ReleaseOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
 export type RenderInput = {
   client: Scalars['ID']['input'];
-  composition?: InputMaybe<Scalars['ID']['input']>;
+  hub?: InputMaybe<Scalars['ID']['input']>;
   manifest?: InputMaybe<ManifestInput>;
   request?: InputMaybe<LinkingRequestInput>;
 };
@@ -1373,6 +1519,9 @@ export type RoleFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type RoleOrdering =
+  { id: Ordering; };
+
 /** A scope that can be assigned to a client. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions. */
 export type Scope = {
   __typename?: 'Scope';
@@ -1404,6 +1553,7 @@ export type Service = {
 /** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
 export type ServiceReleasesArgs = {
   filters?: InputMaybe<ServiceReleaseFilter>;
+  ordering?: Array<ServiceReleaseOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1435,7 +1585,7 @@ export type ServiceInstance = {
   instanceId: Scalars['ID']['output'];
   /** The logo of the app. This should be a url to a logo that can be used to represent the app. */
   logo?: Maybe<MediaStore>;
-  /** The mappings of the composition. A mapping is a mapping of a service to a service instance. This is used to configure the composition. */
+  /** The mappings of the hub. A mapping is a mapping of a service to a service instance. This is used to configure the hub. */
   mappings: Array<ServiceInstanceMapping>;
   /** The name of the instance. This is a human readable name of the instance. */
   name: Scalars['String']['output'];
@@ -1445,8 +1595,15 @@ export type ServiceInstance = {
 
 
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
+export type ServiceInstanceAliasesArgs = {
+  ordering?: Array<InstanceAliasOrdering>;
+};
+
+
+/** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
 export type ServiceInstanceAllowedGroupsArgs = {
   filters?: InputMaybe<GroupFilter>;
+  ordering?: Array<GroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1454,6 +1611,7 @@ export type ServiceInstanceAllowedGroupsArgs = {
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
 export type ServiceInstanceAllowedUsersArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1461,6 +1619,7 @@ export type ServiceInstanceAllowedUsersArgs = {
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
 export type ServiceInstanceDeniedGroupsArgs = {
   filters?: InputMaybe<GroupFilter>;
+  ordering?: Array<GroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1468,10 +1627,17 @@ export type ServiceInstanceDeniedGroupsArgs = {
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
 export type ServiceInstanceDeniedUsersArgs = {
   filters?: InputMaybe<UserFilter>;
+  ordering?: Array<UserOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** ServiceInstance(id, composition, release, logo, instance_id, private_key, steward, organization, device, template, public_key, token) */
+
+/** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
+export type ServiceInstanceMappingsArgs = {
+  ordering?: Array<ServiceInstanceMappingOrdering>;
+};
+
+/** ServiceInstance(id, hub, release, logo, instance_id, private_key, steward, organization, device, template, public_key, token) */
 export type ServiceInstanceFilter = {
   AND?: InputMaybe<ServiceInstanceFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1495,6 +1661,16 @@ export type ServiceInstanceMapping = {
   optional: Scalars['Boolean']['output'];
 };
 
+export type ServiceInstanceMappingOrdering =
+  { id: Ordering; };
+
+export type ServiceInstanceOrdering =
+  { id: Ordering; };
+
+export type ServiceOrdering =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
+
 /** A ServiceRelease is a specific release of a Service. It contains the configuration for a particular version of the service. */
 export type ServiceRelease = {
   __typename?: 'ServiceRelease';
@@ -1513,6 +1689,7 @@ export type ServiceRelease = {
 /** A ServiceRelease is a specific release of a Service. It contains the configuration for a particular version of the service. */
 export type ServiceReleaseInstancesArgs = {
   filters?: InputMaybe<ServiceInstanceFilter>;
+  ordering?: Array<ServiceInstanceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1525,6 +1702,9 @@ export type ServiceReleaseFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type ServiceReleaseOrdering =
+  { id: Ordering; };
 
 /**
  *
@@ -1552,6 +1732,7 @@ export type Stash = {
  */
 export type StashItemsArgs = {
   filters?: InputMaybe<StashItemFilter>;
+  ordering?: Array<StashItemOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1597,6 +1778,16 @@ export type StashItemInput = {
   identifier: Scalars['String']['input'];
   object: Scalars['String']['input'];
 };
+
+export type StashItemOrdering =
+  { id: Ordering; updatedAt?: never; }
+  |  { id?: never; updatedAt: Ordering; };
+
+export type StashOrdering =
+  { createdAt: Ordering; id?: never; name?: never; updatedAt?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; updatedAt?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; updatedAt?: never; }
+  |  { createdAt?: never; id?: never; name?: never; updatedAt: Ordering; };
 
 export type StrFilterLookup = {
   contains?: InputMaybe<Scalars['String']['input']>;
@@ -1746,6 +1937,7 @@ export type User = {
  */
 export type UserComChannelsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<ComChannelOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1765,6 +1957,7 @@ export type UserComChannelsArgs = {
  */
 export type UserGroupsArgs = {
   filters?: InputMaybe<GroupFilter>;
+  ordering?: Array<GroupOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1784,6 +1977,7 @@ export type UserGroupsArgs = {
  */
 export type UserMembershipsArgs = {
   filters?: InputMaybe<MembershipFilter>;
+  ordering?: Array<MembershipOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1808,6 +2002,9 @@ export type UserFilter = {
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username?: InputMaybe<StrFilterLookup>;
 };
+
+export type UserOrdering =
+  { id: Ordering; };
 
 export type UserStats = {
   __typename?: 'UserStats';

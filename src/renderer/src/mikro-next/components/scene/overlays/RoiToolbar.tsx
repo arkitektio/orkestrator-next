@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, type DrawingTool } from "../store/roiDrawingStore";
-import { useSelectionStore } from "../store/layerStore";
+import { useSelectionStore } from "../store/selectionStore";
 import {
   Square,
   Circle,

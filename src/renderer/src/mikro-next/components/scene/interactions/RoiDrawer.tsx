@@ -4,9 +4,9 @@ import { Line } from "@react-three/drei";
 import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
-import { useSelectionStore } from "../store/layerStore";
+import { useSelectionStore } from "../store/selectionStore";
 import { useViewerStore } from "../store/viewerStore";
-import { affineToMatrix4 } from "../panels/layer/affine-utils";
+import { affineToMatrix4 } from "../core/worldTransform";
 import { useCreateDataRoiMutation } from "@/mikro-next/api/graphql";
 import type { DrawnRoi } from "../store/roiDrawingStore";
 

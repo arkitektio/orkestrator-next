@@ -211,7 +211,13 @@ function roundTiming(ms: number): number {
   return Number(ms.toFixed(2))
 }
 
+/**
+ * Per-chunk timing logs are opt-in: they fire twice per chunk and are a
+ * measurable cost when hundreds of chunks stream in. Enable at runtime with
+ * `globalThis.__ZARR_TIMING__ = true`.
+ */
 function logChunkTiming(label: string, timings: Record<string, unknown>): void {
+  if ((globalThis as { __ZARR_TIMING__?: boolean }).__ZARR_TIMING__ !== true) return
   console.log(label, timings)
 }
 
@@ -257,6 +263,33 @@ export interface ArrayMetadata {
   codecMeta: CodecChunkMeta
   encodeChunkKey: (chunk_coords: number[]) => string
   fillValue: Scalar<DataType> | null
+}
+
+/**
+ * Per-array memo of `readArrayMetadata`. The result (`codecMeta`,
+ * `encodeChunkKey`, `fillValue`) is array-invariant, but the uncached reader
+ * runs on the MAIN thread for every chunk fetch — a `store.get(zarr.json)` +
+ * `TextDecoder` + `JSON.parse` + key-encoder rebuild per chunk. Keyed weakly on
+ * the array object; a rejected read (e.g. aborted signal) is evicted so the
+ * next caller retries instead of hitting a poisoned promise.
+ */
+const arrayMetadataCache = new WeakMap<object, Promise<ArrayMetadata>>()
+
+export function readArrayMetadataCached<
+  D extends DataType,
+  Store extends Readable,
+>(
+  arr: ZarrArray<D, Store>,
+  storeOpts?: Parameters<Store["get"]>[1],
+): Promise<ArrayMetadata> {
+  const cached = arrayMetadataCache.get(arr)
+  if (cached) return cached
+  const promise = readArrayMetadata(arr, storeOpts)
+  arrayMetadataCache.set(arr, promise)
+  promise.catch(() => {
+    if (arrayMetadataCache.get(arr) === promise) arrayMetadataCache.delete(arr)
+  })
+  return promise
 }
 
 export async function readArrayMetadata<
@@ -858,7 +891,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
   assertSharedArrayBufferAvailable()
 
   const metadataReadStartedAt = performance.now()
-  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
+  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadataCached(
     arr,
     storeOptsWithSignal,
   )
@@ -930,6 +963,11 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         correctedCodecMeta,
         serializeRequestInit(storeOptsWithSignal as RequestInit | undefined),
         isEdgeChunk ? edgeChunkShape : undefined,
+        // Explicit defaults for the trailing positionals: this call previously
+        // stopped at 7 args, silently dropping the caller's useSharedArrayBuffer
+        // (it defaulted to false and the SAB path never engaged).
+        'default',
+        useShared,
       )
 
       let chunkToReturn: Chunk<D>
@@ -1055,7 +1093,7 @@ export async function getWorker<
 
   // Read metadata from store — single read, single parse
   const metadataReadStartedAt = performance.now()
-  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadata(
+  const { codecMeta, encodeChunkKey, fillValue } = await readArrayMetadataCached(
     arr,
     storeOptsWithSignal,
   )

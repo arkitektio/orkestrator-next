@@ -1,13 +1,12 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "./createScopedStore"
-import { GeneralZarrAccessGrant, MikroClient, SceneZarrStoreDescriptor, ZarrStore } from "../zarr/zarr_stores/type";
-import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
+import { MikroClient } from "../zarr/zarr_stores/type";
 import { RefObject } from "react";
-import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import * as THREE from 'three';
-import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
-
-type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
+import { SceneFragment } from "@/mikro-next/api/graphql";
+import { createConfiguredSceneStores } from "../data/sceneStores";
+import { openSceneArrays, type OpenedZarrArray } from "../data/arrayRegistry";
+import { fitCameraToObject } from "../core/cameraFit";
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -18,19 +17,18 @@ export interface CanvasContext {
 }
 
 
-interface TrackableObject {
+export interface TrackableObject {
   kind: "layer" | "gizmo" | "other";
   id: string;
   ref: RefObject<THREE.Object3D | undefined>;
 }
 
-export interface LayerViewRange {
-  xRange: [number, number];
-  yRange: [number, number];
-  zRange: [number, number] | null;
-  /** Screen pixels per image pixel (how many viewer pixels one voxel occupies) */
-  scale: number;
-}
+// The range model lives with the visibility math in core/; re-exported here
+// for the store's many consumers.
+export type { LayerViewRange } from "../core/visibility";
+import type { LayerViewRange } from "../core/visibility";
+import type { LayerNodePlan } from "../core/octree/nodePlanning";
+import type { BrickResidencyManager } from "../managers/brickResidency";
 
 export interface ProbedCoordinate {
   layerId: string;
@@ -38,18 +36,30 @@ export interface ProbedCoordinate {
   voxelIndex: [number, number, number];
 }
 
+/** Why layers were culled from display by the render-cost budget. */
+export interface RenderBudgetInfo {
+  budgetBytes: number;
+  usedBytes: number;
+  culledLayerIds: string[];
+}
 
-interface ViewerState {
-  // We store the combined projection + view matrix
-  zStart: number | null;
-  zEnd: number | null;
-  tStart: Date | null;
-  tEnd: Date | null;
+/** Why a layer cannot be planned/rendered in the current display mode: its
+ * coarsest pyramid level's pinned atlas floor exceeds the GPU budget (a layer
+ * without a multiscale pyramid — see OCTREE_RENDERER.md P18). */
+export interface UnplannableLayerInfo {
+  mode: "2D" | "3D";
+  floorBytes: number;
+  capBytes: number;
+}
+
+
+/** Per-scene viewer state: camera-derived facts, trackables, probes and the
+ * declarative chunk plans the scene managers write. */
+export interface ViewerState {
   debug: boolean;
   showScaleBar: boolean;
   showScaleGrid: boolean;
   worldUnitsPerPixel: number;
-  getArray: (store: ZarrStore) => OpenedZarrArray;
   getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   currentZ: number;
   frustumNear: number;
@@ -66,13 +76,33 @@ interface ViewerState {
   probeThreshold: number;
 
   lodBias: number;
-  cullRadius: number;
-  setCullRadius: (radius: number) => void;
   setLodBias: (bias: number) => void;
-  renderedChunks: Record<string, { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' }>;
-  setChunkStatus: (chunkId: string, info: { layerId: string; chunkKey: string; level: number; status: 'loading' | 'rendered' } | null) => void;
-  lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
-  setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
+  /** Null while every layer fits the render-cost budget. */
+  renderBudget: RenderBudgetInfo | null;
+  setRenderBudget: (info: RenderBudgetInfo | null) => void;
+  /** Layers refused by the pool-viability guard for the CURRENT display mode
+   * (empty when all layers are plannable). Written by nodePlanTracker /
+   * brickResidency; read by the layer panel badge and DebugPanel. */
+  unplannableLayers: Record<string, UnplannableLayerInfo>;
+  setUnplannableLayers: (layers: Record<string, UnplannableLayerInfo>) => void;
+
+  /** Declarative per-layer octree node plans, written by the node-plan tracker. */
+  nodePlans: Record<string, LayerNodePlan>;
+  setNodePlans: (plans: Record<string, LayerNodePlan>) => void;
+  /** Bumped by the brick residency manager whenever bricks become resident.
+   * STREAMING-progress cadence — only debug consumers (DebugPanel,
+   * BrickResidencyOverlay) may subscribe; layer components must use
+   * `poolsVersion` instead (P17). Deliberately NOT a node-plan replan trigger. */
+  residencyVersion: number;
+  bumpResidencyVersion: () => void;
+  /** Bumped only when a layer's brick POOL is created, rebuilt or disposed —
+   * the rare lifecycle event layer components actually need to re-render on
+   * (their memos key on pool identity). */
+  poolsVersion: number;
+  bumpPoolsVersion: () => void;
+  /** Handle to the brick residency manager (owned by BrickSystemProvider). */
+  brickSystem: BrickResidencyManager | null;
+  registerBrickSystem: (manager: BrickResidencyManager | null) => void;
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
@@ -84,125 +114,48 @@ interface ViewerState {
   clearSavedProbes: () => void
   setProbeThreshold: (threshold: number) => void
 
-
-  setZRange: (start: number | null, end: number | null) => void;
-  setTRange: (start: Date | null, end: Date | null) => void;
   setDebug: (debug: boolean) => void;
   setShowScaleBar: (show: boolean) => void;
   setShowScaleGrid: (show: boolean) => void;
   setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
-  setFrustum: (near: number, far: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
   /** Fit the camera so that the given layer fills the viewport */
   fitToLayer: (layerId: string) => void;
 }
 
 
-function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZarrStoreDescriptor> {
-  const descriptors = new Map<string, SceneZarrStoreDescriptor>();
-
-  for (const layer of scene.layers) {
-    for (const dataArray of layer.lens.dataset.dataArrays) {
-      descriptors.set(dataArray.store.id, {
-        bucket: dataArray.store.bucket,
-        key: dataArray.store.key,
-        path: dataArray.store.path,
-        storeId: dataArray.store.id,
-      });
-    }
-  }
-
-  return descriptors;
-}
-
-async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
-  const access = await client.mutate({
-    mutation: RequestGeneralZarrAccessDocument,
-    variables: { input: {} },
-  }) as { data?: RequestGeneralZarrAccessMutation };
-
-  const credentials = access.data?.requestGeneralZarrAccess;
-  if (!credentials) {
-    throw new Error("Failed to obtain general Zarr access credentials");
-  }
-
-  return credentials;
-}
-
-async function createConfiguredSceneStores(
-  scene: SceneFragment,
-  client: MikroClient,
-  datalayer: string,
-): Promise<Map<string, ZarrStore>> {
-  const descriptors = collectSceneStoreDescriptors(scene);
-  const credentials = await requestGeneralAccess(client);
-  const expiresAt = Date.now() + credentials.expiresIn * 1000;
-
-  const stores = await Promise.all(
-    Array.from(descriptors.values()).map(async (descriptor) => {
-      const store = new ConfiguredS3Store(
-        {
-          accessKey: credentials.accessKey,
-          baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
-          expiresAt,
-          region: credentials.region,
-          secretKey: credentials.secretKey,
-          sessionToken: credentials.sessionToken,
-          storeId: descriptor.storeId,
-        },
-        { preloadMetadata: true },
-      );
-      await store.ready();
-      return [descriptor.storeId, store] as const;
-    }),
-  );
-
-  return new Map(stores);
-}
-
-function createViewerStoreInternal(
-  arraysByStoreId: Map<string, OpenedZarrArray>,
-  arraysByStore: WeakMap<object, OpenedZarrArray>,
-) {
+function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>) {
   return createStore<ViewerState>((set, get) => ({
-    zStart: 0,
-    zEnd: 100,
-    tStart: null,
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
     probedCoordinate: null,
     savedProbes: [],
     probeThreshold: 0.01,
-    lodBias: 0.2,
-    cullRadius: 4000,
-    setCullRadius: (radius) => set({ cullRadius: radius }),
+    lodBias: 1,
     setLodBias: (bias) => set({ lodBias: bias }),
-    renderedChunks: {},
-    setChunkStatus: (chunkId, info) => set((state) => {
-      const next = { ...state.renderedChunks };
-      if (!info) {
-        delete next[chunkId];
-      } else {
-        next[chunkId] = info;
-      }
-      return { renderedChunks: next };
-    }),
-    lodDebugInfo: {},
-    setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
-    register: (ref) => set((state) => {
-      state.trackables.add(ref);
-      return state;
-    }),
+    renderBudget: null,
+    setRenderBudget: (info) => set({ renderBudget: info }),
+    unplannableLayers: {},
+    setUnplannableLayers: (layers) => set({ unplannableLayers: layers }),
+    nodePlans: {},
+    setNodePlans: (plans) => set({ nodePlans: plans }),
+    residencyVersion: 0,
+    bumpResidencyVersion: () => set((state) => ({ residencyVersion: state.residencyVersion + 1 })),
+    poolsVersion: 0,
+    bumpPoolsVersion: () => set((state) => ({ poolsVersion: state.poolsVersion + 1 })),
+    brickSystem: null,
+    registerBrickSystem: (manager) => set({ brickSystem: manager }),
+    register: (ref) => set((state) => ({
+      trackables: new Set(state.trackables).add(ref),
+    })),
     unregister: (ref) => set((state) => {
-      state.trackables.delete(ref);
-      return state;
+      const trackables = new Set(state.trackables);
+      trackables.delete(ref);
+      return { trackables };
     }),
-    setVisible: (visibleSet) => set((state) => {
-      state.visibleLayers = Array.from(visibleSet.keys());
-      return state;
-    }),
+    setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
     setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
     setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
     addSavedProbe: (coordinate) => set((state) => {
@@ -217,7 +170,6 @@ function createViewerStoreInternal(
     clearSavedProbes: () => set({ savedProbes: [] }),
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     currentZ: 0,
-    tEnd: null,
     debug: false,
     showScaleBar: true,
     showScaleGrid: false,
@@ -225,23 +177,6 @@ function createViewerStoreInternal(
     frustumNear: 0.1,
     frustumFar: 100000,
     canvas: null,
-    getArray: (store) => {
-      const key = store as object;
-      const cachedByStore = arraysByStore.get(key);
-      if (cachedByStore) {
-        return cachedByStore;
-      }
-
-      if ("storeId" in store && typeof (store as { storeId?: unknown }).storeId === "string") {
-        const cachedByStoreId = arraysByStoreId.get((store as { storeId: string }).storeId);
-        if (cachedByStoreId) {
-          arraysByStore.set(key, cachedByStoreId);
-          return cachedByStoreId;
-        }
-      }
-
-      throw new Error("Zarr array is not initialized for this store")
-    },
     getArrayForStoreId: (storeId) => {
       const array = arraysByStoreId.get(storeId);
       if (!array) {
@@ -249,10 +184,7 @@ function createViewerStoreInternal(
       }
       return array;
     },
-    setZRange: (start, end) => set({ zStart: start, zEnd: end }),
-    setTRange: (start, end) => set({ tStart: start, tEnd: end }),
     setCurrentZ: (z) => set({ currentZ: z }),
-    setFrustum: (near, far) => set({ frustumNear: near, frustumFar: far }),
     registerCanvas: (ctx) => set({ canvas: ctx }),
     fitToLayer: (layerId) => {
       const { trackables, canvas } = get();
@@ -269,40 +201,7 @@ function createViewerStoreInternal(
       }
       if (!target) throw new Error(`Target for layer ${layerId} not found`);
 
-      // Compute world-space bounding box
-      const box = new THREE.Box3().setFromObject(target);
-      if (box.isEmpty()) throw new Error(`Bounding box for layer ${layerId} is empty`);
-
-      const center = box.getCenter(new THREE.Vector3());
-      const boxSize = box.getSize(new THREE.Vector3());
-      const { camera, controls, size, invalidate } = canvas;
-
-      if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
-        const ortho = camera as THREE.OrthographicCamera;
-        const padding = 1.1;
-        const zoomX = size.width / (boxSize.x * padding);
-        const zoomY = size.height / (boxSize.y * padding);
-        ortho.position.set(center.x, center.y, ortho.position.z);
-        ortho.zoom = Math.min(zoomX, zoomY);
-        ortho.updateProjectionMatrix();
-        if (controls) {
-          controls.target.set(center.x, center.y, 0);
-          controls.update();
-        }
-      } else {
-        const sphere = box.getBoundingSphere(new THREE.Sphere());
-        const fov = (camera as THREE.PerspectiveCamera).fov;
-        const halfFovRad = THREE.MathUtils.degToRad(fov / 2);
-        const distance = (sphere.radius / Math.sin(halfFovRad)) * 1.3;
-        const direction = camera.position.clone().sub(center).normalize();
-        camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
-        camera.lookAt(center);
-        if (controls) {
-          controls.target.copy(center);
-          controls.update();
-        }
-      }
-      invalidate();
+      fitCameraToObject(target, canvas);
     },
     setDebug: (debug) => set({ debug }),
     setShowScaleBar: (show) => set({ showScaleBar: show }),
@@ -317,23 +216,8 @@ export async function createViewerStore(
   datalayer: string,
 ) {
   const storesById = await createConfiguredSceneStores(scene, client, datalayer);
-  const arraysByStoreId = new Map<string, OpenedZarrArray>();
-  const arraysByStore = new WeakMap<object, OpenedZarrArray>();
-
-  for (const [storeId, store] of storesById) {
-    const opened = await (open.v3(store, { kind: "array" }) as Promise<OpenedZarrArray>);
-    arraysByStoreId.set(storeId, opened);
-    arraysByStore.set(store as object, opened);
-  }
-
-  return createViewerStoreInternal(arraysByStoreId, arraysByStore);
-}
-
-export function createViewerStoreSync() {
-  return createViewerStoreInternal(
-    new Map<string, OpenedZarrArray>(),
-    new WeakMap<object, OpenedZarrArray>(),
-  );
+  const arraysByStoreId = await openSceneArrays(storesById);
+  return createViewerStoreInternal(arraysByStoreId);
 }
 
 function isSameProbe(left: ProbedCoordinate, right: ProbedCoordinate): boolean {

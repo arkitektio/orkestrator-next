@@ -1,8 +1,7 @@
 import { ColorMap } from "@/mikro-next/api/graphql";
-import { SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { ImageLayerFragment } from "../../core/layerGuards";
 import {
   colormapGradientCSS as sceneColormapGradientCSS,
-  resolveBaseColorRgb,
   sampleColorMapCSS as sceneSampleColorMapCSS,
 } from "../../zarr/colormaps";
 
@@ -24,20 +23,18 @@ export const colormapGradientCSS = (
   return sceneColormapGradientCSS(colormap, stops, baseColor);
 };
 
+/**
+ * Whether a layer's dimension mapping differs from its persisted state — the
+ * "Save changes" signal for the flyout's Advanced (dims) section. Contrast /
+ * colormap / color now live in the render graph, whose unsaved state is tracked
+ * separately by the render-graph editor (`RenderGraphSection`).
+ */
 export const isLayerDirty = (
-  current: SceneLayerFragment,
-  original: SceneLayerFragment | undefined,
+  current: ImageLayerFragment,
+  original: ImageLayerFragment | undefined,
 ): boolean => {
   if (!original) return true;
-  const currentColor = resolveBaseColorRgb(current.color);
-  const originalColor = resolveBaseColorRgb(original.color);
-  const sameColor = currentColor.every((value, index) => value === originalColor[index]);
-
   return (
-    current.climMin !== original.climMin ||
-    current.climMax !== original.climMax ||
-    !sameColor ||
-    current.colormap !== original.colormap ||
     current.xDim !== original.xDim ||
     current.yDim !== original.yDim ||
     current.zDim !== original.zDim ||

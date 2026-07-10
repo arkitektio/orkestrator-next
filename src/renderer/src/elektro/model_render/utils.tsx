@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { CoordFragment } from "../api/graphql";
-import { toBase } from "../lib/quantities";
+import { toBase } from "@/lib/quantities";
 
 // Coord x/y/z are `Length` quantity strings ("1 µm"); normalise each to µm.
 const coordVector = (coord: CoordFragment): THREE.Vector3 =>

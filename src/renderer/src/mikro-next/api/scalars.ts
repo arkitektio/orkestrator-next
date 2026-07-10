@@ -1,0 +1,16 @@
+// Named TypeScript types for mikro's pint-like quantity scalars.
+//
+// These are referenced from `mikro.yml` (the `scalars:` codegen config) so the
+// generated `graphql.ts` types each field with a meaningful name — `Duration`,
+// `Length` — instead of `any`. They are string-based: the wire format carries the
+// magnitude *and* unit together, e.g. "100 ms", "1 µm".
+//
+// Parse / format / unit-convert these via `@/lib/quantities` (`parseQuantity`,
+// `formatQuantity`, `toBase`, `formatDisplay`) — never do arithmetic on them
+// directly. This mirrors elektro's `elektro/api/scalars.ts`.
+
+/** A quantity of time, e.g. "5 ms", "2 s" (e.g. TimepointView.timeSinceStart). */
+export type Duration = string;
+
+/** A length, e.g. "1 µm", "500 nm" (e.g. pixel sizes, emission/excitation wavelengths). */
+export type Length = string;

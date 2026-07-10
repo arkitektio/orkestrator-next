@@ -1,16 +1,14 @@
-import type { DataType } from 'zarrita'
-
 import type { LayerState } from '../../store/sceneStore'
-import { mapDTypeToMinMax } from '../../stores/utils'
+import { resolveLayerDataRange } from '../../core/dataRange'
 
 const FALLBACK_RANGE: [number, number] = [0, 1]
 
 export function getLayerDtypeRange(layer: LayerState): [number, number] {
-  const dtype = layer.lens.dataset.dataArrays[0]?.store.dtype as DataType | null | undefined
+  const dtype = layer.lens.dataset.dataArrays[0]?.store.dtype
   if (!dtype) return FALLBACK_RANGE
 
   try {
-    return mapDTypeToMinMax(dtype)
+    return resolveLayerDataRange(layer, dtype)
   } catch {
     return FALLBACK_RANGE
   }
@@ -26,17 +24,6 @@ export function absoluteToNormalized(value: number, rangeMin: number, rangeMax: 
   const span = rangeMax - rangeMin
   if (span <= 0) return 0
   return clamp01((value - rangeMin) / span)
-}
-
-export function clampAbsoluteRange(
-  valueMin: number,
-  valueMax: number,
-  rangeMin: number,
-  rangeMax: number,
-): [number, number] {
-  const nextMin = clamp(valueMin, rangeMin, rangeMax)
-  const nextMax = clamp(valueMax, rangeMin, rangeMax)
-  return [Math.min(nextMin, nextMax), Math.max(nextMin, nextMax)]
 }
 
 export function formatContrastValue(value: number): string {

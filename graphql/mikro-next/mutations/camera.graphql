@@ -1,8 +1,8 @@
 mutation CreateCamera(
   $serialNumber: String!
   $name: String
-  $pixelSizeX: Micrometers
-  $pixelSizeY: Micrometers
+  $pixelSizeX: Length
+  $pixelSizeY: Length
   $sensorSizeX: Int
   $sensorSizeY: Int
 ) {
@@ -24,8 +24,8 @@ mutation CreateCamera(
 mutation EnsureCamera(
   $serialNumber: String!
   $name: String
-  $pixelSizeX: Micrometers
-  $pixelSizeY: Micrometers
+  $pixelSizeX: Length
+  $pixelSizeY: Length
   $sensorSizeX: Int
   $sensorSizeY: Int
 ) {

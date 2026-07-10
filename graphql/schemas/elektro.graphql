@@ -56,9 +56,13 @@ input AnalogSignalFilter {
   DISTINCT: Boolean
   NOT: AnalogSignalFilter
   OR: AnalogSignalFilter
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
   label: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   session: ID = null
 }
@@ -192,10 +196,16 @@ input BlockFilter {
   OR: BlockFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   groups: [ID!] = null
   id: ID
   ids: [ID!]
   label: StrFilterLookup
+  mine: Boolean
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   trace: ID = null
 }
@@ -265,10 +275,14 @@ input BlockSegmentFilter {
   DISTINCT: Boolean
   NOT: BlockSegmentFilter
   OR: BlockSegmentFilter
+  createdByAgent: Boolean
+  createdWith: String
   description: StrFilterLookup
   id: ID
   ids: [ID!]
   name: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 
@@ -593,11 +607,17 @@ input DatasetFilter {
   OR: DatasetFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
   parent: ID = null
   parentless: Boolean = null
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 
@@ -774,9 +794,15 @@ input ExperimentFilter {
   OR: ExperimentFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 
@@ -865,10 +891,16 @@ input FileFilter {
   NOT: FileFilter
   OR: FileFilter
   contentType: StrFilterLookup
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   dataset: DatasetFilter = null
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   size: IntFilterLookup
 }
@@ -1119,9 +1151,13 @@ input IrregularlySampledSignalFilter {
   DISTINCT: Boolean
   NOT: IrregularlySampledSignalFilter
   OR: IrregularlySampledSignalFilter
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
   label: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   session: ID = null
 }
@@ -1315,8 +1351,10 @@ input ModelCollectionFilter {
   OR: ModelCollectionFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
   search: String
 }
@@ -1433,8 +1471,10 @@ input ModelWorkspaceFilter {
   OR: ModelWorkspaceFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
   search: String
 }
@@ -1811,6 +1851,25 @@ type NeuronModel {
   modelCollections(filters: ModelCollectionFilter, ordering: [ModelCollectionOrder!]! = [], pagination: OffsetPaginationInput): [ModelCollection!]
   name: String!
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  sectionDominance(
+    referenceCell: ID = null
+    referenceSection: ID = null
+
+    """
+    Weight of the axial coupling factor (∝ diam² / (Ra · length) — driven by section diameter, axial resistivity and length). Defaults to the built-in blend when unset.
+    """
+    weightAxial: Float = null
+
+    """
+    Weight of the membrane capacitance factor (cm · area — driven by specific capacitance). Defaults to the built-in blend when unset.
+    """
+    weightCapacitance: Float = null
+
+    """
+    Weight of the conductance load factor (Σ gbar · area — driven by channel densities like g_pas / gnabar_hh). Defaults to the built-in blend when unset.
+    """
+    weightConductance: Float = null
+  ): [SectionDominance!]!
   simulations(filters: SimulationFilter, ordering: [SimulationOrder!]! = [], pagination: OffsetPaginationInput): [Simulation!]!
 }
 
@@ -1821,9 +1880,15 @@ input NeuronModelFilter {
   OR: NeuronModelFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 
@@ -2118,9 +2183,15 @@ input ROIFilter {
   OR: ROIFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
   kind: RoiKindChoices
+  mine: Boolean
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   trace: ID = null
 }
@@ -2340,6 +2411,23 @@ type Section {
   ra: Resistivity
 }
 
+type SectionDominance {
+  area: Float!
+  axialConductance: Float!
+  capacitance: Float!
+  category: String
+  cellId: String!
+  conductanceLoad: Float!
+  electrotonicDistance: Float!
+  globalScore: Float!
+  isReference: Boolean!
+  rawGlobal: Float!
+  rawReference: Float!
+  referenceScore: Float!
+  sectionId: String!
+  transferWeight: Float!
+}
+
 """
 Input for a section of a cell's morphology, the basic structural unit of the topology.
 """
@@ -2447,6 +2535,7 @@ type Simulation {
   kind: StimulusKind!
   model: NeuronModel!
   name: String!
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
   recordingViews(filters: ExperimentRecordingViewFilter, ordering: [ExperimentRecordingViewOrder!]! = [], pagination: OffsetPaginationInput): [ExperimentRecordingView!]!
   recordings(filters: RecordingFilter, ordering: [RecordingOrder!]! = [], pagination: OffsetPaginationInput): [Recording!]!
   stimuli(filters: StimulusFilter, ordering: [StimulusOrder!]! = [], pagination: OffsetPaginationInput): [Stimulus!]!
@@ -2461,9 +2550,15 @@ input SimulationFilter {
   OR: SimulationFilter
   createdAfter: DateTime
   createdBefore: DateTime
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 
@@ -2488,9 +2583,13 @@ input SpikeTrainFilter {
   DISTINCT: Boolean
   NOT: SpikeTrainFilter
   OR: SpikeTrainFilter
+  createdByAgent: Boolean
+  createdWith: String
   id: ID
   ids: [ID!]
   label: StrFilterLookup
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
   session: ID = null
 }
@@ -2751,10 +2850,16 @@ input TraceFilter {
   DISTINCT: Boolean
   NOT: TraceFilter
   OR: TraceFilter
+  createdBy: ID
+  createdByAgent: Boolean
+  createdWith: String
   dataset: DatasetFilter
   ids: [ID!]
+  mine: Boolean
   name: StrFilterLookup
   notDerived: Boolean = null
+  provenanceRootTask: String
+  provenanceTask: String
   search: String
 }
 

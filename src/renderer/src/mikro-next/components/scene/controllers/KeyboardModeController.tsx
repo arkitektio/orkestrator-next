@@ -6,7 +6,7 @@ import {
   buildAffineMatrix,
   getLayerZSize,
   voxelToPhysicalZ,
-} from "../panels/layer/affine-utils";
+} from "../core/worldTransform";
 
 /**
  * Listens for key holds to temporarily override the mode.

@@ -111,7 +111,7 @@ fragment RGBView on RGBView {
 fragment TimepointView on TimepointView {
   ...View
   id
-  msSinceStart
+  timeSinceStart
   indexSinceStart
   era {
     ...Era

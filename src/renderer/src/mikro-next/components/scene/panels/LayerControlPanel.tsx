@@ -3,16 +3,63 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { isLayerOutOfPlane } from "../core/worldTransform";
 import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { LayerState, useSceneStore } from "../store/sceneStore";
-import { useViewerStore } from "../store/viewerStore";
+import { useViewerStore, type UnplannableLayerInfo } from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
 import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
+
+const formatBytes = (bytes: number): string =>
+  bytes >= 1024 ** 3
+    ? `${(bytes / 1024 ** 3).toFixed(1)} GB`
+    : `${Math.round(bytes / 1024 ** 2)} MB`;
+
+/**
+ * Warning strip for a layer refused by the pool-viability guard (P18): its
+ * coarsest pyramid level's pinned atlas floor exceeds the GPU budget — usually
+ * a dataset with no multiscale pyramid. Offers a one-click mode switch when the
+ * OTHER display mode is affordable. Numbers live in the tooltip.
+ */
+const UnplannableNotice = ({
+  layer,
+  info,
+}: {
+  layer: LayerState;
+  info: UnplannableLayerInfo;
+}) => {
+  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
+  const setDisplayMode = useModeStore((s) => s.setDisplayMode);
+  const otherMode = info.mode === "3D" ? "2D" : "3D";
+  const otherViable = useMemo(
+    () => assessLayerPoolViability(layer, getArrayForStoreId, otherMode)?.viable === true,
+    [layer, getArrayForStoreId, otherMode],
+  );
+
+  return (
+    <div
+      className="flex items-center gap-2 border-t border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200"
+      title={`This layer has no usable multiscale pyramid: keeping its coarsest level resident would need ${formatBytes(info.floorBytes)} of GPU memory (budget ${formatBytes(info.capBytes)}). Provide a pyramidal (multiscale) version of the data to render it in ${info.mode}.`}
+    >
+      <span className="min-w-0 flex-1 truncate">
+        ⚠ too large for {info.mode} — no usable pyramid
+      </span>
+      {otherViable && (
+        <button
+          className="shrink-0 rounded border border-amber-400/40 px-1.5 py-0.5 font-medium transition-colors hover:bg-amber-400/20"
+          onClick={() => setDisplayMode(otherMode)}
+        >
+          switch to {otherMode}
+        </button>
+      )}
+    </div>
+  );
+};
 
 /**
  * One expandable layer card. Owns the layer's render-graph editing state (so it
@@ -31,6 +78,7 @@ const LayerCard = memo(function LayerCard({
   originalLayer,
   isArmed,
   viewportPercent,
+  unplannable,
   onSelect,
   onToggleArm,
   onUpdate,
@@ -43,6 +91,7 @@ const LayerCard = memo(function LayerCard({
   originalLayer: LayerState | undefined;
   isArmed: boolean;
   viewportPercent?: number;
+  unplannable?: UnplannableLayerInfo;
   onSelect: (id: string) => void;
   onToggleArm: (id: string) => void;
   onUpdate: (updated: LayerState) => void;
@@ -81,6 +130,7 @@ const LayerCard = memo(function LayerCard({
         onUpdate={onUpdate}
         onFocus={onFocus}
       />
+      {unplannable && <UnplannableNotice layer={layer} info={unplannable} />}
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
         <div className="border-t border-white/10">
           <LayerGraphFlyout
@@ -113,6 +163,8 @@ export const LayerControlPanel = () => {
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
   const layerViewRanges = useViewerStore((s) => s.layerViewRanges);
+  // Rarely changes (only when the viability verdict flips) — P17-clean.
+  const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const currentZ = useViewerStore((s) => s.currentZ);
   const displayMode = useModeStore((s) => s.displayMode);
   const [updateLater] = useUpdateLaterMutation();
@@ -165,8 +217,11 @@ export const LayerControlPanel = () => {
   // off-screen ones. Not the per-layer on/off `visible` flag.
   const inViewSet = new Set(visibleLayers);
   const isInView = (l: LayerState) =>
-    inViewSet.has(l.id) &&
-    !(displayMode === "2D" && isLayerOutOfPlane(l, currentZ));
+    (inViewSet.has(l.id) &&
+      !(displayMode === "2D" && isLayerOutOfPlane(l, currentZ))) ||
+    // Unplannable layers never mount a mesh, so they are never "visible" —
+    // but their warning must not hide behind the off-view toggle.
+    unplannableLayers[l.id] !== undefined;
 
   // Rough share of the viewport each layer covers (see LayerViewRange
   // viewportFraction); missing = off-view, which sorts to the bottom.
@@ -205,6 +260,7 @@ export const LayerControlPanel = () => {
         originalLayer={originalLayers.find((o) => o.id === layer.id)}
         isArmed={armedLayerIds.includes(layer.id)}
         viewportPercent={fraction != null ? Math.round(fraction * 100) : undefined}
+        unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
         onToggleArm={handleToggleArm}
         onUpdate={updateLayer}

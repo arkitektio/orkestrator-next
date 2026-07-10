@@ -3,6 +3,7 @@ import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveBrickSpec } from "../core/octree/brickSpec";
+import { assessPoolViability } from "../core/octree/poolViability";
 import { buildLayerLevelGeometry, type LevelSource } from "../core/octree/levelGeometry";
 import {
   planLayerNodes,
@@ -13,8 +14,27 @@ import {
 import { buildVolumeVoxelToWorld } from "../core/octree/voxelFrame";
 import type { ModeState } from "../store/modeStore";
 import type { SceneState } from "../store/sceneStore";
-import type { ViewerState } from "../store/viewerStore";
+import type { UnplannableLayerInfo, ViewerState } from "../store/viewerStore";
 import type { ViewState } from "../store/viewStore";
+
+/** Value equality for the unplannable-layers map (skip no-op store writes). */
+const sameUnplannable = (
+  previous: Record<string, UnplannableLayerInfo>,
+  next: Record<string, UnplannableLayerInfo>,
+): boolean => {
+  const previousKeys = Object.keys(previous);
+  if (previousKeys.length !== Object.keys(next).length) return false;
+  return previousKeys.every((key) => {
+    const a = previous[key];
+    const b = next[key];
+    return (
+      !!b &&
+      a.mode === b.mode &&
+      a.floorBytes === b.floorBytes &&
+      a.capBytes === b.capBytes
+    );
+  });
+};
 
 /**
  * Store-level driver for the octree node planner (`core/octree/nodePlanning`):
@@ -67,6 +87,7 @@ export function startNodePlanTracking({
 
     const prevPlans = viewerState.nodePlans;
     const nextPlans: Record<string, LayerNodePlan> = {};
+    const nextUnplannable: Record<string, UnplannableLayerInfo> = {};
     let changed = Object.keys(prevPlans).some((layerId) => !layers.find((l) => l.id === layerId));
 
     const plannableLayers = layers.filter(
@@ -98,6 +119,22 @@ export function startNodePlanTracking({
       const geometry = buildLayerLevelGeometry(layer.lens.dataset.dims, layer, levels);
       if (!geometry) continue;
       const spec = resolveBrickSpec(geometry, mode);
+
+      // Pool-viability guard (P18): a layer whose coarsest level's pinned
+      // atlas floor exceeds the GPU budget (typically a single-level dataset,
+      // where "coarsest" IS full resolution) must never be planned — the
+      // planner would emit its entire full-res grid as unconditional root
+      // targets and the pool would attempt a multi-GB atlas allocation. No
+      // plan → the brick layers render nothing, no pool, no fetch.
+      const viability = assessPoolViability(geometry, spec);
+      if (!viability.viable) {
+        nextUnplannable[layer.id] = {
+          mode,
+          floorBytes: viability.floorBytes,
+          capBytes: viability.capBytes,
+        };
+        continue;
+      }
 
       let camera: NodeCamera | null = null;
       if (mode === "3D" && viewProjectionMatrix) {
@@ -141,6 +178,12 @@ export function startNodePlanTracking({
 
     if (changed) {
       viewerState.setNodePlans(nextPlans);
+    }
+
+    // Value-compared write (rarely changes — P17-clean): entries clear
+    // automatically when a layer becomes viable (e.g. after a mode switch).
+    if (!sameUnplannable(viewerState.unplannableLayers, nextUnplannable)) {
+      viewerState.setUnplannableLayers(nextUnplannable);
     }
   };
 

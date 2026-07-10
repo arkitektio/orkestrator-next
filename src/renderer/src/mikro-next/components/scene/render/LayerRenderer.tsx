@@ -11,9 +11,12 @@ const MAX_DISPLAYABLE_LAYERS = 64;
 /**
  * Dispatches each scene layer to the renderer registered for its `__typename`
  * and the current display mode. Image layers cost nothing against the byte
- * budget: the brick-pool renderer bounds their GPU memory by construction
- * (each layer's atlas is sized from a budget share), so the budget only
- * culls non-image layer types with an estimated cost.
+ * budget here: PLANNED image layers are budget-bounded by the brick pool
+ * (atlas sized from a budget share), and layers whose pinned coarsest level
+ * would exceed the GPU budget (no usable pyramid — P18) are refused UPSTREAM
+ * by the pool-viability guard in nodePlanTracker (no plan → the brick layer
+ * components render nothing; `viewerStore.unplannableLayers` carries the
+ * reason). So this budget only culls non-image layer types.
  */
 export const LayerRenderer = ({ mode }: { mode: "2D" | "3D" }) => {
   const sceneLayers = useSceneStore((s) => s.sceneLayers);

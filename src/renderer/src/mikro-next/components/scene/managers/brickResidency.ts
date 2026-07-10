@@ -11,6 +11,7 @@ import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
+import { assessPoolViability } from "../core/octree/poolViability";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
@@ -178,6 +179,8 @@ export class BrickResidencyManager {
   };
   /** Chunk keys already counted toward bytesDecoded. */
   private readonly countedChunkKeys = new Set<string>();
+  /** Layers already warned about a non-viable pool (one warning per layer). */
+  private readonly warnedUnviable = new Set<string>();
 
   constructor(private readonly deps: Deps) {}
 
@@ -339,7 +342,13 @@ export class BrickResidencyManager {
     for (const [layerId, plan] of Object.entries(plans)) {
       const layer = layers.find((l) => l.id === layerId);
       if (!layer) continue;
-      this.reconcileLayer(layer, plan, planCount);
+      try {
+        this.reconcileLayer(layer, plan, planCount);
+      } catch (error) {
+        // Contain per-layer failures (e.g. an atlas allocation error): one bad
+        // layer must not abort reconciliation of the remaining layers.
+        console.warn(`[bricks] reconcile failed for ${layerId}`, error);
+      }
     }
   }
 
@@ -427,6 +436,35 @@ export class BrickResidencyManager {
     const geometry = buildLayerLevelGeometry(layer.lens.dataset.dims, layer, levels);
     if (!geometry) return null;
     const spec = resolveBrickSpec(geometry, plan.mode);
+
+    // Hard stop (defense in depth — nodePlanTracker refuses such layers before
+    // any plan exists): the coarsest-grid slot floor below OVERRIDES the byte
+    // budget by design (P16), so a no-pyramid layer would otherwise attempt a
+    // multi-GB atlas allocation here (an uncaught RangeError that also aborts
+    // reconciliation of the remaining layers). See P18.
+    const viability = assessPoolViability(geometry, spec);
+    if (!viability.viable) {
+      if (!this.warnedUnviable.has(layer.id)) {
+        this.warnedUnviable.add(layer.id);
+        console.warn(
+          `[bricks] refusing pool for ${layer.id}: coarsest-level floor ` +
+            `${(viability.floorBytes / (1024 * 1024)).toFixed(0)} MB exceeds ` +
+            `${(viability.capBytes / (1024 * 1024)).toFixed(0)} MB budget (no usable pyramid?)`,
+        );
+      }
+      const state = this.deps.viewerStore.getState();
+      if (!state.unplannableLayers[layer.id]) {
+        state.setUnplannableLayers({
+          ...state.unplannableLayers,
+          [layer.id]: {
+            mode: plan.mode,
+            floorBytes: viability.floorBytes,
+            capBytes: viability.capBytes,
+          },
+        });
+      }
+      return null;
+    }
 
     const structureSignature = JSON.stringify({
       mode: plan.mode,

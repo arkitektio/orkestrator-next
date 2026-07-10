@@ -43,6 +43,15 @@ export interface RenderBudgetInfo {
   culledLayerIds: string[];
 }
 
+/** Why a layer cannot be planned/rendered in the current display mode: its
+ * coarsest pyramid level's pinned atlas floor exceeds the GPU budget (a layer
+ * without a multiscale pyramid — see OCTREE_RENDERER.md P18). */
+export interface UnplannableLayerInfo {
+  mode: "2D" | "3D";
+  floorBytes: number;
+  capBytes: number;
+}
+
 
 /** Per-scene viewer state: camera-derived facts, trackables, probes and the
  * declarative chunk plans the scene managers write. */
@@ -71,6 +80,11 @@ export interface ViewerState {
   /** Null while every layer fits the render-cost budget. */
   renderBudget: RenderBudgetInfo | null;
   setRenderBudget: (info: RenderBudgetInfo | null) => void;
+  /** Layers refused by the pool-viability guard for the CURRENT display mode
+   * (empty when all layers are plannable). Written by nodePlanTracker /
+   * brickResidency; read by the layer panel badge and DebugPanel. */
+  unplannableLayers: Record<string, UnplannableLayerInfo>;
+  setUnplannableLayers: (layers: Record<string, UnplannableLayerInfo>) => void;
 
   /** Declarative per-layer octree node plans, written by the node-plan tracker. */
   nodePlans: Record<string, LayerNodePlan>;
@@ -123,6 +137,8 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setLodBias: (bias) => set({ lodBias: bias }),
     renderBudget: null,
     setRenderBudget: (info) => set({ renderBudget: info }),
+    unplannableLayers: {},
+    setUnplannableLayers: (layers) => set({ unplannableLayers: layers }),
     nodePlans: {},
     setNodePlans: (plans) => set({ nodePlans: plans }),
     residencyVersion: 0,

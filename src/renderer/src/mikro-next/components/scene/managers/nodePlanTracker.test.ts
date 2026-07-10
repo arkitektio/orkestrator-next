@@ -47,27 +47,31 @@ type ViewerSubset = Pick<
   | "currentZ"
   | "residencyVersion"
   | "nodePlans"
+  | "unplannableLayers"
   | "getArrayForStoreId"
   | "setNodePlans"
+  | "setUnplannableLayers"
 >;
 
-const makeStores = () => {
+const makeStores = (layers: LayerState[] = [layer]) => {
   const viewerStore = createStore<ViewerSubset>((set) => ({
     layerViewRanges: {},
     lodBias: 1,
     currentZ: 0,
     residencyVersion: 0,
     nodePlans: {},
+    unplannableLayers: {},
     getArrayForStoreId: ((storeId: string) => {
       const arr = ARRAYS[storeId];
       if (!arr) throw new Error(`unknown store ${storeId}`);
       return arr;
     }) as ViewerSubset["getArrayForStoreId"],
     setNodePlans: (plans: Record<string, LayerNodePlan>) => set({ nodePlans: plans }),
+    setUnplannableLayers: (unplannable) => set({ unplannableLayers: unplannable }),
   })) as unknown as StoreApi<ViewerState>;
 
   const sceneStore = createStore<Pick<SceneState, "layers">>(() => ({
-    layers: [layer],
+    layers,
   })) as unknown as StoreApi<SceneState>;
 
   const viewStore = createStore<Pick<ViewState, "viewProjectionMatrix" | "viewportSize" | "cameraPose">>(
@@ -140,6 +144,47 @@ describe("startNodePlanTracking", () => {
     expect(stores.viewerStore.getState().nodePlans[LAYER_ID].mode).toBe("3D");
 
     stop();
+  });
+
+  it("refuses a layer whose coarsest-level pool floor exceeds the budget (P18)", async () => {
+    // Single-level 16384² float32 image: 2D brick grid 64×64 → (4096+64)
+    // slots × 256·256·4 B ≈ 1.09 GB floor > the 512 MB default budget.
+    const hugeLayer = {
+      ...layer,
+      id: "huge-single-level",
+      lens: {
+        ...layer.lens,
+        shape: [16384, 16384, 1],
+        dataset: {
+          dims: ["y", "x", "c"],
+          dataArrays: [{ level: 0, scaleFactors: null, store: { id: "store-huge" } }],
+        },
+      },
+    } as unknown as LayerState;
+    ARRAYS["store-huge"] = {
+      shape: [16384, 16384, 1],
+      chunks: [256, 256, 1],
+      dtype: "float32",
+    };
+
+    const stores = makeStores([layer, hugeLayer]);
+    const stop = startNodePlanTracking(stores);
+    await settle();
+
+    const state = stores.viewerStore.getState();
+    // No plan, no fetch, no pool for the oversized layer…
+    expect(state.nodePlans["huge-single-level"]).toBeUndefined();
+    // …with the reason surfaced for the UI badge…
+    const info = state.unplannableLayers["huge-single-level"];
+    expect(info).toBeDefined();
+    expect(info.mode).toBe("2D");
+    expect(info.floorBytes).toBeGreaterThan(info.capBytes);
+    // …while the viable layer alongside still plans normally.
+    expect(state.nodePlans[LAYER_ID]).toBeDefined();
+    expect(state.unplannableLayers[LAYER_ID]).toBeUndefined();
+
+    stop();
+    delete ARRAYS["store-huge"];
   });
 
   it("stops reacting after cleanup", async () => {

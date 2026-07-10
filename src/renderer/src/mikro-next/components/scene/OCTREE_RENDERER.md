@@ -483,6 +483,39 @@ heavy subtree):
   store write on a continuously-varying cosmetic field (the `viewportFraction`
   regression) — compare only what downstream consumers need per-tick.
 
+**P18 — A single-level dataset makes the "cheap pinned coarsest level"
+assumption catastrophically false.** The whole design leans on coarsest =
+tiny + always-resident: the planner's budget floor falls back to it, reconcile
+pins all of it, and `ensurePool` floors the atlas slot count at the coarsest
+grid — deliberately overriding the byte budget (P16). With NO multiscale
+pyramid, coarsest = level 0 = full resolution, and every valve inverts at
+once: a 2048×2048×1024 uint16 volume floors the 3D atlas at ~18.9 GB (the
+`Float32Array` backing throws an uncaught RangeError inside `ensurePool`,
+which also aborted reconciliation of the REMAINING layers until reconcileAll
+got its per-layer try/catch), and the planner emits the entire full-res grid
+as unconditional root `target`s (`maxPlanBytes` only gates refinement into
+children, never roots) → a full-dataset fetch storm re-triggered per
+interaction. The same volume floors the 2D atlas at ~16 GB — the 2D slot
+floor spans EVERY z slab (that is what makes z-scrubbing instant).
+
+The guard: `assessPoolViability` (`core/octree/poolViability.ts`) computes
+the coarsest-grid floor with the same helpers `ensurePool` uses and refuses
+the layer when it exceeds `getInitialVolumeTextureBudgetBytes()` — the
+device-scaled GLOBAL budget, NOT `MAX_LAYER_POOL_BYTES` (128 MB), which
+known-good deep 2D stacks legitimately exceed (a 3000-slice SPIM stack floors
+at ~200 MB+ after P1's z-payload doubling). Enforced PRIMARILY in
+`nodePlanTracker` (it plans every visible store layer whether or not a mesh
+is mounted, so an unmount-only guard would not stop the fetch storm): a
+refused layer gets no plan → the brick layer components render nothing → no
+pool, no fetch, no atlas. `ensurePool` re-checks as a hard stop for direct
+callers. The refusal is surfaced via `viewerStore.unplannableLayers` — an
+amber strip on the layer card (with a one-click switch to the other display
+mode when THAT one is affordable) and a DebugPanel line. Affordable
+single-level cubes are untouched (the check is budget-based, not
+"single-level ⇒ refuse"). Do NOT try to budget-cap roots inside the planner
+instead — partial coarsest coverage would violate the shader's fallback
+invariant. The real fix for such data is a server-side pyramid.
+
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without
 an effect-cleanup `dispose()`, that's an unbounded GPU leak on exactly the

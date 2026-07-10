@@ -12,6 +12,7 @@ import { useViewStoreApi } from "../store/viewStore";
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
   const renderBudget = useViewerStore((s) => s.renderBudget);
+  const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const lodBias = useViewerStore((s) => s.lodBias);
   const setLodBias = useViewerStore((s) => s.setLodBias);
   const nodePlans = useViewerStore((s) => s.nodePlans);
@@ -98,6 +99,16 @@ export const DebugPanel = () => {
           {renderBudget.culledLayerIds.length} layer(s): {renderBudget.culledLayerIds.join(", ")}
         </div>
       )}
+      {Object.entries(unplannableLayers).map(([layerId, info]) => (
+        <div
+          key={layerId}
+          className="mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200"
+        >
+          {layerId}: not planned in {info.mode} — coarsest-level pool floor{" "}
+          {(info.floorBytes / (1024 * 1024)).toFixed(0)} MB exceeds{" "}
+          {(info.capBytes / (1024 * 1024)).toFixed(0)} MB budget (no usable pyramid)
+        </div>
+      ))}
       <Collapsible open={isControlsOpen} onOpenChange={setIsControlsOpen}>
         <div className="mb-3 rounded border border-border/50 bg-background/40">
           <CollapsibleTrigger asChild>

@@ -41,7 +41,6 @@ const {
   sin,
   texture,
   texture3D,
-  textureLoad,
   uniform,
   uniformArray,
   uv,
@@ -49,8 +48,11 @@ const {
   vec2,
   vec3,
   vec4,
-  uint,
 } = TSL;
+
+// three exports texture3DLoad from Texture3DNode.js but (as of 0.184) does not
+// re-export it through the `three/tsl` barrel — recreate its one-liner here.
+const texture3DLoad = (...params: any[]) => texture3D(...params).setSampler(false);
 
 /** A TSL uniform node as the layer components see it: a `.value` box. */
 export type UniformNodeLike<T> = { value: T };
@@ -100,21 +102,22 @@ export type TraversalNodesPublic = {
   uEmptyDecodeRange: UniformNodeLike<number>;
 };
 
-/** Public (consumer-facing) shape of the channel-compositor nodes. */
+/** Public (consumer-facing) shape of the channel-compositor nodes.
+ *
+ * The eight per-channel scalars are packed into TWO vec4 uniform arrays —
+ * every `uniformArray` is its own uniform buffer binding on the WebGPU
+ * backend, and eight of them (plus the traversal arrays and three's internal
+ * buffers) blew the 12-uniform-buffers-per-stage device limit. */
 export type ChannelNodesPublic = {
   colormapAtlas: UniformNodeLike<THREE.Texture>;
   minValue: UniformNodeLike<number>;
   maxValue: UniformNodeLike<number>;
   numChannels: UniformNodeLike<number>;
   blendMode: UniformNodeLike<number>;
-  chChannel: UniformArrayNodeLike<number>;
-  chClimMin: UniformArrayNodeLike<number>;
-  chClimMax: UniformArrayNodeLike<number>;
-  chGamma: UniformArrayNodeLike<number>;
-  chOpacity: UniformArrayNodeLike<number>;
-  chVisible: UniformArrayNodeLike<number>;
-  chInvert: UniformArrayNodeLike<number>;
-  chRow: UniformArrayNodeLike<number>;
+  /** Per channel: x = channel-slab index, y = climMin, z = climMax, w = gamma. */
+  chParamsA: UniformArrayNodeLike<THREE.Vector4>;
+  /** Per channel: x = opacity, y = visible, z = invert, w = colormap row. */
+  chParamsB: UniformArrayNodeLike<THREE.Vector4>;
 };
 
 /** Shared traversal uniform nodes for one (layer, mode) pool (node graph —
@@ -155,7 +158,13 @@ function makeTraversalNodes(
 /** Channel-compositor uniform nodes; arrays are mutated in place on update
  * (node graph — dynamically typed; see module header). */
 function makeChannelNodes(data: ChannelUniformData): any {
-  return {
+  const paramsA: THREE.Vector4[] = [];
+  const paramsB: THREE.Vector4[] = [];
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    paramsA.push(new THREE.Vector4());
+    paramsB.push(new THREE.Vector4());
+  }
+  const nodes = {
     // A shared TextureNode so channel edits can swap the rebuilt colormap
     // atlas via `.value = newAtlas` without rebuilding the material.
     colormapAtlas: texture(data.atlas),
@@ -163,15 +172,31 @@ function makeChannelNodes(data: ChannelUniformData): any {
     maxValue: uniform(1, "float"),
     numChannels: uniform(data.numChannels, "int"),
     blendMode: uniform(data.blendMode, "int"),
-    chChannel: uniformArray(Array.from(data.channelIndex), "float"),
-    chClimMin: uniformArray(Array.from(data.climMin), "float"),
-    chClimMax: uniformArray(Array.from(data.climMax), "float"),
-    chGamma: uniformArray(Array.from(data.gamma), "float"),
-    chOpacity: uniformArray(Array.from(data.opacity), "float"),
-    chVisible: uniformArray(Array.from(data.visible), "float"),
-    chInvert: uniformArray(Array.from(data.invert), "float"),
-    chRow: uniformArray(Array.from(data.row), "float"),
+    chParamsA: uniformArray(paramsA, "vec4"),
+    chParamsB: uniformArray(paramsB, "vec4"),
   };
+  copyChannelArrays(nodes, data);
+  return nodes;
+}
+
+function copyChannelArrays(
+  nodes: Pick<ChannelNodesPublic, "chParamsA" | "chParamsB">,
+  data: ChannelUniformData,
+): void {
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    nodes.chParamsA.array[i].set(
+      data.channelIndex[i] ?? 0,
+      data.climMin[i] ?? 0,
+      data.climMax[i] ?? 1,
+      data.gamma[i] ?? 1,
+    );
+    nodes.chParamsB.array[i].set(
+      data.opacity[i] ?? 1,
+      data.visible[i] ?? 0,
+      data.invert[i] ?? 0,
+      data.row[i] ?? 0,
+    );
+  }
 }
 
 /** Copy fresh channel data into the existing uniform nodes (no rebuild). */
@@ -179,17 +204,7 @@ export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUnifo
   nodes.colormapAtlas.value = data.atlas;
   nodes.numChannels.value = data.numChannels;
   nodes.blendMode.value = data.blendMode;
-  const copy = (target: UniformArrayNodeLike<number>, source: ArrayLike<number>) => {
-    for (let i = 0; i < MAX_CHANNELS; i++) target.array[i] = source[i] ?? 0;
-  };
-  copy(nodes.chChannel, data.channelIndex);
-  copy(nodes.chClimMin, data.climMin);
-  copy(nodes.chClimMax, data.climMax);
-  copy(nodes.chGamma, data.gamma);
-  copy(nodes.chOpacity, data.opacity);
-  copy(nodes.chVisible, data.visible);
-  copy(nodes.chInvert, data.invert);
-  copy(nodes.chRow, data.row);
+  copyChannelArrays(nodes, data);
 }
 
 /**
@@ -214,19 +229,21 @@ function makeSampleBrickEx(t: any) {
         levelShape.sub(0.5001),
       ).toVar();
       const brick = ivec3(floor(levelVoxel.div(vec3(t.uBrickPayload)))).toVar();
-      const entry = textureLoad(
-        t.pageTable,
-        ivec3(t.uPageOffset.element(i)).add(brick),
+      // texture3DLoad, NOT textureLoad: the plain TSL textureLoad builds a 2D
+      // TextureNode whose fetch coords collapse to ivec2 — invalid WGSL for a
+      // texture_3d. Entry components are rgba8unorm floats; decode bytes with
+      // round(v * 255).
+      const entry = vec4(
+        texture3DLoad(t.pageTable, ivec3(t.uPageOffset.element(i)).add(brick)),
       ).toVar();
+      const flag = int(entry.a.mul(255.0).add(0.5)).toVar();
 
       // EMPTY: uniform-fill brick, value 8-bit-encoded in R (P11).
-      If(entry.a.equal(uint(2)), () => {
+      If(flag.equal(int(2)), () => {
         result.assign(
           vec2(
             2.0,
-            float(t.uEmptyDecodeMin).add(
-              float(entry.r).div(255.0).mul(t.uEmptyDecodeRange),
-            ),
+            float(t.uEmptyDecodeMin).add(entry.r.mul(t.uEmptyDecodeRange)),
           ),
         );
         Break();
@@ -234,9 +251,10 @@ function makeSampleBrickEx(t: any) {
 
       // RESIDENT: atlas tap at slot origin + border + in-brick offset
       // (+ channel-slab z).
-      If(entry.a.equal(uint(1)), () => {
+      If(flag.equal(int(1)), () => {
         const inBrick = levelVoxel.sub(vec3(brick.mul(t.uBrickPayload)));
-        const texel = vec3(ivec3(entry.xyz).mul(t.uSlotSize))
+        const slot = ivec3(entry.xyz.mul(255.0).add(0.5));
+        const texel = vec3(slot.mul(t.uSlotSize))
           .add(float(t.uBrickBorder))
           .add(inBrick)
           .toVar();
@@ -255,6 +273,7 @@ function makeSampleBrickEx(t: any) {
 /** TSL port of `channelNormalize` (lockstep with core mirrors). */
 function makeChannelNormalize(c: any) {
   return Fn(([i, rawValue]: any[]) => {
+    const paramsA = vec4(c.chParamsA.element(i)).toVar(); // (channel, climMin, climMax, gamma)
     const baseNorm = clamp(
       float(rawValue)
         .sub(c.minValue)
@@ -262,11 +281,11 @@ function makeChannelNormalize(c: any) {
       0.0,
       1.0,
     );
-    const climMin = float(c.chClimMin.element(i));
-    const climRange = max(float(c.chClimMax.element(i)).sub(climMin), 0.00001);
+    const climMin = paramsA.y;
+    const climRange = max(paramsA.z.sub(climMin), 0.00001);
     const normalized = clamp(baseNorm.sub(climMin).div(climRange), 0.0, 0.999).toVar();
-    normalized.assign(pow(normalized, max(float(c.chGamma.element(i)), 0.0001)));
-    If(float(c.chInvert.element(i)).greaterThan(0.5), () => {
+    normalized.assign(pow(normalized, max(paramsA.w, 0.0001)));
+    If(vec4(c.chParamsB.element(i)).z.greaterThan(0.5), () => {
       normalized.assign(oneMinus(normalized));
     });
     return normalized;
@@ -342,20 +361,21 @@ export function createPlaneNodeMaterial(
       If(int(i).greaterThanEqual(c.numChannels), () => {
         Break();
       });
-      If(float(c.chVisible.element(i)).lessThan(0.5), () => {
+      const paramsB = vec4(c.chParamsB.element(i)).toVar(); // (opacity, visible, invert, row)
+      If(paramsB.y.lessThan(0.5), () => {
         Continue();
       });
 
       const sampled = vec2(
-        sampleBrickEx(baseVoxel, uDesiredLevel, int(float(c.chChannel.element(i)))),
+        sampleBrickEx(baseVoxel, uDesiredLevel, int(vec4(c.chParamsA.element(i)).x)),
       ).toVar();
       If(sampled.x.lessThan(0.5), () => {
         Continue(); // nothing resident yet: transparent
       });
 
       const normalized = float(channelNormalize(i, sampled.y)).toVar();
-      const color = c.colormapAtlas.sample(vec2(normalized, float(c.chRow.element(i)))).rgb;
-      const weight = float(c.chOpacity.element(i)).mul(normalized);
+      const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
+      const weight = paramsB.x.mul(normalized);
 
       If(int(c.blendMode).equal(1), () => {
         accum.mulAssign(mix(vec3(1.0), color, weight));
@@ -537,12 +557,13 @@ export function createVolumeNodeMaterial(
         If(int(i).greaterThanEqual(c.numChannels), () => {
           Break();
         });
-        If(float(c.chVisible.element(i)).lessThan(0.5), () => {
+        const paramsB = vec4(c.chParamsB.element(i)).toVar(); // (opacity, visible, invert, row)
+        If(paramsB.y.lessThan(0.5), () => {
           Continue();
         });
 
         const sampled = vec2(
-          sampleBrickEx(pB, lvl, int(float(c.chChannel.element(i)))),
+          sampleBrickEx(pB, lvl, int(vec4(c.chParamsA.element(i)).x)),
         ).toVar();
         bestStatus.assign(max(bestStatus, sampled.x));
         If(sampled.x.lessThan(0.5), () => {
@@ -553,8 +574,8 @@ export function createVolumeNodeMaterial(
         });
 
         const normalized = float(channelNormalize(i, sampled.y)).toVar();
-        const color = c.colormapAtlas.sample(vec2(normalized, float(c.chRow.element(i)))).rgb;
-        const weight = float(c.chOpacity.element(i)).mul(normalized);
+        const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
+        const weight = paramsB.x.mul(normalized);
         sampleNorm.assign(max(sampleNorm, normalized));
 
         If(int(c.blendMode).equal(1), () => {

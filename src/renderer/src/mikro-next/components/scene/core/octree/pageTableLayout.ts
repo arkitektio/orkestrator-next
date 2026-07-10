@@ -6,7 +6,9 @@ import type { LayerLevelGeometry, Vec3 } from "./levelGeometry";
  * indexed sampler arrays — the shader picks the level via `uPageOffset[lvl]`
  * ivec3 offsets into this single texture instead.
  *
- * Texel encoding (RGBA8UI): R,G,B = brick-pool slot coords, A = PageFlag.
+ * Texel encoding (RGBA8, one byte per component): R,G,B = brick-pool slot
+ * coords, A = PageFlag. The texture is sampled as unorm; the shader decodes
+ * bytes with `round(value * 255)`.
  */
 
 export const PAGE_FLAG_UNMAPPED = 0;
@@ -81,7 +83,7 @@ export function buildPageTableLayout(
 export const pageEntryIndex = (grid: Vec3, brick: Vec3): number =>
   (brick[2] * grid[1] + brick[1]) * grid[0] + brick[0];
 
-/** Write one RGBA8UI page entry into a level mirror (4 bytes per texel). */
+/** Write one RGBA8 page entry into a level mirror (4 bytes per texel). */
 export function encodePageEntry(
   mirror: Uint8Array,
   entryIndex: number,

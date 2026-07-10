@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { Line } from "@react-three/drei";
+import { Line } from "../primitives/Line";
 import type { ThreeEvent } from "@react-three/fiber";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";

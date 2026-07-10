@@ -1,6 +1,6 @@
 appId: live.arkitekt.orkestrator.next
 productName: Orkestrator
-electronVersion: 39.2.6  # Use your specific version here
+electronVersion: 43.1.0  # Use your specific version here
 electronLanguages: ["en", "en-US"]
 publish:
   provider: github

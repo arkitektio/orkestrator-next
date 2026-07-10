@@ -1,5 +1,5 @@
 import { useModeStore } from "../store/modeStore";
-import { Line } from "@react-three/drei";
+import { Line } from "../primitives/Line";
 
 export const SceneAxis = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);

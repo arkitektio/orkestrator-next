@@ -25,12 +25,12 @@ import {
  * extents (tightly packed rows/images).
  */
 
-export type TexelKind = "r8" | "r32f" | "rgba8ui";
+export type TexelKind = "r8" | "r32f" | "rgba8";
 
 const BYTES_PER_TEXEL: Record<TexelKind, number> = {
   r8: 1,
   r32f: 4,
-  rgba8ui: 4,
+  rgba8: 4,
 };
 
 export function uploadTexSubImage3D(
@@ -107,7 +107,7 @@ export function uploadTexSubImage3D(
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 
-  const format = kind === "rgba8ui" ? gl.RGBA_INTEGER : gl.RED;
+  const format = kind === "rgba8" ? gl.RGBA : gl.RED;
   const type = kind === "r32f" ? gl.FLOAT : gl.UNSIGNED_BYTE;
 
   gl.texSubImage3D(

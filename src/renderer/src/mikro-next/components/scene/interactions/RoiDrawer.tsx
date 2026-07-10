@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import * as THREE from "three";
-import { Line } from "@react-three/drei";
+import { Line } from "../primitives/Line";
 import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";

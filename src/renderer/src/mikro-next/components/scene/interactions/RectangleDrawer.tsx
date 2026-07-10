@@ -1,5 +1,5 @@
 import { useModeStore } from "../store/modeStore";
-import { Line } from "@react-three/drei";
+import { Line } from "../primitives/Line";
 import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { useRoiSelectionStore } from "../store/roiSelectionStore";

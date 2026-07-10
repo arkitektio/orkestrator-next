@@ -1,6 +1,7 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
+import { formatDisplay } from "@/lib/quantities";
 import { CCDElementNode } from "../types";
 
 export default memo(({ data, selected }: NodeProps<CCDElementNode>) => {
@@ -38,7 +39,7 @@ export default memo(({ data, selected }: NodeProps<CCDElementNode>) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/80 text-green-300 text-xs font-semibold px-2 py-1 rounded border border-green-500">
               {data.label}{" "}
-              {data.pixelSizeUm && `, Pixel ${data.pixelSizeUm} µm`}
+              {data.pixelSize && `, Pixel ${formatDisplay(data.pixelSize, "length")}`}
             </div>
           </div>
         </div>

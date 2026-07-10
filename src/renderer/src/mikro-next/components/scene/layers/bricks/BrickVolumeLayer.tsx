@@ -3,11 +3,6 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { ProjectionMode } from "@/mikro-next/api/graphql";
-import {
-  BRICK_TRAVERSAL_GLSL,
-  makeBrickTraversalUniforms,
-} from "../../glsl/brickTraversal";
-import { GLSL_RAND } from "../../glsl/common";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { qualityGovernor } from "../../core/qualityGovernor";
@@ -19,7 +14,8 @@ import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStore } from "../../store/viewStore";
-import { CHANNEL_UNIFORMS_GLSL, buildChannelUniformData } from "./channelUniforms";
+import { createVolumeNodeMaterial, updateChannelNodes } from "./brickNodeMaterials";
+import { buildChannelUniformData } from "./channelUniforms";
 
 /**
  * Brick-pool replacement for the monolithic `VolumeLayer`/`VolumeTextureMesh`
@@ -55,7 +51,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
   const meshRef = useRef<THREE.Mesh | null>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
   const skipSelectionClickRef = useRef(false);
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
@@ -149,74 +144,50 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
   }, [pool, planTargetLevel]);
 
-  // Dynamic uniform pushes (no material rebuild).
+  // TSL node material (WebGPU + WebGL2-fallback backends). Recreated only when
+  // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
+  // through the uniform NODES below.
+  const bundle = useMemo(() => {
+    if (!pool) return null;
+    const created = createVolumeNodeMaterial(pool, pool, channelData);
+    created.nodes.uBaseShape.value.set(
+      pool.geometry.levels[0].spatialShape[0],
+      pool.geometry.levels[0].spatialShape[1],
+      pool.geometry.levels[0].spatialShape[2],
+    );
+    return created;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, pool?.structureSignature]);
+
   useEffect(() => {
-    const u = materialRef.current?.uniforms;
-    if (!u || planTargetLevel === undefined) return;
-    u.colormapAtlas.value = channelData.atlas;
-    u.numChannels.value = channelData.numChannels;
-    u.blendMode.value = channelData.blendMode;
-    u.chChannel.value = channelData.channelIndex;
-    u.chClimMin.value = channelData.climMin;
-    u.chClimMax.value = channelData.climMax;
-    u.chGamma.value = channelData.gamma;
-    u.chOpacity.value = channelData.opacity;
-    u.chVisible.value = channelData.visible;
-    u.chInvert.value = channelData.invert;
-    u.chRow.value = channelData.row;
-    u.uDesiredLevel.value = planTargetLevel;
-    u.uLodBias.value = lodBias;
-    u.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
-    u.uMinDelta.value = marchParams.minDelta;
+    const material = bundle?.material;
+    return () => material?.dispose();
+  }, [bundle]);
+
+  // Dynamic uniform-node pushes (no material rebuild).
+  useEffect(() => {
+    if (!bundle || planTargetLevel === undefined) return;
+    const n = bundle.nodes;
+    updateChannelNodes(n, channelData);
+    n.minValue.value = pool?.minValue ?? 0;
+    n.maxValue.value = pool?.maxValue ?? 1;
+    n.uDesiredLevel.value = planTargetLevel;
+    n.uLodBias.value = lodBias;
+    n.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
+    n.uMinDelta.value = marchParams.minDelta;
     // Coarser ray steps while ACTIVE (camera moving OR bricks streaming —
     // streaming frames recur for seconds after a gesture and were the residual
     // jank on slow GPUs, P19); the tier profile decides how coarse. Settle
     // restores the tier's full quality.
     const profile = qualityGovernor.getProfile();
-    u.uStepScale.value =
+    n.uStepScale.value =
       cameraMoving || qualityGovernor.isStreaming()
         ? profile.activeStepScale
         : profile.settledStepScale;
-    u.projectionMode.value = projectionModeToInt(layer?.projection);
+    n.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
-  }, [channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
-
-  const initialUniforms = useMemo(() => {
-    if (!pool) return null;
-    return {
-      ...makeBrickTraversalUniforms(pool, pool),
-      colormapAtlas: { value: channelData.atlas },
-      minValue: { value: pool.minValue },
-      maxValue: { value: pool.maxValue },
-      numChannels: { value: channelData.numChannels },
-      blendMode: { value: channelData.blendMode },
-      chChannel: { value: channelData.channelIndex },
-      chClimMin: { value: channelData.climMin },
-      chClimMax: { value: channelData.climMax },
-      chGamma: { value: channelData.gamma },
-      chOpacity: { value: channelData.opacity },
-      chVisible: { value: channelData.visible },
-      chInvert: { value: channelData.invert },
-      chRow: { value: channelData.row },
-      uDesiredLevel: { value: planTargetLevel ?? 0 },
-      uLodBias: { value: lodBias },
-      uPxPerVoxelAtUnitDist: { value: pxPerVoxelAtUnitDistance },
-      uMinDelta: { value: marchParams.minDelta },
-      uStepScale: { value: 1 },
-      uBaseShape: {
-        value: new THREE.Vector3(
-          pool.geometry.levels[0].spatialShape[0],
-          pool.geometry.levels[0].spatialShape[1],
-          pool.geometry.levels[0].spatialShape[2],
-        ),
-      },
-      projectionMode: { value: projectionModeToInt(layer?.projection) },
-      isoThreshold: { value: 0.5 },
-      uPickingPass: { value: false },
-    };
-    // Recreated only when the pool is rebuilt (mesh remounts on that key).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature]);
+  }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
   const probeCoordinateFromRay = (ray: THREE.Ray): [number, number, number] | null => {
@@ -283,7 +254,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   };
 
   if (layer?.visible === false) return null;
-  if (planMode !== "3D" || !pool || !initialUniforms) return null;
+  if (planMode !== "3D" || !pool || !bundle) return null;
 
   const base = pool.geometry.levels[0];
   const volumeSize: [number, number, number] = [
@@ -327,244 +298,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         renderOrder={1}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <shaderMaterial
-          ref={materialRef}
-          glslVersion={THREE.GLSL3}
-          transparent={true}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          depthTest={true}
-          uniforms={initialUniforms}
-          vertexShader={`
-            out vec3 vOrigin;
-            out vec3 vDirection;
-
-            void main() {
-              vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-              vOrigin = vec3(inverse(modelMatrix) * vec4(cameraPosition, 1.0));
-              vDirection = position - vOrigin;
-              gl_Position = projectionMatrix * viewMatrix * worldPosition;
-            }
-          `}
-          fragmentShader={`
-            precision highp float;
-            precision highp sampler3D;
-            precision highp usampler3D;
-
-            in vec3 vOrigin;
-            in vec3 vDirection;
-
-            ${BRICK_TRAVERSAL_GLSL}
-            ${CHANNEL_UNIFORMS_GLSL}
-            ${GLSL_RAND}
-
-            uniform int uDesiredLevel;      // ortho / fallback LOD
-            uniform float uLodBias;
-            uniform float uPxPerVoxelAtUnitDist; // 0 → orthographic footprint
-            uniform float uMinDelta;        // base voxels per step at target LOD
-            uniform float uStepScale;       // >1 while the camera moves (quality scaling)
-            uniform vec3 uBaseShape;
-            uniform int projectionMode;     // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
-            uniform float isoThreshold;
-            uniform bool uPickingPass;
-
-            out vec4 FragColor;
-
-            #define MAX_STEPS ${MAX_RAY_STEPS}
-
-            // Unit-box local ([-0.5,0.5], y up) → base voxel (y down).
-            vec3 toBaseVoxel(vec3 p) {
-              return vec3(p.x + 0.5, 0.5 - p.y, p.z + 0.5) * uBaseShape;
-            }
-            vec3 toLocal(vec3 baseVoxel) {
-              vec3 n = baseVoxel / uBaseShape;
-              return vec3(n.x - 0.5, 0.5 - n.y, n.z - 0.5);
-            }
-
-            int desiredLevelAt(vec3 baseVoxel, vec3 cameraBase) {
-              if (uPxPerVoxelAtUnitDist <= 0.0) return uDesiredLevel;
-              float dist = max(distance(baseVoxel, cameraBase), 1.0);
-              float pxPerBaseVoxel = uPxPerVoxelAtUnitDist / dist;
-              for (int lvl = 0; lvl < MAX_BRICK_LEVELS; lvl++) {
-                if (lvl >= uNumLevels - 1) break;
-                if (pxPerBaseVoxel * uLevelScale[lvl].x * uLodBias >= 1.0) return max(lvl, uDesiredLevel);
-              }
-              return uNumLevels - 1;
-            }
-
-            // Exit distance (along the ray, from pB) of the level's brick cell.
-            float brickExitRel(vec3 pB, vec3 invD, int lvl) {
-              vec3 cell = vec3(uBrickPayload) * uLevelScale[lvl];
-              vec3 lo = floor(pB / cell) * cell;
-              vec3 t1 = (lo - pB) * invD;
-              vec3 t2 = (lo + cell - pB) * invD;
-              vec3 tf = max(t1, t2);
-              return max(min(tf.x, min(tf.y, tf.z)), 0.0);
-            }
-
-            void main() {
-              vec3 originB = toBaseVoxel(vOrigin);
-              vec3 exitLocal = vOrigin + normalize(vDirection);
-              vec3 dirB = normalize(toBaseVoxel(exitLocal) - originB);
-              vec3 safeDir = sign(dirB) * max(abs(dirB), vec3(1e-6));
-              vec3 invD = 1.0 / safeDir;
-
-              // Ray ∩ [0, baseShape] slab test.
-              vec3 t0 = (vec3(0.0) - originB) * invD;
-              vec3 t1v = (uBaseShape - originB) * invD;
-              vec3 tminv = min(t0, t1v);
-              vec3 tmaxv = max(t0, t1v);
-              vec2 bounds = vec2(
-                max(max(tminv.x, tminv.y), tminv.z),
-                min(min(tmaxv.x, tmaxv.y), tmaxv.z)
-              );
-              if (bounds.x > bounds.y) discard;
-              bounds.x = max(bounds.x, 0.0);
-
-              float rayLen = max(bounds.y - bounds.x, 0.00001);
-              // Termination guarantee: MAX_STEPS steps of at least this size
-              // always cross the ray, whatever the per-sample LOD picks.
-              float floorDelta = rayLen / float(MAX_STEPS);
-
-              // Reference step for VOLUME opacity correction: the finest-shown
-              // level's settled pitch (indexed by uDesiredLevel, WITHOUT
-              // uStepScale). Any sample taken with a larger step — deeper LOD, or
-              // the coarser steps used while the camera moves — is rescaled below
-              // by stepLen/refStep so accumulated opacity stays step-size
-              // invariant instead of dimming. See core/opacityCorrection.ts.
-              float refStep = max(max(uMinDelta, floorDelta),
-                                  0.75 * uLevelScale[uDesiredLevel].x);
-
-              // Jitter must not depend on rayLen or uStepScale: both change
-              // between frames (camera motion, moving↔settled toggle) and a
-              // per-frame noise realization reads as full-screen shimmer.
-              float t = bounds.x + rand(gl_FragCoord.xy) * uMinDelta;
-
-              float bestNorm = 0.0;          // MIP accumulator (composited)
-              vec3 bestColor = vec3(0.0);
-              float attenuatedMax = 0.0;     // ATTENUATED_MIP
-              vec3 attenuatedColor = vec3(0.0);
-              vec3 volColor = vec3(0.0);     // VOLUME front-to-back
-              float volAlpha = 0.0;
-              bool isoHit = false;           // ISOSURFACE
-              vec3 isoColor = vec3(0.0);
-              bool hit = false;
-              vec3 hitPosition = vec3(0.0);
-
-              for (int i = 0; i < MAX_STEPS; i++) {
-                if (t > bounds.y) break;
-                vec3 pB = originB + t * dirB;
-                int lvl = desiredLevelAt(pB, originB);
-
-                // LOD-adaptive step: fine-voxel pitch where fine data is
-                // sampled (near camera), coarse pitch far out — quality lands
-                // exactly where the per-sample LOD puts the data.
-                float stepLen = max(max(uMinDelta, floorDelta),
-                                    0.75 * uLevelScale[lvl].x) * max(uStepScale, 1.0);
-
-                // Per-sample channel composite (ChunkPlane semantics).
-                vec3 sampleColor = (blendMode == 1) ? vec3(1.0) : vec3(0.0);
-                float sampleNorm = 0.0;
-                int bestStatus = 0;
-                bool anyResident = false;
-
-                for (int c = 0; c < MAX_CHANNELS; c++) {
-                  if (c >= numChannels) break;
-                  if (chVisible[c] < 0.5) continue;
-
-                  float rawValue;
-                  int status = sampleBrickEx(pB, lvl, int(chChannel[c]), rawValue);
-                  bestStatus = max(bestStatus, status);
-                  if (status == 0) continue;
-                  if (status == 1) anyResident = true;
-
-                  float normalized = channelNormalize(c, rawValue);
-                  vec3 color = texture(colormapAtlas, vec2(normalized, chRow[c])).rgb;
-                  float weight = chOpacity[c] * normalized;
-                  sampleNorm = max(sampleNorm, normalized);
-
-                  if (blendMode == 1) {
-                    sampleColor *= mix(vec3(1.0), color, weight);
-                  } else if (blendMode == 2) {
-                    sampleColor = sampleColor * (1.0 - weight) + color * weight;
-                  } else {
-                    sampleColor += color * weight;
-                  }
-                }
-
-                // Empty-space skipping: nothing resident anywhere, or a
-                // known-uniform brick contributing nothing — jump to the
-                // desired-level brick's exit instead of stepping through it.
-                if (bestStatus == 0 || (!anyResident && sampleNorm <= 0.001)) {
-                  t += max(stepLen, brickExitRel(pB, invD, lvl) + 0.01);
-                  continue;
-                }
-
-                if (uPickingPass) {
-                  if (sampleNorm > 0.01) {
-                    hit = true;
-                    hitPosition = clamp(toLocal(pB), vec3(-0.5), vec3(0.5));
-                    break;
-                  }
-                } else if (projectionMode == 1) {
-                  float depthFrac = (t - bounds.x) / rayLen;
-                  float a = sampleNorm * exp(-1.5 * depthFrac);
-                  if (a > attenuatedMax) {
-                    attenuatedMax = a;
-                    attenuatedColor = sampleColor;
-                  }
-                } else if (projectionMode == 2) {
-                  // Step-size (opacity) correction — mirrors
-                  // core/opacityCorrection.ts (keep in lockstep). Without it,
-                  // coarser LOD / camera-moving frames take fewer, larger steps
-                  // and accumulate less opacity, so the volume renders dimmer.
-                  float a = 1.0 - pow(max(1.0 - sampleNorm, 0.0),
-                                      stepLen / max(refStep, 1e-5));
-                  volColor += (1.0 - volAlpha) * a * sampleColor;
-                  volAlpha += (1.0 - volAlpha) * a;
-                  if (volAlpha >= 0.98) break;
-                } else if (projectionMode == 3) {
-                  if (sampleNorm >= isoThreshold) {
-                    isoHit = true;
-                    isoColor = sampleColor;
-                    break;
-                  }
-                } else {
-                  if (sampleNorm > bestNorm) {
-                    bestNorm = sampleNorm;
-                    bestColor = sampleColor;
-                  }
-                }
-
-                t += stepLen;
-              }
-
-              if (uPickingPass) {
-                if (!hit) discard;
-                FragColor = vec4(hitPosition, 1.0);
-                return;
-              }
-
-              if (projectionMode == 2) {
-                if (volAlpha < 0.01) discard;
-                FragColor = vec4(volColor, 1.0);
-                return;
-              }
-
-              if (projectionMode == 3) {
-                if (!isoHit) discard;
-                FragColor = vec4(isoColor, 1.0);
-                return;
-              }
-
-              // MIP / ATTENUATED_MIP: premultiplied additive output.
-              float outNorm = (projectionMode == 1) ? attenuatedMax : bestNorm;
-              vec3 outColor = (projectionMode == 1) ? attenuatedColor : bestColor;
-              if (outNorm < 0.01) discard;
-              FragColor = vec4(outColor, 1.0);
-            }
-          `}
-        />
+        {/* TSL node raymarcher — see brickNodeMaterials.ts (WGSL + GLSL). */}
+        <primitive object={bundle.material} attach="material" />
       </mesh>
 
       {isDebug && (

@@ -1,9 +1,9 @@
-import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
 import { FRAME_UPLOAD_BUDGET, shouldContinueDrain } from "./uploadBudget";
 import { qualityGovernor } from "../core/qualityGovernor";
+import { getMax3DTextureSize, type SceneRenderer } from "../render/gpu/sceneRenderer";
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
@@ -127,7 +127,7 @@ export type LayerBrickPool = {
 };
 
 type Deps = {
-  renderer: THREE.WebGLRenderer;
+  renderer: SceneRenderer;
   viewerStore: StoreApi<ViewerState>;
   sceneStore: StoreApi<SceneState>;
   invalidate: () => void;
@@ -503,10 +503,9 @@ export class BrickResidencyManager {
       getInitialVolumeTextureBudgetBytes() / planCount,
     );
     const coarsestGrid = brickGridForLevel(geometry, spec, geometry.levels.length - 1);
-    const gl = this.deps.renderer.getContext() as WebGL2RenderingContext;
     const maxTextureExtent = Math.min(
       PAGE_TEXTURE_MAX_EXTENT,
-      gl.getParameter(gl.MAX_3D_TEXTURE_SIZE) as number,
+      getMax3DTextureSize(this.deps.renderer),
     );
     // The pool can never need more slots than the pyramid has bricks — cap
     // there so small datasets get small atlases (the budget share only binds

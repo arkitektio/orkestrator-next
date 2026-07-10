@@ -1,4 +1,5 @@
 import { LightpathGraphFragment } from "@/mikro-next/api/graphql";
+import { formatDisplay } from "@/lib/quantities";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Eye, Zap, Filter, Search, Camera, Sun, Microscope, Square, CircleDot, ChevronRight } from "lucide-react";
@@ -67,8 +68,8 @@ const getElementDetails = (element: ElementType) => {
     details.push({ label: "NEPD", value: `${element.nepdWPerSqrtHz} W/√Hz` });
   }
 
-  if (isLaserElement(element) && element.nominalWavelengthNm !== null) {
-    details.push({ label: "Wavelength", value: `${element.nominalWavelengthNm} nm` });
+  if (isLaserElement(element) && element.nominalWavelength != null) {
+    details.push({ label: "Wavelength", value: formatDisplay(element.nominalWavelength, "length") });
   }
 
   if (isObjectiveElement(element)) {
@@ -78,8 +79,8 @@ const getElementDetails = (element: ElementType) => {
     if (element.numericalAperture !== null && element.numericalAperture !== undefined) {
       details.push({ label: "NA", value: element.numericalAperture });
     }
-    if (element.workingDistanceMm !== null) {
-      details.push({ label: "WD", value: `${element.workingDistanceMm} mm` });
+    if (element.workingDistance != null) {
+      details.push({ label: "WD", value: formatDisplay(element.workingDistance, "length") });
     }
   }
 
@@ -87,12 +88,12 @@ const getElementDetails = (element: ElementType) => {
     details.push({ label: "R/T", value: `${element.rFraction}/${element.tFraction}` });
   }
 
-  if (isPinholeElement(element) && element.diameterUm !== null) {
-    details.push({ label: "Diameter", value: `${element.diameterUm} μm` });
+  if (isPinholeElement(element) && element.diameter != null) {
+    details.push({ label: "Diameter", value: formatDisplay(element.diameter, "length") });
   }
 
   if (isLensElement(element)) {
-    details.push({ label: "Focal Length", value: `${element.focalLengthMm} mm` });
+    details.push({ label: "Focal Length", value: formatDisplay(element.focalLength, "length") });
   }
 
   if (isMirrorElement(element) && element.angleDeg !== null) {

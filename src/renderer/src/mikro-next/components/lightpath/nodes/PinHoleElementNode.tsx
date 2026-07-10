@@ -1,10 +1,12 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
+import { toBase } from "@/lib/quantities";
 import { PinholeElementNode } from "../types";
 
 export default memo(({ data, selected }: NodeProps<PinholeElementNode>) => {
-  const diameter = data.diameterUm || 50; // Default diameter in micrometers
+  // `length` base unit is µm, matching this node's geometry math (diameter / 10).
+  const diameter = toBase(data.diameter, "length", 50); // Default diameter in µm
 
   return (
     <>

@@ -17,7 +17,13 @@ import type { LayerBrickPool } from "../managers/brickResidency";
 
 export const MAX_BRICK_LEVELS = 10;
 
-/** Uniform + function declarations; append to a fragment shader. */
+/**
+ * @deprecated GLSL reference implementation — superseded by the TSL port in
+ * `layers/bricks/brickNodeMaterials.ts` (WebGPU migration). Kept in-tree until
+ * visual parity is confirmed on real scenes, then delete. The non-GLSL exports
+ * of this module (`MAX_BRICK_LEVELS`, `encodeEmptyValue`, `decodeEmptyValue`)
+ * remain live.
+ */
 export const BRICK_TRAVERSAL_GLSL = /* glsl */ `
 #define MAX_BRICK_LEVELS ${MAX_BRICK_LEVELS}
 

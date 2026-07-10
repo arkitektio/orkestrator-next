@@ -7,6 +7,7 @@ import {
   type PageTableLayout,
 } from "../../../core/octree/pageTableLayout";
 import { uploadTexSubImage3D } from "./texSubImage3d";
+import type { SceneRenderer } from "../../gpu/sceneRenderer";
 
 /**
  * GPU page table: ONE packed RGBA8UI 3D texture per (layer, mode) holding
@@ -75,7 +76,7 @@ export function setPageEntry(
 
 /** Upload every dirty level region; returns whether anything was uploaded. */
 export function flushPageTable(
-  renderer: THREE.WebGLRenderer,
+  renderer: SceneRenderer,
   pageTable: PageTableTexture,
 ): boolean {
   let uploaded = false;

@@ -22,6 +22,8 @@ generates:
         # `Duration`/`Length` rather than `any`. Parse via @/lib/quantities.
         Duration: "@/mikro-next/api/scalars#Duration"
         Length: "@/mikro-next/api/scalars#Length"
+        Frequency: "@/mikro-next/api/scalars#Frequency"
+        Power: "@/mikro-next/api/scalars#Power"
   src/main/schemas/mikro.ts:
     plugins:
       - "typescript"

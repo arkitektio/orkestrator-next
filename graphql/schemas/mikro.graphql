@@ -144,11 +144,11 @@ type AffineTransformationView implements View {
   image: Image!
   isGlobal: Boolean!
   isotropic: Boolean!
-  pixelSize: ThreeDVector!
+  pixelSize: [Length!]!
   pixelSizeX: Length!
   pixelSizeY: Length!
   pixelSizeZ: Length!
-  position: ThreeDVector!
+  position: [Length!]!
   stage: Stage!
   tMax: Int
   tMin: Int
@@ -298,16 +298,16 @@ type BeamSplitterElement implements OpticalElement {
 type BeamState {
   modeHint: String
   polarization: String
-  powerMw: Float
-  wavelengthNm: Float
+  power: Power
+  wavelength: Length
 }
 
 """State of the optical beam on a particular path segment."""
 input BeamStateInput {
   modeHint: String = null
   polarization: String = null
-  powerMw: Float = null
-  wavelengthNm: Float = null
+  power: Power = null
+  wavelength: Length = null
 }
 
 """Temporary S3 credentials for reading a big file."""
@@ -405,7 +405,7 @@ type CCDElement implements OpticalElement {
   label: String!
   manufacturer: String
   model: String
-  pixelSizeUm: Float
+  pixelSize: Length
 
   """List of ports on the element"""
   ports: [LightPort!]!
@@ -458,31 +458,14 @@ input CameraFilter {
 
 """Input for creating or ensuring a camera"""
 input CameraInput {
-  """The bit depth of the camera sensor"""
   bitDepth: Int = null
-
-  """The manufacturer of the camera"""
   manufacturer: String = null
-
-  """The model of the camera"""
   model: String = null
-
-  """The name of the camera"""
   name: String = null
-
-  """The physical pixel size in x direction (e.g. '6.5 µm')"""
   pixelSizeX: Length = null
-
-  """The physical pixel size in y direction (e.g. '6.5 µm')"""
   pixelSizeY: Length = null
-
-  """The sensor size in x direction (pixels)"""
   sensorSizeX: Int = null
-
-  """The sensor size in y direction (pixels)"""
   sensorSizeY: Int = null
-
-  """The unique serial number of the camera"""
   serialNumber: String!
 }
 
@@ -1348,7 +1331,6 @@ input DeleteADatasetInput {
 
 """Input for deleting a camera by ID"""
 input DeleteCameraInput {
-  """The ID of the camera to delete"""
   id: ID!
 }
 
@@ -2133,6 +2115,9 @@ scalar FourByFourMatrix
 type FrameInfo {
   label: String!
 }
+
+"""A quantity of frequency (``"50 Hz"``, ``"1 kHz"``)."""
+scalar Frequency
 
 """Input type for creating an image from an array-like object"""
 input FromArrayLikeInput {
@@ -2970,16 +2955,16 @@ type LaserElement implements OpticalElement {
   laserMedium: String
   manufacturer: String
   model: String
-  nominalWavelengthNm: Float
+  nominalWavelength: Length
 
   """List of ports on the element"""
   ports: [LightPort!]!
 
   """3D pose of the element"""
   pose: Pose3D
-  powerMw: Float
+  power: Power
   pulseKind: PulseKind
-  repetitionRateHz: Float
+  repetitionRate: Frequency
   serialNumber: String
 }
 
@@ -3117,7 +3102,7 @@ type Lens {
 
 """Thin lens"""
 type LensElement implements OpticalElement {
-  focalLengthMm: Float!
+  focalLength: Length!
   id: ID!
 
   """Element kind"""
@@ -3160,7 +3145,7 @@ type LightEdge {
   id: ID!
   lossDb: Float
   medium: String
-  pathLengthMm: Float
+  pathLength: Length
   sourceElementId: ID!
   sourcePortId: ID!
   targetElementId: ID!
@@ -3173,7 +3158,7 @@ input LightEdgeInput {
   id: String!
   lossDb: Float = 0
   medium: String = "AIR"
-  pathLengthMm: Float = null
+  pathLength: Length = null
   sourceElementId: ID!
   sourcePortId: ID!
   targetElementId: ID!
@@ -4039,7 +4024,7 @@ type ObjectiveElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
-  workingDistanceMm: Float
+  workingDistance: Length
 }
 
 input ObjectiveFilter {
@@ -4133,12 +4118,12 @@ Input for creating or updating any optical element. Fill only fields relevant to
 input OpticalElementInput {
   amplifierGainDb: Float = null
   angleDeg: Float = null
-  bandMaxNm: Float = null
-  bandMinNm: Float = null
+  bandMax: Length = null
+  bandMin: Length = null
   brand: String = null
   channel: ChannelKind = null
-  diameterUm: Float = null
-  focalLengthMm: Float = null
+  diameter: Length = null
+  focalLength: Length = null
   gain: Float = null
   hasPockelsCell: Boolean = null
   hasQSwitch: Boolean = null
@@ -4152,19 +4137,19 @@ input OpticalElementInput {
   manufacturer: String = null
   model: String = null
   nepdWPerSqrtHz: Float = null
-  nominalWavelengthNm: Float = null
+  nominalWavelength: Length = null
   numericalAperture: Float = null
-  pixelSizeUm: Float = null
+  pixelSize: Length = null
   ports: [LightPortInput!]!
   pose: Pose3DInput = null
-  powerMw: Float = null
+  power: Power = null
   pulseKind: PulseKind = null
   rFraction: Float = null
-  repetitionRateHz: Float = null
+  repetitionRate: Frequency = null
   resolution: [Int!] = null
   serialNumber: String = null
   tFraction: Float = null
-  workingDistanceMm: Float = null
+  workingDistance: Length = null
 }
 
 """
@@ -5082,10 +5067,7 @@ type PermissionOption {
 
 """Input for pinning or unpinning a camera for quick access"""
 input PinCameraInput {
-  """The ID of the camera to pin or unpin"""
   id: ID!
-
-  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
@@ -5190,7 +5172,7 @@ input PinViewInput {
 
 """Pinhole"""
 type PinholeElement implements OpticalElement {
-  diameterUm: Float
+  diameter: Length
   id: ID!
 
   """Element kind"""
@@ -5278,6 +5260,9 @@ input Pose3DInput {
   orientation: EulerInput = null
   position: Vec3Input = null
 }
+
+"""A power (``"5 mW"``, ``"2 W"``)."""
+scalar Power
 
 """
 The 3D projection / rendering mode applied to a volumetric (z-stacked) render node.
@@ -6641,16 +6626,16 @@ enum SpatialUnit {
   UNKNOWN
 }
 
-"""Spectral window in nanometers"""
+"""Spectral window"""
 type Spectrum {
-  maxNm: Float!
-  minNm: Float!
+  max: Length!
+  min: Length!
 }
 
-"""Spectral window in nanometers for wavelength-dependent components."""
+"""Spectral window for wavelength-dependent components."""
 input SpectrumInput {
-  maxNm: Float!
-  minNm: Float!
+  max: Length!
+  min: Length!
 }
 
 """

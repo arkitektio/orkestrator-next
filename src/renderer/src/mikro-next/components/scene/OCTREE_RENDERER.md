@@ -570,7 +570,42 @@ mask everything downstream, so check touched files individually).
 
 ---
 
-## 5. Status & what's deliberately deferred
+## 5. WebGPU backend (migration, 2026-07)
+
+The scene renders through three's **`WebGPURenderer`** (async init in
+`Scene.tsx`'s Canvas `gl` factory): native WebGPU where available (macOS =
+Metal — eliminating the ANGLE `texSubImage3D` upload stalls of P19), and its
+automatic **WebGL2 fallback backend** elsewhere (Linux needs the Electron
+switches added in `src/main/index.ts`; the startup log prints the active
+backend). Consequences and contracts:
+
+- **TSL only — no raw GLSL `ShaderMaterial`s.** `WebGPURenderer` does not run
+  them on either backend. The brick shaders live in
+  `layers/bricks/brickNodeMaterials.ts` (TSL → WGSL or GLSL per backend); the
+  old GLSL strings are kept `@deprecated` as reference until visual parity is
+  confirmed, then deleted. NodeMaterials go through the renderer's output
+  transform, so the brick materials pin `toneMapped = false` for parity with
+  the raw FragColor path. Uniform updates go through the returned NODE records
+  (`bundle.nodes.uDesiredLevel.value = …`), not a `.uniforms` map.
+- **Backend internals are isolated in `render/gpu/sceneRenderer.ts`** (device,
+  fallback GL context, texture handles, `maxTextureDimension3D`, GPU identity
+  for the quality governor). Nothing else may touch `renderer.backend`.
+- **Uploads** (`render/bricks/gpu/texSubImage3d.ts`): WebGPU backend →
+  `device.queue.writeTexture` partial 3D writes (no alignment constraints, no
+  unpack state — P3 is obsolete there); WebGL backend → the historical raw
+  `gl.texSubImage3D` path with UNPACK resets; uninitialized texture → full
+  `needsUpdate` re-spec from the CPU backing mirror.
+- **Integer page table**: three maps `RGBAIntegerFormat` + `UnsignedByteType`
+  → `rgba8uint`; the TSL walk uses `textureLoad` (texelFetch equivalent). The
+  R32F atlas's LinearFilter relies on the `float32-filterable` device feature,
+  which three requests automatically when the adapter supports it.
+- **GPU frame timing** (`PerfFrameProbe`): the GL timer only runs on the
+  fallback backend; under native WebGPU `gpuMs` is null for now
+  (timestamp-query integration is a follow-up).
+- Deferred WebGPU-era upgrades: storage-buffer page table (obsoletes the P2
+  packed-texture workaround), compute-shader repack, timestamp queries.
+
+## 6. Status & what's deliberately deferred
 
 Done and verified: all six migration phases (including the Phase 6 cutover:
 legacy renderers, trackers, and the migration flag deleted), three rounds of

@@ -20,6 +20,18 @@ import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
+// WebGPU for the scene renderer: macOS (Metal) and Windows (D3D) enable it by
+// default in this Chromium; Linux still needs Vulkan + the unsafe flag. Where
+// WebGPU is unavailable anyway, three's WebGPURenderer falls back to its
+// WebGL2 backend automatically (TSL shaders compile for both).
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("enable-unsafe-webgpu");
+  app.commandLine.appendSwitch("enable-features", "Vulkan,VulkanFromANGLE,DefaultANGLEVulkan");
+  app.commandLine.appendSwitch("use-angle", "vulkan");
+  // Vulkan is incompatible with the Wayland ozone backend (the GPU process
+  // fails and no window opens). Force x11/XWayland, which supports Vulkan.
+  app.commandLine.appendSwitch("ozone-platform", "x11");
+}
 // Core Services
 const appManager = new AppManager();
 const transport = new IpcTransport();

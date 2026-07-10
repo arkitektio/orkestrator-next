@@ -1,6 +1,7 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
+import { formatDisplay } from "@/lib/quantities";
 import { LensElementNode } from "../types";
 
 export default memo(({ data, selected }: NodeProps<LensElementNode>) => {
@@ -27,7 +28,7 @@ export default memo(({ data, selected }: NodeProps<LensElementNode>) => {
           {/* Focal length indicator */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-blue-900/80 text-white text-xs font-semibold px-2 py-1 rounded">
-              f={data.focalLengthMm}mm
+              f={formatDisplay(data.focalLength, "length")}
             </div>
           </div>
 

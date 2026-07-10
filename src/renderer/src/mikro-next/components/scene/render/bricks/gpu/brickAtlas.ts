@@ -3,6 +3,7 @@ import type { BrickArray } from "../../../core/octree/brickRepack";
 import type { BrickSpec } from "../../../core/octree/brickSpec";
 import type { Vec3 } from "../../../core/octree/levelGeometry";
 import { uploadTexSubImage3D } from "./texSubImage3d";
+import type { SceneRenderer } from "../../gpu/sceneRenderer";
 
 /**
  * The brick pool's GPU side: one big `Data3DTexture` per (layer, mode)
@@ -109,7 +110,7 @@ export function createBrickAtlas(opts: {
 
 /** Upload one repacked brick into a slot (GPU + context-restore mirror). */
 export function writeBrickToAtlas(
-  renderer: THREE.WebGLRenderer,
+  renderer: SceneRenderer,
   atlas: BrickAtlas,
   slotCoords: Vec3,
   brick: BrickArray,

@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { createRepackDispatcher } from "../core/octree/repackDispatcher";
+import type { SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useSceneStoreApi } from "../store/sceneStore";
 import { useViewerStoreApi } from "../store/viewerStore";
 import { BrickResidencyManager } from "./brickResidency";
@@ -23,7 +24,10 @@ export function BrickSystemProvider() {
     // Repack workers live exactly as long as the manager they serve.
     const repack = createRepackDispatcher();
     const manager = new BrickResidencyManager({
-      renderer: gl,
+      // R3F types `gl` as WebGLRenderer; the Canvas factory actually creates a
+      // WebGPURenderer (Scene.tsx) — the manager only touches backend-agnostic
+      // helpers (sceneRenderer.ts).
+      renderer: gl as unknown as SceneRenderer,
       viewerStore,
       sceneStore,
       invalidate,

@@ -1,4 +1,4 @@
-import { Grid } from "@react-three/drei";
+import { Grid } from "./primitives/Grid";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import { useViewerStore } from "./store/viewerStore";

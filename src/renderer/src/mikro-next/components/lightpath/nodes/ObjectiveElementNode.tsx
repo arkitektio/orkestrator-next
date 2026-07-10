@@ -1,6 +1,7 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
+import { formatDisplay } from "@/lib/quantities";
 import { ObjectiveElementNode } from "../types";
 
 export default memo(({ data, selected }: NodeProps<ObjectiveElementNode>) => {
@@ -44,7 +45,7 @@ export default memo(({ data, selected }: NodeProps<ObjectiveElementNode>) => {
                 {data.magnification}
                 {data.numericalAperture &&
                   `, NA ${data.numericalAperture.toFixed(2)}`}
-                {data.workingDistanceMm && `, WD ${data.workingDistanceMm}mm`}
+                {data.workingDistance && `, WD ${formatDisplay(data.workingDistance, "length")}`}
                 {data.manufacturer} {data.model}
               </div>
               <div className="absolute bottom-1 right-1 text-[8px] text-gray-600 italic"></div>

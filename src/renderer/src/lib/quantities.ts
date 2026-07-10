@@ -14,6 +14,7 @@ export type Dimension =
   | "voltage"
   | "conductance"
   | "frequency"
+  | "power"
   | "concentration"
   | "resistivity"
   | "capacitance"
@@ -83,6 +84,16 @@ export const DIMENSIONS: Record<Dimension, DimensionDef> = {
       { symbol: "MHz", toBase: 1e6 },
     ],
   },
+  // Optical / laser power (mikro Power scalar, e.g. LaserElement.power "5 mW").
+  power: {
+    base: "mW",
+    units: [
+      { symbol: "nW", toBase: 1e-6 },
+      { symbol: "µW", toBase: 1e-3 },
+      { symbol: "mW", toBase: 1 },
+      { symbol: "W", toBase: 1e3 },
+    ],
+  },
   // NEURON ion concentrations (nai/nao/…).
   concentration: {
     base: "mM",
@@ -128,6 +139,7 @@ export const SCALAR_DIMENSION = {
   ElectricPotential: "voltage",
   ElectricalConductance: "conductance",
   Frequency: "frequency",
+  Power: "power",
   Concentration: "concentration",
   Resistivity: "resistivity",
   SpecificCapacitance: "capacitance",

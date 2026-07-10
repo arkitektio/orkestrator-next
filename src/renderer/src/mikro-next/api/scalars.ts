@@ -14,3 +14,9 @@ export type Duration = string;
 
 /** A length, e.g. "1 µm", "500 nm" (e.g. pixel sizes, emission/excitation wavelengths). */
 export type Length = string;
+
+/** A frequency, e.g. "50 Hz", "1 kHz" (e.g. LaserElement.repetitionRate). */
+export type Frequency = string;
+
+/** A power, e.g. "5 mW", "2 W" (e.g. LaserElement.power, BeamState.power). */
+export type Power = string;

@@ -25,8 +25,8 @@ fragment OpticalElement on OpticalElement {
 }
 
 fragment Spectrum on Spectrum {
-  minNm
-  maxNm
+  min
+  max
 }
 
 fragment DetectorElement on DetectorElement {
@@ -36,19 +36,19 @@ fragment DetectorElement on DetectorElement {
 
 fragment LaserElement on LaserElement {
   ...OpticalElement
-  nominalWavelengthNm
+  nominalWavelength
 }
 
 fragment CCDElement on CCDElement {
   ...OpticalElement
-  pixelSizeUm
+  pixelSize
 }
 
 fragment ObjectiveElement on ObjectiveElement {
   ...OpticalElement
   magnification
   numericalAperture
-  workingDistanceMm
+  workingDistance
 }
 
 fragment FilterElement on FilterElement {
@@ -85,12 +85,12 @@ fragment BeamSplitterElement on BeamSplitterElement {
 
 fragment LensElement on LensElement {
   ...OpticalElement
-  focalLengthMm
+  focalLength
 }
 
 fragment PinholeElement on PinholeElement {
   ...OpticalElement
-  diameterUm
+  diameter
 }
 
 fragment SampleElement on SampleElement {

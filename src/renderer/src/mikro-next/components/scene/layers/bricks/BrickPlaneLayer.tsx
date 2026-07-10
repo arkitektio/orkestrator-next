@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import {
-  BRICK_TRAVERSAL_GLSL,
-  makeBrickTraversalUniforms,
-} from "../../glsl/brickTraversal";
-import { CHANNEL_UNIFORMS_GLSL, buildChannelUniformData } from "./channelUniforms";
+import { createPlaneNodeMaterial, updateChannelNodes } from "./brickNodeMaterials";
+import { buildChannelUniformData } from "./channelUniforms";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import {
   buildSliceMap,
@@ -38,7 +35,6 @@ type ProbeGeometryContext = {
 export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickPlaneLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
 
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
@@ -101,55 +97,36 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   /** Continuous base-voxel z of the displayed slab's center. */
   const slabBaseZ = planSlabZ !== null && planSlabZ !== undefined ? planSlabZ + 0.5 : 0.5;
 
-  // Push dynamic values straight to the GPU without re-creating the material.
-  useEffect(() => {
-    const u = materialRef.current?.uniforms;
-    if (!u || planTargetLevel === undefined) return;
-    u.colormapAtlas.value = channelData.atlas;
-    u.numChannels.value = channelData.numChannels;
-    u.blendMode.value = channelData.blendMode;
-    u.chChannel.value = channelData.channelIndex;
-    u.chClimMin.value = channelData.climMin;
-    u.chClimMax.value = channelData.climMax;
-    u.chGamma.value = channelData.gamma;
-    u.chOpacity.value = channelData.opacity;
-    u.chVisible.value = channelData.visible;
-    u.chInvert.value = channelData.invert;
-    u.chRow.value = channelData.row;
-    u.uDesiredLevel.value = planTargetLevel;
-    u.uSlabBaseZ.value = slabBaseZ;
-  }, [channelData, planTargetLevel, slabBaseZ]);
-
-  const initialUniforms = useMemo(() => {
+  // TSL node material (WebGPU + WebGL2-fallback backends). Recreated only when
+  // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
+  // through the uniform NODES below.
+  const bundle = useMemo(() => {
     if (!pool) return null;
-    return {
-      ...makeBrickTraversalUniforms(pool, pool),
-      colormapAtlas: { value: channelData.atlas },
-      minValue: { value: pool.minValue },
-      maxValue: { value: pool.maxValue },
-      numChannels: { value: channelData.numChannels },
-      blendMode: { value: channelData.blendMode },
-      chChannel: { value: channelData.channelIndex },
-      chClimMin: { value: channelData.climMin },
-      chClimMax: { value: channelData.climMax },
-      chGamma: { value: channelData.gamma },
-      chOpacity: { value: channelData.opacity },
-      chVisible: { value: channelData.visible },
-      chInvert: { value: channelData.invert },
-      chRow: { value: channelData.row },
-      uDesiredLevel: { value: planTargetLevel ?? 0 },
-      uSlabBaseZ: { value: slabBaseZ },
-      uBaseShape: {
-        value: new THREE.Vector3(
-          pool.geometry.levels[0].spatialShape[0],
-          pool.geometry.levels[0].spatialShape[1],
-          pool.geometry.levels[0].spatialShape[2],
-        ),
-      },
-    };
-    // Recreated only when the pool is rebuilt (mesh remounts on that key).
+    const created = createPlaneNodeMaterial(pool, pool, channelData);
+    created.nodes.uBaseShape.value.set(
+      pool.geometry.levels[0].spatialShape[0],
+      pool.geometry.levels[0].spatialShape[1],
+      pool.geometry.levels[0].spatialShape[2],
+    );
+    return created;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool, pool?.structureSignature]);
+
+  useEffect(() => {
+    const material = bundle?.material;
+    return () => material?.dispose();
+  }, [bundle]);
+
+  // Push dynamic values straight to the uniform nodes (no material rebuild).
+  useEffect(() => {
+    if (!bundle || planTargetLevel === undefined) return;
+    updateChannelNodes(bundle.nodes, channelData);
+    bundle.nodes.minValue.value = pool?.minValue ?? 0;
+    bundle.nodes.maxValue.value = pool?.maxValue ?? 1;
+    bundle.nodes.uDesiredLevel.value = planTargetLevel;
+    bundle.nodes.uSlabBaseZ.value = slabBaseZ;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle, channelData, planTargetLevel, slabBaseZ]);
 
   // --- Probing (PlaneLayer parity, targetLod → plan.targetLevel) ------------
   // Reads shapes/scales from the pool's (deduplicated) level geometry — the
@@ -256,7 +233,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   );
 
   if (layer?.visible === false) return null;
-  if (!planHasNodes || !pool || !initialUniforms) return null;
+  if (!planHasNodes || !pool || !bundle) return null;
 
   const base = pool.geometry.levels[0];
   const totalX = base.spatialShape[0] * base.scale[0];
@@ -288,73 +265,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     >
       <mesh key={pool.structureSignature} scale={[totalX, totalY, 1]} renderOrder={1}>
         <planeGeometry args={[1, 1]} />
-        <shaderMaterial
-          ref={materialRef}
-          glslVersion={THREE.GLSL3}
-          transparent={true}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          depthTest={false}
-          uniforms={initialUniforms}
-          vertexShader={`
-            out vec2 vUv;
-            void main() {
-              vUv = uv;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `}
-          fragmentShader={`
-            precision highp float;
-            precision highp sampler3D;
-            precision highp usampler3D;
-
-            in vec2 vUv;
-
-            ${BRICK_TRAVERSAL_GLSL}
-            ${CHANNEL_UNIFORMS_GLSL}
-
-            uniform int uDesiredLevel;
-            uniform float uSlabBaseZ;
-            uniform vec3 uBaseShape;
-
-            out vec4 FragColor;
-
-            void main() {
-              // Quad uv → base voxel space (voxel y grows downward).
-              vec3 baseVoxel = vec3(
-                vUv.x * uBaseShape.x,
-                (1.0 - vUv.y) * uBaseShape.y,
-                uSlabBaseZ
-              );
-
-              vec3 accum = (blendMode == 1) ? vec3(1.0) : vec3(0.0);
-
-              for (int i = 0; i < MAX_CHANNELS; i++) {
-                if (i >= numChannels) break;
-                if (chVisible[i] < 0.5) continue;
-
-                float rawValue;
-                if (!sampleBrick(baseVoxel, uDesiredLevel, int(chChannel[i]), rawValue)) {
-                  continue; // nothing resident yet: transparent
-                }
-
-                float normalized = channelNormalize(i, rawValue);
-                vec3 color = texture(colormapAtlas, vec2(normalized, chRow[i])).rgb;
-                float weight = chOpacity[i] * normalized;
-
-                if (blendMode == 1) {
-                  accum *= mix(vec3(1.0), color, weight);
-                } else if (blendMode == 2) {
-                  accum = accum * (1.0 - weight) + color * weight;
-                } else {
-                  accum += color * weight;
-                }
-              }
-
-              FragColor = vec4(accum, 1.0);
-            }
-          `}
-        />
+        {/* TSL node material — see brickNodeMaterials.ts (WGSL + GLSL). */}
+        <primitive object={bundle.material} attach="material" />
       </mesh>
     </group>
   );

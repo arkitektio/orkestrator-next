@@ -7,12 +7,19 @@ import {
   type PageTableLayout,
 } from "../../../core/octree/pageTableLayout";
 import { uploadTexSubImage3D } from "./texSubImage3d";
+import type { SceneRenderer } from "../../gpu/sceneRenderer";
 
 /**
- * GPU page table: ONE packed RGBA8UI 3D texture per (layer, mode) holding
+ * GPU page table: ONE packed RGBA8 3D texture per (layer, mode) holding
  * every level's page grid (see `pageTableLayout`). CPU mirrors are kept per
  * level; a dirty level re-uploads whole — level grids are small (hundreds of
  * KB at the very worst), so batching beats bookkeeping sub-rectangles.
+ *
+ * Format note: entries are byte-encoded (slot xyz + flag) but stored as plain
+ * RGBA8 **unorm**, not RGBA8UI — three's WebGPU backend has no mapping for
+ * `RGBAIntegerFormat` and its node builder types every sampled texture as
+ * float anyway. The shader decodes with `round(value * 255)`, which is exact
+ * for all 256 byte values on both backends.
  */
 
 export type PageTableTexture = {
@@ -30,9 +37,8 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
   const backing = new Uint8Array(w * h * d * 4); // all zero = UNMAPPED
 
   const texture = new THREE.Data3DTexture(backing, w, h, d);
-  texture.format = THREE.RGBAIntegerFormat;
+  texture.format = THREE.RGBAFormat;
   texture.type = THREE.UnsignedByteType;
-  texture.internalFormat = "RGBA8UI";
   texture.minFilter = THREE.NearestFilter;
   texture.magFilter = THREE.NearestFilter;
   texture.wrapS = THREE.ClampToEdgeWrapping;
@@ -75,7 +81,7 @@ export function setPageEntry(
 
 /** Upload every dirty level region; returns whether anything was uploaded. */
 export function flushPageTable(
-  renderer: THREE.WebGLRenderer,
+  renderer: SceneRenderer,
   pageTable: PageTableTexture,
 ): boolean {
   let uploaded = false;
@@ -87,7 +93,7 @@ export function flushPageTable(
       uploadTexSubImage3D(
         renderer,
         pageTable.texture,
-        "rgba8ui",
+        "rgba8",
         [offset[0], offset[1], offset[2]],
         [grid[0], grid[1], grid[2]],
         pageTable.mirrors[level],

@@ -1,6 +1,7 @@
 import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
+import { toBase } from "@/lib/quantities";
 import { LaserElementNode, SourceElementNode } from "../types";
 
 // Function to convert wavelength (nm) to RGB color
@@ -72,7 +73,8 @@ const wavelengthToColor = (wavelength: number) => {
 };
 
 export default memo(({ data, selected }: NodeProps<LaserElementNode>) => {
-  const wavelength = data.nominalWavelengthNm || 550; // Default to green if no wavelength
+  // wavelengthToColor reasons in nm; `length` base is µm, so scale µm → nm (×1000).
+  const wavelength = toBase(data.nominalWavelength, "length", 0.55) * 1000; // Default to green (550 nm)
   const colors = wavelengthToColor(wavelength);
 
   return (

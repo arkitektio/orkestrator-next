@@ -1,6 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { perfMonitor } from "./managers/perfMonitor";
+import { getFallbackGL, type SceneRenderer } from "./render/gpu/sceneRenderer";
 import { useViewStoreApi } from "./store/viewStore";
 
 /**
@@ -96,7 +97,10 @@ const RecordingProbe = () => {
   const lastRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const ctx = gl.getContext();
+    // GPU timing: EXT_disjoint_timer_query needs the WebGL fallback backend's
+    // context. Under the native WebGPU backend gpuMs stays null for now
+    // (timestamp-query integration is a follow-up); CPU timing is unaffected.
+    const ctx = getFallbackGL(gl as unknown as SceneRenderer);
     timerRef.current =
       ctx instanceof WebGL2RenderingContext ? new GpuFrameTimer(ctx) : null;
     // A recording needs a frame every tick to sample; take over the render loop.

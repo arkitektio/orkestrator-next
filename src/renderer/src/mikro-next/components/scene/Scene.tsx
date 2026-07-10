@@ -1,4 +1,5 @@
 import { Canvas } from "@react-three/fiber";
+import { WebGPURenderer } from "three/webgpu";
 import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { PerfFrameProbe } from "./PerfFrameProbe";
@@ -37,9 +38,53 @@ import { ThreeDScene } from "./ThreeDScene";
 export const SceneWrapper = ({ children }: { children: ReactNode }) => {
   // `select-none` on the canvas surface stops a drag (pan / ROI draw / probe)
   // from ever turning into a text selection. Overlays keep normal selection.
+  //
+  // Renderer: three's WebGPURenderer (async init via R3F v9's gl factory).
+  // On macOS this is native Metal — killing the ANGLE texSubImage3D upload
+  // stalls (P19) — and where WebGPU is unavailable it transparently falls back
+  // to its WebGL2 backend; the TSL brick shaders compile for both.
   return <Canvas
         className="select-none [-webkit-user-select:none]"
-        frameloop="demand">{children}</Canvas>;
+        frameloop="demand"
+        gl={async (props) => {
+          const renderer = new WebGPURenderer({
+            ...(props as Record<string, unknown>),
+            antialias: true,
+          });
+          await renderer.init();
+
+          const anyRenderer = renderer as unknown as {
+            backend?: { isWebGPUBackend?: boolean };
+            capabilities?: { getMaxAnisotropy?: () => number };
+            getMaxAnisotropy?: () => number;
+          };
+
+          // drei compat shim: several drei components (GizmoViewport's
+          // AxisHead, …) read `gl.capabilities.getMaxAnisotropy()`, which only
+          // exists on WebGLRenderer. WebGPURenderer exposes a top-level
+          // getMaxAnisotropy() — bridge it.
+          if (!anyRenderer.capabilities) {
+            anyRenderer.capabilities = {
+              getMaxAnisotropy: () => anyRenderer.getMaxAnisotropy?.() ?? 1,
+            };
+          } else if (typeof anyRenderer.capabilities.getMaxAnisotropy !== "function") {
+            anyRenderer.capabilities.getMaxAnisotropy = () =>
+              anyRenderer.getMaxAnisotropy?.() ?? 1;
+          }
+
+          const isWebGPU = anyRenderer.backend?.isWebGPUBackend === true;
+          const gpuApiPresent =
+            typeof navigator !== "undefined" && "gpu" in navigator;
+          console.info(
+            `[scene] renderer initialized — backend: ${isWebGPU ? "WebGPU" : "WebGL2 fallback"}` +
+              (isWebGPU
+                ? ""
+                : gpuApiPresent
+                  ? " (navigator.gpu present but no adapter — GPU/driver rejected WebGPU)"
+                  : " (navigator.gpu missing — Chromium flags not active; on Linux the main-process switches need a full Electron restart)"),
+          );
+          return renderer;
+        }}>{children}</Canvas>;
 };
 
 const SceneModeContent = () => {

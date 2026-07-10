@@ -1,6 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { qualityGovernor, resolveDpr } from "../core/qualityGovernor";
+import { getGpuKey, type SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useViewStore } from "../store/viewStore";
 
 /**
@@ -30,22 +31,15 @@ export const QualityAdapter = () => {
   const lastFrameAtRef = useRef<number | null>(null);
   const appliedDprRef = useRef<number | null>(null);
 
-  // Persistence: the learned tier is a property of the GPU, keyed by its
-  // renderer string so an eGPU/driver change re-learns.
+  // Persistence: the learned tier is a property of the GPU (and backend —
+  // WebGPU vs WebGL fallback have different perf), keyed so a driver/backend
+  // change re-learns.
   useEffect(() => {
     if (typeof localStorage === "undefined") return;
-    let gpuKey = "unknown";
-    try {
-      const ctx = gl.getContext();
-      const info = ctx.getExtension("WEBGL_debug_renderer_info");
-      const renderer = info
-        ? (ctx.getParameter(info.UNMASKED_RENDERER_WEBGL) as string)
-        : (ctx.getParameter(ctx.RENDERER) as string);
-      if (renderer) gpuKey = renderer;
-    } catch {
-      /* keep "unknown" */
-    }
-    qualityGovernor.configurePersistence(localStorage, gpuKey);
+    qualityGovernor.configurePersistence(
+      localStorage,
+      getGpuKey(gl as unknown as SceneRenderer),
+    );
   }, [gl]);
 
   useFrame(() => {

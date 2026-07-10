@@ -20,6 +20,13 @@ import { session } from "electron";
 import { ShellService } from "./modules/ShellService";
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
+// WebGPU for the scene renderer: macOS (Metal) and Windows (D3D) enable it by
+// default in this Chromium; Linux still needs Vulkan + the unsafe flag. Where
+// WebGPU is unavailable anyway, three's WebGPURenderer falls back to its
+// WebGL2 backend automatically (TSL shaders compile for both).
+if (process.platform === "linux") {
+  //pass
+}
 // Core Services
 const appManager = new AppManager();
 const transport = new IpcTransport();

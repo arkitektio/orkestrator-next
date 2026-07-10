@@ -17,6 +17,7 @@ declare global {
       downloadFromUrl: (url: string) => Promise<{ success: boolean; path?: string; error?: string }>;
       reloadWindow: () => Promise<{ success: boolean; error?: string }>;
       forceReloadWindow: () => Promise<{ success: boolean; error?: string }>;
+      openDevTools: () => Promise<{ success: boolean; error?: string }>;
       setZoomLevel: (zoomLevel: number) => Promise<{ success: boolean; error?: string }>;
       getZoomLevel: () => Promise<{ success: boolean; zoomLevel?: number; error?: string }>;
       openWebbrowser: (url: string) => Promise<void>;

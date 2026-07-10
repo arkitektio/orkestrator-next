@@ -277,6 +277,16 @@ export class WindowManager implements AppModule {
 
         this.ipcTransport.onChannel("open-second-window", (_, path) => this.createSecondaryWindow(path, ""));
 
+        this.ipcTransport.handleChannel("open-devtools", () => {
+            const focusedWindow = BrowserWindow.getFocusedWindow();
+            const win = focusedWindow ?? this.mainWindow;
+            if (win) {
+                win.webContents.openDevTools({ mode: "detach" });
+                return { success: true };
+            }
+            return { success: false, error: "No window to open devtools for" };
+        });
+
         this.ipcTransport.handleChannel("dialog:openFile", async () => {
             const { canceled, filePaths } = await dialog.showOpenDialog({});
             if (canceled) { return; }

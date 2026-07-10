@@ -36,6 +36,7 @@ import {
 } from "@/app/localactions";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import {
+  Bug,
   CheckCircle,
   Globe,
   Minus,
@@ -368,6 +369,30 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           </CardHeader>
           <CardContent>
             <UpdateChecker />
+          </CardContent>
+        </Card>
+
+        {/* Developer Tools Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bug className="w-5 h-5" />
+              Developer Tools
+            </CardTitle>
+            <CardDescription>
+              Open Chrome DevTools to inspect the application, view console
+              logs, and debug issues.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => window.api?.openDevTools()}
+            >
+              <Bug className="w-4 h-4" />
+              Open DevTools
+            </Button>
           </CardContent>
         </Card>
 

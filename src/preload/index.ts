@@ -24,6 +24,7 @@ const api = {
   getNodeId: () => ipcRenderer.invoke("get-node-id"),
   reloadWindow: () => ipcRenderer.invoke("reload-window"),
   forceReloadWindow: () => ipcRenderer.invoke("force-reload-window"),
+  openDevTools: () => ipcRenderer.invoke("open-devtools"),
   setZoomLevel: (zoomLevel: number) => ipcRenderer.invoke("set-zoom-level", zoomLevel),
   getZoomLevel: () => ipcRenderer.invoke("get-zoom-level"),
   openWebbrowser: (url: string) => ipcRenderer.invoke("open-webbrowser", url),

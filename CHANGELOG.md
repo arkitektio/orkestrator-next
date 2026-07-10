@@ -1,3 +1,10 @@
+## [1.67.4](https://github.com/arkitektio/orkestrator-next/compare/v1.67.3...v1.67.4) (2026-07-10)
+
+
+### Bug Fixes
+
+* headers ([141f4bb](https://github.com/arkitektio/orkestrator-next/commit/141f4bb4acffe7ee6c58b99f53edbd44a8479dbb))
+
 ## [1.67.3](https://github.com/arkitektio/orkestrator-next/compare/v1.67.2...v1.67.3) (2026-07-10)
 
 

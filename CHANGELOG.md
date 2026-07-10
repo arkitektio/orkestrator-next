@@ -1,3 +1,12 @@
+## [1.67.1](https://github.com/arkitektio/orkestrator-next/compare/v1.67.0...v1.67.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* linux no longer needs flags for webgpu ([ffb2f98](https://github.com/arkitektio/orkestrator-next/commit/ffb2f986a61af1d6dfc84608824b33a8736c1b0a))
+* udpate electron ([985edde](https://github.com/arkitektio/orkestrator-next/commit/985edde8719d59e4dfd4437f7390e095d9215186))
+* webgpu for the win ([925d9bc](https://github.com/arkitektio/orkestrator-next/commit/925d9bc4b6b20d9ff02d0d8d335bdd68a627a9f7))
+
 # [1.67.0](https://github.com/arkitektio/orkestrator-next/compare/v1.66.1...v1.67.0) (2026-07-10)
 
 

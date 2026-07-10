@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
+import { shouldContinueDrain } from "./uploadBudget";
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
@@ -65,11 +66,8 @@ import {
  * like `CanvasContext`, referenced from the store by handle only.
  */
 
-// Per-frame texSubImage3D budget. Kept modest: each brick also memcpys into
-// the CPU mirror, so 16 MB budgets meant ~30 MB of memory traffic inside a
-// single interactive frame — visible as pan hitches.
-const FRAME_UPLOAD_BUDGET_BYTES = 6 * 1024 * 1024;
-const FRAME_UPLOAD_BUDGET_BRICKS = 12;
+// Per-frame texSubImage3D budget lives in ./uploadBudget (bytes + bricks +
+// WALL-CLOCK cap — the time cap is what keeps integrated GPUs smooth, P19).
 const PAGE_TEXTURE_MAX_EXTENT = 2048;
 const MIN_POOL_HEADROOM_SLOTS = 64;
 /** Concurrent brick fetches per layer — bounds worker-task fan-out and the
@@ -707,8 +705,14 @@ export class BrickResidencyManager {
     for (const pool of this.pools.values()) {
       while (
         pool.queue.length > 0 &&
-        bytes < FRAME_UPLOAD_BUDGET_BYTES &&
-        bricks < FRAME_UPLOAD_BUDGET_BRICKS
+        // Time-capped alongside bytes/bricks (P19): on integrated GPUs a
+        // single texSubImage3D can cost >15 ms — without the wall-clock cap a
+        // full batch stalls the frame for hundreds of ms.
+        shouldContinueDrain({
+          bytes,
+          bricks,
+          elapsedMs: performance.now() - drainStartedAt,
+        })
       ) {
         const pending = pool.queue.shift()!;
         pool.queuedKeys.delete(pending.key);

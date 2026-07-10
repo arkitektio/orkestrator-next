@@ -184,6 +184,15 @@ export const DebugPanel = () => {
               <span className="px-1 rounded border border-border/50">
                 repack {brickSystem.stats.repackMs.toFixed(0)} ms
               </span>
+              {/* Per-brick texSubImage3D cost — the P19 signal (≪1 ms on a
+                  dGPU; ~17 ms on ANGLE-Metal integrated GPUs). */}
+              <span className="px-1 rounded border border-border/50">
+                upload{" "}
+                {brickSystem.stats.bricksUploaded > 0
+                  ? (brickSystem.stats.uploadMs / brickSystem.stats.bricksUploaded).toFixed(1)
+                  : "–"}{" "}
+                ms/brick
+              </span>
               <span className="px-1 rounded border border-border/50">
                 evict {brickSystem.stats.evictions}
               </span>

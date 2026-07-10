@@ -48,8 +48,18 @@ export function createSyncRepackDispatcher(): RepackDispatcher {
 }
 
 /** Repack workers per dispatcher — repack is memory-bandwidth-bound, so a
- * small pool suffices; the fetch pipeline (12 in-flight bricks) queues here. */
-const REPACK_WORKER_COUNT = 2;
+ * small pool suffices; but the fetch pipeline (12 in-flight bricks) queues
+ * here, and an undersized pool inflates per-brick WALL time (measured 80 ms
+ * wall vs ~13 ms exec on an M2 with 2 workers). Scale mildly with cores. */
+const REPACK_WORKER_COUNT = Math.min(
+  4,
+  Math.max(
+    2,
+    Math.floor(
+      ((typeof navigator !== "undefined" ? navigator.hardwareConcurrency : undefined) ?? 4) / 2,
+    ) - 1,
+  ),
+);
 
 type Pending = {
   resolve: (outcome: RepackOutcome) => void;

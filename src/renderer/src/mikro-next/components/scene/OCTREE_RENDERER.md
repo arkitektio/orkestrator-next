@@ -516,6 +516,28 @@ single-level cubes are untouched (the check is budget-based, not
 instead — partial coarsest coverage would violate the shader's fallback
 invariant. The real fix for such data is a server-side pyramid.
 
+**P19 — Byte budgets lie on integrated GPUs: budget main-thread GPU uploads by
+TIME.** The 6 MB / 12-brick per-frame upload budget was calibrated on a
+dedicated GPU where a `texSubImage3D` costs ≪1 ms. On an Apple M2 (ANGLE-Metal)
+the SAME call measured **~17.5 ms per 256² brick** — a full batch stalled the
+main thread for >200 ms per streaming frame (perf-recorder signature:
+`cpuMs.max ≈ 250 ms`, jank landing in the post-gesture streaming burst,
+`movingFrames 0`). The stall also delayed the repack workers' response
+messages, inflating repack WALL time ~6× past exec time. Fixes, in
+`managers/uploadBudget.ts` + `drainUploads`:
+- the drain loop is additionally capped by **wall clock** (`maxMs = 4`,
+  `shouldContinueDrain`) with a guaranteed first-brick-per-frame — fast GPUs
+  still fit their whole batch, slow ones self-limit to ~1 brick/frame;
+- `cameras/AdaptiveResolution.tsx` halves the DPR during camera motion ONLY
+  when the rolling frame time shows the machine can't hold ~45 fps (an M2 at
+  Retina DPR 2 was GPU-bound at ~19 ms/frame just compositing 2D layers);
+  restores on settle, machines that hold rate never regress;
+- the repack pool scales mildly with cores (2–4 workers).
+Diagnosis path: perf recorder → DebugPanel `upload X ms/brick` chip
+(`stats.uploadMs / bricksUploaded`). If per-brick upload stays >5 ms after
+these, the next lever is three.js' texStorage3D/immutable-texture path on
+ANGLE-Metal — measure before building.
+
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without
 an effect-cleanup `dispose()`, that's an unbounded GPU leak on exactly the

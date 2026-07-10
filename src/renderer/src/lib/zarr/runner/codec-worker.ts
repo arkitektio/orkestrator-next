@@ -169,8 +169,18 @@ function promoteChunkForTexture(
   const promoted = new Float32Array(
     createBuffer(source.length * Float32Array.BYTES_PER_ELEMENT, useSharedArrayBuffer),
   )
-  for (let i = 0; i < source.length; i++) {
-    promoted[i] = Number(source[i])
+  if (
+    typeof BigInt64Array !== 'undefined' &&
+    (source instanceof BigInt64Array || source instanceof BigUint64Array)
+  ) {
+    // BigInt sources need the explicit Number() per element.
+    for (let i = 0; i < source.length; i++) {
+      promoted[i] = Number(source[i])
+    }
+  } else {
+    // Native typed-array widening (uint16/int16/uint32/int32/float64 → f32):
+    // dramatically faster than the scalar loop for large microscopy chunks.
+    promoted.set(source as ArrayLike<number>)
   }
 
   return {
@@ -410,6 +420,9 @@ type WorkerMessage =
       store: S3FetchConfig
       path: `/${string}`
       metaId: number
+      /** Piggybacked codec meta on this worker's FIRST request for a metaId —
+       * replaces the separate serial `init` round-trip (cold-start cost). */
+      meta?: CodecChunkMeta
       requestInit?: SerializedRequestInit
       actualChunkShape?: number[]
       textureFidelity?: TextureFidelity
@@ -483,6 +496,18 @@ ctx.onmessage = async (event: MessageEvent<WorkerMessage>) => {
 
     if (msg.type === 'fetch_decode') {
       const workerStartedAt = now()
+      // Register a piggybacked meta (same effect as an `init` message).
+      if (msg.meta && !pipelineByMetaId.has(msg.metaId)) {
+        metaByMetaId.set(msg.metaId, msg.meta)
+        pipelineByMetaId.set(
+          msg.metaId,
+          create_codec_pipeline({
+            data_type: msg.meta.data_type,
+            shape: msg.meta.chunk_shape,
+            codecs: msg.meta.codecs,
+          }),
+        )
+      }
       const pipeline = getPipeline(msg.metaId)
       const fetchStartedAt = now()
       const rawBytes = await fetchChunkBytes(msg.store, msg.path, msg.requestInit)

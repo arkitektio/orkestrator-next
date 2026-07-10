@@ -181,7 +181,17 @@ export async function workerFetchDecode<D extends DataType>(
   useSharedArrayBuffer = false,
 ): Promise<WorkerFetchDecodeResult<D>> {
   const dispatcher = getDispatcher(worker)
-  const metaInitMs = await ensureMeta(dispatcher, metaId)
+  // Piggyback the codec meta on the first fetch_decode this worker sees for
+  // this metaId instead of a separate serial `init` round-trip (which used to
+  // cost one full worker RT per cold worker — the dominant fixed cost on a
+  // cold pool). Marking BEFORE the send is race-free: the pool checks workers
+  // out exclusively, so no other request can interleave on this worker.
+  let inlineMeta: CodecChunkMeta | undefined
+  if (!dispatcher.hasMeta(metaId)) {
+    inlineMeta = meta
+    dispatcher.markMeta(metaId)
+  }
+  const metaInitMs = 0 // meta rides the fetch_decode message now
 
   const id = nextRequestId++
   const roundTripStartedAt = performance.now()
@@ -191,6 +201,7 @@ export async function workerFetchDecode<D extends DataType>(
     store,
     path,
     metaId,
+    meta: inlineMeta,
     requestInit,
     actualChunkShape,
     textureFidelity,

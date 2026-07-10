@@ -4,7 +4,13 @@ import type { LayerState } from "../layerModel";
 import type { LayerViewRange } from "../visibility";
 import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
-import { planLayerNodes, sameNodePlan, slabLevelZ, type NodeCamera } from "./nodePlanning";
+import {
+  adjacentSlabBrickZ,
+  planLayerNodes,
+  sameNodePlan,
+  slabLevelZ,
+  type NodeCamera,
+} from "./nodePlanning";
 
 const makeLayer = (
   overrides: Partial<{ fixedLOD: number | null; zDim: string | null }> = {},
@@ -128,6 +134,29 @@ describe("slabLevelZ (planner ↔ shader slab convention)", () => {
     expect(Math.floor((9 + 0.5) / 9.5)).toBe(1);
     // Integer scales are unaffected by the convention choice.
     expect(slabLevelZ(150, 1, 32)).toBe(4);
+  });
+});
+
+describe("adjacentSlabBrickZ (z±1 prefetch targeting)", () => {
+  // 38-slice stack, level scale 38/9 ≈ 4.222, 2D payload z = 1: the
+  // prefetched brick must be exactly the brick the planner would fetch on a
+  // scrub to slabZ ± 1 (same floor chain).
+  const scale = 38 / 9;
+
+  it("targets the planner's brick for the neighbor slab", () => {
+    // slabZ 8 sits in level brick z 1 (floor(8/4.22)); slab 9 → 2; slab 7 → 1.
+    expect(adjacentSlabBrickZ(8, 1, 1, scale, 9, 1, 38)).toBe(2);
+    expect(adjacentSlabBrickZ(8, -1, 1, scale, 9, 1, 38)).toBe(1);
+    // Multi-slab bricks (payload z 4) coarsen the brick index the same way.
+    expect(adjacentSlabBrickZ(8, 1, 1, 1, 38, 4, 38)).toBe(2); // level 0, slab 9 → brick 2
+  });
+
+  it("returns null outside the base stack or a truncated level", () => {
+    expect(adjacentSlabBrickZ(0, -1, 1, scale, 9, 1, 38)).toBeNull();
+    expect(adjacentSlabBrickZ(37, 1, 1, scale, 9, 1, 38)).toBeNull();
+    // Truncated pyramid: level covers only z < 2·32 base slices.
+    expect(adjacentSlabBrickZ(64, 1, 1, 32, 2, 1, 81)).toBeNull();
+    expect(adjacentSlabBrickZ(64, -1, 1, 32, 2, 1, 81)).toBe(1);
   });
 });
 

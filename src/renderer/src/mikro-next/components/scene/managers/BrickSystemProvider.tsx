@@ -1,5 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
+import { createDefaultWorker } from "@/lib/zarr/runner";
+import { workerPool } from "../../../workers/pool";
 import { createRepackDispatcher } from "../core/octree/repackDispatcher";
 import type { SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useSceneStoreApi } from "../store/sceneStore";
@@ -21,6 +23,14 @@ export function BrickSystemProvider() {
   const managerRef = useRef<BrickResidencyManager | null>(null);
 
   useEffect(() => {
+    // Pre-warm the zarr decode pool: module workers (zstd/blosc bundles) cost
+    // tens of ms each to spawn+eval, and lazily they serialize in front of
+    // the FIRST chunk fetches of a cold scene. Warm them now so spawn
+    // overlaps metadata fetch/plan. Capped: machines with many cores still
+    // lazy-spawn the rest under real load. The module-level pool outlives
+    // scene mounts, so this is effectively once per app session.
+    workerPool.prewarm(createDefaultWorker, 8);
+
     // Repack workers live exactly as long as the manager they serve.
     const repack = createRepackDispatcher();
     const manager = new BrickResidencyManager({

@@ -267,6 +267,13 @@ export const DebugPanel = () => {
               <span className="px-1 rounded border border-border/50">
                 evict {brickSystem.stats.evictions}
               </span>
+              {/* Wall-clock plan→drained (fetchMs/repackMs are concurrent SUMS
+                  and overstate wall time — judge streaming perf by this). */}
+              {brickSystem.stats.timeToSharpMs > 0 && (
+                <span className="px-1 rounded border border-border/50">
+                  sharp {(brickSystem.stats.timeToSharpMs / 1000).toFixed(2)} s
+                </span>
+              )}
               {brickSystem.stats.fetchErrors > 0 && (
                 <span className="px-1 rounded border border-red-500/50 text-red-300">
                   errors {brickSystem.stats.fetchErrors}

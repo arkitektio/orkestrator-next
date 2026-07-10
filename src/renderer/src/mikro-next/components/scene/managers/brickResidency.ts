@@ -31,7 +31,11 @@ import {
   parseNodeKey,
   totalBrickCount,
 } from "../core/octree/nodeAddress";
-import type { LayerNodePlan, PlannedNode } from "../core/octree/nodePlanning";
+import {
+  adjacentSlabBrickZ,
+  type LayerNodePlan,
+  type PlannedNode,
+} from "../core/octree/nodePlanning";
 import {
   PAGE_FLAG_EMPTY,
   PAGE_FLAG_RESIDENT,
@@ -180,6 +184,11 @@ export type BrickSystemStats = {
    * not main-thread time; compare against repackMs+uploadMs per brick). */
   gpuRepackMs: number;
   uploadMs: number;
+  /** WALL-CLOCK ms from "plan enqueued work while idle" to "pipeline drained"
+   * (queue+inFlight+pendingFetch empty) — the honest time-to-sharp number.
+   * fetchMs/repackMs are SUMS across concurrent bricks and overstate wall
+   * time; judge streaming changes against this, not those. */
+  timeToSharpMs: number;
   bricksUploaded: number;
   bytesUploaded: number;
   emptyBricks: number;
@@ -209,6 +218,7 @@ export class BrickResidencyManager {
     gpuBricks: 0,
     gpuRepackMs: 0,
     uploadMs: 0,
+    timeToSharpMs: 0,
     bricksUploaded: 0,
     bytesUploaded: 0,
     emptyBricks: 0,
@@ -224,6 +234,12 @@ export class BrickResidencyManager {
    * disabled via the localStorage kill switch) — the CPU worker path then
    * handles every brick. */
   private gpuRepacker: GpuRepacker<GpuBrickToken> | null | undefined;
+  /** Wall-clock start of the current streaming burst (null = idle). Set when
+   * a reconcile enqueues work while idle; NOT reset by mid-burst replans, so
+   * timeToSharpMs measures interaction → fully-sharp. */
+  private streamStartedAt: number | null = null;
+  /** Last few timeToSharpMs values (newest last) for variance eyeballing. */
+  private readonly timeToSharpRing: number[] = [];
 
   constructor(private readonly deps: Deps) {}
 
@@ -265,6 +281,7 @@ export class BrickResidencyManager {
   buildDebugReport(): Record<string, unknown> {
     return {
       stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
+      timeToSharpRing: this.timeToSharpRing.map((ms) => Math.round(ms)),
       gpuRepack:
         this.gpuRepacker === undefined
           ? "not-attempted"
@@ -444,6 +461,16 @@ export class BrickResidencyManager {
         // layer must not abort reconciliation of the remaining layers.
         console.warn(`[bricks] reconcile failed for ${layerId}`, error);
       }
+    }
+
+    // Time-to-sharp: start the wall clock when a reconcile enqueues work
+    // while the pipeline is idle (drainUploads stops it on the drained edge).
+    if (this.streamStartedAt === null) {
+      const hasWork = [...this.pools.values()].some(
+        (pool) =>
+          pool.pendingFetch.length > 0 || pool.inFlight.size > 0 || pool.queue.length > 0,
+      );
+      if (hasWork) this.streamStartedAt = performance.now();
     }
   }
 
@@ -715,6 +742,43 @@ export class BrickResidencyManager {
     return promise;
   }
 
+  /** Zarr chunk coords (dims order) for every chunk a brick's fetch touches —
+   * spatial chunks × channel chunks, collapsed dims fixed. Shared by
+   * `fetchBrick` and the adjacent-slab prefetch so the two enumerate
+   * IDENTICAL chunk keys (a prefetched key must be the key the real fetch
+   * asks for, or the warm cache never hits). */
+  private enumerateBrickChunkCoords(
+    pool: LayerBrickPool,
+    levelIndex: number,
+    brickCoords: Vec3,
+  ): { spatial: Vec3; channelChunk: number; chunkCoords: number[] }[] {
+    const level = pool.geometry.levels[levelIndex];
+    const { xPos, yPos, zPos, intensityPos } = pool.geometry.axes;
+    const spatialChunks = chunksTouchingBrick(pool.geometry, pool.spec, levelIndex, brickCoords);
+    const channelsPerChunk =
+      intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
+    const channelChunkCount =
+      intensityPos !== -1 ? Math.ceil(pool.spec.channelCount / channelsPerChunk) : 1;
+
+    const out: { spatial: Vec3; channelChunk: number; chunkCoords: number[] }[] = [];
+    for (const spatial of spatialChunks) {
+      for (let channelChunk = 0; channelChunk < channelChunkCount; channelChunk++) {
+        out.push({
+          spatial,
+          channelChunk,
+          chunkCoords: pool.geometry.dims.map((_, d) => {
+            if (d === xPos) return spatial[0];
+            if (d === yPos) return spatial[1];
+            if (d === zPos) return spatial[2];
+            if (d === intensityPos) return channelChunk;
+            return pool.fixedChunkCoords[d];
+          }),
+        });
+      }
+    }
+    return out;
+  }
+
   private async fetchBrick(pool: LayerBrickPool, node: PlannedNode): Promise<void> {
     const controller = new AbortController();
     pool.inFlight.set(node.key, controller);
@@ -723,38 +787,23 @@ export class BrickResidencyManager {
     try {
       const level = pool.geometry.levels[node.level];
       const arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
-      const { xPos, yPos, zPos, intensityPos } = pool.geometry.axes;
 
-      const spatialChunks = chunksTouchingBrick(pool.geometry, pool.spec, node.level, node.coords);
-      const channelsPerChunk =
-        intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
-      const channelChunkCount =
-        intensityPos !== -1 ? Math.ceil(pool.spec.channelCount / channelsPerChunk) : 1;
-
-      const fetches: Promise<GpuQueuedChunk>[] = [];
-      for (const spatial of spatialChunks) {
-        for (let channelChunk = 0; channelChunk < channelChunkCount; channelChunk++) {
-          const chunkCoords = pool.geometry.dims.map((_, d) => {
-            if (d === xPos) return spatial[0];
-            if (d === yPos) return spatial[1];
-            if (d === zPos) return spatial[2];
-            if (d === intensityPos) return channelChunk;
-            return pool.fixedChunkCoords[d];
-          });
-          fetches.push(
-            this.fetchChunkShared(arr, level.storeId, chunkCoords, node.level).then((chunk) => ({
-              coords: spatial,
-              channelChunk,
-              data: chunk.data as BrickArray,
-              shape: chunk.shape,
-              stride: chunk.stride,
-              // Same key as fetchChunkShared — the GPU chunk-buffer cache
-              // mirrors the decoded-chunk cache's identity.
-              cacheKey: `${level.storeId}:${chunkCoords.join(",")}`,
-            })),
-          );
-        }
-      }
+      const fetches: Promise<GpuQueuedChunk>[] = this.enumerateBrickChunkCoords(
+        pool,
+        node.level,
+        node.coords,
+      ).map(({ spatial, channelChunk, chunkCoords }) =>
+        this.fetchChunkShared(arr, level.storeId, chunkCoords, node.level).then((chunk) => ({
+          coords: spatial,
+          channelChunk,
+          data: chunk.data as BrickArray,
+          shape: chunk.shape,
+          stride: chunk.stride,
+          // Same key as fetchChunkShared — the GPU chunk-buffer cache
+          // mirrors the decoded-chunk cache's identity.
+          cacheKey: `${level.storeId}:${chunkCoords.join(",")}`,
+        })),
+      );
       const chunks = await Promise.all(fetches);
       if (controller.signal.aborted || this.disposed) return;
 
@@ -938,6 +987,16 @@ export class BrickResidencyManager {
     );
     qualityGovernor.setStreaming(streaming);
 
+    // Pipeline drained: stop the time-to-sharp clock started by reconcileAll,
+    // then use the idle workers to warm the chunk cache for adjacent z slabs.
+    if (!streaming && this.streamStartedAt !== null) {
+      this.stats.timeToSharpMs = performance.now() - this.streamStartedAt;
+      this.streamStartedAt = null;
+      this.timeToSharpRing.push(this.stats.timeToSharpMs);
+      if (this.timeToSharpRing.length > 5) this.timeToSharpRing.shift();
+      this.prefetchAdjacentSlabs();
+    }
+
     if (uploadedAny) {
       // Throttle version bumps while streaming — every bump re-renders the
       // React consumers (layer components, overlay, DebugPanel). The final
@@ -1013,6 +1072,86 @@ export class BrickResidencyManager {
     return pool;
   }
 
+  /** One prefetch marker per layer: `sliceSignature|slabZ` last prefetched. */
+  private readonly prefetchedSlabMarker = new Map<string, string>();
+
+  /**
+   * z±1 adjacent-slab prefetch — decoded-chunk-cache warmth ONLY (no atlas
+   * slots, no page-table writes, no residency interaction). Runs exclusively
+   * on the streaming→idle edge, so it can never compete with visible fetches;
+   * within the worker pool its tasks sort BELOW everything visible
+   * (priority −1 vs node levels ≥ 0), so a new plan mid-prefetch jumps the
+   * queue naturally. A later scrub to the neighbor slab then costs
+   * repack+upload instead of network+decode. Capped by chunk count and
+   * (promoted) bytes so plane-chunked datasets can't evict the CURRENT slab
+   * out of the byte-budgeted chunk cache.
+   */
+  private prefetchAdjacentSlabs(): void {
+    const PREFETCH_MAX_CHUNKS = 32;
+    const PREFETCH_MAX_BYTES = 64 * 1024 * 1024;
+    const state = this.deps.viewerStore.getState();
+    let chunksIssued = 0;
+    let bytesIssued = 0;
+
+    for (const pool of this.pools.values()) {
+      if (pool.mode !== "2D" || pool.geometry.axes.zPos === -1) continue;
+      const plan = state.nodePlans[pool.layerId];
+      if (!plan || plan.mode !== "2D" || plan.slabZ === null || plan.slabZ === undefined) {
+        continue;
+      }
+      const marker = `${pool.sliceSignature}|${plan.slabZ}`;
+      if (this.prefetchedSlabMarker.get(pool.layerId) === marker) continue;
+      this.prefetchedSlabMarker.set(pool.layerId, marker);
+
+      const baseLevel = pool.geometry.levels[0];
+      const issued = new Set<string>();
+
+      for (const node of plan.nodes) {
+        if (node.level !== plan.targetLevel) continue;
+        const level = pool.geometry.levels[node.level];
+        // Promoted footprint (uint8 stays 1 B/voxel, everything else → f32).
+        const chunkBytes =
+          level.chunks.reduce((total, extent) => total * Math.max(1, extent), 1) *
+          (pool.atlas.kind === "r8" ? 1 : 4);
+        let arr: ReturnType<typeof state.getArrayForStoreId>;
+        try {
+          arr = state.getArrayForStoreId(level.storeId);
+        } catch {
+          continue;
+        }
+
+        for (const dz of [1, -1]) {
+          const brickZ = adjacentSlabBrickZ(
+            plan.slabZ,
+            dz,
+            baseLevel.scale[2],
+            level.scale[2],
+            level.spatialShape[2],
+            pool.spec.payload[2],
+            baseLevel.spatialShape[2],
+          );
+          // Same brick as the current slab = already resident; skip.
+          if (brickZ === null || brickZ === node.coords[2]) continue;
+
+          const coords: Vec3 = [node.coords[0], node.coords[1], brickZ];
+          for (const { chunkCoords } of this.enumerateBrickChunkCoords(pool, node.level, coords)) {
+            const key = `${level.storeId}:${chunkCoords.join(",")}`;
+            if (issued.has(key)) continue;
+            if (chunksIssued >= PREFETCH_MAX_CHUNKS || bytesIssued + chunkBytes > PREFETCH_MAX_BYTES) {
+              return;
+            }
+            issued.add(key);
+            chunksIssued += 1;
+            bytesIssued += chunkBytes;
+            // Fire-and-forget: results land in the chunk cache; failures
+            // (abort on dispose, transient network) are non-events here.
+            void this.fetchChunkShared(arr, level.storeId, chunkCoords, -1).catch(() => {});
+          }
+        }
+      }
+    }
+  }
+
   private flushPool(pool: LayerBrickPool, nextSliceSignature: string): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
@@ -1028,6 +1167,7 @@ export class BrickResidencyManager {
   private disposePool(pool: LayerBrickPool): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
+    this.prefetchedSlabMarker.delete(pool.layerId);
     disposeBrickAtlas(pool.atlas);
     disposePageTable(pool.pageTable);
     // Pool lifecycle event — layer components must drop their pool handle.

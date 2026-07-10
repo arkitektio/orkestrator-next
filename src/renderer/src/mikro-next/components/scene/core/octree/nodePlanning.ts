@@ -65,6 +65,29 @@ export const slabLevelZ = (
   levelScaleZ: number,
 ): number => Math.floor((baseSlabZ * baseScaleZ) / levelScaleZ);
 
+/**
+ * Brick z of the slab `baseSlabZ + dz` at a level (the z±1 prefetch): null
+ * when the neighbor slab is outside the base stack or the level does not
+ * cover it (truncated pyramid, same drop-out rule as `resolveLevelZ`).
+ * Composes `slabLevelZ` with the payload division so the prefetch targets
+ * EXACTLY the brick the planner would fetch when the user scrubs there.
+ */
+export const adjacentSlabBrickZ = (
+  baseSlabZ: number,
+  dz: number,
+  baseScaleZ: number,
+  levelScaleZ: number,
+  levelShapeZ: number,
+  payloadZ: number,
+  baseShapeZ: number,
+): number | null => {
+  const neighborBase = baseSlabZ + dz;
+  if (neighborBase < 0 || neighborBase > baseShapeZ - 1) return null;
+  const levelZ = slabLevelZ(neighborBase, baseScaleZ, levelScaleZ);
+  if (levelZ < 0 || levelZ > levelShapeZ - 1) return null;
+  return Math.floor(levelZ / payloadZ);
+};
+
 export type NodeCamera = {
   /** Camera frustum transformed into the layer's base-voxel frame. */
   voxelFrustum: THREE.Frustum;

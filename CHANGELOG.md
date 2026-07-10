@@ -1,3 +1,10 @@
+## [1.67.2](https://github.com/arkitektio/orkestrator-next/compare/v1.67.1...v1.67.2) (2026-07-10)
+
+
+### Bug Fixes
+
+* devtools trigger ([1450e11](https://github.com/arkitektio/orkestrator-next/commit/1450e118b970e9fe56f1f6cf928c7f980b686ce1))
+
 ## [1.67.1](https://github.com/arkitektio/orkestrator-next/compare/v1.67.0...v1.67.1) (2026-07-10)
 
 

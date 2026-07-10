@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -10,6 +10,7 @@ import {
 import { GLSL_RAND } from "../../glsl/common";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
 import { perfMonitor } from "../../managers/perfMonitor";
+import { qualityGovernor } from "../../core/qualityGovernor";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { buildAffineMatrix } from "../../core/worldTransform";
@@ -88,6 +89,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       : 0,
   );
   const cameraMoving = useViewStore((s) => s.cameraMoving);
+  // Quality tier / streaming flips are rare (P17-clean); re-runs the uniform
+  // push below so uStepScale tracks the governor's profile.
+  const qualityVersion = useSyncExternalStore(
+    qualityGovernor.subscribe,
+    () => qualityGovernor.getVersion(),
+  );
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
   const interactionMode = useModeStore((s) => s.interactionMode);
@@ -161,12 +168,18 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     u.uLodBias.value = lodBias;
     u.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     u.uMinDelta.value = marchParams.minDelta;
-    // Coarser ray steps while the camera moves; the settle emission restores
-    // full quality ≤150 ms after the drag ends.
-    u.uStepScale.value = cameraMoving ? 2 : 1;
+    // Coarser ray steps while ACTIVE (camera moving OR bricks streaming —
+    // streaming frames recur for seconds after a gesture and were the residual
+    // jank on slow GPUs, P19); the tier profile decides how coarse. Settle
+    // restores the tier's full quality.
+    const profile = qualityGovernor.getProfile();
+    u.uStepScale.value =
+      cameraMoving || qualityGovernor.isStreaming()
+        ? profile.activeStepScale
+        : profile.settledStepScale;
     u.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
-  }, [channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, marchParams, layer?.projection, invalidate]);
+  }, [channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
 
   const initialUniforms = useMemo(() => {
     if (!pool) return null;

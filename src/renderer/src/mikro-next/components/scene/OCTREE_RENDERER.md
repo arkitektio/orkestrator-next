@@ -538,6 +538,26 @@ Diagnosis path: perf recorder → DebugPanel `upload X ms/brick` chip
 these, the next lever is three.js' texStorage3D/immutable-texture path on
 ANGLE-Metal — measure before building.
 
+**The quality GOVERNOR generalizes this** (`core/qualityGovernor.ts`): the
+one-shot motion-DPR regress still janked because the real jank window is
+STREAMING, not motion — after any gesture, bricks stream for seconds and every
+residency bump renders a "settled" full-quality frame (DPR 2 + full-pitch
+raymarch) at 25–50 ms. The governor:
+- learns a machine tier (High/Medium/Low) from CONSECUTIVE slow/fast frame
+  deltas (15 slow → demote; 120 fast + 30 s post-demote cooldown → promote;
+  streak counting on deltas, not the EMA — a stale EMA from the old tier would
+  cascade demotes before the cheaper tier could prove itself);
+- persists the tier per GPU (`localStorage` `scene-quality-tier:<UNMASKED_RENDERER>`),
+  so later sessions start right; DebugPanel has an Auto/High/Medium/Low
+  override for testing;
+- drives every knob from one profile table: settled/active DPR
+  (`cameras/QualityAdapter.tsx`), 3D `uStepScale` settled/active
+  (`BrickVolumeLayer`), upload time budget, per-layer in-flight fetches, and
+  the residency-bump cadence (`brickResidency.ts`), where **active = camera
+  moving OR bricks streaming** (the drain loop feeds the streaming edge).
+The decoded-chunk cache also halves on ≤8 GiB machines (GC pressure). A
+dedicated GPU stays at High forever — zero behavior change.
+
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without
 an effect-cleanup `dispose()`, that's an unbounded GPU leak on exactly the

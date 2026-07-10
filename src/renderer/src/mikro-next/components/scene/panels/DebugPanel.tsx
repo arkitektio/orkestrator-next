@@ -1,8 +1,13 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
 import { ChevronDown, ClipboardCopy, Circle, Square } from "lucide-react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import {
+  qualityGovernor,
+  TIER_LABELS,
+  type QualityTier,
+} from "../core/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
@@ -25,6 +30,8 @@ export const DebugPanel = () => {
   const [reportCopied, setReportCopied] = useState(false);
   const recording = usePerfRecording();
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
+  // Tier/override/streaming flips only — rare (P17-clean).
+  useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
 
   if (!isDebug) return null;
 
@@ -75,6 +82,16 @@ export const DebugPanel = () => {
       // The opt-in CPU/GPU recording (Start/End report). Null when no session
       // has been captured. This is the "last few seconds" perf window.
       perfSession: perfMonitor.buildSessionReport(),
+      quality: {
+        tier: TIER_LABELS[qualityGovernor.getTier()],
+        autoTier: TIER_LABELS[qualityGovernor.getAutoTier()],
+        override:
+          qualityGovernor.getOverride() !== null
+            ? TIER_LABELS[qualityGovernor.getOverride()!]
+            : null,
+        emaFrameMs: Number(qualityGovernor.getEmaMs().toFixed(2)),
+        streaming: qualityGovernor.isStreaming(),
+      },
     };
     const json = JSON.stringify(report, null, 2);
     console.log("[octree debug report]", report);
@@ -133,6 +150,34 @@ export const DebugPanel = () => {
                   className="py-1"
                 />
               </div>
+              {/* GPU-adaptive quality tier (P19): learned from frame times,
+                  persisted per GPU; the select forces a tier for testing. */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
+                  <span>Quality</span>
+                  <span className="font-mono bg-accent px-1 rounded">
+                    {TIER_LABELS[qualityGovernor.getTier()]}
+                    {qualityGovernor.getOverride() !== null ? " (forced)" : ""} ·{" "}
+                    {qualityGovernor.getEmaMs().toFixed(1)} ms
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {([null, 0, 1, 2] as const).map((tier) => (
+                    <button
+                      key={tier === null ? "auto" : tier}
+                      className={`flex-1 rounded border px-1 py-0.5 text-[10px] transition-colors ${
+                        qualityGovernor.getOverride() === tier
+                          ? "border-white/40 bg-white/15 text-white"
+                          : "border-border/50 text-muted-foreground hover:bg-white/10"
+                      }`}
+                      onClick={() => qualityGovernor.setOverride(tier as QualityTier | null)}
+                    >
+                      {tier === null ? "Auto" : TIER_LABELS[tier as QualityTier]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 className="flex w-full items-center justify-center gap-1 rounded border border-border/50 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-white/10 transition-colors"
                 onClick={copyDebugReport}

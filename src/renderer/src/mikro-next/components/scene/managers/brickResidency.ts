@@ -2,7 +2,8 @@ import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
-import { shouldContinueDrain } from "./uploadBudget";
+import { FRAME_UPLOAD_BUDGET, shouldContinueDrain } from "./uploadBudget";
+import { qualityGovernor } from "../core/qualityGovernor";
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
@@ -70,15 +71,23 @@ import {
 // WALL-CLOCK cap — the time cap is what keeps integrated GPUs smooth, P19).
 const PAGE_TEXTURE_MAX_EXTENT = 2048;
 const MIN_POOL_HEADROOM_SLOTS = 64;
-/** Concurrent brick fetches per layer — bounds worker-task fan-out and the
- * per-fetch main-thread overhead when a plan wants hundreds of bricks. */
-const MAX_INFLIGHT_BRICKS = 12;
-/** Residency bumps are throttled while streaming (they re-render consumers). */
-const RESIDENCY_BUMP_INTERVAL_MS = 150;
+// In-flight fetch count, residency-bump throttle and upload time budget are
+// TIER-scaled — read from the quality governor's profile at use sites (P19).
+
 /** Byte cap for decoded chunks held for repacking (the runner's default
  * cache is count-bounded and can pin GBs of plane-chunked SABs). Sized above
- * a typical plane-chunked working set so repacks don't thrash the cache. */
-const DECODED_CHUNK_CACHE_BYTES = 512 * 1024 * 1024;
+ * a typical plane-chunked working set, scaled down on low-RAM machines
+ * (8 GiB Macs hit GC pauses with the full 512 MB alongside the atlases). */
+const DECODED_CHUNK_CACHE_BYTES = (() => {
+  const nav =
+    typeof navigator !== "undefined"
+      ? (navigator as Navigator & { deviceMemory?: number })
+      : undefined;
+  const memoryGiB = nav?.deviceMemory;
+  return typeof memoryGiB === "number" && memoryGiB > 0 && memoryGiB <= 8
+    ? 256 * 1024 * 1024
+    : 512 * 1024 * 1024;
+})();
 
 type PendingBrick = {
   key: string;
@@ -379,7 +388,8 @@ export class BrickResidencyManager {
 
     // Fetch every planned node that isn't resident yet — coarse levels first
     // (they are the fallback), then plan priority (near-first). Only
-    // MAX_INFLIGHT_BRICKS run concurrently; the rest wait in pendingFetch.
+    // the tier profile's maxInflightBricks run concurrently; the rest wait
+    // in pendingFetch.
     pool.pendingFetch = plan.nodes
       .filter(
         (node) =>
@@ -393,7 +403,8 @@ export class BrickResidencyManager {
   }
 
   private startNextFetches(pool: LayerBrickPool): void {
-    while (pool.inFlight.size < MAX_INFLIGHT_BRICKS && pool.pendingFetch.length > 0) {
+    const maxInflight = qualityGovernor.getProfile().maxInflightBricks;
+    while (pool.inFlight.size < maxInflight && pool.pendingFetch.length > 0) {
       const node = pool.pendingFetch.shift()!;
       if (
         !pool.protectedKeys.has(node.key) ||
@@ -698,6 +709,8 @@ export class BrickResidencyManager {
   drainUploads(): void {
     if (this.disposed) return;
     const drainStartedAt = performance.now();
+    const profile = qualityGovernor.getProfile();
+    const budget = { ...FRAME_UPLOAD_BUDGET, maxMs: profile.uploadBudgetMs };
     let bytes = 0;
     let bricks = 0;
     let uploadedAny = false;
@@ -707,12 +720,12 @@ export class BrickResidencyManager {
         pool.queue.length > 0 &&
         // Time-capped alongside bytes/bricks (P19): on integrated GPUs a
         // single texSubImage3D can cost >15 ms — without the wall-clock cap a
-        // full batch stalls the frame for hundreds of ms.
-        shouldContinueDrain({
-          bytes,
-          bricks,
-          elapsedMs: performance.now() - drainStartedAt,
-        })
+        // full batch stalls the frame for hundreds of ms. The ms cap is
+        // tier-scaled (slower GPUs get a smaller slice of the frame).
+        shouldContinueDrain(
+          { bytes, bricks, elapsedMs: performance.now() - drainStartedAt },
+          budget,
+        )
       ) {
         const pending = pool.queue.shift()!;
         pool.queuedKeys.delete(pending.key);
@@ -762,16 +775,20 @@ export class BrickResidencyManager {
     if (uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
     if (bricks > 0) perfMonitor.markUpload(bricks, bytes); // no-op unless recording
 
+    // "Streaming" (work anywhere in the pipeline) counts as ACTIVITY for the
+    // quality governor: frames rendered while bricks load use the tier's
+    // cheaper profile, and the edge back to false snaps quality up (P19).
+    const streaming = [...this.pools.values()].some(
+      (pool) => pool.queue.length > 0 || pool.inFlight.size > 0 || pool.pendingFetch.length > 0,
+    );
+    qualityGovernor.setStreaming(streaming);
+
     if (uploadedAny) {
       // Throttle version bumps while streaming — every bump re-renders the
       // React consumers (layer components, overlay, DebugPanel). The final
       // batch always bumps so consumers settle on the complete state.
-      const streaming =
-        [...this.pools.values()].some(
-          (pool) => pool.queue.length > 0 || pool.inFlight.size > 0 || pool.pendingFetch.length > 0,
-        );
       const now = performance.now();
-      if (!streaming || now - this.lastResidencyBumpAt > RESIDENCY_BUMP_INTERVAL_MS) {
+      if (!streaming || now - this.lastResidencyBumpAt > profile.residencyBumpMs) {
         this.lastResidencyBumpAt = now;
         this.deps.viewerStore.getState().bumpResidencyVersion();
       }
@@ -809,5 +826,7 @@ export class BrickResidencyManager {
     this.inFlightChunks.clear();
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
+    // Don't leave the governor thinking a torn-down scene is still streaming.
+    qualityGovernor.setStreaming(false);
   }
 }

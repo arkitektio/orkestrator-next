@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { PerfFrameProbe } from "./PerfFrameProbe";
-import { AdaptiveResolution } from "./cameras/AdaptiveResolution";
+import { QualityAdapter } from "./cameras/QualityAdapter";
 import { CameraController } from "./cameras/CameraController";
 import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { CanvasSync } from "./cameras/CanvasSync";
@@ -161,7 +161,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               {/* Must follow CameraController: fits the as-loaded scene extent
                   before the first painted frame (and on 2D/3D remounts). */}
               <InitialCameraFit />
-              <AdaptiveResolution />
+              <QualityAdapter />
               <CanvasSync />
 
               {/* Interaction Layers */}

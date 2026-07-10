@@ -1,3 +1,43 @@
+# [1.67.0](https://github.com/arkitektio/orkestrator-next/compare/v1.66.1...v1.67.0) (2026-07-10)
+
+
+### Bug Fixes
+
+* activator ([d624967](https://github.com/arkitektio/orkestrator-next/commit/d62496774e4ba74f4c8c125d7517bbaf0bdb5eb3))
+* adaptive step site ([615b248](https://github.com/arkitektio/orkestrator-next/commit/615b24899250c36087327cb8a2d39ac695aec8f9))
+* add report ([58a7fc8](https://github.com/arkitektio/orkestrator-next/commit/58a7fc82a4efc9a2d83c425ff53f4e92d9232662))
+* add scene grpaher ([eac0904](https://github.com/arkitektio/orkestrator-next/commit/eac0904f9582a163266428c8aac5bf5c53377af7))
+* better stuff ([4b5c766](https://github.com/arkitektio/orkestrator-next/commit/4b5c76651512be537cdcfb79c6315f7643dd3de3))
+* brick layer size? ([d59f55d](https://github.com/arkitektio/orkestrator-next/commit/d59f55db2ab59ca782b22ffc19c2a4b61472845d))
+* dead code removal ([df2386a](https://github.com/arkitektio/orkestrator-next/commit/df2386a7f63a650ae4c9ac2b07987b1addb226b7))
+* debounce ([51a728c](https://github.com/arkitektio/orkestrator-next/commit/51a728cce3359244cb4a7a77093d1920c95aec1d))
+* fetching logic ([264e1c4](https://github.com/arkitektio/orkestrator-next/commit/264e1c418b51cffac51bfddab1f89c8900807270))
+* gone ([a068634](https://github.com/arkitektio/orkestrator-next/commit/a068634e8ac8903054668a252362df2cbe01c2ba))
+* grainy fix ([16c3f17](https://github.com/arkitektio/orkestrator-next/commit/16c3f17369f03cd3e9343eb56c5bf4896c5bbe2a))
+* layer guards ([408eaa5](https://github.com/arkitektio/orkestrator-next/commit/408eaa57c01571429285634e8b830ebece15c11b))
+* more ([032a753](https://github.com/arkitektio/orkestrator-next/commit/032a75324e38f7fc2d04cbc42260257f0d39e770))
+* more cleanup ([20b2fdb](https://github.com/arkitektio/orkestrator-next/commit/20b2fdb88770c09c72f67f620481c5ec654cdef7))
+* more fixes ([0d0e42d](https://github.com/arkitektio/orkestrator-next/commit/0d0e42dc8bf3701cefb9d7bd86ce1e4556586481))
+* more node planning ([0d0d697](https://github.com/arkitektio/orkestrator-next/commit/0d0d697f5096845e3c2987bcfa166cc724195314))
+* more planning ([2079b72](https://github.com/arkitektio/orkestrator-next/commit/2079b72803f3b0c4c206a3cf6f652cae6b570b43))
+* more planning ([debecd0](https://github.com/arkitektio/orkestrator-next/commit/debecd03a1bf83e4d9f334b6e3cc77bbc3bf8f2b))
+* more stuff ([16eb3ea](https://github.com/arkitektio/orkestrator-next/commit/16eb3ea6a818a586688e56877b5838bb9656ce61))
+* more volume matching ([e878cef](https://github.com/arkitektio/orkestrator-next/commit/e878cefb95ec44e48f5683f1045cea6be262b906))
+* perf monitor ([243cf5a](https://github.com/arkitektio/orkestrator-next/commit/243cf5a1c9a0d8246dbf528335475caab2a6c895))
+* potential overload fix? ([13b63e0](https://github.com/arkitektio/orkestrator-next/commit/13b63e0a063cef1c420ca6d5cad5e3180b81258b))
+* quality Goerneror ([ac8fc45](https://github.com/arkitektio/orkestrator-next/commit/ac8fc4531175cfc8fb8c15c82fe7d48217737ec2))
+* refactor quantitites and changed ui for scene ([b8c28e4](https://github.com/arkitektio/orkestrator-next/commit/b8c28e4562a1af1d8f9546a007ad43c80d2fb484))
+* render budgets ([2c4e0ff](https://github.com/arkitektio/orkestrator-next/commit/2c4e0ff1cd443b0703bb2821c1f526fda88fc5a2))
+* source of truth ([49fadbd](https://github.com/arkitektio/orkestrator-next/commit/49fadbd64329bd86e84cbc16879e7622f01b5f14))
+* stuff ([9059208](https://github.com/arkitektio/orkestrator-next/commit/905920862d8962b3505f93c553fd866f348303e0))
+* stuff is getting tidier ([a36d262](https://github.com/arkitektio/orkestrator-next/commit/a36d2623566edd4b3f73874e8226302d543c40cf))
+* with quantities support ([49f2c7e](https://github.com/arkitektio/orkestrator-next/commit/49f2c7e4d2098487482ea12b8f36d11b40a9fa3f))
+
+
+### Features
+
+* correct scene renderer ([1a91894](https://github.com/arkitektio/orkestrator-next/commit/1a9189415f84b675d6a3712391038f79f3b6aadd))
+
 ## [1.66.1](https://github.com/arkitektio/orkestrator-next/compare/v1.66.0...v1.66.1) (2026-07-03)
 
 

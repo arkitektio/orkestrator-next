@@ -669,20 +669,24 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
-    // A channel with no named colormap — or the explicit INTENSITY colormap —
-    // plus a color is the standard per-channel microscopy tint (e.g. RGB
-    // composites). The row must hold the CONSTANT color: the brick compositor
-    // multiplies the row sample by the channel's normalized intensity, so an
-    // intensity RAMP here (what `sampleColorMapRgb(Intensity, t, color)`
-    // returns — correct for self-contained LUT consumers) would double-count
-    // intensity and crush the image to intensity². Only fall back to a
-    // named/Viridis colormap when no color is given.
+    // RESPONSE-CURVE CONVENTION (deliberate, user-validated): every NAMED
+    // colormap row — including INTENSITY-with-base-color and the monochrome
+    // family (Cyan, Red, Grey, …) — bakes its self-contained ramp
+    // (`sampleColorMapRgb`, e.g. cyan × t). The compositor multiplies the row
+    // sample by normalized intensity once more, giving named colormaps an
+    // intensity² response. That squared curve is the ORIGINAL renderer look
+    // and reads as "true to life" on screen (it approximates the gamma
+    // encoding the additive output path never applies); a linear
+    // constant-row factoring was tried and rejected — midtones washed out.
+    // What matters for consistency: INTENSITY+color goes through the SAME
+    // sampleColorMapRgb ramp as its named-colormap twin (Intensity+cyan ≡
+    // Cyan), so identical hues render identically.
+    //
+    // The ONLY constant-tint rows are colorless-colormap channels with an
+    // explicit color (legacy per-channel tint without a named map): those
+    // have always rendered linearly via the compositor's single multiply.
     const tintColor =
-      channel?.colormap === ColorMap.Intensity
-        ? resolveBaseColorRgb(channel.color) // INTENSITY sans color = white
-        : channel?.colormap == null && channel?.color
-          ? channel.color
-          : null;
+      channel?.colormap == null && channel?.color ? channel.color : null;
 
     for (let x = 0; x < width; x++) {
       const t = x / (width - 1);

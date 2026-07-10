@@ -1,3 +1,13 @@
+## [1.67.3](https://github.com/arkitektio/orkestrator-next/compare/v1.67.2...v1.67.3) (2026-07-10)
+
+
+### Bug Fixes
+
+* colormaps ([311f273](https://github.com/arkitektio/orkestrator-next/commit/311f2731728b34801fcb5387244f92a732602584))
+* correct WDGL loops ([90269db](https://github.com/arkitektio/orkestrator-next/commit/90269dbf6678aa2537bfce7e648e4216800434af))
+* new stuff ([8418730](https://github.com/arkitektio/orkestrator-next/commit/8418730314725b3b3db60718be4fb4ded308abd2))
+* pewaremd worker pool and s3 request ([e16a4ee](https://github.com/arkitektio/orkestrator-next/commit/e16a4eeed27228e1c7230e54001b65f165d5737b))
+
 ## [1.67.2](https://github.com/arkitektio/orkestrator-next/compare/v1.67.1...v1.67.2) (2026-07-10)
 
 

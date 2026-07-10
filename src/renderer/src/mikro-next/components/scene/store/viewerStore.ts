@@ -68,8 +68,6 @@ export interface ViewerState {
 
   lodBias: number;
   setLodBias: (bias: number) => void;
-  lodDebugInfo: Record<string, { currentLOD: number; targetResolution: number; renderedLevels?: number[] }>;
-  setLodDebugInfo: (layerId: string, info: { currentLOD: number; targetResolution: number; renderedLevels?: number[] }) => void;
   /** Null while every layer fits the render-cost budget. */
   renderBudget: RenderBudgetInfo | null;
   setRenderBudget: (info: RenderBudgetInfo | null) => void;
@@ -77,11 +75,17 @@ export interface ViewerState {
   /** Declarative per-layer octree node plans, written by the node-plan tracker. */
   nodePlans: Record<string, LayerNodePlan>;
   setNodePlans: (plans: Record<string, LayerNodePlan>) => void;
-  /** Bumped by the brick residency manager whenever bricks become resident,
-   * so brick-consuming components (layers, overlays, DebugPanel) re-render.
-   * Deliberately NOT a node-plan replan trigger. */
+  /** Bumped by the brick residency manager whenever bricks become resident.
+   * STREAMING-progress cadence — only debug consumers (DebugPanel,
+   * BrickResidencyOverlay) may subscribe; layer components must use
+   * `poolsVersion` instead (P17). Deliberately NOT a node-plan replan trigger. */
   residencyVersion: number;
   bumpResidencyVersion: () => void;
+  /** Bumped only when a layer's brick POOL is created, rebuilt or disposed —
+   * the rare lifecycle event layer components actually need to re-render on
+   * (their memos key on pool identity). */
+  poolsVersion: number;
+  bumpPoolsVersion: () => void;
   /** Handle to the brick residency manager (owned by BrickSystemProvider). */
   brickSystem: BrickResidencyManager | null;
   registerBrickSystem: (manager: BrickResidencyManager | null) => void;
@@ -117,14 +121,14 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     probeThreshold: 0.01,
     lodBias: 1,
     setLodBias: (bias) => set({ lodBias: bias }),
-    lodDebugInfo: {},
-    setLodDebugInfo: (layerId, info) => set((state) => ({ lodDebugInfo: { ...state.lodDebugInfo, [layerId]: info } })),
     renderBudget: null,
     setRenderBudget: (info) => set({ renderBudget: info }),
     nodePlans: {},
     setNodePlans: (plans) => set({ nodePlans: plans }),
     residencyVersion: 0,
     bumpResidencyVersion: () => set((state) => ({ residencyVersion: state.residencyVersion + 1 })),
+    poolsVersion: 0,
+    bumpPoolsVersion: () => set((state) => ({ poolsVersion: state.poolsVersion + 1 })),
     brickSystem: null,
     registerBrickSystem: (manager) => set({ brickSystem: manager }),
     register: (ref) => set((state) => ({

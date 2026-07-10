@@ -1,5 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
+import { createRepackDispatcher } from "../core/octree/repackDispatcher";
 import { useSceneStoreApi } from "../store/sceneStore";
 import { useViewerStoreApi } from "../store/viewerStore";
 import { BrickResidencyManager } from "./brickResidency";
@@ -19,11 +20,14 @@ export function BrickSystemProvider() {
   const managerRef = useRef<BrickResidencyManager | null>(null);
 
   useEffect(() => {
+    // Repack workers live exactly as long as the manager they serve.
+    const repack = createRepackDispatcher();
     const manager = new BrickResidencyManager({
       renderer: gl,
       viewerStore,
       sceneStore,
       invalidate,
+      repack,
     });
     managerRef.current = manager;
     const stop = manager.start();
@@ -32,6 +36,7 @@ export function BrickSystemProvider() {
       stop();
       viewerStore.getState().registerBrickSystem(null);
       manager.dispose();
+      repack.dispose();
       managerRef.current = null;
     };
   }, [gl, invalidate, viewerStore, sceneStore]);

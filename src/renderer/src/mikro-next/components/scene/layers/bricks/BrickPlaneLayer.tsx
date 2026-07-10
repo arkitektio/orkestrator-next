@@ -43,9 +43,16 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
   const currentZ = useViewerStore((s) => s.currentZ);
-  const plan = useViewerStore((s) => s.nodePlans[layerId]);
-  // Re-render when residency changes so the pool handle appears/rebuilds.
-  useViewerStore((s) => s.residencyVersion);
+  // SCALAR plan subscriptions only (P9c/P17, see BrickVolumeLayer): the plan
+  // object churns identity per replan; this component consumes only these.
+  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planSlabZ = useViewerStore((s) => s.nodePlans[layerId]?.slabZ);
+  const planHasNodes = useViewerStore(
+    (s) => (s.nodePlans[layerId]?.nodes.length ?? 0) > 0,
+  );
+  // Re-render when the pool handle appears/rebuilds/disposes — pool lifecycle
+  // only (see BrickVolumeLayer), never the streaming residency counter.
+  useViewerStore((s) => s.poolsVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
   const viewerStoreApi = useViewerStoreApi();
 
@@ -92,12 +99,12 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [channelData]);
 
   /** Continuous base-voxel z of the displayed slab's center. */
-  const slabBaseZ = plan?.slabZ !== null && plan?.slabZ !== undefined ? plan.slabZ + 0.5 : 0.5;
+  const slabBaseZ = planSlabZ !== null && planSlabZ !== undefined ? planSlabZ + 0.5 : 0.5;
 
   // Push dynamic values straight to the GPU without re-creating the material.
   useEffect(() => {
     const u = materialRef.current?.uniforms;
-    if (!u || !plan) return;
+    if (!u || planTargetLevel === undefined) return;
     u.colormapAtlas.value = channelData.atlas;
     u.numChannels.value = channelData.numChannels;
     u.blendMode.value = channelData.blendMode;
@@ -109,9 +116,9 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     u.chVisible.value = channelData.visible;
     u.chInvert.value = channelData.invert;
     u.chRow.value = channelData.row;
-    u.uDesiredLevel.value = plan.targetLevel;
+    u.uDesiredLevel.value = planTargetLevel;
     u.uSlabBaseZ.value = slabBaseZ;
-  }, [channelData, plan, slabBaseZ]);
+  }, [channelData, planTargetLevel, slabBaseZ]);
 
   const initialUniforms = useMemo(() => {
     if (!pool) return null;
@@ -130,7 +137,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       chVisible: { value: channelData.visible },
       chInvert: { value: channelData.invert },
       chRow: { value: channelData.row },
-      uDesiredLevel: { value: plan?.targetLevel ?? 0 },
+      uDesiredLevel: { value: planTargetLevel ?? 0 },
       uSlabBaseZ: { value: slabBaseZ },
       uBaseShape: {
         value: new THREE.Vector3(
@@ -152,7 +159,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     if (!layer || !pool) return null;
 
     const levelIndex = Math.min(
-      plan?.targetLevel ?? pool.geometry.levels.length - 1,
+      planTargetLevel ?? pool.geometry.levels.length - 1,
       pool.geometry.levels.length - 1,
     );
     const level = pool.geometry.levels[levelIndex];
@@ -194,7 +201,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       ],
       volumeSize: [width, height, depth],
     };
-  }, [plan?.targetLevel, currentZ, layer, pool]);
+  }, [planTargetLevel, currentZ, layer, pool]);
 
   const updateProbe = useCallback(
     (localPoint: THREE.Vector3 | null, save: boolean) => {
@@ -249,7 +256,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   );
 
   if (layer?.visible === false) return null;
-  if (!plan || plan.nodes.length === 0 || !pool || !initialUniforms) return null;
+  if (!planHasNodes || !pool || !initialUniforms) return null;
 
   const base = pool.geometry.levels[0];
   const totalX = base.spatialShape[0] * base.scale[0];

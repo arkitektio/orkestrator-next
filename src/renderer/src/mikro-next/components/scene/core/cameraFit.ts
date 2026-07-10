@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { computeFitPose } from "./sceneFit";
 
 /**
  * The camera/controls surface `fitCameraToObject` needs. Structurally matches
@@ -13,39 +14,50 @@ export type FitCanvasContext = {
   invalidate: () => void;
 };
 
-/** Frame `target`'s world-space bounding box in the canvas camera (ortho or perspective). */
-export function fitCameraToObject(target: THREE.Object3D, canvas: FitCanvasContext): void {
-  const box = new THREE.Box3().setFromObject(target);
-  if (box.isEmpty()) throw new Error("Bounding box for fit target is empty");
-
-  const center = box.getCenter(new THREE.Vector3());
-  const boxSize = box.getSize(new THREE.Vector3());
+/**
+ * Apply a `computeFitPose` result to a live camera + controls. Shared by the
+ * post-mount object fit below and the pre-first-render initial fit
+ * (`cameras/InitialCameraFit.tsx`).
+ */
+export function applyFitToCamera(box: THREE.Box3, canvas: FitCanvasContext): void {
   const { camera, controls, size, invalidate } = canvas;
 
   if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
     const ortho = camera as THREE.OrthographicCamera;
-    const padding = 1.1;
-    const zoomX = size.width / (boxSize.x * padding);
-    const zoomY = size.height / (boxSize.y * padding);
-    ortho.position.set(center.x, center.y, ortho.position.z);
-    ortho.zoom = Math.min(zoomX, zoomY);
+    const pose = computeFitPose(box, {
+      kind: "orthographic",
+      viewport: size,
+      cameraZ: ortho.position.z,
+    });
+    ortho.position.copy(pose.position);
+    ortho.zoom = pose.zoom!;
     ortho.updateProjectionMatrix();
     if (controls) {
-      controls.target.set(center.x, center.y, 0);
+      controls.target.copy(pose.target);
       controls.update();
     }
   } else {
-    const sphere = box.getBoundingSphere(new THREE.Sphere());
-    const fov = (camera as THREE.PerspectiveCamera).fov;
-    const halfFovRad = THREE.MathUtils.degToRad(fov / 2);
-    const distance = (sphere.radius / Math.sin(halfFovRad)) * 1.3;
-    const direction = camera.position.clone().sub(center).normalize();
-    camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
-    camera.lookAt(center);
+    const persp = camera as THREE.PerspectiveCamera;
+    const center = box.getCenter(new THREE.Vector3());
+    const pose = computeFitPose(box, {
+      kind: "perspective",
+      fov: persp.fov,
+      // Preserve the current viewing angle; only the distance changes.
+      viewDirection: camera.position.clone().sub(center),
+    });
+    camera.position.copy(pose.position);
+    camera.lookAt(pose.target);
     if (controls) {
-      controls.target.copy(center);
+      controls.target.copy(pose.target);
       controls.update();
     }
   }
   invalidate();
+}
+
+/** Frame `target`'s world-space bounding box in the canvas camera (ortho or perspective). */
+export function fitCameraToObject(target: THREE.Object3D, canvas: FitCanvasContext): void {
+  const box = new THREE.Box3().setFromObject(target);
+  if (box.isEmpty()) throw new Error("Bounding box for fit target is empty");
+  applyFitToCamera(box, canvas);
 }

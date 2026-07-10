@@ -46,18 +46,13 @@ const ProbeOrbitPivot = () => {
         : null;
     if (!ctrl) return;
 
-    const { getArrayForStoreId, worldUnitsPerPixel } = viewerApi.getState();
+    const { getArrayForStoreId } = viewerApi.getState();
     const layer = sceneApi
       .getState()
       .layers.find((l) => l.id === probedCoordinate.layerId);
     if (!layer) return;
 
-    const world = computeProbeWorldPosition(
-      layer,
-      probedCoordinate,
-      getArrayForStoreId,
-      worldUnitsPerPixel,
-    );
+    const world = computeProbeWorldPosition(layer, probedCoordinate, getArrayForStoreId);
     if (!world) return;
 
     const offset = camera.position.clone().sub(ctrl.target);

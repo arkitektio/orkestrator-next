@@ -15,7 +15,6 @@ import { ChevronDown, Crosshair, Save, X } from "lucide-react";
 import { useState } from "react";
 import { ImageLayerFragment } from "../../core/layerGuards";
 import { LayerState } from "../../store/sceneStore";
-import { useViewerStore } from "../../store/viewerStore";
 import { isLayerDirty } from "./colormap-utils";
 import { DimPill } from "./DimPill";
 import {
@@ -57,9 +56,6 @@ export const LayerGraphFlyout = ({
   inline?: boolean;
 }) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [isLodDebugOpen, setIsLodDebugOpen] = useState(false);
-  const lodDebugInfo = useViewerStore((s) => s.lodDebugInfo);
-  const currentLodInfo = lodDebugInfo[layer.id];
   const dirty = isLayerDirty(layer, originalLayer);
 
   const label =

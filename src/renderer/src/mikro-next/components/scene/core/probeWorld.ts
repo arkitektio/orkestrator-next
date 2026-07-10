@@ -14,11 +14,52 @@ import type { ProbedCoordinate } from "../store/viewerStore";
  * Extracted from `SceneProbedPoint` so both the rendered marker and the
  * probe-orbit camera pivot derive the exact same point (no drift between what you
  * see and what you pivot around).
+ *
+ * Deliberately CAMERA-INDEPENDENT: everything here changes only on probe/layer
+ * events, so components can memo it without subscribing to per-frame camera
+ * facts. The camera-dependent marker size (constant screen-size compensation) is
+ * computed separately via `probeMarkerRadius` — in a `useFrame`, not through the
+ * store (see OCTREE_RENDERER.md P17).
  */
 export interface ProbeMarkerGeometry {
   affineMatrix: THREE.Matrix4;
   markerPosition: [number, number, number];
-  markerRadius: number;
+  /** Smallest non-zero physical extent of the probed volume — the clamp basis
+   * for the marker radius. */
+  minAxis: number;
+}
+
+/**
+ * Screen-size-compensated marker radius. `worldUnitsPerPixel` comes straight
+ * from the camera (per frame, in `useFrame`); the clamps keep the marker from
+ * vanishing or swallowing tiny volumes.
+ */
+export function probeMarkerRadius(
+  minAxis: number,
+  worldUnitsPerPixel: number,
+  pxRadius: number,
+  minFraction: number,
+  maxFraction: number,
+): number {
+  return THREE.MathUtils.clamp(
+    worldUnitsPerPixel * pxRadius,
+    minAxis * minFraction,
+    minAxis * maxFraction,
+  );
+}
+
+/** World units spanned by one screen pixel for this camera + viewport height. */
+export function computeWorldUnitsPerPixel(
+  camera: THREE.Camera,
+  viewportHeight: number,
+): number {
+  if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
+    return 1 / (camera as THREE.OrthographicCamera).zoom;
+  }
+  const persp = camera as THREE.PerspectiveCamera;
+  const distance = camera.position.length();
+  const vFov = THREE.MathUtils.degToRad(persp.fov);
+  return (2 * Math.tan(vFov / 2) * distance) / Math.max(viewportHeight, 1);
 }
 
 /** Resolve the volume LOD used for probe geometry (fixed → default → highest). */
@@ -38,14 +79,14 @@ export function getResolvedVolumeLod(layer: LayerState): number {
 }
 
 /**
- * Compute the marker geometry (affine matrix + local marker offset + radius) for a
- * probe on a layer, or `null` when the layer has no resolvable spatial axes / LOD.
+ * Compute the camera-independent marker geometry (affine matrix + local marker
+ * offset + radius clamp basis) for a probe on a layer, or `null` when the layer
+ * has no resolvable spatial axes / LOD.
  */
 export function resolveProbeMarkerGeometry(
   layer: LayerState,
   probe: ProbedCoordinate,
   getArrayForStoreId: (storeId: string) => { shape: readonly number[] },
-  worldUnitsPerPixel: number,
 ): ProbeMarkerGeometry | null {
   const resolvedVolumeLod = getResolvedVolumeLod(layer);
   const dataArray = layer.lens.dataset.dataArrays[resolvedVolumeLod];
@@ -99,7 +140,7 @@ export function resolveProbeMarkerGeometry(
     return {
       affineMatrix: buildAffineMatrix(layer),
       markerPosition,
-      markerRadius: THREE.MathUtils.clamp(worldUnitsPerPixel * 6, minAxis * 0.004, minAxis * 0.03),
+      minAxis,
     };
   } catch {
     return null;
@@ -115,9 +156,8 @@ export function computeProbeWorldPosition(
   layer: LayerState,
   probe: ProbedCoordinate,
   getArrayForStoreId: (storeId: string) => { shape: readonly number[] },
-  worldUnitsPerPixel: number,
 ): THREE.Vector3 | null {
-  const geometry = resolveProbeMarkerGeometry(layer, probe, getArrayForStoreId, worldUnitsPerPixel);
+  const geometry = resolveProbeMarkerGeometry(layer, probe, getArrayForStoreId);
   if (!geometry) {
     return null;
   }

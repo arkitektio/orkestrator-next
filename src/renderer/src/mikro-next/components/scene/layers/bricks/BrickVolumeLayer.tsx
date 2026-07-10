@@ -63,8 +63,18 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const unregister = useViewerStore((s) => s.unregister);
   const lodBias = useViewerStore((s) => s.lodBias);
   const isDebug = useViewerStore((s) => s.debug);
-  const plan = useViewerStore((s) => s.nodePlans[layerId]);
-  useViewerStore((s) => s.residencyVersion); // pool appears/rebuilds → re-render
+  // SCALAR plan subscriptions only (P9c/P17): the plan OBJECT gets a new
+  // identity on every replan (≤5/s during a pan — its node list changes), but
+  // this component consumes only targetLevel/mode. Subscribing to the scalars
+  // means re-rendering only when those actually change (zoom-level crossings).
+  // Anything needing the full plan (the probe closure) reads it via
+  // viewerStoreApi.getState() at call time.
+  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planMode = useViewerStore((s) => s.nodePlans[layerId]?.mode);
+  // Pool appears/rebuilds/disposes → re-render. NOT residencyVersion: that
+  // bumps per upload batch while streaming and would re-render this component
+  // continuously during a pan for nothing (texture updates are imperative).
+  useViewerStore((s) => s.poolsVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
 
   // Scalar selectors ONLY: cameraPose/viewportSize are new objects on every
@@ -127,15 +137,15 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // (see stepLen in the shader); the in-shader rayLen/MAX_STEPS floor
   // guarantees every ray reaches its exit within the loop bound.
   const marchParams = useMemo(() => {
-    if (!pool || !plan) return { minDelta: 1, steps: 128 };
-    const level = pool.geometry.levels[Math.min(plan.targetLevel, pool.geometry.levels.length - 1)];
+    if (!pool || planTargetLevel === undefined) return { minDelta: 1, steps: 128 };
+    const level = pool.geometry.levels[Math.min(planTargetLevel, pool.geometry.levels.length - 1)];
     return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
-  }, [pool, plan]);
+  }, [pool, planTargetLevel]);
 
   // Dynamic uniform pushes (no material rebuild).
   useEffect(() => {
     const u = materialRef.current?.uniforms;
-    if (!u || !plan) return;
+    if (!u || planTargetLevel === undefined) return;
     u.colormapAtlas.value = channelData.atlas;
     u.numChannels.value = channelData.numChannels;
     u.blendMode.value = channelData.blendMode;
@@ -147,7 +157,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     u.chVisible.value = channelData.visible;
     u.chInvert.value = channelData.invert;
     u.chRow.value = channelData.row;
-    u.uDesiredLevel.value = plan.targetLevel;
+    u.uDesiredLevel.value = planTargetLevel;
     u.uLodBias.value = lodBias;
     u.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     u.uMinDelta.value = marchParams.minDelta;
@@ -156,7 +166,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     u.uStepScale.value = cameraMoving ? 2 : 1;
     u.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
-  }, [channelData, plan, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, marchParams, layer?.projection, invalidate]);
+  }, [channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, marchParams, layer?.projection, invalidate]);
 
   const initialUniforms = useMemo(() => {
     if (!pool) return null;
@@ -175,7 +185,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       chVisible: { value: channelData.visible },
       chInvert: { value: channelData.invert },
       chRow: { value: channelData.row },
-      uDesiredLevel: { value: plan?.targetLevel ?? 0 },
+      uDesiredLevel: { value: planTargetLevel ?? 0 },
       uLodBias: { value: lodBias },
       uPxPerVoxelAtUnitDist: { value: pxPerVoxelAtUnitDistance },
       uMinDelta: { value: marchParams.minDelta },
@@ -198,6 +208,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
   const probeCoordinateFromRay = (ray: THREE.Ray): [number, number, number] | null => {
     const mesh = meshRef.current;
+    // Event-time read of the full plan — no render subscription needed for it.
+    const plan = viewerStoreApi.getState().nodePlans[layerId];
     if (!mesh || !pool || !plan || !brickSystem) return null;
     const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
     const localOrigin = ray.origin.clone().applyMatrix4(inverseMatrix);
@@ -258,7 +270,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   };
 
   if (layer?.visible === false) return null;
-  if (!plan || plan.mode !== "3D" || !pool || !initialUniforms) return null;
+  if (planMode !== "3D" || !pool || !initialUniforms) return null;
 
   const base = pool.geometry.levels[0];
   const volumeSize: [number, number, number] = [

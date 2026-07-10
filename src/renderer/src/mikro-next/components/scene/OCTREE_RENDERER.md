@@ -200,14 +200,29 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   per cache hit (pitfall P10). `buildDebugReport()` backs the DebugPanel's
   "Copy debug report" button — paste that JSON when reporting perf issues.
 
-### 2.9 Repack (`core/octree/brickRepack.ts`)
+### 2.9 Repack (`core/octree/brickRepack.ts` + `repackDispatcher.ts`)
 
-Pure, main-thread, golden-buffer-tested. Strided copy from decoded chunks into
-the canonical output layout `((c·storedZ + z)·storedY + y)·storedX + x`
-(x-fastest — this is why the shaders have no `dimRemap`), then per-axis edge
-replication for the border, then a min/max scan; `min == max` flags the brick
-EMPTY. Measured cost is ~50–90 ms *total* across a whole SPIM bring-up —
-worker-side repack is documented as a non-urgent future optimization.
+Pure, golden-buffer-tested, and — since the P17 hardening — run **off the UI
+thread**: `BrickResidencyManager` submits jobs through a `RepackDispatcher`
+(`core/octree/repackDispatcher.ts`), a 2-worker pool around the unchanged pure
+function (`repack-worker.ts`; sync fallback when `Worker` is unavailable —
+vitest/jsdom). Strided copy from decoded chunks into the canonical output
+layout `((c·storedZ + z)·storedY + y)·storedX + x` (x-fastest — this is why
+the shaders have no `dimRemap`), then per-axis edge replication for the
+border, then a min/max scan; `min == max` flags the brick EMPTY. Decoded
+chunks travel to the repack worker zero-copy (SharedArrayBuffer-backed — the
+app is crossOriginIsolated and `getChunkWorker` forwards
+`useSharedArrayBuffer`) while STAYING in the main-side chunk cache; the output
+brick returns as a transferable. `stats.repackMs` is therefore wall time
+(queue + worker), not main-thread time. No cancellation: jobs are a few ms and
+stale results are absorbed by the existing `protectedKeys`/`staleDrops` gate.
+
+Related main-thread costs, assessed: the per-upload CPU backing-mirror copy in
+`writeBrickToAtlas` (§2.5) is KEPT — `sampleResident` (probes) and
+context-loss restore both read `atlas.backing`, and the copy is bounded by the
+6 MB/frame upload budget. Per-chunk `zarr.json` re-parsing on the main thread
+was removed via a per-array metadata memo
+(`lib/zarr/runner/get-worker.ts` `readArrayMetadataCached`).
 
 ### 2.10 Shader traversal (`glsl/brickTraversal.ts`)
 
@@ -433,6 +448,41 @@ pool cap, since the coarsest-level slot floor overrides the byte budget).
 `resolveAxisIndices` now resolves an intensity axis that collides with a
 spatial axis to -1 (no channel dim). Trust nothing about dim mappings.
 
+**P17 — Render-cadence state must not live in React-subscribed store fields.**
+The scene has two planes: the render plane (trackers, managers, three.js
+objects — all vanilla `store.subscribe` + imperative updates + `invalidate()`)
+and the UI plane (React). The rule: **React-subscribed store fields may only
+change at UI cadence** (user action or camera-settle). Continuous render facts
+flow through vanilla subscriptions / `useFrame` / uniforms; if the UI must
+display one, publish a throttled or settled snapshot — and subscribe to
+**scalars, never objects** (the P9c corollary). Violations found in one audit,
+all the same shape (render fact → React store field → per-tick re-render of a
+heavy subtree):
+
+- `worldUnitsPerPixel` was written per frame (`camera.position.length()`
+  changes during pan/orbit too, not just zoom) → ScaleBar re-rendered per frame
+  and both probe-marker components rebuilt their geometry memo per frame. Fix:
+  probe markers compute the radius from the camera in their own `useFrame`
+  (`core/probeWorld.ts` splits camera-independent geometry from
+  `probeMarkerRadius`); `CanvasSync` publishes the store value throttled
+  (150 ms leading + trailing) for the HTML ScaleBar only.
+- `residencyVersion` (per-upload-batch) was the layers' only way to catch the
+  rare "pool appeared/rebuilt" event → every streaming batch re-rendered every
+  layer. Fix: `poolsVersion`, bumped only on pool create/rebuild/dispose;
+  `residencyVersion` remains for the debug UI, whose components are now
+  MOUNT-gated on `debug` (`WhenDebug` in `Scene.tsx`) so their subscriptions
+  don't exist otherwise.
+- The layers subscribed to the `nodePlans[layerId]` OBJECT (new identity per
+  replan, ≤5/s during a pan) to courier three scalars into uniforms. Fix:
+  scalar selectors (`targetLevel` / `slabZ` / `mode` / `nodes.length > 0`);
+  event-time consumers read the full plan via `storeApi.getState()`.
+- `viewStore.updateCameraData` minted fresh `viewportSize`/`cameraPose` object
+  identities per 16 Hz emission; it now preserves the previous references when
+  value-equal, so object selectors can't re-render at frame rate by accident.
+- Corollary for write-side dedup gates (`sameViewRanges`): never gate a hot
+  store write on a continuously-varying cosmetic field (the `viewportFraction`
+  regression) — compare only what downstream consumers need per-tick.
+
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without
 an effect-cleanup `dispose()`, that's an unbounded GPU leak on exactly the
@@ -457,7 +507,12 @@ not implement without cause):
 
 - per-mode pool retention (instant 2D↔3D toggles; doubles per-layer memory),
 - `texStorage3D` allocation (skips the one-time zeroed 128 MB upload per pool),
-- worker-side repack (repack is ~50–90 ms total, not a bottleneck),
+- lazy backing-mirror (drop the per-upload CPU memcpy in `writeBrickToAtlas`;
+  entangled with `sampleResident` probes + context-loss restore, see §2.9),
 - motion-time reduced-resolution rendering (only if `uStepScale = 3` proves
   insufficient),
 - uint16-native `R16` atlases (worker currently promotes to float32).
+
+No longer deferred: worker-side repack shipped with the P17 hardening
+(`repackDispatcher.ts`), alongside the per-array zarr-metadata memo and the
+`useSharedArrayBuffer` forwarding fix in `getChunkWorker`.

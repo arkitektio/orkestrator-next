@@ -10,7 +10,8 @@ import { resolveCollapsedSelection } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
-import { repackBrick, type BrickArray, type RepackChunk } from "../core/octree/brickRepack";
+import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
+import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
   buildLayerLevelGeometry,
@@ -122,6 +123,8 @@ type Deps = {
   viewerStore: StoreApi<ViewerState>;
   sceneStore: StoreApi<SceneState>;
   invalidate: () => void;
+  /** Runs `repackBrick` off the UI thread (worker pool; sync in tests). */
+  repack: RepackDispatcher;
 };
 
 export type ResidentBrickInfo = {
@@ -524,6 +527,9 @@ export class BrickResidencyManager {
       maxValue,
     };
     this.pools.set(layer.id, pool);
+    // Pool LIFECYCLE event (not streaming progress): this is what layer
+    // components re-render on — see viewerStore.poolsVersion.
+    this.deps.viewerStore.getState().bumpPoolsVersion();
     return pool;
   }
 
@@ -609,30 +615,35 @@ export class BrickResidencyManager {
 
       const stored = pool.spec.stored;
       const elementCount = stored[0] * stored[1] * stored[2] * pool.spec.channelCount;
-      const output: BrickArray =
-        pool.atlas.kind === "r8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
 
+      // Repack runs OFF the UI thread (worker pool); SAB-backed chunks travel
+      // zero-copy, the output brick comes back as a transferable. repackMs is
+      // wall time (queue + worker), not main-thread time.
       const repackStartedAt = performance.now();
-      const result = repackBrick({
-        spec: pool.spec,
-        level,
-        axes: pool.geometry.axes,
-        brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
-        fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
-        fixedOffsets: pool.fixedOffsets,
-        chunks,
-        output,
+      const result = await this.deps.repack.repack({
+        kind: pool.atlas.kind,
+        elementCount,
+        input: {
+          spec: pool.spec,
+          level,
+          axes: pool.geometry.axes,
+          brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
+          fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
+          fixedOffsets: pool.fixedOffsets,
+          chunks,
+        },
       });
       this.stats.repackMs += performance.now() - repackStartedAt;
+      if (controller.signal.aborted || this.disposed) return;
       this.stats.bricksFetched += 1;
 
       pool.queue.push({
         key: node.key,
         level: node.level,
         coords: node.coords,
-        data: output,
+        data: result.data,
         uniformValue: result.uniformValue,
-        bytes: output.byteLength,
+        bytes: result.data.byteLength,
       });
       pool.queuedKeys.add(node.key);
       this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
@@ -746,6 +757,8 @@ export class BrickResidencyManager {
     pool.inFlight.clear();
     disposeBrickAtlas(pool.atlas);
     disposePageTable(pool.pageTable);
+    // Pool lifecycle event — layer components must drop their pool handle.
+    this.deps.viewerStore.getState().bumpPoolsVersion();
   }
 
   dispose(): void {

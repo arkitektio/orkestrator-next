@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { PerfFrameProbe } from "./PerfFrameProbe";
 import { CameraController } from "./cameras/CameraController";
+import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
@@ -18,7 +19,7 @@ import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { createViewerStore, ViewerStoreContext } from "./store/viewerStore";
+import { createViewerStore, ViewerStoreContext, useViewerStore } from "./store/viewerStore";
 import { createSelectionStore, SelectionStoreContext } from "./store/selectionStore";
 import { GizmoHelper, GizmoViewport} from '@react-three/drei'
 import { createSceneStore, SceneStoreContext } from "./store/sceneStore";
@@ -44,6 +45,17 @@ const SceneModeContent = () => {
   const displayMode = useModeStore((state) => state.displayMode);
 
   return displayMode === "2D" ? <TwoDScene /> : <ThreeDScene />;
+};
+
+/**
+ * Mount-gate for debug consumers. The DebugPanel and BrickResidencyOverlay
+ * subscribe to streaming-cadence state (`residencyVersion`, `nodePlans`); when
+ * mounted with debug off they still re-render (to null) on every bump. Gating
+ * the MOUNT here means those subscriptions don't exist at all outside debug.
+ */
+const WhenDebug = ({ children }: { children: ReactNode }) => {
+  const debug = useViewerStore((s) => s.debug);
+  return debug ? <>{children}</> : null;
 };
 
 
@@ -145,6 +157,9 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <CameraMatrixSync />
               <PerfFrameProbe />
               <CameraController />
+              {/* Must follow CameraController: fits the as-loaded scene extent
+                  before the first painted frame (and on 2D/3D remounts). */}
+              <InitialCameraFit />
               <CanvasSync />
 
               {/* Interaction Layers */}
@@ -155,7 +170,9 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <SceneModeContent />
 
               <BrickSystemProvider />
-              <BrickResidencyOverlay />
+              <WhenDebug>
+                <BrickResidencyOverlay />
+              </WhenDebug>
 
               <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
                 <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}/>
@@ -170,7 +187,9 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <ProbeThresholdPanel />
               <LayerControlPanel />
             </div>
-            <DebugPanel />
+            <WhenDebug>
+              <DebugPanel />
+            </WhenDebug>
             <SelectedRoiPanel />
             <ZSliderPanel />
             <VisibilityManager/>

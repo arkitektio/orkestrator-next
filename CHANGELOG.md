@@ -1,3 +1,10 @@
+## [1.67.6](https://github.com/arkitektio/orkestrator-next/compare/v1.67.5...v1.67.6) (2026-07-11)
+
+
+### Bug Fixes
+
+* dupilcate headers ([0396e3e](https://github.com/arkitektio/orkestrator-next/commit/0396e3e7e1f0c59984487c93586468179068c446))
+
 ## [1.67.5](https://github.com/arkitektio/orkestrator-next/compare/v1.67.4...v1.67.5) (2026-07-11)
 
 

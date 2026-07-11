@@ -16,8 +16,58 @@ import { AppManager } from "./modules/AppManager";
 import { UploadService } from "./modules/UploadService";
 import { BigFileUploadService } from "./modules/BigFileUploadService";
 import { BigFileDownloadService } from "./modules/BigFileDownloadService";
-import { session, protocol, net } from "electron";
+import { session, protocol } from "electron";
+import { readFile } from "node:fs/promises";
+import { normalize, sep } from "node:path";
 import { ShellService } from "./modules/ShellService";
+import { APP_SCHEME } from "./scheme";
+
+// Minimal extension -> MIME map for the app:// static file handler. Kept inline
+// to avoid adding a dependency. text/javascript for .js/.mjs is mandatory (ES
+// module scripts are rejected otherwise) and application/wasm is required for
+// WebAssembly.instantiateStreaming (zarr codecs, duckdb-wasm).
+const MIME_TYPES: Record<string, string> = {
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".mjs": "text/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".map": "application/json",
+  ".wasm": "application/wasm",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".woff": "font/woff",
+  ".ttf": "font/ttf",
+  ".data": "application/octet-stream",
+  ".txt": "text/plain",
+};
+
+function mimeForPath(filePath: string): string {
+  const dot = filePath.lastIndexOf(".");
+  const ext = dot >= 0 ? filePath.slice(dot).toLowerCase() : "";
+  return MIME_TYPES[ext] ?? "application/octet-stream";
+}
+
+// Register the custom `app://` scheme (see ./scheme) as standard + secure. This
+// MUST run before the app 'ready' event, hence at module top-level.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: APP_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
+]);
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 // WebGPU for the scene renderer: macOS (Metal) and Windows (D3D) enable it by
@@ -104,25 +154,37 @@ if (!gotTheLock) {
       })
     })
 
-    // In the packaged app the renderer is loaded via loadFile() (file://),
-    // and onHeadersReceived above does not reliably apply COOP/COEP to that
-    // navigation response (especially out of an asar archive) — without it,
-    // window.crossOriginIsolated is false and SharedArrayBuffer is undefined,
-    // breaking the worker-accelerated zarr chunk decoding pipeline. Overriding
-    // the file: protocol handler gives full control over the Response headers
-    // for every file:// request, including the top-level document.
-    protocol.handle("file", async (request) => {
-      const response = await net.fetch(request.url, {
-        bypassCustomProtocolHandlers: true,
-      })
-      const headers = new Headers(response.headers)
-      headers.set("Cross-Origin-Opener-Policy", "same-origin")
-      headers.set("Cross-Origin-Embedder-Policy", "require-corp")
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      })
+    // Serve the packaged renderer from the custom `app://` scheme (registered
+    // as standard + secure above) instead of file://. Returning the COOP/COEP
+    // trio on this real, secure origin is what makes the document
+    // cross-origin isolated, so SharedArrayBuffer is available for the
+    // worker-accelerated zarr chunk decoding pipeline. The renderer uses
+    // HashRouter, so the only document ever requested is index.html; every
+    // other request is a static asset relative to it.
+    const rendererRoot = normalize(join(__dirname, "../renderer"))
+    protocol.handle(APP_SCHEME, async (request) => {
+      const url = new URL(request.url)
+      let pathname = decodeURIComponent(url.pathname)
+      if (pathname === "/" || pathname === "") pathname = "/index.html"
+
+      // Confine every read to the renderer root (path-traversal guard).
+      const filePath = normalize(join(rendererRoot, pathname))
+      if (filePath !== rendererRoot && !filePath.startsWith(rendererRoot + sep)) {
+        return new Response("Forbidden", { status: 403 })
+      }
+
+      try {
+        const data = await readFile(filePath)
+        const headers = new Headers({
+          "Content-Type": mimeForPath(filePath),
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Cross-Origin-Embedder-Policy": "require-corp",
+          "Cross-Origin-Resource-Policy": "same-origin",
+        })
+        return new Response(data, { status: 200, headers })
+      } catch {
+        return new Response("Not Found", { status: 404 })
+      }
     })
 
     windowManager.createMainWindow(icon);

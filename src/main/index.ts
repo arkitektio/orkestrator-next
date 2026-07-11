@@ -145,9 +145,20 @@ if (!gotTheLock) {
     registerIssueIpc();
     // Inside your app.whenReady() or before creating the window
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      // Strip any pre-existing COOP/COEP before re-adding: the app:// protocol
+      // handler already sets them (lowercased by Headers), so a plain spread
+      // would emit the header twice ("require-corp, require-corp"). COOP/COEP
+      // are structured single-item headers — a duplicated value is INVALID and
+      // Chromium then ignores the header entirely, silently breaking
+      // crossOriginIsolated (and thus SharedArrayBuffer) in the packaged app.
+      const responseHeaders = Object.fromEntries(
+        Object.entries(details.responseHeaders ?? {}).filter(
+          ([key]) => !["cross-origin-embedder-policy", "cross-origin-opener-policy"].includes(key.toLowerCase())
+        )
+      )
       callback({
         responseHeaders: {
-          ...details.responseHeaders,
+          ...responseHeaders,
           'Cross-Origin-Embedder-Policy': ['require-corp'],
           'Cross-Origin-Opener-Policy': ['same-origin']
         }

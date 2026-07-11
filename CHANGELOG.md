@@ -1,3 +1,10 @@
+## [1.67.8](https://github.com/arkitektio/orkestrator-next/compare/v1.67.7...v1.67.8) (2026-07-11)
+
+
+### Bug Fixes
+
+* massive type fixing ([f0600c8](https://github.com/arkitektio/orkestrator-next/commit/f0600c8891d81bc1065f74476e388865e073b176))
+
 ## [1.67.7](https://github.com/arkitektio/orkestrator-next/compare/v1.67.6...v1.67.7) (2026-07-11)
 
 

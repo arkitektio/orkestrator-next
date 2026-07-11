@@ -8,10 +8,12 @@ import {
 } from "lucide-react";
 import {
   AggregationFunction,
-  DerivationRuleInput,
   DerivationType,
+  PropertyDefinition,
   ValueKind,
 } from "../../api/graphql";
+
+export type { PropertyDefinition };
 
 export const DEFAULT_DERIVATION = DerivationType.Latest
 export const DEFAULT_AGGREGATION = AggregationFunction.Latest

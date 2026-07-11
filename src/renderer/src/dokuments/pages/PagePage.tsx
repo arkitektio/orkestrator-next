@@ -7,7 +7,7 @@ import { useGetPageQuery } from "../api/graphql";
 
 export const PagePage = asDetailQueryRoute(
   useGetPageQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
 
     const resolve = useResolve();
 

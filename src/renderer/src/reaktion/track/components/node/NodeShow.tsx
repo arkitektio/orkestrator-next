@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { NodeResizeControl } from "@xyflow/react";
 import { motion } from "framer-motion";
 import React from "react";
-import { useLatestNodeEvent } from "../../hooks/useLatestNodeEvent";
 
 type NodeProps = {
   children: React.ReactNode;
@@ -32,13 +31,11 @@ export const NodeTrackLayout: React.FC<NodeProps> = ({
   className,
   selected,
   contextMenu,
-  minWidth = 100,
-  minHeight = 30,
+  minWidth: _minWidth = 100,
+  minHeight: _minHeight = 30,
   maxWidth = 400,
   maxHeight = 700,
 }) => {
-  const latestEvent = useLatestNodeEvent(id);
-
   return (
     <>
       <ContextMenu>

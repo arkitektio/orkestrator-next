@@ -7,7 +7,6 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphMetricCategory } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
   useGetMetricCategoryQuery,
   useUpdateEntityCategoryMutation
@@ -37,17 +36,15 @@ const Page = asDetailQueryRoute(
       }
     };
 
-    const navigate = useNavigate();
-
     return (
       <KraphMetricCategory.ModelPage
-        object={data.metricCategory.id}
+        object={{ id: data.metricCategory.id }}
         title={data?.metricCategory.label}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <KraphMetricCategory.Komments object={data.metricCategory.id} />
+                <KraphMetricCategory.Komments object={{ id: data.metricCategory.id }} />
               ),
             }}
           />

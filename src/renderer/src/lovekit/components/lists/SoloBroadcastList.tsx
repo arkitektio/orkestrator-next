@@ -14,7 +14,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination,  title }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListSoloBroadcastsQuery({
+  const { data, refetch } = useListSoloBroadcastsQuery({
     variables: { filter: filters, pagination, },
   });
 

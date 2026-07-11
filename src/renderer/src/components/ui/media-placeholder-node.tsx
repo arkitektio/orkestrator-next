@@ -15,8 +15,32 @@ import { KEYS } from 'platejs';
 import { PlateElement, useEditorPlugin, withHOC } from 'platejs/react';
 import { useFilePicker } from 'use-file-picker';
 
-import { useUploadFile } from '@/hooks/use-upload-file';
 import { cn } from '@/lib/utils';
+
+type UploadedFile = { name: string; url: string };
+
+/**
+ * Minimal local stand-in for a real upload hook: creates an object URL for
+ * the given file so the placeholder element can be replaced with a usable
+ * media node without depending on a backend upload endpoint.
+ */
+function useUploadFile() {
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [uploadedFile, setUploadedFile] = React.useState<UploadedFile | undefined>(undefined);
+  const [uploadingFile, setUploadingFile] = React.useState<File | undefined>(undefined);
+
+  const uploadFile = React.useCallback(async (file: File) => {
+    setIsUploading(true);
+    setUploadingFile(file);
+    setProgress(0);
+    setUploadedFile({ name: file.name, url: URL.createObjectURL(file) });
+    setProgress(100);
+    setIsUploading(false);
+  }, []);
+
+  return { isUploading, progress, uploadedFile, uploadFile, uploadingFile };
+}
 
 const CONTENT: Record<
   string,
@@ -188,7 +212,7 @@ export function ImageProgress({
   imageRef,
   progress = 0,
 }: {
-  file: File;
+  file: File | undefined;
   className?: string;
   imageRef?: React.RefObject<HTMLImageElement | null>;
   progress?: number;
@@ -196,6 +220,11 @@ export function ImageProgress({
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!file) {
+      setObjectUrl(null);
+      return undefined;
+    }
+
     const url = URL.createObjectURL(file);
     setObjectUrl(url);
 
@@ -204,7 +233,7 @@ export function ImageProgress({
     };
   }, [file]);
 
-  if (!objectUrl) {
+  if (!objectUrl || !file) {
     return null;
   }
 

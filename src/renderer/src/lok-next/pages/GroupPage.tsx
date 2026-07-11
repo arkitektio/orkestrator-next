@@ -20,7 +20,7 @@ export const GroupPage = asDetailQueryRoute(useDetailGroupQuery, ({ data }) => {
   const [update] = useUpdateGroupProfileMutation();
   const [create] = useCreateGroupProfileMutation();
 
-  const createFile = async (file: File, key: string) => {
+  const createFile = async (_file: File, key: string) => {
     if (!data.group.profile)
       create({
         variables: {

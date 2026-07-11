@@ -24,7 +24,6 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as z from "zod";
 import {
-  useAgentOptionsLazyQuery,
   useCreateShortcutMutation,
   useDetailActionQuery
 } from "../api/graphql";
@@ -109,6 +108,7 @@ const ArgsContainer = ({
               {group.filledPorts.map((port, index) => {
                 const Widget = registry.getInputWidgetForPort(port);
                 if (hidden && hidden[port.key]) return null;
+                if (!port.widget) return null;
 
                 return (
                   <div className="w-full flex flex-row items-center space-x-2">
@@ -155,8 +155,6 @@ export const ReserveForm = (props: {
 
   const action = actiondata?.action;
 
-  const [search] = useAgentOptionsLazyQuery();
-
   const [chosenArgs, setChosenArgs] = React.useState<string[]>([]);
 
   const form = usePortForm({
@@ -197,7 +195,6 @@ export const ReserveForm = (props: {
   };
 
   const data = form.watch();
-  const isSubmitting = form.formState.isSubmitting;
   const isValid = form.formState.isValid;
 
   const { registry } = useWidgetRegistry();
@@ -219,7 +216,7 @@ export const ReserveForm = (props: {
             className="space-y-6 mt-4"
           >
             <div className="w-full flex flex-row items-center space-x-2 mt-2">
-              {action?.args.length > 0 &&
+              {(action?.args.length ?? 0) > 0 &&
                 action?.args.map((arg) => {
                   return (
                     <Badge
@@ -290,7 +287,7 @@ export const ReserveFormDialog = (props: {
     return <div>Loading...</div>;
   }
 
-  const [chosenArgs, setChosenArgs] = React.useState<string[]>([]);
+  const [, setChosenArgs] = React.useState<string[]>([]);
 
   return (
     <div>

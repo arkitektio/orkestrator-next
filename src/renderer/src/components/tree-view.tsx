@@ -100,11 +100,13 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
             }
             if (!expandAll) ids.pop()
           }
+          return false
         } else if (!expandAll && items.id === targetId) {
           return true
         } else if (items.children) {
           return walkTreeItems(items.children, targetId)
         }
+        return false
       }
 
       walkTreeItems(data, initialSelectedItemId)
@@ -128,7 +130,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
         />
         <div
           className='w-full h-[48px]'
-          onDrop={(e) => { handleDrop({ id: '', name: 'parent_div' }) }}>
+          onDrop={() => { handleDrop({ id: '', name: 'parent_div' }) }}>
 
         </div>
       </div>

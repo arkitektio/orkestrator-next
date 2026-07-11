@@ -1,11 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokRedeemToken } from "@/linkers";
 import { useGetRedeemTokenQuery } from "../api/graphql";
 
 export const RedeemTokenPage = asDetailQueryRoute(useGetRedeemTokenQuery, ({ data }) => {
-  const resolve = useResolve();
-
   return (
     <LokRedeemToken.ModelPage
       object={data.redeemToken}

@@ -11,7 +11,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListLlModelsQuery({
+  const { data, error, refetch } = useListLlModelsQuery({
     variables: { filter: filters, pagination },
   });
 

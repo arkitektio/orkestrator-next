@@ -14,7 +14,6 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
   selected,
 }) => {
   const latestEvent = useLatestNodeEvent(id);
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   return (

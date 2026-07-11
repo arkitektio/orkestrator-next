@@ -12,7 +12,7 @@ import {
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 
-export const CreateWorkspaceForm = (props: { onSuccess?: (data: CreateWorkspaceMutation) => void }) => {
+export const CreateWorkspaceForm = (props: { onSuccess?: (data: CreateWorkspaceMutation | null | undefined) => void }) => {
   const [add] = useCreateWorkspaceMutation({
     refetchQueries: [WorkspacesDocument, WorkspaceCarouselDocument],
   });

@@ -35,6 +35,7 @@ import {
   EffectWidgetProps,
   InputWidgetProps,
   ReturnWidgetProps,
+  WidgetRegistryType,
 } from "@/rekuest/widgets/types";
 
 export const UnknownInputWidget = ({ port }: InputWidgetProps) => {
@@ -68,6 +69,25 @@ export const UnknownEffectWidget = ({
   );
 };
 
+// HideEffect only knows how to render the "HideEffect" variant of the
+// PortEffectFragment union, so narrow to that variant before delegating.
+const HideEffectAdapter = ({ effect, port, children }: EffectWidgetProps) => {
+  if (effect.__typename !== "HideEffect") {
+    return null;
+  }
+  return (
+    <HideEffect effect={effect} port={port}>
+      {children}
+    </HideEffect>
+  );
+};
+
+// BoolReturnWidget narrows its value to boolean; the registry hands widgets
+// the generic ValueKind, so coerce before delegating.
+const BoolReturnWidgetAdapter = (props: ReturnWidgetProps<any>) => {
+  return <BoolReturnWidget {...props} value={Boolean(props.value)} />;
+};
+
 const registry = new WidgetRegistry(
   UnknownInputWidget,
   UnknownReturnWidget,
@@ -79,96 +99,126 @@ registry.registerReturnWidgetFallback(
   DelegatingStructureWidget,
 );
 
-const int = registry.registerInputWidgetFallback(PortKind.Int, IntWidget);
-const list = registry.registerInputWidgetFallback(PortKind.List, ListWidget);
-const bool = registry.registerInputWidgetFallback(PortKind.Bool, BoolWidget);
-const date = registry.registerInputWidgetFallback(PortKind.Date, DateWidget);
-const enumwi = registry.registerInputWidgetFallback(PortKind.Enum, EnumWidget);
-const union = registry.registerInputWidgetFallback(PortKind.Union, UnionWidget);
-const dict = registry.registerInputWidgetFallback(PortKind.Dict, DictWidget);
-const model = registry.registerInputWidgetFallback(PortKind.Model, ModelWidget);
-const float = registry.registerInputWidgetFallback(PortKind.Float, FloatWidget);
+registry.registerInputWidgetFallback(PortKind.Int, IntWidget);
+registry.registerInputWidgetFallback(PortKind.List, ListWidget);
+registry.registerInputWidgetFallback(PortKind.Bool, BoolWidget);
+registry.registerInputWidgetFallback(PortKind.Date, DateWidget);
+registry.registerInputWidgetFallback(PortKind.Enum, EnumWidget);
+registry.registerInputWidgetFallback(PortKind.Union, UnionWidget);
+registry.registerInputWidgetFallback(PortKind.Dict, DictWidget);
+registry.registerInputWidgetFallback(PortKind.Model, ModelWidget);
+registry.registerInputWidgetFallback(PortKind.Float, FloatWidget);
 registry.registerInputWidgetFallback(PortKind.Quantity, QuantityWidget);
-const string = registry.registerInputWidgetFallback(
+registry.registerInputWidgetFallback(
   PortKind.String,
   StringWidget,
 );
-const mstructure = registry.registerInputWidgetFallback(
+registry.registerInputWidgetFallback(
   PortKind.MemoryStructure,
   MemoryStructureWidget,
 );
-const structure = registry.registerInputWidgetFallback(
+registry.registerInputWidgetFallback(
   PortKind.Structure,
   StructureWidget,
 );
 
-const hideEffect = registry.registerEffectWidget("HideEffect", HideEffect);
+registry.registerEffectWidget("HideEffect", HideEffectAdapter);
 
-const search = registry.registerInputWidget("SearchAssignWidget", SearchWidget);
-const slider = registry.registerInputWidget("SliderAssignWidget", SliderWidget);
+registry.registerInputWidget("SearchAssignWidget", SearchWidget);
+registry.registerInputWidget("SliderAssignWidget", SliderWidget);
 
-const choices = registry.registerInputWidget(
+registry.registerInputWidget(
   "ChoiceAssignWidget",
   ChoicesWidget,
 );
 
-const stateChoise = registry.registerInputWidget(
+registry.registerInputWidget(
   "StateChoiceAssignWidget",
   StateChoiceWidget,
 );
 
-const proxy = registry.registerInputWidget("ProxyWidget", ProxyWidget);
+registry.registerInputWidget("ProxyWidget", ProxyWidget);
 
-const intReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Int,
   IntReturnWidget,
 );
-const floatReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Float,
   FloatReturnWidget,
 );
 registry.registerReturnWidgetFallback(PortKind.Quantity, QuantityReturnWidget);
-const stringReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.String,
   StringReturnWidget,
 );
-const modelReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Model,
   ModelReturnWidget,
 );
 
 
-const listReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.List,
   ListReturnWidget,
 );
-const boolReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Bool,
-  BoolReturnWidget,
+  BoolReturnWidgetAdapter,
 );
-const dateReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Date,
   DateReturnWidget,
 );
 
-const enumReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Enum,
   EnumReturnWidget,
 );
-const unionReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Union,
   UnionReturnWidget,
 );
 
-const structureReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.Structure,
   DelegatingStructureWidget,
 );
 
 
-const mstructureReturn = registry.registerReturnWidgetFallback(
+registry.registerReturnWidgetFallback(
   PortKind.MemoryStructure,
   MemoryStructureReturnWidget,
 );
 
-export const THE_WIDGET_REGISTRY = registry;
+// `WidgetRegistry.getInputWidgetForPort` / `getReturnWidgetForPort` are typed
+// against the specific `ArgPort` / `ReturnPort` fragments, while
+// `WidgetRegistryType` (consumed by `WidgetRegistryProvider`) works over the
+// broader `MappablePort` union. Narrow on `__typename` before delegating.
+export const THE_WIDGET_REGISTRY: WidgetRegistryType = {
+  registerWard: (wardKey, ward) => registry.registerWard(wardKey, ward),
+  getWard: (wardKey) => registry.getWard(wardKey),
+  registerInputWidget: (widgetType, widget) =>
+    registry.registerInputWidget(widgetType, widget),
+  registerInputWidgetFallback: (portType, widget) =>
+    registry.registerInputWidgetFallback(portType, widget),
+  registerReturnWidget: (widgetType, widget) =>
+    registry.registerReturnWidget(widgetType, widget),
+  registerEffectWidget: (effectType, widget) =>
+    registry.registerEffectWidget(effectType, widget),
+  registerReturnWidgetFallback: (portType, widget) =>
+    registry.registerReturnWidgetFallback(portType, widget),
+  getReturnWidgetForPort: (port, allowFallback) => {
+    if (port.__typename !== "ReturnPort") {
+      return UnknownReturnWidget;
+    }
+    return registry.getReturnWidgetForPort(port, allowFallback);
+  },
+  getInputWidgetForPort: (port, allowFallback) => {
+    if (port.__typename !== "ArgPort") {
+      return UnknownInputWidget;
+    }
+    return registry.getInputWidgetForPort(port, allowFallback);
+  },
+  getEffectWidget: (effectType) => registry.getEffectWidget(effectType),
+};

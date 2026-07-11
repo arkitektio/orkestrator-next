@@ -4,7 +4,7 @@
 import { normalizeNodeId } from 'platejs';
 import { Plate, usePlateEditor } from 'platejs/react';
 
-import { EditorKit } from '@/components/editor/plugsieditor-kit';
+import { EditorKit } from '@/components/editor/editor-kit';
 import { SettingsDialog } from '@/components/editor/settings-dialog';
 import { Editor, EditorContainer } from '@/components/ui/editor';
 

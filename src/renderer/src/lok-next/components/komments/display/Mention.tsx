@@ -7,13 +7,13 @@ export const Mention = ({ element }: { element: MentionType }) => {
     <>
       {element?.user && (
         <LokUser.Smart
-          object={element?.user?.id}
+          object={element.user}
           className="inline-flex"
           containerClassName="inline"
 
         >
           <LokUser.DetailLink
-            object={element?.user?.id}
+            object={element.user}
             className="inline"
           >
             <Badge variant="secondary" className="inline-flex items-center gap-1 font-normal cursor-pointer hover:bg-secondary/80">

@@ -2,8 +2,8 @@ import { DescendantKind } from "@/lok-next/api/graphql";
 import ReactDOM from "react-dom";
 import { Transforms } from "slate";
 import {
-  DescendendInput,
   ElementRenderProps,
+  KommentElementNode,
   KommentEditor,
   LeafRenderProps,
 } from "../types";
@@ -67,14 +67,14 @@ export const insertMention = (
 ) => {
   console.log(q);
   if (!q) return;
-  const mention: DescendendInput = {
+  const mention: KommentElementNode = {
     kind: DescendantKind.Mention,
     user: q.value,
     text: q.label,
-    children: [{ text: q.label, kind: DescendantKind.Leaf }],
+    children: [{ text: q.label }],
   };
   console.log(mention);
-  Transforms.insertNodes<DescendendInput>(editor, mention);
+  Transforms.insertNodes<KommentElementNode>(editor, mention);
   Transforms.move(editor);
 };
 

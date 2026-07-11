@@ -30,7 +30,12 @@ const Filter = ({
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
-    onFilterChanged({ search: debouncedSearch, noImages });
+    onFilterChanged({
+      search: debouncedSearch,
+      noImages,
+      noFiles: defaultValue.noFiles ?? false,
+      noDatasets: defaultValue.noDatasets ?? false,
+    });
   }, [debouncedSearch, noImages]);
 
   return (
@@ -53,8 +58,8 @@ const Filter = ({
         <PopoverContent>
           <div className="flex flex-row gap-2">
             <Toggle
-              isChecked={noImages}
-              onCheckedChange={setNoImages}
+              pressed={noImages}
+              onPressedChange={setNoImages}
             >
               Exclude Globals
             </Toggle>

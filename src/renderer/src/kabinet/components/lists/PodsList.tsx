@@ -7,8 +7,8 @@ export type Props = {
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListPodQuery({
+const List = (_props: Props) => {
+  const { data, refetch } = useListPodQuery({
     variables: {},
   });
 
@@ -23,7 +23,7 @@ const List = ({ pagination }: Props) => {
           </div>
         </KabinetDefinition.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
       {(ex, index) => <PodCard key={index} item={ex} />}
     </ListRender>

@@ -13,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useShortcutsQuery({
+  const { data, refetch } = useShortcutsQuery({
     variables: { filters, pagination },
   });
 

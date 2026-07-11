@@ -16,6 +16,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <>
           <Button
+            onClick={handleCreateRoom}
             title="Create Room"
             variant={"outline"}
           >

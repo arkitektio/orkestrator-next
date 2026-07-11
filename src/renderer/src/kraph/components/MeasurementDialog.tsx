@@ -16,9 +16,20 @@ import { useForm } from "react-hook-form";
 import {
   useCreateMeasurementCategoryMutation,
   useCreateMeasurementMutation,
+  useEnsureStructureMutation,
   useListMeasurmentCategoryLazyQuery,
   useSearchEntitiesLazyQuery,
 } from "../api/graphql";
+
+// Machine key generation, mirroring `toSnakeCase` in
+// `schema-builder/utils.ts` (kept local/inline here to avoid pulling in that
+// module for a single helper).
+const slugify = (label: string): string =>
+  label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "category";
 
 interface MeasurementDialogProps {
   open: boolean;
@@ -28,6 +39,12 @@ interface MeasurementDialogProps {
   identifier: string;
   object: string;
   onSuccess: () => void;
+  /**
+   * The entity category to search target entities within. Entity search is
+   * category-scoped on the current backend; without one, the "Target
+   * Entity" search field has nothing to search and stays empty.
+   */
+  entityCategory?: string;
 }
 
 export const MeasurementDialog = ({
@@ -38,11 +55,29 @@ export const MeasurementDialog = ({
   identifier,
   object,
   onSuccess,
+  entityCategory,
 }: MeasurementDialogProps) => {
   const [createMeasurement] = useCreateMeasurementMutation({});
   const [createMeasurementCategory] = useCreateMeasurementCategoryMutation({});
   const [listMeasurementCategories] = useListMeasurmentCategoryLazyQuery();
+  const [ensureStructure] = useEnsureStructureMutation();
   const [searchEntities] = useSearchEntitiesLazyQuery();
+
+  const searchTargetEntities = async (x: {
+    variables: { search?: string; values?: string[] };
+  }) => {
+    if (!entityCategory) {
+      return { data: { options: [] } };
+    }
+    const result = await searchEntities({
+      variables: {
+        category: entityCategory,
+        search: x.variables.search,
+        values: x.variables.values,
+      },
+    });
+    return { data: result.data ? { options: result.data.options } : undefined };
+  };
 
   const measurementForm = useForm({
     defaultValues: {
@@ -65,7 +100,7 @@ export const MeasurementDialog = ({
     const result = await listMeasurementCategories({
       variables: {
         filters: {
-          graph: selectedGraph,
+          graph: { id: selectedGraph },
           search: x.variables.search,
           ids: x.variables.values,
         },
@@ -101,18 +136,15 @@ export const MeasurementDialog = ({
         const newCategory = await createMeasurementCategory({
           variables: {
             input: {
+              key: slugify(data.newCategoryName),
               label: data.newCategoryName,
               description: data.newCategoryDescription || "No description",
               graph: selectedGraph,
-              structureDefinition: {
+              source: {
                 // Connect to structures with any tags/categories initially
-                tagFilters: [],
-                categoryFilters: [],
               },
-              entityDefinition: {
+              target: {
                 // Allow connection to any entity initially
-                tagFilters: [],
-                categoryFilters: [],
               },
             },
           },
@@ -121,13 +153,30 @@ export const MeasurementDialog = ({
       }
 
       if (categoryId && data.entity) {
+        // Ensure the structure (identifier + object) exists so we have an id
+        // to use as the measurement's source.
+        const structure = await ensureStructure({
+          variables: {
+            input: {
+              identifier,
+              object,
+              graph: selectedGraph,
+            },
+          },
+        });
+
+        if (!structure.data?.ensureStructure) {
+          console.error("Failed to ensure structure");
+          return;
+        }
+
         // Create the measurement connection
         await createMeasurement({
           variables: {
             input: {
-              structure: `@${identifier}/${object}`,
+              sourceId: structure.data.ensureStructure.id,
               category: categoryId,
-              entity: data.entity,
+              targetId: data.entity,
             },
           },
         });
@@ -194,7 +243,7 @@ export const MeasurementDialog = ({
               name="entity"
               label="Target Entity"
               description="Search and select the entity to measure"
-              searchQuery={searchEntities}
+              searchQuery={searchTargetEntities}
             />
 
             <DialogFooter>

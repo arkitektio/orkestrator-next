@@ -4,7 +4,7 @@ import { useListProjectsQuery } from "@/omero-ark/api/graphql";
 import ProjectCard from "../cards/ProjectCard";
 
 const List = () => {
-  const { data, error, subscribeToMore, refetch } = useListProjectsQuery({
+  const { data, error, refetch } = useListProjectsQuery({
     variables: {},
   });
 
@@ -18,7 +18,7 @@ const List = () => {
             Projects
           </OmeroArkProject.ListLink>
         }
-        refetch={refetch}
+        refetch={() => refetch()}
       >
         {(ex, index) => <ProjectCard key={index} project={ex} />}
       </ListRender>

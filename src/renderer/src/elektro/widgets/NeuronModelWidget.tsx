@@ -6,13 +6,17 @@ import { NeuronVisualizer } from "../components/NeuronRenderer";
 export default (props: ReturnWidgetProps) => {
   const { data } = useDetailNeuronModelQuery({
     variables: {
-      id: props.value,
+      id: String(props.value ?? ""),
     },
   });
 
+  if (!data?.neuronModel) {
+    return <div>Neuron model not found</div>;
+  }
+
   return (
-    <ElektroNeuronModel.DetailLink object={props.value}>
-      {data?.neuronModel && <NeuronVisualizer model={data?.neuronModel} />}
+    <ElektroNeuronModel.DetailLink object={data.neuronModel}>
+      <NeuronVisualizer model={data.neuronModel} />
     </ElektroNeuronModel.DetailLink>
   );
 };

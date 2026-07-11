@@ -14,7 +14,7 @@ import {
 
 export type ActionAssignVariables = AssignInput;
 
-export type UseImplementationActionReturn<T> = {
+export type UseImplementationActionReturn = {
   implementation?: DetailImplementationFragment;
   error?: any;
   assign: (
@@ -26,14 +26,14 @@ export type UseImplementationActionReturn<T> = {
   latestTask?: PostmanTaskFragment;
 };
 
-export type UseImplementationAction<T> = {
+export type UseImplementationAction = {
   id: string;
 };
 
-export const useImplementationAction = <T extends any>(
-  options: UseImplementationAction<T>,
-): UseImplementationActionReturn<T> => {
-  const { data, variables, refetch, error } = useImplementationQuery({
+export const useImplementationAction = (
+  options: UseImplementationAction,
+): UseImplementationActionReturn => {
+  const { data, error } = useImplementationQuery({
     variables: {
       id: options.id,
     },

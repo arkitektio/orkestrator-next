@@ -12,7 +12,7 @@ export const EntityOverlay = (props: { entity: string }) => {
 
   return (
     <div>
-      <KraphNode.DetailLink object={props.entity}>
+      <KraphNode.DetailLink object={{ id: props.entity }}>
         {data?.node?.label}
       </KraphNode.DetailLink>
 
@@ -25,7 +25,7 @@ export const EntityOverlay = (props: { entity: string }) => {
                   kind: PortKind.Structure,
                   identifier: data.node.identifier,
                   key: data.node.object,
-                  __typename: "Port",
+                  __typename: "ReturnPort",
                   nullable: false,
                 }}
                 value={data.node.object}

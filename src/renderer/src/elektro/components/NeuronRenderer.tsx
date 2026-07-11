@@ -21,8 +21,6 @@ import { HoveredNet, NetworkLayer, NetworkTooltip } from "./NetworkLayer3D";
 import { NetworkControl } from "./NetworkControl";
 
 // --- Types & Helpers ---
-type CompartmentMap = Record<string, CompartmentFragment>;
-
 interface ProcessedSegment {
   id: string;
   uniqueKey: string;
@@ -438,7 +436,9 @@ const PanelOverlay = ({
           >
             <NeuronPanelCard
               section={section}
-              compartment={section ? compartmentMap[section.category] : undefined}
+              compartment={
+                section?.category ? compartmentMap[section.category] : undefined
+              }
               onClose={() => closePanel(panel.sectionId)}
             />
           </div>

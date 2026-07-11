@@ -25,7 +25,7 @@ import {
 
 export const RecordingPage = asDetailQueryRoute(
   useDetailRecordingQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
     const [show, setShow] = React.useState(false);
     const [hidden, setHidden] = React.useState<string[]>([]);
     const [hiddenStimuli, setHiddenStimuli] = React.useState<string[]>([]);

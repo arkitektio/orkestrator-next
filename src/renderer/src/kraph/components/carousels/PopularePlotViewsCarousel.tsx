@@ -27,7 +27,7 @@ const TCarousel = (props: { queries: GraphQueryFragment[] }) => {
               <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                 <div>
                   <KraphGraphQuery.DetailLink
-                    object={item.id}
+                    object={{ id: item.id }}
                     className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
                   >
                     {item.label}

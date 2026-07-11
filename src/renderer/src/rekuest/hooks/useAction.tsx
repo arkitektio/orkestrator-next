@@ -12,7 +12,7 @@ import {
 
 export type ActionAssignVariables = AssignInput;
 
-export type useActionReturn<T> = {
+export type useActionReturn = {
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanTaskFragment>;
@@ -23,14 +23,14 @@ export type useActionReturn<T> = {
   action: DetailActionFragment | undefined;
 };
 
-export type useActionOptions<T> = {
+export type useActionOptions = {
   id: string;
 };
 
-export const useAction = <T extends any>(
-  options: useActionOptions<T>,
-): useActionReturn<T> => {
-  const { data, variables, refetch } = useDetailActionQuery({
+export const useAction = (
+  options: useActionOptions,
+): useActionReturn => {
+  const { data } = useDetailActionQuery({
     variables: {
       id: options.id,
     },

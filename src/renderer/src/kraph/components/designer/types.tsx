@@ -2,25 +2,25 @@ import { Connection, Edge, Node } from "@xyflow/react";
 import React from "react";
 
 import {
-  EntityCategoryInput,
-  EntityRoleDefinitionFragment,
+  CreateEntityDefinitionInput,
+  CreateMeasurementDefinitionInput,
+  CreateRelationDefinitionInput,
+  CreateStructureDefinitionInput,
+  EventRoleFragment,
   ListEntityCategoryFragment,
   ListMeasurementCategoryFragment,
   ListMetricCategoryFragment,
   ListNaturalEventCategoryFragment,
   ListProtocolEventCategoryFragment,
-  ListReagentCategoryFragment,
   ListRelationCategoryFragment,
   ListStructureCategoryFragment,
-  ListStructureRelationCategoryFragment,
-  MeasurementCategoryInput,
-  ReagentRoleDefinitionFragment,
-  RelationCategoryInput,
-  StructureCategoryInput
+  ListStructureRelationCategoryFragment
 } from "@/kraph/api/graphql";
 
 export type GenericNode = Node<ListEntityCategoryFragment, "entitycategory">;
-export type ReagentNode = Node<ListReagentCategoryFragment, "reagentcategory">;
+// ReagentCategory was removed from the backend schema; reagent entities are
+// now modeled as EntityCategory (see EntityCategory.instanceKind).
+export type ReagentNode = Node<ListEntityCategoryFragment, "reagentcategory">;
 export type MetricNode = Node<ListMetricCategoryFragment, "metriccategory">;
 export type ProtocolEventNode = Node<
   ListProtocolEventCategoryFragment,
@@ -36,10 +36,13 @@ export type StructureNode = Node<
   "structurecategory"
 >;
 export type StagingStructureNode = Node<
-  StructureCategoryInput,
+  CreateStructureDefinitionInput,
   "stagingstructure"
 >;
-export type StagingGenericNode = Node<EntityCategoryInput, "staginggeneric">;
+export type StagingGenericNode = Node<
+  CreateEntityDefinitionInput,
+  "staginggeneric"
+>;
 
 export type MeasurementEdge = Edge<
   ListMeasurementCategoryFragment,
@@ -49,7 +52,7 @@ export type MeasurementEdge = Edge<
 export type DescribeEdge = Edge<ListMetricCategoryFragment, "describe">;
 
 export type StagingMeasurementEdge = Edge<
-  MeasurementCategoryInput,
+  CreateMeasurementDefinitionInput,
   "stagingmeasurement"
 >;
 export type RelationEdge = Edge<ListRelationCategoryFragment, "relation">;
@@ -57,11 +60,11 @@ export type StructureRelationEdge = Edge<
   ListStructureRelationCategoryFragment,
   "structure_relation"
 >;
-export type EntityRoleEdge = Edge<ReagentRoleDefinitionFragment, "reagentrole">;
-export type ReagentRoleEdge = Edge<EntityRoleDefinitionFragment, "entityrole">;
+export type EntityRoleEdge = Edge<EventRoleFragment, "reagentrole">;
+export type ReagentRoleEdge = Edge<EventRoleFragment, "entityrole">;
 
 export type StagingRelationEdge = Edge<
-  RelationCategoryInput,
+  CreateRelationDefinitionInput,
   "stagingrelation"
 >;
 

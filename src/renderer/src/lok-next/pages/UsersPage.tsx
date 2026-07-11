@@ -1,17 +1,14 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { DialogButton } from "@/components/ui/dialog-button";
-import { LokService, LokUser } from "@/linkers";
+import { LokUser } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import UserList from "../components/lists/UserList";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
   return (
     <LokUser.ListPage
       title="Users"

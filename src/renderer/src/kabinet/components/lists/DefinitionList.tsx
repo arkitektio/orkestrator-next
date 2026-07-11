@@ -1,19 +1,19 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KabinetDefinition } from "@/linkers";
 import {
-  DatasetFilter,
+  DefinitionFilter,
   OffsetPaginationInput,
   useListDefinitionsQuery,
 } from "../../api/graphql";
 import DefinitionCard from "../cards/DefinitionCard";
 
 export type Props = {
-  filters?: DatasetFilter;
+  filters?: DefinitionFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery({
+const List = (_props: Props) => {
+  const { data, refetch } = useListDefinitionsQuery({
     variables: {},
   });
 
@@ -29,9 +29,9 @@ const List = ({ filters, pagination }: Props) => {
           </div>
         </KabinetDefinition.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
-      {(ex, index) => <DefinitionCard key={ex.id} item={ex} />}
+      {(ex) => <DefinitionCard key={ex.id} item={ex} />}
     </ListRender>
   );
 };

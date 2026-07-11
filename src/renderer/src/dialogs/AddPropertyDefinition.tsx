@@ -96,13 +96,6 @@ export const AddPropertyDefinitionDialog = (props: {
                 label: pd.label,
                 description: pd.description,
                 valueKind: pd.valueKind,
-                optional: pd.optional,
-                default: pd.default,
-                options: pd.options?.map((opt) => ({
-                    label: opt.label,
-                    value: opt.value,
-                    description: opt.description,
-                })),
             })) || [];
 
         const newPropertyDefinition = {

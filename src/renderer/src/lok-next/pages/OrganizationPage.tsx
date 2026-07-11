@@ -48,8 +48,8 @@ const Page = asDetailQueryRoute(useOrganizationQuery, ({ data }) => {
 
   return (
     <LokOrganization.ModelPage
-      object={data.organization.id}
-      pageActions={<><LokOrganization.ObjectButton object={data.organization.id} /><Button variant="outline" onClick={() => setCreateInviteOpen(true)}>Create Invite</Button><CreateInviteDialog open={createInviteOpen} onOpenChange={setCreateInviteOpen} organizationId={data.organization.id} availableRoles={data.organization.roles} /></>}
+      object={data.organization}
+      pageActions={<><LokOrganization.ObjectButton object={data.organization} /><Button variant="outline" onClick={() => setCreateInviteOpen(true)}>Create Invite</Button><CreateInviteDialog open={createInviteOpen} onOpenChange={setCreateInviteOpen} organizationId={data.organization.id} availableRoles={data.organization.roles} /></>}
       title={data?.organization?.name}
     >
       {/* Profile Hero Section */}

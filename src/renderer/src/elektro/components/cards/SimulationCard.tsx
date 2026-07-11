@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ElektroSimulation } from "@/linkers";
 import { ListSimulationFragment } from "../../api/graphql";
-import { toBase } from "@/lib/quantities";
 
 
 interface Props {
@@ -11,11 +10,6 @@ interface Props {
 }
 
 const TheCard = ({ item, className }: Props) => {
-  // `duration` is a `Duration` quantity string ("100 ms"); normalise to ms.
-  const durationMs = toBase(item.duration, "time", 0);
-  const seconds = durationMs / 1000;
-  const formatted = durationMs >= 1000 ? `${seconds.toFixed(2)} seconds` : `${durationMs} ms`;
-
   return (
     <ElektroSimulation.Smart object={item} hover>
       <Card

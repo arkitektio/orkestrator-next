@@ -1,11 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   MikroImage,
   MikroInstanceMaskView,
   MikroInstanceMaskViewLabel,
 } from "@/linkers";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { InstanceMaskViewFragment } from "../../api/graphql";
 
 interface HistoryCardProps {
@@ -16,21 +15,13 @@ interface HistoryCardProps {
 type Row = Record<string, unknown>;
 
 const TheCard = ({ item }: HistoryCardProps) => {
-  const resolve = useResolve();
-
-  const url = resolve(item?.labels?.presignedUrl) ?? null;
-  const alias = useMemo(
-    () => (item?.id ? `labels_${item.id}.parquet` : "labels.parquet"),
-    [item?.id],
-  );
-
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [cols, setCols] = useState<string[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(!!url);
+  const [rows] = useState<Row[] | null>(null);
+  const [cols] = useState<string[] | null>(null);
+  const [err] = useState<string | null>(null);
+  const [loading] = useState<boolean>(!!item?.labels);
 
   return (
-    <MikroInstanceMaskView.Smart object={item}  key={item}>
+    <MikroInstanceMaskView.Smart object={item} key={item.id}>
       <Card key={item.id} className="p-4 space-y-2">
         <p className="text-light text-xs">Is instance mask foddr</p>
 
@@ -67,7 +58,7 @@ const TheCard = ({ item }: HistoryCardProps) => {
                 {rows.map((r, i) => (
                   <tr key={i}>
                     <MikroInstanceMaskViewLabel.DetailLink
-                      object={`${item.id}-${i}`}
+                      object={{ id: `${item.id}-${i}` }}
                       key={i}
                       className="border-b last:border-0"
                     >

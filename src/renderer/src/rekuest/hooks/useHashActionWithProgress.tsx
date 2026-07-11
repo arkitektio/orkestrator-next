@@ -1,8 +1,8 @@
-import { useDialog } from "@/app/dialog";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
+import { buildAssignInput } from "@/rekuest/assign";
 import {
   TaskEventFragment,
   AssignInput,
@@ -38,7 +38,6 @@ export const useHashActionWithProgress = (
   const [error, setError] = useState<string | null>(null);
 
   const { assign: postAssign } = useAssign();
-  const { openDialog } = useDialog();
 
   const doStuff = useCallback(
     (event: TaskEventFragment) => {
@@ -76,20 +75,21 @@ export const useHashActionWithProgress = (
     const untrack = trackTask(reference, doStuff);
 
     try {
-      await postAssign({
+      await postAssign(buildAssignInput({
         action: data?.action.id,
         args: args,
         reference: reference,
-        ephemeral: options.ephemeral,
-      });
+        ephemeral: options.ephemeral ?? false,
+      }));
 
       setDoing(true);
       setError(null);
     } catch (e) {
       untrack();
-      toast.error(e.message);
+      const message = e instanceof Error ? e.message : "Unknown error";
+      toast.error(message);
       setDoing(false);
-      setError(e.message || "Unknown error");
+      setError(message);
     }
   };
 

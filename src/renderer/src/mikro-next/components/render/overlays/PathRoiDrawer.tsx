@@ -2,7 +2,7 @@ import { RoiKind } from "@/mikro-next/api/graphql";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { PathDrawer } from "../controls/PathDrawer";
-import { RoiDrawerProps } from "./RoiDrawerCanvas";
+import { RoiSubDrawerProps } from "./RoiDrawerCanvas";
 import { convertFromThreeJSCoords } from "./roiUtils";
 import { useRoiCreation } from "./useRoiCreation";
 
@@ -14,7 +14,7 @@ export const PathRoiDrawer = ({
   z,
   t,
   event_key = "shift",
-}: RoiDrawerProps) => {
+}: RoiSubDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
   const onPathDrawn = async (points: THREE.Vector3[]) => {

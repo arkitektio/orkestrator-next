@@ -9,7 +9,7 @@ import StructureCard from "../components/cards/StructureCard";
 
 export const TPage = asDetailQueryRoute(
   useGetStructurePackageQuery,
-  ({ data, refetch }) => {
+  ({ data }) => {
     return (
       <RekuestStructurePackage.ModelPage
         title={data.structurePackage.id}

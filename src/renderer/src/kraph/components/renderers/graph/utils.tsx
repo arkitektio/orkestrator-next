@@ -4,20 +4,23 @@ import { PathEdge, PathNode } from "./types";
 import { Position } from "@xyflow/react";
 export const entityNodesToNodes = (
   nodes: GraphPathRenderFragment["nodes"],
-  root?: string | undefined,
+  _root?: string | undefined,
 ): PathNode[] => {
   return Array.from(
     nodes
       .reduce((map, node) => {
         if (!map.has(node.id) && node.__typename) {
-          map.set(node.id, {
-            type: node.__typename || "Entity",
-            position: { x: 0, y: 0 },
-            id: node.id,
-            data: node,
-            height: 100,
-            width: 100,
-          });
+          map.set(
+            node.id,
+            {
+              type: node.__typename || "Entity",
+              position: { x: 0, y: 0 },
+              id: node.id,
+              data: node,
+              height: 100,
+              width: 100,
+            } as PathNode,
+          );
         }
         return map;
       }, new Map<string, PathNode>())
@@ -32,13 +35,22 @@ export const entityRelationToEdges = (
     relations
       .reduce((map, relation) => {
         if (!map.has(relation.id) && relation.__typename) {
-          map.set(relation.id, {
-            type: relation.__typename,
-            id: relation.id,
-            source: relation.sourceId,
-            target: relation.targetId,
-            data: relation,
-          });
+          const type =
+            relation.__typename === "InputParticipation" ||
+            relation.__typename === "OutputParticipation"
+              ? "Participant"
+              : relation.__typename;
+
+          map.set(
+            relation.id,
+            {
+              type,
+              id: relation.id,
+              source: relation.sourceId,
+              target: relation.targetId,
+              data: relation,
+            } as PathEdge,
+          );
         }
         return map;
       }, new Map<string, PathEdge>())

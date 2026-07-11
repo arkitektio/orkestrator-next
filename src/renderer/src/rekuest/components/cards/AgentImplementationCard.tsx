@@ -2,7 +2,7 @@ import { useDialog } from "@/app/dialog";
 import { cn } from "@/lib/utils";
 import { RekuestImplementation } from "@/linkers";
 import { ListImplementationFragment } from "@/rekuest/api/graphql";
-import { PlayCircle, Zap } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { useCallback } from "react";
 
 interface Props {

@@ -12,8 +12,8 @@ export type Props = {
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListDashboardsQuery({});
+const List = (_props: Props) => {
+  const { data, refetch } = useListDashboardsQuery({});
 
   return (
     <ListRender
@@ -23,7 +23,7 @@ const List = ({ filters, pagination }: Props) => {
           Dashbaords
         </RekuestDashboard.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
       {(ex, index) => <DashboardCard key={index} item={ex} />}
     </ListRender>

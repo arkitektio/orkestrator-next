@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 
-export const LoadingPage = (props) => {
+export const LoadingPage = () => {
   return (
     <div className="h-full w-full relative">
       <PageLayout title="Loading">

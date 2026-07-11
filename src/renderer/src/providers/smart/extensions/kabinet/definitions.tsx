@@ -1,17 +1,19 @@
 import { useRekuest } from "@/app/Arkitekt";
 import {
+  DemandKind as KabinetDemandKind,
   ListDefinitionFragment,
+  PortDemandInput as KabinetPortDemandInput,
+  PortKind as KabinetPortKind,
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
 import {
   DemandKind,
-  PortDemandInput,
   PortKind,
   useAllActionsQuery,
 } from "@/rekuest/api/graphql";
 import { useHashActionWithProgress } from "@/rekuest/hooks/useHashActionWithProgress";
 import { CommandGroup } from "cmdk";
-import { Boxes, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import React from "react";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
@@ -53,40 +55,40 @@ export const InstallButton = (props: {
 };
 
 export const ApplicableDefinitions = (props: PassDownProps) => {
-  const demands: PortDemandInput[] = [];
+  const demands: KabinetPortDemandInput[] = [];
 
   if (props.objects.length === 1) {
     demands.push({
-      kind: DemandKind.Args,
-      matches: [{ at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier }],
+      kind: KabinetDemandKind.Args,
+      matches: [{ at: 0, kind: KabinetPortKind.Structure, identifier: props.objects[0].identifier }],
     });
   }
 
   if (props.objects.length > 1) {
     demands.push({
-      kind: DemandKind.Args,
+      kind: KabinetDemandKind.Args,
       matches: [{
         at: 0,
-        kind: PortKind.List,
-        children: [{ at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier }],
+        kind: KabinetPortKind.List,
+        children: [{ at: 0, kind: KabinetPortKind.Structure, identifier: props.objects[0].identifier }],
       }],
     });
   }
 
   if (props.partners && props.partners.length === 1) {
     demands.push({
-      kind: DemandKind.Args,
-      matches: [{ at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier }],
+      kind: KabinetDemandKind.Args,
+      matches: [{ at: 1, kind: KabinetPortKind.Structure, identifier: props.partners[0].identifier }],
     });
   }
 
   if (props.partners && props.partners.length > 1) {
     demands.push({
-      kind: DemandKind.Args,
+      kind: KabinetDemandKind.Args,
       matches: [{
         at: 1,
-        kind: PortKind.List,
-        children: [{ at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier }],
+        kind: KabinetPortKind.List,
+        children: [{ at: 1, kind: KabinetPortKind.Structure, identifier: props.partners[0].identifier }],
       }],
     });
   }

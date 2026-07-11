@@ -26,9 +26,11 @@ const TForm = (props: {
   const form = useForm<UpdateMeasurementCategoryMutationVariables["input"]>({
     defaultValues: {
       id: props.measurementCategory.id,
+      key: props.measurementCategory.key,
       label: props.measurementCategory.label,
       description: props.measurementCategory.description,
-      purl: props.measurementCategory.purl || "",
+      source: props.measurementCategory.sourceDescriptor,
+      target: props.measurementCategory.targetDescriptor,
       tags: props.measurementCategory.tags.map((tag) => tag.id),
     },
   });
@@ -60,11 +62,6 @@ const TForm = (props: {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
               />
               <GraphQLListSearchField
                 searchQuery={searchTags}

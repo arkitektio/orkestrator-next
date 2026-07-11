@@ -1,12 +1,12 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
+import { ReturnPortFragment } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import React from "react";
 import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
@@ -18,11 +18,6 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
 }) => {
   const latestEvent = useLatestNodeEvent(id);
   const [expanded, setExpanded] = React.useState(false);
-
-  const description = useActionDescription({
-    description: data.description,
-    variables: data.constantsMap,
-  });
 
   const { registry } = useWidgetRegistry();
 
@@ -67,7 +62,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
         <CardDescription></CardDescription>
         {expanded && <div className="flex-groww-full h-full bg-green-200">{latestEvent && ins && latestEvent.kind === RunEventKind.Next && (
           <ReturnsContainer
-            ports={outs.at(0) || []}
+            ports={(outs.at(0) || []) as ReturnPortFragment[]}
             values={
               outs.at(0)?.reduce(
                 (acc, curr, index) => {

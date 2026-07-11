@@ -5,8 +5,8 @@ import {
   type Emoji,
   EmojiSettings,
   type GridRow,
-  type UseEmojiPickerType,
 } from "@udecode/plate-emoji";
+import { type UseEmojiPickerType } from "@udecode/plate-emoji/react";
 
 export type EmojiPickerContentProps = Pick<
   UseEmojiPickerType,

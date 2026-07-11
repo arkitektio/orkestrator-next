@@ -94,7 +94,7 @@ export const useMikroBigFileDownload = () => {
 
       console.log("Finished download to", resultPath);
 
-      const finishData = await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
+      await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
         mutation: FinishBigfileUploadDocument,
         variables: {
           input: {

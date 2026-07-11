@@ -1,5 +1,4 @@
 import { buildAssignInput } from "@/rekuest/assign";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -8,14 +7,11 @@ import { useRef } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
-import { cn } from "@/lib/utils";
 import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
 import {
-  ListDependencyFragment,
   PostmanTaskFragment,
   ResolvedDependencyInput,
-  useAgentOptionsLazyQuery
 } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useImplementationForm } from "../hooks/useImplementationForm";

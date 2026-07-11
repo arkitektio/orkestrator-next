@@ -4,9 +4,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
-  useStore,
   type EdgeProps,
-  type ReactFlowState,
 } from "@xyflow/react";
 import { MeasurementEdge } from "../../types";
 import { getEdgeParams } from "../../utils";
@@ -47,8 +45,8 @@ export const TEdge = ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
@@ -57,17 +55,6 @@ export const TEdge = ({
   const edgePaths = useEdgePaths(id);
   const pathColorRaw = edgePaths.length > 0 && edgePaths[0].color ? edgePaths[0].color : undefined;
   const pathColor = pathColorRaw ? rgbToCSS(pathColorRaw) : undefined;
-
-  const theEdges = useStore((s: ReactFlowState) => {
-    const edgeExists = s.edges.filter(
-      (e) =>
-        (e.source === source && e.target === target) ||
-        (e.target === source && e.source === target),
-    );
-    return edgeExists;
-  });
-
-  const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
@@ -129,12 +116,12 @@ export const TEdge = ({
           className="p-3 text-xs group z-10 nodrag nopan transition-all duration-300"
         >
           <KraphStructureRelationCategory.Smart
-            object={data?.id || "0"}
+            object={{ id: data?.id || "0" }}
             className="w-20"
           >
             {data?.id && (
               <KraphStructureRelationCategory.DetailLink
-                object={data?.id}
+                object={{ id: data.id }}
                 style={{ pointerEvents: isPossible ? "all" : "none" }}
                 className={`font-bold ${isPossible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >

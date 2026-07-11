@@ -146,7 +146,7 @@ export const CreatableListSearchField = ({
 
   const createValue = (input: string) => {
     create(input).then((value) => {
-      search({ values: [value] })
+      search({ values: [value.toString()] })
       const currentValues = Array.isArray(form.getValues(name))
         ? form.getValues(name)
         : [];

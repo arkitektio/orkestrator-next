@@ -11,7 +11,6 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
   id,
   selected,
 }) => {
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   return (

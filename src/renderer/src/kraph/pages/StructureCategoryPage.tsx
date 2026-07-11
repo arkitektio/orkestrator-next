@@ -9,7 +9,6 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphStructureCategory
 } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
   useGetStructureCategoryQuery,
   useUpdateStructureCategoryMutation,
@@ -52,18 +51,16 @@ const Page =  asDetailQueryRoute(
       await refetch();
     };
 
-    const navigate = useNavigate();
-
     return (
       <KraphStructureCategory.ModelPage
-        object={data.structureCategory.id}
+        object={{ id: data.structureCategory.id }}
         title={data?.structureCategory.identifier}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
                 <KraphStructureCategory.Komments
-                  object={data.structureCategory.id}
+                  object={{ id: data.structureCategory.id }}
                 />
               ),
             }}
@@ -81,7 +78,7 @@ const Page =  asDetailQueryRoute(
               {data.structureCategory.pinned ? "Unpin" : "Pin"}
             </Button>
             <KraphStructureCategory.ObjectButton
-              object={data.structureCategory.id}
+              object={{ id: data.structureCategory.id }}
             />
 
             <FormSheet

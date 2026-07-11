@@ -32,7 +32,7 @@ export const DocumentsExplorer = (props: {
   const query = watch("query");
 
   const handleSearch = async () => {
-    const { data } = await search({
+    await search({
       variables: {
         queryTexts: [query],
         collection: props.collection.id,
@@ -55,7 +55,6 @@ export const DocumentsExplorer = (props: {
           <StringField
             placeholder="Search"
             name="query"
-            className="w-full"
             label="Search"
           />
         </form>
@@ -66,7 +65,7 @@ export const DocumentsExplorer = (props: {
               {doc.structure ? (
                 <DelegatingStructureWidget
                   port={{
-                    __typename: "Port",
+                    __typename: "ReturnPort",
                     key: "object",
                     nullable: true,
                     kind: PortKind.Structure,
@@ -87,7 +86,7 @@ export const DocumentsExplorer = (props: {
 
 const TPage = asDetailQueryRoute(
   useGetChromaCollectionQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
     return (
       <AlpakaCollection.ModelPage
         title={data?.chromaCollection?.name}

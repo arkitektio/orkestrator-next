@@ -16,6 +16,7 @@ import {
   useUpdateProtocolEventCategoryMutation,
 } from "../api/graphql";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
+import { buildUpdateProtocolEventDefinitionInput } from "../protocolEventInput";
 
 const Page =  asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
@@ -30,10 +31,10 @@ const Page =  asDetailQueryRoute(
       if (response) {
         await update({
           variables: {
-            input: {
-              id: data.protocolEventCategory.id,
-              image: response,
-            },
+            input: buildUpdateProtocolEventDefinitionInput(
+              data.protocolEventCategory,
+              { image: response },
+            ),
           },
         });
         await refetch();
@@ -43,7 +44,7 @@ const Page =  asDetailQueryRoute(
     return (
       <KraphProtocolEventCategory.ModelPage
         title={data?.protocolEventCategory?.label}
-        object={data.protocolEventCategory.id}
+        object={{ id: data.protocolEventCategory.id }}
         actions={
           <KraphProtocolEventCategory.Actions
             object={data.protocolEventCategory.id}
@@ -65,7 +66,7 @@ const Page =  asDetailQueryRoute(
                 id={data.protocolEventCategory.id}
               />
             </FormSheet>
-            <EnhanceButton identifier="@kraph/protocoleventcategory" object={data.protocolEventCategory.id} />
+            <EnhanceButton identifier="@kraph/protocoleventcategory" object={{ id: data.protocolEventCategory.id }} />
           </div>
         }
         sidebars={
@@ -73,7 +74,7 @@ const Page =  asDetailQueryRoute(
             map={{
               Comments: (
                 <KraphProtocolStepTemplate.Komments
-                  object={data.protocolEventCategory.id}
+                  object={{ id: data.protocolEventCategory.id }}
                 />
               ),
             }}

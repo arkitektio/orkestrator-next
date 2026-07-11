@@ -12,7 +12,7 @@ import { useMeQuery, useUpdateUserProfileMutation } from "../api/graphql";
 
 // (legacy) export type removed – not used
 
-const Page = (props) => {
+const Page = () => {
   const { data } = useMeQuery();
 
   if (!data) {

@@ -6,6 +6,7 @@ import {
 } from "@apollo/client";
 import { Trash2 } from "lucide-react";
 import { Action, ResolveActionServices } from "../LocalActionProvider";
+import type { Service } from "../../arkitekt/types";
 
 export const identifierFromSmartOrString = (identifier: Smart | string) => {
   if (typeof identifier === "string") {
@@ -53,8 +54,11 @@ export const buildDeleteAction = <
     },
   ],
   execute: async ({ services, onProgress, abortSignal: _abortSignal, state, modifiers, confirm }) => {
-    const service = services[params.service]
-      .client as ApolloClient<NormalizedCache>;
+    // `services[key]` is typed against the deferred `ResolveActionServices<TAppOrServices>`
+    // conditional, which TS can't resolve for a generic `TAppOrServices` inside this
+    // function body — every concrete service in `ServiceMap` has `.client`, though.
+    const resolvedService = services[params.service] as unknown as Service;
+    const service = resolvedService.client as ApolloClient<NormalizedCache>;
     if (!service) {
       throw new Error("Service not found");
     }

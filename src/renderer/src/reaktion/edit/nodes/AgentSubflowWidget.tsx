@@ -29,7 +29,7 @@ export const AgentSubflowWidget = ({
   const setAutoResolvable = useEditFlowStore((state) => state.setAutoResolvable)
 
 
-  const { data: agentData, error: agentError } = useAgentsQuery({
+  const { error: agentError } = useAgentsQuery({
     variables: {
       filters: {
          appIdentifier: data.appFilter,

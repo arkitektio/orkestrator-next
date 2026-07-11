@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokDevice } from "@/linkers";
 import { ListDeviceFragment } from "../../api/graphql";
 
@@ -9,8 +8,6 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-  const resolve = useResolve();
-
   return (
     <LokDevice.Smart object={item} >
       <Card className="p-3">

@@ -3,7 +3,6 @@ import {
   GraphFragment,
   useUpdateGraphVisualMutation,
 } from "@/kraph/api/graphql";
-import { KraphGraph } from "@/linkers";
 import {
   Connection,
   ReactFlow,
@@ -138,10 +137,13 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
         return;
       }
 
-      const newNodes = children.map((node) => {
-        const child = the_nodes.find((n) => n.id === node.id);
-        return { ...child, position: { x: node.x, y: node.y } };
-      });
+      const newNodes = children
+        .map((node) => {
+          const child = the_nodes.find((n) => n.id === node.id);
+          if (!child) return undefined;
+          return { ...child, position: { x: node.x, y: node.y } };
+        })
+        .filter((n): n is MyNode => n !== undefined);
 
       setNodes(newNodes);
     });
@@ -194,10 +196,13 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           return;
         }
 
-        const newNodes = children.map((node) => {
-          const child = the_nodes.find((n) => n.id === node.id);
-          return { ...child, position: { x: node.x, y: node.y } };
-        });
+        const newNodes = children
+          .map((node) => {
+            const child = the_nodes.find((n) => n.id === node.id);
+            if (!child) return undefined;
+            return { ...child, position: { x: node.x, y: node.y } };
+          })
+          .filter((n): n is MyNode => n !== undefined);
 
         setNodes(newNodes);
       })

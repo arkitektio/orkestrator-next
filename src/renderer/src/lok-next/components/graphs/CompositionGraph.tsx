@@ -10,6 +10,10 @@ export default ({ client }: { client: DetailClientFragment }) => {
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance | null>(null);
 
+  // NOTE: `mappings` is no longer part of the DetailClient fragment (schema
+  // drift — the field still exists on `Client` but is not currently
+  // requested). Render just the client node until the query is updated to
+  // fetch mappings again.
   const nodes = [
     {
       id: "start",
@@ -17,30 +21,9 @@ export default ({ client }: { client: DetailClientFragment }) => {
       data: client,
       type: "client",
     },
-
-    ...client.mappings.map((mapping, index) => ({
-      id: mapping.instance.id,
-      position: {
-        x:
-          300 +
-          Math.cos(((2 * Math.PI) / client.mappings.length) * index) * 200,
-        y:
-          300 +
-          Math.sin(((2 * Math.PI) / client.mappings.length) * index) * 200,
-      },
-      data: mapping.instance,
-      type: "serviceinstance",
-    })),
   ];
 
-  const edges = client.mappings.map((mapping) => ({
-    id: mapping.id,
-    source: "start",
-    target: mapping.instance.id,
-    label: mapping.key,
-    data: mapping,
-    type: "instancemapping",
-  }));
+  const edges: never[] = [];
 
   React.useEffect(() => {
     if (reactFlowInstance) {

@@ -38,15 +38,15 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
             <div className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex flex-col">
-              {data.serviceInstance.identifier}
+              {data.serviceInstance.release.service.identifier}
               <div className="text-lg text-gray-500">
-                {data.serviceInstance.service.identifier}
+                {data.serviceInstance.release.service.identifier}
               </div>
               <div className="text-lg text-gray-700 font-light">
-                Provides {data.serviceInstance.service.identifier}
+                Provides {data.serviceInstance.release.service.identifier}
               </div>
               <div className="text-lg text-gray-700 font-light">
-                {data.serviceInstance.service.description}
+                {data.serviceInstance.release.service.description}
               </div>
             </div>
           </div>

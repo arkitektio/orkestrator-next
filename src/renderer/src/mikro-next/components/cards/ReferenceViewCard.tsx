@@ -47,7 +47,7 @@ const TheCard = ({ history }: HistoryCardProps) => {
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
-                  object={history.task.id}
+                  object={{ id: history.task.taskId }}
                 >
                   <Badge> during</Badge>
                 </RekuestTask.DetailLink>

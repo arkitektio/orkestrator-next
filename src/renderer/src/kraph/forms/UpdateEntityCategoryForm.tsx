@@ -12,6 +12,7 @@ import { Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
+  DerivationType,
   EntityCategoryFragment,
   UpdateEntityCategoryMutationVariables,
   useCreateGraphTagInlineMutation,
@@ -39,16 +40,15 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
       id: props.entityCategory.id,
       label: props.entityCategory.label,
       description: props.entityCategory.description,
-      purl: props.entityCategory.purl || "",
-      tags: props.entityCategory.tags.map((tag) => tag.value),
+      tags: props.entityCategory.tags.map((tag) => tag.id),
       propertyDefinitions: props.entityCategory.propertyDefinitions.map(
         (def) => ({
           key: def.key,
           label: def.label || "",
           description: def.description || "",
           valueKind: def.valueKind,
-          optional: def.optional,
-          default: def.default,
+          derivation: DerivationType.Latest,
+          rule: def.rule ? { aggregation: def.rule.aggregation } : undefined,
         })
       ),
     },
@@ -101,11 +101,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
               />
               <GraphQLCreatableListSearchField
                 searchQuery={searchTags}
@@ -168,20 +163,12 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                           </div>
                           <div className="flex items-start pt-8 min-w-[180px]">
                             <SwitchField
-                              label="Optional"
-                              name={`propertyDefinitions.${index}.optional`}
+                              label="Searchable"
+                              name={`propertyDefinitions.${index}.searchable`}
                               description=""
                               className="w-full"
                             />
                           </div>
-                        </div>
-
-                        <div className="mb-3">
-                          <StringField
-                            label="Default Value"
-                            name={`propertyDefinitions.${index}.default`}
-                            description="Default value for this property (optional)"
-                          />
                         </div>
 
                         <Button
@@ -208,8 +195,8 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                       label: "",
                       description: "",
                       valueKind: ValueKind.String,
-                      optional: false,
-                      default: null,
+                      derivation: DerivationType.Latest,
+                      searchable: false,
                     })
                   }
                   className="w-full"

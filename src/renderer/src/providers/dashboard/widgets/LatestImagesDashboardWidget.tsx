@@ -37,9 +37,9 @@ const LatestImagesWidget = () => {
                   className={() => "block cursor-pointer group"}
                 >
                   <Card className="relative aspect-square rounded-md overflow-hidden bg-muted h-full">
-                    {img.latestSnapshot?.store.presignedUrl ? (
+                    {img.latestSnapshot?.store.key ? (
                       <Image
-                        src={resolve(img.latestSnapshot.store.presignedUrl)}
+                        src={resolve(img.latestSnapshot.store.key)}
                         className="object-cover w-full h-full"
                       />
                     ) : (

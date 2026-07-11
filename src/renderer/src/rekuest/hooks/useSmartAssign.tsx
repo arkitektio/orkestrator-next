@@ -2,27 +2,28 @@ import { toast } from "sonner";
 import { buildAssignInput } from "@/rekuest/assign";
 import {
   AssignInput,
+  ListImplementationFragment,
   PostmanTaskFragment,
   PrimaryActionFragment,
 } from "../api/graphql";
+import { useAssign } from "./useAssign";
 
 export type ActionAssignVariables = AssignInput;
 
-export type useActionReturn<T> = {
+export type useActionReturn = {
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanTaskFragment>;
 };
 
-export type useActionOptions<T> = {
+export type useActionOptions = {
   id: string;
 };
 
-export const useAssign = <T extends any>(): useActionReturn<T> => {
+export const useSmartAssign = (props: { object: any }) => {
   const { assign } = useAssign();
 
   const onActionSelect = async (action: PrimaryActionFragment) => {
-    alert("Conditional Assign");
     const the_key = action.args?.at(0)?.key;
 
     const neededAdditionalPorts = action.args.filter(
@@ -44,14 +45,14 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
           [the_key]: props.object,
         },
       }));
-    } catch (e) {
+    } catch (e: any) {
       toast.error(e.message);
     }
   };
 
   const onImplementationSelect = async (
     action: PrimaryActionFragment,
-    implementation: ListImplementationFragment,
+    _implementation: ListImplementationFragment,
   ) => {
     const the_key = action.args?.at(0)?.key;
 
@@ -63,7 +64,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
       return;
     }
     if (neededAdditionalPorts.length > 0) {
-      setDialogAction(action);
+      setDialogAction({ action, args: { [the_key]: props.object } });
       return;
     }
 
@@ -74,7 +75,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
           [the_key]: props.object,
         },
       }));
-    } catch (e) {
+    } catch (e: any) {
       toast.error(e.message);
     }
   };
@@ -84,7 +85,8 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     onImplementationSelect,
   };
 };
-function setDialogAction(arg0: {
+
+function setDialogAction(_arg0: {
   action: PrimaryActionFragment;
   args: { [x: string]: any };
 }) {

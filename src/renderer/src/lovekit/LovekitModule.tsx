@@ -9,9 +9,9 @@ import SoloBroadcast from "./pages/SoloBroadcast";
 import SoloBroadcasts from "./pages/SoloBroadcasts";
 interface Props { }
 
-export const Module: React.FC<Props> = (props) => {
+export const Module: React.FC<Props> = (_props) => {
   return (
-    <Guard.Lovekit fallback={<>Loading</>}>
+    <Guard.Lovekit unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="streams/:id" element={<StreamPage />} />

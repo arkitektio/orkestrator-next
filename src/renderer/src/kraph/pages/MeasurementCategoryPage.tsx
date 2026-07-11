@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -10,7 +10,6 @@ import {
   KraphMeasurementCategory,
   KraphMetricCategory
 } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
   useGetMeasurmentCategoryQuery,
   useUpdateEntityCategoryMutation
@@ -40,18 +39,16 @@ const Page = asDetailQueryRoute(
       }
     };
 
-    const navigate = useNavigate();
-
     return (
       <KraphMeasurementCategory.ModelPage
-        object={data.measurementCategory.id}
+        object={{ id: data.measurementCategory.id }}
         title={data?.measurementCategory.label}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
                 <KraphMetricCategory.Komments
-                  object={data.measurementCategory.id}
+                  object={{ id: data.measurementCategory.id }}
                 />
               ),
             }}
@@ -81,9 +78,9 @@ const Page = asDetailQueryRoute(
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.measurementCategory?.store?.presignedUrl && (
+            {data.measurementCategory?.image?.presignedUrl && (
               <Image
-                src={resolve(data.measurementCategory?.store.presignedUrl)}
+                src={resolve(data.measurementCategory?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -93,21 +90,17 @@ const Page = asDetailQueryRoute(
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
         <div className="flex flex-col p-6 h-full">
-          {data.measurementCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.measurementCategory.bestQuery}
-            />
+          {data.measurementCategory.relevantQueries.length > 0 ? (
+            <ul className="list-disc pl-4 text-sm">
+              {data.measurementCategory.relevantQueries.map((query) => (
+                <li key={query.id}>{query.label}</li>
+              ))}
+            </ul>
           ) : (
             <div className="h-ful w-ull flex flex-col items-center justify-center">
               <p className="text-sm font-light mb-3">
                 No Graph Query yet for this category
               </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.measurementCategory} />
-              </FormDialog>
             </div>
           )}
         </div>

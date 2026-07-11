@@ -2,6 +2,12 @@
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { useExtension } from "../ExtensionContext";
 
+type RegisteredAction = {
+  key: string;
+  label: string;
+  run: () => void;
+};
+
 export const FilteredCommands = (props: {
   actions: RegisteredAction[] | undefined;
   heading: string;

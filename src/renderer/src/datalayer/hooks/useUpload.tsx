@@ -62,13 +62,6 @@ export type ExtraRequest = RequestInit & {
   onProgress?: (this: any, e: ProgressEvent) => void;
 };
 
-const customFetch = (uri: any, options: ExtraRequest) => {
-  if (options.onProgress) {
-    return uploadFetch(uri, options);
-  }
-  return fetch(uri, options);
-};
-
 export type UploadOptions = {
   signal?: AbortSignal;
   onProgress?: (ev: ProgressEvent) => void;
@@ -85,23 +78,41 @@ const uploadToStore = async (
     throw Error("No client configured");
   }
 
-  const data = new FormData();
-  data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
+  // Media grants now carry short-lived S3 credentials (accessKey/secretKey/sessionToken)
+  // instead of a bearer JWT, so uploads are delegated to the Electron main process,
+  // which already knows how to perform a signed S3 upload (see useMikroBigFileUpload).
+  if (!window.api?.uploadBigFile) {
+    throw Error("Media upload is only supported in the Electron app");
+  }
 
-  const x = customFetch(`${endpointUrl}${z.path}`, {
-    body: data,
-    mode: "cors",
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${z.jwt}`,
-    },
-    onProgress: options?.onProgress,
-    signal: options?.signal,
+  const uploadId = options?.id || crypto.randomUUID();
+
+  return new Promise<string>((resolve, reject) => {
+    if (options?.signal) {
+      options.signal.addEventListener("abort", () => {
+        window.api.cancelBigFile({ uploadId });
+        reject(new DOMException("Aborted", "AbortError"));
+      });
+    }
+
+    const filePath = window.api?.getFilePath
+      ? window.api.getFilePath(file)
+      : (file as any).path || file.name;
+
+    window.api
+      .uploadBigFile({
+        uploadId,
+        path: filePath,
+        grant: z,
+        endpointUrl,
+      })
+      .then((resultStore: string) => {
+        resolve(resultStore);
+      })
+      .catch((err: any) => {
+        reject(err);
+      });
   });
-
-
-  await x;
-  return `${z.store}`;
 };
 
 export const useKraphMediaUpload = () => {

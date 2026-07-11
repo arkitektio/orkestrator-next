@@ -53,9 +53,6 @@ const Pane: React.FunctionComponent = () => {
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    pagination: {
-      limit: 10,
-    },
   };
 
   const { data, refetch } = useGlobalSearchQuery({ variables });

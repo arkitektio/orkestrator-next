@@ -13,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListStructuresQuery({
+  const { data, refetch } = useListStructuresQuery({
     variables: { filters, pagination },
   });
 
@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <StructureCard key={ex.id} item={ex} />}
+      {(ex, _index) => <StructureCard key={ex.id} item={ex} />}
     </ListRender>
   );
 };

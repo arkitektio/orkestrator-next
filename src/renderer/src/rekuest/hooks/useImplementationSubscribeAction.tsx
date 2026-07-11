@@ -13,7 +13,7 @@ import {
 
 export type ActionAssignVariables = AssignInput;
 
-export type UseImplementationActionReturn<T> = {
+export type UseImplementationActionReturn = {
   implementation?: DetailImplementationFragment;
   assign: (
     variables: ActionAssignVariables,
@@ -24,13 +24,13 @@ export type UseImplementationActionReturn<T> = {
   causedTask?: PostmanTaskFragment;
 };
 
-export type UseImplementationAction<T> = {
+export type UseImplementationAction = {
   id: string;
 };
 
-export const useImplementationSubscribeAction = <T extends any>(
-  options: UseImplementationAction<T>,
-): UseImplementationActionReturn<T> => {
+export const useImplementationSubscribeAction = (
+  options: UseImplementationAction,
+): UseImplementationActionReturn => {
   const [causedTask, setCausedTask] =
     useState<PostmanTaskFragment | null>(null);
 

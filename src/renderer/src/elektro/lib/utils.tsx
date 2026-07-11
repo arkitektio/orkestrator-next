@@ -1,7 +1,19 @@
 
 import { NestedArray, TypedArray } from "zarr";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { DataType } from "zarrita";
+
+// `zarr`'s package.json only exposes "." and "./core" via its `exports` map,
+// so the internal `zarr/types/core/types` module (where these are defined)
+// isn't resolvable. Mirror the shapes locally instead.
+interface Slice {
+  start: number | null;
+  stop: number | null;
+  step: number | null;
+  _slice: true;
+}
+
+type DimensionArraySelection = Slice | number | number[] | "..." | ":" | null;
+type ArraySelection = DimensionArraySelection[] | DimensionArraySelection;
 
 export const available_color_maps = [
   "jet",

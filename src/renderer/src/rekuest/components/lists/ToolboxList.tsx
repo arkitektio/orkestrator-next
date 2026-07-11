@@ -13,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useToolboxesQuery({
+  const { data, refetch } = useToolboxesQuery({
     variables: { filters, pagination },
   });
 

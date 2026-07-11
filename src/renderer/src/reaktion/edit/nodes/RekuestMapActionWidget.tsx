@@ -25,7 +25,7 @@ import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
-export const DeviceSelector = (props) => { };
+export const DeviceSelector = (_props) => { };
 
 
 export const TemplateTag = (props: { template: string }) => {

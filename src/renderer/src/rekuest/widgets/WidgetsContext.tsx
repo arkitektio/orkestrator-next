@@ -3,39 +3,6 @@ import { WidgetRegistryType } from "./types";
 
 export type Ward = (...args: any[]) => Promise<any | undefined>;
 
-const fakeWidgetRegistry: WidgetRegistryType = {
-  registerWard: () => {
-    throw new Error("No registry set");
-  },
-  registerInputWidget: () => {
-    throw new Error("No registry set");
-  },
-  registerInputWidgetFallback: () => {
-    throw new Error("No registry set");
-  },
-  registerReturnWidget: () => {
-    throw new Error("No registry set");
-  },
-  getEffectWidget: () => {
-    throw new Error("No registry set");
-  },
-  registerEffectWidget: () => {
-    throw new Error("No registry set");
-  },
-  registerReturnWidgetFallback: () => {
-    throw new Error("No registry set");
-  },
-  getReturnWidgetForPort: () => {
-    throw new Error("No registry set");
-  },
-  getInputWidgetForPort: () => {
-    throw new Error("No registry set");
-  },
-  getWard: () => {
-    throw new Error("No registry set");
-  },
-};
-
 export type WidgetRegistryContextType = {
   registry: WidgetRegistryType;
   setRegistry: (postman: WidgetRegistryType) => void;

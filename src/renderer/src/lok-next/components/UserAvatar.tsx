@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokDevice, LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useGetDeviceByDeviceIdQuery, useGetDeviceQuery, useUserQuery } from "../api/graphql";
+import { useGetDeviceByDeviceIdQuery, useUserQuery } from "../api/graphql";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 

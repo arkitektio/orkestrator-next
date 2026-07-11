@@ -7,8 +7,8 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   ColumnKind,
+  CreateScatterPlotInput,
   GraphTableQueryFragment,
-  ScatterPlotInput,
   useCreateScatterPlotMutation,
   ValueKind
 } from "../api/graphql";
@@ -31,30 +31,30 @@ const TForm = (props: { graphQuery: GraphTableQueryFragment }) => {
     (col) => col.kind === ColumnKind.Node || col.kind === ColumnKind.Edge,
   );
 
-  const form = useForm<ScatterPlotInput>({
+  const form = useForm<CreateScatterPlotInput>({
     defaultValues: {
-      label: "New Scatter Plot",
+      name: "New Scatter Plot",
       description: "A scatter plot visualization",
-      query: props.graphQuery.id,
-      xColumn: numericColumns[0]?.name || "",
-      yColumn: numericColumns[1]?.name || numericColumns[0]?.name || "",
-      idColumn: idColumns[0]?.name || "id",
+      graphQueryId: Number(props.graphQuery.id),
+      xColumn: numericColumns[0]?.key || "",
+      yColumn: numericColumns[1]?.key || numericColumns[0]?.key || "",
+      idColumn: idColumns[0]?.key || "id",
     },
   });
 
   const columnOptions = numericColumns.map((col) => ({
     value: col.key,
-    label: col.label
+    label: col.label || col.key,
   }));
 
   const idColumnOptions = idColumns.map((col) => ({
     value: col.key,
-    label: col.label
+    label: col.label || col.key,
   }));
 
   const allColumnOptions = props.graphQuery.columns.map((col) => ({
     value: col.key,
-    label: col.label
+    label: col.label || col.key,
   }));
 
   return (
@@ -71,7 +71,7 @@ const TForm = (props: { graphQuery: GraphTableQueryFragment }) => {
         <div className="grid grid-cols-1 gap-4 p-4">
           <StringField
             label="Name"
-            name="label"
+            name="name"
             description="Name of the scatter plot"
           />
           <StringField

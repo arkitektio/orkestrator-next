@@ -8,18 +8,15 @@ import {
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetMetricQuery } from "../api/graphql";
-import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
-export default asDetailQueryRoute(useGetMetricQuery, ({ data, refetch }) => {
-  const uploadFile = useKraphMediaUpload();
-
+export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
   return (
     <KraphMetric.ModelPage
-      object={data.metric.id}
+      object={{ id: data.metric.id }}
       title={data?.metric.category.label}
       sidebars={
         <MultiSidebar
-          map={{ Comments: <KraphMetric.Komments object={data.metric.id} /> }}
+          map={{ Comments: <KraphMetric.Komments object={{ id: data.metric.id }} /> }}
         />
       }
       pageActions={
@@ -31,7 +28,7 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data, refetch }) => {
       }
     >
       <KraphEntity.Drop
-        object={data.metric.id}
+        object={{ id: data.metric.id }}
         className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6"
       >
         <div>

@@ -1,6 +1,6 @@
-import { PortKind } from "@/rekuest/api/graphql";
+import { AssignWidgetFragment, PortKind } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
+import { InputWidgetProps, MappablePort, Port } from "@/rekuest/widgets/types";
 import React from "react";
 
 export type UnionValue = {
@@ -16,7 +16,9 @@ const ModelWidget: React.FC<InputWidgetProps> = ({
   return (
     <>
       {port.children?.map((port) => {
-        const Widget = useWidgetRegistry().registry.getInputWidgetForPort(port);
+        const Widget = useWidgetRegistry().registry.getInputWidgetForPort(
+          port as unknown as MappablePort,
+        );
 
         return (
           <Widget
@@ -24,10 +26,10 @@ const ModelWidget: React.FC<InputWidgetProps> = ({
               {
                 ...port,
                 __typename: "Port",
-              } as Port
+              } as unknown as Port
             }
             path={path.concat(port.key)}
-            widget={port.widget}
+            widget={port.widget as unknown as AssignWidgetFragment}
             bound={bound}
             parentKind={PortKind.Model}
           />

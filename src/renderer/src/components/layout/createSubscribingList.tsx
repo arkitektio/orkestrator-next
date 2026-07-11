@@ -61,7 +61,7 @@ export const Offseter = ({
   array,
 }: {
   offset: number;
-  setOffset: React.Dispatch<React.SetStateAction<number>>;
+  setOffset: (value: number) => void;
   step: number;
   array?: any[] | undefined | null;
   refetch: () => Promise<any>;

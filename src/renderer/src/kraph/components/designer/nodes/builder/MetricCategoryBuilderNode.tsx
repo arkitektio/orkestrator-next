@@ -17,10 +17,10 @@ export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
       <PathNodePresentation
         id={id}
         label={data.label}
-        tags={data.tags}
+        tags={data.tags.map((tag) => ({ value: tag.name }))}
       >
         <div className="font-semibold">{data.label}</div>
-        <div className="text-sm text-muted-foreground">{data.ValueKind}</div>
+        <div className="text-sm text-muted-foreground">{data.valueKind}</div>
       </PathNodePresentation>
     </>
   );

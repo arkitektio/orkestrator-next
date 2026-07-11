@@ -7,7 +7,7 @@ export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>} title="Pods">
+    <PageLayout pageActions={<></>} title="Pods">
       <div className="p-3">
         <PodsList />
         <Separator className="mt-8 mb-2" />

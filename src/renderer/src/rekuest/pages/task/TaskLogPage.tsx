@@ -96,7 +96,7 @@ export const DelegateItem = (props: { event: TaskEventFragment }) => {
           This assignmenent was delegated to{" "}
           {props.event.delegatedTo?.implementation.action.name}
           <RekuestTask.DetailLink
-            object={props.event.delegatedTo?.id || ""}
+            object={{ id: props.event.delegatedTo?.id || "" }}
             className="font-semibold"
           >
             {" "}
@@ -204,9 +204,7 @@ export const isInterruptable = (task: DetailTaskFragment) => {
 
 export const TPage = asDetailQueryRoute(
   useDetailTaskQuery,
-  ({ data, refetch, subscribeToMore }) => {
-    const navigate = useNavigate();
-
+  ({ data }) => {
     const reassign = useReassign({ task: data.task });
 
     const [cancel, _] = useCancelMutation();

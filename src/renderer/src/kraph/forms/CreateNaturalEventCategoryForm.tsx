@@ -18,7 +18,14 @@ const TForm = (props: { graph?: string; onSuccess?: (data: CreateNaturalEventCat
     refetchQueries: ["GetGraph"],
   });
 
-  const submit = useGraphQLDialog(add, { successMessage: "Natural Event Category created", onSuccess: props.onSuccess });
+  const submit = useGraphQLDialog(add, {
+    successMessage: "Natural Event Category created",
+    onSuccess: (data) => {
+      if (data) {
+        props.onSuccess?.(data);
+      }
+    },
+  });
 
   const form = useForm<CreateProtocolEventCategoryMutationVariables["input"]>({
     defaultValues: {

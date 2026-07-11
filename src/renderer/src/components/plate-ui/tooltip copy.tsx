@@ -21,10 +21,10 @@ export const TooltipContent = withCn(
 );
 
 export function withTooltip<
-  T extends React.ComponentType<any> | keyof HTMLElementTagNameMap,
+  T extends React.ComponentType<any> | keyof React.JSX.IntrinsicElements,
 >(Component: T) {
   return React.forwardRef<
-    React.ElementRef<T>,
+    React.ComponentRef<T>,
     {
       tooltip?: React.ReactNode;
       tooltipContentProps?: Omit<

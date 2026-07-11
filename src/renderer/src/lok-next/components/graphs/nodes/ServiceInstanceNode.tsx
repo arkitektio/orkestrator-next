@@ -1,11 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { LokServiceInstance } from "@/linkers";
 import { ListServiceInstanceFragment } from "@/lok-next/api/graphql";
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
 
 export default memo(
-  ({ data, isConnectable }: NodeProps<ListServiceInstanceFragment>) => {
+  ({
+    data,
+    isConnectable,
+  }: NodeProps<Node<ListServiceInstanceFragment>>) => {
     return (
       <>
         <Handle
@@ -44,8 +47,8 @@ export default memo(
           style={{ padding: 10, width: 100, height: 100 }}
           className="flex flex-col justify-center items-center p-3"
         >
-          <LokServiceInstance.DetailLink object={data.id} className={"text-xl"}>
-            {data.identifier}
+          <LokServiceInstance.DetailLink object={data} className={"text-xl"}>
+            {data.release.service.identifier}
           </LokServiceInstance.DetailLink>
         </Card>
       </>

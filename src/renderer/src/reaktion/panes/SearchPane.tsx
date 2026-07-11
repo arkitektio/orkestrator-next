@@ -19,10 +19,8 @@ import {
 } from "../api/graphql";
 import WorkspaceCard from "../components/cards/WorkspaceCard";
 
-interface IDataSidebarProps { }
-
-export const NavigationPane = (props: {}) => {
-  const { data, refetch, variables } = useWorkspacesQuery();
+export const NavigationPane = () => {
+  const { data } = useWorkspacesQuery();
   const { data: rundata } = useListRunsQuery({
     variables: {
       pagination: {

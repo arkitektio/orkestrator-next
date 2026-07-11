@@ -20,9 +20,9 @@ interface Props { }
  * @returns
  */
 
-const Module: React.FC<Props> = (props) => {
+const Module: React.FC<Props> = () => {
   return (
-    <Guard.Fluss fallback={<>Loading</>}>
+    <Guard.Fluss unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout
         pane={
           <>

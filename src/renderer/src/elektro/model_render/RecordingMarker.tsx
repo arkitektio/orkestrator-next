@@ -1,9 +1,9 @@
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import { Recording } from "../api/graphql"; // adjust path as needed
+import { RecordingFragment } from "../api/graphql"; // adjust path as needed
 import { getColorForRecording } from "../components/SimulationRender";
 
-export const RecordingMarker = ({ recording, position }: { recording: Recording; position: THREE.Vector3 }) => (
+export const RecordingMarker = ({ recording, position }: { recording: RecordingFragment; position: THREE.Vector3 }) => (
   <group position={position}>
     <mesh>
       <sphereGeometry args={[0.6, 12, 12]} />

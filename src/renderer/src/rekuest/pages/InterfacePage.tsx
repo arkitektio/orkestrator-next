@@ -5,7 +5,7 @@ import {
   useGetInterfaceQuery
 } from "@/rekuest/api/graphql";
 
-export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data, refetch }) => {
+export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data }) => {
   return (
     <RekuestInterface.ModelPage
       title={data.interface.key}

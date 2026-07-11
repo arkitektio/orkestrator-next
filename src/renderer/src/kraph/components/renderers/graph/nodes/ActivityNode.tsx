@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphEditEvent } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
@@ -9,8 +8,6 @@ import Timestamp from "react-timestamp";
 import { ActivityNode } from "../types";
 
 const TNode = memo(({ data, id, selected }: NodeProps<ActivityNode>) => {
-  const resolve = useResolve();
-
   return (
     <>
       <NodeResizer
@@ -27,7 +24,7 @@ const TNode = memo(({ data, id, selected }: NodeProps<ActivityNode>) => {
       >
         <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
           <KraphEditEvent.DetailLink
-            object={data.id}
+            object={{ id: data.id }}
             className="font-bold text-sm text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
           >
             <Timestamp date={data.label} relative />

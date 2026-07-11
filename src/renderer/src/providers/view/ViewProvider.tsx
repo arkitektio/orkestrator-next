@@ -29,7 +29,7 @@ export const ViewProvider: React.FC<ViewProviderProps> = ({
   }, [props.persistKey]);
 
   const extendToInclude = useCallback(
-    (view: View) => {
+    (_view: View) => {
       throw new Error("Not implemented");
     },
     [setActiveView],

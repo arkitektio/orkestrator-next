@@ -229,12 +229,13 @@ const resolveComponentPropValue = (
       return prop.agent_call;
     }
 
+    const agentCall = prop.agent_call;
     return () => {
       runtimeContext.dispatchAction(
         {
-          dependency: prop.agent_call.dependency,
-          operation: prop.agent_call.operation,
-          arguments: resolveActionArguments(prop.agent_call.arguments, runtimeContext),
+          dependency: agentCall.dependency,
+          operation: agentCall.operation,
+          arguments: resolveActionArguments(agentCall.arguments, runtimeContext),
         },
         component,
       );
@@ -242,18 +243,19 @@ const resolveComponentPropValue = (
   }
 
   if (prop.util_call) {
+    const utilCall = prop.util_call;
     if (isActionSchema(targetSchema)) {
       return () => {
         runtimeContext.invokeFunction(
-          prop.util_call.operation,
-          resolveActionArguments(prop.util_call.arguments, runtimeContext),
+          utilCall.operation,
+          resolveActionArguments(utilCall.arguments, runtimeContext),
         );
       };
     }
 
     return runtimeContext.invokeFunction(
-      prop.util_call.operation,
-      resolveActionArguments(prop.util_call.arguments, runtimeContext),
+      utilCall.operation,
+      resolveActionArguments(utilCall.arguments, runtimeContext),
     );
   }
 

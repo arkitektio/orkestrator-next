@@ -1,9 +1,9 @@
 import { MikroRenderTree } from "@/linkers";
-import { ListRenderTreeFragment } from "../../api/graphql";
 
+// No `ListRenderTree` fragment/query is currently generated for this
+// still-valid backend type, so a minimal local shape is used instead.
 interface Props {
-  item: ListRenderTreeFragment;
-
+  item: { id: string; name: string };
 }
 
 const Card = ({ item }: Props) => {

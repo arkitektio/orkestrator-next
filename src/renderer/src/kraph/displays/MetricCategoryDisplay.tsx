@@ -13,7 +13,7 @@ export const MetricCategoryDisplay = (props: DisplayWidgetProps) => {
 
   if (props.context === "command") {
     return (
-      <KraphMetricCategory.DetailLink object={props.object}>
+      <KraphMetricCategory.DetailLink object={{ id: props.object }}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium text-sm truncate">{cat.label}</span>
           <span className="text-xs text-muted-foreground shrink-0">{cat.valueKind}</span>
@@ -23,7 +23,7 @@ export const MetricCategoryDisplay = (props: DisplayWidgetProps) => {
   }
 
   return (
-    <KraphMetricCategory.DetailLink object={props.object}>
+    <KraphMetricCategory.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
         {cat.image?.presignedUrl && (
           <img src={cat.image.presignedUrl} alt={cat.label} className="w-full h-20 object-cover rounded" />

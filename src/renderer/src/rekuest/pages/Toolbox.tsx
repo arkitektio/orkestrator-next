@@ -4,7 +4,7 @@ import { RekuestToolbox } from "@/linkers";
 import { useToolboxQuery } from "@/rekuest/api/graphql";
 import ShortcutList from "../components/lists/ShortcutList";
 
-export const ToolboxPage = asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
+export const ToolboxPage = asDetailQueryRoute(useToolboxQuery, ({ data }) => {
   return (
     <RekuestToolbox.ModelPage
       title={data.toolbox.name}

@@ -13,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListScatterPlotsQuery({
+  const { data, error, refetch } = useListScatterPlotsQuery({
     variables: { filters, pagination },
   });
 

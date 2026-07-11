@@ -25,7 +25,7 @@ interface SidebarProps {
   isMobile: boolean;
 }
 
-export function Sidebar({ links, isCollapsed, isMobile }: SidebarProps) {
+export function Sidebar({ links, isCollapsed }: SidebarProps) {
   return (
     <div
       data-collapsed={isCollapsed}
@@ -70,7 +70,10 @@ export function Sidebar({ links, isCollapsed, isMobile }: SidebarProps) {
                   <Link
                     to="#"
                     className={cn(
-                      buttonVariants({ variant: link.variant, size: "icon" }),
+                      buttonVariants({
+                        variant: link.variant === "grey" ? "secondary" : link.variant,
+                        size: "icon",
+                      }),
                       "h-11 w-11 md:h-16 md:w-16",
                       link.variant === "grey" &&
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
@@ -101,7 +104,10 @@ export function Sidebar({ links, isCollapsed, isMobile }: SidebarProps) {
               key={index}
               to="#"
               className={cn(
-                buttonVariants({ variant: link.variant, size: "xl" }),
+                buttonVariants({
+                  variant: link.variant === "grey" ? "secondary" : link.variant,
+                  size: "lg",
+                }),
                 link.variant === "grey" &&
                 "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
                 "justify-start gap-4",

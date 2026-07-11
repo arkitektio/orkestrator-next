@@ -31,7 +31,6 @@ export function detectPropertyChanges(
   const originalKeys = new Set(original.map((p) => p.key))
   const updatedKeys = new Set(updated.map((p) => p.key))
   const originalByKey = new Map(original.map((p) => [p.key, p]))
-  const updatedByKey = new Map(updated.map((p) => [p.key, p]))
 
   // Detect additions - properties in updated but not in original
   for (const property of updated) {
@@ -56,8 +55,8 @@ export function detectPropertyChanges(
 
       for (const added of plan.additions) {
         // Check if labels are similar (case-insensitive match or substring)
-        const removedLabel = removedProp.label.toLowerCase()
-        const addedLabel = added.label.toLowerCase()
+        const removedLabel = (removedProp.label || removedProp.key).toLowerCase()
+        const addedLabel = (added.label || added.key).toLowerCase()
 
         if (
           removedLabel === addedLabel ||

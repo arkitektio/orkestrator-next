@@ -1,17 +1,5 @@
-import { ApolloClient, gql } from "@apollo/client";
+import { ApolloClient } from "@apollo/client";
 import { MigrationPlan } from "./migration";
-
-const UPDATE_ENTITY_PROPERTIES = gql`
-  mutation UpdateEntityProperties($id: ID!, $properties: [PropertyInput!]!) {
-    updateEntity(input: { id: $id, properties: $properties }) {
-      id
-      propertyList {
-        key
-        value
-      }
-    }
-  }
-`;
 
 interface EntityProperty {
   key: string;
@@ -30,7 +18,7 @@ export async function applyMigrations(
   entities: Entity[],
   plan: MigrationPlan,
   defaultValues: Record<string, any>,
-  client: ApolloClient<any>
+  _client: ApolloClient<any>
 ): Promise<void> {
   const mutations = entities.map(async (entity) => {
     const currentProperties = new Map(
@@ -54,8 +42,7 @@ export async function applyMigrations(
     // Add new properties with default values
     for (const addition of plan.additions) {
       if (!currentProperties.has(addition.key)) {
-        const defaultValue =
-          defaultValues[addition.key] || addition.default || "";
+        const defaultValue = defaultValues[addition.key] || "";
         currentProperties.set(addition.key, String(defaultValue));
       }
     }

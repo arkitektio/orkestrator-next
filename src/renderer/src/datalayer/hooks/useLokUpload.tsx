@@ -8,6 +8,7 @@ import {
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
 } from "@/lok-next/api/graphql";
+import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { useCallback } from "react";
 
 export const uploadFetch = (
@@ -120,13 +121,17 @@ const uploadToStore = async (
 };
 
 export const useLokUpload = () => {
-  const client = useLok();
+  const client = useLok() as ApolloClient<NormalizedCache> | undefined;
   const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
       if (!client) {
         throw Error("No client configured");
+      }
+
+      if (!datalayerEndpoint) {
+        throw Error("No datalayer endpoint configured");
       }
 
       const data = await client.mutate<

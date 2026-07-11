@@ -1,9 +1,8 @@
-import { Port } from "@/port-next/api/graphql";
 import { ReturnContainerProps } from "@/rekuest/widgets/tailwind";
-import { PortGroup } from "@/rekuest/widgets/types";
+import { PortGroup, ReturnPort } from "@/rekuest/widgets/types";
 
 export type FilledGroup = PortGroup & {
-  ports: Port[];
+  ports: ReturnPort[];
 };
 
 export const ReturnsContainer = ({

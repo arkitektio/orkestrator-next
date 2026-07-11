@@ -13,7 +13,7 @@ export type ActionAssignVariables = AssignInput;
 
 export type PartialTemplateOptions = Partial<ActionAssignVariables>;
 
-export type UseActionReturn<T> = {
+export type UseActionReturn = {
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanTaskFragment>;
@@ -23,9 +23,9 @@ export type UseActionReturn<T> = {
   latestTask?: PostmanTaskFragment;
 };
 
-export const useAction = <T extends any>(
+export const useAction = (
   options: PartialTemplateOptions,
-): UseActionReturn<T> => {
+): UseActionReturn => {
   const [currentAssign, setCurrentAssign] =
     useState<PostmanTaskFragment | null>(null);
 

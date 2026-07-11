@@ -3,7 +3,7 @@ import { MikroTable } from "@/linkers";
 import { useGetTableQuery } from "../api/graphql";
 import { TableTable } from "../components/tables/TableTable";
 
-export const TablePage = asDetailQueryRoute(useGetTableQuery, ({ data, refetch }) => {
+export const TablePage = asDetailQueryRoute(useGetTableQuery, ({ data }) => {
   return (
     <MikroTable.ModelPage
       object={data.table}

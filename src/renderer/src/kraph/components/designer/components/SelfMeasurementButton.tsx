@@ -8,21 +8,21 @@ import { Form } from "@/components/ui/form";
 import {
   CreateMeasurementCategoryMutationVariables,
   CreateMetricCategoryMutationVariables,
-  ValueKind,
+  PropertyType,
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { useOntologyGraph } from "../OntologyGraphProvider";
 import { labelToEdgeAgeName } from "../utils";
 
-export const SelfMeasurementForm = (props: {}) => {
+export const SelfMeasurementForm = () => {
   const run = useFormDialog();
 
   const form = useForm<CreateMetricCategoryMutationVariables["input"]>({
     defaultValues: {
       label: "",
       description: "",
-      kind: ValueKind.Float,
+      valueKind: PropertyType.Float,
     },
   });
 
@@ -50,12 +50,12 @@ export const SelfMeasurementForm = (props: {}) => {
 
               <ChoicesField
                 label="Data Kind"
-                name="kind"
+                name="valueKind"
                 description="Select a data kind"
                 options={[
-                  { label: "Float", value: ValueKind.Float },
-                  { label: "Integer", value: ValueKind.Int },
-                  { label: "String", value: ValueKind.String },
+                  { label: "Float", value: PropertyType.Float },
+                  { label: "Integer", value: PropertyType.Integer },
+                  { label: "String", value: PropertyType.String },
                 ]}
               />
 
@@ -70,7 +70,10 @@ export const SelfMeasurementForm = (props: {}) => {
   );
 };
 
-export const SelfMeasurementButton = (props: { self: string }) => {
+export const SelfMeasurementButton = (props: {
+  self: string;
+  onCancel: () => void;
+}) => {
   const { addStagingEdge } = useOntologyGraph();
 
   const onSubmitGeneric = (
@@ -78,7 +81,7 @@ export const SelfMeasurementButton = (props: { self: string }) => {
   ) => {
     addStagingEdge({
       data: data,
-      ageName: labelToEdgeAgeName(data.label),
+      ageName: labelToEdgeAgeName(data.label || data.key),
       type: "measurement",
       source: props.self,
       target: props.self,

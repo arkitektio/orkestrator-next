@@ -31,10 +31,8 @@ const Page = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
 
           <div className="font-light mt-2 ">Tags</div>
           <div className="text-xl flex mb-2">
-            {data?.dataset?.tags?.map((tag, index) => (
-              <>
-                <span className="font-semibold mr-2">#{tag} </span>
-              </>
+            {data?.dataset?.tags?.map((tag) => (
+              <span className="font-semibold mr-2" key={tag}>#{tag} </span>
             ))}
           </div>
         </div>

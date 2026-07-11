@@ -35,7 +35,7 @@ const TNode = memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
           )}
           <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
             <KraphProtocolEventCategory.DetailLink
-              object={data.id}
+              object={{ id: data.id }}
               className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
             >
               {data.category.label}

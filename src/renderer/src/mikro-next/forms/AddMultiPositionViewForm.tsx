@@ -8,7 +8,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
-  WellPositionViewInput,
   useAutoCreateMultiWellPlateMutation,
   useCreateWellPositionViewMutation,
   useMultiWellPlateOptionsLazyQuery,
@@ -17,16 +16,35 @@ import {
 export const AddMultiPositionViewForm = (props: { image: string }) => {
   const [add] = useCreateWellPositionViewMutation();
 
-  const [search] = useMultiWellPlateOptionsLazyQuery();
+  const [searchMultiWellPlateOptions] = useMultiWellPlateOptionsLazyQuery();
+  const search = async (x: {
+    variables: { search?: string; values?: string[] };
+  }) => {
+    const result = await searchMultiWellPlateOptions({
+      variables: x.variables,
+    });
+    return {
+      data: result.data
+        ? {
+          options: result.data.options.map((option) => ({
+            value: option.value,
+            label: option.label ?? option.value,
+          })),
+        }
+        : undefined,
+      errors: result.error ? [result.error] : undefined,
+    };
+  };
   const [create] = useAutoCreateMultiWellPlateMutation();
 
   const submit = useGraphQLDialog(add, { successMessage: "Saved" });
 
-  const form = useForm<WellPositionViewInput>({
+  const form = useForm({
     defaultValues: {
       image: props.image,
       row: 0,
       column: 0,
+      well: "",
     },
     resolver: yupResolver(
       yup.object().shape({
@@ -46,7 +64,10 @@ export const AddMultiPositionViewForm = (props: { image: string }) => {
             submit({
               variables: {
                 input: {
-                  ...data,
+                  image: data.image,
+                  row: data.row,
+                  column: data.column,
+                  well: data.well,
                 },
               },
             });

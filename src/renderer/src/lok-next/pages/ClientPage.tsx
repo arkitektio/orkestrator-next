@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokClient, LokDevice, LokServiceInstance, RekuestTask } from "@/linkers";
+import { LokClient, LokDevice, RekuestTask } from "@/linkers";
 import {
   TaskEventKind,
   PostmanTaskFragment,
@@ -15,7 +15,6 @@ import {
   AlertTriangle,
   Bug,
   ExternalLink,
-  Link as LinkIcon,
   Server,
   User,
 } from "lucide-react";

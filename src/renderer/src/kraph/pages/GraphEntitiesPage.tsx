@@ -1,17 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { useGetGraphQuery, useListLinkedExpressionQuery } from "../api/graphql";
+import { useGetGraphQuery } from "../api/graphql";
 import { EntitiesTable } from "../components/tables/EntitiesTable";
 
-export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const { data: xdata, error } = useListLinkedExpressionQuery({
-    variables: {
-      graph: data?.graph.id,
-      pinned: true,
-    },
-  });
-
-  console.log("X", xdata);
-
+export default asDetailQueryRoute(useGetGraphQuery, ({ data }) => {
   return (
     <>
       <EntitiesTable graph={data?.graph.id} />

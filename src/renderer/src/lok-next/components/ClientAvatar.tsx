@@ -13,25 +13,26 @@ export const ClientAvatar = (props: { clientId: string }) => {
   });
 
   const resolve = useResolve();
+  const client = data?.client;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {data?.client.id && (
-          <LokClient.DetailLink object={data?.client.id}>
+        {client && (
+          <LokClient.DetailLink object={client}>
             <Avatar className="h-10 w-10 cursor-pointer">
               <AvatarImage
                 className="rounded-md"
-                src={resolve(data?.client.logo?.presignedUrl)}
-                alt={data?.client.name}
+                src={resolve(client.logo?.presignedUrl)}
+                alt={client.name}
               />
-              <AvatarFallback>{data?.client.name.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback>{client.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
           </LokClient.DetailLink>
         )}
       </TooltipTrigger>
 
-      <TooltipContent>{data?.client.name}</TooltipContent>
+      <TooltipContent>{client?.name}</TooltipContent>
     </Tooltip>
   );
 };

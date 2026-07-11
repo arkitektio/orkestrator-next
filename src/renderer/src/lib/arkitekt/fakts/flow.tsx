@@ -1,4 +1,4 @@
-import { EnhancedManifest } from "../provider";
+import { EnhancedManifest } from "../types";
 import { challenge } from "./challenge";
 import { claim } from "./claim";
 import { FaktsEndpoint } from "./endpointSchema";

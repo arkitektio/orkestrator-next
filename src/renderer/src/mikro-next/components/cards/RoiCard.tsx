@@ -1,4 +1,3 @@
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";
 import { MikroROI } from "@/linkers";
 import { ListRoiFragment } from "../../api/graphql";
@@ -10,8 +9,6 @@ interface ImageCardProps {
 }
 
 const ImageCard = ({ item, className }: ImageCardProps) => {
-  const resolve = useResolve();
-
   const { progress } = MikroROI.useLive({ object: item.id });
   return (
     <MikroROI.Smart object={item} >

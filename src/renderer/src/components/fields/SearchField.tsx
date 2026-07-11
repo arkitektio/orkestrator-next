@@ -83,7 +83,6 @@ export const SearchField = ({
   validate,
   search,
   createComponent,
-  placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
   description,

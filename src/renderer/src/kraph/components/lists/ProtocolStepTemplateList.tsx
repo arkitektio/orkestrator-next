@@ -1,36 +1,30 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphProtocolStepTemplate } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  ProtocolStepFilter,
-  useListProtocolStepTemplatesQuery
-} from "../../api/graphql";
-import ProtocolStepTemplateCard from "../cards/ProtocolStepTemplateCard";
+import { OffsetPaginationInput } from "../../api/graphql";
 
+// NOTE: "ProtocolStepTemplate" no longer exists in the current backend
+// schema (no ProtocolStepFilter / useListProtocolStepTemplatesQuery /
+// ProtocolStepTemplateCard remain, and grepping graphql.ts for
+// "ProtocolStep" turns up nothing). Nothing in the app currently renders
+// this component. Rather than invent a replacement concept or fabricate a
+// card for a removed backend type, this is left as an inert placeholder
+// that renders nothing, keeping the file compiling until the concept either
+// comes back under a new name or this component is removed for good.
 export type Props = {
-  filters?: ProtocolStepFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } =
-    useListProtocolStepTemplatesQuery({
-      variables: { filters, pagination },
-    });
-
+const List = (_props: Props) => {
   return (
-    <ListRender
-      array={data?.protocolStepTemplates}
+    <ListRender<never>
+      array={undefined}
       title={
         <KraphProtocolStepTemplate.ListLink className="flex-0">
           Steps
         </KraphProtocolStepTemplate.ListLink>
       }
-      refetch={refetch}
     >
-      {(ex, index) => (
-        <ProtocolStepTemplateCard key={index} item={ex} />
-      )}
+      {() => null}
     </ListRender>
   );
 };

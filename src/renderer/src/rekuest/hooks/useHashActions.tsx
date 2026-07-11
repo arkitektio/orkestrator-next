@@ -13,7 +13,7 @@ import {
 
 export type ActionAssignVariables = AssignInput;
 
-export type useActionReturn<T> = {
+export type useActionReturn = {
   action?: AssignActionQuery["action"];
   assign: (
     variables: ActionAssignVariables,
@@ -24,13 +24,13 @@ export type useActionReturn<T> = {
   latestTask?: PostmanTaskFragment;
 };
 
-export type useActionOptions<T> = {
+export type useActionOptions = {
   hash?: string;
 };
 
-export const useHashAction = <T extends any>(
-  options: useActionOptions<T>,
-): useActionReturn<T> => {
+export const useHashAction = (
+  options: useActionOptions,
+): useActionReturn => {
   const { data } = useAssignActionQuery({
     variables: {
       ...options,

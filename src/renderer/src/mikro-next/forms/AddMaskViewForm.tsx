@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
-  StructureViewInput,
+  MaskViewInput,
   useCreateMaskViewMutation
 } from "../api/graphql";
 
@@ -16,14 +16,13 @@ export const AddMaskViewForm = (props: { image: string }) => {
 
   const submit = useGraphQLDialog(add, { successMessage: "Saved" });
 
-  const form = useForm<StructureViewInput>({
+  const form = useForm<MaskViewInput>({
     defaultValues: {
       image: props.image,
     },
     resolver: yupResolver(
       yup.object().shape({
         image: yup.string().required(),
-        entity: yup.string().required(),
       }),
     ),
   });

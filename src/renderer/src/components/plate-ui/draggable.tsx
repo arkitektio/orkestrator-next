@@ -5,7 +5,7 @@ import React from "react";
 import type { TEditor } from "@udecode/plate-common";
 import type { DropTargetMonitor } from "react-dnd";
 
-import { cn, withRef } from "@udecode/cn";
+import { cn } from "@udecode/cn";
 import {
   type PlateElementProps,
   MemoizedChildren,
@@ -53,7 +53,7 @@ export interface DraggableProps extends PlateElementProps {
 
 export const Draggable = withHOC(
   DraggableProvider,
-  withRef<"div", DraggableProps>(
+  React.forwardRef<HTMLDivElement, DraggableProps>(
     ({ className, onDropHandler, ...props }, ref) => {
       const { children, element } = props;
 

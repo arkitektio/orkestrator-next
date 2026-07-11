@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -9,7 +9,6 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphRelationCategory
 } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
   useGetRelationCategoryQuery,
   useUpdateEntityCategoryMutation
@@ -39,18 +38,16 @@ const Page = asDetailQueryRoute(
       }
     };
 
-    const navigate = useNavigate();
-
     return (
       <KraphRelationCategory.ModelPage
-        object={data.relationCategory.id}
+        object={{ id: data.relationCategory.id }}
         title={data?.relationCategory.label}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
                 <KraphRelationCategory.Komments
-                  object={data.relationCategory.id}
+                  object={{ id: data.relationCategory.id }}
                 />
               ),
             }}
@@ -80,9 +77,9 @@ const Page = asDetailQueryRoute(
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.relationCategory?.store?.presignedUrl && (
+            {data.relationCategory?.image?.presignedUrl && (
               <Image
-                src={resolve(data.relationCategory?.store.presignedUrl)}
+                src={resolve(data.relationCategory?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -92,21 +89,17 @@ const Page = asDetailQueryRoute(
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
         <div className="flex flex-col p-6 h-full">
-          {data.relationCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.relationCategory.bestQuery}
-            />
+          {data.relationCategory.relevantQueries.length > 0 ? (
+            <ul className="list-disc pl-4 text-sm">
+              {data.relationCategory.relevantQueries.map((query) => (
+                <li key={query.id}>{query.label}</li>
+              ))}
+            </ul>
           ) : (
             <div className="h-ful w-ull flex flex-col items-center justify-center">
               <p className="text-sm font-light mb-3">
                 No Graph Query yet for this category
               </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateGraphQueryForm category={data.relationCategory} />
-              </FormDialog>
             </div>
           )}
         </div>

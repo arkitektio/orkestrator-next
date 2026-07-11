@@ -23,7 +23,7 @@ const TheCard = ({ view }: Props) => {
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
-                  object={view.operator}
+                  object={{ id: view.operator.sub }}
                 >
                   {view.operator?.sub}
                 </LokUser.DetailLink>

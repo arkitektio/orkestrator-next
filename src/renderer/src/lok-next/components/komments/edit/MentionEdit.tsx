@@ -3,7 +3,6 @@ import { ElementRenderProps } from "../types";
 
 export const MentionEdit = ({
   attributes,
-  children,
   element,
 }: ElementRenderProps) => {
   if (!element.user) {
@@ -11,7 +10,7 @@ export const MentionEdit = ({
   }
   console.log(element);
 
-  const { data, error } = useUserQuery({
+  const { data } = useUserQuery({
     variables: { id: element.user },
   });
 

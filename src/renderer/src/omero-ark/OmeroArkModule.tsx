@@ -13,7 +13,7 @@ import StandardPane from "./panes/StandardPane";
 
 export const OmeroArkModule = () => {
   return (
-    <Guard.OmeroArk fallback={<>Loading</>}>
+    <Guard.OmeroArk unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <ConnectedGuard>
           <Routes>

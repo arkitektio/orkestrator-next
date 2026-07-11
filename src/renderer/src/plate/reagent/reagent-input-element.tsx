@@ -29,7 +29,7 @@ export const ReagentInputElement = withRef<typeof PlateElement>(
     const { children, editor, element } = props;
 
     const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
-    const [error, setError] = useState<string | null>(null);
+    const [, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
     const { roles } = useRoles();
@@ -39,7 +39,7 @@ export const ReagentInputElement = withRef<typeof PlateElement>(
       return troles
     }
 
-    const query = (string: string) => {
+    const query = (_string: string) => {
       searchF(search)
         .then((res) => {
           setOptions(res);

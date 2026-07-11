@@ -1,31 +1,30 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  ProtocolStepFilter,
-  useListProtocolStepsQuery,
-} from "../../api/graphql";
-import ProtocolStepCard from "../cards/ProtocolStepCard";
+import { KraphProtocolStep } from "@/linkers";
+import { OffsetPaginationInput } from "../../api/graphql";
 
+// NOTE: "ProtocolStep" no longer exists in the current backend schema (no
+// ProtocolStepFilter / useListProtocolStepsQuery / ProtocolStepCard remain,
+// and grepping graphql.ts for "ProtocolStep" turns up nothing). Nothing in
+// the app currently renders this component. Rather than invent a replacement
+// concept or fabricate a card for a removed backend type, this is left as an
+// inert placeholder that renders nothing, keeping the file compiling until
+// the concept either comes back under a new name or this component is
+// removed for good.
 export type Props = {
-  filters?: ProtocolStepFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListProtocolStepsQuery({
-    variables: { filters, pagination },
-  });
-
+const List = (_props: Props) => {
   return (
-    <ListRender
-      array={data?.protocolSteps}
+    <ListRender<never>
+      array={undefined}
       title={
-        <MikroDataset.ListLink className="flex-0">Steps</MikroDataset.ListLink>
+        <KraphProtocolStep.ListLink className="flex-0">
+          Steps
+        </KraphProtocolStep.ListLink>
       }
-      refetch={refetch}
     >
-      {(ex, index) => <ProtocolStepCard key={index} item={ex} />}
+      {() => null}
     </ListRender>
   );
 };

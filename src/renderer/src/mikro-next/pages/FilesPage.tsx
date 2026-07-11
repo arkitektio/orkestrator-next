@@ -19,7 +19,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </>
       }
     >
-      <FileList pagination={{ limit: 30 }} />
+      <FileList defaultLimit={30} />
     </MikroFile.ListPage>
   );
 };

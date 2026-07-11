@@ -1,10 +1,10 @@
 
 import { withRef } from "@udecode/cn";
 import {
-  ELEMENT_UL,
   useListToolbarButton,
   useListToolbarButtonState,
-} from "@udecode/plate-list";
+} from "@udecode/plate-list/react";
+import { KEYS } from "platejs";
 
 import { Icons } from "@/components/icons";
 
@@ -15,18 +15,18 @@ export const ListToolbarButton = withRef<
   {
     nodeType?: string;
   }
->(({ nodeType = ELEMENT_UL, ...rest }, ref) => {
+>(({ nodeType = KEYS.ul, ...rest }, ref) => {
   const state = useListToolbarButtonState({ nodeType });
   const { props } = useListToolbarButton(state);
 
   return (
     <ToolbarButton
       ref={ref}
-      tooltip={nodeType === ELEMENT_UL ? "Bulleted List" : "Numbered List"}
+      tooltip={nodeType === KEYS.ul ? "Bulleted List" : "Numbered List"}
       {...props}
       {...rest}
     >
-      {nodeType === ELEMENT_UL ? <Icons.ul /> : <Icons.ol />}
+      {nodeType === KEYS.ul ? <Icons.ul /> : <Icons.ol />}
     </ToolbarButton>
   );
 });

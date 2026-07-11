@@ -1,9 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  DescendantInput,
-  DescendantKind,
-  useUserOptionsLazyQuery,
-} from "@/lok-next/api/graphql";
+import { DescendantInput, DescendantKind } from "@/lok-next/api/graphql";
 import { BoldPlugin, CodePlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
 import { MentionPlugin } from "@platejs/mention/react";
 import {
@@ -77,7 +73,6 @@ export const CommentEdit = ({
   parent,
   identifier,
 }: CommentEditProps) => {
-  const [searchUser, data] = useUserOptionsLazyQuery();
   const [saving, setSaving] = useState(false);
 
   const editor = usePlateEditor({
@@ -106,7 +101,7 @@ export const CommentEdit = ({
       .catch(console.error)
       .then(() => {
         setSaving(false);
-        editor.reset();
+        editor.tf.reset();
       });
   };
 
@@ -117,13 +112,6 @@ export const CommentEdit = ({
     }
   };
 
-  const mentionItems =
-    data?.data?.options?.map((option) => ({
-      key: option?.value || '',
-      text: option?.label || '',
-      value: option?.value || '',
-    })) || [];
-
   return (
     <div className="flex flex-col gap-2 p-3 min-h-32 ">
       <Plate editor={editor}>
@@ -133,7 +121,7 @@ export const CommentEdit = ({
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => editor.tf.toggle.mark({ key: 'bold' })}
+              onClick={() => editor.tf.toggleMark('bold')}
               className=" p-0"
             >
               <Bold className="h-4 w-4" />
@@ -142,7 +130,7 @@ export const CommentEdit = ({
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => editor.tf.toggle.mark({ key: 'italic' })}
+              onClick={() => editor.tf.toggleMark('italic')}
               className=" p-0"
             >
               <Italic className="h-4 w-4" />
@@ -151,7 +139,7 @@ export const CommentEdit = ({
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => editor.tf.toggle.mark({ key: 'underline' })}
+              onClick={() => editor.tf.toggleMark('underline')}
               className="p-0"
             >
               <Underline className="h-4 w-4" />
@@ -160,7 +148,7 @@ export const CommentEdit = ({
               variant="ghost"
               size="sm"
               type="button"
-              onClick={() => editor.tf.toggle.mark({ key: 'code' })}
+              onClick={() => editor.tf.toggleMark('code')}
               className="p-0"
             >
               <Code className="h-4 w-4" />

@@ -1,14 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { LovekitSoloBroadcast, LovekitStream } from "@/linkers";
-import { useGetSoloBroadcastQuery, useGetStreamQuery } from "../api/graphql";
+import { LovekitSoloBroadcast } from "@/linkers";
+import { useGetSoloBroadcastQuery } from "../api/graphql";
 
 import { cn } from "@/lib/utils";
 import { StreamJoiner } from "../components/StreamJoiner";
 
 export default asDetailQueryRoute(
   useGetSoloBroadcastQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
 
 
     const broadcast = data?.soloBroadcast?.id;
@@ -29,19 +29,16 @@ export default asDetailQueryRoute(
           />
         }
       >
-
-         return (
-           <div className={cn("relative h-full w-full overflow-hidden bg-black")}>
-             {broadcast && (
-               <StreamJoiner broadcast={data.soloBroadcast} />
-             )}
-             {!broadcast && (
-               <div className="flex items-center justify-center h-full">
-                 <span className="text-white">Loading broadcast...</span>
-               </div>
-             )}
-           </div>
-         );
+        <div className={cn("relative h-full w-full overflow-hidden bg-black")}>
+          {broadcast && (
+            <StreamJoiner broadcast={data.soloBroadcast} />
+          )}
+          {!broadcast && (
+            <div className="flex items-center justify-center h-full">
+              <span className="text-white">Loading broadcast...</span>
+            </div>
+          )}
+        </div>
       </LovekitSoloBroadcast.ModelPage>
     );
   },

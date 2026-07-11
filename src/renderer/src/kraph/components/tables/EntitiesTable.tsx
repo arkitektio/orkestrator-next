@@ -112,7 +112,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     id: "Label",
     accessorKey: "linkedExpression.label",
     header: () => <div className="text-center">Type</div>,
-    cell: ({ row, getValue }) => {
+    cell: ({ row }) => {
       const label = row.getValue("Label") as string;
 
       return <div className="text-center font-medium">{label}</div>;
@@ -122,7 +122,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     id: "Ontology",
     accessorKey: "linkedExpression.expression.label",
     header: () => <div className="text-center">Ontology</div>,
-    cell: ({ row, getValue }) => {
+    cell: ({ row }) => {
       const label = row.getValue("Ontology") as string;
 
       return <div className="text-center font-medium">{label || ""}</div>;
@@ -159,11 +159,6 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
   },
 ];
 
-const calculateColumns = () => {
-  const calculated_columns = columns;
-  return calculated_columns;
-};
-
 export type FormValues = {
   metrics?: string[];
   kinds?: string[];
@@ -171,6 +166,12 @@ export type FormValues = {
 };
 
 export const EntitiesTable = (props: {
+  /**
+   * Entity listing is category-scoped on the current backend (there's no
+   * longer a way to list all entities in a graph or by "linked expression").
+   * Without an entity category id, the table renders empty.
+   */
+  entityCategoryId?: string;
   graph?: string;
   linkedExpression?: string;
 }) => {
@@ -185,12 +186,10 @@ export const EntitiesTable = (props: {
     defaultValues: {},
   });
 
-  const { data, loading, refetch, error } = useListEntitiesQuery({
+  const { data, loading, refetch } = useListEntitiesQuery({
+    skip: !props.entityCategoryId,
     variables: {
-      filters: {
-        graph: props.graph,
-        linkedExpression: props.linkedExpression,
-      },
+      entityCategoryId: props.entityCategoryId || "",
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,

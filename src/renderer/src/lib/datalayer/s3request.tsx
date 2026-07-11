@@ -1,7 +1,15 @@
-import { GeneralMediaAccessGrantFragment } from "@/mikro-next/api/graphql";
+// Only the credential fields actually used for signing are required here, so
+// this stays structural — both mikro-next's `GeneralMediaAccessGrantFragment`
+// and rekuest's `MediaAccessGrantFragment` satisfy it despite differing
+// `__typename`s and extra fields.
+export type S3SigningCredentials = {
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  region: string;
+};
 
-
-export async function signS3Request(url: string, method: string, credentials: GeneralMediaAccessGrantFragment) {
+export async function signS3Request(url: string, method: string, credentials: S3SigningCredentials) {
   const { accessKey, secretKey, sessionToken, region } = credentials;
   const parsedUrl = new URL(url);
   const endpoint = parsedUrl.host; // e.g., "jhnnsrs-la" or "minio"

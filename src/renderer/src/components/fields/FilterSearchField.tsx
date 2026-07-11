@@ -82,7 +82,6 @@ export const FilterSearchField = ({
   label,
   validate,
   search,
-  filters,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",

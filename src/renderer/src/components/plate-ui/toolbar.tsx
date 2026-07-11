@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import * as ToolbarPrimitive from "@radix-ui/react-toolbar";
-import { cn, withCn, withRef, withVariants } from "@udecode/cn";
+import { cn, withCn, withVariants } from "@udecode/cn";
 import { type VariantProps, cva } from "class-variance-authority";
 
 import { Icons } from "@/components/icons";
@@ -139,7 +139,10 @@ export const ToolbarToggleItem = withVariants(
   ["variant", "size"],
 );
 
-export const ToolbarGroup = withRef<"div">(({ children, className }, ref) => {
+export const ToolbarGroup = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ children, className }, ref) => {
   const childArr = React.Children.map(children, (c) => c);
 
   if (!childArr || childArr.length === 0) return null;
@@ -157,3 +160,4 @@ export const ToolbarGroup = withRef<"div">(({ children, className }, ref) => {
     </div>
   );
 });
+ToolbarGroup.displayName = "ToolbarGroup";

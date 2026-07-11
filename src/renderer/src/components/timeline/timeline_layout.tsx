@@ -1,6 +1,5 @@
 "use client";
 
-import { TimelineElement } from "@/app/data";
 import {
   Timeline,
   TimelineConnector,
@@ -12,6 +11,12 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@/components/timeline/timeline";
+
+export interface TimelineElement {
+  date: React.ReactNode;
+  title: React.ReactNode;
+  description: React.ReactNode;
+}
 
 interface TimelineLayoutProps {
   items: TimelineElement[]; // Replace any[] with the actual type of items.

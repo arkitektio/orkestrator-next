@@ -90,7 +90,9 @@ const InlineCombobox = ({
 }: InlineComboboxProps) => {
   const editor = useEditorRef();
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const cursorState = useHTMLInputCursorState(inputRef);
+  const cursorState = useHTMLInputCursorState(
+    inputRef as React.RefObject<HTMLInputElement>,
+  );
 
   const [valueState, setValueState] = useState("");
   const hasValueProp = valueProp !== undefined;
@@ -133,7 +135,7 @@ const InlineCombobox = ({
   const { props: inputProps, removeInput } = useComboboxInput({
     cancelInputOnBlur: false,
     cursorState,
-    ref: inputRef,
+    ref: inputRef as React.RefObject<HTMLElement>,
     onCancelInput: (cause) => {
       if (cause !== "backspace") {
         insertText(editor, trigger + value, {

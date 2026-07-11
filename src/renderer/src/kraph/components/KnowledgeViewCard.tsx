@@ -1,9 +1,17 @@
 import { Card } from "@/components/ui/card";
-import type { GetKnowledgeViewsQuery } from "../api/graphql";
-import { SelectiveNodeViewRenderer } from "./renderers/NodeQueryRenderer";
 import { StructureConnectionActions } from "./StructureConnectionActions";
 
-type KnowledgeView = GetKnowledgeViewsQuery["knowledgeViews"][0];
+// NOTE: `GetKnowledgeViewsQuery`/`knowledgeViews` and the "best view" node
+// query renderer it used to delegate to no longer exist on the current
+// backend schema (there is no `.graphql` operation left that produces this
+// shape). This component has no callers anywhere in the app right now; it's
+// kept compiling against a local, structurally-equivalent type with the
+// removed view-rendering branch dropped, until a replacement query/renderer
+// is designed against the current schema.
+export type KnowledgeView = {
+  structureCategory: { id: string; graph: { id: string; name: string } };
+  structure?: { id: string; label: string } | null;
+};
 
 interface KnowledgeViewCardProps {
   view: KnowledgeView;
@@ -30,12 +38,8 @@ export const KnowledgeViewCard = ({
         {view.structureCategory.graph.name}
       </h3>
       {view.structure ? (
-        <div className="h-64">
-          {view.structure?.bestView ? (
-            <SelectiveNodeViewRenderer view={view.structure.bestView} />
-          ) : (
-            "No view available"
-          )}
+        <div className="h-64 text-xs text-muted-foreground">
+          {view.structure.label}
         </div>
       ) : (
         <StructureConnectionActions

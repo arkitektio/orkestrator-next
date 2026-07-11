@@ -28,13 +28,10 @@ import {
 } from "@/components/ui/popover";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  ListEntityFragment,
   ListGraphFragment,
-  useCreateEntityMutation,
   useListGraphsLazyQuery,
-  useMyActiveGraphQuery,
-  useSearchExpressionLazyQuery,
-  useSearchLinkedRelationsLazyQuery,
+  useSearchEntitiesLazyQuery,
+  useSearchRelationsLazyQuery,
 } from "@/kraph/api/graphql";
 import { cn, notEmpty } from "@/lib/utils";
 import { Tooltip } from "@radix-ui/react-tooltip";
@@ -50,7 +47,7 @@ export const ButtonLabel = (props: {
   search: SearchFunction;
   value: string;
 }) => {
-  const [option, setOption] = useState<ListEntityFragment | null | undefined>(
+  const [option, setOption] = useState<Option | null | undefined>(
     null,
   );
   const [error, setError] = useState<string | null>(null);
@@ -78,10 +75,12 @@ export type SearchOptions = { search?: string; values?: (string | number)[] };
 
 export type SearchFunction = (
   searching: SearchOptions,
-) => Promise<(ListEntityFragment | null | undefined)[]>;
+) => Promise<(Option | null | undefined)[]>;
 
 export type EntitySearchFieldProps = {
   name: string;
+  /** The entity category to search/create within (search is category-scoped). */
+  category: string;
   graph?: string;
   label?: string;
   description?: string;
@@ -186,9 +185,10 @@ export const GraphPanel = (props: {
 };
 
 export const LinkExpressionPanel = (props: {
+  category: string;
   onExpressionSelected: (id: string) => void;
 }) => {
-  const [graphSearch] = useSearchExpressionLazyQuery();
+  const [graphSearch] = useSearchRelationsLazyQuery();
 
   const search = useCallback(
     async (x: {
@@ -197,7 +197,9 @@ export const LinkExpressionPanel = (props: {
     }) => {
       const queryResult = await graphSearch({
         variables: {
+          category: props.category,
           search: x.search,
+          values: x.values?.map((v) => v.toString()),
         },
       });
       if (queryResult?.error) {
@@ -208,7 +210,7 @@ export const LinkExpressionPanel = (props: {
       }
       return queryResult.data?.options;
     },
-    [graphSearch],
+    [graphSearch, props.category],
   );
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
@@ -277,6 +279,7 @@ export const LinkExpressionPanel = (props: {
 
 export const EntityRelationSearchField = ({
   name,
+  category,
   label,
   graph,
   validate,
@@ -285,10 +288,6 @@ export const EntityRelationSearchField = ({
   noOptionFoundPlaceholder = "No options found",
   description,
 }: EntitySearchFieldProps) => {
-  const { data, error: myerror } = useMyActiveGraphQuery();
-
-  const mygraph = graph || data?.myActiveGraph;
-
   const form = useFormContext();
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
@@ -296,30 +295,23 @@ export const EntityRelationSearchField = ({
 
   const [error, setError] = useState<string | null>(null);
 
-  const [createNewEntity] = useCreateEntityMutation();
-
   const [selectedGraph, setSelectedGraph] = useState<ListGraphFragment | null>(
     null,
   );
   const [graphPopoverOpen, setGraphPopoverOpen] = useState(false);
 
-  const [entitySearch] = useSearchLinkedRelationsLazyQuery();
+  const [entitySearch] = useSearchEntitiesLazyQuery();
 
   const search = useCallback(
     async (x: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      const graphId = graph || selectedGraph?.id || mygraph?.id;
-
-      if (!graphId) {
-        throw new Error("No graph selected");
-      }
       const queryResult = await entitySearch({
         variables: {
+          category,
           search: x.search,
           values: x.values?.map((x) => x.toString()),
-          graph: graphId,
         },
       });
       if (queryResult?.error) {
@@ -330,7 +322,7 @@ export const EntityRelationSearchField = ({
       }
       return queryResult.data?.options;
     },
-    [entitySearch, selectedGraph, mygraph],
+    [entitySearch, category],
   );
 
   const query = (string: string) => {
@@ -367,7 +359,7 @@ export const EntityRelationSearchField = ({
           <FormItem className="flex flex-col dark:text-white">
             {label != undefined && <FormLabel>{label}</FormLabel>}
 
-            {(selectedGraph || mygraph) && !graph && (
+            {selectedGraph && !graph && (
               <Popover
                 open={graphPopoverOpen}
                 onOpenChange={setGraphPopoverOpen}
@@ -376,7 +368,7 @@ export const EntityRelationSearchField = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge color="red" className="mb-2">
-                        {(selectedGraph || mygraph)?.name}
+                        {selectedGraph?.name}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -394,7 +386,6 @@ export const EntityRelationSearchField = ({
                 </PopoverContent>
               </Popover>
             )}
-            {myerror && <div>{myerror?.message}</div>}
 
             <Popover
               open={generalPopoverOpen}
@@ -429,7 +420,7 @@ export const EntityRelationSearchField = ({
                     }}
                   />
                   <CommandList>
-                    <CommandEmpty></CommandEmpty>
+                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
                     {error && (
                       <CommandGroup heading="Error">
                         {error && <CommandItem>{error}</CommandItem>}

@@ -28,13 +28,15 @@ import {
   useSmartExtension,
 } from "./ExtensionContext";
 
+type DisplayIdentifier = Parameters<typeof useDisplayComponent>[0];
+
 export const DisplayWidget = (props: {
   identifier: string;
   object: string;
   link?: boolean;
   context?: "command" | "widget";
 }) => {
-  const Widget = useDisplayComponent(props.identifier);
+  const Widget = useDisplayComponent(props.identifier as DisplayIdentifier);
 
   if (Widget == undefined) {
     return <>No widget found</>;
@@ -83,7 +85,7 @@ export const ModifierRender = (props: { modifier: Modifier; context?: "command" 
     return (
       <DisplayWidget
         identifier={props.modifier.identifier}
-        object={props.modifier}
+        object={props.modifier.id}
         context={props.context || "widget"}
       />
     );

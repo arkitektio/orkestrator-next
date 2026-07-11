@@ -2,12 +2,11 @@ import { Button } from "@/components/ui/button";
 import {
   GetStructureDocument,
   ListGraphFragment,
-  useCreateStructureMutation,
+  useEnsureStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery
 } from "@/kraph/api/graphql";
-import { Identifier } from "@/providers/smart/types";
-import { SelectiveNodeViewRenderer } from "../renderers/NodeQueryRenderer";
+import { Identifier } from "@/types";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
@@ -27,7 +26,7 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
     },
   });
 
-  const [createS] = useCreateStructureMutation({
+  const [createS] = useEnsureStructureMutation({
     refetchQueries: [GetStructureDocument],
   });
 
@@ -46,12 +45,7 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
       {data?.structureByIdentifier != undefined ? (
         <div className="w-full h-full">
           <div className="text-xs font-bold">{props.graph.name}</div>
-
-          {data.structureByIdentifier.bestView && (
-            <SelectiveNodeViewRenderer
-              view={data.structureByIdentifier.bestView}
-            />
-          )}
+          <div className="text-xs">{data.structureByIdentifier.label}</div>
         </div>
       ) : (
         <div className="">
@@ -60,7 +54,8 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
               createS({
                 variables: {
                   input: {
-                    structure: `${props.identifier}:${props.object}`,
+                    identifier: props.identifier,
+                    object: props.object,
                     graph: props.graph.id,
                   },
                 },

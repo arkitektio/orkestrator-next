@@ -1,7 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { MikroDataset } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
 import { useState } from "react";
 import { useGetDatasetQuery } from "../api/graphql";
 import { DatasetListExplorer, useDatasetExplorer } from "../components/explorer/DatasetListExplorer";

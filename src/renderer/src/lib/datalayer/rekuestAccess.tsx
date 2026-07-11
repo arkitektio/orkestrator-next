@@ -1,11 +1,11 @@
-import {  MediaAccessGrantFragment, MediaStore, MediaStoreFragment, RequestMediaAccessDocument, RequestMediaAccessInput, RequestMediaAccessMutation, RequestMediaAccessMutationVariables } from "@/rekuest/api/graphql";
+import {  MediaAccessGrantFragment, MediaStoreFragment, RequestMediaAccessDocument, RequestMediaAccessInput, RequestMediaAccessMutation, RequestMediaAccessMutationVariables } from "@/rekuest/api/graphql";
 import {  signS3Request } from "./s3request";
 import { ApolloClient } from "@apollo/client";
 import { useDatalayerEndpoint, useRekuest } from "@/app/Arkitekt";
 import React from "react";
 
 
-export const createBlobUrl = async (media: MediaStoreFragment, datalayer: string, credentials: MediaAccessGrantFragment) => {
+export const createBlobUrl = async (_media: MediaStoreFragment, datalayer: string, credentials: MediaAccessGrantFragment) => {
 
 
   const s3Url = datalayer + "/" + credentials.bucket + "/" + credentials.key;

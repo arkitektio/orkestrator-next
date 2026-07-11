@@ -25,7 +25,7 @@ const Page = () => {
           title="Datasets"
           description="Datasets allow you to group your images and files together. Just like folders. "
         />
-        <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
+        <DatasetList />
       </div>
     </OmeroArkDataset.ListPage>
   );

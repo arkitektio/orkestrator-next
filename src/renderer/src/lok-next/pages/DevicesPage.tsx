@@ -2,13 +2,10 @@ import { Explainer } from "@/components/explainer/Explainer";
 import { LokDevice } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import DeviceList from "../components/lists/DeviceList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
   return (
     <LokDevice.ListPage
       title="Devices"

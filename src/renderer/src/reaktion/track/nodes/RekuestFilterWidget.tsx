@@ -21,14 +21,12 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { RekuestFilterNodeProps } from "../../types";
-import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
 
 export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,
 }) => {
-  const latestEvent = useLatestNodeEvent(id);
   const [expanded, setExpanded] = React.useState(false);
 
   const description = useActionDescription({

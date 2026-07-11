@@ -1,12 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestAction, RekuestSpace } from "@/linkers";
+import { RekuestSpace } from "@/linkers";
 import {
   AgentFilter,
   OffsetPaginationInput,
   useSpacesQuery,
-  useToolboxesQuery,
 } from "@/rekuest/api/graphql";
-import ToolboxCard from "../cards/ToolboxCard";
 import SpaceCard from "../cards/SpaceCard";
 
 export type Props = {
@@ -15,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useSpacesQuery({
+  const { data, refetch } = useSpacesQuery({
     variables: { filters, pagination },
   });
 

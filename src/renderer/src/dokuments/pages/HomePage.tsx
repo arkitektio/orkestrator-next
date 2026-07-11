@@ -6,10 +6,6 @@ import React from "react";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const handleCreateRoom = async () => {
-    alert("Creating room");
-  };
-
   return (
     <PageLayout
       title="Dokuments"

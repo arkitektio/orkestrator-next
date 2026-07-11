@@ -1,9 +1,6 @@
 
 import {
-  Images,
-  TrendingUp,
-  Calendar,
-  Activity
+  Images
 } from "lucide-react";
 import { useHomePageStatsQuery } from "../api/graphql";
 

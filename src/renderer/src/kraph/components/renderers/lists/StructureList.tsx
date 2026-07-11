@@ -84,7 +84,7 @@ const calculateColumns = (
         const id = row.getValue("id") as string;
         return (
           <KraphStructure.DetailLink
-            object={id}
+            object={{ id }}
             className="items-center justify-center flex"
           >
             Open

@@ -11,7 +11,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { PaneLink, SidePaneGroup } from "@/components/ui/sidepane";
 import { Toggle } from "@/components/ui/toggle";
-import { UploadProgress } from "@/components/upload/UploadProgress";
 import {
   JustUsername,
 } from "@/lok-next/components/UserAvatar";
@@ -180,18 +179,26 @@ const Pane: React.FunctionComponent = () => {
             <Toggle
               label="No Images"
               name="noImages"
-              checked={noImages}
-              onCheckedChange={setNoImages}
+              pressed={noImages}
+              onPressedChange={setNoImages}
             >
               Exclude Images
             </Toggle>
             <Toggle
               label="No Files"
               name="noFiles"
-              checked={noFiles}
-              onCheckedChange={setNoFiles}
+              pressed={noFiles}
+              onPressedChange={setNoFiles}
             >
               Exclude Files
+            </Toggle>
+            <Toggle
+              label="No Datasets"
+              name="noDatasets"
+              pressed={noDatasets}
+              onPressedChange={setNoDatasets}
+            >
+              Exclude Datasets
             </Toggle>
           </div>
         </PopoverContent>

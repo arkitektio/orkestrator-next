@@ -17,7 +17,7 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
       <PathNodePresentation
         id={id}
         label={data.identifier}
-        tags={data.tags}
+        tags={data.tags.map((tag) => ({ value: tag.name }))}
       />
     </>
   );

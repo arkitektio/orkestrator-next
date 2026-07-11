@@ -2,7 +2,7 @@ import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 import { toBase } from "@/lib/quantities";
-import { LaserElementNode, SourceElementNode } from "../types";
+import { LaserElementNode } from "../types";
 
 // Function to convert wavelength (nm) to RGB color
 const wavelengthToColor = (wavelength: number) => {

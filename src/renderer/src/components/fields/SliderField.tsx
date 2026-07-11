@@ -58,7 +58,7 @@ export const SliderField = (
                 value={[field.value]}
                 onValueChange={(z) => {
                   if (props.throttle) {
-                    throttle(field.onChange(z[0]), props.throttle);
+                    throttle(() => field.onChange(z[0]), props.throttle)();
                   } else field.onChange(z[0]);
                 }}
                 min={props.min}

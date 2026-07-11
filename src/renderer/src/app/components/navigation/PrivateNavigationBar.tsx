@@ -35,7 +35,6 @@ import { useDebug } from "@/providers/debug/DebugContext";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
 import { ChatBubbleIcon, DashIcon, HomeIcon, ReloadIcon } from "@radix-ui/react-icons";
 import {
-  AlertTriangle,
   Bug,
   ChevronUp,
   Database,

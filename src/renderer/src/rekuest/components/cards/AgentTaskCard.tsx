@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { RekuestTask } from "@/linkers";
 import { TaskEventKind, ListTaskFragment } from "@/rekuest/api/graphql";
-import { CheckCircle, Clock, XCircle, Loader } from "lucide-react";
+import { CheckCircle, XCircle, Loader } from "lucide-react";
 import Timestamp from "react-timestamp";
 
 interface Props {

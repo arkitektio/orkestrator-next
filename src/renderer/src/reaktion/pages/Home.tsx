@@ -21,7 +21,7 @@ const Page = () => {
             name="createworkspace"
             variant={"outline"}
             dialogProps={{
-              onSuccess: (data) => navigate(FlussWorkspace.linkBuilder(data.createWorkspace.id)),
+              onSuccess: (data) => data && navigate(FlussWorkspace.linkBuilder(data.createWorkspace.id)),
             }}
           >
             Create

@@ -1,4 +1,5 @@
-import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
+import { asParamlessRoute, HookFunction } from "@/app/routes/ParamlessRoute";
+import { OperationVariables } from "@apollo/client";
 import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -34,7 +35,7 @@ import {
   parseAsStringLiteral,
   useQueryState,
 } from "nuqs";
-import { Ordering, useHomePageQuery } from "../api/graphql";
+import { HomePageQuery, Ordering, useHomePageQuery } from "../api/graphql";
 import BlockList from "../components/lists/BlockList";
 import ExperimentList from "../components/lists/ExperimentList";
 import NeuronModelList from "../components/lists/NeuronModelList";
@@ -43,7 +44,16 @@ import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar
 
 export interface IRepresentationScreenProps {}
 
-const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
+// The generated `useHomePageQuery` takes no variables at all (`Exact<{}>`),
+// which is too narrow for `asParamlessRoute`'s generic `HookFunction` (it is
+// invoked with a generic `OperationVariables` options object). The runtime
+// shape is unaffected: options are always `{}` for this query.
+const useHomePageQueryAsHookFunction = useHomePageQuery as unknown as HookFunction<
+  HomePageQuery,
+  OperationVariables
+>;
+
+const Page = asParamlessRoute(useHomePageQueryAsHookFunction, ({ data }) => {
   // All dashboard filters live in the URL so the view is shareable/bookmarkable.
   const [createdAfter, setCreatedAfter] = useQueryState("after", parseAsIsoDateTime);
 

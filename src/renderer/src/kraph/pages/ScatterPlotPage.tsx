@@ -29,7 +29,7 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
 
   // Get available column names from the table
   const columnNames = React.useMemo(() => {
-    return data.scatterPlot.query.columns.map(c => c.name);
+    return data.scatterPlot.query.columns.map(c => c.key);
   }, [data.scatterPlot.query]);
 
   // Local state for parameters
@@ -70,7 +70,7 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
       await deleteScatterPlot({
         variables: {
           input: {
-            id: data.scatterPlot.id,
+            id: Number(data.scatterPlot.id),
           },
         },
       });
@@ -81,7 +81,7 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
           input: {
             name: name,
             description: description || null,
-            graphQueryId: data.scatterPlot.query.id,
+            graphQueryId: Number(data.scatterPlot.query.id),
             xColumn,
             yColumn,
             idColumn,
@@ -117,7 +117,7 @@ const Page = asDetailQueryRoute(useGetScatterPlotQuery, ({ data }) => {
       await deleteScatterPlot({
         variables: {
           input: {
-            id: data.scatterPlot.id,
+            id: Number(data.scatterPlot.id),
           },
         },
       });

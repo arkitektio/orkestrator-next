@@ -308,7 +308,9 @@ export function Markdown({ text, isOwn = false, className }: MarkdownProps) {
       {blocks.map((block, idx) => {
         switch (block.type) {
           case "header": {
-            const H = `h${Math.min(block.level || 1, 6)}` as React.ElementType;
+            const H = `h${Math.min(block.level || 1, 6)}` as React.ElementType<
+              React.HTMLAttributes<HTMLHeadingElement>
+            >;
             const sizeClass =
               block.level === 1
                 ? "text-lg font-bold mt-3 mb-1 text-foreground"

@@ -40,6 +40,22 @@ export type CypherSchema = {
   relationships: CypherRelationshipSchema;
 };
 
+// `monaco-editor`'s own namespace type isn't resolvable as a bare `monaco.*`
+// type reference in this project's dependency tree (only the `Monaco`
+// namespace-object type re-exported by `@monaco-editor/react` is available),
+// so the completion-item shape is derived from it via indexed access instead
+// of writing `monaco.languages.CompletionItem[]` directly.
+type CypherCompletionItemKind =
+  Monaco["languages"]["CompletionItemKind"][keyof Monaco["languages"]["CompletionItemKind"]];
+
+type CypherCompletionItem = {
+  label: string;
+  kind: CypherCompletionItemKind;
+  insertText: string;
+  detail?: string;
+  documentation?: string;
+};
+
 export const CypherField = ({
   name,
   validate,
@@ -64,7 +80,7 @@ export const CypherField = ({
             endColumn: position.column,
           });
 
-          const suggestions: monaco.languages.CompletionItem[] = [];
+          const suggestions: CypherCompletionItem[] = [];
 
           // 🟨 Node label suggestions after (n:
           const nodeLabelMatch = /\([a-zA-Z_][a-zA-Z0-9_]*:\s*([a-zA-Z_]*)$/.exec(textUntilPosition);

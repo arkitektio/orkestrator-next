@@ -36,6 +36,7 @@ import { ExternalLink, Filter, Plus, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { CypherQueryDisplay } from "./components/CypherQueryDisplay";
 import { ReturnColumnBuilder } from "./components/ReturnColumnBuilder";
+import { RenderGraphQueryTable } from "@/kraph/components/renderers/table/GraphTable";
 import {
   enrichPath,
   generateGraphQueryInput,
@@ -248,11 +249,11 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
 const convertGraphQLToPath = (
   graphQuery: GraphTableQueryFragment
 ): Path[] => {
-  if (!graphQuery.builderArgs?.matches || graphQuery.builderArgs.matches?.length === 0) {
+  if (!graphQuery.builderArgs?.matchPaths || graphQuery.builderArgs.matchPaths?.length === 0) {
     return [];
   }
 
-  return graphQuery.builderArgs?.matches?.map((match) => {
+  return graphQuery.builderArgs?.matchPaths?.map((match) => {
     return {
       nodes: match.nodes,
       relations: match.relations,
@@ -294,14 +295,14 @@ const mapWhereOperatorToString = (operator: string): string => {
 const deserializeWhereClauses = (
   graphQuery: GraphTableQueryFragment
 ): NodeWhereClause[] => {
-  if (!graphQuery.builderArgs || graphQuery.builderArgs.wheres?.length === 0) {
+  if (!graphQuery.builderArgs || graphQuery.builderArgs.whereClauses?.length === 0) {
     return [];
   }
 
   // Group WHERE clauses by nodeId
   const clausesByNode = new Map<string, WhereCondition[]>();
 
-  graphQuery.builderArgs.wheres.forEach((where) => {
+  graphQuery.builderArgs.whereClauses?.forEach((where) => {
     const nodeId = where.node || where.path; // Use node if available, fallback to path
     if (!nodeId) return;
 
@@ -328,11 +329,11 @@ const deserializeWhereClauses = (
 const deserializeReturnColumns = (
   graphQuery: GraphTableQueryFragment
 ): ReturnColumn[] => {
-  if (!graphQuery.builderArgs || graphQuery.builderArgs.returns.length === 0) {
+  if (!graphQuery.builderArgs || graphQuery.builderArgs.returnStatements?.length === 0) {
     return [];
   }
 
-  return graphQuery.builderArgs.returns.map((ret) => ({
+  return (graphQuery.builderArgs.returnStatements || []).map((ret) => ({
     nodeId: ret.node || ret.path, // Use node if available, fallback to path
     property: ret.property || "id",
     alias: undefined, // Alias is not stored in GraphQL, will be generated
@@ -526,10 +527,13 @@ export const QueryBuilderGraph = ({
         return;
       }
 
-      const newNodes = children.map((node) => {
-        const child = the_nodes.find((n) => n.id === node.id);
-        return { ...child, position: { x: node.x, y: node.y } };
-      });
+      const newNodes = children
+        .map((node) => {
+          const child = the_nodes.find((n) => n.id === node.id);
+          if (!child) return undefined;
+          return { ...child, position: { x: node.x, y: node.y } };
+        })
+        .filter((n): n is MyNode => n !== undefined);
 
       setNodes(newNodes);
     });
@@ -582,10 +586,13 @@ export const QueryBuilderGraph = ({
           return;
         }
 
-        const newNodes = children.map((node) => {
-          const child = the_nodes.find((n) => n.id === node.id);
-          return { ...child, position: { x: node.x, y: node.y } };
-        });
+        const newNodes = children
+          .map((node) => {
+            const child = the_nodes.find((n) => n.id === node.id);
+            if (!child) return undefined;
+            return { ...child, position: { x: node.x, y: node.y } };
+          })
+          .filter((n): n is MyNode => n !== undefined);
 
         setNodes(newNodes);
       })
@@ -1394,7 +1401,7 @@ export const QueryBuilderGraph = ({
                   <div className="font-semibold text-sm text-green-600">
                     Query Results
                   </div>
-                  <KraphGraphQuery.DetailLink object={executedGraphQuery.id}>
+                  <KraphGraphQuery.DetailLink object={{ id: executedGraphQuery.id }}>
                     <Button size="sm" variant="outline" className="h-7 gap-1">
                       <ExternalLink className="h-3 w-3" />
                       Open
@@ -1402,8 +1409,8 @@ export const QueryBuilderGraph = ({
                   </KraphGraphQuery.DetailLink>
                 </div>
                 <div className="w-full overflow-auto" style={{ maxHeight: "600px" }}>
-                  <SelectiveGraphQueryRenderer
-                    graphQuery={executedGraphQuery}
+                  <RenderGraphQueryTable
+                    graphQueryId={executedGraphQuery.id}
                     options={{ minimal: true }}
                   />
                 </div>

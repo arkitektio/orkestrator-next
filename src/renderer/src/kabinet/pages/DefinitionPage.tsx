@@ -2,11 +2,9 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { KABINET_REFRESH_POD_HASH } from "@/constants";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
 import { buildAssignInput } from "@/rekuest/assign";
-import { useImplementationsQuery } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { useCallback } from "react";
 import { useGetDefinitionQuery } from "../api/graphql";
@@ -39,27 +37,9 @@ export const AssignButton = (props: {
   );
 };
 
-const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
-  const { data } = useImplementationsQuery({
-    variables: {
-      filters: {
-        actionHash: KABINET_REFRESH_POD_HASH,
-      },
-    },
-  });
-
-  return (
-    <div className="flex flex-row gap-2">
-      {data?.implementations.map((t) => (
-        <AssignButton id={t.id} pod={props.item} refetch={props.refetch} />
-      ))}
-    </div>
-  );
-};
-
 export const DefinitionPage = asDetailQueryRoute(
   useGetDefinitionQuery,
-  ({ data, refetch }) => {
+  ({ data }) => {
     const description = useActionDescription({
       description: data.definition.description || "",
     });

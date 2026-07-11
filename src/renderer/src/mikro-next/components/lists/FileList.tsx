@@ -1,9 +1,6 @@
 import { createList } from "@/components/layout/createList";
 import { MikroFile } from "@/linkers";
 import {
-  FileFilter,
-  FileOrder,
-  OffsetPaginationInput,
   useGetFilesQuery,
 } from "../../api/graphql";
 import FileCard from "../cards/FileCard";

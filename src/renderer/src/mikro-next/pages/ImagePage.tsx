@@ -13,7 +13,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
@@ -39,12 +38,7 @@ export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
 export const ImagePage =  asDetailQueryRoute(
   useGetImageQuery,
-  ({ data, refetch, subscribeToMore }) => {
-    const x = data?.image?.store?.shape?.at(4);
-    const y = data?.image?.store?.shape?.at(4);
-
-    const aspectRatio = x && y ? x / y : 1;
-
+  ({ data, subscribeToMore }) => {
     const [pinImage] = usePinImageMutation();
 
     useEffect(() => {
@@ -99,7 +93,6 @@ export const ImagePage =  asDetailQueryRoute(
 
     const defautContext = data?.image?.rgbContexts?.at(0);
 
-    const resolve = useResolve();
     return (
       <MikroImage.ModelPage
         title={data?.image?.name}
@@ -219,7 +212,7 @@ export const ImagePage =  asDetailQueryRoute(
                   <div className="font-light mb-2">Channels</div>
 
                   <ResponsiveContainerGrid className="gap-3 ">
-                    {defautContext?.views.map((view, index) => (
+                    {defautContext?.views.map((view) => (
                       <>
                         <RGBViewCard view={view} key={"rgb-" + view.id} />
                       </>

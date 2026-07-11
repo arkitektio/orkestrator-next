@@ -17,7 +17,7 @@ interface Props { }
 
 export const KabinetModule: React.FC<Props> = () => {
   return (
-    <Guard.Kabinet fallback={<>Loading</>}>
+    <Guard.Kabinet unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="repos" element={<ReposPage />} />

@@ -5,7 +5,7 @@ import {
   OperationVariables,
   QueryHookOptions,
   QueryResult,
-  SubscribeToMoreOptions,
+  SubscribeToMoreFunction,
   useQuery,
 } from "@apollo/client";
 import React from "react";
@@ -56,16 +56,7 @@ export const asDynamicQueryRoute = <
     refetch: (
       variables?: Partial<V> | undefined,
     ) => Promise<ApolloQueryResult<T>>;
-    subscribeToMore: <
-      TSubscriptionData = T,
-      TSubscriptionVariables extends OperationVariables = V,
-    >(
-      options: SubscribeToMoreOptions<
-        T,
-        TSubscriptionVariables,
-        TSubscriptionData
-      >,
-    ) => () => void;
+    subscribeToMore: SubscribeToMoreFunction<T, V>;
   }>,
   options: {
     fallback?: React.ReactNode;

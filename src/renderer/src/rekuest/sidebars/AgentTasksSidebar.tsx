@@ -3,7 +3,7 @@ import { useListTasksQuery } from "../api/graphql";
 import ListTaskCard from "../components/cards/ListTaskCard";
 
 export const AgentTasksSidebar = (props: { agent: string }) => {
-  const { data, error, loading } = useListTasksQuery({
+  const { data, error } = useListTasksQuery({
     variables: {
       filter: { agent: props.agent },
       pagination: { limit: 10, offset: 0 },

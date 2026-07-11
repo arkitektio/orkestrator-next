@@ -14,10 +14,10 @@ import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder, reactiveFlowNode } from "@/reaktion/utils";
+import { PortKind } from "@/reaktion/types";
 import {
   ConstantActionDocument,
   ConstantActionQuery,
-  PortKind,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
   useAgentsQuery,

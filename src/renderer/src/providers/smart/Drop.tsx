@@ -22,7 +22,7 @@ export const SmartDropZone = ({
 
   return (
     <div
-      key={props.object}
+      key={props.object.id}
       ref={ref}
       className={cn(
         "group relative over:shadow-xl over:ring-2 over:ring-gray-300 over:rounded-md can-drop:border-gray-200",

@@ -19,27 +19,29 @@ export const AgentPill = (props: { clientId: string }) => {
         {JSON.stringify(error)}</div>;
   }
 
+  const client = data?.client;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {data?.client.id && (
-          <LokClient.DetailLink object={data?.client.id}>
+        {client && (
+          <LokClient.DetailLink object={client}>
             <Avatar className="h-10 w-10 cursor-pointer">
               <AvatarImage
                 className="rounded-md center"
-                src={resolve(data?.client.logo?.presignedUrl)}
-                alt={data?.client.name}
+                src={resolve(client.logo?.presignedUrl)}
+                alt={client.name}
               />
-              <AvatarFallback>{data?.client.release.app.identifier.slice(0, 2)}</AvatarFallback>
+              <AvatarFallback>{client.release.app.identifier.slice(0, 2)}</AvatarFallback>
             </Avatar>
-            {data.client.user?.username}
-            {data.client.node ? <p className="text-muted-foreground">{data.client.node?.name || "Unlabeled Node"}</p> : ""}
+            {client.user?.username}
+            {client.node ? <p className="text-muted-foreground">{client.node?.name || "Unlabeled Node"}</p> : ""}
 
           </LokClient.DetailLink>
         )}
       </TooltipTrigger>
 
-      <TooltipContent>{data?.client.name}</TooltipContent>
+      <TooltipContent>{client?.name}</TooltipContent>
     </Tooltip>
   );
 };

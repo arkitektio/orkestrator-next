@@ -54,19 +54,6 @@ export function PolygonDrawer(props: PolygonDrawerProps) {
     setCurrentPoint(null);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      // Cancel current polygon
-      setPoints([]);
-      setCurrentPoint(null);
-    } else if (e.key === "Enter" && points.length >= 3) {
-      // Complete polygon
-      props.onPolygonDrawn?.(points);
-      setPoints([]);
-      setCurrentPoint(null);
-    }
-  };
-
   // Generate preview lines
   const linePoints = (() => {
     if (points.length === 0) return [];
@@ -98,8 +85,6 @@ export function PolygonDrawer(props: PolygonDrawerProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onDoubleClick={handleDoubleClick}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
       >
         <planeGeometry args={[10000, 10000]} />
         <meshStandardMaterial

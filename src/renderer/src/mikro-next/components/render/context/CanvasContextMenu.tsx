@@ -9,7 +9,7 @@ import {
   MoreHorizontal,
   Square,
 } from "lucide-react";
-import { useViewerState } from "./ViewerStateProvider";
+import { useViewerState } from "../ViewerStateProvider";
 
 // Helper function to get icon for ROI type
 const getRoiIcon = (roiKind: RoiKind) => {

@@ -2,9 +2,9 @@ import { ContainerGrid } from "@/components/layout/ContainerGrid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TooltipButton } from "@/components/ui/tooltip-button";
-import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
+import { ArgChildPortFragment, AssignWidgetFragment, PortKind } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
+import { InputWidgetProps, MappablePort, Port } from "@/rekuest/widgets/types";
 import {
   pathToName,
   portToDefaults,
@@ -20,19 +20,19 @@ const RenderDownWidget = ({
   path,
   bound,
 }: {
-  port: ChildPortFragment;
+  port: ArgChildPortFragment;
   path: string[];
   bound?: string;
 }) => {
   const { registry } = useWidgetRegistry();
-  const Widget = registry.getInputWidgetForPort(port);
+  const Widget = registry.getInputWidgetForPort(port as unknown as MappablePort);
 
   return (
     <div className="mt-2">
       <Widget
-        port={{ ...port, __typename: "Port" } as Port}
+        port={{ ...port, __typename: "Port" } as unknown as Port}
         parentKind={PortKind.List}
-        widget={port.widget}
+        widget={port.widget as unknown as AssignWidgetFragment}
         bound={bound}
         path={path}
       />
@@ -45,7 +45,7 @@ export const SideBySideWidget = ({
   valuetype,
   path,
   bound,
-}: InputWidgetProps & { valuetype: ChildPortFragment }) => {
+}: InputWidgetProps & { valuetype: ArgChildPortFragment }) => {
   const control = useFormContext().control;
 
   const { fields, append, remove } = useFieldArray({

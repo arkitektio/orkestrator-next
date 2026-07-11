@@ -5,16 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { KraphStructureRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureRelationQuery } from "../api/graphql";
-import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
-const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
-  const uploadFile = useKraphMediaUpload();
-
+const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data }) => {
   return (
     <KraphStructureRelation.ModelPage
-      object={data?.structureRelation.id}
+      object={{ id: data?.structureRelation.id }}
       title={data?.structureRelation.category.label}
-      sidebars={<KraphStructureRelation.Komments object={data.structureRelation.id} />}
+      sidebars={<KraphStructureRelation.Komments object={{ id: data.structureRelation.id }} />}
       pageActions={
         <div className="flex flex-row gap-2">
           <>

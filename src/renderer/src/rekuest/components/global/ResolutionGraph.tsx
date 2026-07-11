@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -30,7 +29,7 @@ const elk = new ELK();
 interface GraphResolution {
   id: string;
   name: string;
-  resolvedDependencies: GraphResolvedDependency[];
+  resolvedDependencies?: GraphResolvedDependency[];
 }
 
 interface GraphResolvedDependency {
@@ -39,7 +38,7 @@ interface GraphResolvedDependency {
   dependency: {
     id: string;
     key: string;
-    description?: string;
+    description?: string | null;
   };
   implementation: {
     id: string;
@@ -50,7 +49,7 @@ interface GraphResolvedDependency {
       name: string;
     };
   };
-  downStreamResolution?: GraphResolution;
+  downStreamResolution?: GraphResolution | null;
 }
 
 const useLayout = () => {
@@ -122,7 +121,7 @@ const useLayout = () => {
         .then((g) => {
           const newNodes: Node[] = [];
 
-          const processNode = (elkNode: any, parentId?: string) => {
+          const processNode = (elkNode: any) => {
             const originalNode = ns.find((n) => n.id === elkNode.id);
             if (originalNode) {
               newNodes.push({

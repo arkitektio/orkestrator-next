@@ -7,7 +7,7 @@ import PodCard from "../components/cards/PodCard";
 
 export const ResourcePage =  asDetailQueryRoute(
   useGetResourceQuery,
-  ({ data, refetch }) => {
+  ({ data }) => {
     return (
       <KabinetResource.ModelPage
         title={data?.resource?.name}

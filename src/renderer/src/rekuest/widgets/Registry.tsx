@@ -17,7 +17,7 @@ export const fakeWard = (key: string): Ward => ({
     throw new Error("No ward set for " + key);
   },
   describe: async () => {
-    return {};
+    return [];
   }
 });
 

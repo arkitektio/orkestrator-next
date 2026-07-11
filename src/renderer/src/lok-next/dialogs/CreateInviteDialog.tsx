@@ -24,7 +24,7 @@ import { useCreateInviteMutation } from "../api/graphql";
 
 const formSchema = z.object({
   expiresInDays: z.coerce.number().min(1).default(1),
-  roles: z.array(z.string()).optional(),
+  roles: z.array(z.string()).default([]),
 });
 
 interface CreateInviteDialogProps {
@@ -44,7 +44,11 @@ export const CreateInviteDialog = ({
     refetchQueries: ['Organization']
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<
+    z.input<typeof formSchema>,
+    unknown,
+    z.output<typeof formSchema>
+  >({
     resolver: zodResolver(formSchema),
     defaultValues: {
       expiresInDays: 1,
@@ -52,7 +56,7 @@ export const CreateInviteDialog = ({
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.output<typeof formSchema>) => {
     createInvite({
       variables: {
         input: {
@@ -85,7 +89,16 @@ export const CreateInviteDialog = ({
                 <FormItem>
                   <FormLabel>Expires in (days)</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input
+                      type="number"
+                      {...field}
+                      value={
+                        typeof field.value === "string" ||
+                        typeof field.value === "number"
+                          ? field.value
+                          : ""
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -12,7 +12,7 @@ import {
   useCreateGithubRepoMutation,
 } from "../api/graphql";
 
-export const CreateRepoForm = (props: { onSuccess?: (data: CreateGithubRepoMutation) => void }) => {
+export const CreateRepoForm = (props: { onSuccess?: (data: CreateGithubRepoMutation | null | undefined) => void }) => {
   const [add] = useCreateGithubRepoMutation({
     refetchQueries: [ListReleasesDocument, ListDefinitionsDocument],
   });

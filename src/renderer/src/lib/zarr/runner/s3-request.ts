@@ -41,9 +41,9 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 async function hmacSha256(
-  key: Uint8Array,
+  key: Uint8Array<ArrayBuffer>,
   value: string,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     key,
@@ -65,7 +65,7 @@ async function deriveSigningKey(
   secretKey: string,
   dateStamp: string,
   region: string,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const kDate = await hmacSha256(encoder.encode(`AWS4${secretKey}`), dateStamp)
   const kRegion = await hmacSha256(kDate, region)
   const kService = await hmacSha256(kRegion, 's3')
@@ -81,13 +81,13 @@ async function deriveSigningKey(
  * drop to 2. Module state — this file runs inside each decode worker, so the
  * memo is naturally per-worker. Date rollover self-handles via the key.
  */
-const signingKeyMemo = new Map<string, Promise<Uint8Array>>()
+const signingKeyMemo = new Map<string, Promise<Uint8Array<ArrayBuffer>>>()
 const SIGNING_KEY_MEMO_MAX = 8
 
 function deriveSigningKeyCached(
   config: S3FetchConfig,
   dateStamp: string,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   // accessKey identifies the credential set (a secret rotation issues a new
   // access key alongside it); the secret itself stays out of the map key.
   const memoKey = `${config.accessKey}|${dateStamp}|${config.region}`

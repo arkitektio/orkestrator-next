@@ -11,15 +11,15 @@ import { Komments } from "@/lok-next/components/komments/Komments";
 import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
 
-const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data }) => {
+const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
   return (
     <PageLayout
       title={data?.image?.name || "Image"}
-      actions={<MikroDataset.Actions id={id} />}
+      pageActions={<MikroDataset.Actions object={data?.image} />}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <Komments identifier="@omero-ark/image" object={id} />,
+            Comments: data?.image ? <Komments identifier="@omero-ark/image" object={data.image} /> : null,
           }}
         />
       }
@@ -42,10 +42,8 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data }) => {
 
             <div className="font-light mt-2 ">Tags</div>
             <div className="text-xl flex mb-2">
-              {data?.image?.tags?.map((tag, index) => (
-                <>
-                  <span className="font-semibold mr-2">#{tag} </span>
-                </>
+              {data?.image?.tags?.map((tag) => (
+                <span className="font-semibold mr-2" key={tag}>#{tag} </span>
               ))}
             </div>
           </div>

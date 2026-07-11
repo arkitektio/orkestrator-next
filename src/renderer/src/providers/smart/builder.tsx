@@ -105,7 +105,7 @@ export const buildPaneLink = <T extends Object>(to: string) => {
   };
 };
 
-export const linkBuilder = <T extends ObjectType>(to: string) => (objectId: string | undefined) => {
+export const linkBuilder = (to: string) => (objectId: string | undefined) => {
   if (!objectId) {
     return `/error`;
   }
@@ -113,7 +113,7 @@ export const linkBuilder = <T extends ObjectType>(to: string) => (objectId: stri
   return `/${to}/${objectId}`;
 };
 
-export const listLinkBuilder = <T extends ObjectType>(to: string) => () => {
+export const listLinkBuilder = (to: string) => () => {
   return `/${to}/`;
 };
 
@@ -263,9 +263,9 @@ export const buildSmart = <T extends Object>(
   return {
     DetailLink: buildModelLink<T>(to),
     PaneLink: buildPaneLink<T>(to),
-    ListLink: buildBaseLink<T>(to),
-    linkBuilder: linkBuilder<T>(to),
-    listlinkBuilder: listLinkBuilder<T>(to),
+    ListLink: buildBaseLink(to),
+    linkBuilder: linkBuilder(to),
+    listlinkBuilder: listLinkBuilder(to),
     Smart: buildSmartModel<T>(model),
     Drop: buildDropModel<T>(model),
     Actions: buildSelfActions(model),
@@ -280,8 +280,9 @@ export const buildSmart = <T extends Object>(
     ObjectButton: buildObjectButton(model),
     NewButton: buildNewButton(model),
     useProgress: ({ object }: { object: string }) =>
-      buildUseProgress(model, object),
-    useLive: ({ object }: { object: string }) => buildUseLive(model, object),
+      buildUseProgress(model, { id: object }),
+    useLive: ({ object }: { object: string }) =>
+      buildUseLive(model, { id: object }),
   };
 };
 

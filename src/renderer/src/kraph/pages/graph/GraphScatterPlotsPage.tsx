@@ -2,16 +2,10 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import ScatterPlotList from "@/kraph/components/lists/ScatterPlotList";
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
-
-  const id = useParams().id;
-
   return (
     <PageLayout
       title="Graph Scatter Plots"
@@ -32,7 +26,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </div>
 
 
-        <ScatterPlotList pagination={{ limit: 30 }} filters={{ graph: id }} />
+        <ScatterPlotList pagination={{ limit: 30 }} />
       </div>
     </PageLayout>
   );

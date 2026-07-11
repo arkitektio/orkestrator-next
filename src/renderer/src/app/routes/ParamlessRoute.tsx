@@ -97,5 +97,7 @@ export const asParamlessRoute = <T extends unknown>(
 
       return <Component {...passyProps} />;
     }
+
+    return null;
   };
 };

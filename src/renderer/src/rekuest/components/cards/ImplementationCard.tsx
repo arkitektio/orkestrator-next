@@ -7,13 +7,11 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialogbutton";
-import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestImplementation } from "@/linkers";
 
 
 import {
   ListImplementationFragment,
-  useDeleteImplementationMutation,
 } from "@/rekuest/api/graphql";
 import { PlayCircle } from "lucide-react";
 
@@ -23,17 +21,6 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-    const [deleteImplementation, _] = useDeleteImplementationMutation({
-    variables: {
-      id: item.id,
-    },
-  });
-
-
-  const description = useActionDescription({
-    description: item.action.description || "",
-  });
-
   return (
     <RekuestImplementation.Smart object={item}>
       <Card className="group hover:shadow-md transition-shadow overflow-hidden">

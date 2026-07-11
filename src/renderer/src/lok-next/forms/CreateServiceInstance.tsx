@@ -10,7 +10,7 @@ import {
   useCreateServiceInstanceMutation
 } from "../api/graphql";
 
-export const CreateServiceInstanceForm = (props: { identifier?: string; onSuccess?: (data: CreateServiceInstanceMutation) => void }) => {
+export const CreateServiceInstanceForm = (props: { identifier?: string; onSuccess?: (data: CreateServiceInstanceMutation | null | undefined) => void }) => {
   const [createServiceInstance] = useCreateServiceInstanceMutation();
 
   const submit = useGraphQLDialog(createServiceInstance, { successMessage: "Service Instance created", onSuccess: props.onSuccess });

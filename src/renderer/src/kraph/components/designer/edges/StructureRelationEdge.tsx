@@ -4,9 +4,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
-  useStore,
   type EdgeProps,
-  type ReactFlowState,
 } from "@xyflow/react";
 import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
@@ -31,7 +29,7 @@ export const getSpecialPath = (
 };
 
 export const TEdge = ({
-  id,
+  id: _id,
   data,
   source,
   target,
@@ -39,23 +37,12 @@ export const TEdge = ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
-
-  const theEdges = useStore((s: ReactFlowState) => {
-    const edgeExists = s.edges.filter(
-      (e) =>
-        (e.source === source && e.target === target) ||
-        (e.target === source && e.source === target),
-    );
-    return edgeExists;
-  });
-
-  const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
@@ -97,11 +84,11 @@ export const TEdge = ({
           className="p-3 text-xs group z-10 nodrag nopan transition-opacity"
         >
           <KraphStructureRelationCategory.Smart
-            object={data?.id || "0"}
+            object={{ id: data?.id || "0" }}
             className="w-20"
           >
             {data?.id && (
-              <KraphStructureRelationCategory.DetailLink object={data?.id}>
+              <KraphStructureRelationCategory.DetailLink object={{ id: data.id }}>
                 {data?.label}
               </KraphStructureRelationCategory.DetailLink>
             )}

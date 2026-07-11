@@ -16,7 +16,7 @@ const convertToThreeJSCoords = (
   imageHeight: number,
 ): [number, number][] => {
   const tr = vertices.map((v) => {
-    const [c, t, z, y, x] = v; // Try the original order first
+    const [, , , y, x] = v; // Try the original order first
     // Convert from image coordinates to Three.js coordinates
     // Image: (0,0) = top-left, (width,height) = bottom-right
     // Three.js: (0,0) = center, (-width/2, height/2) = top-left
@@ -73,13 +73,10 @@ export const ROIPolygon = (props: {
   boundingBox.getCenter(center);
 
   const { toggle, toggleB, isSelected, isBSelected } = useMySelect({
-    self: { identifier: "@mikro/roi", object: props.roi.id },
+    self: { identifier: "@mikro/roi", object: { id: props.roi.id } },
   });
   // Find the rightmost point of the bounding box
   const rightPoint = new THREE.Vector2(boundingBox.max.x, center.y);
-
-  // Add a small offset to position the panel to the right
-  const OFFSET_X = 20; // pixels to the right
 
   // Labels: show b-selection number near the ROI (if present),
   // and show the normal selection number centered inside the ROI when selected.
@@ -296,10 +293,10 @@ export const ROIPolygon = (props: {
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
           onContextMenu={onRightClick}
-          onPointerOver={(e) => {
+          onPointerOver={() => {
             setHovered(true);
           }}
-          onPointerOut={(e) => {
+          onPointerOut={() => {
             setHovered(false);
           }}
         />

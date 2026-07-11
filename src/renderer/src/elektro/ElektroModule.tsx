@@ -32,9 +32,9 @@ import { EnvironmentPage } from "./pages/EnvironmentPage";
 import { ElektroZarrStoreProvider } from "./components/store/ElektroZarrStoreProvider";
 interface Props { }
 
-export const ElektroModule: React.FC<Props> = (props) => {
+export const ElektroModule: React.FC<Props> = () => {
   return (
-    <Guard.Elektro fallback={<>Loading</>}>
+    <Guard.Elektro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ElektroZarrStoreProvider>
         <ModuleLayout pane={<StandardPane />}>
         <Routes>

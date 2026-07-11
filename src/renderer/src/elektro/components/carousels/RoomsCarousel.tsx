@@ -15,7 +15,7 @@ export const Test = () => {
 };
 
 export const RoomsCarousel = () => {
-  const { data, error, subscribeToMore, refetch } = useRoomsQuery({});
+  const { data, error } = useRoomsQuery({});
 
   if (!data?.rooms) {
     return null;

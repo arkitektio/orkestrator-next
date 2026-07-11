@@ -1,4 +1,4 @@
-import { useGetDatasetQuery } from "@/mikro-next/api/graphql";
+import { useGetDatasetQuery, useGetImageQuery } from "@/mikro-next/api/graphql";
 
 export const ImageRender = (props: { object: string }) => {
   const { data } = useGetImageQuery({

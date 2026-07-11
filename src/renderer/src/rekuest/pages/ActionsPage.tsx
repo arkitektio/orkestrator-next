@@ -13,12 +13,12 @@ const Page = () => {
 
   const [createdAfter, setCreatedAfter] = useQueryState(
     " after",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const [createdBefore, setCreatedBefore] = useQueryState(
     "before",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const temporalFilter = {
@@ -32,8 +32,8 @@ const Page = () => {
       {/* 3. Picker updates the URL params */}
       <DateTimeRangePicker
         // Optional: bind value to keep picker UI in sync on page refresh
-        initialDateFrom={createdAfter || null}
-        initialDateTo={createdBefore || null}
+        initialDateFrom={createdAfter ?? undefined}
+        initialDateTo={createdBefore ?? undefined}
         onUpdate={({ range }) => {
           setCreatedAfter(range.from || null);
           setCreatedBefore(range.to || null);

@@ -14,8 +14,6 @@ import { useEditRiver } from "../context";
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
-  const color = "rgb(30 58 138)";
-
   const {
     id,
     sourcePosition,
@@ -26,11 +24,8 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetX,
     targetY,
     target,
-    source,
     style,
-    markerStart,
     markerEnd,
-    data,
   } = props;
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
@@ -46,7 +41,7 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
 
   const isConnecting = !!connectionNodeId;
 
-  const { showEdgeLabels, removeEdge } = useEditRiver();
+  const { showEdgeLabels } = useEditRiver();
 
   const node = useNodes().find((n) => n.id == target) as FlowNode | undefined;
 

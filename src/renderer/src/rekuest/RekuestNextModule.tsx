@@ -51,9 +51,9 @@ import SpacesPage from "./pages/SpacesPage";
  */
 const Module: React.FC = () => {
   return (
-      <ModuleLayout pane={<Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}><Standardpane /></Guard.Rekuest>}>
+      <ModuleLayout pane={<Guard.Rekuest unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>} key={"rekuest"}><Standardpane /></Guard.Rekuest>}>
 
-    <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
+    <Guard.Rekuest unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>} key={"rekuest"}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="home" element={<Home />} />

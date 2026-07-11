@@ -6,11 +6,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { GetKnowledgeViewsQuery } from "../api/graphql";
-import { KnowledgeViewCard } from "./KnowledgeViewCard";
+import { KnowledgeView, KnowledgeViewCard } from "./KnowledgeViewCard";
 
 interface KnowledgeViewCarouselProps {
-  knowledgeViews: GetKnowledgeViewsQuery["knowledgeViews"];
+  knowledgeViews: KnowledgeView[];
   error?: Error | null;
   onConnect: (graphId: string) => void;
   onConnectWithMeasurement: (graphId: string) => void;

@@ -81,7 +81,7 @@ const useValuesForBlockSegment = (block: AnalogSignalFragment) => {
         }),
         renderView(block.timeTrace, stepSize),
       ]).then((data) => {
-        const values = data.map((x) => ({}));
+        const values = data.map(() => ({}));
 
         block.channels.forEach((view, recordIndex: number) => {
           const array = data[recordIndex];
@@ -183,7 +183,7 @@ export const AnalogSignalRender = (props: {
   );
 
   const handleMouseUp = useCallback(
-    (e: CategoricalChartState, event) => {
+    (_e: CategoricalChartState, event) => {
       if (selection.left !== null && selection.right !== null) {
         const [tempLeft, tempRight] = [selection.left, selection.right].sort(
           (a, b) => a - b,
@@ -275,8 +275,6 @@ export const AnalogSignalRender = (props: {
             stroke="#1b1b25"
             fill="transparent"
             travellerWidth={5}
-            travellerStroke="#181212"
-            travellerFill="#181212"
             startIndex={range.left}
             endIndex={range.right}
             onChange={(e) =>

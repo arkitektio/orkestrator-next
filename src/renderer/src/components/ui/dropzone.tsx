@@ -1,5 +1,5 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
-import { Identifier, Structure } from "@/providers/types";
+import { Identifier, Structure } from "@/types";
 import { useDrop } from "react-dnd";
 
 import { resolveSmartDrop } from "@/providers/smart/dropUtils";
@@ -46,7 +46,7 @@ export const DropZone = ({
         }
         if (compareWithList && compareWithList.length > 0) {
           const compareIds = compareWithList.map((c) => c.id);
-          items = items.filter((i) => !compareIds.includes(i.id));
+          items = items.filter((i) => !compareIds.includes(i.object.id));
           console.log("ALL COMPARED ITEMS", items);
         }
 
@@ -70,7 +70,7 @@ export const DropZone = ({
   }, []);
 
   return (
-    <div className={`${!canDrop && "hidden"} ${className}`} ref={drop}>
+    <div className={`${!canDrop && "hidden"} ${className}`} ref={(node) => { drop(node); }}>
       {allItemsContained && "All items already contained"}
       {isOver ? overLabel : canDropLabel}
       {children}

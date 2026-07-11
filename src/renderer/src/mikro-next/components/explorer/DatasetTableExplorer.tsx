@@ -50,7 +50,6 @@ import {
   useChildrenQuery,
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
-import { useForm } from "react-hook-form";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
 
 export type Item = ChildrenQuery["children"][0];
@@ -171,7 +170,6 @@ export const columns: ColumnDef<Item>[] = [
   },
   {
     id: "createdAt",
-    name: "Acquired At",
     accessorKey: "createdAt",
     header: ({ column }) => {
       return (
@@ -240,17 +238,13 @@ export const DatasetTableExplorer = (props: {
     pageSize: 20,
   });
 
-  const form = useForm<FormValues>({
-    defaultValues: {},
-  });
-
-  const { data, loading, refetch, error } = useChildrenQuery({
+  const { data, loading, refetch } = useChildrenQuery({
     variables: {
       id: props.dataset.id,
     },
   });
 
-  const [columns, setColumns] = React.useState<ColumnDef<Item>[]>(() =>
+  const [columns] = React.useState<ColumnDef<Item>[]>(() =>
     calculateColumns(),
   );
 
@@ -295,7 +289,9 @@ export const DatasetTableExplorer = (props: {
             Comments: (
               <Komments identifier="@mikro/dataset" object={props.dataset} />
             ),
-            Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
+            Provenance: (
+              <ProvenanceSidebar items={props?.dataset.provenanceEntries} />
+            ),
           }}
         />
       }

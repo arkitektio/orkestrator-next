@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useEffect } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import { createStore, useStore } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { X, CheckCircle2, AlertCircle, Loader2, ChevronUp, ChevronDown } from "lucide-react";
@@ -42,7 +42,7 @@ export type UploadStore = ReturnType<typeof createUploadStore>;
 const COMPLETED_UPLOAD_TTL_MS = 8000;
 
 export const createUploadStore = () =>
-  createStore<UploadProps>((set, get) => ({
+  createStore<UploadProps>((set) => ({
     uploads: [],
     startUpload: async <T, U>(
       file: File,
@@ -211,7 +211,11 @@ const UploadOverlay: React.FC = () => {
                   {u.status === "pending" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   {u.status === "uploading" && <span className="text-xs text-muted-foreground">{u.progress.toFixed(0)}%</span>}
                   {u.status === "completed" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                  {u.status === "error" && <AlertCircle className="h-4 w-4 text-red-500" title={u.error} />}
+                  {u.status === "error" && (
+                    <span title={u.error}>
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    </span>
+                  )}
                   {(u.status === "uploading" || u.status === "pending") && (
                     <button onClick={() => cancelUpload(u.id)} className="text-muted-foreground hover:text-foreground">
                       <X className="h-4 w-4" />

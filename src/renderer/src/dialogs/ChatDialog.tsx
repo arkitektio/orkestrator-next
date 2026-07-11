@@ -96,7 +96,7 @@ export const ChatDialog = (props: { model: string }) => {
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: 'bold' })}
+                  onClick={() => editor.tf.toggleMark('bold')}
                   className=" p-0 h-6 w-6"
                 >
                   <Bold className="h-4 w-4" />
@@ -105,7 +105,7 @@ export const ChatDialog = (props: { model: string }) => {
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: 'italic' })}
+                  onClick={() => editor.tf.toggleMark('italic')}
                   className=" p-0 h-6 w-6"
                 >
                   <Italic className="h-4 w-4" />
@@ -114,7 +114,7 @@ export const ChatDialog = (props: { model: string }) => {
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: 'underline' })}
+                  onClick={() => editor.tf.toggleMark('underline')}
                   className="p-0 h-6 w-6"
                 >
                   <Underline className="h-4 w-4" />
@@ -123,7 +123,7 @@ export const ChatDialog = (props: { model: string }) => {
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => editor.tf.toggle.mark({ key: 'code' })}
+                  onClick={() => editor.tf.toggleMark('code')}
                   className="p-0 h-6 w-6"
                 >
                   <Code className="h-4 w-4" />

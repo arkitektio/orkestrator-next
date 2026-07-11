@@ -9,17 +9,17 @@ import {
 import { trackTask } from "../lib/taskTracker";
 export type ActionAssignVariables = AssignInput;
 
-export type useActionReturn<T> = {
+export type useActionReturn = {
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanTaskFragment>;
 };
 
-export type useActionOptions<T> = {
+export type useActionOptions = {
   id: string;
 };
 
-export const useAssign = <T extends any>(): useActionReturn<T> => {
+export const useAssign = (): useActionReturn => {
   const [postAssign] = useAssignMutation({});
 
   const assign = useCallback(
@@ -54,10 +54,10 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
 };
 
 
-export const useAssignWithCallback = <T extends any>({ onDone }: {
+export const useAssignWithCallback = ({ onDone }: {
   onDone?: (event: TaskEventFragment) => void,
 
-}): useActionReturn<T> => {
+}): useActionReturn => {
   const { assign } = useAssign();
 
 

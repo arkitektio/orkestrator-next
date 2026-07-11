@@ -19,7 +19,7 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 
-export const SelectHooks = (props: {}) => {
+export const SelectHooks = (_props: {}) => {
   const [search, _] = useHooksSearchLazyQuery();
 
   return <GraphQLListSearchField name="hooks" searchQuery={search} />;
@@ -30,7 +30,7 @@ export const ActionAssignForm = (props: {
   args?: { [key: string]: any };
   hidden?: { [key: string]: any };
 }) => {
-  const { assign, latestTask, cancel, action } = useAction({
+  const { assign, action } = useAction({
     id: props.id,
   });
 

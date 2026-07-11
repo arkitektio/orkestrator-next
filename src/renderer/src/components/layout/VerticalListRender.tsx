@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 type VerticalListRenderProps<T> = {
   title: ReactNode;
@@ -17,7 +18,12 @@ export const VerticalListRender = <T,>({
 
   return (
     <div>
-      <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+      <span
+        className={cn(
+          "text-sm font-semibold uppercase tracking-wider text-muted-foreground",
+          titleClassName,
+        )}
+      >
         {title}
       </span>
       <div className="mt-2 space-y-2 gap-1">

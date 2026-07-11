@@ -1,6 +1,6 @@
 "use client";
 
-import { DetailRoomFragment } from "@/alpaka/api/graphql";
+import { RoomFragment } from "@/alpaka/api/graphql";
 import { useEffect, useState } from "react";
 import { Chat } from "./chat";
 
@@ -8,7 +8,7 @@ interface ChatLayoutProps {
   defaultLayout?: number[] | undefined;
   defaultCollapsed?: boolean;
   navCollapsedSize: number;
-  room: DetailRoomFragment;
+  room: RoomFragment;
 }
 
 export function ChatLayout({

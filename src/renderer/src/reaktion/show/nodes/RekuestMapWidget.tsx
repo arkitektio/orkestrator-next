@@ -19,7 +19,6 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
-import { useShowRiver } from "../context";
 import { useDependency } from "../hooks/useDependency";
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
@@ -28,8 +27,6 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   selected,
 }) => {
   const [expanded, setExpanded] = React.useState(false);
-
-  const { template } = useShowRiver();
 
   const description = useActionDescription({
     description: data.description,
@@ -42,9 +39,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
     <NodeShowLayout
       id={id}
       className={cn(
-        !dependency?.resolvable
-          ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
-          : "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+        "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
       )}
       selected={selected}
       contextMenu={

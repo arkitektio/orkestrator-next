@@ -46,12 +46,13 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   }, [rangeEvents, t]);
 
   useEffect(() => {
-    if (play) {
-      const interval = setInterval(() => {
-        setT((t) => (t > range.max ? 0 : t + 1));
-      }, 1000);
-      return () => clearInterval(interval);
+    if (!play) {
+      return;
     }
+    const interval = setInterval(() => {
+      setT((t) => (t > range.max ? 0 : t + 1));
+    }, 1000);
+    return () => clearInterval(interval);
   }, [play, range]);
 
   useEffect(() => {

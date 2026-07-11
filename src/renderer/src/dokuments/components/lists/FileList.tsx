@@ -12,7 +12,7 @@ export type Props = {
 };
 
 const TList = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListFilesQuery({
+  const { data, refetch } = useListFilesQuery({
     variables: {
       filter: filters,
       pagination: pagination,

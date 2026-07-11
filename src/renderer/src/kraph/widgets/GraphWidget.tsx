@@ -5,7 +5,7 @@ import { useGetGraphQuery } from "../api/graphql";
 export const GraphWidget = (props: ReturnWidgetProps) => {
   const { data } = useGetGraphQuery({
     variables: {
-      id: props.value,
+      id: String(props.value ?? ""),
     },
   });
 

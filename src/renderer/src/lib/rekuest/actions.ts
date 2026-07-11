@@ -34,11 +34,14 @@ import {
   UnblockMutation,
   UnblockMutationVariables
 } from '@/rekuest/api/graphql'
+import type { Arkitekt } from '@/app/Arkitekt'
 import { buildDeleteAction } from '../localactions/builders/deleteAction'
 import { Action } from '../localactions/LocalActionProvider'
 import { Ban, Bookmark, LogOut, Pencil, Pin, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 
-export const REKUEST_ACTIONS: Record<string, Action> = {
+type RekuestAction = Action<typeof Arkitekt>
+
+export const REKUEST_ACTIONS: Record<string, RekuestAction> = {
   'rekuest-update-agent': {
     title: 'Rename / Update Agent',
     description: 'Open the update dialog for this agent',
@@ -53,6 +56,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
       }
     ],
     execute: async ({ services, state, dialog }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       const selectedAgent = state.left.find(
         (item) => item.identifier === '@rekuest/agent',
       )
@@ -94,6 +101,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
       }
     ],
     execute: async ({ services, state, navigate }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       for (const structure of state.left) {
         if (structure.identifier !== '@rekuest/blok') {
           continue
@@ -135,6 +146,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
       }
     ],
     execute: async ({ services, state, navigate }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       for (const structure of state.left) {
         if (structure.identifier !== '@rekuest/materialized_blok') {
           continue
@@ -176,6 +191,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
       }
     ],
     execute: async ({ services, state, navigate }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       for (const structure of state.left) {
         if (structure.identifier !== '@rekuest/dashboard') {
           continue
@@ -247,6 +266,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     ],
     description: 'Pin or unpin this agent',
     execute: async ({ services, state }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       for (const structure of state.left) {
         if (structure.identifier !== '@rekuest/agent') {
           continue
@@ -276,19 +299,21 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     ],
     description: 'Restart the agent process',
     execute: async ({ services, state }) => {
-      // Implementation for bouncing an agent goes here
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+      const client = services.rekuest.client
 
       state.left.forEach(async (structure) => {
         if (structure.identifier !== '@rekuest/agent') {
           return
         }
-        await services.rekuest.client.mutate<BounceMutation, BounceMutationVariables>({
+        await client.mutate<BounceMutation, BounceMutationVariables>({
           mutation: BounceDocument,
           variables: {
-            input: { agent: structure.object }
+            input: { agent: structure.object.id }
           }
         })
-        // variables: { ... } // Add necessary variables here
       })
     }
   },
@@ -303,19 +328,21 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     ],
     description: 'Restart the agent process',
     execute: async ({ services, state }) => {
-      // Implementation for bouncing an agent goes here
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+      const client = services.rekuest.client
 
       state.left.forEach(async (structure) => {
         if (structure.identifier !== '@rekuest/agent') {
           return
         }
-        await services.rekuest.client.mutate<KickMutation, KickMutationVariables>({
+        await client.mutate<KickMutation, KickMutationVariables>({
           mutation: KickDocument,
           variables: {
-            input: { agent: structure.object }
+            input: { agent: structure.object.id }
           }
         })
-        // variables: { ... } // Add necessary variables here
       })
     }
   },
@@ -330,19 +357,21 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     ],
     description: 'Restart the agent process',
     execute: async ({ services, state }) => {
-      // Implementation for bouncing an agent goes here
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+      const client = services.rekuest.client
 
       state.left.forEach(async (structure) => {
         if (structure.identifier !== '@rekuest/agent') {
           return
         }
-        await services.rekuest.client.mutate<BlockMutation, BlockMutationVariables>({
+        await client.mutate<BlockMutation, BlockMutationVariables>({
           mutation: BlockDocument,
           variables: {
-            input: { agent: structure.object }
+            input: { agent: structure.object.id }
           }
         })
-        // variables: { ... } // Add necessary variables here
       })
     }
   },
@@ -357,19 +386,21 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
     ],
     description: 'Restart the agent process',
     execute: async ({ services, state }) => {
-      // Implementation for bouncing an agent goes here
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+      const client = services.rekuest.client
 
       state.left.forEach(async (structure) => {
         if (structure.identifier !== '@rekuest/agent') {
           return
         }
-        await services.rekuest.client.mutate<UnblockMutation, UnblockMutationVariables>({
+        await client.mutate<UnblockMutation, UnblockMutationVariables>({
           mutation: UnblockDocument,
           variables: {
-            input: { agent: structure.object }
+            input: { agent: structure.object.id }
           }
         })
-        // variables: { ... } // Add necessary variables here
       })
     }
   },
@@ -387,6 +418,10 @@ export const REKUEST_ACTIONS: Record<string, Action> = {
       },
     ],
     execute: async ({ services, state, dialog }) => {
+      if (!services.rekuest) {
+        throw new Error('Rekuest service not available')
+      }
+
       const structure = state.left.find(
         (item) => item.identifier === '@rekuest/implementation',
       )

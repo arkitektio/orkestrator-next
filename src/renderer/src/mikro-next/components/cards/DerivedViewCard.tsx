@@ -1,6 +1,6 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  MikroFileView,
+  MikroDerivedView,
   MikroImage
 } from "@/linkers";
 import {
@@ -15,7 +15,7 @@ interface Props {
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroFileView.Smart object={view} >
+    <MikroDerivedView.Smart object={view} >
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
@@ -32,7 +32,7 @@ const TheCard = ({ view }: Props) => {
           </CardTitle>
         </CardHeader>
       </ViewCard>
-    </MikroFileView.Smart>
+    </MikroDerivedView.Smart>
   );
 };
 

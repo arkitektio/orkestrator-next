@@ -1,16 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReturnWidgetProps } from "@/rekuest/widgets/types";
+import { ReturnWidgetFragment } from "@/rekuest/api/graphql";
+import { MappablePort, ReturnWidgetProps, ValueKind } from "@/rekuest/widgets/types";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import React from "react";
 
 const ModelReturnWidget: React.FC<ReturnWidgetProps> = ({
   port,
-  widget,
   value,
 }) => {
   const { registry } = useWidgetRegistry();
 
   const childPorts = port.children;
+
+  const values: Record<string, ValueKind> =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, ValueKind>)
+      : {};
 
   const len = childPorts?.length || 1;
 
@@ -25,19 +30,21 @@ const ModelReturnWidget: React.FC<ReturnWidgetProps> = ({
       className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5`}
     >
       {childPorts?.map((port, index) => {
-        const Widget = registry.getReturnWidgetForPort(port);
+        const Widget = registry.getReturnWidgetForPort(
+          port as unknown as MappablePort,
+        );
 
         return (
           <Card>
             <CardHeader>
-              <CardTitle>{port.label || port.key}</CardTitle>
+              <CardTitle>{port.key}</CardTitle>
             </CardHeader>
             <CardContent>
               <Widget
                 key={index}
-                value={value[port.key]}
-                port={port}
-                widget={port.widget}
+                value={values[port.key]}
+                port={port as unknown as ReturnWidgetProps["port"]}
+                widget={port.widget as unknown as ReturnWidgetFragment}
                 options={{ disable: false }}
               />
             </CardContent>

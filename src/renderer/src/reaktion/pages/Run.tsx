@@ -16,7 +16,7 @@ export const FlowDetail = (props: { id: string }) => {
   return <>{data?.flow && <EditFlow flow={data.flow} />}</>;
 };
 
-export const Page = asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
+export const Page = asDetailQueryRoute(useGetRunQuery, ({ data }) => {
   return (
     <FlussRun.ModelPage
       object={data.run}

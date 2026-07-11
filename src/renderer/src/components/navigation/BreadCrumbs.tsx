@@ -12,7 +12,7 @@ import useReactRouterBreadcrumbs from "use-react-router-breadcrumbs";
 
 interface IBreadCrumbsProps { }
 
-const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = (props) => {
+const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = () => {
   const breadcrumbs = useReactRouterBreadcrumbs();
 
   return (

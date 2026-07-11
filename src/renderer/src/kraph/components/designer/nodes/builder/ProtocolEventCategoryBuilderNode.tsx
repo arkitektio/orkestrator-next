@@ -17,7 +17,7 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
       <PathNodePresentation
         id={id}
         label={data.label}
-        tags={data.tags}
+        tags={data.tags.map((tag) => ({ value: tag.name }))}
         className="rounded-lg"
       />
     </>

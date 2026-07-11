@@ -2,30 +2,24 @@ import { Card } from "@/components/ui/card";
 import { ListServiceInstanceMappingFragment } from "@/lok-next/api/graphql";
 import {
   BaseEdge,
+  Edge,
   EdgeLabelRenderer,
   EdgeProps,
   getBezierPath,
-  useStore
 } from "@xyflow/react";
 
-const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
-
-export default (props: EdgeProps<ListServiceInstanceMappingFragment>) => {
-  const color = "rgb(30 58 138)";
-
+export default (
+  props: EdgeProps<Edge<ListServiceInstanceMappingFragment>>,
+) => {
   const {
     id,
     sourcePosition,
     targetPosition,
-    targetHandleId,
     sourceX,
     sourceY,
     targetX,
     targetY,
-    target,
-    source,
     style,
-    markerStart,
     markerEnd,
     data,
   } = props;
@@ -38,10 +32,6 @@ export default (props: EdgeProps<ListServiceInstanceMappingFragment>) => {
     targetX,
     targetY,
   });
-
-  const connectionNodeId = useStore(connectionNodeIdSelector);
-
-  const isConnecting = !!connectionNodeId;
 
   return (
     <>

@@ -13,7 +13,7 @@ export type IRepresentationScreenProps = {};
 
 export const AnalogSignalChannelPage = asDetailQueryRoute(
   useDetailAnalogSignalChannelQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
     return (
       <ElektroAnalogSignalChannel.ModelPage
         variant="black"

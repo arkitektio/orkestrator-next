@@ -6,7 +6,7 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Suspense } from "react";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);
@@ -28,10 +28,10 @@ export function MeshRenderer({ url }: { url: string }) {
   );
 }
 
-export const MeshWidget = (props: ReturnWidgetProps) => {
+export const MeshWidget = (props: ReturnWidgetProps<any, string>) => {
   const { data } = useDetailMeshQuery({
     variables: {
-      id: props.value,
+      id: props.value ?? "",
     },
   });
 
@@ -44,8 +44,8 @@ export const MeshWidget = (props: ReturnWidgetProps) => {
   return (
     <MikroMesh.DetailLink className="w-full h-full" object={data.mesh}>
       {data?.mesh.name}
-      {data?.mesh.store.presignedUrl && (
-        <MeshRenderer url={resolve(data?.mesh.store.presignedUrl)} />
+      {data?.mesh.store.path && (
+        <MeshRenderer url={resolve(data?.mesh.store.path)} />
       )}
     </MikroMesh.DetailLink>
   );

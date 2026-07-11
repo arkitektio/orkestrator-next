@@ -1,40 +1,25 @@
 "use client";
 
 import {
-  ChartConfig
-} from "@/components/ui/chart";
-import {
   ScatterPlotFragment
 } from "@/kraph/api/graphql";
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 import { MiniWidget } from "../MiniWidget";
 
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
-
 // Top-level exported tooltip component for the scatter plot. Recharts will
 // render this component and pass in `active` and `payload` as props; we also
 // accept the `scatterPlot` so the tooltip can show the selected column names.
+// `graphAgeName` is passed down from `ScatterPlot` (fetched via
+// `renderGraphTable`), since `ScatterPlotFragment` itself doesn't carry the
+// graph's `ageName` needed by `MiniWidget`.
 export const ScatterPlotTooltip: React.FC<
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> & {
     scatterPlot: ScatterPlotFragment;
+    graphAgeName?: string;
   }
-> = ({ active, payload, scatterPlot }) => {
+> = ({ active, payload, scatterPlot, graphAgeName }) => {
   if (!active || !payload || !payload.length) return null;
-
-  const point = payload[0]?.payload || {};
 
   const xVal = payload.find(
     (p: any) => p.dataKey === scatterPlot.xColumn,
@@ -59,7 +44,7 @@ export const ScatterPlotTooltip: React.FC<
       <div className="border-t pt-2">
         {idVal ? (
           <>
-            <MiniWidget id={idVal} graph={scatterPlot.query.graph.ageName} />
+            <MiniWidget id={idVal} graph={graphAgeName} />
           </>
         ) : (
           "No id"

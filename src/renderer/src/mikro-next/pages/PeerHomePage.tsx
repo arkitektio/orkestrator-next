@@ -10,7 +10,7 @@ import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { Database } from "lucide-react";
-import { parseAsIsoDateTime, useQueryState } from "nuqs";
+import { parseAsBoolean, parseAsIsoDateTime, useQueryState } from "nuqs";
 import { usePeerHomePageQuery } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
@@ -21,22 +21,21 @@ import { PeerStatisticsSidebar } from "../components/sidebars/PeerStatisticsSide
 export interface IRepresentationScreenProps { }
 
 
-const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ data, id }) => {
+const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
 
   const [parentless, setParentless] = useQueryState(
     "parentless",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (v: any) => (v === "true" ? true : v === "false" ? false : undefined)
+    parseAsBoolean
   );
 
   const [createdAfter, setCreatedAfter] = useQueryState(
     "after",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const [createdBefore, setCreatedBefore] = useQueryState(
     "before",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const temporalFilter = {
@@ -53,8 +52,8 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ data, id }) => {
           {/* 3. Picker updates the URL params */}
           <DateTimeRangePicker
             // Optional: bind value to keep picker UI in sync on page refresh
-            initialDateFrom={createdAfter || null}
-            initialDateTo={createdBefore || null}
+            initialDateFrom={createdAfter ?? undefined}
+            initialDateTo={createdBefore ?? undefined}
             onUpdate={({ range }) => {
               setCreatedAfter(range.from || null);
               setCreatedBefore(range.to || null);

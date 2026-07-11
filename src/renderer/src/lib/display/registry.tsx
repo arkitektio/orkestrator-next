@@ -28,7 +28,7 @@ export function createDisplayProvider<
     const { registry } = useDisplay();
     return (
       registry[identifier] ||
-      (() => <div>Display not found for {identifier}</div>)
+      (() => <div>Display not found for {String(identifier)}</div>)
     );
   };
 

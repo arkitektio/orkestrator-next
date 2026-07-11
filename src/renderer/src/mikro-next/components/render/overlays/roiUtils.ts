@@ -23,7 +23,7 @@ export const convertToThreeJSCoords = (
   imageHeight: number
 ): [number, number][] => {
   const tr = vertices.map((v) => {
-    const [c, t, z, y, x] = v // Try the original order first
+    const [, , , y, x] = v // Try the original order first
     // Convert from image coordinates to Three.js coordinates
     // Image: (0,0) = top-left, (width,height) = bottom-right
     // Three.js: (0,0) = center, (-width/2, height/2) = top-left

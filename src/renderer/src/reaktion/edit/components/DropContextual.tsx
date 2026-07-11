@@ -430,7 +430,7 @@ export const SourceDropContextual = (props: {
     }));
   };
 
-  const { data, refetch, error } = useAllActionsQuery({
+  const { data, refetch } = useAllActionsQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });

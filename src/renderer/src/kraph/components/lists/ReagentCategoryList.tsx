@@ -1,31 +1,30 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphReagentCategory } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  OntologyFilter,
-  useListReagentCategoryQuery
-} from "../../api/graphql";
-import ReagentCategoryCard from "../cards/ReagentCategoryCard";
+import { OffsetPaginationInput } from "../../api/graphql";
 
+// NOTE: "ReagentCategory" no longer exists in the current backend schema (no
+// useListReagentCategoryQuery / ReagentCategoryCard remain, and grepping
+// graphql.ts for "Reagent" turns up nothing at all). Nothing in the app
+// currently renders this component. Rather than invent a replacement concept
+// or fabricate a card for a removed backend type, this is left as an inert
+// placeholder that renders nothing, keeping the file compiling until the
+// concept either comes back under a new name or this component is removed
+// for good.
 export type Props = {
-  filters?: OntologyFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListReagentCategoryQuery({
-    variables: { filters, pagination },
-  });
-
+const List = (_props: Props) => {
   return (
-    <ListRender
-      array={data?.reagentCategories}
+    <ListRender<never>
+      array={undefined}
       title={
-        <KraphReagentCategory.ListLink className="flex-0">Reagent Categories</KraphReagentCategory.ListLink>
+        <KraphReagentCategory.ListLink className="flex-0">
+          Reagent Categories
+        </KraphReagentCategory.ListLink>
       }
-      refetch={refetch}
     >
-      {(ex, index) => <ReagentCategoryCard key={index} item={ex} />}
+      {() => null}
     </ListRender>
   );
 };

@@ -16,7 +16,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Matrix4, Vector3 } from "three";
+import { Matrix4, Vector3, type Group } from "three";
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import {
@@ -113,7 +113,7 @@ const FallbackBox = () => (
 );
 
 const ViewPlacement = ({ placement }: { placement: SpacePlacementFragment }) => {
-  const meshRef = useRef<THREE.Group>(null!);
+  const meshRef = useRef<Group>(null!);
   const selectedId = useSpaceViewScene((state) => state.selectedPlacementId);
   const selectPlacement = useSpaceViewScene((state) => state.selectPlacement);
   const openPlacementPanel = useSpaceViewScene((state) => state.openPlacementPanel);

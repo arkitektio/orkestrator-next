@@ -20,7 +20,7 @@ import { portToLabel } from "../widgets/utils";
 import { ResolutionGraph } from "../components/global/ResolutionGraph";
 
 export const DoForm = ({ id, resolution }: { id: string, resolution: string }) => {
-  const { assign, latestTask, cancel, implementation } = useImplementationAction({
+  const { assign, latestTask, implementation } = useImplementationAction({
     id: id,
   });
 

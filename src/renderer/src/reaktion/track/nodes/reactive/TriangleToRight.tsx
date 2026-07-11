@@ -1,6 +1,6 @@
 import { ShapeProps } from "../ReactiveWidget";
 
-export default ({ data, implementation }: ShapeProps) => {
+export default ({ data: _data, implementation }: ShapeProps) => {
   return (
     <>
       <svg height="40" width="40">

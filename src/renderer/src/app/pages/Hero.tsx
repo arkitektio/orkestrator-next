@@ -13,7 +13,6 @@ import {
   IDockviewPanelProps,
   IDockviewPanelHeaderProps,
   SerializedDockview,
-  type DockviewTheme,
 } from "dockview";
 import {
   ArrowRight,

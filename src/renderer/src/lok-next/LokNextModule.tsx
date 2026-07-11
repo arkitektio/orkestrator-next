@@ -26,9 +26,9 @@ import UsersPage from "./pages/UsersPage";
 import StandardPane from "./panes/StandardPane";
 interface Props { }
 
-export const LokNextModule: React.FC<Props> = (props) => {
+export const LokNextModule: React.FC<Props> = () => {
   return (
-    <Guard.Lok fallback={<>Loading</>}>
+    <Guard.Lok notConnectedFallback={<>Loading</>} connectingFallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="me" element={<MePage />} />

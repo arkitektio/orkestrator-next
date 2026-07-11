@@ -8,7 +8,7 @@ const SnapshotPanel = ({ image }: { image: SnapshotFragment }) => {
     <>
       {image.store && (
         <img
-          src={s3resolve(image.store.presignedUrl)}
+          src={s3resolve(image.store.key)}
           className="w-full h-full"
         />
       )}

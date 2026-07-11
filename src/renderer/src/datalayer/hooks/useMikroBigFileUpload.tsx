@@ -77,13 +77,6 @@ export type ExtraRequest = RequestInit & {
   onProgress?: (this: any, e: ProgressEvent) => void;
 };
 
-const customFetch = (uri: any, options: ExtraRequest) => {
-  if (options.onProgress) {
-    return uploadFetch(uri, options);
-  }
-  return fetch(uri, options);
-};
-
 export type UploadOptions = {
   signal?: AbortSignal;
   onProgress?: (ev: ProgressEvent) => void;
@@ -162,7 +155,7 @@ export const useMikroBigFileUpload = () => {
 
       const z = data.data.requestBigfileUpload;
 
-      const result = await uploadToStore(file, datalayerEndpoint, z, options);
+      await uploadToStore(file, datalayerEndpoint, z, options);
 
       await client.mutate<FinishBigfileUploadMutation, FinishBigfileUploadMutationVariables>({
         mutation: FinishBigfileUploadDocument,

@@ -1,18 +1,13 @@
 import { Position } from "@xyflow/react";
 
 import {
-  BaseListCategoryFragment,
   CategoryNodePositionInput,
-  CategoryDefintion,
   EntityDescriptorFragment,
   GraphFragment,
   ListEntityCategoryFragment,
   ListStructureCategoryFragment,
-  StructureCategoryDefinition,
-  StructureDescriptorFragment,
-  StructureDescriptorInput
+  StructureDescriptorFragment
 } from "@/kraph/api/graphql";
-import { notEmpty } from "@/lib/utils";
 import {
   MarkerType
 } from "@xyflow/react";
@@ -48,7 +43,7 @@ import DescribeBuilderEdge from "./edges/builder/DescribeBuilderEdge";
 import ReagentRoleBuilderEdge from "./edges/builder/ReagentRoleBuilderEdge";
 
 export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
-  const structureNodes = graph.structureCategories.map((cat, index) => ({
+  const structureNodes = graph.structureCategories.map((cat) => ({
     id: cat.id,
     position: {
       x: cat.positionX || 300,
@@ -60,7 +55,7 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     type: "structurecategory" as const,
   }));
 
-  const genericNodes = graph.entityCategories.map((entity, index) => ({
+  const genericNodes = graph.entityCategories.map((entity) => ({
     id: entity.id,
     position: {
       x: entity.positionX || 300,
@@ -73,7 +68,7 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   }));
 
   const protocolEventCategory = graph.protocolEventCategories.map(
-    (entity, index) => ({
+    (entity) => ({
       id: entity.id,
       position: {
         x: entity.positionX || 300,
@@ -87,7 +82,7 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   );
 
   const naturalEventCategory = graph.naturalEventCategories.map(
-    (entity, index) => ({
+    (entity) => ({
       id: entity.id,
       position: {
         x: entity.positionX || 300,
@@ -100,7 +95,7 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     }),
   );
 
-  const metricNode = graph.metricCategories.map((entity, index) => ({
+  const metricNode = graph.metricCategories.map((entity) => ({
     id: entity.id,
     position: {
       x: entity.positionX || 300,
@@ -119,20 +114,6 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     ...naturalEventCategory,
     ...metricNode,
   ];
-};
-
-const withCategoryFilter = (category: CategoryDefintion) => {
-  return (cat: BaseListCategoryFragment) => {
-    if (category.tagFilters && category.tagFilters.length > 0) {
-      return category.tagFilters.some((tag) =>
-        cat.tags.find((t) => t.name == tag),
-      );
-    }
-    if (category.categoryFilters && category.categoryFilters.length > 0) {
-      return category.categoryFilters.some((id) => id == cat.id);
-    }
-    return true;
-  };
 };
 
 const buildStructureFilter = (descriptor: StructureDescriptorFragment) => {

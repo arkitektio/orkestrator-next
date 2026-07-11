@@ -29,7 +29,6 @@ import {
   ConstantActionDocument,
   ConstantActionQuery,
   DemandKind,
-  PortKind,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
@@ -41,6 +40,7 @@ import {
   ConnectContextualParams,
   DropContextualParams,
   GeneralPort,
+  PortKind,
   ReactiveNodeSuggestions,
   StreamPort,
 } from "../../types";

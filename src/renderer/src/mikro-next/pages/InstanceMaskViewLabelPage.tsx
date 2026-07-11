@@ -9,7 +9,7 @@ export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
 export const InstanceMaskViewLabelPage = asDetailQueryRoute(
   useGetInstanceMaskViewLabelQuery,
-  ({ data, refetch }) => {
+  ({ data }) => {
     return (
       <MikroInstanceMaskViewLabel.ModelPage
         title={data?.instanceMaskViewLabel?.id}

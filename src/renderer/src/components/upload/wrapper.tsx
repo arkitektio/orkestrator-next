@@ -21,7 +21,7 @@ export const UploadWrapper = ({ uploadFile, createFile, children }: {
   const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
       accept: [NativeTypes.FILE],
-      drop: (item, monitor) => {
+      drop: (item, _monitor) => {
         // In react-dnd, the HTML5 backend item may strip properties like path from File objects on Linux/Windows.
         // Try getting the original Electron File object with .path from dataTransfer first.
         const dataTransfer = (item as any).dataTransfer;
@@ -53,7 +53,7 @@ export const UploadWrapper = ({ uploadFile, createFile, children }: {
   }, [uploadFile, createFile, startUpload]);
 
   return (
-    <div className="w-full h-full relative" ref={drop}>
+    <div className="w-full h-full relative" ref={(node) => { drop(node); }}>
       {isOver && canDrop && (
         <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center border-2 border-dashed border-primary rounded-lg pointer-events-none">
           <p className="text-2xl font-semibold text-primary">Drop files to upload</p>

@@ -15,9 +15,7 @@ import {
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 
-interface IDataSidebarProps { }
-
-export const NavigationPane = (props: {}) => {
+export const NavigationPane = () => {
   return (
     <Tree>
       <SidePaneGroup title="Explore">
@@ -84,17 +82,6 @@ export const NavigationPane = (props: {}) => {
     </Tree>
   );
 };
-
-const variables = {
-  search: "",
-  noGroups: false,
-  noUsers: false,
-  pagination: {
-    limit: 10,
-  },
-};
-
-
 
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState("");

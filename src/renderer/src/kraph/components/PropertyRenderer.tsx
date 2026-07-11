@@ -40,11 +40,10 @@ export const PropertyRenderer = ({
     case ValueKind.Float:
       return <span className="text-sm font-mono">{value}</span>;
 
-    case ValueKind.Category: {
-      // If options are available, try to find the label for the value
-      const option = definition.options?.find((opt) => opt.value === value);
-      return <span className="text-sm">{option?.label || value}</span>;
-    }
+    case ValueKind.Category:
+      // The category-options concept (definition.options) no longer exists
+      // on the current backend schema; render the raw value.
+      return <span className="text-sm">{value}</span>;
 
     case ValueKind.String:
     default:

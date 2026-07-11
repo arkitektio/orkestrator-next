@@ -26,7 +26,14 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateRelation
 
   const [create] = useCreateInlineGraphMutation();
 
-  const submit = useGraphQLDialog(add, { successMessage: "Relation Category created", onSuccess: props.onSuccess });
+  const submit = useGraphQLDialog(add, {
+    successMessage: "Relation Category created",
+    onSuccess: (data) => {
+      if (data) {
+        props.onSuccess?.(data);
+      }
+    },
+  });
 
   const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
     defaultValues: {

@@ -1,7 +1,7 @@
 import {
-  AccessCredentialsFragment,
-  RequestAccessDocument,
-  RequestAccessMutation,
+  RequestZarrAccessDocument,
+  RequestZarrAccessMutation,
+  ZarrAccessGrantFragment,
 } from "@/mikro-next/api/graphql";
 import { ApolloClient } from "@apollo/client";
 import React from "react";
@@ -26,7 +26,7 @@ export type LoadingState = {
 
 export type RequestAccessState =
   | LoadingState
-  | LoadedState<AccessCredentialsFragment>
+  | LoadedState<ZarrAccessGrantFragment>
   | ErrorState;
 
 export const useRequestAccess = (key: string, client: ApolloClient<any>) => {
@@ -39,8 +39,8 @@ export const useRequestAccess = (key: string, client: ApolloClient<any>) => {
   React.useEffect(() => {
     if (client) {
       client
-        .query<RequestAccessMutation>({
-          query: RequestAccessDocument,
+        .query<RequestZarrAccessMutation>({
+          query: RequestZarrAccessDocument,
           variables: {
             key: key,
           },
@@ -48,7 +48,7 @@ export const useRequestAccess = (key: string, client: ApolloClient<any>) => {
         .then((result) => {
           setState({
             status: "loaded",
-            data: result.data.requestAccess,
+            data: result.data.requestZarrAccess,
             error: undefined,
           });
         })

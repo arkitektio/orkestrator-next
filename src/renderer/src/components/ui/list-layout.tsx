@@ -58,7 +58,7 @@ Header.displayName = "ListLayout.Header";
 const Grid = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, _ref) => (
   <ContainerGrid
     className={cn(
       className

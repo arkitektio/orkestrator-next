@@ -14,7 +14,7 @@ export const OutStream: React.FC<{
   length: number;
   onClick?: (instream: number, onposition: number) => void;
   open?: boolean | undefined;
-}> = ({ stream, id, onClick, length, open }) => {
+}> = ({ stream, id, onClick: _onClick, length, open: _open }) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   return (
     <>

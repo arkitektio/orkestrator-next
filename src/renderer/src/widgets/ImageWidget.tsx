@@ -5,7 +5,7 @@ import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 export const ImageWidget = (props: ReturnWidgetProps<any, string>) => {
   const { data } = useGetImageQuery({
     variables: {
-      id: props.value,
+      id: props.value ?? "",
     },
   });
 

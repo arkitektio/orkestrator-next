@@ -11,7 +11,7 @@ import {
   useCreateRedeemTokenMutation,
 } from "../api/graphql";
 
-export const CreateRedeemTokenForm = (props: { token?: string; onSuccess?: (data: CreateRedeemTokenMutation) => void }) => {
+export const CreateRedeemTokenForm = (props: { token?: string; onSuccess?: (data: CreateRedeemTokenMutation | null | undefined) => void }) => {
   const [createRedeemToken] = useCreateRedeemTokenMutation();
 
   const submit = useGraphQLDialog(createRedeemToken, { successMessage: "Redeem token created", onSuccess: props.onSuccess });

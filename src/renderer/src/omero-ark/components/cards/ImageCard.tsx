@@ -1,18 +1,19 @@
 import { Arkitekt } from "@/app/Arkitekt";
 import { Card } from "@/components/ui/card";
 import { OmeroArkImage } from "@/linkers";
+import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 
-import { ListImageFragment } from "@/omero-ark/api/graphql";
+import { ListOmeroImageFragment } from "@/omero-ark/api/graphql";
 import React from "react";
 
 interface Props {
-  image: ListImageFragment;
+  image: ListOmeroImageFragment;
 
 }
 
-const apiUrlFromImageID = (id: string, fakts: any) => {
+const apiUrlFromImageID = (id: string, baseUrl: string) => {
   //TODO: CURRENTLY NOT FUNCTIONAL
-  return `${fakts.omero_ark.endpoint_url.replace(
+  return `${baseUrl.replace(
     "/graphql",
     "",
   )}/api/thumbnails/${id}`;
@@ -30,9 +31,11 @@ const TCard = ({ image }: Props) => {
     if (!image.id) return;
     if (!token) return;
     if (ref.current === null) return;
+    if (!omeroArk.alias) return;
+    const baseUrl = aliasToHttpPath(omeroArk.alias, "");
     let objectURL: string | undefined;
     let cancelled = false;
-    fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
+    fetch(apiUrlFromImageID(image.id, baseUrl), {
       headers: {
         Accept: "image/jpeg",
         Authorization: "Bearer " + token,
@@ -52,7 +55,7 @@ const TCard = ({ image }: Props) => {
       cancelled = true;
       if (objectURL) URL.revokeObjectURL(objectURL);
     };
-  }, [image.id, omeroArk.client.url, token]);
+  }, [image.id, omeroArk.alias, token]);
 
   return (
     <OmeroArkImage.Smart

@@ -2,18 +2,18 @@ import { ListRender } from "@/components/layout/ListRender";
 import { KraphStructureCategory } from "@/linkers";
 import {
   OffsetPaginationInput,
-  OntologyFilter,
+  StructureCategoryFilter,
   useListStructureCategoryQuery
 } from "../../api/graphql";
 import StructureCategoryCard from "../cards/StructureCategoryCard";
 
 export type Props = {
-  filters?: OntologyFilter;
+  filters?: StructureCategoryFilter;
   pagination?: OffsetPaginationInput;
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListStructureCategoryQuery({
+  const { data, refetch } = useListStructureCategoryQuery({
     variables: { filters, pagination },
   });
 

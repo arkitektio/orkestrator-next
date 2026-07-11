@@ -8,11 +8,10 @@ import { ArgNodeProps } from "../../../types";
 import { useEditNodeErrors } from "../../context";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
-  data: { outs, ins },
+  data: { outs },
   id,
   selected,
 }) => {
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   const errors = useEditNodeErrors(id);

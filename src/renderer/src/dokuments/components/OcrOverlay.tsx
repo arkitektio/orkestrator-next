@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { PageFragment } from "../api/graphql";
 
 // Color palette for OCR text overlays
@@ -16,12 +16,12 @@ const colors = [
 
 interface OcrOverlayProps {
   page: PageFragment;
-  imageRef: React.RefObject<HTMLImageElement>;
+  imageRef: React.RefObject<HTMLImageElement | null>;
   show: boolean;
 }
 
 export const OcrOverlay: React.FC<OcrOverlayProps> = ({ page, imageRef, show }) => {
-  const [overlays, setOverlays] = useState<JSX.Element[]>([]);
+  const [overlays, setOverlays] = useState<React.JSX.Element[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const updateOverlays = useCallback(() => {
@@ -83,7 +83,7 @@ export const OcrOverlay: React.FC<OcrOverlayProps> = ({ page, imageRef, show }) 
           </div>
         </div>
       );
-    }).filter(Boolean) as JSX.Element[];
+    }).filter(Boolean) as React.JSX.Element[];
 
     setOverlays(newOverlays);
   }, [show, page.ocrResult?.lines, imageRef, imageLoaded]);

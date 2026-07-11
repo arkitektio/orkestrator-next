@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReturnWidgetProps } from "@/rekuest/widgets/types";
+import { ReturnWidgetFragment } from "@/rekuest/api/graphql";
+import { MappablePort, ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import React from "react";
 
 const ListReturnWidget: React.FC<ReturnWidgetProps> = ({
   port,
-  widget,
   value,
 }) => {
   const { registry } = useWidgetRegistry();
@@ -30,7 +30,9 @@ const ListReturnWidget: React.FC<ReturnWidgetProps> = ({
 
   const childPort = childPorts[0];
 
-  const Widget = registry.getReturnWidgetForPort(childPort);
+  const Widget = registry.getReturnWidgetForPort(
+    childPort as unknown as MappablePort,
+  );
 
   return (
     <div className={`flex flex-col gap-5`}>
@@ -44,8 +46,8 @@ const ListReturnWidget: React.FC<ReturnWidgetProps> = ({
               <Widget
                 key={index}
                 value={va}
-                port={childPort}
-                widget={childPort.widget}
+                port={childPort as unknown as ReturnWidgetProps["port"]}
+                widget={childPort.widget as unknown as ReturnWidgetFragment}
                 options={{ disable: false }}
               />
             </CardContent>

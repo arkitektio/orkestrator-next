@@ -25,12 +25,12 @@ export const MemoryStructureWidget = (
       console.log("Searching", searching)
       const w = await searchD({
         variables: {
-          ...searching,
+          search: searching.search,
+          values: searching.values?.map((v) => v.toString()),
           implementation: props.bound,
-
         }
       })
-      return w.data?.options
+      return w.data?.options || []
     },
     [searchD, props.bound],
   );

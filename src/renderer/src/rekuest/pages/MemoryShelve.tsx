@@ -10,7 +10,7 @@ import { BellIcon } from "lucide-react";
 
 export const MemoryShelvePage = asDetailQueryRoute(
   useMemoryShelveQuery,
-  ({ data, refetch, subscribeToMore }) => {
+  ({ data }) => {
 
     return (
       <RekuestMemoryShelve.ModelPage

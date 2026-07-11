@@ -124,7 +124,7 @@ export const CreateNewRelation = (props: {
           onSubmit={form.handleSubmit(handleRelationCreation)}
           className="space-y-6"
         >
-          <GraphQLSearchField
+          <GraphQLCreatableSearchField
             label="Graph"
             name="graph"
             description="Select the graph for this relation"

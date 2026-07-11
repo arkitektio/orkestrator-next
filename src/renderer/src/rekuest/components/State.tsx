@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { useCheckoutQuery, useGetStateQuery, WatchStateEventsDocument, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables, StateFragment } from "../api/graphql";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import AsyncBoundary from "@/components/boundaries/AsyncBoundary";
@@ -91,7 +91,6 @@ export const StateDisplay = ({
             {label && <label>{port.key}</label>}
             <Widget
               key={index}
-              value={data?.state?.value[port.key]}
               port={port}
               widget={port.widget}
             />
@@ -121,7 +120,7 @@ export const StateCheckoutDisplay = ({
       pollInterval: 1000,
     });
 
-    const value = data?.checkout?.value || state.value;
+    const value = data?.checkout?.value;
 
     const ports = select
       ? state.definition.ports.filter((p) => select.includes(p.key)) || []

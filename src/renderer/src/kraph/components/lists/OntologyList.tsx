@@ -1,33 +1,30 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  OntologyFilter,
-  useListOntologiesQuery,
-} from "../../api/graphql";
-import OntologyCard from "../cards/OntologyCard";
+import { KraphOntology } from "@/linkers";
+import { OffsetPaginationInput } from "../../api/graphql";
 
+// NOTE: "Ontology" no longer exists as a top-level queryable concept in the
+// current backend schema (no OntologyFilter / useListOntologiesQuery /
+// OntologyCard remain, and grepping graphql.ts turns up nothing beyond the
+// unrelated `OntologyReference` input). Nothing in the app currently renders
+// this component. Rather than invent a replacement concept or fabricate a
+// card for a removed backend type, this is left as an inert placeholder that
+// renders nothing, keeping the file compiling until the concept either comes
+// back under a new name or this component is removed for good.
 export type Props = {
-  filters?: OntologyFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListOntologiesQuery({
-    variables: { filters, pagination },
-  });
-
+const List = (_props: Props) => {
   return (
-    <ListRender
-      array={data?.ontologies}
+    <ListRender<never>
+      array={undefined}
       title={
-        <MikroDataset.ListLink className="flex-0 text-xs">
+        <KraphOntology.ListLink className="flex-0 text-xs">
           My Ontologies
-        </MikroDataset.ListLink>
+        </KraphOntology.ListLink>
       }
-      refetch={refetch}
     >
-      {(ex, index) => <OntologyCard key={index} item={ex} />}
+      {() => null}
     </ListRender>
   );
 };

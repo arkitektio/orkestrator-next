@@ -11,7 +11,7 @@ import { useRunCarouselQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 
 export const RunCarousel = ({ }) => {
-  const { data, error, subscribeToMore, refetch } = useRunCarouselQuery({
+  const { data, error } = useRunCarouselQuery({
     variables: {
       pagination: {
         limit: 3,

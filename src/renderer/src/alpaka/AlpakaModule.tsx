@@ -14,9 +14,9 @@ import RoomsPage from "./pages/RoomsPage";
 import StandardPane from "./panes/StandardPane";
 interface Props { }
 
-export const AlpakaModule: React.FC<Props> = (props) => {
+export const AlpakaModule: React.FC<Props> = () => {
   return (
-    <Guard.Alpaka fallback={<>Loading</>}>
+    <Guard.Alpaka unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="rooms/:id" element={<RoomPage />} />

@@ -120,7 +120,7 @@ export interface EditFlowState extends ValidationResult {
   showEdgeLabels: boolean;
   showNodeErrors: boolean;
   contextuals: ContextualParams[];
-  reactFlowInstance: ReactFlowInstance | null;
+  reactFlowInstance: ReactFlowInstance<FlowNode, FlowEdge> | null;
   relativeWrapperRef: RefObject<HTMLDivElement | null> | null;
   connectAppend: boolean;
   connectingStart?: OnConnectStartParams;
@@ -160,7 +160,7 @@ export interface EditFlowState extends ValidationResult {
   ) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
-  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+  setReactFlowInstance: (instance: ReactFlowInstance<FlowNode, FlowEdge> | null) => void;
   setConnectingStart: (params: OnConnectStartParams | undefined) => void;
   setConnectAppend: (value: boolean) => void;
   setShowEdgeLabels: (value: boolean) => void;

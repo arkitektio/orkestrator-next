@@ -14,7 +14,6 @@ import {
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
 import { ContextualContainer } from "@/reaktion/edit/components/ContextualContainer";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
 

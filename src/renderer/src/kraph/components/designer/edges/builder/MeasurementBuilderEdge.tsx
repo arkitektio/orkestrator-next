@@ -51,8 +51,8 @@ export default ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
@@ -74,15 +74,6 @@ export default ({
   const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
-
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
 
   let path = "";
   // Calculate offset based on whether there are multiple edges and the current edge's index

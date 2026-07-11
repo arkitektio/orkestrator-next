@@ -1,21 +1,16 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialog-button";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokService } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useGetServiceQuery } from "../api/graphql";
-import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
 
 export type IRepresentationScreenProps = {};
 
 const Page = asDetailQueryRoute(useGetServiceQuery, ({ data }) => {
-  const navigate = useNavigate();
   const resolve = useResolve();
 
   return (
@@ -63,10 +58,6 @@ const Page = asDetailQueryRoute(useGetServiceQuery, ({ data }) => {
           </div>
         </div>
       </div>
-      <ListRender array={data?.service?.instances}>
-        {(item) => <ServiceInstanceCard item={item} />}
-      </ListRender>
-
       <Separator />
     </PageLayout>
   );

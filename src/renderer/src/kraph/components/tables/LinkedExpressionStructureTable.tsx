@@ -32,29 +32,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { Form } from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  ListEntitiesQueryVariables,
   ListEntityFragment,
-  useGetLinkedExpressionByAgeNameQuery,
   useListEntitiesQuery,
-  useSearchLinkedExpressionLazyQuery
 } from "@/kraph/api/graphql";
 import { EntityOverlay } from "@/kraph/overlays/EntityOverlay";
-import { KraphLinkedExpression, KraphNode } from "@/linkers";
+import { KraphNode } from "@/linkers";
 import { useForm } from "react-hook-form";
-import Timestamp from "react-timestamp";
 
 export const columns: ColumnDef<ListEntityFragment>[] = [
   {
@@ -82,60 +71,6 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "createdAt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Created at
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <Timestamp date={row.getValue("createdAt")} />,
-    sortingFn: (a, b) => a.getValue("createdAt") - b.getValue("createdAt"),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "object",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Object
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <>{row.getValue("object")}</>,
-    sortingFn: (a, b) => a.getValue("object") - b.getValue("object"),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "identifier",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Identifier
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <>{row.getValue("identifier")}</>,
-    sortingFn: (a, b) => a.getValue("identifier") - b.getValue("identifier"),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
     accessorKey: "label",
     header: ({ column }) => {
       return (
@@ -151,7 +86,6 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     cell: ({ row }) => (
       <div className="text-left font-medium">{row.getValue("label")}</div>
     ),
-    sortingFn: (a, b) => a.getValue("label") - b.getValue("label"),
     enableSorting: true,
     enableHiding: true,
   },
@@ -169,16 +103,16 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphNode.DetailLink object={row.getValue("id")}>
+      <KraphNode.DetailLink object={{ id: row.getValue<string>("id") }}>
         {" "}
         Open{" "}
       </KraphNode.DetailLink>
     ),
-    sortingFn: (a, b) => a.getValue("id") - b.getValue("id"),
     enableSorting: true,
     enableHiding: true,
   },
   {
+    id: "id-popover",
     accessorKey: "id",
     header: ({ column }) => {
       return (
@@ -199,83 +133,33 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
           </Button>
         </PopoverTrigger>
         <PopoverContent className="rounded rounded-xl shadow-xl shadow">
-          <EntityOverlay entity={row.getValue("id")} />
+          <EntityOverlay entity={row.getValue<string>("id")} />
         </PopoverContent>
       </Popover>
     ),
-    sortingFn: (a, b) => a.getValue("id") - b.getValue("id"),
     enableSorting: true,
     enableHiding: true,
   },
   {
     id: "Label",
-    accessorKey: "linkedExpression.label",
+    accessorKey: "category.label",
     header: () => <div className="text-center">Type</div>,
-    cell: ({ row, getValue }) => {
-      const label = row.getValue("Label");
+    cell: ({ row }) => {
+      const label = row.getValue<string>("Label");
 
       return <div className="text-center font-small">{label}</div>;
-    },
-    filterFn: (rows, filterValue) => {
-      return rows.filter((row) => {
-        return row.getValue("Label").includes(filterValue);
-      });
     },
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original;
-
-      return <KraphNode.ObjectButton object={row.getValue("id")} />;
+      return <KraphNode.ObjectButton object={{ id: row.getValue<string>("id") }} />;
     },
   },
 ];
 
-const initialVariables: ListEntitiesQueryVariables = {
-  pagination: {
-    limit: 20, // Default page size
-    offset: 0, // Start from the first item
-  },
-};
-
-export const MetricHeader = (props: { ageName: string; graph: string }) => {
-  const { data } = useGetLinkedExpressionByAgeNameQuery({
-    variables: {
-      graph: props.graph,
-      ageName: props.ageName,
-    },
-  });
-
-  if (!data?.linkedExpressionByAgename) {
-    return null;
-  }
-
-  return (
-    <div>
-      <Tooltip>
-        <TooltipTrigger>
-          <KraphLinkedExpression.DetailLink
-            object={data?.linkedExpressionByAgename.id}
-          >
-            {data?.linkedExpressionByAgename?.expression.label}
-          </KraphLinkedExpression.DetailLink>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div>
-            <h1>{data?.linkedExpressionByAgename?.expression.label}</h1>
-            <p>{data?.linkedExpressionByAgename?.expression.description}</p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-};
-
 export type FormValues = {
-  metrics?: string[];
-  kinds?: string[];
   search?: string | null;
 };
 
@@ -288,19 +172,15 @@ export const LinkedExpressionStructureTable = (props: {
     pageSize: 20,
   });
 
-  const [searchM] = useSearchLinkedExpressionLazyQuery({});
-
   const form = useForm<FormValues>({
     defaultValues: {},
   });
-  const { metrics, kinds, search } = form.watch();
+  const { search } = form.watch();
 
-  const { data, loading, refetch, error } = useListEntitiesQuery({
+  const { data, loading, refetch } = useListEntitiesQuery({
     variables: {
-      filters: {
-        graph: props.graph,
-        linkedExpression: props.linkedExpression,
-      },
+      entityCategoryId: props.linkedExpression,
+      filters: {},
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
@@ -310,20 +190,17 @@ export const LinkedExpressionStructureTable = (props: {
 
   React.useEffect(() => {
     const variables = {
+      entityCategoryId: props.linkedExpression,
       filters: {
         search: search,
-        kinds: kinds,
-        graph: props.graph,
-        linkedExpression: props.linkedExpression,
       },
-      metrics: metrics,
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
       },
     };
     refetch(variables);
-  }, [metrics, kinds, search, refetch]);
+  }, [search, refetch]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -358,15 +235,6 @@ export const LinkedExpressionStructureTable = (props: {
   return (
     <div className="w-full h-full">
       <div className="flex items-center py-4 gap-2">
-        <Form {...form}>
-          {!props.linkedExpression && (
-            <GraphQLListSearchField
-              placeholder="Filter Kind"
-              searchQuery={searchM}
-              name="kinds"
-            />
-          )}
-        </Form>
         <Input
           placeholder="Search..."
           value={(table.getColumn("label")?.getFilterValue() as string) ?? ""}

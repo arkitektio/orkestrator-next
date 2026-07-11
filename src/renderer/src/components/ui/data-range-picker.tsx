@@ -1,20 +1,10 @@
 
 'use client'
 
-import React, { type FC, useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from './button'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { Calendar } from './calendar'
-import { DateInput } from './date-input'
-import { Label } from './label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from './select'
-import { Switch } from './switch'
 import { ChevronUpIcon, ChevronDownIcon, CheckIcon } from '@radix-ui/react-icons'
 import { cn } from '@/lib/utils'
 
@@ -90,9 +80,8 @@ export const DateRangePicker = ({
   initialCompareTo,
   onUpdate,
   align = 'end',
-  locale = 'en-US',
-  showCompare = true
-}: DateRangePickerProps): JSX.Element => {
+  locale = 'en-US'
+}: DateRangePickerProps): React.JSX.Element => {
   const [isOpen, setIsOpen] = useState(false)
 
   const [range, setRange] = useState<DateRange>({
@@ -113,8 +102,8 @@ export const DateRangePicker = ({
   )
 
   // Refs to store the values of range and rangeCompare when the date picker is opened
-  const openedRangeRef = useRef<DateRange | undefined>()
-  const openedRangeCompareRef = useRef<DateRange | undefined>()
+  const openedRangeRef = useRef<DateRange | undefined>(undefined)
+  const openedRangeCompareRef = useRef<DateRange | undefined>(undefined)
 
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined)
 
@@ -246,39 +235,6 @@ export const DateRangePicker = ({
     setSelectedPreset(undefined)
   }
 
-  const resetValues = (): void => {
-    setRange({
-      from:
-        typeof initialDateFrom === 'string'
-          ? getDateAdjustedForTimezone(initialDateFrom)
-          : initialDateFrom,
-      to: initialDateTo
-        ? typeof initialDateTo === 'string'
-          ? getDateAdjustedForTimezone(initialDateTo)
-          : initialDateTo
-        : typeof initialDateFrom === 'string'
-          ? getDateAdjustedForTimezone(initialDateFrom)
-          : initialDateFrom
-    })
-    setRangeCompare(
-      initialCompareFrom
-        ? {
-          from:
-            typeof initialCompareFrom === 'string'
-              ? getDateAdjustedForTimezone(initialCompareFrom)
-              : initialCompareFrom,
-          to: initialCompareTo
-            ? typeof initialCompareTo === 'string'
-              ? getDateAdjustedForTimezone(initialCompareTo)
-              : initialCompareTo
-            : typeof initialCompareFrom === 'string'
-              ? getDateAdjustedForTimezone(initialCompareFrom)
-              : initialCompareFrom
-        }
-        : undefined
-    )
-  }
-
   useEffect(() => {
     checkPreset()
   }, [range])
@@ -291,7 +247,7 @@ export const DateRangePicker = ({
     preset: string
     label: string
     isSelected: boolean
-  }): JSX.Element => (
+  }): React.JSX.Element => (
     <Button
       className={cn(isSelected && 'pointer-events-none')}
       variant="ghost"
@@ -307,15 +263,6 @@ export const DateRangePicker = ({
       </>
     </Button>
   )
-
-  // Helper function to check if two date ranges are equal
-  const areRangesEqual = (a?: DateRange, b?: DateRange): boolean => {
-    if (!a || !b) return a === b // If either is undefined, return true if both are undefined
-    return (
-      a.from.getTime() === b.from.getTime() &&
-      (!a.to || !b.to || a.to.getTime() === b.to.getTime())
-    )
-  }
 
   useEffect(() => {
     if (isOpen) {

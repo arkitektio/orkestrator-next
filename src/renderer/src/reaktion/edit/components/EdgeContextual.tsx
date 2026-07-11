@@ -23,7 +23,6 @@ import {
   ConstantActionDocument,
   ConstantActionQuery,
   DemandKind,
-  PortKind,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery
 } from "@/rekuest/api/graphql";
@@ -33,6 +32,7 @@ import { useForm } from "react-hook-form";
 import {
   DropContextualParams,
   EdgeContextualParams,
+  PortKind,
   ReactiveNodeSuggestions,
   StreamPort,
 } from "../../types";

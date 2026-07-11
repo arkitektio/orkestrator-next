@@ -155,7 +155,7 @@ export const ConnectContextual = (props: {
   ) => {
     await props.addStagingEdge({
       data: data,
-      ageName: labelToEdgeAgeName(data.label),
+      ageName: labelToEdgeAgeName(data.label || data.key),
       type: "stagingmeasurement",
       source: props.params.leftNode.id,
       target: props.params.rightNode.id,
@@ -167,7 +167,7 @@ export const ConnectContextual = (props: {
   ) => {
     await props.addStagingEdge({
       data: data,
-      ageName: labelToEdgeAgeName(data.label),
+      ageName: labelToEdgeAgeName(data.label || data.key),
       type: "stagingrelation",
       source: props.params.leftNode.id,
       target: props.params.rightNode.id,

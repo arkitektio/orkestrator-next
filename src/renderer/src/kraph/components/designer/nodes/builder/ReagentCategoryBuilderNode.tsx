@@ -1,4 +1,3 @@
-import { KraphReagentCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { PathNodePresentation } from "../../components/PathNodePresentation";
@@ -18,7 +17,7 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
       <PathNodePresentation
         id={id}
         label={data.label}
-        tags={data.tags}
+        tags={data.tags.map((tag) => ({ value: tag.name }))}
         className="rounded-full"
       >
         <div className="font-semibold">{data.label}</div>

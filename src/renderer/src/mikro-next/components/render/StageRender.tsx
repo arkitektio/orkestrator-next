@@ -56,7 +56,7 @@ const AsyncImageRender = ({
   imageId: string;
   matrix: THREE.Matrix4;
 }) => {
-  const { data, loading, error } = useGetImageQuery({
+  const { data, loading } = useGetImageQuery({
     variables: {
       id: imageId,
     },
@@ -71,7 +71,7 @@ const AsyncImageRender = ({
 };
 
 export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps) => {
-  const [selected, setSelected] = useState<Object3D<Object3DEventMap>[]>([]);
+  const [, setSelected] = useState<Object3D<Object3DEventMap>[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +124,18 @@ export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps) => {
                 );
 
                 const matrix = new THREE.Matrix4();
-                matrix.set(...flattenMatrix);
+                const [
+                  n11, n12, n13, n14,
+                  n21, n22, n23, n24,
+                  n31, n32, n33, n34,
+                  n41, n42, n43, n44,
+                ] = flattenMatrix;
+                matrix.set(
+                  n11, n12, n13, n14,
+                  n21, n22, n23, n24,
+                  n31, n32, n33, n34,
+                  n41, n42, n43, n44,
+                );
                 return (
                   <group key={view.id} matrixAutoUpdate={false} matrix={matrix}>
                     <AsyncImageRender imageId={view.image.id} matrix={matrix} />
@@ -190,8 +201,7 @@ export const AsyncStageRender = ({
 
         const newView = subscriptionData.data.affineTransformationViews.create;
 
-        if (!subscriptionData.data.affineTransformationViews.create)
-          return prev;
+        if (!newView) return prev;
 
         const affineViews = [...(stage.affineViews || []), newView];
 

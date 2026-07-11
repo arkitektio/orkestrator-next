@@ -12,10 +12,21 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
     );
   }
 
+  const value = props.value;
+  const object =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>).object
+      : undefined;
+
+  if (object == null) {
+    return (
+      <div className="text-xs"> No Value received {props.port.identifier}</div>
+    );
+  }
 
   return (
     <Widget
-      object={props.value.object}
+      object={String(object)}
       small={true}
       identifier={props.port.identifier}
     />

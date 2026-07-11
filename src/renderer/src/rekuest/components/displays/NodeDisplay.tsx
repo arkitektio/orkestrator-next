@@ -1,6 +1,9 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DisplayComponentProps } from "@/providers/display/DisplayContext";
 import { useConstantActionQuery } from "@/rekuest/api/graphql";
+
+type DisplayComponentProps = {
+  object: string;
+};
 
 const Display = (props: DisplayComponentProps) => {
   const { data } = useConstantActionQuery({

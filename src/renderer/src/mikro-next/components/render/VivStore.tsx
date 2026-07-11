@@ -41,6 +41,11 @@ export function joinUrlParts(...args: string[]) {
 }
 
 export class VivS3Store extends HTTPStore {
+  // `zarr`'s package.json `exports` map has no "types" condition, so
+  // TypeScript can't see `HTTPStore`'s own members through the base class;
+  // redeclare the two used here (already set for real by `super(...)`).
+  url: string;
+  fetchOptions: RequestInit;
   aws: AwsClient;
   cache: LRUIndexedDBCache;
 
@@ -51,6 +56,8 @@ export class VivS3Store extends HTTPStore {
     options: any = {},
   ) {
     super(url, options);
+    this.url = url;
+    this.fetchOptions = options.fetchOptions || {};
     this.aws = aws;
     this.cache = cache;
   }

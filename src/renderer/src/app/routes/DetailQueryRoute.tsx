@@ -89,7 +89,7 @@ export const asDetailQueryRoute = <T extends any>(
     const passyProps =
       direct ||
       hook({
-        variables: { id: id },
+        variables: { id: id ?? "" },
         ...options.queryOptions,
       });
 
@@ -108,7 +108,9 @@ export const asDetailQueryRoute = <T extends any>(
         return <DebugPage data={passyProps.data} />;
       }
 
-      return <Component {...passyProps} id={id} />;
+      return <Component {...passyProps} id={id ?? ""} />;
     }
+
+    return null;
   };
 };

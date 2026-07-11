@@ -56,20 +56,19 @@ import {
 import {
   EntityCategoryFragment,
   EntityFilter,
-  EntityOrder,
-  ListEntitiesQuery,
+  EntityNodesQuery,
   Ordering,
   PropertyDefinitionFragment,
   PropertyMatch,
   PropertyOrder,
   ValueKind,
   WhereOperator,
+  useEntityNodesQuery,
   useGetEntityQuery,
-  useListEntitiesQuery,
   useSetEntityPropertyMutation
 } from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
-import { KraphMeasurement, KraphNode, KraphProtocolEvent } from "@/linkers";
+import { KraphMeasurement, KraphNaturalEvent, KraphNode, KraphProtocolEvent } from "@/linkers";
 import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Plus, RefreshCw, X } from "lucide-react";
 import Timestamp from "react-timestamp";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
@@ -133,8 +132,8 @@ const EditableCell = ({
     setNodeProperty({
       variables: {
         input: {
-          entity: nodeId,
-          variable: propertyDefinition.key,
+          entityId: nodeId,
+          key: propertyDefinition.key,
           value: newValue.toISOString(),
         },
       },
@@ -147,8 +146,8 @@ const EditableCell = ({
     setNodeProperty({
       variables: {
         input: {
-          entity: nodeId,
-          variable: propertyDefinition.key,
+          entityId: nodeId,
+          key: propertyDefinition.key,
           value: String(checked),
         },
       },
@@ -157,41 +156,6 @@ const EditableCell = ({
 
   const renderEditWidget = () => {
     const kind = propertyDefinition.valueKind;
-    const options = propertyDefinition.options;
-
-    if (options && options.length > 0) {
-      return (
-        <select
-          value={editingValue || ""}
-          onChange={(e) => {
-            const selectedValue = e.target.value;
-            setEditingValue(selectedValue);
-            setIsEditing(false);
-            setNodeProperty({
-              variables: {
-                input: {
-                  entity: nodeId,
-                  variable: propertyDefinition.key,
-                  value: String(selectedValue),
-                },
-              },
-            });
-          }}
-          onBlur={handleBlur}
-          autoFocus
-          className="h-8 bg-background border border-input rounded-md px-2"
-        >
-          <option value="" disabled>
-            Select an option
-          </option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      );
-    }
 
     switch (kind) {
       case ValueKind.Boolean:
@@ -319,7 +283,7 @@ const EditableCell = ({
 
 const calculateColumns = (
   category: EntityCategoryFragment,
-): ColumnDef<ListEntitiesQuery["entities"][0]>[] => {
+): ColumnDef<EntityNodesQuery["entities"][0]>[] => {
   if (!category) {
     return [];
   }
@@ -330,8 +294,6 @@ const calculateColumns = (
       id: "select",
       header: () => <div className="text-center">Select</div>,
       cell: ({ row }) => {
-        const label = row.getValue("id") as string;
-
         return (
           <div className="flex items-center justify-center">
             <Button variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={() => {
@@ -423,12 +385,6 @@ const calculateColumns = (
                       {variable.valueKind.replace(/_/g, " ")}
                     </span>
                   </div>
-                  {variable.optional !== undefined && (
-                    <div>
-                      <span className="font-semibold">Optional: </span>
-                      <span>{variable.optional ? "Yes" : "No"}</span>
-                    </div>
-                  )}
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -451,7 +407,7 @@ const calculateColumns = (
   return defaults;
 };
 
-const calculateRows = (entities: ListEntitiesQuery["entities"] | undefined) => {
+const calculateRows = (entities: EntityNodesQuery["entities"] | undefined) => {
   const rowObjects = entities;
   return rowObjects;
 };
@@ -460,7 +416,7 @@ const calculateRows = (entities: ListEntitiesQuery["entities"] | undefined) => {
 export const RowEntity = ({
   row,
 }: {
-  row: Row<ListEntitiesQuery["entities"][0]>;
+  row: Row<EntityNodesQuery["entities"][0]>;
 }) => {
 
   const { data } = useGetEntityQuery({
@@ -474,60 +430,58 @@ export const RowEntity = ({
       <>
         {data?.entity.measuredBy.map((measurement) => (
           <KraphMeasurement.DetailLink
-            object={measurement.id}
+            object={{ id: measurement.id }}
             key={`${measurement.id}`}
 
           >
             <Card className="p-2 flex flex-col flex-1 h-32 w-32 truncate">
 
               <pre>{measurement.category.label}</pre>
-              {measurement.source.__typename == "Structure" && (
-                <DisplayWidget
-                  identifier={measurement.source.identifier}
-                  object={measurement.source.object}
-                  link={true}
-                />
-              )}
+              <DisplayWidget
+                identifier={measurement.source.identifier}
+                object={measurement.source.object}
+                link={true}
+              />
             </Card>
           </KraphMeasurement.DetailLink>
         ))}
       </>
     )}
-    {(data?.entity.subjectedTo.length || 0) > 0 && <>
-      <div className="p-2">Subjected to</div>
+    {(data?.entity.participatedIn.length || 0) > 0 && <>
+      <div className="p-2">Participated in</div>
 
       <div className="flex flex-row gap-2 p-6">
-        {(data?.entity.subjectedTo || []).map((subjected) => (
+        {(data?.entity.participatedIn || []).map((participation) => (
           <Card
-            key={`${subjected.id}`}
+            key={`${participation.id}`}
             className="p-2 flex-row gap-2 flex w-96"
           >
             <div className="my-auto border border-1 rounded  px-2 py-1">
-              {subjected.role}
+              {participation.role}
             </div>
-            {subjected.target.__typename == "ProtocolEvent" && (
+            {participation.target.__typename == "ProtocolEvent" && (
               <div className="flex flex-col">
                 <KraphProtocolEvent.DetailLink
-                  object={subjected.target.id}
+                  object={{ id: participation.target.id }}
                   className={"text-xl font-bold"}
                 >
-                  {subjected.target.category.label}
+                  {participation.target.category.label}
                 </KraphProtocolEvent.DetailLink>
                 <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                  {subjected.target.validFrom && (
-                    <Timestamp date={subjected.target.validFrom} relative />
+                  {participation.target.measuredFrom && (
+                    <Timestamp date={participation.target.measuredFrom} relative />
                   )}
-                  {subjected.target.validTo && subjected.target.validFrom && (
+                  {participation.target.measuredTo && participation.target.measuredFrom && (
                     <div>
                       (~
                       {calculateDuration(
-                        subjected.target.validFrom,
-                        subjected.target.validTo,
+                        participation.target.measuredFrom,
+                        participation.target.measuredTo,
                       )}
                       )
                     </div>
                   )}
-                  {!subjected.target.validTo && !subjected.target.validFrom && (
+                  {!participation.target.measuredTo && !participation.target.measuredFrom && (
                     <div>No validity</div>
                   )}
                 </div>
@@ -538,45 +492,43 @@ export const RowEntity = ({
       </div>
     </>}
 
-    {(data?.entity.targetedBy.length || 0) > 0 && (
+    {(data?.entity.resultedOut.length || 0) > 0 && (
       <>
-        <div className="p-6">Targeted by</div>
+        <div className="p-6">Resulted out of</div>
 
 
         <div className="flex flex-row gap-2 p-6">
-          {data?.entity.targetedBy.map((targeted) => (
-            <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
+          {data?.entity.resultedOut.map((resulted) => (
+            <Card key={`${resulted.id}`} className="p-2 flex-row gap-2 flex w-96">
               <div className="my-auto border border-1 rounded  px-2 py-1">
-                {targeted.role}
+                {resulted.role}
               </div>
-              {targeted.source.__typename == "ProtocolEvent" && (
-                <div className="flex flex-col">
-                  <KraphProtocolEvent.DetailLink
-                    object={targeted.source.id}
-                    className={"text-xl font-bold"}
-                  >
-                    {targeted.source.category.label}
-                  </KraphProtocolEvent.DetailLink>
-                  <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                    {targeted.source.validFrom && (
-                      <Timestamp date={targeted.source.validFrom} relative />
-                    )}
-                    {targeted.source.validTo && targeted.source.validFrom && (
-                      <div>
-                        (~
-                        {calculateDuration(
-                          targeted.source.validFrom,
-                          targeted.source.validTo,
-                        )}
-                        )
-                      </div>
-                    )}
-                    {!targeted.source.validTo && !targeted.source.validFrom && (
-                      <div>No validity</div>
-                    )}
-                  </div>
+              <div className="flex flex-col">
+                <KraphNaturalEvent.DetailLink
+                  object={{ id: resulted.source.id }}
+                  className={"text-xl font-bold"}
+                >
+                  {resulted.source.category.label}
+                </KraphNaturalEvent.DetailLink>
+                <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                  {resulted.source.measuredFrom && (
+                    <Timestamp date={resulted.source.measuredFrom} relative />
+                  )}
+                  {resulted.source.measuredTo && resulted.source.measuredFrom && (
+                    <div>
+                      (~
+                      {calculateDuration(
+                        resulted.source.measuredFrom,
+                        resulted.source.measuredTo,
+                      )}
+                      )
+                    </div>
+                  )}
+                  {!resulted.source.measuredTo && !resulted.source.measuredFrom && (
+                    <div>No validity</div>
+                  )}
                 </div>
-              )}
+              </div>
             </Card>
           ))}
         </div>
@@ -590,7 +542,7 @@ export const RowEntity = ({
 export const EntityRow = ({
   row,
 }: {
-  row: Row<ListEntitiesQuery["entities"][0]>;
+  row: Row<EntityNodesQuery["entities"][0]>;
 }) => {
 
   const [moreData, setMoreData] = React.useState(false);
@@ -651,7 +603,7 @@ export const EntityList = (props: {
 
   const [propertyOrders, setPropertyOrders] = React.useState<PropertyOrder[]>([]);
   const [newOrderKey, setNewOrderKey] = React.useState<string>("");
-  const [newOrderDirection, setNewOrderDirection] = React.useState<OrderDirection>(Ordering.Asc);
+  const [newOrderDirection, setNewOrderDirection] = React.useState<Ordering>(Ordering.Asc);
   const [isAddOrderOpen, setIsAddOrderOpen] = React.useState(false);
 
   const [pagination, setPagination] = React.useState({
@@ -679,14 +631,13 @@ export const EntityList = (props: {
     matches: propertyMatches.length > 0 ? propertyMatches : undefined,
   };
 
-  const order: EntityOrder | undefined = propertyOrders.length > 0
-    ? { property: propertyOrders }
-    : undefined;
-
-  const { data, loading, refetch, error } = useListEntitiesQuery({
+  const { data, loading, refetch, error } = useEntityNodesQuery({
     variables: {
-      entityCategoryId: props.category.id,
+      category: props.category.id,
       filters,
+      ordering: propertyOrders.length > 0
+        ? propertyOrders.map((propertyOrder) => ({ property: propertyOrder }))
+        : undefined,
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,

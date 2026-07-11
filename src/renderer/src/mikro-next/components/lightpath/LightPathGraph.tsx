@@ -24,21 +24,27 @@ import OtherElementNode from "./nodes/OtherElementNode";
 import OtherSourceElementNode from "./nodes/OtherSourceElementNode";
 import PinHoleElementNode from "./nodes/PinHoleElementNode";
 import SampleElementNode from "./nodes/SampleElementNode";
-import SourceElementNode from "./nodes/SourceElementNode";
 import { MyEdge, MyNode } from "./types";
 
 const graphToNodes = (graph: LightpathGraphFragment): MyNode[] => {
-  return graph.elements.map((cat, index) => ({
-    id: cat.id,
-    position: {
-      x: cat.pose?.position?.x || 300,
-      y: cat.pose?.position?.y || 300,
-    },
-    height: 100,
-    width: 100,
-    data: cat,
-    type: cat.__typename,
-  }));
+  // `LampElement` has no corresponding node renderer/`MyNode` variant, so it
+  // is skipped rather than rendered as an unsupported node type.
+  return graph.elements
+    .filter((cat) => cat.__typename !== "LampElement")
+    .map(
+      (cat) =>
+        ({
+          id: cat.id,
+          position: {
+            x: cat.pose?.position?.x || 300,
+            y: cat.pose?.position?.y || 300,
+          },
+          height: 100,
+          width: 100,
+          data: cat,
+          type: cat.__typename,
+        }) as MyNode,
+    );
 };
 
 const graphToEdges = (graph: LightpathGraphFragment): MyEdge[] => {
@@ -68,22 +74,11 @@ const nodeTypes = {
   LaserElement: LaserElementNode,
   FilterElement: FilterElementNode,
   ObjectiveElement: ObjectiveElementNode,
-  SourceElement: SourceElementNode, // Reuse the sample element for the source
 };
 
 const edgeTypes = {
   LightEdge: LightEdge,
 };
-
-function calculateMidpoint(
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-) {
-  return {
-    x: (p1.x + p2.x) / 2,
-    y: (p1.y + p2.y) / 2,
-  };
-}
 
 const layeredLayout = {
   "elk.algorithm": "layered",
@@ -159,12 +154,8 @@ export const LightPathGraph = ({
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<MyNode, MyEdge> | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<MyNode>(
-    graphToNodes(graph),
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState<MyEdge>(
-    graphToEdges(graph),
-  );
+  const [nodes, setNodes] = useNodesState<MyNode>(graphToNodes(graph));
+  const [edges, setEdges] = useEdgesState<MyEdge>(graphToEdges(graph));
 
   React.useEffect(() => {
     if (reactFlowInstance) {
@@ -210,10 +201,13 @@ export const LightPathGraph = ({
         return;
       }
 
-      const newNodes = children.map((node) => {
-        const child = the_nodes.find((n) => n.id === node.id);
-        return { ...child, position: { x: node.x || 1, y: node.y || 1 } };
-      });
+      const newNodes = children
+        .map((node) => {
+          const child = the_nodes.find((n) => n.id === node.id);
+          if (!child) return null;
+          return { ...child, position: { x: node.x || 1, y: node.y || 1 } };
+        })
+        .filter((n): n is MyNode => n !== null);
 
       setNodes(newNodes);
     });

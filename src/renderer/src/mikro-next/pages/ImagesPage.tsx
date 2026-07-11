@@ -27,7 +27,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
           title="Images"
           description="Images are the building blocks of your data management. They represent your microscope images and are part of your datasets."
         />
-        <ImageList pagination={{ limit: 30 }} />
+        <ImageList defaultLimit={30} />
       </div>
     </MikroImage.ListPage>
   );

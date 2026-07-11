@@ -10,7 +10,7 @@ type Props = {
   nodes: FlowNode[];
   edges: FlowEdge[];
   children?: React.ReactNode;
-} & ReactFlowProps;
+} & ReactFlowProps<FlowNode, FlowEdge>;
 
 const onInit = (reactFlowInstance: any) =>
   console.log("flow loaded:", reactFlowInstance);

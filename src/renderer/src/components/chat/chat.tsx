@@ -48,6 +48,7 @@ import {
 import {
   useAllPrimaryDefinitionsQuery,
   ListDefinitionFragment,
+  PortKind as KabinetPortKind,
 } from "@/kabinet/api/graphql";
 import { useHashActionWithProgress } from "@/rekuest/hooks/useHashActionWithProgress";
 import { KabinetDefinition } from "@/linkers";
@@ -141,11 +142,11 @@ const InstallReplyerSection = (props: {
         demands: [
           {
             kind: DemandKind.Args,
-            matches: [{ kind: PortKind.Structure, identifier: "@alpaka/message" }],
+            matches: [{ kind: KabinetPortKind.Structure, identifier: "@alpaka/message" }],
           },
           {
             kind: DemandKind.Returns,
-            matches: [{ kind: PortKind.Structure, identifier: "@alpaka/message" }],
+            matches: [{ kind: KabinetPortKind.Structure, identifier: "@alpaka/message" }],
           },
         ],
         search: props.search !== "" ? props.search : undefined,
@@ -486,6 +487,7 @@ export function Chat({ isMobile, room }: ChatProps) {
         timers.forEach((t) => clearTimeout(t));
       };
     }
+    return undefined;
   }, [activeTasks]);
 
   const dismissTask = (reference: string) => {
@@ -494,7 +496,7 @@ export function Chat({ isMobile, room }: ChatProps) {
 
   const [cancelAssign] = useCancelMutation();
 
-  const handleCancelTask = async (id: string, reference: string) => {
+  const handleCancelTask = async (id: string, _reference: string) => {
     if (!id) return;
     try {
       toast.info("Canceling replyer...");
@@ -707,7 +709,7 @@ export function Chat({ isMobile, room }: ChatProps) {
       ...prev,
       ...structures.map((s) => ({
         identifier: s.identifier,
-        object: s.object,
+        object: s.object.id,
       })),
     ]);
   });
@@ -715,7 +717,9 @@ export function Chat({ isMobile, room }: ChatProps) {
   return (
     <div
       className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[inherit]"
-      ref={drop}
+      ref={(node) => {
+        drop(node);
+      }}
     >
       {(isOver || loading) && (
         <div className="absolute top-0 left-0 z-50 h-full w-full backdrop-blur-sm">

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { DependenciesContainer } from "@/components/widgets/DepenciesContainer";
-import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { ApolloError } from "@apollo/client";
 import {
   RekuestAction,
   RekuestAgent,
@@ -47,13 +47,9 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 export const DoForm = ({ id }: { id: string }) => {
-  const { assign, latestTask, cancel, implementation } = useImplementationAction({
+  const { assign, latestTask, implementation } = useImplementationAction({
     id: id,
   });
-
-  const description = useActionDescription({
-     description: implementation?.action.description || "",
-   });
 
    const form = useImplementationForm({
      implementation: implementation,
@@ -67,7 +63,7 @@ export const DoForm = ({ id }: { id: string }) => {
    }) => {
      console.log("Submitting");
      try {
-       const task = await assign(buildAssignInput({
+       await assign(buildAssignInput({
          implementation: id,
          args: data.args,
          dependencies: Object.values(data.dependencies),
@@ -202,7 +198,7 @@ export const ImplementationFlow = (props: { implementation: DetailImplementation
 
   return (
     <>
-      {data?.flow && <ShowFlow flow={data?.flow} implementation={props.implementation} />}
+      {data?.flow && <ShowFlow flow={data?.flow} template={props.implementation} />}
     </>
   );
 };
@@ -596,7 +592,7 @@ export const FlowRender = (props: { implementation: DetailImplementationFragment
 
 const TPage = asDetailQueryRoute(
   useImplementationQuery,
-  ({ data, refetch, subscribeToMore }) => {
+  ({ data, subscribeToMore }) => {
     useEffect(() => {
       return subscribeToMore<
         WatchImplementationSubscription,
@@ -606,7 +602,7 @@ const TPage = asDetailQueryRoute(
         variables: {
           implementation: data.implementation.id,
         },
-        updateQuery: (prev, { subscriptionData }) => {
+        updateQuery: (_prev, { subscriptionData }) => {
           return { implementation: subscriptionData.data.implementationChange };
         },
       });

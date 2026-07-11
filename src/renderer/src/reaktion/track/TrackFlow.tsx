@@ -4,7 +4,7 @@ import {
   RunStatus,
 } from "@/reaktion/api/graphql";
 import { DetailTaskFragment } from "@/rekuest/api/graphql";
-import { useNodesState } from "@xyflow/react";
+import { NodeProps, EdgeProps, useNodesState } from "@xyflow/react";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { Graph } from "../base/Graph";
@@ -18,20 +18,22 @@ import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
+import { AgentSubFlowTrackNodeWidget } from "./nodes/generic/AgentSubFlowShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterActionNode: RekuestFilterWidget,
-  RekuestMapActionNode: RekuestMapWidget,
-  ReactiveNode: ReactiveTrackNodeWidget,
-  ArgNode: ArgTrackNodeWidget,
-  ReturnNode: ReturnTrackNodeWidget,
+  RekuestFilterActionNode: RekuestFilterWidget as React.FC<NodeProps>,
+  RekuestMapActionNode: RekuestMapWidget as React.FC<NodeProps>,
+  ReactiveNode: ReactiveTrackNodeWidget as React.FC<NodeProps>,
+  ArgNode: ArgTrackNodeWidget as React.FC<NodeProps>,
+  ReturnNode: ReturnTrackNodeWidget as React.FC<NodeProps>,
+  AgentSubFlowNode: AgentSubFlowTrackNodeWidget as React.FC<NodeProps>,
 };
 
 const edgeTypes: EdgeTypes = {
-  VanillaEdge: LabeledShowEdge,
-  LoggingEdge: LabeledShowEdge,
+  VanillaEdge: LabeledShowEdge as React.FC<EdgeProps>,
+  LoggingEdge: LabeledShowEdge as React.FC<EdgeProps>,
 };
 
 export type Props = {
@@ -40,7 +42,7 @@ export type Props = {
   onSave?: (graph: GraphInput) => void;
 };
 
-export const TrackFlow: React.FC<Props> = ({ run, task, onSave }) => {
+export const TrackFlow: React.FC<Props> = ({ run }) => {
   console.log("THE FLOW", run);
 
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
@@ -48,13 +50,12 @@ export const TrackFlow: React.FC<Props> = ({ run, task, onSave }) => {
   const [runState, setRunState] = useState<RunState>({ t: 0 });
   const [live, setLive] = useState<boolean>(true);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
+  const [nodes, , onNodesChange] = useNodesState(
     nodes_to_flownodes(run.flow.graph?.nodes || []) || [],
   );
   const edges = edges_to_flowedges(run.flow.graph?.edges || []);
-  const globals = run.flow.graph.globals || [];
 
-  const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
+  const [selectedNode] = useState<FlowNode | null>(null);
 
   return (
     <TrackRiverContext.Provider

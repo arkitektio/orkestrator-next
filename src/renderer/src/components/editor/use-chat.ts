@@ -55,7 +55,7 @@ export const useChat = () => {
     id: 'editor',
     transport: new DefaultChatTransport({
       api: options.api || '/api/ai/command',
-      fetch: async (input, init) => {
+      fetch: async (_input, init) => {
         const bodyOptions = editor.getOptions(aiChatPlugin).chatOptions?.body
         const initBody = JSON.parse(init?.body as string)
         const body = { ...initBody, ...bodyOptions }

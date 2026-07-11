@@ -21,7 +21,7 @@ export type IRepresentationScreenProps = {};
 
 const Page = asDetailQueryRoute(
   useGetStageQuery,
-  ({ data, refetch, subscribeToMore, id }) => {
+  ({ data, subscribeToMore, id }) => {
     useEffect(() => {
       const unsubscribe = subscribeToMore<
         WatchTransformationViewsSubscription,
@@ -40,8 +40,7 @@ const Page = asDetailQueryRoute(
 
           const newView = subscriptionData.data.affineTransformationViews.create;
 
-          if (!subscriptionData.data.affineTransformationViews.create)
-            return prev;
+          if (!newView) return prev;
 
           const affineViews = [...(stage.affineViews || []), newView];
 
@@ -65,8 +64,8 @@ const Page = asDetailQueryRoute(
     return (
       <MikroStage.ModelPage
         variant={"black"}
-        actions={<MikroStage.Actions object={id} />}
-        object={id}
+        actions={<MikroStage.Actions object={{ id }} />}
+        object={{ id }}
         title={data?.stage?.name}
       >
 
@@ -82,7 +81,7 @@ const Page = asDetailQueryRoute(
                     <PinToggle
                       onPin={(e) => {
                         data?.stage.id &&
-                          pinImage({
+                          pinStage({
                             variables: {
                               id: data?.stage.id,
                               pin: e,

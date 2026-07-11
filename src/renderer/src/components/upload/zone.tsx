@@ -18,7 +18,7 @@ export const UploadZone: React.FC<{
   const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
       accept: [NativeTypes.FILE],
-      drop: (item, monitor) => {
+      drop: (item, _monitor) => {
         const files: File[] = (item as any).files;
         if (files) {
           files.forEach((file) => {
@@ -44,7 +44,9 @@ export const UploadZone: React.FC<{
 
   return (
     <div
-      ref={drop}
+      ref={(node) => {
+        drop(node);
+      }}
       className={`w-full h-full flex items-center justify-center border-2 border-dashed rounded-lg transition-colors p-10 ${isOver && canDrop
         ? "border-primary bg-primary/10"
         : "border-muted-foreground/25 hover:border-primary/50"

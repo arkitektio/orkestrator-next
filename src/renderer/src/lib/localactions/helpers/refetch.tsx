@@ -1,4 +1,10 @@
-import { NormalizedCache, ApolloClient } from "@apollo/client";
+import {
+  NormalizedCache,
+  ApolloClient,
+  DocumentNode,
+  OperationVariables,
+  TypedDocumentNode,
+} from "@apollo/client";
 
 /**
  * Scans active Apollo queries for multiple entities up to a specified depth.
@@ -9,7 +15,12 @@ import { NormalizedCache, ApolloClient } from "@apollo/client";
  * @returns {Array<{queryName: string, query: DocumentNode, variables: object, refetch: Function}>}
  */
 export function getRefetchableQueriesForEntities(client: ApolloClient<NormalizedCache>, entities: { typename: string, id: string | number }[], maxDepth: number = 3) {
-  const matchingQueries = [];
+  const matchingQueries: {
+    queryName: string;
+    query: DocumentNode | TypedDocumentNode<any, OperationVariables>;
+    variables: OperationVariables | undefined;
+    refetch: () => Promise<unknown>;
+  }[] = [];
 
   // 1. OPTIMIZATION: Pre-process the targets into a Set for O(1) lookups.
   // This prevents iterating over the targets array on every single node.

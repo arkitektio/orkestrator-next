@@ -4,16 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { KraphReagent, KraphRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetRelationQuery } from "../api/graphql";
-import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
-export default asDetailQueryRoute(useGetRelationQuery, ({ data, refetch }) => {
-  const uploadFile = useKraphMediaUpload();
-
+export default asDetailQueryRoute(useGetRelationQuery, ({ data }) => {
   return (
     <KraphRelation.ModelPage
-      object={data.relation.id}
-      title={data?.relation.label}
-      sidebars={<KraphReagent.Komments object={data.relation.id} />}
+      object={{ id: data.relation.category.id }}
+      title={data?.relation.category.label}
+      sidebars={<KraphReagent.Komments object={{ id: data.relation.category.id }} />}
       pageActions={
         <div className="flex flex-row gap-2">
           <>
@@ -25,11 +22,11 @@ export default asDetailQueryRoute(useGetRelationQuery, ({ data, refetch }) => {
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.relation.label}
+            {data.relation.category.label}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground"></p>
           <p className="mt-3 text-xl text-muted-foreground">
-            <Badge>{data.relation.id}</Badge>
+            <Badge>{data.relation.category.id}</Badge>
           </p>
         </div>
       </div>

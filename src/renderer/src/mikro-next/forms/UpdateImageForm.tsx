@@ -6,14 +6,11 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   ImageFragment,
-  useRgbContextOptionsLazyQuery,
   useUpdateImageMutation,
 } from "../api/graphql";
 
 export const UpdateImageForm = (props: { image: ImageFragment }) => {
   const [add] = useUpdateImageMutation();
-
-  const [searchStage] = useRgbContextOptionsLazyQuery();
 
   const submit = useGraphQLDialog(add, { successMessage: "Image updated" });
 

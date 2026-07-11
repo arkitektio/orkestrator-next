@@ -9,12 +9,16 @@ export const PodDisplay = (props: DisplayWidgetProps) => {
     }
   });
 
+  if (!data?.pod) {
+    return <div className="text-xs text-muted-foreground">Pod not found</div>;
+  }
+
   return (
-    <KabinetPod.DetailLink object={props.object}>
+    <KabinetPod.DetailLink object={data.pod}>
       <p className="text-xl">
-        {data?.pod?.deployment.flavour?.release?.app.identifier}
+        {data.pod.deployment.flavour?.release?.app.identifier}
       </p>
-      <p className="text-sm">Deployed on {data?.pod?.backend.name}</p>
+      <p className="text-sm">Deployed on {data.pod.backend.name}</p>
     </KabinetPod.DetailLink>
   );
 };

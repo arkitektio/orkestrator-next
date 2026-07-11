@@ -8,7 +8,7 @@ export const MetricDisplay = (props: DisplayWidgetProps) => {
   });
 
   return (
-    <KraphMetric.DetailLink object={props.object}>
+    <KraphMetric.DetailLink object={{ id: props.object }}>
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-light text-muted-foreground">{data?.metric.category.label}</h1>
         <p className="text-sm text-muted-foreground">{data?.metric.category.description}</p>

@@ -1,19 +1,19 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphGraph } from "@/linkers";
 import {
+  GraphFilter,
   OffsetPaginationInput,
-  OntologyFilter,
   useListGraphsQuery,
 } from "../../api/graphql";
 import GraphCard from "../cards/GraphCard";
 
 export type Props = {
-  filters?: OntologyFilter;
+  filters?: GraphFilter;
   pagination?: OffsetPaginationInput;
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListGraphsQuery({
+  const { data, refetch } = useListGraphsQuery({
     variables: { filters, pagination },
   });
 

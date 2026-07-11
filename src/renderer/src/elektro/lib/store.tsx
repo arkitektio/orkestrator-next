@@ -2,12 +2,6 @@ import { AbsolutePath } from "@zarrita/storage";
 import { AwsClient } from "aws4fetch";
 import { FetchStore } from "zarrita";
 
-enum HTTPMethod {
-  Get = "GET",
-  Head = "HEAD",
-  Put = "PUT",
-}
-
 class LRUCache<K, V> {
   private cache = new Map<K, V>();
   private maxSize: number;
@@ -252,45 +246,3 @@ export interface XArrayMetadata {
   zarr_consolidated_format: number;
 }
 
-type Labels = [...string[], "y", "x"];
-function getAxisLabelsAndChannelAxis(
-  xarray_metadata: XArrayMetadata,
-  arr: ZarrArray,
-): { labels: Labels; channel_axis: number } {
-  // type cast string[] to Labels
-  const labels = xarray_metadata.metadata["data/.zattrs"]
-    ._ARRAY_DIMENSIONS as Labels;
-
-  const channel_axis = labels.indexOf("c");
-  return { labels, channel_axis };
-}
-
-export async function openZarrArray(
-  url: string,
-): Promise<{ data: ZarrArray; metadata: XArrayMetadata }> {
-  // If the loader fails to load, handle the error (show an error snackbar).
-  // Otherwise load.
-  try {
-    console.log(url);
-
-    const aws = new AwsClient({
-      accessKeyId: "kBcG6sCIlQvOWPOpzJhu",
-      secretAccessKey: "FjiprDl3qHwIMR7azM2M",
-      service: "s3",
-    });
-
-    const x = await aws.fetch(url + "/.zmetadata");
-    const xarray_metadata = (await x.json()) as XArrayMetadata;
-
-    const store = new S3Store(url, aws);
-    const grp = await openGroup(store, "", "r");
-
-    const data = (await grp.getItem("data")) as ZarrArray;
-
-    return { data, metadata: xarray_metadata };
-  } catch (e) {
-    throw Error("Failed to load data");
-  }
-}
-
-export type SelectionLoader = (s: any) => Promise<ZarrArray>;

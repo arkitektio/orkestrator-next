@@ -7,10 +7,10 @@ import StreamPage from "./pages/StreamPage";
 import StandardPane from "./panes/StandardPane";
 interface Props { }
 
-export const Module: React.FC<Props> = (props) => {
+export const Module: React.FC<Props> = (_props) => {
   return (
-    <Guard.Mikro fallback={<>Loading</>}>
-      <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
+    <Guard.Mikro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
+      <Guard.Rekuest unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>} key={"rekuest"}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="streams/:id" element={<StreamPage />} />

@@ -34,6 +34,7 @@ import {
   usePinnedActionIds,
   useTogglePinnedAction,
 } from "@/app/localactions";
+import type { Action } from "@/lib/localactions/LocalActionProvider";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import {
   Bug,
@@ -547,7 +548,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                   <div className="space-y-2 p-3">
                     {filteredLocalActionEntries.map(({ id, action }) => {
                       const isPinned = pinnedActionIds.includes(id);
-                      const isRequiredPin = action.pinned === true;
+                      const isRequiredPin = (action as Action).pinned === true;
 
                       return (
                         <div

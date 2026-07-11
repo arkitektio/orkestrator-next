@@ -29,10 +29,10 @@ export const TForm = (props: {
   >({
     defaultValues: {
       id: props.structureRelationCategory.id,
+      key: props.structureRelationCategory.key,
       label: props.structureRelationCategory.label,
       description: props.structureRelationCategory.description,
-      purl: props.structureRelationCategory.purl || "",
-      tags: props.structureRelationCategory.tags.map((tag) => tag.value),
+      tags: props.structureRelationCategory.tags.map((tag) => tag.id),
     },
   });
 
@@ -70,11 +70,6 @@ export const TForm = (props: {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
               />
               <GraphQLCreatableListSearchField
                 searchQuery={searchTags}

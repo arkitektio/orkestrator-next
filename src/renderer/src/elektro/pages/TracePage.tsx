@@ -7,7 +7,7 @@ import { TraceRender } from "../components/TraceRender";
 
 export const TracePage = asDetailQueryRoute(
   useDetailTraceQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
 
     return (
       <ElektroTrace.ModelPage

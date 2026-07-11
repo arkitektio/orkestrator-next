@@ -3,9 +3,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
-  useStore,
   type EdgeProps,
-  type ReactFlowState,
 } from "@xyflow/react";
 import {
   ReagentRoleEdge
@@ -31,7 +29,7 @@ export const getSpecialPath = (
 };
 
 export default ({
-  id,
+  id: _id,
   data,
   source,
   target,
@@ -39,34 +37,14 @@ export default ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<ReagentRoleEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
-  const theEdges = useStore((s: ReactFlowState) => {
-    const edgeExists = s.edges.filter(
-      (e) =>
-        (e.source === source && e.target === target) ||
-        (e.target === source && e.source === target),
-    );
-    return edgeExists;
-  });
-
-  const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
-
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
-
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
 
   let path = "";
   const offset = 0;

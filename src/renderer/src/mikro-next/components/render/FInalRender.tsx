@@ -196,7 +196,7 @@ export const ActiveImageViews = (props: {
             <LightpathViewCard view={view} key={"lightpath-" + view.id} />
           )}
           {view.__typename == "LabelView" && (
-            <LabelViewCard view={view} key={"label-" + view.id} />
+            <LabelViewCard view={view} key={"label-" + index} />
           )}
           {view.__typename == "InstanceMaskView" && (
             <InstanceMaskViewCard item={view} key={"label-" + view.id} />
@@ -240,10 +240,8 @@ export const ActiveImageViews = (props: {
 export const LayerRender = (props: {
   derivedScaleView: ScaledView;
   view: RgbViewFragment;
-  z: number;
   affineScaleX: number;
   affineScaleY: number;
-  t: number;
   xSize: number;
   availableScales: ScaledView[];
   ySize: number;
@@ -277,10 +275,6 @@ export const LayerRender = (props: {
   if (!derivedScaleView.image.store.chunks) {
     return <div>Chunk shape not found</div>;
   }
-
-  // Calculate z-position based on scale: higher resolution (lower scaleX) should be on top
-  // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.
-  const zPosition = (derivedScaleView.scaleX - 1) * 0.001;
 
   return (
     <group key={`${view.id}-${derivedScaleView.id}`}>
@@ -363,7 +357,7 @@ export const Controls = ({
   );
 };
 
-export const Panels = () => {
+export const Panels = ({ rois }: { rois: ListRoiFragment[] }) => {
   const {
     openPanels,
     setOpenPanels,
@@ -423,6 +417,7 @@ export const Panels = () => {
             displayStructures={displayStructures}
             removeDisplayStructure={removeDisplayStructure}
             clearDisplayStructures={clearDisplayStructures}
+            rois={rois}
           />
         </Card>
       ))}
@@ -464,19 +459,11 @@ export const RGBContextRender = (props: {
   const matrix = props.matrix || new THREE.Matrix4().identity();
 
   const version = rbgContext.image.store.version;
-  const zSize = rbgContext.image?.store.shape?.at(2) || 1;
-  const tSize = rbgContext.image?.store.shape?.at(1) || 1;
   const xSize = rbgContext.image?.store.shape?.at(3) || 1;
   const ySize = rbgContext.image?.store.shape?.at(4) || 1;
 
   const affineScaleX = matrix.elements[0];
   const affineScaleY = matrix.elements[5];
-
-  // Get available scales from layers
-  const allLayers = rbgContext.image.derivedScaleViews;
-  const availableScales = Array.from(
-    new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
-  ).sort((a, b) => a - b);
 
   // Get image dimensions for the auto-zoom camera
 
@@ -583,17 +570,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
     }
   };
 
-  const layers = props.context.image.derivedScaleViews.concat({
-    image: props.context.image,
-    scaleX: 1,
-    scaleY: 1,
-    scaleC: 1,
-    scaleT: 1,
-    scaleZ: 1,
-    __typename: "ScaleView",
-    id: "extra",
-  });
-
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -609,21 +585,12 @@ export const FinalRenderInner = (props: RGBDProps) => {
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
       >
-        {/* @ts-expect-error - ThreeCanvas type issue */}
         <ThreeCanvas
           style={{ width: "100%", height: "100%" }}
           data-nonbreaker
           onWheel={handleWheel}
         >
-          <AutoZoomCamera
-            imageHeight={ySize}
-            imageWidth={xSize}
-            xEnd={props.xEnd}
-            xStart={props.xStart}
-            yEnd={props.yEnd}
-            yStart={props.yStart}
-            follow={props.follow || "width"}
-          />
+          <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
           <OrbitControls
             enableRotate={false}
             enablePan={!allowRoiDrawing}
@@ -670,7 +637,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
           </div>
         )}
 
-        <Panels />
+        <Panels rois={props.rois} />
 
         {!props.hideControls && (
           <Controls

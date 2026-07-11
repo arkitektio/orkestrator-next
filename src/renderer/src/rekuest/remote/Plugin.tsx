@@ -15,6 +15,10 @@ const RenderPlugin = ({ plugin, ...props }) => {
     return <div>Unknown Error: {err.toString()}</div>;
   }
 
+  if (!Component) {
+    return null;
+  }
+
   return <Component {...props} />;
 };
 

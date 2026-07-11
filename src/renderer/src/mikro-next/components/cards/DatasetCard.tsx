@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";
 import { MikroDataset } from "@/linkers";
 import { ListDatasetFragment } from "../../api/graphql";
@@ -10,8 +9,6 @@ interface Props {
 }
 
 const TheCard = ({ item, className }: Props) => {
-  const s3resolve = useResolve();
-
   return (
     <MikroDataset.Smart object={item} hover>
       <Card

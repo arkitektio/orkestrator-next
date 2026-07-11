@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { NavigationMenu } from "../ui/navigation-menu";
 
 export type AppLayoutProps = {
@@ -7,8 +6,6 @@ export type AppLayoutProps = {
 };
 
 export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex-grow flex flex-col md:flex-row bg-sidebar dark:text-white h-screen">
       {/* Desktop navigation - sidebar on the left */}

@@ -1,7 +1,6 @@
 import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import React from "react";
 import { Route, Routes } from "react-router";
 import DatasetPage from "./pages/DatasetPage";
 import DatasetsPage from "./pages/DatasetsPage";
@@ -27,7 +26,7 @@ import StandardPane from "./panes/StandardPane";
 
 export const MikroNextModule = () => {
   return (
-    <Guard.Mikro fallback={<>Loading</>}>
+    <Guard.Mikro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />

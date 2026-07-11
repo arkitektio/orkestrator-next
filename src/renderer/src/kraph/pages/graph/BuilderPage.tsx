@@ -2,63 +2,39 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { KraphGraphQuery } from "@/linkers";
 import {
+  useGetGraphQuery,
   useGetGraphTableQueryQuery,
-  useUpdateGraphTableQueryMutation,
 } from "../../api/graphql";
 
-import { Button } from "@/components/ui/button";
 import QueryBuilderGraph from "@/kraph/components/designer/QueryBuilderGraph";
 
-const Page = asDetailQueryRoute(useGetGraphTableQueryQuery, ({ data, refetch }) => {
-  const [update] = useUpdateGraphTableQueryMutation({
-    refetchQueries: ["GetGraphTableQuery"],
-  });
-
-  const { data: graphData } = useGetGraphTableQueryQuery({
+// Note: the backend no longer exposes a `pinned` field on `GraphTableQuery`
+// (the pin/unpin concept has been removed from that type), so the pin button
+// that used to live here has been dropped.
+const Page = asDetailQueryRoute(useGetGraphTableQueryQuery, ({ data }) => {
+  const { data: graphData } = useGetGraphQuery({
     variables: {
       id: data.graphTableQuery.graph.id,
     },
   });
 
-  const pin = async () => {
-    await update({
-      variables: {
-        input: {
-          id: data.graphTableQuery.id,
-          name: data.graphTableQuery.label,
-          query: data.graphTableQuery.query,
-        },
-      },
-    });
-    await refetch();
-  };
-
-  if (!graphData?.graphTableQuery) {
+  if (!graphData?.graph) {
     return <div>Loading graph data...</div>;
   }
 
   return (
     <KraphGraphQuery.ModelPage
-      object={data.graphTableQuery.id}
+      object={{ id: data.graphTableQuery.id }}
       title={data.graphTableQuery.label}
       pageActions={
         <div className="flex flex-row gap-2">
-          <KraphGraphQuery.ObjectButton object={data.graphTableQuery.id} />
-          <Button
-            onClick={() => {
-              pin();
-            }}
-            className="w-full"
-            variant="outline"
-          >
-            {data.graphTableQuery.pinned ? "Unpin" : "Pin"}
-          </Button>
+          <KraphGraphQuery.ObjectButton object={{ id: data.graphTableQuery.id }} />
         </div>
       }
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KraphGraphQuery.Komments object={data.graphTableQuery.id} />,
+            Comments: <KraphGraphQuery.Komments object={{ id: data.graphTableQuery.id }} />,
           }}
         />
       }

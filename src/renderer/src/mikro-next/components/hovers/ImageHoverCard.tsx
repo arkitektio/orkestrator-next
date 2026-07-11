@@ -34,7 +34,12 @@ export const ImageHoverCard = ({ object }: { object: Object }) => {
   }
 
   const image = data.image;
-  const snapshot = image.renders.find((r) => r.__typename === "Snapshot");
+  const snapshot = image.renders.find(
+    (
+      r,
+    ): r is Extract<(typeof image.renders)[number], { __typename?: "Snapshot" }> =>
+      r.__typename === "Snapshot",
+  );
   const shape = image.store.shape;
 
   return (

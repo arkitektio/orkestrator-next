@@ -1,5 +1,4 @@
 import { useRekuest } from "@/app/Arkitekt";
-import { useSettings } from "@/providers/settings/SettingsContext";
 import type { ApolloClient } from "@apollo/client";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -68,7 +67,7 @@ const hydrateAndInsertAgent = async (client: RekuestClient, id: string) => {
   });
 };
 
-export const AgentToatser = (props: { id: string }) => {
+export const AgentToatser = (_props: { id: string }) => {
   const { data } = useAgentQuery({});
 
   return (
@@ -79,8 +78,7 @@ export const AgentToatser = (props: { id: string }) => {
   );
 };
 
-export const AgentUpdater = (props: {}) => {
-  const { settings } = useSettings();
+export const AgentUpdater = (_props: {}) => {
   const client = useRekuest();
 
   useEffect(() => {
@@ -124,6 +122,7 @@ export const AgentUpdater = (props: {}) => {
 
       return () => subscription.unsubscribe();
     }
+    return undefined;
   }, [client]);
 
   return <></>;

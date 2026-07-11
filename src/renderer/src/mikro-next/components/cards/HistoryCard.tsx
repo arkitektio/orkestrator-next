@@ -10,10 +10,10 @@ import { MikroHistory, RekuestTask } from "@/linkers";
 import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
-import { HistoryKind, ProvenanceEntry } from "../../api/graphql";
+import { HistoryKind, ProvenanceEntryFragment } from "../../api/graphql";
 
 interface HistoryCardProps {
-  history: ProvenanceEntry;
+  history: ProvenanceEntryFragment;
 
 }
 

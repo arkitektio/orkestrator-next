@@ -1,9 +1,8 @@
-import { MediaAccessGrantFragment, MediaStoreFragment, RequestMediaAccessDocument, RequestMediaAccessInput, RequestMediaAccessMutation, RequestMediaAccessMutationVariables } from "@/mikro/api/graphql";
 import { signS3Request } from "./s3request";
 import { ApolloClient } from "@apollo/client";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import React from "react";
-import { GeneralMediaAccessGrantFragment, RequestGeneralMediaAccessDocument, RequestGeneralMediaAccessInput, RequestGeneralMediaAccessMutation, RequestGeneralMediaAccessMutationVariables } from "@/mikro-next/api/graphql";
+import { GeneralMediaAccessGrantFragment, MediaStoreFragment, RequestGeneralMediaAccessDocument, RequestGeneralMediaAccessMutation, RequestGeneralMediaAccessMutationVariables } from "@/mikro-next/api/graphql";
 
 // --- Caching & Lock Mechanism ---
 let cachedCredentialsPromise: Promise<GeneralMediaAccessGrantFragment> | null = null;

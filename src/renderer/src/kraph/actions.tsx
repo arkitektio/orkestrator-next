@@ -8,7 +8,7 @@ import {
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
 } from "./api/graphql";
-import { FlaskConical, PlusCircle, Ruler, Workflow } from "lucide-react";
+import { PlusCircle, Ruler, Workflow } from "lucide-react";
 
 export const NewEntityAction: Action = {
   title: "Create New Entity",
@@ -23,7 +23,7 @@ export const NewEntityAction: Action = {
       type: "nopartner",
     },
   ],
-  execute: async ({ state, navigate, dialog }) => {
+  execute: async ({ state, dialog }) => {
     if (!state.left || state.left.length === 0) {
       throw new Error("No graph provided for Create New Entity action");
     }
@@ -33,7 +33,7 @@ export const NewEntityAction: Action = {
     }
 
     dialog.openDialog("createentity", {
-      category: graph,
+      category: graph.id,
     });
   },
 };
@@ -102,11 +102,11 @@ export const KRAPH_ACTIONS = {
         identifier: "@kraph/graph",
       },
     ],
-    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+    execute: async ({ state, dialog }) => {
       dialog.openSheet(
         "createprotocoleventcategory",
         {
-          graph: state.left[0].object,
+          graph: state.left[0].object.id,
         },
         { className: "w-[600px] max-w-none" },
       );
@@ -128,8 +128,16 @@ export const KRAPH_ACTIONS = {
         identifier: "@kraph/entitycategory",
       },
     ],
-    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
-      const graph = state.left[0]?.object?.graph?.id as string | undefined;
+    execute: async ({ state, dialog }) => {
+      const graphField = state.left[0]?.object?.graph;
+      const graph =
+        graphField &&
+        typeof graphField === "object" &&
+        !Array.isArray(graphField) &&
+        "id" in graphField &&
+        typeof graphField.id === "string"
+          ? graphField.id
+          : undefined;
       if (!graph) {
         throw new Error("Structure category does not have a graph. Use the context menu to select a graph.");
       }
@@ -138,32 +146,6 @@ export const KRAPH_ACTIONS = {
         right: state.right || [],
         graph,
       });
-    },
-    collections: ["io"],
-  },
-  "create-protocol-event": {
-    title: "Create Protocol Event Category",
-    description: "Delete the structure",
-    icon: FlaskConical,
-    conditions: [
-      {
-        type: "mixture",
-        identifiers: ["@kraph/reagentcategory", "@kraph/entitycategory"],
-      },
-      {
-        type: "pmixture",
-        identifiers: ["@kraph/reagentcategory", "@kraph/entitycategory"],
-      },
-    ],
-    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
-      dialog.openSheet(
-        "createpprotocoleventfrominsandouts",
-        {
-          ins: state.left,
-          outs: state.right || [],
-        },
-        { className: "w-[800px] max-w-none" },
-      );
     },
     collections: ["io"],
   },

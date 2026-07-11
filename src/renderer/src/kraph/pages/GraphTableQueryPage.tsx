@@ -16,48 +16,24 @@ import CreateScatterPlotForm from "../forms/CreateScatterPlotForm";
 
 const Page = asDetailQueryRoute(
   useGetGraphTableQueryQuery,
-  ({ data, refetch }) => {
-
-    const pin = async (variables: { input: { id: string; pin: boolean } }) => {
-      // Implement the pinning logic here, e.g., call a mutation to update the pinned state
-      // For example:
-      // await updateGraphQueryPin(variables);
-      // After updating, you might want to refetch the data to reflect the changes
-      await refetch();
-    }
+  ({ data }) => {
     return (
       <KraphGraphQuery.ModelPage
-        object={data.graphTableQuery.id}
+        object={{ id: data.graphTableQuery.id }}
         title={data.graphTableQuery.label}
         pageActions={
           <div className="flex flex-row gap-2">
             <KraphGraph.DetailLink
-              object={data.graphTableQuery.graph.id}
+              object={{ id: data.graphTableQuery.graph.id }}
               subroute="entities"
             >
               <Button variant="outline" size="sm">
                 Graph
               </Button>
             </KraphGraph.DetailLink>
-            <Button
-              onClick={() => {
-                pin({
-                  variables: {
-                    input: {
-                      id: data.graphTableQuery.id,
-                      pin: !data.graphTableQuery.pinned,
-                    },
-                  },
-                });
-              }}
-              size="sm"
-              variant={"outline"}
-            >
-              {data.graphTableQuery.pinned ? "Unpin" : "Pin"}
-            </Button>
 
             <KraphGraphQuery.DetailLink
-              object={data.graphTableQuery.id}
+              object={{ id: data.graphTableQuery.id }}
               subroute="builder"
             >
               <Button variant="outline" size="sm">
@@ -76,20 +52,20 @@ const Page = asDetailQueryRoute(
             </FormDialog>
 
             <KraphGraphQuery.DetailLink
-              object={data.graphTableQuery.id}
+              object={{ id: data.graphTableQuery.id }}
               subroute="designer"
             >
               <Button variant="outline" size="sm">
                 Designer
               </Button>
             </KraphGraphQuery.DetailLink>
-            <KraphGraphQuery.ObjectButton object={data.graphTableQuery.id} />
+            <KraphGraphQuery.ObjectButton object={{ id: data.graphTableQuery.id }} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <KraphGraphView.Komments object={data.graphTableQuery.id} />,
+              Comments: <KraphGraphView.Komments object={{ id: data.graphTableQuery.id }} />,
               Cypher: <CypherSidebar cypher={data.graphTableQuery.query || ""} />,
               Plots: <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
@@ -118,7 +94,7 @@ const Page = asDetailQueryRoute(
           <div className="col-span-5">
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
               <KraphGraph.DetailLink
-                object={data.graphTableQuery.graph.id}
+                object={{ id: data.graphTableQuery.graph.id }}
                 className={"text-slate-400 mr-2"}
               >
                 {data.graphTableQuery.graph.name}

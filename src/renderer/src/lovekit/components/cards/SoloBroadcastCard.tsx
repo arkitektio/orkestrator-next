@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { LovekitSoloBroadcast, LovekitStream } from "@/linkers";
+import { LovekitSoloBroadcast } from "@/linkers";
 import { ListSoloBroadcastFragment } from "@/lovekit/api/graphql";
 
 

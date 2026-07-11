@@ -22,7 +22,12 @@ export const popOutWindowOpen = async ({
   return {
     close: async () => {
       try {
-        win.close?.();
+        // `window.api.startFakts` (Electron path) returns a `Promise<void>`
+        // rather than a `Window` handle — only real `window.open` handles
+        // can be closed from here.
+        if (win && "close" in win) {
+          win.close();
+        }
       } catch (e) {
         console.error("Window close failed", e);
       }

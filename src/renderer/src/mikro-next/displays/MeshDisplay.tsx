@@ -6,7 +6,7 @@ import { DisplayWidgetProps } from "@/lib/display/registry";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Suspense } from "react";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);
@@ -38,10 +38,10 @@ export const MeshWidget = (props: DisplayWidgetProps) => {
   const resolve = useResolve();
 
   return (
-    <MikroMesh.DetailLink className="w-full h-full" object={props.object}>
+    <MikroMesh.DetailLink className="w-full h-full" object={{ id: props.object }}>
       {data?.mesh.name}
-      {data?.mesh.store.presignedUrl && (
-        <MeshRenderer url={resolve(data?.mesh.store.presignedUrl)} />
+      {data?.mesh.store.key && (
+        <MeshRenderer url={resolve(data?.mesh.store.key)} />
       )}
     </MikroMesh.DetailLink>
   );

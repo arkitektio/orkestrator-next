@@ -21,9 +21,7 @@ import {
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
 
-interface IDataSidebarProps { }
-
-export const NavigationPane = (props: {}) => {
+export const NavigationPane = () => {
   return (
     <Tree>
       <SidePaneGroup title="Explore">
@@ -103,15 +101,6 @@ export const NavigationPane = (props: {}) => {
     </Tree>
   );
 };
-
-const variables = {
-  search: "",
-  noRooms: false,
-  pagination: {
-    limit: 10,
-  },
-};
-
 
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState("");

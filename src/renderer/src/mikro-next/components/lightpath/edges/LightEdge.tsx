@@ -1,9 +1,7 @@
 import {
   BaseEdge,
   useInternalNode,
-  useStore,
-  type EdgeProps,
-  type ReactFlowState
+  type EdgeProps
 } from "@xyflow/react";
 import { LightEdge } from "../types";
 import { getEdgeParams } from "../utils";
@@ -28,7 +26,7 @@ export const getSpecialPath = (
 };
 
 export default ({
-  id,
+  id: _id,
   data,
   source,
   target,
@@ -36,30 +34,15 @@ export default ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
   markerEnd,
 }: EdgeProps<LightEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
-  const theEdges = useStore((s: ReactFlowState) => {
-    const edgeExists = s.edges.filter(
-      (e) =>
-        (e.source === source && e.target === target) ||
-        (e.target === source && e.source === target),
-    );
-    return edgeExists;
-  });
-
-  const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
-
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
   let path = "";
   const offset = 0;
-  let centerX = (sourceX + targetX) / 2;
-  let centerY = (sourceY + targetY) / 2;
 
   if (source == target) {
     const radiusX = 100;
@@ -67,9 +50,6 @@ export default ({
     path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
       targetX + 5
     } ${targetY}`;
-
-    centerX = sourceX - radiusX * 2;
-    centerY = (sourceY + targetY) / 2;
   } else {
     path = getSpecialPath(
       { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },

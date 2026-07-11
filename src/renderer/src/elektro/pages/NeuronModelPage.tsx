@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
+import { ElektroEnvironment, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailNeuronModelQuery } from "../api/graphql";
 import { ExportModelButton } from "../forms/ExportModelForm";
 import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
@@ -12,7 +12,7 @@ export type IRepresentationScreenProps = {};
 
 export const NeuronModelPage = asDetailQueryRoute(
   useDetailNeuronModelQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
 
     return (
       <ElektroNeuronModel.ModelPage

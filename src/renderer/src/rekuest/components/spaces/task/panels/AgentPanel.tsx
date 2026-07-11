@@ -6,65 +6,11 @@ import { SpaceGroupPlacement } from "../types";
 import * as THREE from "three";
 import { Card } from "@/components/ui/card";
 import { RekuestAgent } from "@/linkers";
-import { TaskEventKind, PatchFragment, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
+import { PatchFragment, StateFragment, useAgentQuery, useCheckoutAgentQuery } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { AsyncBoundary } from "@/components/boundaries/AsyncBoundary";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-const getStatusBadge = (kind: TaskEventKind | undefined | string) => {
-  switch (kind) {
-    case TaskEventKind.Completed:
-      return { label: "Done", cls: "bg-emerald-500/20 text-emerald-400" };
-    case TaskEventKind.Yield:
-      return { label: "Yield", cls: "bg-violet-500/20 text-violet-400" };
-    case TaskEventKind.Failed:
-      return { label: "Error", cls: "bg-rose-500/20 text-rose-400" };
-    case TaskEventKind.Bound:
-      return { label: "Running", cls: "bg-sky-500/20 text-sky-400" };
-    default:
-      return { label: String(kind ?? "—"), cls: "bg-muted text-muted-foreground" };
-  }
-};
-
-const AgentStateValueDisplay = ({
-  state,
-  value,
-  revision,
-
-}: {
-  state: StateFragment;
-  value: Record<string, unknown>;
-  revision: string | undefined;
-}) => {
-  const { registry } = useWidgetRegistry();
-
-  return (
-    <Card className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
-      {revision && (
-        <div className="text-xs text-muted-foreground">
-          Revision: <span className="font-mono">{revision}</span>
-        </div>
-      )}
-      {state.definition.ports.map((port, index) => {
-        const Widget = registry.getReturnWidgetForPort(port);
-
-        return (
-          <div className="flex flex-col gap-2" key={index}>
-            <label className="text-xs text-muted-foreground">{port.key}</label>
-            <Widget
-              key={index}
-              value={value?.[port.key] as never}
-              port={port}
-              widget={port.widget}
-              revision={revision}
-            />
-          </div>
-        );
-      })}
-    </Card>
-  );
-};
 
 /**
  * Resolves a JSON Patch path to the matching state port and renders the
@@ -200,7 +146,7 @@ const AgentCheckoutPanel = ({
   const debouncedTimepoint = useDebounce(timepoint, 200);
 
 
-  const { data: revData, error, loading } = useCheckoutAgentQuery({
+  const { data: revData, loading } = useCheckoutAgentQuery({
     variables: {
       agent: agentId,
       timestamp: debouncedTimepoint ? new Date(debouncedTimepoint).toISOString() : undefined,

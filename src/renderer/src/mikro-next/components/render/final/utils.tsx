@@ -1,6 +1,12 @@
 import { NestedArray, TypedArray } from "zarr";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { DataType } from "zarrita";
+import { Slice } from "./indexer";
+
+// `zarr`'s package.json `exports` map only publishes `.`/`./core`, so the
+// deep `zarr/types/core/types` typings are not resolvable; mirror the small
+// bit of its shape actually used here.
+type DimensionArraySelection = Slice | number | number[] | "..." | ":" | null;
+type ArraySelection = DimensionArraySelection[] | DimensionArraySelection;
 
 export const available_color_maps = [
   "jet",

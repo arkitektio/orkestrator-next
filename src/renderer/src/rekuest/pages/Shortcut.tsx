@@ -13,7 +13,7 @@ import {
   useShortcutQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
@@ -21,7 +21,7 @@ import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
-  const { assign, latestTask, cancel } = useAction({
+  const { assign, latestTask } = useAction({
     id: shortcut.action.id,
   });
 
@@ -149,12 +149,10 @@ export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
   );
 };
 
-export const TPage = asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
+export const TPage = asDetailQueryRoute(useShortcutQuery, ({ data }) => {
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.shortcut.action?.hash || "");
   }, [data?.shortcut.action?.hash]);
-
-  const [formData, setFormData] = useState({});
 
   const description = useActionDescription({
     description: data.shortcut.action.description || "",

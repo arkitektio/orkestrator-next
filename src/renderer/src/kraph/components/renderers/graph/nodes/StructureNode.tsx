@@ -1,20 +1,12 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphStructure } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
 
-import { DisplayWidget } from "@/command/Menu";
-import { usePathViewerState } from "../PathViewerStateProvider";
 import { StructureNode } from "../types";
 
 const TNode = memo(({ data, id, selected }: NodeProps<StructureNode>) => {
-  const resolve = useResolve();
-
-  const { viewerState } = usePathViewerState();
-
   return (
     <>
       <NodeResizer
@@ -30,31 +22,14 @@ const TNode = memo(({ data, id, selected }: NodeProps<StructureNode>) => {
             }`}
           style={{ zIndex: 10 }}
         >
-          {viewerState.showWidgets ? (
-            <DisplayWidget
-              identifier={data.category.identifier}
-              object={data.object}
-              link
-            />
-          ) : (
-            <>
-              {data.category.store?.presignedUrl && (
-                <Image
-                  src={resolve(data?.category.store.presignedUrl)}
-                  style={{ filter: "brightness(0.5)" }}
-                  className="object-cover h-full w-full"
-                />
-              )}
-              <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
-                <KraphStructure.DetailLink
-                  object={data.id}
-                  className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
-                >
-                  {data.category.label}
-                </KraphStructure.DetailLink>
-              </div>
-            </>
-          )}
+          <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
+            <KraphStructure.DetailLink
+              object={{ id: data.id }}
+              className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
+            >
+              {data.category.label}
+            </KraphStructure.DetailLink>
+          </div>
         </Card>
       </div>
     </>

@@ -1,4 +1,3 @@
-import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
 import { KraphNodeQuery } from "@/linkers";
 import {
@@ -24,13 +23,6 @@ const TheCard = ({ item }: Props) => {
           {item?.label}
           <p className="text-xs font-light">{item.description}</p>
         </KraphNodeQuery.DetailLink>
-        <PinButton
-          item={item}
-          func={() => { }}
-          className="ml-auto text-xs p-1 group-hover:block hidden"
-          variant={"outline"}
-          size={"icon"}
-        />
       </Card>
     </KraphNodeQuery.Smart>
   );

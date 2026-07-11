@@ -4,7 +4,7 @@ import { useListTasksQuery } from "../api/graphql";
 import ListTaskCard from "../components/cards/ListTaskCard";
 
 export const RunsSidebar = (props: { object: Object, identifier: Identifier }) => {
-  const { data, error, loading } = useListTasksQuery({
+  const { data, error } = useListTasksQuery({
     variables: {
       filter: { actedOn: [`${props.identifier}:${props.object}`] },
       pagination: { limit: 10, offset: 0 },

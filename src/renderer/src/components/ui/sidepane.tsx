@@ -44,10 +44,11 @@ export const PaneLink = (props: PaneLinkProps) => {
         clearTimeout(timeout);
       };
     }
+    return undefined;
   }, [isOver]);
 
   return (
-    <div ref={drop} className={`${isOver && "animate-pulse"}`}>
+    <div ref={(node) => { drop(node); }} className={`${isOver && "animate-pulse"}`}>
       <NavLink to={props.to}>
         {({ isActive }) => (
           <div className={cn(props.className, isActive ? "text-primary " : "text-foreground")}>

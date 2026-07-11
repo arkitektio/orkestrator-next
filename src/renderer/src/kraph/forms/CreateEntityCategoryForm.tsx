@@ -1,4 +1,3 @@
-import { useDialog } from "@/app/dialog";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
@@ -52,7 +51,6 @@ import {
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
-import { toast } from "sonner";
 import { keyify } from "./utils";
 import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 
@@ -301,7 +299,14 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
   });
 
   const [search] = useSearchGraphsLazyQuery();
-  const  submit = useGraphQLDialog(add, { successMessage: "Entity Category created", onSuccess: props.onSuccess });
+  const  submit = useGraphQLDialog(add, {
+    successMessage: "Entity Category created",
+    onSuccess: (data) => {
+      if (data) {
+        props.onSuccess?.(data);
+      }
+    },
+  });
 
 
 

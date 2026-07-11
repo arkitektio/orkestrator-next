@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import {
   BoldPlugin,
   CodePlugin,
@@ -11,9 +10,7 @@ import {
   Code,
   FileImage,
   Italic,
-  Mic,
   Paperclip,
-  PlusCircle,
   Send,
   SmilePlus,
   Type,
@@ -43,7 +40,6 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
 export default function ChatBottombar({
   sendMessage,
-  isMobile,
   stagedStructures,
   onRemoveStructure,
   prefillText,
@@ -185,7 +181,7 @@ export default function ChatBottombar({
                       variant="ghost"
                       size="sm"
                       type="button"
-                      onClick={() => editor.tf.toggle.mark({ key: "bold" })}
+                      onClick={() => editor.tf.toggleMark("bold")}
                       className="h-8 w-8 p-0"
                     >
                       <Bold className="h-3 w-3" />
@@ -194,7 +190,7 @@ export default function ChatBottombar({
                       variant="ghost"
                       size="sm"
                       type="button"
-                      onClick={() => editor.tf.toggle.mark({ key: "italic" })}
+                      onClick={() => editor.tf.toggleMark("italic")}
                       className="h-8 w-8 p-0"
                     >
                       <Italic className="h-3 w-3" />
@@ -203,7 +199,7 @@ export default function ChatBottombar({
                       variant="ghost"
                       size="sm"
                       type="button"
-                      onClick={() => editor.tf.toggle.mark({ key: "underline" })}
+                      onClick={() => editor.tf.toggleMark("underline")}
                       className="h-8 w-8 p-0"
                     >
                       <Underline className="h-3 w-3" />
@@ -212,14 +208,14 @@ export default function ChatBottombar({
                       variant="ghost"
                       size="sm"
                       type="button"
-                      onClick={() => editor.tf.toggle.mark({ key: "code" })}
+                      onClick={() => editor.tf.toggleMark("code")}
                       className="h-8 w-8 p-0"
                     >
                       <Code className="h-3 w-3" />
                     </Button>
                     <EmojiPicker
                       onChange={(value) => {
-                        editor.insertText(value);
+                        editor.tf.insertText(value);
                         editor.tf.focus();
                       }}
                     >

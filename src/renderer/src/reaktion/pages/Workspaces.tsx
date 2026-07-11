@@ -1,14 +1,11 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import WorkspaceList from "../components/lists/WorkspaceList";
 import WorkspaceCarousel from "../edit/carousels/WorkspaceCarousel";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
   return (
     <PageLayout
       title="Workspaces"

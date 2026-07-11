@@ -14,6 +14,15 @@ export interface RoiDrawerProps extends EventKeyProps {
   image: { id: string };
 }
 
+// Props for the individual shape drawers rendered by RoiDrawerCanvas below —
+// these additionally receive the current c/t/z selection so the drawn
+// vectors can be placed correctly.
+export interface RoiSubDrawerProps extends RoiDrawerProps {
+  c: number;
+  t: number;
+  z: number;
+}
+
 export const RoiDrawerCanvas = ({
   imageHeight,
   imageWidth,

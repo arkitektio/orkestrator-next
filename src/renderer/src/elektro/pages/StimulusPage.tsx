@@ -3,16 +3,12 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { ElektroStimulus } from "@/linkers";
 import { useDetailStimulusQuery } from "../api/graphql";
 import { SimulationRender } from "../components/SimulationRender";
-import { useTraceArray } from "../lib/useTraceArray";
 
 export type IRepresentationScreenProps = {};
 
 export const StimulusPage = asDetailQueryRoute(
   useDetailStimulusQuery,
-  ({ data, subscribeToMore }) => {
-    const { renderView } = useTraceArray();
-
-
+  ({ data }) => {
     return (
       <ElektroStimulus.ModelPage
         title={data?.stimulus?.label}

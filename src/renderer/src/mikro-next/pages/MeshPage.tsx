@@ -4,15 +4,13 @@ import { Button } from "@/components/ui/button";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroMesh } from "@/linkers";
 import {
-  useDetailMeshQuery,
-  usePinStageMutation
+  useDetailMeshQuery
 } from "../api/graphql";
 
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Suspense } from "react";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import { de } from "date-fns/locale";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);
@@ -34,12 +32,10 @@ export function MeshRenderer({ url }: { url: string }) {
   );
 }
 
-export const MeshPage = asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch }) => {
-  const [pinStage] = usePinStageMutation();
-
+export const MeshPage = asDetailQueryRoute(useDetailMeshQuery, ({ data }) => {
   const downloadFile = () => {
-    if (data?.mesh?.store.presignedUrl) {
-      const url = resolve(data.mesh.store.presignedUrl);
+    if (data?.mesh?.store.key) {
+      const url = resolve(data.mesh.store.key);
       const link = document.createElement("a");
       link.href = url;
       link.download = data.mesh.name || "download";
@@ -73,7 +69,7 @@ export const MeshPage = asDetailQueryRoute(useDetailMeshQuery, ({ data, refetch 
           {data?.mesh?.name}
         </MikroMesh.DetailLink>
         <div className="flex-grow">
-          <MeshRenderer url={resolve(data?.mesh?.store.presignedUrl)} />
+          <MeshRenderer url={resolve(data?.mesh?.store.key)} />
         </div>
       </div>
     </MikroMesh.ModelPage>

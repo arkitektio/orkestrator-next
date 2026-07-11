@@ -19,7 +19,7 @@ export type IRepresentationScreenProps = {};
 
 export const SimulationPage = asDetailQueryRoute(
   useDetailSimulationQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
   const [hidden, setHidden] = React.useState<string[]>([]);
     const [hiddenStimuli, setHiddenStimuli] = React.useState<string[]>([]);
 

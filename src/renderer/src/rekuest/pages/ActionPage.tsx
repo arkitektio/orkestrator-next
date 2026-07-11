@@ -1,7 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { buildAssignInput } from "@/rekuest/assign";
 import { ListRender } from "@/components/layout/ListRender";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +11,10 @@ import { RekuestAction, RekuestImplementation } from "@/linkers";
 import {
   TaskEventKind,
   DetailActionFragment,
-  useAutoResolveMutation,
   useDetailActionQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
 import MinimalTaskCard from "../components/cards/MinimalTaskCard";
@@ -28,7 +26,7 @@ import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
-  const { assign, latestTask, cancel } = useAction({
+  const { assign, latestTask } = useAction({
     id: action.id,
   });
 
@@ -42,8 +40,8 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
       args: data,
       hooks: [],
     })).then(
-      (v) => { },
-      (error) => { },
+      (_v) => { },
+      (_error) => { },
     );
   };
 
@@ -163,44 +161,14 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   );
 };
 
-export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
+export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data }) => {
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.action?.hash || "");
   }, [data?.action?.hash]);
 
-  const [formData, setFormData] = useState({});
-
   const description = useActionDescription({
     description: data.action.description || "",
   });
-
-
-  const [autoResolve] = useAutoResolveMutation()
-
-
-
-  const runAutoResolve = async () => {
-    try {
-      const mdata = await autoResolve({
-        variables: {
-          input: { action: data.ac.id },
-        },
-      });
-      if (mdata.errors) {
-        toast.error("Auto-resolve failed: " + mdata.errors[0].message);
-      } else {
-        toast.success("Auto-resolve started");
-        if (mdata.data?.autoResolve?.id) {
-          navigate(RekuestResolution.linkBuilder(mdata.data?.autoResolve?.id))
-        }
-        refetch();
-      }
-    }
-    catch (e) {
-      toast.error("Auto-resolve failed: " + (e as Error).message);
-    }
-  };
-
 
   return (
     <RekuestAction.ModelPage

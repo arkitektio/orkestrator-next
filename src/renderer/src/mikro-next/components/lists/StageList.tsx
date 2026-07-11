@@ -13,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetStagesQuery({
+  const { data, refetch } = useGetStagesQuery({
     variables: { filters, pagination },
   });
 

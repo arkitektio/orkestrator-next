@@ -9,12 +9,11 @@ import { ArgNodeProps } from "../../../types";
 import { useLatestNodeEvent } from "../../hooks/useLatestNodeEvent";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
-  data: { outs, ins },
+  data: { outs },
   id,
   selected,
 }) => {
   const latestEvent = useLatestNodeEvent(id);
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   return (

@@ -1,22 +1,23 @@
-import { CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
-  MikroFileView,
   MikroPixelView
 } from "@/linkers";
-import {
-  PixelViewFragment
-} from "../../api/graphql";
-import { ViewCard } from "./meta/ViewCard";
 
+// "PixelView" no longer exists as a type on the backend schema; this card is
+// unreachable in practice (see call sites), kept only for its narrow local shape.
 interface Props {
-  view: PixelViewFragment;
-
+  view: { __typename?: "PixelView"; id: string };
 }
 
 const TheCard = ({ view }: Props) => {
   return (
-    <MikroFileView.Smart object={view} >
-      <ViewCard view={view}>
+    <MikroPixelView.Smart object={view} >
+      <Card
+        className={cn(
+          "cursor-pointer @container text-xs rounded-md border bg-background/80",
+        )}
+      >
         <CardHeader>
           <CardTitle>
             <p className="font-bold text-xl">
@@ -28,8 +29,8 @@ const TheCard = ({ view }: Props) => {
             </p>
           </CardTitle>
         </CardHeader>
-      </ViewCard>
-    </MikroFileView.Smart>
+      </Card>
+    </MikroPixelView.Smart>
   );
 };
 

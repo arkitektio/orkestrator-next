@@ -10,7 +10,8 @@ import TaskList from "@/rekuest/components/lists/TaskList";
 import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, Podcast } from "lucide-react";
+import { Ordering } from "@/rekuest/api/graphql";
+import { Podcast } from "lucide-react";
 
 
 
@@ -171,7 +172,7 @@ const Page = () => {
       <ActionList />
 
       <TaskList />
-      <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: "DESC" }} />
+      <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: Ordering.Desc }} />
       </div>
     </PageLayout>
   );

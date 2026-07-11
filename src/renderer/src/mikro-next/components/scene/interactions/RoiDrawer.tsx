@@ -56,6 +56,10 @@ export const RoiDrawer = () => {
       try {
         await Promise.all(
           armedLayers.map(async (layer) => {
+            // xDim/yDim are required to place a data ROI; skip layers that
+            // don't declare them rather than sending an invalid mutation.
+            if (!layer.xDim || !layer.yDim) return;
+
             const invAffine = affineToMatrix4(layer.affineMatrix).invert();
             const voxelVectors = roi.worldVectors.map((worldVector) => {
               const vector = worldToVoxel(

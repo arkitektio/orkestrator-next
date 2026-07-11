@@ -1,6 +1,3 @@
-import * as React from "react";
-
-import { useFormContext } from "react-hook-form";
 import { SearchField } from "./SearchField";
 import { FieldProps } from "./types";
 
@@ -11,8 +8,6 @@ export type Option = {
 };
 
 export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
-  const [open, setOpen] = React.useState(false);
-
   const search = async ({
     search,
     values,
@@ -27,8 +22,6 @@ export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
       return false;
     });
   };
-
-  const form = useFormContext();
 
   return <SearchField search={search} {...props} />;
 };

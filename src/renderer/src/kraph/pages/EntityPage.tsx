@@ -46,7 +46,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
   return (
     <KraphEntity.ModelPage
       variant="black"
-      object={data.entity.id}
+      object={{ id: data.entity.id }}
       title={<>
         <div className="flex flex-row">
           {data.entity.category.label} <div className="ml-2 text-md font-light">{data.entity.label}</div>
@@ -54,14 +54,14 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
       </>}
       sidebars={
         <MultiSidebar
-          map={{ Comments: <KraphEntity.Komments object={data.entity.id} /> }}
+          map={{ Comments: <KraphEntity.Komments object={{ id: data.entity.id }} /> }}
         />
       }
       pageActions={
         <div className="flex flex-row gap-2">
 
           <KraphEntity.ObjectButton
-            object={data.entity.id}
+            object={{ id: data.entity.id }}
             className="w-full"
           />
         </div>
@@ -86,7 +86,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                   Category
                 </span>
                 <KraphEntityCategory.DetailLink
-                  object={data.entity.category.id}
+                  object={{ id: data.entity.category.id }}
                   className="text-sm font-medium hover:underline"
                 >
                   {data.entity.category.label}
@@ -217,7 +217,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                         {subjected.target.__typename == "ProtocolEvent" && (
                           <div className="flex-1">
                             <KraphProtocolEvent.DetailLink
-                              object={subjected.target.id}
+                              object={{ id: subjected.target.id }}
                               className="font-medium hover:underline block"
                             >
                               {subjected.target.category.label}
@@ -256,7 +256,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                             Targeted by
                           </div>
                           <KraphProtocolEvent.DetailLink
-                            object={targeted.source.id}
+                            object={{ id: targeted.source.id }}
                             className="font-medium hover:underline block"
                           >
                             {targeted.source.category.label}

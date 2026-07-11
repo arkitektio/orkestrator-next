@@ -22,7 +22,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             variant={"outline"}
             size={"sm"}
             dialogProps={{
-              onSuccess: (data) => navigate(LokRedeemToken.linkBuilder(data.createRedeemToken.id)),
+              onSuccess: (data) =>
+                data?.createRedeemToken &&
+                navigate(LokRedeemToken.linkBuilder(data.createRedeemToken.id)),
             }}
           >
             <PlusIcon className="h-4 w-4 mr-2" />

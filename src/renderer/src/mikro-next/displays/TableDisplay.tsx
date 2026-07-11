@@ -14,7 +14,7 @@ export const TableDisplay = (props: DisplayWidgetProps) => {
 
   if (props.context === "command") {
     return (
-      <MikroTable.DetailLink object={props.object}>
+      <MikroTable.DetailLink object={{ id: props.object }}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-medium text-sm truncate">{table.name}</span>
           {columnCount > 0 && (
@@ -28,7 +28,7 @@ export const TableDisplay = (props: DisplayWidgetProps) => {
   }
 
   return (
-    <MikroTable.DetailLink object={props.object}>
+    <MikroTable.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-2">
         <div className="font-semibold text-sm">{table.name}</div>
         {columnCount > 0 && (

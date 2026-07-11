@@ -119,7 +119,7 @@ export function PropertyInspector({
           </Label>
           <Input
             id="label"
-            value={property.label}
+            value={property.label || ""}
             onChange={(e) => handleLabelChange(e.target.value)}
             placeholder="e.g., Phone Number"
             className={`text-lg ${errors?.label ? "border-red-500" : ""}`}

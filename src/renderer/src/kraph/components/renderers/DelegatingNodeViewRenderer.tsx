@@ -1,30 +1,29 @@
-import { NodeQueryViewFragment } from "@/kraph/api/graphql";
-import { PathGraph } from "./graph/PathGraph";
-import { GraphTable } from "./table/GraphTable";
+import { NodeQueryFragment } from "@/kraph/api/graphql";
+import { RenderGraphPath } from "./graph/PathGraph";
+import { RenderGraphQueryPairs } from "./pairs/Pairs";
+import { RenderGraphQueryTable } from "./table/GraphTable";
 
 
 export type ViewOptions = {
-  minimal: bool
+  minimal: boolean
 };
 
 export const DelegatinNodeViewRenderer = (props: {
-  nodeView: NodeQueryViewFragment;
+  nodeView: NodeQueryFragment;
   options?: ViewOptions
 }) => {
   return (
     <>
-      {props.nodeView.render.__typename === "Pairs" && (
-        <div>Pair Rendering</div>
+      {props.nodeView.__typename === "NodePairsQuery" && (
+        <RenderGraphQueryPairs graphQueryId={props.nodeView.id} options={props.options} />
       )}
 
-      {props.nodeView.render.__typename === "Path" && (
-        <PathGraph path={props.nodeView.render} options={props.options} />
+      {props.nodeView.__typename === "NodePathQuery" && (
+        <RenderGraphPath graphQueryId={props.nodeView.id} options={props.options} />
       )}
 
-      {props.nodeView.render.__typename === "Table" && (
-        <>
-          <GraphTable table={props.nodeView.render} options={props.options} />
-        </>
+      {props.nodeView.__typename === "NodeTableQuery" && (
+        <RenderGraphQueryTable graphQueryId={props.nodeView.id} options={props.options} />
       )}
     </>
   );

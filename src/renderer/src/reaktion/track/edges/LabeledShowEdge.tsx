@@ -2,33 +2,25 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getSmoothStepPath,
-  useNodes,
   useStore,
 } from "@xyflow/react";
 import { MergeIcon } from "lucide-react";
 import React from "react";
-import { FlowNode, VanillaEdgeProps } from "../../types";
+import { VanillaEdgeProps } from "../../types";
 
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
-  const color = "rgb(30 58 138)";
-
   const {
     id,
     sourcePosition,
     targetPosition,
-    targetHandleId,
     sourceX,
     sourceY,
     targetX,
     targetY,
-    target,
-    source,
     style,
-    markerStart,
     markerEnd,
-    data,
   } = props;
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
@@ -43,8 +35,6 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
   const connectionNodeId = useStore(connectionNodeIdSelector);
 
   const isConnecting = !!connectionNodeId;
-
-  const node = useNodes().find((n) => n.id == target) as FlowNode | undefined;
 
   return (
     <>

@@ -40,6 +40,7 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
                     <Input
                       placeholder={"Search...."}
                       {...field}
+                      value={field.value ?? ""}
                       type="string"
                       className="flex-grow h-full bg-background text-foreground w-full"
                     />

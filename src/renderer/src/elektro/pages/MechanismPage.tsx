@@ -1,15 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Card } from "@/components/ui/card";
-import { ElektroEnvironment, ElektroMechanism, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
-import { useDetailMechanismQuery, useDetailNeuronModelQuery } from "../api/graphql";
-import NeuronModelSimulationCard from "../components/cards/NeuronModelSimulationCard";
-import { NeuronVisualizer } from "../components/NeuronRenderer";
+import { ElektroMechanism } from "@/linkers";
+import { useDetailMechanismQuery } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
 
 export const MechanismPage = asDetailQueryRoute(
   useDetailMechanismQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
 
     return (
       <ElektroMechanism.ModelPage

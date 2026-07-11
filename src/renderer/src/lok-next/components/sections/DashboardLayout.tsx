@@ -1,13 +1,10 @@
 import { Separator } from "@/components/ui/separator";
-import { useMeQuery } from "@/lok-next/api/graphql";
 import { Username } from "../Me";
 import { LatestMentionsSection } from "./LatestMentionsSection";
 import { RecentAppsSection } from "./RecentAppsSection";
 import { UserOrganizationsSection } from "./UserOrganizationsSection";
 
 export const DashboardLayout = () => {
-  const { data: userData } = useMeQuery();
-
   return (
     <div className="space-y-8 p-4">
       {/* Header Section */}

@@ -44,10 +44,11 @@ export const DroppableNavLink = (props: NavLinkProps) => {
         clearTimeout(timeout);
       };
     }
+    return undefined;
   }, [isOver]);
 
   return (
-    <div ref={drop} className={`${isOver && "animate-pulse"}`}>
+    <div ref={(node) => { drop(node); }} className={`${isOver && "animate-pulse"}`}>
       <NavLink {...props} />
     </div>
   );

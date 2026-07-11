@@ -40,7 +40,7 @@ export type ContextMenuProps = {
   id: string;
 };
 
-export const TriangleToRight = ({ data, implementation }: ShapeProps) => {
+export const TriangleToRight = ({ data: _data, implementation }: ShapeProps) => {
   return (
     <>
       <svg height="40" width="40">
@@ -244,7 +244,7 @@ export const DefaultContext = ({ data }: ContextMenuProps) => {
   );
 };
 
-export const ChangeZipImplementation = ({ data, id }: ContextMenuProps) => {
+export const ChangeZipImplementation = ({ data, id: _id }: ContextMenuProps) => {
   return (
     <>
       <div className="text-xs">Current: {data.implementation}</div>

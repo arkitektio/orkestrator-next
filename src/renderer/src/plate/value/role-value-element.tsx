@@ -17,7 +17,7 @@ export const ValueDisplay = (props: {
   value: string
 }) => {
 
-  const { data, error, loading } = useGetEntityQuery({
+  const { data, error } = useGetEntityQuery({
     variables: {
       id: props.value,
     },

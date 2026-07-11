@@ -6,6 +6,9 @@ import { Button, ButtonProps } from "./button";
 type DialogType = typeof registry;
 type ExtractProps<T> =
   T extends React.ComponentType<infer P> ? Omit<P, "onClose"> : never;
+type DialogPropsMap = {
+  [K in keyof DialogType]: ExtractProps<DialogType[K]>;
+};
 
 export const SheetButton = <T extends keyof DialogType>({
   name,
@@ -17,10 +20,10 @@ export const SheetButton = <T extends keyof DialogType>({
 }: {
   name: T;
   className?: string;
-  dialogProps: ExtractProps<DialogType[T]>;
+  dialogProps: DialogPropsMap[T];
   options?: { className?: string, size?: "small" | "medium" | "large" };
 } & ButtonProps) => {
-  const { openSheet } = useDialog<T>();
+  const { openSheet } = useDialog();
 
   const onClick = useCallback(async () => {
     openSheet(name, dialogProps, options || {});

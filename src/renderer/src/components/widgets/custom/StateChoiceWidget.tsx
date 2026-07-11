@@ -17,10 +17,10 @@ import { useWatch } from "react-hook-form";
 
 
 
-const accessNestedValue = (obj: Record<string, unknown>, path: string[]) => {
-  return path.reduce((acc, key) => {
-    if (acc && typeof acc === "object" && key in acc) {
-      return acc[key] as Record<string, unknown>;
+const accessNestedValue = (obj: Record<string, unknown>, path: string[]): unknown => {
+  return path.reduce<unknown>((acc, key) => {
+    if (acc && typeof acc === "object" && key in (acc as Record<string, unknown>)) {
+      return (acc as Record<string, unknown>)[key];
     }
     return null;
   }, obj);
@@ -66,7 +66,7 @@ export const StateChoiceWidget = (
   });
 
   const search = useCallback(
-    async (searching: SearchOptions) => {
+    async (_searching: SearchOptions) => {
       const accessedValue = accessNestedValue(liveValue || {}, statePaths);
       // 1. Validation: Must be an array — the options are built by mapping over it.
       if (!Array.isArray(accessedValue)) {
@@ -93,9 +93,10 @@ export const StateChoiceWidget = (
 
 
       // 3. Map the array with fallbacks
-      return accessedValue.map((item, index) => {
+      return accessedValue.map((rawItem, index) => {
         // Handle Objects
-        if (item !== null && typeof item === "object") {
+        if (rawItem !== null && typeof rawItem === "object") {
+          const item = rawItem;
 
           if (props.port.kind == PortKind.MemoryStructure) {
             return {
@@ -105,9 +106,6 @@ export const StateChoiceWidget = (
               key: String(item.id || index), // Keys must be strings for many UI frameworks
             };
           }
-
-
-
 
 
 
@@ -125,9 +123,9 @@ export const StateChoiceWidget = (
 
         // Handle Primitives (Strings/Numbers)
         return {
-          value: item,
-          label: String(item),
-          key: String(item),
+          value: rawItem,
+          label: String(rawItem),
+          key: String(rawItem),
         };
       })
     },

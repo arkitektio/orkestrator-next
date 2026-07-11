@@ -1,5 +1,4 @@
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { CalendarProps } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -25,7 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type DayPickerProps } from "react-day-picker";
+
+type CalendarProps = DayPickerProps;
 
 // ---------- utils start ----------
 /**
@@ -488,6 +489,7 @@ const TimePickerInput = React.forwardRef<
 
         return () => clearTimeout(timer);
       }
+      return undefined;
     }, [flag]);
 
     const calculatedValue = React.useMemo(() => {

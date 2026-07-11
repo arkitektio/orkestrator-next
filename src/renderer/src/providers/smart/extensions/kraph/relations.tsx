@@ -35,8 +35,8 @@ export const EntityRelateButton = (props: {
           await createRelation({
             variables: {
               input: {
-                sourceId: left.object,
-                targetId: right.object,
+                sourceId: left.object.id,
+                targetId: right.object.id,
                 category: props.relation.id,
               },
             },

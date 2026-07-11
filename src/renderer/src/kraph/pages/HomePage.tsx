@@ -11,9 +11,7 @@ import {
 import { DialogButton } from "@/components/ui/dialog-button";
 import { KraphGraph } from "@/linkers";
 import {
-  Activity,
   BarChart3,
-  Database,
   Network,
   PlusIcon,
   TrendingUp,
@@ -31,42 +29,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const { data, loading } = useHomePageQuery();
 
   const navigate = useNavigate();
-
-  const totalGraphs = data?.graphs?.length || 0;
-  const pinnedGraphs = data?.graphs?.filter((g) => g.pinned)?.length || 0;
-  const graphsWithImages =
-    data?.graphs?.filter((g) => g.store?.presignedUrl)?.length || 0;
-
-  const statsCards = [
-    {
-      title: "Total Graphs",
-      value: loading ? "..." : totalGraphs,
-      icon: Database,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-    },
-    {
-      title: "Pinned Graphs",
-      value: loading ? "..." : pinnedGraphs,
-      icon: Activity,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-    },
-    {
-      title: "With Visuals",
-      value: loading ? "..." : graphsWithImages,
-      icon: BarChart3,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
-    },
-    {
-      title: "Connections",
-      value: loading ? "..." : totalGraphs * 3, // Estimated connections
-      icon: Network,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
-    },
-  ];
 
   return (
     <PageLayout

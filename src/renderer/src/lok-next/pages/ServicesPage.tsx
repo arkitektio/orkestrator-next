@@ -1,18 +1,14 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { DialogButton } from "@/components/ui/dialog-button";
-import { LokService } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import ServiceList from "../components/lists/ServiceList";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
   return (
     <PageLayout
       title="Lok"

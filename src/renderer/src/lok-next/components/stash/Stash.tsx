@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   ListStashFragment,
   StashItemFragment,
+  StashItemInput,
   useAddItemsToStashMutation,
   useCreateStashMutation,
   useDeleteStashItemsMutation,
@@ -26,10 +27,10 @@ export const StashItem = (props: { item: StashItemFragment }) => {
 
   const self: Structure = {
     identifier: props.item.identifier,
-    object: props.item.object,
+    object: { id: props.item.object },
   };
 
-  const [{ isDragging }, drag, preview] = useDrag(
+  const [, drag] = useDrag<Structure[], { stash?: string }, { isDragging: boolean }>(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
@@ -38,7 +39,7 @@ export const StashItem = (props: { item: StashItemFragment }) => {
           isDragging: monitor.isDragging(),
         };
       },
-      end: (item, monitor) => {
+      end: (_item, monitor) => {
         if (monitor.didDrop()) {
           if (monitor.getDropResult()?.stash) {
             deleteItems({ variables: { items: props.item.id } });
@@ -50,7 +51,12 @@ export const StashItem = (props: { item: StashItemFragment }) => {
   );
 
   return (
-    <Card className="p-2 relative group flex flex-row" ref={drag}>
+    <Card
+      className="p-2 relative group flex flex-row"
+      ref={(node) => {
+        drag(node);
+      }}
+    >
       <div className="flex-grow my-auto">
         <ConditionalStructureRender
           object={props.item.object}
@@ -75,39 +81,30 @@ export const StashZone = (props: { item: ListStashFragment }) => {
     refetchQueries: ["MyStashes"],
   });
 
-  const [deleteItems] = useDeleteStashItemsMutation({
-    refetchQueries: ["MyStashes"],
-  });
-
   const [deleteStash] = useDeleteStashMutation({
     refetchQueries: ["MyStashes"],
   });
 
-  const [{ isOver, canDrop, overItems }, drop] = useDrop(() => {
+  const [{ isOver, overItems }, drop] = useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE],
-      drop: (item, monitor) => {
+      drop: (_item, monitor) => {
         if (!monitor.didDrop()) {
           console.log("Ommitting Parent Drop");
-        }
-
-        if (monitor.getItem()?.text) {
-          const structure: Structure = JSON.parse(monitor.getItem().text);
-          addItems({
-            variables: {
-              stash: props.item.id,
-              items: [structure],
-            },
-          });
         }
 
         const items = monitor.getItem() as Structure[] | null;
 
         if (items) {
+          const stashItems: StashItemInput[] = items.map((structure) => ({
+            identifier: structure.identifier,
+            object: structure.object.id,
+          }));
+
           addItems({
             variables: {
               stash: props.item.id,
-              items: items,
+              items: stashItems,
             },
           });
         }
@@ -115,20 +112,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
         return { stash: props.item.id };
       },
       collect: (monitor) => {
-        const text = monitor.getItem()?.text;
-        console.log("text", text);
-        if (text) {
-          const structure: Structure = JSON.parse(text);
-          return {
-            isOver: monitor.isOver(),
-            canDrop: monitor.canDrop(),
-            overItems: [structure],
-          };
-        }
-
         const item = monitor.getItem() as Structure[] | null;
-        console.log("item", item);
-        console.log("monitor", monitor.isOver());
         return {
           isOver: !!monitor.isOver(),
           overItems: item,
@@ -145,7 +129,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
     };
   });
 
-  const [{ isDragging }, drag, preview] = useDrag(
+  const [{ isDragging }, drag] = useDrag(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
       item: allItems,
@@ -160,7 +144,9 @@ export const StashZone = (props: { item: ListStashFragment }) => {
 
   return (
     <Card
-      ref={drop}
+      ref={(node) => {
+        drop(node);
+      }}
       className={cn(
         "transition transition-all duration-300 bg-sidebar",
         isDragging ? "animate-pulse" : "text-slate-300",
@@ -169,13 +155,20 @@ export const StashZone = (props: { item: ListStashFragment }) => {
     >
       <CardHeader>
         <CardTitle
-          ref={drag}
+          ref={(node) => {
+            drag(node);
+          }}
           data-disableselect
           className="cursor-pointer flex flex-row gap-2 "
         >
           <div className="flex-grow my-auto">{props.item.name}</div>
           <div className="flex flex-row gap-2">
-            <GripVertical ref={drag} className={cn("w-6 h-6 cursor-pointer")} />
+            <GripVertical
+              ref={(node) => {
+                drag(node);
+              }}
+              className={cn("w-6 h-6 cursor-pointer")}
+            />
             <Button
               onClick={() =>
                 deleteStash({ variables: { stash: props.item.id } })
@@ -205,7 +198,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
                 overItems.map((item) => (
                   <Card className="p-2">
                     <ConditionalStructureRender
-                      object={item.object}
+                      object={item.object.id}
                       identifier={item.identifier}
                     />
                   </Card>

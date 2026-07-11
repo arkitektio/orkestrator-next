@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import {
-  ListSearchField,
   ListSearchFieldProps,
   Option,
 } from "./ListSearchField";

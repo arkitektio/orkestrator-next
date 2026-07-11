@@ -10,7 +10,7 @@ import {
   useSearchMeasurmentCategoryLazyQuery
 } from "../api/graphql";
 
-const TForm = (props: {
+const TForm = (_props: {
   identifier: string
   object: string
 }) => {
@@ -24,13 +24,10 @@ const TForm = (props: {
     },
   });
 
-  const [searchMeasurements] = useSearchMeasurmentCategoryLazyQuery({
-    variables: {
-      source: {
-        identifier: props.identifier,
-      }
-    },
-  });
+  // Note: the backend no longer supports filtering measurement categories by
+  // a source identifier (the `source` filter has been removed from
+  // `SearchMeasurmentCategory`); results are now unfiltered by source.
+  const [searchMeasurements] = useSearchMeasurmentCategoryLazyQuery();
 
   return (
     <>

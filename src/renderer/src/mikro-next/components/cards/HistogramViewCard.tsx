@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
@@ -13,7 +12,6 @@ import {
 } from "recharts";
 import {
   HistogramViewFragment,
-  useDeleteHistogramViewMutation,
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 

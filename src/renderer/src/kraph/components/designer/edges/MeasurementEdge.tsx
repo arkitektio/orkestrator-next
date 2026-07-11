@@ -44,8 +44,8 @@ export default ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
@@ -63,15 +63,6 @@ export default ({
   const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
-
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
 
   let path = "";
   // Calculate offset based on whether there are multiple edges and the current edge's index
@@ -105,13 +96,13 @@ export default ({
           className="p-3 text-xs group nodrag nopan transition-opacity"
         >
           <KraphMeasurementCategory.Smart
-            object={data?.id || "0"}
+            object={{ id: data?.id || "0" }}
             className="w-16 overflow-hidden items-center justify-center flex"
           >
             <Tooltip>
               <TooltipTrigger asChild>
                 {data?.id && (
-                  <KraphMeasurementCategory.DetailLink object={data?.id}>
+                  <KraphMeasurementCategory.DetailLink object={{ id: data.id }}>
                     {data?.label}
                   </KraphMeasurementCategory.DetailLink>
                 )}

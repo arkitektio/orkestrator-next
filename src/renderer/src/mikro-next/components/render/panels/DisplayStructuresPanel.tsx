@@ -62,7 +62,7 @@ export const DisplayStructuresPanel = ({
           <div className="text-xs text-gray-500 mb-1">Structures:</div>
 
           <SmartContext
-            objects={displayStructures.map(r => ({ identifier: "@mikro/roi", object: r }))}
+            objects={displayStructures.map(r => ({ identifier: "@mikro/roi", object: { id: r } }))}
 
           />
         </div>

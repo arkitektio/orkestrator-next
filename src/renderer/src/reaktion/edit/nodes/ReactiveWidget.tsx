@@ -44,7 +44,7 @@ export type ContextMenuProps = {
   id: string;
 };
 
-export const TriangleToRight = ({ data, implementation }: ShapeProps) => {
+export const TriangleToRight = ({ data: _data, implementation }: ShapeProps) => {
   return (
     <>
       <svg height="40" width="40">

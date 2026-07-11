@@ -38,6 +38,13 @@ type ImagePyramidProps = {
   images: ImageLevel[];
 };
 
+// three.js's `Object3DEventMap` doesn't declare a "change" event, though
+// `EventDispatcher` supports arbitrary event names at runtime.
+type CameraWithChangeEvent = THREE.Camera & {
+  addEventListener(type: "change", listener: () => void): void;
+  removeEventListener(type: "change", listener: () => void): void;
+};
+
 function ImagePyramid({ images }: ImagePyramidProps) {
   const { camera } = useThree();
   const [visibleTiles, setVisibleTiles] = useState<ImageLevel[]>([]);
@@ -51,10 +58,12 @@ function ImagePyramid({ images }: ImagePyramidProps) {
       setVisibleTiles(selectedTiles);
     };
 
-    handleZoom();
-    camera.addEventListener("change", handleZoom);
+    const changeableCamera = camera as CameraWithChangeEvent;
 
-    return () => camera.removeEventListener("change", handleZoom);
+    handleZoom();
+    changeableCamera.addEventListener("change", handleZoom);
+
+    return () => changeableCamera.removeEventListener("change", handleZoom);
   }, [camera, images]);
 
   return (

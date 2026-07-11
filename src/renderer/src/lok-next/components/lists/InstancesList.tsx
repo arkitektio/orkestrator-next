@@ -15,7 +15,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListServiceInstancesQuery({
+  const { data, error, refetch } = useListServiceInstancesQuery({
     variables: { pagination, filters },
   });
 

@@ -2,11 +2,11 @@ import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import React from "react";
 
 const FloatReturnWidget: React.FC<ReturnWidgetProps> = ({
-  port,
-  widget,
   value,
 }) => {
-  return <div className="text-white items-center flex justify-center h-full w-full">{value}</div>
+  const display =
+    value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+  return <div className="text-white items-center flex justify-center h-full w-full">{display}</div>
 };
 
 export { FloatReturnWidget };

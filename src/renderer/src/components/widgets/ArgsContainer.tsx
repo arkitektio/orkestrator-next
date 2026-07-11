@@ -1,3 +1,4 @@
+import { AssignWidgetFragment } from "@/rekuest/api/graphql";
 import { notEmpty } from "@/lib/utils";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
@@ -112,7 +113,7 @@ export const ArgsContainer = ({
                         key={index}
                         port={port}
                         bound={bound}
-                        widget={port.widget}
+                        widget={port.widget as unknown as AssignWidgetFragment}
                         options={options}
                         path={[...path, port.key]}
                       />

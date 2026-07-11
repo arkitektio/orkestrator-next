@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import * as ListLayout from "@/components/ui/list-layout";
-import { ListOffsetter } from "@/components/ui/list";
 import {
   Empty,
   EmptyContent,
@@ -9,7 +8,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { FileQuestion, Plus, RefreshCcw } from "lucide-react";
+import { FileQuestion, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OffsetPaginationInput } from "@/lok-next/api/graphql";
 import { Smart } from "@/providers/smart/builder";
@@ -63,7 +62,7 @@ export const Offseter = ({
   array,
 }: {
   offset: number;
-  setOffset: React.Dispatch<React.SetStateAction<number>>;
+  setOffset: (value: number) => void;
   step: number;
   array?: any[] | undefined | null;
   refetch: () => Promise<any>;
@@ -178,9 +177,6 @@ export const createList = <
 
     const listData = (data ? data[dataKey] : []) as unknown as TItem[];
     const hasItems = listData && listData.length > 0;
-
-    // Pagination Logic
-    const showHeaderPagination = listData.length >= (pagination.limit || 20);
 
     const headerActions = (
       <div className="flex items-center gap-2">

@@ -1,18 +1,5 @@
-import { useLivekit } from "@/app/Arkitekt";
 import { cn } from "@/lib/utils";
-import {
-  SoloBroadcastFragment,
-  useGetSoloBroadcastQuery,
-  useJoinBroadcastMutation
-} from "@/lovekit/api/graphql";
-import {
-  GridLayout,
-  LiveKitRoom,
-  useTracks,
-  VideoTrack,
-} from "@livekit/components-react";
-import { Track } from "livekit-client";
-import { useEffect, useRef, useState } from "react";
+import { useGetSoloBroadcastQuery } from "@/lovekit/api/graphql";
 import { StreamJoiner } from "../components/StreamJoiner";
 
 

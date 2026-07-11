@@ -4,13 +4,10 @@ import { LokOrganization } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import OrganizationList from "../components/lists/OrganizationList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const navigate = useNavigate();
-
   return (
     <LokOrganization.ListPage
       title="Organizations"

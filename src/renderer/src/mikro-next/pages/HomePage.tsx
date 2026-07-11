@@ -33,13 +33,28 @@ import {
   TrendingUp,
   Upload,
 } from "lucide-react";
+import { HookFunction } from "@/app/routes/ParamlessRoute";
+import { OperationVariables, QueryHookOptions } from "@apollo/client";
 import {
   DatasetOrder,
   FileOrder,
+  HomePageQuery,
+  HomePageQueryVariables,
   ImageOrder,
   Ordering,
   useHomePageQuery,
 } from "../api/graphql";
+
+// `useHomePageQuery`'s wrapped `useQuery` (mikro's `nextFetchPolicy` default)
+// pins its options type to the exact (variable-less) query shape, which is
+// narrower than `asParamlessRoute`'s generic `HookFunction`; this adapter
+// bridges the two without changing the actual (variable-less) query call.
+const useHomePageQueryForRoute: HookFunction<HomePageQuery, OperationVariables> = (
+  options,
+) =>
+  useHomePageQuery(
+    options as unknown as QueryHookOptions<HomePageQuery, HomePageQueryVariables>,
+  ) as unknown as ReturnType<HookFunction<HomePageQuery, OperationVariables>>;
 import { UploadDialog } from "../components/dialogs/UploadDialog";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
@@ -52,19 +67,19 @@ import { parseAsIsoDateTime, parseAsString, parseAsStringLiteral, useQueryState 
 export interface IRepresentationScreenProps { }
 
 
-const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
+const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
   const performDataLayerUpload = useMikroBigFileUpload();
   const createFile = useCreateFile();
   const { startUpload } = useUpload();
 
   const [createdAfter, setCreatedAfter] = useQueryState(
     "after",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const [createdBefore, setCreatedBefore] = useQueryState(
     "before",
-    parseAsIsoDateTime.withDefault(undefined)
+    parseAsIsoDateTime
   );
 
   const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
@@ -89,9 +104,13 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
 
   const ordering = Ordering[sortDirection === "ASC" ? "Asc" : "Desc"];
   // Image/File/Dataset orders are @oneOf inputs that share createdAt/name keys.
-  const imageOrdering: ImageOrder[] = [{ [sortField]: ordering }];
-  const fileOrdering: FileOrder[] = [{ [sortField]: ordering }];
-  const datasetOrdering: DatasetOrder[] = [{ [sortField]: ordering }];
+  const orderByField =
+    sortField === "createdAt"
+      ? ({ createdAt: ordering } as const)
+      : ({ name: ordering } as const);
+  const imageOrdering: ImageOrder[] = [orderByField];
+  const fileOrdering: FileOrder[] = [orderByField];
+  const datasetOrdering: DatasetOrder[] = [orderByField];
 
   const sortFieldLabels = { createdAt: "Date created", name: "Name" } as const;
   // Defaults the dashboard ships with — a tag is shown when the user diverges.
@@ -188,8 +207,8 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
           {/* 3. Picker updates the URL params */}
           <DateTimeRangePicker
             // Optional: bind value to keep picker UI in sync on page refresh
-            initialDateFrom={createdAfter || null}
-            initialDateTo={createdBefore || null}
+            initialDateFrom={createdAfter ?? undefined}
+            initialDateTo={createdBefore ?? undefined}
             onUpdate={({ range }) => {
               setCreatedAfter(range.from || null);
               setCreatedBefore(range.to || null);

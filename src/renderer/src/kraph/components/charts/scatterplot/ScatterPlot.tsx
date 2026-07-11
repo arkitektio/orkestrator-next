@@ -7,12 +7,13 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import {
+  RenderGraphTableFilter,
   ScatterPlotFragment,
-  useDeleteScatterPlotMutation
+  useRenderGraphTableQuery
 } from "@/kraph/api/graphql";
 import * as React from "react";
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts";
-import { calculateColumns, calculateRows } from "../../renderers/utils";
+import { calculateRows } from "../../renderers/utils";
 import { MiniWidget } from "../MiniWidget";
 import { ScatterPlotTooltip } from "./ScatterPlotTooltip";
 
@@ -42,12 +43,18 @@ const ScatterPlot = (props: {
   const [isDrawing, setIsDrawing] = React.useState(false);
   const chartRef = React.useRef<any>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const svgRef = React.useRef<SVGSVGElement>(null);
 
-  const [del] = useDeleteScatterPlotMutation();
+  const filters: RenderGraphTableFilter = { value: "" };
 
-  const columns = calculateColumns(props.table);
-  const rows = calculateRows(props.table);
+  const { data: tableData } = useRenderGraphTableQuery({
+    variables: {
+      id: props.scatterPlot.query.id,
+      filters,
+    },
+  });
+
+  const table = tableData?.renderGraphTable;
+  const rows = calculateRows(table);
 
   const handleDotClick = (data: any) => {
     if (isLassoMode) return; // Don't handle clicks in lasso mode
@@ -132,7 +139,7 @@ const ScatterPlot = (props: {
       const containerRect = containerRef.current.getBoundingClientRect();
 
       // Filter points by checking if their rendered position is inside the lasso
-      const selectedPoints = rows.filter((row, index) => {
+      const selectedPoints = rows.filter((_row, index) => {
         // Find the corresponding dot element
         const dotElement = scatterDots[index] as SVGElement;
         if (!dotElement) return false;
@@ -223,9 +230,9 @@ const ScatterPlot = (props: {
               type="number"
               dataKey={props.scatterPlot.xColumn}
               name={
-                props.table.columns.find(
-                  (n) => n.name == props.scatterPlot.xColumn,
-                )?.name || "No Label"
+                table?.query.columns.find(
+                  (c) => c.key == props.scatterPlot.xColumn,
+                )?.label || "No Label"
               }
               unit="µm"
             />
@@ -233,18 +240,23 @@ const ScatterPlot = (props: {
               type="number"
               dataKey={props.scatterPlot.yColumn}
               name={
-                props.table.columns.find(
-                  (n) => n.name == props.scatterPlot.yColumn,
-                )?.name || " No Label"
+                table?.query.columns.find(
+                  (c) => c.key == props.scatterPlot.yColumn,
+                )?.label || " No Label"
               }
               unit="µm"
             />
             <ChartTooltip
-              content={<ScatterPlotTooltip scatterPlot={props.scatterPlot} />}
+              content={
+                <ScatterPlotTooltip
+                  scatterPlot={props.scatterPlot}
+                  graphAgeName={table?.query.graph.ageName}
+                />
+              }
               cursor={{ strokeDasharray: "3 3" }}
             />
             <Scatter
-              name={props.scatterPlot.name}
+              name={props.scatterPlot.label}
               data={rows}
               fill="#8884d8"
               onClick={handleDotClick}
@@ -325,7 +337,7 @@ const ScatterPlot = (props: {
                         <>
                           <MiniWidget
                             id={idVal}
-                            graph={props.scatterPlot.query.graph.ageName}
+                            graph={table?.query.graph.ageName}
                           />
                         </>
                       ) : (

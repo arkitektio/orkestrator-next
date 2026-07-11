@@ -43,6 +43,11 @@ export const PropertyEditor = ({
   };
 
   const renderInput = () => {
+    const stringValue =
+      currentValue === null || currentValue === undefined
+        ? ""
+        : String(currentValue);
+
     switch (definition.valueKind) {
       case ValueKind.Boolean:
         return (
@@ -68,7 +73,7 @@ export const PropertyEditor = ({
           <Input
             type="number"
             step="1"
-            value={currentValue || ""}
+            value={stringValue}
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );
@@ -77,14 +82,14 @@ export const PropertyEditor = ({
           <Input
             type="number"
             step="any"
-            value={currentValue || ""}
+            value={stringValue}
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );
       case ValueKind.Datetime:
         return (
           <DateTimePicker
-            value={currentValue ? new Date(currentValue) : undefined}
+            value={stringValue ? new Date(stringValue) : undefined}
             onChange={(date) => setCurrentValue(date?.toISOString())}
           />
         );
@@ -92,7 +97,7 @@ export const PropertyEditor = ({
         if (definition.description && definition.description.length > 50) {
           return (
             <Textarea
-              value={currentValue || ""}
+              value={stringValue}
               onChange={(e) => setCurrentValue(e.target.value)}
               rows={3}
             />
@@ -100,14 +105,14 @@ export const PropertyEditor = ({
         }
         return (
           <Input
-            value={currentValue || ""}
+            value={stringValue}
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );
       default:
         return (
           <Input
-            value={currentValue || ""}
+            value={stringValue}
             onChange={(e) => setCurrentValue(e.target.value)}
           />
         );

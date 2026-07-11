@@ -1,6 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphGraph } from "@/linkers";
 import { ListGraphFragment } from "../../api/graphql";
 
@@ -9,8 +7,6 @@ interface Props {
 }
 
 const TheCard = ({ item }: Props) => {
-
-  const s3resolve = useResolve();
   return (
     <KraphGraph.Smart object={item}>
       <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate group">

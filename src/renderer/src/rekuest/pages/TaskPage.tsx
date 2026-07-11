@@ -531,9 +531,7 @@ export const TaskStatsSidebar = (props: { task: DetailTaskFragment }) => {
 
 export const TPage = asDetailQueryRoute(
   useDetailTaskQuery,
-  ({ data, refetch, subscribeToMore }) => {
-    const navigate = useNavigate();
-
+  ({ data }) => {
     const reassign = useReassign({ task: data.task });
 
     const [cancel, _] = useCancelMutation();

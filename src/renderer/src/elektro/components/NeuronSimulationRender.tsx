@@ -56,7 +56,7 @@ const CylinderWithTooltip = ({
     dir.clone().normalize()
   );
 
-  const params = compartmentMap[section.category];
+  const params = section.category ? compartmentMap[section.category] : undefined;
 
   useCursor(hovered);
 
@@ -190,12 +190,13 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
             {cell.topology.sections.flatMap((section, secIndex) => {
               const color = getColorFromIndex(secIndex);
 
-              if (section.coords && section.coords.length > 1) {
-                return section.coords.slice(1).map((end, i) => (
+              const coords = section.coords;
+              if (coords && coords.length > 1) {
+                return coords.slice(1).map((end, i) => (
                   <CylinderWithTooltip
                     key={`${section.id}-${i}`}
                     section={section}
-                    start={section.coords[i]}
+                    start={coords[i]}
                     end={end}
                     color={color}
                     compartmentMap={compartmentMap}

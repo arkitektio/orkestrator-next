@@ -10,8 +10,8 @@ export type Props = {
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useTracesQuery({});
+const List = (_props: Props) => {
+  const { data, refetch } = useTracesQuery({});
 
   return (
     <ListRender

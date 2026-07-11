@@ -12,7 +12,11 @@ import {
   Pencil,
 } from "lucide-react";
 
-const TOOLS: { tool: DrawingTool; label: string; icon: React.ElementType }[] = [
+const TOOLS: {
+  tool: DrawingTool;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { tool: "RECTANGLE", label: "Rect", icon: Square },
   { tool: "ELLIPSIS", label: "Ellipse", icon: Circle },
   { tool: "POINT", label: "Point", icon: Crosshair },

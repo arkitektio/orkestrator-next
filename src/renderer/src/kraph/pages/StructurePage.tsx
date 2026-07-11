@@ -1,27 +1,21 @@
-import { useDisplayComponent } from "@/app/display";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { DisplayWidget } from "@/command/Menu";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
-import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 
-const Page = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
-  const uploadFile = useKraphMediaUpload();
-
-  const Widget = useDisplayComponent(data.structure.identifier || "");
-
+const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
   return (
     <KraphStructure.ModelPage
-      object={data.structure.id}
+      object={{ id: data.structure.id }}
       title={data?.structure.identifier}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <KraphStructure.Komments object={data.structure.id} />,
+            Comments: <KraphStructure.Komments object={{ id: data.structure.id }} />,
           }}
         />
       }
@@ -35,12 +29,12 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
       }
     >
       <KraphStructure.Drop
-        object={data.structure.id}
+        object={{ id: data.structure.id }}
         className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6"
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            <KraphStructureCategory.DetailLink object={data.structure.category.id} className="font-light text-muted-foreground">
+            <KraphStructureCategory.DetailLink object={{ id: data.structure.category.id }} className="font-light text-muted-foreground">
               {data.structure.category.identifier}
             </KraphStructureCategory.DetailLink>{" "}{data.structure.object}
           </h1>
@@ -70,7 +64,7 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
         {data.structure.category.relevantNodeQueries.map((query) => (
           <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">
             <KraphNodeQuery.DetailLink
-              object={query.id}
+              object={{ id: query.id }}
               className="w-full"
               subroute="view"
               subobject={data.structure.id}

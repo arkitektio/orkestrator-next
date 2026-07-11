@@ -16,12 +16,16 @@ import {
 } from "@/components/ui/tooltip";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
-import { ReactiveImplementation, RunEventKind } from "@/reaktion/api/graphql";
+import {
+  ReactiveImplementation,
+  ReactiveNodeFragment,
+  RunEventKind,
+} from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
-import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
+import { FlowNodeData, ReactiveNodeProps } from "../../types";
 import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
 import JustTrack from "./reactive/JustTrack";
 import Math from "./reactive/Math";
@@ -29,14 +33,14 @@ import TriangleToRight from "./reactive/TriangleToRight";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
   className?: string;
 };
 
 export type ContextMenuProps = {
   implementation: ReactiveImplementation;
-  data: ReactiveNodeData;
+  data: FlowNodeData<ReactiveNodeFragment>;
   id: string;
 };
 
@@ -75,7 +79,7 @@ export const Default = ({ data, className }: ShapeProps) => {
   );
 };
 
-export const Select = ({ data, className }: ShapeProps) => {
+export const Select = ({ data, className: _className }: ShapeProps) => {
   return (
     <>
       <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
@@ -200,47 +204,12 @@ export const DefaultContext = ({ data }: ContextMenuProps) => {
   );
 };
 
-export const ChangeZipImplementation = ({ data, id }: ContextMenuProps) => {
+export const ChangeZipImplementation = ({ data, id: _id }: ContextMenuProps) => {
   return (
     <>
       <div className="text-xs">Current: {data.implementation}</div>
     </>
   );
-};
-
-const contextMenuMap: {
-  [key in ReactiveImplementation]: React.FC<ContextMenuProps>;
-} = {
-  [ReactiveImplementation.Combinelatest]: ChangeZipImplementation,
-  [ReactiveImplementation.Withlatest]: ChangeZipImplementation,
-  [ReactiveImplementation.Zip]: ChangeZipImplementation,
-  [ReactiveImplementation.Gate]: DefaultContext,
-  [ReactiveImplementation.Filter]: DefaultContext,
-  [ReactiveImplementation.Split]: DefaultContext,
-  [ReactiveImplementation.ToList]: DefaultContext,
-  [ReactiveImplementation.BufferComplete]: DefaultContext,
-  [ReactiveImplementation.Chunk]: DefaultContext,
-  [ReactiveImplementation.Omit]: DefaultContext,
-  [ReactiveImplementation.Add]: DefaultContext,
-  [ReactiveImplementation.All]: DefaultContext,
-  [ReactiveImplementation.And]: DefaultContext,
-  [ReactiveImplementation.BufferUntil]: DefaultContext,
-  [ReactiveImplementation.BufferCount]: DefaultContext,
-  [ReactiveImplementation.Delay]: DefaultContext,
-  [ReactiveImplementation.DelayUntil]: DefaultContext,
-  [ReactiveImplementation.Divide]: DefaultContext,
-  [ReactiveImplementation.Ensure]: DefaultContext,
-  [ReactiveImplementation.Foreach]: DefaultContext,
-  [ReactiveImplementation.If]: DefaultContext,
-  [ReactiveImplementation.Modulo]: DefaultContext,
-  [ReactiveImplementation.Power]: DefaultContext,
-  [ReactiveImplementation.Prefix]: DefaultContext,
-  [ReactiveImplementation.Subtract]: DefaultContext,
-  [ReactiveImplementation.Multiply]: DefaultContext,
-  [ReactiveImplementation.Suffix]: DefaultContext,
-  [ReactiveImplementation.Select]: DefaultContext,
-  [ReactiveImplementation.Just]: DefaultContext,
-  [ReactiveImplementation.Reorder]: DefaultContext,
 };
 
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
@@ -280,12 +249,6 @@ const shapeForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ShapeProps> => {
   return shapeMap[implementation] || Default;
-};
-
-const contextMenuForImplementation = (
-  implementation: ReactiveImplementation,
-): React.FC<ContextMenuProps> => {
-  return contextMenuMap[implementation] || DefaultContext;
 };
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({

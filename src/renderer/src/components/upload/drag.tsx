@@ -29,10 +29,10 @@ export const DragZone: React.FC<{
   const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
       accept: [NativeTypes.FILE],
-      drop: (item, monitor) => {
+      drop: (item, _monitor) => {
         const files: File[] = (item as any).files;
         console.log("files", files);
-        const futures: UploadFuture[] = files.map((file: any, index) => {
+        const futures: UploadFuture[] = files.map((file: any, _index) => {
           const abortController = new AbortController();
 
           const hash = hashFile(file);
@@ -61,7 +61,7 @@ export const DragZone: React.FC<{
                 console.log("Upload done");
                 return createFile(file, key);
               })
-              .then((x) => {
+              .then(() => {
                 console.log("Create done");
                 setUploadFutures((futures) =>
                   futures.filter((f) => f.hash !== hashFile(file)),
@@ -115,7 +115,9 @@ export const DragZone: React.FC<{
       <div
         className={`${!canDrop && "hidden"
           } bg-slate-300 border border-gray-800 cursor-pointer rounded text-white  hover:shadow-lg`}
-        ref={drop}
+        ref={(node) => {
+          drop(node);
+        }}
       >
         <div className="truncate p-5">
           {isOver ? "Release to upload" : "Drag and drop a file here"}

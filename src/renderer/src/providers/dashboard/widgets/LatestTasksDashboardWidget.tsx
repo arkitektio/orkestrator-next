@@ -63,7 +63,7 @@ const LatestTasksWidget = () => {
                     {task.action.name}
                   </span>
                   <span
-                    className={`text-[10px] shrink-0 text-primary "text-muted-foreground"}`}
+                    className={`text-[10px] shrink-0 ${statusColor[task.latestEventKind] ?? "text-muted-foreground"}`}
                   >
                     {statusLabel[task.latestEventKind] ??
                       task.latestEventKind}

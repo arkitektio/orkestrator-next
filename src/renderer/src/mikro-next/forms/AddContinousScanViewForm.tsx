@@ -11,7 +11,8 @@ import {
 
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { ReactElement, useRef } from "react";
+import * as THREE from "three";
 
 export const calculateIndex = (
   currentIndex: number,
@@ -50,14 +51,13 @@ function PixelatedCube({
   speed = 10,
   directionPattern = ScanDirection.ColumnRowSlice,
 }) {
-  const materialsRef = useRef([]);
+  const materialsRef = useRef<(THREE.MeshStandardMaterial | null)[]>([]);
   const currentIndex = useRef(0);
-  const lightRef = useRef();
+  const lightRef = useRef<THREE.PointLight>(null);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     const cubesToUpdate = speed * delta;
 
-    let lastUpdatedIndex = -1;
     for (let i = 0; i < cubesToUpdate; i++) {
       const calculatedIndex = calculateIndex(
         currentIndex.current,
@@ -69,14 +69,13 @@ function PixelatedCube({
       if (material) {
         material.emissive.set("yellow");
         material.needsUpdate = true;
-        lastUpdatedIndex = calculatedIndex;
       }
 
       currentIndex.current++;
     }
   });
 
-  const cubes = [];
+  const cubes: ReactElement[] = [];
   for (let x = 0; x < gridSize; x++) {
     for (let y = 0; y < gridSize; y++) {
       for (let z = 0; z < gridSize; z++) {

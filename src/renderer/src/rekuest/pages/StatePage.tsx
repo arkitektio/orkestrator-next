@@ -100,8 +100,6 @@ const LiveStateDisplay = ({
     },
   });
 
-  const displayValue = liveValue;
-
   return (
     <AsyncBoundary>
       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">

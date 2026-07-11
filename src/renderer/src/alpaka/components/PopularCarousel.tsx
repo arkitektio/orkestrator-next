@@ -14,7 +14,7 @@ export const Test = () => {
 };
 
 export const PopularCarousel = ({ }) => {
-  const { data, error, subscribeToMore, refetch } = useRoomsQuery({
+  const { data } = useRoomsQuery({
     variables: {},
   });
 

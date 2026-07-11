@@ -45,7 +45,7 @@ function createPromotedArray<D extends DataType>(
   }
 
   const Ctr = get_ctr(meta.data_type) as unknown as {
-    new (buf: ArrayBuffer, off: number, len: number): TypedArray<D>
+    new (buf: ArrayBufferLike, off: number, len: number): TypedArray<D>
     BYTES_PER_ELEMENT: number
   }
   return new Ctr(buffer, byteOffset, byteLength / Ctr.BYTES_PER_ELEMENT)

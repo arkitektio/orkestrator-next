@@ -24,7 +24,7 @@ import {
   LetterCaseToggleIcon,
   QuestionMarkIcon,
 } from "@radix-ui/react-icons";
-import { Controls, useNodesState } from "@xyflow/react";
+import { Controls, EdgeProps, NodeProps, useNodesState } from "@xyflow/react";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -37,19 +37,21 @@ import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
+import { AgentSubFlowShowNodeWidget } from "./nodes/generic/AgentSubFlowShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterActionNode: RekuestFilterWidget,
-  RekuestMapActionNode: RekuestMapWidget,
-  ReactiveNode: ReactiveTrackNodeWidget,
-  ArgNode: ArgTrackNodeWidget,
-  ReturnNode: ReturnTrackNodeWidget,
+  RekuestFilterActionNode: RekuestFilterWidget as React.FC<NodeProps>,
+  RekuestMapActionNode: RekuestMapWidget as React.FC<NodeProps>,
+  ReactiveNode: ReactiveTrackNodeWidget as React.FC<NodeProps>,
+  ArgNode: ArgTrackNodeWidget as React.FC<NodeProps>,
+  ReturnNode: ReturnTrackNodeWidget as React.FC<NodeProps>,
+  AgentSubFlowNode: AgentSubFlowShowNodeWidget as React.FC<NodeProps>,
 };
 
 const edgeTypes: EdgeTypes = {
-  VanillaEdge: LabeledShowEdge,
-  LoggingEdge: LabeledShowEdge,
+  VanillaEdge: LabeledShowEdge as React.FC<EdgeProps>,
+  LoggingEdge: LabeledShowEdge as React.FC<EdgeProps>,
 };
 
 export type Props = {
@@ -65,7 +67,7 @@ export const ShowFlow: React.FC<Props> = ({ flow, template }) => {
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
   const [showNodeErrors, setShowNodeErrors] = useState(true);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
+  const [nodes, , onNodesChange] = useNodesState(
     nodes_to_flownodes(flow.graph?.nodes || []) || [],
   );
   const edges = edges_to_flowedges(flow.graph?.edges || []);

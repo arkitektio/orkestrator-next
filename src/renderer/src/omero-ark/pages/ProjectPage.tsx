@@ -8,14 +8,12 @@ import {
 } from "@/components/ui/pane";
 import { OmeroArkProject } from "@/linkers";
 import { PlusIcon } from "lucide-react";
-import { useNavigate } from "react-router";
 import { useGetProjectQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
 
 
 const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
 
-  const navigate = useNavigate();
   return (
     <OmeroArkProject.ModelPage
       object={data?.project}
@@ -47,15 +45,13 @@ const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
 
           <div className="font-light mt-2 ">Tags</div>
           <div className="text-xl flex mb-2">
-            {data?.project?.tags?.map((tag, index) => (
-              <>
-                <span className="font-semibold mr-2">#{tag} </span>
-              </>
+            {data?.project?.tags?.map((tag) => (
+              <span className="font-semibold mr-2" key={tag}>#{tag} </span>
             ))}
           </div>
         </div>
         <ListRender title="Contained Dataset" array={data?.project?.datasets}>
-          {(item, index) => <DatasetCard dataset={item} key={index} />}
+          {(item, index) => <DatasetCard item={item} key={index} />}
         </ListRender>
       </DetailPane>
     </OmeroArkProject.ModelPage>

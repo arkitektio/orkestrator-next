@@ -25,6 +25,7 @@ import { EnumReturnWidget } from "./returns/fallbacks/EnumReturnWidget";
 import { FloatReturnWidget } from "./returns/fallbacks/FloatReturnWidget";
 import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { ListReturnWidget } from "./returns/fallbacks/ListReturnWidget";
+import { MemoryStructureReturnWidget } from "./returns/fallbacks/MemoryStructureReturnWidget";
 import { UnionReturnWidget } from "./returns/fallbacks/UnionReturnWidget";
 
 export const ShadnWigets = () => {
@@ -135,7 +136,7 @@ export const ShadnWigets = () => {
 
     const mstructureReturn = registry.registerReturnWidgetFallback(
       PortKind.MemoryStructure,
-      MemoryStructureWidget,
+      MemoryStructureReturnWidget,
     );
 
     return () => {

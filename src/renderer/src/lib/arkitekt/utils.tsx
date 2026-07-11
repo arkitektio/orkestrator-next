@@ -6,7 +6,7 @@ import { AppContext, EnhancedManifest, ReportRequest, Service } from "./types";
 
 
 function mstimeout(ms: number) {
-  return new Promise((resolve, reject) =>
+  return new Promise((_resolve, reject) =>
     setTimeout(() => reject(Error(`Timeout after ${ms}`)), ms),
   );
 }

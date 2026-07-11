@@ -55,7 +55,7 @@ export const AgentForButton = ({
 };
 
 
-export default asDetailQueryRoute(useGetBackendQuery, ({ data, refetch }) => {
+export default asDetailQueryRoute(useGetBackendQuery, ({ data }) => {
   return (
     <KabinetBackend.ModelPage
       title={data?.backend?.name}
@@ -66,7 +66,6 @@ export default asDetailQueryRoute(useGetBackendQuery, ({ data, refetch }) => {
           <KabinetBackend.ObjectButton object={data.backend} />
         </div>
       }
-      refetch={refetch}
     >
       <div className="p-3">
         <div className="grid grid-cols-6">

@@ -5,16 +5,14 @@ import { MikroImage, MikroROI } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
-import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
+import { useGetRoiQuery } from "../api/graphql";
 import { FinalRender } from "../components/render/FInalRender";
 
 export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export const RoiPage = asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
-  const [pinRoi] = usePinRoiMutation();
-
+export const RoiPage = asDetailQueryRoute(useGetRoiQuery, ({ data }) => {
   const context = data.roi.image.rgbContexts.at(0);
   return (
     <MikroROI.ModelPage

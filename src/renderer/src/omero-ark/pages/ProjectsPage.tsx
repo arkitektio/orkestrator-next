@@ -25,7 +25,7 @@ const Page = () => {
           title="Projects"
           description="Projects allow you to group your images and files together. Just like folders. "
         />
-        <ProjectList pagination={{ limit: 30 }} filters={{ parentless: true }} />
+        <ProjectList />
       </div>
     </OmeroArkProject.ListPage>
   );

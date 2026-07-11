@@ -5,20 +5,20 @@ import { useGetStreamQuery } from "../api/graphql";
 
 export default asDetailQueryRoute(
   useGetStreamQuery,
-  ({ data, subscribeToMore }) => {
+  ({ data }) => {
     return (
       <LovekitStream.ModelPage
         title={data?.stream.id}
-        object={data.stream.id}
+        object={data.stream}
         pageActions={
           <div className="flex flex-row gap-2">
-            <LovekitStream.ObjectButton object={data.stream.id} />
+            <LovekitStream.ObjectButton object={data.stream} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <LovekitStream.Komments object={data.stream.id} />,
+              Comments: <LovekitStream.Komments object={data.stream} />,
             }}
           />
         }

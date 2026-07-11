@@ -1,12 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
-import { Reply, X } from "lucide-react";
-import { useState } from "react";
 import Timestamp from "react-timestamp";
-import { CommentEdit } from "../edit/CommentEdit";
 import { DescendantType, LeafType, ListCommentType } from "../types";
 import { Mention } from "./Mention";
 
@@ -44,7 +40,6 @@ export const renderDescendant = (x: DescendantType) => {
 };
 
 export const Comment = ({ comment }: { comment: ListCommentType }) => {
-  const [showReply, setShowReply] = useState(false);
   const s3resolve = useResolve();
 
   return (
@@ -91,18 +86,6 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
               />
             )}
           </div>
-
-          <div className="flex items-center gap-2 group-hover:block hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowReply(!showReply)}
-              className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Reply className="h-3 w-3 mr-1" />
-              Reply
-            </Button>
-          </div>
         </div>
 
 
@@ -145,22 +128,6 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {showReply && (
-          <div className="mt-3 flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowReply(false)}
-              className="h-7 w-7 p-0 flex-shrink-0 my-auto"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <div className="flex-1">
-              <CommentEdit parent={comment?.id} />
-            </div>
           </div>
         )}
       </div>

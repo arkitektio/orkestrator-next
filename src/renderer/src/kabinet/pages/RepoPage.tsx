@@ -16,7 +16,6 @@ const RepoPage = asDetailQueryRoute(useGetRepoQuery, ({ data, refetch }) => {
     <KabinetRepo.ModelPage
       title={repo.name}
       object={repo}
-      refetch={refetch}
       sidebars={
         <MultiSidebar
           map={{

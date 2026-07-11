@@ -31,10 +31,14 @@ export const AddRGBViewForm = (props: { image: string }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(async (data) => {
+            // `CreateRgbViewMutation` no longer accepts rScale/gScale/bScale
+            // (the schema moved to contrastLimit/gamma/colorMap); only
+            // `image`/`context` are still forwarded here.
+            if (!data.context) return;
             submit({
               variables: {
                 image: props.image,
-                ...data,
+                context: data.context,
               },
             });
           })}

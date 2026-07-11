@@ -2,7 +2,8 @@ import { cn } from "@/lib/utils";
 import React, { useCallback, useState } from "react";
 import { Button, ButtonProps } from "./button";
 
-export interface ActionButtonProps extends Action, ButtonProps {
+export interface ActionButtonProps extends ButtonProps {
+  run: () => Promise<void> | void;
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
@@ -15,21 +16,6 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   ...props
 }) => {
   const [doing, setDoing] = useState(false);
-
-  useAction({
-    run: async (state) => {
-      setDoing(true);
-      try {
-        const x = await run(state);
-        setDoing(false);
-        return x;
-      } catch (e) {
-        setDoing(false);
-        throw e;
-      }
-    },
-    ...props,
-  });
 
   const onClick = useCallback(async () => {
     try {

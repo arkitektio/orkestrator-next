@@ -59,6 +59,7 @@ export const RenderGraphQueryTable = (props: {
   // Prepare GraphQL variables
   const filters: RenderGraphTableFilter = {
     search: search || undefined,
+    value: "",
   };
 
   const paginationInput: RenderGraphTablePagination = {
@@ -69,7 +70,7 @@ export const RenderGraphQueryTable = (props: {
   const order: RenderGraphTableOrder | undefined =
     sorting.length > 0
       ? {
-        field: sorting[0].id,
+        key: sorting[0].id,
         direction: sorting[0].desc ? "DESC" : "ASC",
       }
       : undefined;

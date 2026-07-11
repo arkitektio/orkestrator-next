@@ -1,9 +1,9 @@
 import { FormField } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
-import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
+import { ArgChildPortFragment, AssignWidgetFragment, PortKind } from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
+import { InputWidgetProps, MappablePort, Port } from "@/rekuest/widgets/types";
 import { pathToName, portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
 import {
@@ -16,18 +16,18 @@ const RenderDownWidget = ({
   port,
   path,
 }: {
-  port: ChildPortFragment;
+  port: ArgChildPortFragment;
   path: string[];
 }) => {
   const { registry } = useWidgetRegistry();
-  const Widget = registry.getInputWidgetForPort(port);
+  const Widget = registry.getInputWidgetForPort(port as unknown as MappablePort);
 
   return (
     <div className="mt-2">
       <Widget
-        port={{ ...port, __typename: "Port" } as Port}
+        port={{ ...port, __typename: "Port" } as unknown as Port}
         parentKind={PortKind.Union}
-        widget={port.assignWidget}
+        widget={port.widget as unknown as AssignWidgetFragment}
         path={path}
       />
     </div>
@@ -39,7 +39,7 @@ const SubForm = ({
   field,
   path,
 }: {
-  variants: ChildPortFragment[];
+  variants: ArgChildPortFragment[];
   field: ControllerRenderProps<FieldValues, string>;
   path: string[];
 }) => {

@@ -18,12 +18,12 @@ import {
 import RoomCard from "../components/cards/RoomCard";
 
 
-export const NavigationPane = (props: {}) => {
+export const NavigationPane = () => {
   const [createRoom] = useCreateRoomMutation({
     refetchQueries: ["Rooms"],
   });
 
-  const { data, refetch, variables } = useRoomsQuery();
+  const { data } = useRoomsQuery();
 
   return (
     <Tree>

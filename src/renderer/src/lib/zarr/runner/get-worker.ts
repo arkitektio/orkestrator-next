@@ -16,6 +16,7 @@ import type {
   Readable,
   Scalar,
   Slice,
+  TypedArray,
   Array as ZarrArray,
 } from "zarrita"
 
@@ -470,7 +471,7 @@ export function readBloscFrameContentSize(
  *
  * Returns the decompressed byte size, or null if detection failed.
  */
-async function probeDecompressedSize<D extends DataType>(
+async function probeDecompressedSize(
   rawBytes: Uint8Array,
   codecMeta: CodecChunkMeta,
   bytesPerElement: number,
@@ -1139,9 +1140,15 @@ export async function getWorker<
   // Allocate output — backed by SharedArrayBuffer when requested
   const size = indexer.shape.reduce((a: number, b: number) => a * b, 1)
   const buffer = createBuffer(size * outputBytesPerElement, useShared)
-  const data = new OutputCtr(buffer as ArrayBufferLike, 0, size)
+  // `createBuffer` returns a `SharedArrayBuffer` when `useShared` is true,
+  // which every JS engine accepts as a TypedArray backing buffer even though
+  // the current DOM lib types `ArrayBuffer`/`SharedArrayBuffer` as structurally
+  // distinct (missing `resizable`/`resize`/etc.).
+  const data = new OutputCtr(buffer as ArrayBuffer, 0, size)
   const outStride = get_strides(indexer.shape)
-  const out = setter.prepare(data, indexer.shape, outStride) as Chunk<D>
+  // `OutputCtr` is chosen at runtime from `correctedCodecMeta.data_type`, so TS
+  // can't statically narrow `data`'s element type to the generic `D`.
+  const out = setter.prepare(data as unknown as TypedArray<D>, indexer.shape, outStride) as Chunk<D>
 
   // Pre-compute chunk invariants (hoisted out of loop)
   const chunkShape = actualChunkShape

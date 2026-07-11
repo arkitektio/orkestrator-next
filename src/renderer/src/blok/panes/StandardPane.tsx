@@ -1,10 +1,7 @@
 import { DroppableNavLink } from "@/components/ui/link";
 import { Home, Image } from "lucide-react";
-import { exp } from "three/src/nodes/math/MathNode.js";
 
-interface IDataSidebarProps { }
-
-export const NavigationPane = (props: {}) => {
+export const NavigationPane = (_props: {}) => {
   return (
     <div className="flex-1 flex-col">
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">

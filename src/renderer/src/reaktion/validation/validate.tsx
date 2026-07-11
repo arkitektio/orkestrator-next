@@ -5,33 +5,6 @@ import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
 import { PortKind } from "@/rekuest/api/graphql";
 
-const validateNoEdgeWithItself = (
-  previous: ValidationResult,
-): Partial<ValidationResult> => {
-  const validatedEdges: FlowEdge[] = [];
-  const solvedErrors: SolvedError[] = [];
-
-  for (const edge of previous.edges) {
-    if (edge.source == edge.target) {
-      solvedErrors.push({
-        type: "edge",
-        id: edge.id,
-        message: "Edge with itself",
-        level: "warning",
-        solvedBy: "Removing the Edge",
-      });
-    } else {
-      validatedEdges.push(edge);
-    }
-  }
-
-  return {
-    ...previous,
-    edges: validatedEdges,
-    solvedErrors: solvedErrors,
-  };
-};
-
 const handleToStream = (sourceHandle: string | null | undefined): number => {
   if (!sourceHandle) return -1;
   const parts = sourceHandle.split("_");
@@ -255,7 +228,7 @@ function atLeastOneNode(previous: ValidationResult) {
 }
 
 function noDoubleEdgeForOutput(previous: ValidationResult) {
-  const solved: ValidationError[] = previous.solvedErrors;
+  const solved: SolvedError[] = previous.solvedErrors;
   const remain: ValidationError[] = previous.remainingErrors;
   const nodes = previous.nodes;
   const edges = previous.edges;
@@ -280,6 +253,7 @@ function noDoubleEdgeForOutput(previous: ValidationResult) {
       level: "critical",
       message:
         "You can only have one edge to the return node: Mabye merge them before sending them to the return node? We will remove the other edges",
+      solvedBy: "Removing the other edges",
     });
   }
 

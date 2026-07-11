@@ -65,14 +65,5 @@ export const useAssignProgress = (options: {
     )
     .at(0);
 
-  const latestError = tasks
-    ?.at(-1)
-    ?.events.filter(
-      (e) =>
-        e.kind == TaskEventKind.Failed ||
-        e.kind == TaskEventKind.Critical,
-    )
-    .at(0);
-
   return { latestProgress };
 };

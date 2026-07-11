@@ -25,14 +25,15 @@ export type PageLayoutProps = {
   title: React.ReactNode | undefined;
   children: React.ReactNode;
   sidebars?: React.ReactNode;
+  actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: "black" | "default";
 };
 
 export const PageLayout = ({
-  title = "Loading...",
   sidebars,
   children,
+  actions,
   pageActions,
   variant = "default",
 }: PageLayoutProps) => {
@@ -46,7 +47,7 @@ export const PageLayout = ({
 
   const reportBug = useReport();
 
-  const [copied, setCopied] = useState(false);
+  const [, setCopied] = useState(false);
   const copyTimer = useRef<number | undefined>(undefined);
 
   // Clear the pending copy-reset timer on unmount to avoid a setState-after-unmount.
@@ -147,6 +148,7 @@ export const PageLayout = ({
             </div>
             <div className="flex-initial text-foreground flex flex-row gap-1 max-w-3xl">
 
+              {actions}
               {pageActions}
 
 

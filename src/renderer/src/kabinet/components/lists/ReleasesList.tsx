@@ -9,8 +9,8 @@ export type Props = {
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListReleasesQuery({
+const List = (_props: Props) => {
+  const { data, error, refetch } = useListReleasesQuery({
     variables: {},
   });
 
@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
             </div>
           </KabinetRelease.ListLink>
         }
-        refetch={refetch}
+        refetch={() => refetch()}
       >
         {(ex, index) => <ReleaseCard key={index} item={ex} />}
       </ListRender>

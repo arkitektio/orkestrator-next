@@ -13,7 +13,7 @@ type CreateOrganizationForm = {
   description?: string;
 };
 
-export const CreateOrganizationForm = (props) => {
+export const CreateOrganizationForm = () => {
   const [add] = useCreateOrganizationMutation();
 
   const { closeDialog } = useDialog();

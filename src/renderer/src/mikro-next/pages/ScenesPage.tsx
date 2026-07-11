@@ -7,7 +7,7 @@ export type IRepresentationScreenProps = {};
 
 const ScenesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <MikroScene.ListPage actions={<></>} title="Scenes">
+    <MikroScene.ListPage pageActions={<></>} title="Scenes">
       <div className="p-3">
         <Explainer
           title="Scenes"

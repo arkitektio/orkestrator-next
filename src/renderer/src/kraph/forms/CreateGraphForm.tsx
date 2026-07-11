@@ -17,7 +17,14 @@ const TForm = (props: { onSuccess?: (data: CreateGraphMutation) => void }) => {
     refetchQueries: [HomePageDocument],
   });
 
-  const submit = useGraphQLDialog(add, { successMessage: "Graph created", onSuccess: props.onSuccess });
+  const submit = useGraphQLDialog(add, {
+    successMessage: "Graph created",
+    onSuccess: (data) => {
+      if (data) {
+        props.onSuccess?.(data);
+      }
+    },
+  });
 
   const form = useForm<CreateGraphMutationVariables["input"]>({
     defaultValues: {

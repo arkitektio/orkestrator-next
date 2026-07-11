@@ -24,14 +24,14 @@ const columnToDef = (
       header: () => (
         <div className="text-center">{column.label}</div>
       ),
-      cell: ({ row, getValue }) => {
+      cell: ({ row }) => {
         const label = row.getValue(column.key) as string;
 
         const concat_id = render.query.graph.ageName + ":" + label;
 
         return (
-          <KraphEntity.Smart object={concat_id}>
-            <KraphEntity.DetailLink object={concat_id}>
+          <KraphEntity.Smart object={{ id: concat_id }}>
+            <KraphEntity.DetailLink object={{ id: concat_id }}>
               {label || ""}
               {concat_id}
             </KraphEntity.DetailLink>
@@ -50,7 +50,7 @@ const columnToDef = (
       header: () => (
         <div className="text-center">{column.label || column.key}</div>
       ),
-      cell: ({ row, getValue }) => {
+      cell: ({ row }) => {
         const label = row.getValue(column.key) as string;
 
         return <div className="text-center font-medium">{label || ""}</div>;
@@ -68,7 +68,7 @@ const columnToDef = (
         header: () => (
           <div className="text-center">{column.label || column.key}</div>
         ),
-        cell: ({ row, getValue }) => {
+        cell: ({ row }) => {
           const label = row.getValue(column.key) as string;
 
           if (!label) {
@@ -92,7 +92,7 @@ const columnToDef = (
       header: () => (
         <div className="text-center">{column.label || column.key}</div>
       ),
-      cell: ({ row, getValue }) => {
+      cell: ({ row }) => {
         const label = row.getValue(column.key) as string;
 
         return <div className="text-center font-medium">{label || ""}</div>;
@@ -127,7 +127,7 @@ export const calculateColumns = (
     return [];
   }
 
-  return render.query.columns.map((c, item) => {
+  return render.query.columns.map((c) => {
     return columnToDef(c, render);
 
   });
@@ -231,7 +231,7 @@ export const buildCypherSchemaFromGraph = (
       },
     };
 
-    for (const variable of node.sourceEntityRoles) {
+    for (const variable of node.inputs) {
       schema.relationships[variable.role] = {
         type: "Role",
         label: "Role",

@@ -161,8 +161,9 @@ const LayerDataRois = ({ layerId }: { layerId: string }) => {
   const { data } = useGetDataRoisQuery({
     variables: {
       filters: {
-        activeFor: sliceFilter,
-        dataset: layer ? { exact: layer.lens.dataset.id } : undefined,
+        // `DataRoiFilter` has no server-side "active for these slices" filter;
+        // `sliceFilter` is still used below purely as a query-readiness gate.
+        dataset: layer ? layer.lens.dataset.id : undefined,
       },
     },
     skip: !layer || !sliceFilter,

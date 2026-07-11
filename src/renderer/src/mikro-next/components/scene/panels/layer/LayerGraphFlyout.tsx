@@ -1,22 +1,7 @@
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronDown, Crosshair, Save, X } from "lucide-react";
-import { useState } from "react";
-import { ImageLayerFragment } from "../../core/layerGuards";
+import { Crosshair, Save, X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { isLayerDirty } from "./colormap-utils";
-import { DimPill } from "./DimPill";
 import {
   RenderGraphEditor,
   RenderGraphSection,
@@ -33,7 +18,7 @@ export const LayerGraphFlyout = ({
   originalLayer,
   isArmed,
   editor,
-  onUpdate,
+  onUpdate: _onUpdate,
   onToggleArm,
   onSave,
   onClose,
@@ -55,30 +40,11 @@ export const LayerGraphFlyout = ({
    */
   inline?: boolean;
 }) => {
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const dirty = isLayerDirty(layer, originalLayer);
 
   const label =
     layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel
       ?.label ?? "Untitled Layer";
-
-  const dims: { label: string; key: keyof ImageLayerFragment }[] = [
-    { label: "X", key: "xDim" },
-    { label: "Y", key: "yDim" },
-    { label: "Z", key: "zDim" },
-    { label: "I", key: "intensityDim" },
-  ];
-
-  const swapDims = (
-    keyA: keyof ImageLayerFragment,
-    keyB: keyof ImageLayerFragment,
-  ) => {
-    onUpdate({
-      ...layer,
-      [keyA]: layer[keyB],
-      [keyB]: layer[keyA],
-    } as LayerState);
-  };
 
   const body = (
     <div

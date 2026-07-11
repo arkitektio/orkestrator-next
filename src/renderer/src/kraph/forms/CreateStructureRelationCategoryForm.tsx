@@ -9,11 +9,10 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateRelationCategoryMutationVariables,
   CreateStructureRelationCategoryMutation,
+  CreateStructureRelationCategoryMutationVariables,
   useCreateInlineGraphMutation,
   useCreateStructureRelationCategoryMutation,
-  useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery
 } from "../api/graphql";
@@ -27,16 +26,22 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateStructur
 
   const [create] = useCreateInlineGraphMutation();
 
-  const submit = useGraphQLDialog(add, { successMessage: "Structure Relation Category created", onSuccess: props.onSuccess });
+  const submit = useGraphQLDialog(add, {
+    successMessage: "Structure Relation Category created",
+    onSuccess: (data) => {
+      if (data) {
+        props.onSuccess?.(data);
+      }
+    },
+  });
 
-  const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
+  const form = useForm<CreateStructureRelationCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
     },
   });
 
   const [searchTags] = useSearchTagsLazyQuery();
-  const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const [search] = useSearchGraphsLazyQuery();
 
@@ -87,30 +92,18 @@ export const TForm = (props: { graph?: string; onSuccess?: (data: CreateStructur
                   />
                   <div className="col-span-2 flex-col gap-1 flex">
                     <GraphQLSearchField
-                      name={`sourceDefinition.tagFilters`}
+                      name={`source.tags`}
                       label="Tag Filters"
                       searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
-                    <GraphQLSearchField
-                      name={`sourceDefinition.categoryFilters`}
-                      label="Category Filters"
-                      searchQuery={searchEntityCategory}
-                      description="Filters for the entity's categories."
+                      description="Filters for the source structure's tags."
                     />
                   </div>
                   <div className="col-span-2 flex-col gap-1 flex">
                     <GraphQLSearchField
-                      name={`targetDefinition.tagFilters`}
+                      name={`target.tags`}
                       label="Tag Filters"
                       searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
-                    <GraphQLSearchField
-                      name={`targetDefinition.categoryFilters`}
-                      label="Category Filters"
-                      searchQuery={searchEntityCategory}
-                      description="Filters for the entity's categories."
+                      description="Filters for the target structure's tags."
                     />
                   </div>
                 </CollapsibleContent>

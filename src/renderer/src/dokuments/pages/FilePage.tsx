@@ -3,14 +3,13 @@ import { Icons } from "@/components/icons";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DokumentsDocument, DokumentsFile, LovekitStream } from "@/linkers";
 import {
   DatabaseIcon,
   DownloadIcon,
   FileIcon,
   FileTextIcon,
-  FolderIcon,
 } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
 import { Separator } from "@/components/ui/separator";

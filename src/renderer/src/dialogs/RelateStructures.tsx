@@ -1,9 +1,9 @@
-import { Structure } from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
+import { Structure } from "@/types";
 import {
   ListStructureRelationCategoryWithGraphFragment,
-  useCreateStructureMutation,
   useCreateStructureRelationMutation,
+  useEnsureStructureMutation,
   useListStructureRelationCategoryQuery
 } from "@/kraph/api/graphql";
 import { toast } from "sonner";
@@ -13,18 +13,13 @@ export const RelateStructures = (props: {
   right: Structure[];
 }) => {
   const { data, error } = useListStructureRelationCategoryQuery({
-    variables: {
-      filters: {
-        sourceIdentifier: props.left.at(0)?.identifier,
-        targetIdentifier: props.right.at(0)?.identifier,
-      },
-    },
+    variables: {},
     fetchPolicy: "network-only",
   });
 
   const { closeDialog } = useDialog();
 
-  const [createStructure] = useCreateStructureMutation({
+  const [ensureStructure] = useEnsureStructureMutation({
     onCompleted: () => {},
     onError: (error) => {
       console.error("Error creating structure:", error);
@@ -42,32 +37,42 @@ export const RelateStructures = (props: {
     category: ListStructureRelationCategoryWithGraphFragment,
   ) => {
     try {
-      const leftStructureString = `${props.left.at(0)?.identifier}:${props.left.at(0)?.object}`;
-      const rightStructureString = `${props.right.at(0)?.identifier}:${props.right.at(0)?.object}`;
+      const leftStructure = props.left.at(0);
+      const rightStructure = props.right.at(0);
 
-      const left = await createStructure({
+      if (!leftStructure || !rightStructure) {
+        throw new Error("Missing source or target structure");
+      }
+
+      const left = await ensureStructure({
         variables: {
           input: {
-            structure: leftStructureString,
+            identifier: leftStructure.identifier,
+            object: leftStructure.object.id,
             graph: category.graph.id,
           },
         },
       });
 
-      const right = await createStructure({
+      const right = await ensureStructure({
         variables: {
           input: {
-            structure: rightStructureString,
+            identifier: rightStructure.identifier,
+            object: rightStructure.object.id,
             graph: category.graph.id,
           },
         },
       });
+
+      if (!left.data || !right.data) {
+        throw new Error("Failed to ensure structures");
+      }
 
       await createSRelation({
         variables: {
           input: {
-            source: left.data?.createStructure.id,
-            target: right.data?.createStructure.id,
+            sourceId: left.data.ensureStructure.id,
+            targetId: right.data.ensureStructure.id,
             category: category.id,
           },
         },

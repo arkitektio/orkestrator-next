@@ -16,7 +16,7 @@ export const UpdateFileForm = (props: { file: FileFragment }) => {
     <>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(async (data) => {
+          onSubmit={form.handleSubmit(async (_data) => {
             console.log("dd");
           })}
         >

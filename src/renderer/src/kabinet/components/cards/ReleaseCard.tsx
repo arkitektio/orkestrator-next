@@ -33,7 +33,7 @@ export const AssignButton = (props: {
   template: ListImplementationFragment;
   release: string;
 }) => {
-  const { assign, latestTask, implementation } = useImplementationAction(
+  const { assign, implementation } = useImplementationAction(
     {
       id: props.template.id,
     },

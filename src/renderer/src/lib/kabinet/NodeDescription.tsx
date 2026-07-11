@@ -5,7 +5,7 @@ function replaceVariablesWithNames(template: string) {
   // This regular expression captures Handlebars expressions {{ variable }}
   const regex = /\{\{([^\{\}]+)\}\}/g;
 
-  return template.replace(regex, function (match, variableName) {
+  return template.replace(regex, function (_match, variableName) {
     // Remove any whitespace and return the variable name
     return variableName.trim();
   });

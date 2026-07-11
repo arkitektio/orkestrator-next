@@ -40,14 +40,14 @@ const Page = asDetailQueryRoute(
 
     return (
       <KraphStructureRelationCategory.ModelPage
-        object={data.structureRelationCategory.id}
+        object={{ id: data.structureRelationCategory.id }}
         title={data?.structureRelationCategory.label}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
                 <KraphStructureRelationCategory.Komments
-                  object={data.structureRelationCategory.id}
+                  object={{ id: data.structureRelationCategory.id }}
                 />
               ),
             }}

@@ -1,33 +1,30 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphPlotView } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  OntologyFilter,
-  useListPlotViewsQuery
-} from "../../api/graphql";
-import PlotViewCard from "../cards/PlotViewCard";
+import { OffsetPaginationInput } from "../../api/graphql";
 
+// NOTE: "PlotView" no longer exists in the current backend schema (no
+// PlotViewFilter / useListPlotViewsQuery / PlotViewCard remain, and grepping
+// graphql.ts for "PlotView" turns up nothing). Nothing in the app currently
+// renders this component. Rather than invent a replacement concept (e.g.
+// silently repointing it at ScatterPlot, which is a distinct surviving type),
+// this is left as an inert placeholder that renders nothing, keeping the file
+// compiling until the concept either comes back under a new name or this
+// component is removed for good.
 export type Props = {
-  filters?: OntologyFilter;
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListPlotViewsQuery({
-    variables: { filters, pagination },
-  });
-
+const List = (_props: Props) => {
   return (
-    <ListRender
-      array={data?.plotViews}
+    <ListRender<never>
+      array={undefined}
       title={
         <KraphPlotView.ListLink className="flex-0">
           Views
         </KraphPlotView.ListLink>
       }
-      refetch={refetch}
     >
-      {(ex, index) => <PlotViewCard key={index} item={ex} />}
+      {() => null}
     </ListRender>
   );
 };

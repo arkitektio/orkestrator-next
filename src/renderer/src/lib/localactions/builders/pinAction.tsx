@@ -33,7 +33,7 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
       identifier: identifierFromSmartOrString(params.identifier),
     },
   ],
-  execute: async ({ services, onProgress, abortSignal, state }) => {
+  execute: async ({ services, onProgress, abortSignal: _abortSignal, state }) => {
     const service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
     if (!service) {
@@ -45,7 +45,7 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
         mutation: params.mutation,
         variables: {
           input: {
-            id: state.left[i].object,
+            id: state.left[i].object.id,
             pin: false,
           },
         },

@@ -21,7 +21,6 @@ export type FittingResponsiveGridProps = {
 
 export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   children,
-  fitLength,
   minItemWidth,
   className,
 }) => {

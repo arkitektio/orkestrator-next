@@ -1,5 +1,5 @@
-import { Action } from '@/actions/action-registry'
-import { buildDeleteAction } from '@/actions/builders/deleteAction'
+import { Action } from '@/lib/localactions/LocalActionProvider'
+import { buildDeleteAction } from '@/lib/localactions/builders/deleteAction'
 import { DeleteRoomDocument } from '@/alpaka/api/graphql'
 
 export const LOVEKIT_ACTIONS: Action[] = [

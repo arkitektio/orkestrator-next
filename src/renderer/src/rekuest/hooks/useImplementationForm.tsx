@@ -37,18 +37,17 @@ const buildDependenciesSchema = (
       Zod.object({
         agent: Zod.string(),
         key: Zod.string(),
-        mappedActions: Zod.array(Zod.any()),
       }),
     ),
   });
 
   // No dependencies defined — allow anything
   if (dependencies.length === 0) {
-    return Zod.array(resolvedDepSchema).optional();
+    return Zod.array(resolvedDepSchema).default([]);
   }
 
   return Zod.array(resolvedDepSchema)
-    .optional()
+    .default([])
     .superRefine((resolved, ctx) => {
       const resolvedArr = resolved ?? [];
 
@@ -107,7 +106,7 @@ export const useImplementationForm = (props: {
   overwrites?: { [key: string]: unknown };
   presetDependencies?: ResolvedDependencyInput[] ;
   doNotAutoReset?: boolean;
-  additionalSchema?: Zod.ZodObject<unknown>;
+  additionalSchema?: Zod.ZodObject<Zod.ZodRawShape>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
   reValidateMode?: "onChange" | "onBlur" | "onSubmit";
 }) => {

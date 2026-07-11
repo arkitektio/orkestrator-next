@@ -1,6 +1,6 @@
 import { RekuestSpace } from "@/linkers";
 import SpacesList from "../components/lists/SpacesList";
-import { useCreateSpaceMutation, SpacesDocument } from "../api/graphql";
+import { useCreateSpaceMutation } from "../api/graphql";
 import { Button } from "@/components/ui/button";
 
 const Page = () => {

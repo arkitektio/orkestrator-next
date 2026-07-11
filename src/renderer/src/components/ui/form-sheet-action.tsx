@@ -1,31 +1,16 @@
-import { Action, useAction } from "@/providers/command/CommandContext";
 import React, { useCallback, useState } from "react";
 import { FormDialogContext } from "../dialog/FormDialog";
 import { Button, ButtonProps } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 
-export type FormDialogActionProps = Omit<Action, "run"> &
-  ButtonProps & {
+export type FormDialogActionProps = {
+  label?: React.ReactNode;
+} & ButtonProps & {
     children: React.ReactNode;
     buttonChildren?: React.ReactNode;
     onSubmit?: (v: any) => void;
     onError?: (err: any) => void;
   };
-
-export type Defered = {
-  resolve: (any: any) => void;
-  reject: (any: any) => void;
-};
-
-const createDefered = (): [Promise<any>, Defered] => {
-  let resolve: any;
-  let reject: any;
-  const promise = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return [promise, { resolve, reject } as Defered];
-};
 
 /**
  *  A form dialog action component.
@@ -34,9 +19,6 @@ const createDefered = (): [Promise<any>, Defered] => {
  * This component creates a button that will cause a dialog to open when clicked.
  * This dialog is wrapped in a form context provider, so that any form components
  * inside the dialog can be used to submit a form.
- *
- * Additionally, the dialog is runnable and registered with the command provider,
- * so that it can be opened by a command.
  *
  * @component
  */
@@ -48,36 +30,10 @@ export const FormSheetAction: React.FC<FormDialogActionProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  const [defered, setDefered] = useState<Defered | undefined>(undefined);
-
-  useAction({
-    run: async (state) => {
-      console.log("run");
-
-      setOpen(true);
-
-      const [promise, defered] = createDefered();
-      setDefered(defered);
-      try {
-        const x = await promise;
-        setDefered(undefined);
-        return x;
-      } catch (e) {
-        setDefered(undefined);
-        alert(e);
-        throw e;
-      }
-    },
-    ...props,
-  });
-
   const bonSubmit = useCallback(
     (v: any) => {
       console.log("submit");
       setOpen(false);
-      if (defered) {
-        defered.resolve(v);
-      }
       onSubmit?.(v);
     },
     [setOpen, onSubmit],
@@ -87,9 +43,6 @@ export const FormSheetAction: React.FC<FormDialogActionProps> = ({
     (e: any) => {
       console.log("error", e);
       setOpen(false);
-      if (defered) {
-        defered.reject(e);
-      }
       onError?.(e);
     },
     [setOpen, onError],

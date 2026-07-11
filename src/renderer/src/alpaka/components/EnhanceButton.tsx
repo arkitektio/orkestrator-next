@@ -50,7 +50,7 @@ export const EnhanceButton = (props: EnhanceButtonProps) => {
 
   const { assign } = useAssignWithCallback({
     onDone: () => {
-      props.refetch();
+      props.refetch?.();
     }
   });
   const { openDialog } = useDialog();

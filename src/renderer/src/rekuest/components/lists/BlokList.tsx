@@ -12,8 +12,8 @@ export type Props = {
   pagination?: OffsetPaginationInput;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListBloksQuery({});
+const List = (_props: Props) => {
+  const { data, refetch } = useListBloksQuery({});
 
   return (
     <ListRender
@@ -21,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
       title={
         <RekuestBlok.ListLink className="flex-0">Bloks</RekuestBlok.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
       {(ex, index) => <BlokCard key={index} item={ex} />}
     </ListRender>

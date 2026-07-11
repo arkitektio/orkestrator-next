@@ -43,7 +43,7 @@ interface Props { }
 
 export const KraphModule: React.FC<Props> = () => {
   return (
-    <Guard.Mikro fallback={<>Loading</>}>
+    <Guard.Mikro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />

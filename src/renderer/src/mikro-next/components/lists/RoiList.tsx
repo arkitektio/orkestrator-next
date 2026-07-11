@@ -14,7 +14,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetRoIsQuery({
+  const { data, refetch } = useGetRoIsQuery({
     variables: { filters, pagination, ordering: [{ createdAt: Ordering.Desc }] },
   });
 
@@ -31,7 +31,7 @@ const List = ({ filters, pagination }: Props) => {
       actions={<MikroROI.NewButton minimal />}
       refetch={refetch}
     >
-      {(ex, index) => <RoiCard key={ex.id} item={ex} />}
+      {(ex) => <RoiCard key={ex.id} item={ex} />}
     </ListRender>
   );
 };

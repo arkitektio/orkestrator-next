@@ -5,14 +5,16 @@ import { useDetailActionQuery } from "../api/graphql";
 export const ActionDisplay = (props: DisplayWidgetProps) => {
   const { data } = useDetailActionQuery({
     variables: {
-      id: props.value,
+      id: props.object,
     },
   });
 
+  if (!data?.action) return null;
+
   return (
-    <RekuestAction.DetailLink object={props.value}>
-      <p className="text-xl">{data?.action?.name}</p>
-      <p className="text-sm">{data?.action?.description}</p>
+    <RekuestAction.DetailLink object={data.action}>
+      <p className="text-xl">{data.action.name}</p>
+      <p className="text-sm">{data.action.description}</p>
     </RekuestAction.DetailLink>
   );
 };

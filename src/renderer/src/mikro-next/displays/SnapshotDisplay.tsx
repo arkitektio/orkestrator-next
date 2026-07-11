@@ -1,4 +1,3 @@
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 import { DisplayWidgetProps } from "@/lib/display/registry";
 import { MikroSnapshot } from "@/linkers";
@@ -10,8 +9,6 @@ export const TDisplay = (props: DisplayWidgetProps) => {
       id: props.object,
     },
   });
-
-  const s3resolve = useResolve();
 
   return (
     <MikroSnapshot.DetailLink object={{ id: props.object }}>

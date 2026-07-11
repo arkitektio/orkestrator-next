@@ -3,7 +3,6 @@ import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { KraphGraph } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useNavigate } from "react-router-dom";
 import {
   useGetGraphQuery,
   useUpdateGraphMutation,
@@ -15,7 +14,6 @@ import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const navigate = useNavigate();
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });

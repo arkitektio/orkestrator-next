@@ -14,7 +14,7 @@ export const Test = () => {
 };
 
 export const PopularCarousel = ({ }) => {
-  const { data, error, subscribeToMore, refetch } = useTracesQuery({
+  const { data } = useTracesQuery({
     variables: {},
   });
 

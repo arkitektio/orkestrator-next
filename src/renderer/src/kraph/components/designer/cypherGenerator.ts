@@ -3,10 +3,8 @@ import { Path, WhereCondition, ReturnColumn, NodeWhereClause } from './OntologyG
 import {
   ColumnInput,
   ColumnKind,
-  ValueKind,
-  MatchPathInput,
-  WhereClauseInput,
-  WhereOperator
+  CreateGraphTableQueryInput,
+  ValueKind
 } from '@/kraph/api/graphql'
 
 export interface EnrichedPath {
@@ -57,28 +55,33 @@ function getRelationshipVariable(index: number, relationType: string): string {
  * Generates a Cypher label from node type
  */
 function getNodeLabel(node: MyNode): string {
-  return node.data.ageName
+  // Staging nodes (not yet persisted) carry a create-input shape that has no
+  // ageName yet; fall back to the node id in that case.
+  return node.data && 'ageName' in node.data ? node.data.ageName : node.id
 }
 
 /**
  * Generates a Cypher relationship type from edge type
  */
 function getRelationshipType(edge: MyEdge): string {
+  const ageName = edge.data && 'ageName' in edge.data ? edge.data.ageName : undefined
+  const role = edge.data && 'role' in edge.data ? edge.data.role : undefined
+
   switch (edge.type) {
     case 'measurement':
-      return edge.data?.ageName || 'MEASURED_BY'
+      return ageName || 'MEASURED_BY'
     case 'relation':
-      return edge.data?.ageName || 'RELATED_TO'
+      return ageName || 'RELATED_TO'
     case 'structure_relation':
       return 'STRUCTURE_RELATION'
     case 'reagentrole':
-      return edge.data?.role || 'PARTICIPATES'
+      return role || 'PARTICIPATES'
     case 'entityrole':
-      return edge.data?.role || 'PARTICIPATES'
+      return role || 'PARTICIPATES'
     case 'describe':
       return 'DESCRIBES'
     default:
-      return edge.data?.ageName || 'CONNECTED_TO'
+      return ageName || 'CONNECTED_TO'
   }
 }
 
@@ -482,123 +485,27 @@ export function generateUnifiedCypherQueryWithColumns(
 }
 
 /**
- * Maps WHERE operator string to WhereOperator enum
+ * Generates a URL/key-safe slug from a human-readable name
  */
-function mapWhereOperator(operator: string): WhereOperator {
-  switch (operator) {
-    case '=':
-      return WhereOperator.Equals
-    case '!=':
-      return WhereOperator.NotEquals
-    case '>':
-      return WhereOperator.GreaterThan
-    case '<':
-      return WhereOperator.LessThan
-    case '>=':
-      return WhereOperator.GreaterThanOrEqual
-    case '<=':
-      return WhereOperator.LessThanOrEqual
-    case 'CONTAINS':
-      return WhereOperator.Contains
-    case 'STARTS WITH':
-      return WhereOperator.StartsWith
-    case 'ENDS WITH':
-      return WhereOperator.EndsWith
-    default:
-      return WhereOperator.Equals
-  }
+function slugifyKey(name: string): string {
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'query'
+  )
 }
 
 /**
- * Generates MatchPathInput array from paths
- */
-function generateMatchPathInputs(enrichedPaths: EnrichedPath[]): MatchPathInput[] {
-  return enrichedPaths.map((ep) => {
-    const { path } = ep
-
-    // Build the full path by interleaving nodes and relations
-    const fullPath: string[] = []
-    for (let i = 0; i < path.nodes.length; i++) {
-      fullPath.push(path.nodes[i])
-      if (i < path.relations.length) {
-        fullPath.push(path.relations[i])
-      }
-    }
-
-    return {
-      relations: fullPath,
-      nodes: path.nodes,
-      relationDirections: path.relationDirections || [],
-      optional: path.optional || false,
-      title: path.title,
-      color: path.color // Already in RGB format
-    }
-  })
-}
-
-/**
- * Generates WhereClauseInput array from where clauses
- */
-function generateWhereClauseInputs(
-  globalWhereClauses: NodeWhereClause[] | undefined,
-  enrichedPaths: EnrichedPath[]
-): WhereClauseInput[] {
-  const whereInputs: WhereClauseInput[] = []
-  const nodeMap = buildNodeMapping(enrichedPaths, [] as MyNode[])
-
-  // Use global WHERE clauses if provided
-  if (globalWhereClauses && globalWhereClauses.length > 0) {
-    globalWhereClauses.forEach((whereClause) => {
-      whereClause.conditions.forEach((condition) => {
-        // Find first occurrence of this node
-        const mapping = Array.from(nodeMap.values()).find((m) => m.nodeId === whereClause.nodeId)
-
-        if (mapping) {
-          whereInputs.push({
-            path: whereClause.nodeId,
-            node: whereClause.nodeId,
-            property: condition.property,
-            operator: mapWhereOperator(condition.operator),
-            value: String(condition.value)
-          })
-        }
-      })
-    })
-  } else {
-    // Fallback to path-specific WHERE clauses
-    enrichedPaths.forEach((ep) => {
-      if (ep.path.whereClauses && ep.path.whereClauses.length > 0) {
-        ep.path.whereClauses.forEach((whereClause) => {
-          whereClause.conditions.forEach((condition) => {
-            whereInputs.push({
-              path: whereClause.nodeId,
-              node: whereClause.nodeId,
-              property: condition.property,
-              operator: mapWhereOperator(condition.operator),
-              value: String(condition.value)
-            })
-          })
-        })
-      }
-    })
-  }
-
-  return whereInputs
-}
-
-/**
- * Generates ReturnInput array from return columns
- */
-function generateReturnInputs(returnColumns: ReturnColumn[]): ReturnInput[] {
-  return returnColumns.map((col) => ({
-    path: col.nodeId,
-    node: col.nodeId,
-    property: col.property
-  }))
-}
-
-/**
- * Generates a GraphQueryInput for creating/updating a graph query
+ * Generates a GraphQueryInput for creating/updating a graph query.
+ *
+ * Note: the backend schema no longer exposes the builder-derived `matches` /
+ * `wheres` / `returns` / `kind` fields on CreateGraphTableQueryInput /
+ * UpdateGraphTableQueryInput (those concepts moved to
+ * CreateGraphTableQueryThroughBuilderInput, which is not used by the
+ * QueryBuilderGraph create/update flow). Only the generated Cypher query and
+ * column definitions are sent now.
  */
 export function generateGraphQueryInput(
   enrichedPaths: EnrichedPath[],
@@ -608,7 +515,7 @@ export function generateGraphQueryInput(
   name: string,
   description?: string,
   globalWhereClauses?: NodeWhereClause[]
-): GraphQueryInput {
+): CreateGraphTableQueryInput {
   // Generate the Cypher query
   const query = generateUnifiedCypherQueryWithColumns(
     enrichedPaths,
@@ -632,9 +539,10 @@ export function generateGraphQueryInput(
 
     if (!node) {
       columns.push({
-        name: col.alias || col.property,
+        key: col.alias || col.property,
         kind: ColumnKind.Value,
-        label: col.alias || col.property
+        label: col.alias || col.property,
+        type: ValueKind.String
       })
       return
     }
@@ -646,26 +554,26 @@ export function generateGraphQueryInput(
 
       // Determine column kind based on property
       let columnKind = ColumnKind.Value
-      let valueKind: ValueKind | undefined = undefined
-      let idfor: string[] | undefined = undefined
+      let valueType: ValueKind = ValueKind.String
+      let isIdForKey: string | undefined = undefined
 
       if (col.property === 'id') {
         columnKind = ColumnKind.Node
         // Use idfor from column if provided, otherwise default to nodeId
-        idfor = col.idfor || [col.nodeId]
-      } else if (col.property === 'ValueKind') {
+        isIdForKey = col.idfor?.[0] || col.nodeId
+      } else if (col.property === 'valueKind') {
         columnKind = ColumnKind.Value
       } else if (col.property === 'label' || col.property === 'identifier') {
         columnKind = ColumnKind.Value
       }
 
       // Try to infer ValueKind if it's a metric node
-      if (node.type === 'metriccategory' && nodeData?.ValueKind) {
-        valueKind = nodeData.ValueKind as ValueKind
+      if (node.type === 'metriccategory' && nodeData?.valueKind) {
+        valueType = nodeData.valueKind as ValueKind
       }
 
       // Use variable name when multiple occurrences, otherwise use alias or variable_property
-      const name =
+      const key =
         matchingMappings.length > 1
           ? `${mapping.variable}_${col.property}`
           : col.alias || `${mapping.variable}_${col.property}`
@@ -676,38 +584,25 @@ export function generateGraphQueryInput(
           : col.alias || col.property
 
       columns.push({
-        name,
+        key,
         kind: columnKind,
         label,
         description: `${col.property} from ${mapping.name} (${mapping.variable})`,
-        valueKind,
-        idfor,
+        type: valueType,
+        isIdForKey,
         searchable: col.property === 'label' || col.property === 'identifier'
       })
     })
   })
 
-  // Determine view kind based on columns
-  let kind = ViewKind.Table
-  if (returnColumns.length === 0) {
-    kind = ViewKind.NodeList
-  }
-
-  // Generate matches, wheres, and returns
-  const matches = generateMatchPathInputs(enrichedPaths)
-  const wheres = generateWhereClauseInputs(globalWhereClauses, enrichedPaths)
-  const returns = generateReturnInputs(returnColumns)
-
   return {
     graph: graphId,
+    key: slugifyKey(name),
     name,
     description: description || `Generated query: ${name}`,
     query,
-    kind,
-    columns: columns.length > 0 ? columns : undefined,
-    matches: matches.length > 0 ? matches : undefined,
-    wheres: wheres.length > 0 ? wheres : undefined,
-    returns: returns.length > 0 ? returns : undefined
+    cypher: query,
+    columnInput: columns.length > 0 ? columns : undefined
   }
 }
 

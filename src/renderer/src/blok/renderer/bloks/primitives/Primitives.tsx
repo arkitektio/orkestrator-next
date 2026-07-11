@@ -101,9 +101,9 @@ type BaseLayoutBlok = {
   height?: BlokPropHandle<typeof sizeSchema>;
   minHeight?: BlokPropHandle<typeof sizeSchema>;
   maxHeight?: BlokPropHandle<typeof sizeSchema>;
-  background?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
-  color?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
-  borderColor?: BlokPropHandle<z.ZodOptional<z.ZodString>>;
+  background?: BlokPropHandle<z.ZodOptional<typeof BlokPropSchemas.DynamicString>>;
+  color?: BlokPropHandle<z.ZodOptional<typeof BlokPropSchemas.DynamicString>>;
+  borderColor?: BlokPropHandle<z.ZodOptional<typeof BlokPropSchemas.DynamicString>>;
   radius?: BlokPropHandle<typeof sizeSchema>;
   overflow?: BlokPropHandle<typeof overflowSchema>;
   grow?: BlokPropHandle<typeof numberSchema>;

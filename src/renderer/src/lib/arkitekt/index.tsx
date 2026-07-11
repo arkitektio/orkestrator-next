@@ -111,7 +111,7 @@ export const buildArkitekt = <T extends ServiceBuilderMap, S extends ServiceBuil
       const service = useService(serviceKey as string);
       return service?.alias;
     },
-    useSelfService: () => useSelfService(),
+    useSelfService: (): ReturnType<S> => useSelfService() as ReturnType<S>,
     useSelf: () => useArkitektStore((s) => s.connection?.fakts.self),
     useAutoLoginError: (): AppContext<T>["autoLoginError"] => useArkitektStore((s) => s.autoLoginError),
     useAvailableServices: useAvailableServices,

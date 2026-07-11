@@ -12,9 +12,9 @@ const TheCard = ({ item }: Props) => {
     <LokServiceInstance.Smart object={item} >
       <Card className="p-3 flex flex-col">
         <LokServiceInstance.DetailLink object={item} className="">
-          {item.identifier}
+          {item.release.service.identifier}
         </LokServiceInstance.DetailLink>
-        <div className="text-xs">configured for {item.service.id}</div>
+        <div className="text-xs">configured for {item.release.service.id}</div>
       </Card>
     </LokServiceInstance.Smart>
   );

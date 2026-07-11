@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   RelationCategoryFragment,
-  UpdateMetricCategoryMutationVariables,
+  UpdateRelationCategoryMutationVariables,
   useSearchTagsLazyQuery,
   useUpdateRelationCategoryMutation
 } from "../api/graphql";
@@ -21,9 +21,10 @@ const TForm = (props: { relationCategory: RelationCategoryFragment }) => {
 
   const dialog = useGraphQlFormDialog(update);
 
-  const form = useForm<UpdateMetricCategoryMutationVariables["input"]>({
+  const form = useForm<UpdateRelationCategoryMutationVariables["input"]>({
     defaultValues: {
       id: props.relationCategory.id,
+      key: props.relationCategory.key,
       label: props.relationCategory.label,
       description: props.relationCategory.description,
       tags: props.relationCategory.tags.map((tag) => tag.id),
@@ -57,11 +58,6 @@ const TForm = (props: { relationCategory: RelationCategoryFragment }) => {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
               />
               <GraphQLListSearchField
                 searchQuery={searchTags}

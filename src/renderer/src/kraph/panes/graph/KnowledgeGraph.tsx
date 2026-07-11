@@ -1,7 +1,8 @@
-import ReactFlow, {
+import {
   Background,
   EdgeTypes,
   NodeTypes,
+  ReactFlow,
   ReactFlowProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";

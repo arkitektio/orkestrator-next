@@ -4,9 +4,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   useInternalNode,
-  useStore,
   type EdgeProps,
-  type ReactFlowState,
 } from "@xyflow/react";
 import { RelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
@@ -30,7 +28,7 @@ export const getSpecialPath = (
 };
 
 export default ({
-  id,
+  id: _id,
   data,
   source,
   target,
@@ -38,23 +36,12 @@ export default ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
+  sourcePosition: _sourcePosition,
+  targetPosition: _targetPosition,
   markerEnd,
 }: EdgeProps<RelationEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
-
-  const theEdges = useStore((s: ReactFlowState) => {
-    const edgeExists = s.edges.filter(
-      (e) =>
-        (e.source === source && e.target === target) ||
-        (e.target === source && e.source === target),
-    );
-    return edgeExists;
-  });
-
-  const myIndex = theEdges.findIndex((e) => e.id == id) || 0;
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
@@ -90,11 +77,11 @@ export default ({
           className="p-1 text-xs group nodrag nopan transition-opacity"
         >
           <KraphRelationCategory.Smart
-            object={data?.id || "0"}
+            object={{ id: data?.id || "0" }}
             className="w-20"
           >
             {data?.id && (
-              <KraphRelationCategory.DetailLink object={data?.id}>
+              <KraphRelationCategory.DetailLink object={{ id: data.id }}>
                 {data?.label}
               </KraphRelationCategory.DetailLink>
             )}

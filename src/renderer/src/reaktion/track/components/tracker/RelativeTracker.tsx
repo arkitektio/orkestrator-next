@@ -14,17 +14,19 @@ import { useTrackRiver } from "../../context";
 export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
   const { setRunState } = useTrackRiver();
 
-  const [t, setT] = useState<Date | undefined>();
+  const [t, setT] = useState<number | undefined>();
   const [play, setPlay] = useState(false);
   const [triggerRange, setTriggerRange] = useState({ min: 0, max: 10 });
 
-  const [range, setRange] = useState<{ min: Date; max: Date; marks: Date[] }>(
-    () => ({
-      min: new Date(),
-      max: new Date(),
-      marks: [],
-    }),
-  );
+  const [range, setRange] = useState<{
+    min: number;
+    max: number;
+    marks: number[];
+  }>(() => ({
+    min: 0,
+    max: 0,
+    marks: [],
+  }));
 
   const [rangeEvents, setRangeEvents] = useState<
     (RunEventFragment | null | undefined)[]
@@ -34,7 +36,7 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
 
   useEffect(() => {
     const newEvents = rangeEvents?.reduce((prev, event) => {
-      if (t && event && new Date(event.createdAt) <= t) {
+      if (t !== undefined && event && event.t <= t) {
         const prev_node = prev?.find((i) => i.source === event?.source);
         if (prev_node) {
           if (prev_node.t <= event.t) {
@@ -48,45 +50,52 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
     }, [] as RunEventFragment[]);
 
     console.log(newEvents);
-    setRunState({ t: t, events: newEvents });
+    setRunState({ t: t ?? 0, events: newEvents });
   }, [rangeEvents, t]);
 
   useEffect(() => {
-    if (play) {
-      const interval = setInterval(() => {
-        setT((t) => (t > range.max ? 0 : t + 1));
-      }, 1000);
-      return () => clearInterval(interval);
+    if (!play) {
+      return;
     }
+    const interval = setInterval(() => {
+      setT((t) => (t === undefined || t > range.max ? 0 : t + 1));
+    }, 1000);
+    return () => clearInterval(interval);
   }, [play, range]);
 
   useEffect(() => {
     const array = run?.snapshots
-      ?.map((snapshot) => new Date(snapshot.createdAt))
-      .sort((a, b) => (a > b ? 1 : 0)) || [0, 100];
+      ?.map((snapshot) => snapshot.t)
+      .sort((a, b) => a - b) || [0, 100];
     console.log("Snapshots", array);
 
     setRange({
-      min: array.at(0),
-      max: array.at(-1),
+      min: array.at(0) ?? 0,
+      max: array.at(-1) ?? 0,
       marks: array,
     });
-    if (!t) {
+    if (t === undefined) {
       setT(array.at(-1));
     }
   }, [run?.snapshots]);
 
   useEffect(() => {
+    if (t === undefined) {
+      return;
+    }
     if (t > triggerRange.max || t < triggerRange.min) {
       setTriggerRange({ min: t, max: t + 80 });
     }
   }, [t, triggerRange]);
 
   useEffect(() => {
+    if (t === undefined) {
+      return;
+    }
     console.log("Changing t", t);
     setRunState((state) => ({
-      t: t,
-      events: state?.events?.filter((event) => event && event?.t <= t),
+      t,
+      events: state?.events?.filter((event) => event && event.t <= t),
     }));
   }, [t]);
 
@@ -122,7 +131,7 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
         <Card
           className="group-hover:opacity-100 opacity-0 absolute w-20 h-13 p-1  translate-x-[-50%] translate-y-[-120%] flex items-center justify-center bg-gray-900 dark:bg-gray-800 rounded-md shadow-md"
           style={{
-            left: `${((t - range.min) / (range.max - range.min)) * 100}%`,
+            left: `${(((t ?? 0) - range.min) / (range.max - range.min)) * 100}%`,
           }}
         >
           <Timestamp
@@ -140,7 +149,7 @@ export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
           onValueChange={(val) => {
             setT(val[0]), setPlay(false);
           }}
-          value={[t]}
+          value={[t ?? 0]}
         />
       </div>
     </div>

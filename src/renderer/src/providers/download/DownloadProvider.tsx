@@ -55,7 +55,7 @@ const trimFinishedDownloads = (downloads: DownloadTask[]): DownloadTask[] => {
 };
 
 export const createDownloadStore = () =>
-  createStore<DownloadProps>((set, get) => ({
+  createStore<DownloadProps>((set) => ({
     downloads: [],
     startDownload: async <T,>(
       fileName: string,
@@ -214,7 +214,11 @@ const DownloadOverlay: React.FC = () => {
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
                     </>
                   )}
-                  {d.status === "error" && <AlertCircle className="h-4 w-4 text-red-500" title={d.error} />}
+                  {d.status === "error" && (
+                    <span title={d.error}>
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    </span>
+                  )}
                   {(d.status === "downloading" || d.status === "pending") && (
                     <button onClick={() => cancelDownload(d.id)} className="text-muted-foreground hover:text-foreground">
                       <X className="h-4 w-4" />

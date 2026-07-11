@@ -86,7 +86,7 @@ export const useSmartDropZone = ({
     syncAttribute(nodeRef.current, "data-over", isOver ? "true" : "false");
     syncAttribute(nodeRef.current, "data-can-drop", canDrop ? "true" : "false");
     syncAttribute(nodeRef.current, "data-identifier", identifier);
-    syncAttribute(nodeRef.current, "data-object", object);
+    syncAttribute(nodeRef.current, "data-object", object.id);
   }, [canDrop, identifier, isOver, object]);
 
   const ref = React.useCallback(
@@ -100,7 +100,7 @@ export const useSmartDropZone = ({
       }
 
       syncAttribute(node, "data-identifier", identifier);
-      syncAttribute(node, "data-object", object);
+      syncAttribute(node, "data-object", object.id);
       syncAttribute(node, "data-over", isOver ? "true" : "false");
       syncAttribute(node, "data-can-drop", canDrop ? "true" : "false");
     },

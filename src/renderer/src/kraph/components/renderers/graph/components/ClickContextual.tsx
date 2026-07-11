@@ -125,9 +125,9 @@ const ClickReactiveNodes = (props: {
   );
 };
 
-export const ClickContextual = (props: {}) => {
+export const ClickContextual = (_props: {}) => {
   const [search, setSearch] = useState<string | undefined>(undefined);
-  const [localSearch, setLocalSearch] = useState<string | undefined>(undefined);
+  const [, setLocalSearch] = useState<string | undefined>(undefined);
   const [registration, setRegistration] = useState<Registration | undefined>(
     undefined,
   );

@@ -4,7 +4,6 @@ import {
   useMemoryShelveQuery,
 } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
-import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";
 
 export const MemoryStructureWidget = (
@@ -21,25 +20,28 @@ export const MemoryStructureWidget = (
 
   const { data, error } = useMemoryShelveQuery({
     variables: {
-      template: props.bound,
+      id: props.port.key,
     },
   });
 
   const search = useCallback(
     async (searching: SearchOptions) => {
       console.log("Searching", searching);
+      const drawers = data?.memoryShelve.drawers.filter(notEmpty) || [];
+
+      let filtered = drawers;
       if (searching.search) {
-        return data?.memoryShelve.drawers
-          .filter(notEmpty)
-          .filter((c) => c.label?.startsWith(searching.search || ""));
-      }
-      if (searching.values) {
+        filtered = drawers.filter((c) =>
+          c.label?.startsWith(searching.search || ""),
+        );
+      } else if (searching.values) {
         console.log("Searching", searching.values);
-        return data?.memoryShelve.drawers
-          .filter(notEmpty)
-          .filter((c) => searching.values?.includes(c.resourceId));
+        filtered = drawers.filter((c) =>
+          searching.values?.includes(c.resourceId),
+        );
       }
-      return data?.memoryShelve.drawers
+
+      return filtered.map((c) => ({ label: c.label, value: c.resourceId }));
     },
     [data],
   );
@@ -47,7 +49,7 @@ export const MemoryStructureWidget = (
   return (
     <>
       <SearchField
-        name={pathToName(props.path)}
+        name={props.port.key}
         label={props.port.label || props.port.key}
         search={search}
         description={props.port.description || undefined}

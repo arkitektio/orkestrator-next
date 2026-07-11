@@ -13,10 +13,10 @@ export const Keybutton = ({
   key: string;
   registerKey: string;
 }) => {
-  const ref = React.useRef(null);
+  const ref = React.useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === registerKey && ref.current) {
         ref.current.click();
         window.removeEventListener("keydown", handleKeyDown);

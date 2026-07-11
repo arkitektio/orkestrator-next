@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { CreateProjectMutation, CreateProjectMutationVariables, useCreateProjectMutation } from "../api/graphql";
 
-export const CreateProjectForm = (props: { onSuccess?: (data: CreateProjectMutation) => void }) => {
+export const CreateProjectForm = (props: { onSuccess?: (data: CreateProjectMutation | null | undefined) => void }) => {
   const [add] = useCreateProjectMutation();
 
   const submit = useGraphQLDialog(add, { successMessage: "Project created", onSuccess: props.onSuccess });

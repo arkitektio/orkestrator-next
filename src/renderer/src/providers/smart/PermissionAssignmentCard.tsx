@@ -1,14 +1,8 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  UserOptionsQuery,
-  useUserOptionsLazyQuery,
-} from "@/lok-next/api/graphql";
-import {
-  PermissionOptionsQuery,
-  usePermissionOptionsLazyQuery,
-} from "@/mikro-next/api/graphql";
+import { useUserOptionsLazyQuery } from "@/lok-next/api/graphql";
+import { usePermissionOptionsLazyQuery } from "@/mikro-next/api/graphql";
 import { useCallback } from "react";
 
 type Props = {
@@ -42,13 +36,13 @@ export const PermissionAssignmentCard = ({
 
   return (
     <Card className="p-2 flex flex-col gap-2">
-      <GraphQLSearchField<UserOptionsQuery>
+      <GraphQLSearchField
         searchQuery={searchUsers}
         label="User"
         placeholder="Search for a user"
         name={`assignments.${index}.user`}
       />
-      <GraphQLSearchField<PermissionOptionsQuery>
+      <GraphQLSearchField
         searchQuery={searchPermissions}
         label="Permission"
         placeholder="Search for a permission"

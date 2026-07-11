@@ -8,10 +8,10 @@ export const LOK_ACTIONS = {
     icon: Bell,
     conditions: [{ type: 'identifier', identifier: '@lok/user' }, { type: 'nopartner' }],
     collections: ['notify'],
-    execute: async ({ state, services, dialog }) => {
+    execute: async ({ state, dialog }) => {
       const users = state.left
         .filter((item) => item.identifier === '@lok/user')
-        .map((item) => item.object)
+        .map((item) => item.object.id)
 
       dialog.openDialog('notifyusers', { users })
     }
@@ -22,10 +22,10 @@ export const LOK_ACTIONS = {
     icon: Building2,
     conditions: [{ type: 'identifier', identifier: '@lok/user' }, { type: 'nopartner' }],
     collections: ['notify'],
-    execute: async ({ state, services, dialog }) => {
+    execute: async ({ state, dialog }) => {
       const users = state.left
         .filter((item) => item.identifier === '@lok/user')
-        .map((item) => item.object)
+        .map((item) => item.object.id)
 
       dialog.openSheet('addusertoorganization', { users }, { className: 'max-w-4xl' })
     }

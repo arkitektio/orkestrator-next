@@ -46,7 +46,7 @@ export const InStream: React.FC<{
           >
             <div className="grid grid-cols-1 gap-4">
               {stream.length > 0 ? (
-                stream?.map((s, index) => (
+                stream?.map((s) => (
                   <div className="flex flex-row gap-2 justify-between">
                     <div className="ml-auto text-right">
                       <h4 className="font-medium leading-none">{s?.key}</h4>

@@ -126,7 +126,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                   <AgentProvider disabled={false}>
                                     <WardRegistrar />
                                     <BuiltinDashboardWidgets />
-                                    <Guard.Rekuest fallback={<></>}>
+                                    <Guard.Rekuest unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <TaskUpdater />
                                       <TaskNotificationStack />
                                       <AgentUpdater />
@@ -135,7 +135,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       <TaskHookRunner />
                                     </Guard.Rekuest>
                                     <Toaster />
-                                    <Guard.Mikro fallback={<></>}>
+                                    <Guard.Mikro unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <MikroDashboardWidgets />
                                       <LatestImagesDashboardWidget />
                                     </Guard.Mikro>

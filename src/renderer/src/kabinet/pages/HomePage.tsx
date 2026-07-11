@@ -1,7 +1,8 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Separator } from "@/components/ui/separator";
 
-import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
+import { asParamlessRoute, HookFunction } from "@/app/routes/ParamlessRoute";
+import { OperationVariables } from "@apollo/client";
 import { CommandMenu } from "@/command/Menu";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { HelpSidebar } from "@/components/sidebars/help";
@@ -15,6 +16,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import {
+  HomePageQuery,
   ListDefinitionsDocument,
   ListReleasesDocument,
   useHomePageQuery,
@@ -26,8 +28,17 @@ import RepoList from "../components/lists/RepoList";
 import ReleasesList from "../components/lists/ReleasesList";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
+// The generated `useHomePageQuery` takes no variables at all (`Exact<{}>`),
+// which is too narrow for `asParamlessRoute`'s generic `HookFunction` (it is
+// invoked with a generic `OperationVariables` options object). The runtime
+// shape is unaffected: options are always `{}` for this query.
+const useHomePageQueryAsHookFunction = useHomePageQuery as unknown as HookFunction<
+  HomePageQuery,
+  OperationVariables
+>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
+const Page = asParamlessRoute(useHomePageQueryAsHookFunction, ({ data }: { data: any }) => {
   const [rescan, { loading }] = useRescanReposMutation({
     refetchQueries: [ListReleasesDocument, ListDefinitionsDocument],
   });
@@ -53,8 +64,6 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
           </>
 
           <Button
-
-            label="Rescan Repos"
             onClick={async () => {
               await rescan();
             }}

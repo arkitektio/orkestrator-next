@@ -74,7 +74,7 @@ export const LatestMentionsSection = () => {
             </div>
             <div className="flex-1 min-w-0">
               <LokComment.DetailLink
-                object={mention.id}
+                object={mention}
                 className="block hover:text-foreground"
               >
                 <div className="mb-2">

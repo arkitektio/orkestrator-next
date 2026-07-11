@@ -29,7 +29,11 @@ const Page = () => {
         variant={"outline"}
         size={"sm"}
         dialogProps={{
-          onSuccess: (data) => navigate(OmeroArkProject.linkBuilder(data.createProject.id)),
+          onSuccess: (data) => {
+            if (data?.createProject) {
+              navigate(OmeroArkProject.linkBuilder(data.createProject.id));
+            }
+          },
         }}
       >
         <PlusIcon className="h-4 w-4 mr-2" />

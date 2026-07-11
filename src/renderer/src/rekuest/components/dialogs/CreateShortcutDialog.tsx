@@ -26,7 +26,6 @@ import { Port, PortGroup } from "@/rekuest/widgets/types";
 import React, { useMemo } from "react";
 import * as z from "zod";
 import {
-  useAgentOptionsLazyQuery,
   useCreateShortcutMutation,
   useDetailActionQuery,
 } from "../../api/graphql";
@@ -111,6 +110,7 @@ const ArgsContainer = ({
               {group.filledPorts.map((port, index) => {
                 const Widget = registry.getInputWidgetForPort(port);
                 if (hidden && hidden[port.key]) return null;
+                if (!port.widget) return null;
 
                 return (
                   <div className="w-full flex flex-row items-center space-x-2">
@@ -159,8 +159,6 @@ export const CreateShortcutDialog = (props: {
 
   const action = actiondata?.action;
 
-  const [search] = useAgentOptionsLazyQuery();
-
   const [chosenArgs, setChosenArgs] = React.useState<string[]>([]);
 
   const form = usePortForm({
@@ -191,7 +189,7 @@ export const CreateShortcutDialog = (props: {
         },
       },
     }).then(
-      (res) => {
+      () => {
         closeDialog();
       },
       (err) => {

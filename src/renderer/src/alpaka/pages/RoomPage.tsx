@@ -1,8 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DisplayWidget } from "@/command/Menu";
 import { AlpakaRoom } from "@/linkers";
 import { useEffect } from "react";
 import {
@@ -11,14 +9,11 @@ import {
   WatchMessagesSubscriptionVariables,
   useGetRoomQuery,
 } from "../api/graphql";
-import { getRoomTalkingAbout } from "../roomTalkingAbout";
 
 
 export const RoomPage =  asDetailQueryRoute(
   useGetRoomQuery,
   ({ data, subscribeToMore }) => {
-    const talkingAboutStructures = getRoomTalkingAbout(data.room.id);
-
     useEffect(() => {
       return subscribeToMore<
         WatchMessagesSubscription,

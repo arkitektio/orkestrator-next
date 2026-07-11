@@ -2,6 +2,7 @@ import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 import { Guard } from "@/app/Arkitekt";
 import { ListPageLayout } from "@/components/layout/ListPageLayout";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
+import { PageVariant } from "@/components/layout/PageLayout";
 import {
   configureSmartBuilder,
   SmartEnhanceButtonProps,
@@ -38,6 +39,12 @@ type HoverCardEntry = {
   Component: ComponentType<{ object: any }>;
   Guard: ComponentType<{ children: ReactNode }>;
 };
+
+// `SmartModelPage`/`SmartListPageProps` type `variant` as `unknown` since the
+// smart-adapter layer is generic over any page layout; narrow it down to the
+// concrete `PageVariant` union that the shadcn layouts actually accept.
+const asPageVariant = (variant: unknown): PageVariant | undefined =>
+  variant === "black" || variant === "default" ? variant : undefined;
 
 const hoverCards: Record<string, HoverCardEntry> = {
   "@mikro/image": { Component: ImageHoverCard, Guard: Guard.Mikro },
@@ -95,6 +102,7 @@ configureSmartBuilder({
       <ModelPageLayout
         identifier={identifier}
         {...props}
+        variant={asPageVariant(props.variant)}
         additionalSidebars={{
           ...props.additionalSidebars,
           Rooms: <Guard.Alpaka>{roomsSidebar}</Guard.Alpaka>,
@@ -104,9 +112,19 @@ configureSmartBuilder({
       </ModelPageLayout>
     );
   },
-  renderListPage: ({ identifier, children, ...props }: SmartListPageProps & { identifier: string }) => {
+  renderListPage: ({ identifier, children, callback, ...props }: SmartListPageProps & { identifier: string }) => {
+    // `SmartListPageProps.callback` is generic over the smart object type
+    // (`Object` by default), while `ListPageLayoutProps.callback` narrows it
+    // to the selected item's string id — and the layout never actually
+    // invokes it, so this is a type-only adaptation.
+    const listCallback = callback as ((object: string) => void) | undefined;
     return (
-      <ListPageLayout identifier={identifier} {...props}>
+      <ListPageLayout
+        identifier={identifier}
+        {...props}
+        variant={asPageVariant(props.variant)}
+        callback={listCallback}
+      >
         {children}
       </ListPageLayout>
     );

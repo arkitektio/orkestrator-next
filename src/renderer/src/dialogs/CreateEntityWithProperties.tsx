@@ -4,13 +4,6 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -20,6 +13,7 @@ import {
   useCreateEntityMutation,
   ValueKind,
 } from "@/kraph/api/graphql";
+import { enUS } from "date-fns/locale";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -37,11 +31,6 @@ const validateProperty = (
   value: PropertyValue,
   definition: PropertyDefinitionFragment,
 ): string | null => {
-  // Check if required
-  if (!definition.optional && (value === null || value === undefined || value === "")) {
-    return `${definition.label || definition.key} is required`;
-  }
-
   // Type-specific validation
   if (value !== null && value !== undefined && value !== "") {
     switch (definition.valueKind) {
@@ -62,15 +51,6 @@ const validateProperty = (
           return `${definition.label || definition.key} must be true or false`;
         }
         break;
-
-      case ValueKind.Category:
-        if (definition.options && definition.options.length > 0) {
-          const validValues = definition.options.map((opt) => opt.value);
-          if (!validValues.includes(String(value))) {
-            return `${definition.label || definition.key} must be one of: ${validValues.join(", ")}`;
-          }
-        }
-        break;
     }
   }
 
@@ -81,11 +61,7 @@ const useCreateEntityForm = (category: EntityCategoryFragment) => {
   const defaultProperties: Record<string, PropertyValue> = {};
 
   category.propertyDefinitions?.forEach((def) => {
-    if (def.default !== null && def.default !== undefined) {
-      defaultProperties[def.key] = def.default;
-    } else {
-      defaultProperties[def.key] = null;
-    }
+    defaultProperties[def.key] = null;
   });
 
   const form = useForm<CreateEntityFormData>({
@@ -157,39 +133,6 @@ const PropertyField = ({
   error?: string;
 }) => {
   const renderInput = () => {
-    // If there are predefined options, render a select
-    if (definition.options && definition.options.length > 0) {
-      return (
-        <Select
-          value={value ? String(value) : ""}
-          onValueChange={(val) => onChange(val)}
-        >
-          <SelectTrigger className={error ? "border-red-500" : ""}>
-            <SelectValue placeholder={`Select ${definition.label || definition.key}`} />
-          </SelectTrigger>
-          <SelectContent>
-            {definition.optional && (
-              <SelectItem value="">
-                <span className="text-muted-foreground italic">None</span>
-              </SelectItem>
-            )}
-            {definition.options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                <div className="flex flex-col">
-                  <span>{opt.label}</span>
-                  {opt.description && (
-                    <span className="text-xs text-muted-foreground">
-                      {opt.description}
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    }
-
     switch (definition.valueKind) {
       case ValueKind.Boolean:
         return (
@@ -234,6 +177,10 @@ const PropertyField = ({
             value={value instanceof Date ? value : value ? new Date(String(value)) : undefined}
             onChange={(date) => onChange(date || null)}
             className={error ? "border-red-500" : ""}
+            locale={enUS}
+            weekStartsOn={0}
+            showWeekNumber={false}
+            showOutsideDays={true}
           />
         );
 
@@ -278,7 +225,6 @@ const PropertyField = ({
     <div className="space-y-2">
       <Label htmlFor={definition.key}>
         {definition.label || definition.key}
-        {!definition.optional && <span className="text-red-500 ml-1">*</span>}
       </Label>
       {definition.description && (
         <p className="text-xs text-muted-foreground">{definition.description}</p>
@@ -325,8 +271,6 @@ export const CreateEntityWithPropertiesDialog = (props: {
     setPropertyErrors({});
 
     // Serialize properties for GraphQL
-    const serializedProperties: Record<string, string | number | boolean | null> = {};
-
     const properties: PropertySet[] = []
 
 

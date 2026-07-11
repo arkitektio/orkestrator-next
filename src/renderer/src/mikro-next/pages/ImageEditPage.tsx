@@ -14,18 +14,26 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
-import { Matrix4 } from "@math.gl/core";
 import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Download } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import Timestamp from "react-timestamp";
 import {
+  AcquisitionViewFragment,
   AffineTransformationViewFragment,
+  ChannelViewFragment,
+  DerivedViewFragment,
+  FileViewFragment,
+  HistogramViewFragment,
+  OpticsViewFragment,
+  RgbViewFragment,
+  RoiViewFragment,
   useGetImageQuery,
   usePinImageMutation,
   WatchRoisDocument,
   WatchRoisSubscription,
   WatchRoisSubscriptionVariables,
+  WellPositionViewFragment,
 } from "../api/graphql";
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
@@ -49,40 +57,27 @@ export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
+// `Image.views` no longer exists on the backend schema (see below), so the
+// "Views" grid always renders an empty, correctly-discriminated array of the
+// view kinds these cards know how to render.
+type EditableView =
+  | AffineTransformationViewFragment
+  | { __typename?: "LabelView"; id?: string; label?: string }
+  | OpticsViewFragment
+  | ChannelViewFragment
+  | RgbViewFragment
+  | AcquisitionViewFragment
+  | WellPositionViewFragment
+  | RoiViewFragment
+  | FileViewFragment
+  | DerivedViewFragment
+  | { __typename?: "PixelView"; id: string }
+  | HistogramViewFragment;
+
 export const ImageEditPage = asDetailQueryRoute(
   useGetImageQuery,
   ({ data, refetch, subscribeToMore }) => {
-    const x = data?.image?.store?.shape?.at(4);
-    const y = data?.image?.store?.shape?.at(4);
-    const z = data?.image?.store?.shape?.at(2) || 1;
-    const t = data?.image?.store?.shape?.at(1) || 1;
-    const c = data?.image?.store?.shape?.at(0) || 1;
-
-    const aspectRatio = x && y ? x / y : 1;
-
     const [pinImage] = usePinImageMutation();
-
-    const modelMatrix = useMemo(() => {
-      const affineView = data?.image?.views.find(
-        (x) => x.__typename == "AffineTransformationView",
-      ) as AffineTransformationViewFragment;
-      if (!affineView) {
-        return new Matrix4().identity();
-      }
-
-      console.log(affineView.affineMatrix);
-
-      const scaleX = affineView.affineMatrix[0][0];
-      const scaleY = affineView.affineMatrix[1][1];
-      const scaleZ = affineView.affineMatrix[2][2];
-      const min = Math.min(scaleX, scaleY, scaleZ);
-
-      const scale = [scaleX / min, scaleY / min, scaleZ / min];
-
-      console.log("scale", scale);
-
-      return new Matrix4().scale(scale);
-    }, [data?.image?.views]);
 
     useEffect(() => {
       return subscribeToMore<
@@ -151,11 +146,11 @@ export const ImageEditPage = asDetailQueryRoute(
                     <Card className="p-2 truncate flex flex-row items-center gap-2" key={index}>
                       {render.__typename == "Snapshot" && (
                         <Image
-                          src={resolve(render.store.presignedUrl)}
+                          src={resolve(render.store.key)}
                           className="w-full"
                         />
                       )}
-                      <a href={resolve(render.store.presignedUrl)} download>
+                      <a href={resolve(render.store.key)} download>
                         <Download size={24} />
                         {render.__typename}
                       </a>
@@ -184,7 +179,6 @@ export const ImageEditPage = asDetailQueryRoute(
                     <FinalRender
                       context={context}
                       rois={data.image.rois}
-                      modelMatrix={modelMatrix}
                     />
                   </div>
                 </div>
@@ -260,7 +254,9 @@ export const ImageEditPage = asDetailQueryRoute(
                   <div className="font-light mb-2">Views</div>
 
                   <ResponsiveContainerGrid className="gap-3 ">
-                    {data?.image.views?.map((view, index) => (
+                    {/* `Image.views` no longer exists on the backend schema; kept as an
+                        empty, type-safe no-op until a replacement query is wired up. */}
+                    {([] as EditableView[]).map((view, index) => (
                       <>
                         {view.__typename == "AffineTransformationView" && (
                           <TransformationViewCard view={view} key={index} />
@@ -305,7 +301,7 @@ export const ImageEditPage = asDetailQueryRoute(
                         <CardContent className="grid place-items-center w-full h-full">
                           <FormDialog
                             trigger={<PlusIcon className="text-xl" />}
-                            onSubmit={async (data) => {
+                            onSubmit={async (_data) => {
                               await refetch();
                             }}
                           >

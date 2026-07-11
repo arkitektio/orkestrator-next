@@ -1,10 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroScene, MikroStage } from "@/linkers";
+import { MikroScene } from "@/linkers";
 import {
   DatasetFilter,
   OffsetPaginationInput,
   useGetScenesQuery,
-  useGetStagesQuery,
 } from "../../api/graphql";
 import SceneCard from "../cards/SceneCard";
 
@@ -14,7 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetScenesQuery({
+  const { data, refetch } = useGetScenesQuery({
     variables: { filters, pagination },
   });
 

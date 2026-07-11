@@ -6,7 +6,7 @@ import LightPathGraph from "../components/lightpath/LightPathGraph";
 
 export const LightpathViewPage = asDetailQueryRoute(
   useGetLightpathViewQuery,
-  ({ data, refetch }) => {
+  ({ data }) => {
     return (
       <MikroLightpathView.ModelPage
         title={data?.lightpathView?.__typename}

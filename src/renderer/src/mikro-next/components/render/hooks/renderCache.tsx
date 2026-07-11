@@ -55,7 +55,7 @@ export const addImageDataToCache = async (
 
 export const getImageDataFromCache = async (
   key: string,
-  signal: AbortSignal | undefined,
+  _signal: AbortSignal | undefined,
 ): Promise<ImageData | null> => {
   const db = await openDB();
   const store = getObjectStore(db, "readonly");

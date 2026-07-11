@@ -4,8 +4,10 @@ import {
   useHomePageQuery as useMikroHomePageQuery,
   useHomePageStatsQuery as useMikroHomePageStatsQuery,
 } from "@/mikro-next/api/graphql";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 
 const MikroWidget = () => {
+  const resolve = useResolve();
   const { data: statsData, loading: statsLoading } =
     useMikroHomePageStatsQuery({ fetchPolicy: "cache-and-network" });
   const { data: homeData } = useMikroHomePageQuery({
@@ -30,9 +32,9 @@ const MikroWidget = () => {
             </p>
             <p className="text-xs text-muted-foreground">Total</p>
           </div>
-          {latestImage?.latestSnapshot?.store?.presignedUrl && (
+          {latestImage?.latestSnapshot?.store?.key && (
             <img
-              src={latestImage.latestSnapshot.store.presignedUrl}
+              src={resolve(latestImage.latestSnapshot.store.key)}
               alt={latestImage.name}
               className="w-10 h-10 rounded object-cover ml-auto"
             />

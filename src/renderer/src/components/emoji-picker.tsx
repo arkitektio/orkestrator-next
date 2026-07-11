@@ -8,16 +8,20 @@ import {
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { SmileIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface EmojiPickerProps {
   onChange: (value: string) => void;
+  children?: ReactNode;
 }
 
-export const EmojiPicker = ({ onChange }: EmojiPickerProps) => {
+export const EmojiPicker = ({ onChange, children }: EmojiPickerProps) => {
   return (
     <Popover>
-      <PopoverTrigger>
-        <SmileIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition" />
+      <PopoverTrigger asChild={!!children}>
+        {children ?? (
+          <SmileIcon className="h-5 w-5 text-muted-foreground hover:text-foreground transition" />
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-full">
         <Picker

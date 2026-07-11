@@ -2,15 +2,13 @@ import { useMemo } from "react";
 import {
   DetailSimulationFragment,
   ExperimentFragment,
-  ListRecordingFragment,
-  ListStimulusFragment,
   RecordingFragment,
   StimulusFragment,
 } from "../api/graphql";
 import { ExperimentRender } from "./ExperimentRender";
 
 export const getColorForRecording = (
-  recording: ListRecordingFragment,
+  recording: RecordingFragment,
   highlight?: string[],
 ) => {
   const hue =
@@ -23,7 +21,7 @@ export const getColorForRecording = (
 };
 
 export const getColorForStimulus = (
-  stimulus: ListStimulusFragment,
+  stimulus: StimulusFragment,
   highlight?: string[],
 ) => {
   const hue =

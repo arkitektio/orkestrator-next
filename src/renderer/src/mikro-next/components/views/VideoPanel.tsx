@@ -9,7 +9,7 @@ const VideoPanel = ({ video }: { video: VideoFragment }) => {
     <>
       {video?.store && (
         <ReactPlayer
-          url={s3resolve(video.store.presignedUrl)}
+          src={s3resolve(video.store.presignedUrl)}
           onError={(e) => {
             console.log(e);
           }}

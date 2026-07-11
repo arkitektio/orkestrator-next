@@ -54,7 +54,7 @@ export const useAsyncChunk = (props: {
         if (abortController.signal.aborted) return;
 
         const array = chunk as Chunk<DataType>;
-        let textureData: ArrayBufferView;
+        let textureData: Float32Array;
         let format: THREE.PixelFormat;
         let type: THREE.TextureDataType;
         let [min, max] = mapDTypeToMinMax(dtype);

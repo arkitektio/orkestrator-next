@@ -4,6 +4,7 @@ import Store from 'electron-store';
 import { join } from 'path';
 import { AppModule } from './AppModule';
 import { IpcTransport } from './IpcTransport';
+import { APP_ORIGIN } from '../scheme';
 
 import { autoUpdater } from 'electron-updater';
 
@@ -126,7 +127,7 @@ export class WindowManager implements AppModule {
         if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
             this.mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
         } else {
-            this.mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+            this.mainWindow.loadURL(`${APP_ORIGIN}/index.html`);
         }
 
         const currentWindow = this.mainWindow;
@@ -168,13 +169,10 @@ export class WindowManager implements AppModule {
             const loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
             secondaryWindow.loadURL(loaded_url);
         } else {
-            secondaryWindow
-                .loadFile(join(__dirname, "../renderer/index.html"))
-                .then(() => {
-                    secondaryWindow.webContents.executeJavaScript(
-                        `window.location = '#${path}'`
-                    );
-                });
+            // HashRouter: the route is just a fragment, so we can load it
+            // directly instead of navigating after load. This also serves the
+            // secondary window over app:// so it is cross-origin isolated too.
+            secondaryWindow.loadURL(`${APP_ORIGIN}/index.html#${path}`);
         }
 
         secondaryWindow.on('closed', () => {

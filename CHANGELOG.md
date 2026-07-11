@@ -1,3 +1,10 @@
+## [1.67.5](https://github.com/arkitektio/orkestrator-next/compare/v1.67.4...v1.67.5) (2026-07-11)
+
+
+### Bug Fixes
+
+* serve packaged renderer over app:// scheme for cross-origin isolation ([098f661](https://github.com/arkitektio/orkestrator-next/commit/098f661eb46c19283f093a50ed2f6ed1851aac76)), closes [#fragment](https://github.com/arkitektio/orkestrator-next/issues/fragment)
+
 ## [1.67.4](https://github.com/arkitektio/orkestrator-next/compare/v1.67.3...v1.67.4) (2026-07-10)
 
 

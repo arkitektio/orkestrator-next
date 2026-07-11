@@ -1,5 +1,6 @@
 import { is } from '@electron-toolkit/utils';
-import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
+import { app, BrowserWindow, dialog, Menu, screen, shell } from 'electron';
+import type { MenuItemConstructorOptions } from 'electron';
 import Store from 'electron-store';
 import { join } from 'path';
 import { AppModule } from './AppModule';
@@ -20,12 +21,32 @@ function debounce<T extends (...args: any[]) => void>(
     };
 }
 
+// Persisted main-window geometry. `x`/`y` are optional so a first launch (or a
+// window that was never moved) centers on the primary display.
+interface WindowState {
+    x?: number;
+    y?: number;
+    width: number;
+    height: number;
+    maximized: boolean;
+}
+
+const DEFAULT_WINDOW_STATE: WindowState = {
+    width: 900,
+    height: 670,
+    maximized: false,
+};
+
+const WINDOW_STATE_KEY = "windowState";
+
 export class WindowManager implements AppModule {
     private mainWindow: BrowserWindow | null = null;
     private windows: Set<BrowserWindow> = new Set();
     private store: Store;
     private ipcTransport: IpcTransport;
+    private iconPath = '';
     private debouncedSetZoomFactor: (zoomLevel: number, window: BrowserWindow) => void;
+    private debouncedSaveWindowState: () => void;
 
     constructor(ipcTransport: IpcTransport) {
         this.store = new Store();
@@ -33,6 +54,7 @@ export class WindowManager implements AppModule {
         this.debouncedSetZoomFactor = debounce((zoomLevel: number, window: BrowserWindow) => {
             window.webContents.setZoomFactor(zoomLevel);
         }, 150);
+        this.debouncedSaveWindowState = debounce(() => this.saveWindowState(), 400);
     }
 
     setup() {
@@ -51,6 +73,19 @@ export class WindowManager implements AppModule {
         const url = commandLine.find(arg => arg.startsWith('orkestrator://'));
         if (url) {
             this.handleOrkestratorUrl(url);
+        }
+    }
+
+    onActivate() {
+        // Standard macOS behavior: reactivating the app (dock click, App Exposé,
+        // Cmd+Tab) should always resurface the main UI. If the window was closed
+        // it no longer exists — recreate it; otherwise restore + focus it.
+        if (!this.mainWindow || this.mainWindow.isDestroyed()) {
+            this.createMainWindow(this.iconPath);
+        } else {
+            if (this.mainWindow.isMinimized()) this.mainWindow.restore();
+            this.mainWindow.show();
+            this.mainWindow.focus();
         }
     }
 
@@ -81,9 +116,15 @@ export class WindowManager implements AppModule {
     }
 
     createMainWindow(iconPath: string): BrowserWindow {
+        // Remember the icon so onActivate can rebuild the window after it was closed.
+        this.iconPath = iconPath;
+
+        const state = this.getStoredWindowState();
         this.mainWindow = new BrowserWindow({
-            width: 900,
-            height: 670,
+            x: state.x,
+            y: state.y,
+            width: state.width,
+            height: state.height,
             show: false,
             title: "Orkestrator",
             icon: iconPath,
@@ -97,6 +138,10 @@ export class WindowManager implements AppModule {
             },
         });
 
+        if (state.maximized) {
+            this.mainWindow.maximize();
+        }
+
         // Try restoring zoom factor
         const zoom = this.store.get("zoomFactor", 0.7) as number;
         this.mainWindow.webContents.setZoomFactor(zoom);
@@ -109,7 +154,14 @@ export class WindowManager implements AppModule {
             if (this.mainWindow) {
                 this.mainWindow.webContents.setZoomFactor(this.store.get("zoomFactor", 0.7) as number);
             }
+            this.debouncedSaveWindowState();
         });
+
+        this.mainWindow.on("move", () => this.debouncedSaveWindowState());
+
+        // Persist synchronously on close: by the time 'closed' fires the window
+        // is already destroyed and its bounds are unreadable.
+        this.mainWindow.on("close", () => this.saveWindowState());
 
         this.mainWindow.on('ready-to-show', () => {
             this.mainWindow?.show();
@@ -224,6 +276,64 @@ export class WindowManager implements AppModule {
         return Array.from(this.windows);
     }
 
+    /**
+     * Read the persisted main-window geometry, dropping a stored position that
+     * no longer lands on a connected display. Without this guard a window last
+     * saved on a monitor that has since been disconnected would reopen
+     * off-screen — invisible and effectively unrecoverable.
+     */
+    private getStoredWindowState(): WindowState {
+        const stored = this.store.get(WINDOW_STATE_KEY) as Partial<WindowState> | undefined;
+        if (!stored || typeof stored.width !== "number" || typeof stored.height !== "number") {
+            return { ...DEFAULT_WINDOW_STATE };
+        }
+
+        const state: WindowState = {
+            width: stored.width,
+            height: stored.height,
+            maximized: Boolean(stored.maximized),
+        };
+
+        if (typeof stored.x === "number" && typeof stored.y === "number") {
+            const bounds = { x: stored.x, y: stored.y, width: stored.width, height: stored.height };
+            const visible = screen.getAllDisplays().some((display) => {
+                const wa = display.workArea;
+                // Require some overlap between the saved window and this display.
+                return (
+                    bounds.x < wa.x + wa.width &&
+                    bounds.x + bounds.width > wa.x &&
+                    bounds.y < wa.y + wa.height &&
+                    bounds.y + bounds.height > wa.y
+                );
+            });
+            if (visible) {
+                state.x = stored.x;
+                state.y = stored.y;
+            }
+        }
+
+        return state;
+    }
+
+    /** Persist the main window's normal (non-maximized) bounds and maximized flag. */
+    private saveWindowState() {
+        const win = this.mainWindow;
+        if (!win || win.isDestroyed()) return;
+
+        const maximized = win.isMaximized();
+        // getNormalBounds() returns the restored geometry even while maximized,
+        // so relaunch restores to a sensible size after un-maximizing.
+        const bounds = win.getNormalBounds();
+        const state: WindowState = {
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+            maximized,
+        };
+        this.store.set(WINDOW_STATE_KEY, state);
+    }
+
     private setupIpcHandlers() {
         this.ipcTransport.handleChannel("reload-window", () => {
             const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -310,52 +420,75 @@ export class WindowManager implements AppModule {
             }
         };
 
-        const menu = Menu.buildFromTemplate([
-            {
-                label: app.name,
-                submenu: [
-                    {
-                        label: "Check for Updates…",
-                        click: () => autoUpdater.checkForUpdates()
-                    },
-                    { type: "separator" },
-                    { role: "quit" },
-                ],
-            },
+        const forceReloadCurrentWindow = () => {
+            const focusedWindow = BrowserWindow.getFocusedWindow();
+            if (focusedWindow) {
+                focusedWindow.webContents.reloadIgnoringCache();
+            } else if (this.mainWindow) {
+                this.mainWindow.webContents.reloadIgnoringCache();
+            }
+        };
+
+        const isMac = process.platform === "darwin";
+
+        // On macOS the first submenu is the application menu and carries the
+        // standard Hide/Hide-Others/Show-All items (Show All in particular lets
+        // a user recover the app after hiding it). On Windows/Linux there is no
+        // app menu convention, so the update + quit items live under "File".
+        const appMenu: MenuItemConstructorOptions = isMac
+            ? {
+                  label: app.name,
+                  submenu: [
+                      { role: "about" },
+                      { label: "Check for Updates…", click: () => autoUpdater.checkForUpdates() },
+                      { type: "separator" },
+                      { role: "services" },
+                      { type: "separator" },
+                      { role: "hide" },
+                      { role: "hideOthers" },
+                      { role: "unhide" },
+                      { type: "separator" },
+                      { role: "quit" },
+                  ],
+              }
+            : {
+                  label: "File",
+                  submenu: [
+                      { label: "Check for Updates…", click: () => autoUpdater.checkForUpdates() },
+                      { type: "separator" },
+                      { role: "quit" },
+                  ],
+              };
+
+        const template: MenuItemConstructorOptions[] = [
+            appMenu,
             {
                 label: "Edit",
                 submenu: [
-                    { label: "Undo", accelerator: "CmdOrCtrl+Z", role: "undo" },
-                    { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", role: "redo" },
+                    { role: "undo" },
+                    { role: "redo" },
                     { type: "separator" },
-                    { label: "Cut", accelerator: "CmdOrCtrl+X", role: "cut" },
-                    { label: "Copy", accelerator: "CmdOrCtrl+C", role: "copy" },
-                    { label: "Paste", accelerator: "CmdOrCtrl+V", role: "paste" },
-                    { label: "Select All", accelerator: "CmdOrCtrl+A", role: "selectAll" }
-                ]
+                    { role: "cut" },
+                    { role: "copy" },
+                    { role: "paste" },
+                    { role: "selectAll" },
+                ],
             },
             {
                 label: "View",
                 submenu: [
                     { label: "Reload", accelerator: "CmdOrCtrl+R", click: reloadCurrentWindow },
-                    {
-                        label: "Force Reload",
-                        accelerator: "CmdOrCtrl+Shift+R",
-                        click: () => {
-                            const focusedWindow = BrowserWindow.getFocusedWindow();
-                            if (focusedWindow) {
-                                focusedWindow.webContents.reloadIgnoringCache();
-                            } else if (this.mainWindow) {
-                                this.mainWindow.webContents.reloadIgnoringCache();
-                            }
-                        },
-                    },
+                    { label: "Force Reload", accelerator: "CmdOrCtrl+Shift+R", click: forceReloadCurrentWindow },
                     { label: "Toggle Always on Top", click: stayOnTop },
                     { type: "separator" },
                     { role: "toggleDevTools" },
                 ],
             },
-        ]);
-        Menu.setApplicationMenu(menu);
+            // Standard Window menu — Minimize/Zoom/(Bring All to Front)/Close.
+            // Gives users the native surface for managing and resurfacing windows.
+            { role: "windowMenu" },
+        ];
+
+        Menu.setApplicationMenu(Menu.buildFromTemplate(template));
     }
 }

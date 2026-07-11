@@ -1,3 +1,10 @@
+## [1.67.7](https://github.com/arkitektio/orkestrator-next/compare/v1.67.6...v1.67.7) (2026-07-11)
+
+
+### Bug Fixes
+
+* minimization bug ([43fee5a](https://github.com/arkitektio/orkestrator-next/commit/43fee5a7a7593dc557d2d46b2cfa787ce36b463a))
+
 ## [1.67.6](https://github.com/arkitektio/orkestrator-next/compare/v1.67.5...v1.67.6) (2026-07-11)
 
 

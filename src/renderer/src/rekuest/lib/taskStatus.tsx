@@ -84,6 +84,32 @@ export const statusTextColor = (
   }
 };
 
+/** Text color for a single event kind in log views (one color per kind). */
+export const eventKindColor = (kind: TaskEventKind): string => {
+  switch (kind) {
+    case TaskEventKind.Completed:
+      return "text-green-500";
+    case TaskEventKind.Yield:
+      return "text-purple-500";
+    case TaskEventKind.Failed:
+    case TaskEventKind.Critical:
+      return "text-red-500";
+    case TaskEventKind.Cancelled:
+    case TaskEventKind.Cancelling:
+    case TaskEventKind.Interrupted:
+    case TaskEventKind.Interrupting:
+      return "text-orange-400";
+    case TaskEventKind.Bound:
+      return "text-blue-500";
+    case TaskEventKind.Delegate:
+      return "text-blue-400";
+    case TaskEventKind.Progress:
+      return "text-yellow-500";
+    default:
+      return "text-muted-foreground";
+  }
+};
+
 /** Fill + border classes for gantt/timeline bars keyed by event kind. */
 export const statusBarColor = (
   status: TaskEventKind | undefined | string,

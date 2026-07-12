@@ -1,16 +1,16 @@
-import { buildAssignInput } from "@/rekuest/assign";
 import { useCallback } from "react";
 import {
-  AssignInput,
   DetailActionFragment,
   PostmanTaskFragment,
-  useAssignMutation,
-  useMyTasksQuery,
-  useCancelMutation,
-  useDetailActionQuery
+  useDetailActionQuery,
 } from "../api/graphql";
-
-export type ActionAssignVariables = AssignInput;
+import {
+  ActionAssignVariables,
+  useAssign,
+  useCancelTask,
+  useReassignFromTask,
+} from "./useAssign";
+import { useFilteredTasks } from "./useTasks";
 
 export type useActionReturn = {
   assign: (
@@ -36,78 +36,26 @@ export const useAction = (
     },
   });
 
-  const { data: tasks_data } = useMyTasksQuery();
+  const tasks = useFilteredTasks({ action: options.id, allowDone: true });
+  const latestTask = tasks.at(-1);
 
-  const [postAssign] = useAssignMutation({});
-  const [cancelAssign] = useCancelMutation({});
-
-  const tasks = tasks_data?.myTasks.filter(
-    (x) => x.action.id == options.id,
-  );
-
-  const latestTask = tasks?.at(-1);
-
-  const assign = useCallback(
-    async (vars: ActionAssignVariables) => {
-      const mutation = await postAssign({
-        variables: {
-          input: {
-            ...vars,
-            args: vars.args,
-            hooks: [],
-          },
-        },
-      });
-
-      const task = mutation.data?.assign;
-
-      if (!task) {
-        console.error(mutation);
-        const errorMessages = mutation.errors || "Unknown error";
-        throw Error(`Couldn't assign: ${errorMessages}`);
-      }
-
-      return task;
-    },
-    [postAssign],
-  );
+  const { assign } = useAssign();
+  const { cancel: cancelTask } = useCancelTask();
+  const { reassign: reassignTask } = useReassignFromTask();
 
   const reassign = useCallback(() => {
-    console.log("Not");
     if (!latestTask) {
       throw Error("No latest task");
     }
-    return assign(buildAssignInput({
-      args: latestTask.args,
-      action: latestTask?.action.id,
-      hooks: [],
-    }));
-  }, [assign]);
+    return reassignTask(latestTask);
+  }, [reassignTask, latestTask]);
 
   const cancel = useCallback(async () => {
     if (!latestTask) {
-      throw Error("Cannot Reassign");
+      throw Error("No task to cancel");
     }
-
-
-    const mutation = await cancelAssign({
-      variables: {
-        input: { task: latestTask.id },
-      },
-    });
-
-    const task = mutation.data?.cancel;
-
-    if (!task) {
-      console.error(mutation);
-      const errorMessages =
-        mutation.errors?.map((error) => error.message).join(", ") ||
-        "Unknown error";
-      throw Error(`Couldn't assign: ${errorMessages}`);
-    }
-
-    return task;
-  }, [cancelAssign, latestTask]);
+    return cancelTask(latestTask.id);
+  }, [cancelTask, latestTask]);
 
   return {
     assign,

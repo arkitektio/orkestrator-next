@@ -5,15 +5,11 @@ import { v4 as uuidv4 } from "uuid";
 import { buildAssignInput } from "@/rekuest/assign";
 import {
   TaskEventFragment,
-  AssignInput,
+  TaskEventKind,
   useActionByHashQuery
 } from "../api/graphql";
 import { trackTask } from "../lib/taskTracker";
 import { useAssign } from "./useAssign";
-
-export type ActionAssignVariables = AssignInput;
-
-
 
 export type useActionOptions = {
   hash?: string;
@@ -41,36 +37,28 @@ export const useHashActionWithProgress = (
 
   const doStuff = useCallback(
     (event: TaskEventFragment) => {
-      if (event.kind == "COMPLETED") {
+      if (event.kind == TaskEventKind.Completed) {
         setDoing(false);
         setProgress(null);
         options.onDone?.(event);
       }
-      if (event.kind == "FAILED" || event.kind == "CRITICAL") {
+      if (
+        event.kind == TaskEventKind.Failed ||
+        event.kind == TaskEventKind.Critical
+      ) {
         setDoing(false);
         setProgress(null);
         setError(event.message || "Unknown error");
         options.onError?.(event.message || "Unknown error");
       }
-      if (event.kind == "PROGRESS") {
+      if (event.kind == TaskEventKind.Progress) {
         setProgress(event.progress || 0);
       }
     },
     [setDoing, setProgress, setError, options.onDone, options.onError],
   );
 
-  const assign = async (args: { [key: string]: any }) => {
-
-    let actionArgs = data?.action?.args || [];
-
-    actionArgs = actionArgs.map((arg) => {
-      if (arg.key in args) {
-        return args[arg.key];
-      }
-      return arg;
-    });
-
-
+  const assign = async (args: { [key: string]: unknown }) => {
     const reference = uuidv4();
     const untrack = trackTask(reference, doStuff);
 

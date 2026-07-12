@@ -4,6 +4,7 @@ import { DateTimeRangePicker } from "@/components/ui/date-time-range-picker";
 import { RekuestTask } from "@/linkers";
 import { Ordering, TaskEventKind, TaskStatus } from "@/rekuest/api/graphql";
 import TaskList from "@/rekuest/components/lists/TaskList";
+import { OrgTasksUpdater } from "@/rekuest/components/updaters/OrgTasksUpdater";
 import {
   TASK_STATUS_FILTER_OPTIONS as STATUS_OPTIONS,
   TASK_STATE_FILTER_OPTIONS as STATE_OPTIONS,
@@ -141,6 +142,7 @@ const OrgTasksPage = () => {
           )}
         </div>
 
+        <OrgTasksUpdater />
         <TaskList
           order={{ createdAt: Ordering.Desc }}
           filters={{

@@ -10,43 +10,13 @@ import {
   PostmanTaskFragment
 } from '@/rekuest/api/graphql'
 import {
-  SpaceGroup,
-  SpaceGroupPlacement,
+  buildTimeline,
+  mapParentEvents,
+  notEmpty,
   TimelineDependencyGroup,
-  TimelineEvent,
-  TimelineItem,
-  TimelineMethodRow
-} from './types'
-
-// ── helpers ──────────────────────────────────────────────────────────
-
-function notEmpty<T>(v: T | null | undefined): v is T {
-  return v !== null && v !== undefined
-}
-
-const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
-  if (typeof candidate === 'string' || typeof candidate === 'number') {
-    const label = String(candidate).trim()
-    return label.length > 0 ? label : undefined
-  }
-  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return undefined
-
-  const obj = candidate as Record<string, unknown>
-  for (const key of ['name', 'title', 'reference', 'key', 'id']) {
-    const value = obj[key]
-    if (typeof value === 'string' && value.trim().length > 0) return value
-  }
-  return undefined
-}
-
-const getEndTime = (a: PostmanTaskFragment) => {
-  if (a.finishedAt) return new Date(a.finishedAt).getTime()
-  if (a.events && a.events.length > 0) {
-    const times = a.events.map((e) => new Date(e.createdAt).getTime())
-    if (times.length > 0) return Math.max(...times)
-  }
-  return new Date().getTime()
-}
+  TimelineEvent
+} from '@/rekuest/lib/taskTimeline'
+import { SpaceGroup, SpaceGroupPlacement } from './types'
 
 // ── derived data builders ────────────────────────────────────────────
 
@@ -130,96 +100,6 @@ function buildAgentToTaskMap(
     }
   }
   return agentToTasks
-}
-
-function buildTimeline(children: PostmanTaskFragment[]): {
-  groups: TimelineDependencyGroup[]
-  events: TimelineEvent[]
-  startTime: number
-  endTime: number
-} {
-  if (children.length === 0) {
-    return { groups: [], events: [], startTime: 0, endTime: 0 }
-  }
-
-  const times = children.flatMap((a) => [new Date(a.createdAt).getTime(), getEndTime(a)])
-  const min = Math.min(...times)
-  const max = Math.max(...times)
-  const interpolate = (t: number) => (max === min ? 0 : (t - min) / (max - min))
-
-  const groupMap = new Map<string, TimelineDependencyGroup>()
-  const methodMap = new Map<string, Map<string, TimelineMethodRow>>()
-
-  for (const a of children) {
-    const dependencyMethod = a.dependencyMethod?.trim() || 'dynamic'
-    const dependencyKey = a.dependency?.trim() || 'catch-all'
-
-    const dependencies = a.dependencies
-    const dependenciesByKey =
-      dependencies && typeof dependencies === 'object' && !Array.isArray(dependencies)
-        ? (dependencies as Record<string, unknown>)
-        : undefined
-
-    const selectedDependencyValue = dependenciesByKey?.[dependencyKey]
-    const selectedMethodValue =
-      selectedDependencyValue &&
-      typeof selectedDependencyValue === 'object' &&
-      !Array.isArray(selectedDependencyValue)
-        ? (selectedDependencyValue as Record<string, unknown>)[dependencyMethod]
-        : undefined
-
-    const dependencyLabel = dependencyKey === 'catch-all' ? 'Catch-all dependency' : dependencyKey
-    const resolvedDepLabel = dependencyCandidateToLabel(selectedDependencyValue)
-    const resolvedMethodLabel = dependencyCandidateToLabel(selectedMethodValue)
-
-    const startTime = new Date(a.createdAt).getTime()
-    const endTime = getEndTime(a)
-
-    const item: TimelineItem = {
-      task: a,
-      start: interpolate(startTime),
-      end: interpolate(endTime),
-      startTime,
-      endTime,
-      events: []
-    }
-
-    if (!groupMap.has(dependencyKey)) {
-      groupMap.set(dependencyKey, {
-        id: dependencyKey,
-        dependency: dependencyLabel,
-        summary: resolvedDepLabel ? `resolved via ${resolvedDepLabel}` : 'Dependency group',
-        items: [],
-        methods: []
-      })
-      methodMap.set(dependencyKey, new Map())
-    }
-
-    const group = groupMap.get(dependencyKey)!
-    group.items.push(item)
-
-    const methodsForDep = methodMap.get(dependencyKey)!
-    if (!methodsForDep.has(dependencyMethod)) {
-      const row: TimelineMethodRow = {
-        id: `${dependencyKey}:${dependencyMethod}`,
-        method: dependencyMethod,
-        summary: resolvedMethodLabel || resolvedDepLabel || 'Delegated path',
-        items: []
-      }
-      methodsForDep.set(dependencyMethod, row)
-      group.methods.push(row)
-    }
-    methodsForDep.get(dependencyMethod)!.items.push(item)
-  }
-
-  const groups = Array.from(groupMap.values())
-    .map((g) => ({
-      ...g,
-      methods: [...g.methods].sort((a, b) => a.method.localeCompare(b.method))
-    }))
-    .sort((a, b) => a.dependency.localeCompare(b.dependency))
-
-  return { groups, events: [], startTime: min, endTime: max }
 }
 
 // ── active-at-timepoint ──────────────────────────────────────────────
@@ -395,15 +275,11 @@ export const createSpaceViewStore = (task: DetailTaskFragment) => {
   const initialTimepoint = taskDone ? startTime : liveNow
   const initialActive = computeActiveAtTimepoint(initialTimepoint, children, agentToTaskIds)
 
-  const parentEvents: TimelineEvent[] = (task.events || []).map((e) => ({
-    kind: e.kind,
-    message: e.message,
-    createdAt: e.createdAt,
-    position:
-      endTime === startTime
-        ? 0
-        : (new Date(e.createdAt).getTime() - startTime) / (endTime - startTime)
-  }))
+  const parentEvents: TimelineEvent[] = mapParentEvents(
+    task.events || [],
+    startTime,
+    endTime
+  )
 
   const initialLayoutMode = 'space' as const
   const initialTransforms = computeLayoutTransforms(spaceGroups, initialLayoutMode, rootAgentId)
@@ -512,12 +388,11 @@ export const createSpaceViewStore = (task: DetailTaskFragment) => {
       )
       const updatedActive = computeActiveAtTimepoint(computeAt, updatedChildren, updatedAgentMap)
       const { groups: tGroups, startTime: sT, endTime: eT } = buildTimeline(updatedChildren)
-      const updatedParentEvents: TimelineEvent[] = (updatedTask.events || []).map((e) => ({
-        kind: e.kind,
-        message: e.message,
-        createdAt: e.createdAt,
-        position: eT === sT ? 0 : (new Date(e.createdAt).getTime() - sT) / (eT - sT)
-      }))
+      const updatedParentEvents: TimelineEvent[] = mapParentEvents(
+        updatedTask.events || [],
+        sT,
+        eT
+      )
 
       const updatedTransforms = computeLayoutTransforms(
         updatedSpaceGroups,

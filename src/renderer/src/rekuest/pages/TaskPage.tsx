@@ -14,7 +14,7 @@ import {
   useDetailTaskQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
-import { ChevronDown, Clock, GitBranch, ListChecks } from "lucide-react";
+import { ChevronDown, Clock, ListChecks } from "lucide-react";
 import Timestamp from "react-timestamp";
 import { ChildTaskUpdater } from "../components/updaters/ChildTaskUpdater";
 import {
@@ -24,26 +24,15 @@ import {
 import { TaskFlow } from "../components/task/TaskFlow";
 import { useCancelTask } from "../hooks/useAssign";
 import { useReassign } from "../hooks/useReassign";
-import {
-  isCancelable,
-  isInterruptable,
-  statusTheme,
-} from "../lib/taskStatus";
+import { isCancelable, isInterruptable } from "../lib/taskStatus";
 
+// Only stats the main column doesn't already show — status, progress and
+// delegations live in the hero / Delegations section.
 export const TaskStatsSidebar = (props: { task: DetailTaskFragment }) => {
   const endTime = props.task.finishedAt;
   const startTime = props.task.createdAt;
-  const theme = statusTheme(props.task);
 
   const statsCards = [
-    {
-      title: "Status",
-      value: theme.label,
-      description: "Latest state of this task",
-      icon: ListChecks,
-      color: theme.text,
-      bgColor: theme.bg,
-    },
     {
       title: "Total Walltime",
       value: !endTime
@@ -61,14 +50,6 @@ export const TaskStatsSidebar = (props: { task: DetailTaskFragment }) => {
       icon: ListChecks,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
-    },
-    {
-      title: "Delegations",
-      value: String(props.task.children?.length ?? 0),
-      description: "Child tasks delegated to other apps",
-      icon: GitBranch,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
     },
   ];
 

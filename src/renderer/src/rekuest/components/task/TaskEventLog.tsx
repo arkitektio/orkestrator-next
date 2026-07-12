@@ -116,30 +116,58 @@ export const DelegateItem = (props: { event: TaskEventFragment }) => {
   );
 };
 
+/**
+ * A yield in the log: collapsed to a single row by default (the newest
+ * result is already rendered in full above the log); expandable in place for
+ * older yields or the flow-logs tab.
+ */
 export const YieldItem = (props: {
   task: DetailTaskFragment;
   event: TaskEventFragment;
 }) => {
   const { registry } = useWidgetRegistry();
+  const [expanded, setExpanded] = useState(false);
+  const hasReturns =
+    props.event.returns != null && props.task.action.returns.length > 0;
 
   return (
     <EventRow
       kind={props.event.kind}
       createdAt={props.event.createdAt}
       tone="success"
+      compact={!expanded}
     >
-      <div className="w-full rounded-md border bg-muted/40 p-3">
-        <ReturnsContainer
-          registry={registry}
-          ports={props.task.action.returns}
-          values={props.event.returns}
-          options={{ labels: true }}
-        />
-      </div>
+      {hasReturns ? (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((x) => !x)}
+            className="flex w-fit items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {expanded ? "Hide result" : "Show result"}
+          </button>
+          {expanded && (
+            <div className="w-full rounded-md border bg-muted/40 p-3">
+              <ReturnsContainer
+                registry={registry}
+                ports={props.task.action.returns}
+                values={props.event.returns}
+                options={{ labels: true }}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">Yielded (no returns)</p>
+      )}
     </EventRow>
   );
 };
 
+/**
+ * An error in the log: a single inline line — the hero above is the
+ * prominent home for the failure message.
+ */
 export const ErrorItem = (props: {
   task: DetailTaskFragment;
   event: TaskEventFragment;
@@ -149,10 +177,9 @@ export const ErrorItem = (props: {
       kind={props.event.kind}
       createdAt={props.event.createdAt}
       tone="error"
+      compact
     >
-      <div className="w-full rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-        {props.event.message}
-      </div>
+      <p className="text-xs text-destructive">{props.event.message}</p>
     </EventRow>
   );
 };
@@ -317,11 +344,6 @@ export const TaskStatusHero = (props: { task: DetailTaskFragment }) => {
               ← Parent task
             </Badge>
           </RekuestTask.DetailLink>
-        )}
-        {task.children && task.children.length > 0 && (
-          <Badge variant="outline">
-            {task.children.length} child{task.children.length === 1 ? "" : "ren"}
-          </Badge>
         )}
       </div>
     </div>
@@ -507,19 +529,36 @@ export const TaskTimeLine = (props: {
 export const DefaultRenderer = (props: {
   task: DetailTaskFragment;
 }) => {
+  const { task } = props;
+  const hasResult =
+    task.action.returns.length > 0 &&
+    task.events.some(
+      (e) => e.kind === TaskEventKind.Yield && e.returns != null,
+    );
+  const hasArgs = task.action.args.length > 0;
+
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="h-full w-full overflow-y-auto @container">
       <div className="flex w-full flex-col gap-6 p-4">
-        <TaskStatusHero task={props.task} />
-        <TaskResultSection task={props.task} />
-        <TaskArgsSection task={props.task} />
-        <ChildTasksSection task={props.task} />
-        {props.task.events.length > 0 && (
+        <TaskStatusHero task={task} />
+        {(hasResult || hasArgs) && (
+          <div
+            className={cn(
+              "grid gap-6",
+              hasResult && hasArgs && "@4xl:grid-cols-2",
+            )}
+          >
+            <TaskResultSection task={task} />
+            <TaskArgsSection task={task} />
+          </div>
+        )}
+        <ChildTasksSection task={task} />
+        {task.events.length > 0 && (
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Event Log
             </h3>
-            <TaskTimeLine task={props.task} />
+            <TaskTimeLine task={task} />
           </div>
         )}
       </div>

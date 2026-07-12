@@ -1,21 +1,21 @@
 import { TaskEventKind } from '@/rekuest/api/graphql'
+import { statusBucket } from '@/rekuest/lib/taskStatus'
 
 /**
  * Tailwind classes for a status bar/badge keyed by an task's
  * `latestEventKind`. Shared by the timeline bars and the live status strip so
- * the two surfaces speak the same colour language.
+ * the two surfaces speak the same colour language. The palette is deliberately
+ * softer than the global gantt palette (`statusBarColor`), but the branching
+ * follows the shared `statusBucket` vocabulary.
  */
 export const getStatusColor = (status: TaskEventKind | undefined | string) => {
-  switch (status) {
-    case TaskEventKind.Completed:
+  if (status === TaskEventKind.Yield) return 'bg-violet-400/90 border-violet-500'
+  switch (statusBucket(status as TaskEventKind)) {
+    case 'done':
       return 'bg-primary/20 border-primary'
-    case TaskEventKind.Yield:
-      return 'bg-violet-400/90 border-violet-500'
-    case TaskEventKind.Failed:
+    case 'error':
       return 'bg-rose-400/90 border-rose-500'
-    case TaskEventKind.Critical:
-      return 'bg-rose-400/90 border-rose-500'
-    case TaskEventKind.Cancelled:
+    case 'cancelled':
       return 'bg-zinc-500/80 border-zinc-600'
     default:
       return 'bg-primary/70 border-primary'
@@ -32,16 +32,14 @@ export const classifyChild = (child: {
   isDone?: boolean | null
   latestEventKind?: TaskEventKind | null
 }): ChildStatusBucket => {
-  switch (child.latestEventKind) {
-    case TaskEventKind.Failed:
-    case TaskEventKind.Critical:
+  switch (statusBucket(child.latestEventKind, child.isDone)) {
+    case 'error':
       return 'errored'
-    case TaskEventKind.Cancelled:
-    case TaskEventKind.Interrupted:
+    case 'cancelled':
       return 'cancelled'
-    case TaskEventKind.Completed:
+    case 'done':
       return 'done'
     default:
-      return child.isDone ? 'done' : 'running'
+      return 'running'
   }
 }

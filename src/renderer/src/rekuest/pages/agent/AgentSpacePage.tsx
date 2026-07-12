@@ -21,6 +21,7 @@ import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { createElement, Suspense, useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
+import { statusBarColor } from "../../lib/taskStatus";
 
 const toyCarUrl = new URL(
   "../../../../../../resources/Box.glb",
@@ -85,24 +86,6 @@ const dependencyCandidateToLabel = (candidate: unknown): string | undefined => {
   }
 
   return undefined;
-};
-
-const getStatusColor = (status: TaskEventKind | undefined | string) => {
-  switch (status) {
-    case TaskEventKind.Completed:
-      return "bg-green-500 border-green-600";
-    case TaskEventKind.Yield:
-      return "bg-purple-500 border-purple-600";
-    case TaskEventKind.Failed:
-    case TaskEventKind.Critical:
-      return "bg-red-500 border-red-600";
-    case TaskEventKind.Cancelled:
-      return "bg-gray-500 border-gray-600";
-    case TaskEventKind.Bound:
-      return "bg-blue-500 border-blue-600";
-    default:
-      return "bg-slate-500 border-slate-600";
-  }
 };
 
 const ToyCarModel = () => {
@@ -259,7 +242,7 @@ const TimelineBars = ({
                 highlighted.includes(item.task.id)
                   ? "ring-2 ring-offset-1 ring-primary z-20 opacity-100"
                   : "opacity-60 hover:opacity-100 hover:z-20"
-              } ${getStatusColor(
+              } ${statusBarColor(
                 item.task.latestEventKind
               )} absolute h-full border rounded-md cursor-pointer transition-all flex items-center justify-center shadow-sm`}
               style={{

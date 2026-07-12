@@ -38,7 +38,11 @@ import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { ChildTaskUpdater } from "../components/updaters/ChildTaskUpdater";
 import { TaskStatusLine } from "../components/task/TaskStatusLine";
-import { TaskStatusIcon, formatEventKind } from "../components/hovers/status";
+import {
+  TaskStatusIcon,
+  formatEventKind,
+  statusTheme,
+} from "../lib/taskStatus";
 import { deriveLiveState } from "../hooks/useTasks";
 import { isTerminalEvent } from "../lib/taskTracker";
 
@@ -236,49 +240,6 @@ export const ChildTasksSection = (props: {
       </div>
     </div>
   );
-};
-
-/**
- * Maps a task's terminal/running state to a subtle color theme for the hero
- * panel, reusing the same status vocabulary as {@link TaskStatusIcon}.
- */
-const statusTheme = (task: DetailTaskFragment) => {
-  const kind = task.latestEventKind;
-  if (task.isDone || kind === TaskEventKind.Completed) {
-    return {
-      ring: "ring-green-500/20",
-      bg: "bg-green-500/5",
-      text: "text-green-600 dark:text-green-400",
-      label: "Completed",
-    };
-  }
-  if (kind === TaskEventKind.Failed || kind === TaskEventKind.Critical) {
-    return {
-      ring: "ring-destructive/20",
-      bg: "bg-destructive/5",
-      text: "text-destructive",
-      label: formatEventKind(kind),
-    };
-  }
-  if (
-    kind === TaskEventKind.Cancelled ||
-    kind === TaskEventKind.Cancelling ||
-    kind === TaskEventKind.Interrupted ||
-    kind === TaskEventKind.Interrupting
-  ) {
-    return {
-      ring: "ring-muted-foreground/20",
-      bg: "bg-muted/40",
-      text: "text-muted-foreground",
-      label: formatEventKind(kind),
-    };
-  }
-  return {
-    ring: "ring-primary/20",
-    bg: "bg-primary/5",
-    text: "text-primary",
-    label: formatEventKind(kind),
-  };
 };
 
 const formatWalltime = (task: DetailTaskFragment) => {

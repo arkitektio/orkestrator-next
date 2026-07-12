@@ -10,27 +10,13 @@ import {
   useAgentQuery,
 } from "@/rekuest/api/graphql";
 import TaskList from "@/rekuest/components/lists/TaskList";
+import {
+  TASK_STATUS_FILTER_OPTIONS as STATUS_OPTIONS,
+  TASK_STATE_FILTER_OPTIONS as STATE_OPTIONS,
+} from "@/rekuest/lib/taskStatus";
 import { parseAsIsoDateTime, parseAsStringLiteral, useQueryState, parseAsArrayOf } from "nuqs";
 import Timestamp from "react-timestamp";
 import { X } from "lucide-react";
-
-const STATUS_OPTIONS: { label: string; value: TaskStatus }[] = [
-  { label: "Done", value: TaskStatus.Done },
-  { label: "Ongoing", value: TaskStatus.Ongoing },
-  { label: "Assigning", value: TaskStatus.Assigning },
-  { label: "Cancelled", value: TaskStatus.Cancelled },
-  { label: "Critical", value: TaskStatus.Critical },
-];
-
-const STATE_OPTIONS: { label: string; value: TaskEventKind }[] = [
-  { label: "Queued", value: TaskEventKind.Queued },
-  { label: "Assigned", value: TaskEventKind.Bound },
-  { label: "Yielded", value: TaskEventKind.Yield },
-  { label: "Done", value: TaskEventKind.Completed },
-  { label: "Error", value: TaskEventKind.Failed },
-  { label: "Cancelled", value: TaskEventKind.Cancelled },
-  { label: "Critical", value: TaskEventKind.Critical },
-];
 
 export const AgentTasksPage = asDetailQueryRoute(
   useAgentQuery,

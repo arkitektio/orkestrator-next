@@ -7,7 +7,10 @@ import {
   TaskEventFragment,
   TaskEventKind,
   DetailTaskFragment,
+  PortKind,
+  ReturnPortFragment,
 } from "@/rekuest/api/graphql";
+import { UnknownReturnWidget } from "@/app/shadCnWidgetRegistry";
 import { Clock } from "lucide-react";
 import { Fragment, ReactNode, useEffect, useMemo, useState } from "react";
 import Timestamp from "react-timestamp";
@@ -333,10 +336,70 @@ const formatArgValue = (value: unknown): string => {
   return JSON.stringify(value);
 };
 
+type ArgPortLike = DetailTaskFragment["action"]["args"][number];
+
+/**
+ * Resolve a DISPLAY widget for an input port: retag the arg port as a return
+ * port and drop its assign (form) widget so the registry falls back to the
+ * kind-based display widgets — Structure args render as smart display cards,
+ * primitives with their return widgets.
+ */
+const argPortToDisplayPort = (port: ArgPortLike): ReturnPortFragment =>
+  ({
+    ...port,
+    __typename: "ReturnPort",
+    widget: null,
+  }) as unknown as ReturnPortFragment;
+
+const TaskArgValue = (props: { port: ArgPortLike; value: unknown }) => {
+  const { registry } = useWidgetRegistry();
+  const displayPort = useMemo(
+    () => argPortToDisplayPort(props.port),
+    [props.port],
+  );
+  const Widget = registry.getReturnWidgetForPort(displayPort, true);
+
+  // Structure args are stored as the plain object id, while the structure
+  // display widget expects the `{ object }` shape used by return values.
+  const value =
+    props.port.kind === PortKind.Structure &&
+    (typeof props.value === "string" || typeof props.value === "number")
+      ? { object: props.value }
+      : props.value;
+
+  if (props.value == null || Widget === UnknownReturnWidget) {
+    return (
+      <span
+        className={cn(
+          "font-mono text-xs",
+          props.value == null ? "text-muted-foreground" : "text-foreground",
+        )}
+        title={formatArgValue(props.value)}
+      >
+        {formatArgValue(props.value)}
+      </span>
+    );
+  }
+
+  return (
+    // False positive: the registry looks up pre-registered module-level
+    // components (same pattern as ReturnsContainer) — nothing is created
+    // during render, so widget state is never reset.
+    // eslint-disable-next-line react-hooks/static-components
+    <Widget
+      port={displayPort}
+      widget={null}
+      value={value as never}
+      options={{ labels: false }}
+    />
+  );
+};
+
 /**
  * The inputs this task was called with: one row per arg port, matched against
- * the raw `args` map. Rendered as plain text (not assign widgets) so it stays
- * a read-only record of the call.
+ * the raw `args` map and rendered through the display-widget registry (so
+ * structures link to their objects), with a plain-text fallback for kinds
+ * without a display widget.
  */
 export const TaskArgsSection = (props: { task: DetailTaskFragment }) => {
   const ports = props.task.action.args;
@@ -355,7 +418,7 @@ export const TaskArgsSection = (props: { task: DetailTaskFragment }) => {
           return (
             <div
               key={port.key}
-              className="flex items-baseline gap-4 px-3 py-2 text-sm"
+              className="flex items-center gap-4 px-3 py-2 text-sm"
             >
               <div className="w-1/3 min-w-0 shrink-0">
                 <div className="truncate font-medium">
@@ -367,16 +430,8 @@ export const TaskArgsSection = (props: { task: DetailTaskFragment }) => {
                   </div>
                 )}
               </div>
-              <div
-                className={cn(
-                  "min-w-0 flex-1 truncate font-mono text-xs",
-                  value === null || value === undefined
-                    ? "text-muted-foreground"
-                    : "text-foreground",
-                )}
-                title={formatArgValue(value)}
-              >
-                {formatArgValue(value)}
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <TaskArgValue port={port} value={value} />
               </div>
             </div>
           );

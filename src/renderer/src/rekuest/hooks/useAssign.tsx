@@ -127,7 +127,6 @@ export const useCancelTask = () => {
 /** Minimal task shape needed to re-run it (works for Postman and Detail tasks). */
 export type ReassignableTask = {
   args: AssignInput["args"];
-  dependencies?: AssignInput["dependencies"];
   action: { id: string };
   implementation?: { id: string } | null;
 };
@@ -147,7 +146,10 @@ export const useReassignFromTask = () => {
           ...(task.implementation
             ? { implementation: task.implementation.id }
             : { action: task.action.id }),
-          dependencies: task.dependencies,
+          // A task's `dependencies` field is the raw resolution JSON map, NOT
+          // the [ResolvedDependencyInput!] list AssignInput expects — sending
+          // it fails server validation ("mappedAgents was not provided").
+          // Omit it and let the server re-resolve on the rerun.
           hooks: [],
           capture: opts?.capture ?? false,
         }),

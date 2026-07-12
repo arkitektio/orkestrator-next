@@ -20,6 +20,7 @@ import {
 import { Pin, PinOff } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
+import { upsertById } from "../lib/taskCache";
 import { AgentHeroScene } from "../components/AgentHeroScene";
 import { CopyAgentPythonButton } from "../components/copy-agent-python";
 import AgentImplementationCard from "../components/cards/AgentImplementationCard";
@@ -135,27 +136,14 @@ export const AgentPage = asDetailQueryRoute(
         updateQuery: (prev, { subscriptionData }) => {
           const change = subscriptionData.data?.agentTasks;
           if (!change) return prev;
-          const { create, update } = change;
-          if (create) {
-            if (prev.agent.tasks.some((task) => task.id === create.id)) return prev;
-            return {
-              agent: {
-                ...prev.agent,
-                tasks: [create, ...prev.agent.tasks],
-              },
-            };
-          }
-          if (update) {
-            return {
-              agent: {
-                ...prev.agent,
-                tasks: prev.agent.tasks.map((task) =>
-                  task.id === update.id ? update : task,
-                ),
-              },
-            };
-          }
-          return prev;
+          const item = change.create ?? change.update;
+          if (!item) return prev;
+          return {
+            agent: {
+              ...prev.agent,
+              tasks: upsertById(prev.agent.tasks, item, { prepend: true }),
+            },
+          };
         },
       });
     }, [subscribeToMore, data.agent.id]);

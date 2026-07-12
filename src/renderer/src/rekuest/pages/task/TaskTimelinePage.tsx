@@ -22,7 +22,8 @@ import { useEffect, useState } from "react";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 import { statusBarColor } from "../../lib/taskStatus";
-import { isCancalable, isInterruptable, useReassign } from "../TaskPage";
+import { useReassign } from "@/rekuest/hooks/useReassign";
+import { isCancelable, isInterruptable } from "@/rekuest/lib/taskStatus";
 
 export function notEmpty<TValue>(
   value: TValue | null | undefined
@@ -550,7 +551,7 @@ export const TaskTimelinePage = asDetailQueryRoute(
             >
               Rerun
             </Button>
-            {isCancalable(data.task) && (
+            {isCancelable(data.task) && (
               <Button
                 onClick={() =>
                   cancel({

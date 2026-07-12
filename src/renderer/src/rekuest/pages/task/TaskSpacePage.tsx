@@ -22,7 +22,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import type {} from '@react-three/fiber'
 import { useEffect, useState } from 'react'
 import Timestamp from 'react-timestamp'
-import { isCancalable, isInterruptable, useReassign } from '../TaskPage'
+import { useReassign } from '@/rekuest/hooks/useReassign'
+import { isCancelable, isInterruptable } from '@/rekuest/lib/taskStatus'
 
 /**
  * Keeps the store in sync when the GraphQL cache updates
@@ -70,7 +71,7 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailTaskQuery, ({ data, id 
             >
               Rerun
             </Button>
-            {isCancalable(data.task) && (
+            {isCancelable(data.task) && (
               <Button
                 onClick={() =>
                   cancel({

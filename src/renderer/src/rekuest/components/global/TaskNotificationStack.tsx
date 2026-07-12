@@ -9,11 +9,11 @@ import {
   useTaskNotifications,
 } from "../../lib/taskNotifications";
 import { TaskStatusLine } from "../task/TaskStatusLine";
-import { TaskStatusIcon } from "../hovers/status";
+import { TaskStatusIcon } from "../../lib/taskStatus";
 import {
-  borderColorForAss,
+  borderColorForLiveState,
   DynamicYieldDisplay,
-} from "../functional/TaskUpdater";
+} from "../task/YieldDisplay";
 
 /**
  * A single live task notification card. Ported from the former sonner
@@ -44,7 +44,7 @@ const TaskNotificationCard = ({ id }: { id: string }) => {
     <div
       className={cn(
         "relative flex w-80 flex-col gap-2 rounded-md border bg-background p-3 shadow-lg",
-        borderColorForAss(live),
+        borderColorForLiveState(live),
       )}
     >
       <Button
@@ -101,7 +101,7 @@ const TaskNotificationPill = ({
       aria-label="Show tasks"
       className={cn(
         "flex max-w-[18rem] items-center gap-2 rounded-full border bg-background/95 px-4 py-2 shadow-2xl shadow-black/25 ring-1 ring-black/5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-accent hover:shadow-2xl dark:shadow-black/50 dark:ring-white/10",
-        borderColorForAss(live),
+        borderColorForLiveState(live),
       )}
     >
       <TaskStatusIcon

@@ -1,11 +1,8 @@
 import { useRekuest } from "@/app/Arkitekt";
-import { WrappedReturnsContainer } from "@/rekuest/widgets/tailwind";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect } from "react";
 import {
   MyTasksDocument,
   MyTasksQuery,
-  useDetailActionQuery,
   useMyTasksQuery,
   WatchMyTasksDocument,
   WatchMyTasksSubscription,
@@ -28,51 +25,6 @@ import {
 import { notify as notifyTask } from "../../lib/taskNotifications";
 
 export { registeredCallbacks } from "../../lib/taskTracker";
-
-export const DynamicYieldDisplay = (props: {
-  values: any[];
-  actionId: string;
-}) => {
-  const { data } = useDetailActionQuery({
-    variables: {
-      id: props.actionId,
-    },
-  });
-
-  const { registry } = useWidgetRegistry();
-
-  if (!data) {
-    return <> Loaaading </>;
-  }
-
-  return (
-    <div className="w-full h-full overflow-hidden p-2 flex bg-muted/50 rounded-md border border-muted-foreground/10 flex-col gap-2 items-center justify-center">
-      <WrappedReturnsContainer
-        ports={data.action.returns}
-        values={props.values}
-        registry={registry}
-        className="p-2"
-      />
-    </div>
-  );
-};
-
-export const borderColorForAss = (ass: any) => {
-  if (ass.error) {
-    return "border-red-500";
-  }
-  if (ass.cancelled) {
-    return "border-orange-500";
-  }
-  if (ass.done) {
-    return "border-green-500";
-  }
-  if (ass.yield) {
-    return "border-blue-500";
-  }
-
-  return "border-muted-foreground/10";
-};
 
 export const TaskUpdater = () => {
   const client = useRekuest();

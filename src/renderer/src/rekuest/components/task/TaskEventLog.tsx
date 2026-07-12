@@ -9,7 +9,7 @@ import {
   DetailTaskFragment,
 } from "@/rekuest/api/graphql";
 import { Clock } from "lucide-react";
-import { Fragment, ReactNode, useMemo } from "react";
+import { Fragment, ReactNode, useEffect, useMemo, useState } from "react";
 import Timestamp from "react-timestamp";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
 import { deriveLiveState } from "../../hooks/useTasks";
@@ -196,6 +196,30 @@ const formatWalltime = (task: DetailTaskFragment) => {
   return `${seconds.toFixed(2)}s`;
 };
 
+const formatSeconds = (ms: number) => {
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${Math.floor(seconds % 60)}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+};
+
+/** Ticking elapsed-time readout for a still-running task. */
+const ElapsedTime = ({ since }: { since: string }) => {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="text-sm font-semibold tabular-nums text-foreground">
+      {formatSeconds(Math.max(0, now - new Date(since).getTime()))}
+    </span>
+  );
+};
+
 /**
  * At-a-glance status panel: status icon + label, reference, live progress,
  * latest message / error, timing, and the implementation / agent / lineage
@@ -242,6 +266,7 @@ export const TaskStatusHero = (props: { task: DetailTaskFragment }) => {
           {walltime && (
             <div className="text-sm font-semibold text-foreground">{walltime}</div>
           )}
+          {running && <ElapsedTime since={task.createdAt} />}
         </div>
       </div>
 
@@ -300,6 +325,98 @@ export const TaskStatusHero = (props: { task: DetailTaskFragment }) => {
   );
 };
 
+const formatArgValue = (value: unknown): string => {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  return JSON.stringify(value);
+};
+
+/**
+ * The inputs this task was called with: one row per arg port, matched against
+ * the raw `args` map. Rendered as plain text (not assign widgets) so it stays
+ * a read-only record of the call.
+ */
+export const TaskArgsSection = (props: { task: DetailTaskFragment }) => {
+  const ports = props.task.action.args;
+  if (!ports || ports.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        Inputs
+      </h3>
+      <div className="rounded-md border divide-y">
+        {ports.map((port) => {
+          const value = props.task.args?.[port.key];
+          return (
+            <div
+              key={port.key}
+              className="flex items-baseline gap-4 px-3 py-2 text-sm"
+            >
+              <div className="w-1/3 min-w-0 shrink-0">
+                <div className="truncate font-medium">
+                  {port.label || port.key}
+                </div>
+                {port.identifier && (
+                  <div className="truncate font-mono text-[10px] text-muted-foreground">
+                    {port.identifier}
+                  </div>
+                )}
+              </div>
+              <div
+                className={cn(
+                  "min-w-0 flex-1 truncate font-mono text-xs",
+                  value === null || value === undefined
+                    ? "text-muted-foreground"
+                    : "text-foreground",
+                )}
+                title={formatArgValue(value)}
+              >
+                {formatArgValue(value)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The task's most recent yielded result, surfaced above the event log so the
+ * output is visible without scrolling through progress/log noise.
+ */
+export const TaskResultSection = (props: { task: DetailTaskFragment }) => {
+  const { registry } = useWidgetRegistry();
+  const latestYield = props.task.events
+    .filter((e) => e.kind === TaskEventKind.Yield)
+    .at(0);
+
+  if (!latestYield?.returns || props.task.action.returns.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        Latest Result
+      </h3>
+      <div className="rounded-md border bg-muted/40 p-3">
+        <ReturnsContainer
+          registry={registry}
+          ports={props.task.action.returns}
+          values={latestYield.returns}
+          options={{ labels: true }}
+        />
+      </div>
+    </div>
+  );
+};
+
 export const TaskTimeLine = (props: {
   task: DetailTaskFragment;
 }) => {
@@ -339,6 +456,8 @@ export const DefaultRenderer = (props: {
     <div className="h-full w-full overflow-y-auto">
       <div className="flex w-full flex-col gap-6 p-4">
         <TaskStatusHero task={props.task} />
+        <TaskResultSection task={props.task} />
+        <TaskArgsSection task={props.task} />
         <ChildTasksSection task={props.task} />
         {props.task.events.length > 0 && (
           <div className="flex flex-col gap-2">

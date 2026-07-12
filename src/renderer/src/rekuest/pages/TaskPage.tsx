@@ -14,7 +14,7 @@ import {
   useDetailTaskQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
-import { ChevronDown, Images } from "lucide-react";
+import { ChevronDown, Clock, GitBranch, ListChecks } from "lucide-react";
 import Timestamp from "react-timestamp";
 import { ChildTaskUpdater } from "../components/updaters/ChildTaskUpdater";
 import {
@@ -24,23 +24,51 @@ import {
 import { TaskFlow } from "../components/task/TaskFlow";
 import { useCancelTask } from "../hooks/useAssign";
 import { useReassign } from "../hooks/useReassign";
-import { isCancelable, isInterruptable } from "../lib/taskStatus";
+import {
+  isCancelable,
+  isInterruptable,
+  statusTheme,
+} from "../lib/taskStatus";
 
 export const TaskStatsSidebar = (props: { task: DetailTaskFragment }) => {
-
-
-  // Calculate additional metrics from available data
-  const endTime = props.task.finishedAt
+  const endTime = props.task.finishedAt;
   const startTime = props.task.createdAt;
+  const theme = statusTheme(props.task);
 
   const statsCards = [
     {
-      title: "Total Waltime",
-      value: !endTime ? "..." : `${((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000).toFixed(2)}s`,
+      title: "Status",
+      value: theme.label,
+      description: "Latest state of this task",
+      icon: ListChecks,
+      color: theme.text,
+      bgColor: theme.bg,
+    },
+    {
+      title: "Total Walltime",
+      value: !endTime
+        ? "running…"
+        : `${((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000).toFixed(2)}s`,
       description: "Total walltime taken for this task",
-      icon: Images,
+      icon: Clock,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
+    },
+    {
+      title: "Events",
+      value: String(props.task.events.length),
+      description: "Events recorded for this task",
+      icon: ListChecks,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+    },
+    {
+      title: "Delegations",
+      value: String(props.task.children?.length ?? 0),
+      description: "Child tasks delegated to other apps",
+      icon: GitBranch,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
     },
   ];
 
@@ -81,6 +109,12 @@ export const TPage = asDetailQueryRoute(
     const { cancel } = useCancelTask();
     const [interrupt] = useInterruptMutation();
 
+    // The Timeline and Space views visualize delegations to other apps —
+    // they're only offered when this task actually fanned out.
+    const hasDelegations =
+      (data.task.children?.length ?? 0) > 0 ||
+      (data.task.resolvedDependencies?.length ?? 0) > 0;
+
     return (
       <RekuestTask.ModelPage
         title={
@@ -107,30 +141,34 @@ export const TPage = asDetailQueryRoute(
                 Logs
               </Button>
             </RekuestTask.DetailLink>
-            <RekuestTask.DetailLink
-              object={data?.task}
-              subroute="timeline"
-              className="font-semibold"
-            >
-              <Button
-                variant={"outline"}
-                size={"sm"}
+            {hasDelegations && (
+              <RekuestTask.DetailLink
+                object={data?.task}
+                subroute="timeline"
+                className="font-semibold"
               >
-                Timeline
-              </Button>
-            </RekuestTask.DetailLink>
-            <RekuestTask.DetailLink
-              object={data?.task}
-              subroute="space"
-              className="font-semibold"
-            >
-              <Button
-                variant={"outline"}
-                size={"sm"}
+                <Button
+                  variant={"outline"}
+                  size={"sm"}
+                >
+                  Timeline
+                </Button>
+              </RekuestTask.DetailLink>
+            )}
+            {hasDelegations && (
+              <RekuestTask.DetailLink
+                object={data?.task}
+                subroute="space"
+                className="font-semibold"
               >
-                Space
-              </Button>
-            </RekuestTask.DetailLink>
+                <Button
+                  variant={"outline"}
+                  size={"sm"}
+                >
+                  Space
+                </Button>
+              </RekuestTask.DetailLink>
+            )}
             {data.task.parent && <RekuestTask.DetailLink
               object={data?.task?.parent}
               subroute="log"
@@ -140,7 +178,7 @@ export const TPage = asDetailQueryRoute(
                 variant={"outline"}
                 size={"sm"}
               >
-                Logs
+                Parent Logs
               </Button>
             </RekuestTask.DetailLink>}
             <div className="flex">

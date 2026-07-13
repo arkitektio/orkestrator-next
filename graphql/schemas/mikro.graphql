@@ -1,9 +1,14 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
 """
-A multi-dimensional array dataset with named dimensions. It can have multiple scales attached to it, which are represented as DataArrays
+A multi-dimensional array dataset. Its dimensions, their types and their physical units live on the axes of its INTRINSIC coordinate system; its pyramid levels are DataArrays, each mapping into that one system
 """
 type ADataset {
+  """
+  The dataset's own physical space: the coordinate system every one of its pyramid levels maps into
+  """
+  coordinateSystem: CoordinateSystem
+
   """The task this dataset was created through, if any"""
   createdThrough: Task
 
@@ -13,10 +18,17 @@ type ADataset {
   """The multiscale data arrays belonging to this dataset"""
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
   description: String
-  dimDescriptors: [DimDescriptor!]!
+
+  """
+  The dataset's dimension names, in array order. Derived from the axes of its intrinsic coordinate system
+  """
   dims: [String!]!
   id: ID!
+  multiscale: Boolean!
   name: String!
+
+  """The dataset's shape: that of its level-0 array"""
+  shape: [Int!]!
 }
 
 input ADatasetFilter {
@@ -122,6 +134,20 @@ type AcquisitionView implements View {
   yMin: Int
   zMax: Int
   zMin: Int
+}
+
+"""A general affine map, given as an M x (N+1) matrix with rows outermost"""
+type AffineTransformation implements Transformation {
+  """
+  The affine matrix, M x (N+1), rows outermost. The last column is the translation
+  """
+  affine: [[Float!]!]!
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+  version: Int!
 }
 
 """
@@ -271,6 +297,89 @@ input AssociateInput {
   selfs: [ID!]!
 }
 
+"""
+One named, typed dimension of a coordinate system. Its `order` is its index into the array shape
+"""
+type Axis {
+  discrete: Boolean!
+  id: ID!
+  longName: String
+  name: String!
+  order: Int!
+  type: AxisType!
+  unit: Unit
+}
+
+input AxisFilter {
+  AND: AxisFilter
+  DISTINCT: Boolean
+  NOT: AxisFilter
+  OR: AxisFilter
+
+  """Filter by the coordinate system this axis belongs to"""
+  coordinateSystem: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+  type: AxisTypeChoices
+}
+
+"""
+Input type for one axis: its name, its kind, its physical unit and the size of one voxel along it
+"""
+input AxisInput {
+  discrete: Boolean! = false
+  longName: String = null
+  name: String!
+  spacing: Float! = 1
+  type: AxisType!
+  unit: Unit = null
+}
+
+"""
+The kind of an axis. Ordering an array's axes by this type is an RFC-5 MUST: time, then channel and custom types, then space.
+"""
+enum AxisType {
+  """A raw voxel index along one dimension of a stored array."""
+  ARRAY
+
+  """
+  A discrete channel axis: its coordinates index acquisitions, not positions.
+  """
+  CHANNEL
+
+  """
+  An axis of a coordinate-valued array (as used by a displacement field's target).
+  """
+  COORDINATE
+
+  """An axis of a displacement-valued array."""
+  DISPLACEMENT
+
+  """
+  A FLIM arrival-time bin. Not an RFC-5 type; the spec permits types beyond its enum.
+  """
+  MICROTIME
+
+  """A spatial axis, carrying a physical length unit."""
+  SPACE
+
+  """A time axis, carrying a physical duration unit."""
+  TIME
+}
+
+enum AxisTypeChoices {
+  ARRAY
+  CHANNEL
+  COORDINATE
+  DISPLACEMENT
+  MICROTIME
+  SPACE
+  TIME
+}
+
 """Beam splitter"""
 type BeamSplitterElement implements OpticalElement {
   band: Spectrum
@@ -358,6 +467,21 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
+"""
+A pair of child transformations giving an explicit forward and inverse map
+"""
+type BijectionTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """The forward transformation (order 0) and its inverse (order 1)"""
+  transformations: [Transformation!]!
+  version: Int!
+}
+
 """Composites its children using an in-layer blend mode"""
 type BlendNode implements LayerRenderNode {
   blending: Blending!
@@ -392,6 +516,32 @@ enum BlendingChoices {
   ADDITIVE
   MULTIPLICATIVE
   NORMAL
+}
+
+"""An axis-aligned bounding box, as a min and a max corner"""
+type BoundingBox {
+  """The upper corner, in the axis order of the coordinate system"""
+  max: [Float!]!
+
+  """The lower corner, in the axis order of the coordinate system"""
+  min: [Float!]!
+}
+
+"""
+A composition of child transformations, each acting on a named subset of the axes
+"""
+type ByDimensionTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The child transformations. Each carries the `inputAxes` and `outputAxes` it acts on
+  """
+  transformations: [Transformation!]!
+  version: Int!
 }
 
 """Detector"""
@@ -458,14 +608,31 @@ input CameraFilter {
 
 """Input for creating or ensuring a camera"""
 input CameraInput {
+  """The bit depth of the camera sensor"""
   bitDepth: Int = null
+
+  """The manufacturer of the camera"""
   manufacturer: String = null
+
+  """The model of the camera"""
   model: String = null
+
+  """The name of the camera"""
   name: String = null
+
+  """The physical pixel size in x direction (e.g. '6.5 µm')"""
   pixelSizeX: Length = null
+
+  """The physical pixel size in y direction (e.g. '6.5 µm')"""
   pixelSizeY: Length = null
+
+  """The sensor size in x direction (pixels)"""
   sensorSizeX: Int = null
+
+  """The sensor size in y direction (pixels)"""
   sensorSizeY: Int = null
+
+  """The unique serial number of the camera"""
   serialNumber: String!
 }
 
@@ -757,16 +924,6 @@ enum ColorMapChoices {
   YELLOW
 }
 
-"""
-A constraint on a named dimension of a data ROI, with optional min, max and step
-"""
-type Constraint {
-  dim: String!
-  max: Int
-  min: Int
-  step: Int
-}
-
 enum ContinousScanDirection {
   COLUMN_ROW_SLICE
   COLUMN_ROW_SLICE_SNAKE
@@ -876,13 +1033,16 @@ The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata,
 """
 type CoordinateAnchor {
   channelLabel: ChannelLabel
-  chunkShape: [Int!]!
-  dims: [String!]!
+
+  """
+  The coordinates this anchor is pinned to, e.g. {'c': 0, 't': 5}. An anchor that omits an axis is global along it
+  """
+  coordinates: Any!
   id: ID!
   lightGraph: LightPath
-  optikitState: OptikitState
-  shape: [Int!]!
-  store: ZarrStore!
+
+  """The microscope state recorded at this coordinate"""
+  microscope: OptikitState
   valueHistogram: ValueHistogram
 }
 
@@ -897,25 +1057,103 @@ input CoordinateAnchorInput {
   valueHistogram: ValueHistogramInput = null
 }
 
-"""Input type for creating an image from an array-like object"""
+"""
+A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions
+"""
+type CoordinateSystem {
+  """
+  The system's axes, in array order (slowest-varying first). RFC-5 requires them ordered by type: time, then channel and custom types, then space
+  """
+  axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
+  id: ID!
+  kind: CoordinateSystemKind!
+  name: String!
+}
+
+input CoordinateSystemFilter {
+  AND: CoordinateSystemFilter
+  DISTINCT: Boolean
+  NOT: CoordinateSystemFilter
+  OR: CoordinateSystemFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """Filter by the dataset whose INTRINSIC system this is"""
+  dataset: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  kind: CoordinateSystemKindChoices
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by the scene whose WORLD system this is"""
+  scene: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+"""
+What a coordinate system denotes: raw voxel indices, a dataset's own physical space, or a space shared between datasets.
+"""
+enum CoordinateSystemKind {
+  """
+  The raw voxel index space of a single pyramid level. Its axes are discrete and unitless.
+  """
+  ARRAY
+
+  """A reference space shared across scenes, e.g. an anatomical atlas."""
+  ATLAS
+
+  """
+  The dataset's own physical space. Every pyramid level of the dataset maps into this one system, so it is the space in which a dataset's geometry is unambiguous.
+  """
+  INTRINSIC
+
+  """A scene's shared space, into which each of its layers is registered."""
+  WORLD
+}
+
+enum CoordinateSystemKindChoices {
+  ARRAY
+  ATLAS
+  INTRINSIC
+  WORLD
+}
+
+input CoordinateSystemOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
+Input type for creating an array dataset, with the axes that give it a physical space
+"""
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
+  axes: [AxisInput!]!
   data: ArrayLike!
-  dimDescriptors: [DimensionDescriptorInput!]!
+  multiscale: Boolean! = true
   name: String!
   scales: [ScaleInput!]!
 }
 
-"""Input type for creating an image from an array-like object"""
+"""Input for drawing a region of interest in a coordinate system"""
 input CreateDataRoiInput {
-  dataset: ID!
-  drawnOnLens: ID = null
+  coordinateSystem: ID!
   kind: RoiKind!
-  slices: [SliceInput!]!
+  name: String = null
+  selectors: [SelectorInput!] = null
   vectors: [ThreeDVector!]!
-  xDim: String!
-  yDim: String!
-  zDim: String = null
 }
 
 """Input for creating a new dataset to organize images and files"""
@@ -931,7 +1169,6 @@ input CreateDatasetInput {
 Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel)
 """
 input CreateIntensityLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   climMax: Float = null
   climMin: Float = null
@@ -943,34 +1180,24 @@ input CreateIntensityLayerInput {
   opacity: Float = null
   order: Int = null
   scene: ID!
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
 """
 Create a label layer that renders an instance / segmentation map, mapping discrete integer labels to distinct colors
 """
 input CreateLabelLayerInput {
-  affineMatrix: [[Float!]!] = null
   intensityDim: String = null
   intensityIndex: Int = 0
   lens: ID!
   opacity: Float = null
   order: Int = null
   scene: ID!
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
 """Input type for creating an image from an array-like object"""
 input CreateLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   intensityDim: String = null
   lens: ID!
@@ -978,11 +1205,7 @@ input CreateLayerInput {
   order: Int = null
   renderGraph: LayerRenderGraphInput!
   scene: ID!
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
 """Input type for creating an image from an array-like object"""
@@ -992,10 +1215,23 @@ input CreateLensInput {
 }
 
 """
+Input for registering an immutable, versioned mesh collection against a coordinate system
+"""
+input CreateMeshCollectionInput {
+  catalog: ParquetLike!
+  coordinateSystem: ID!
+  encoding: Any = null
+  geometry: [ParquetLike!] = null
+  grid: Any = null
+  provenanceMetadata: Any = null
+  specVersion: String!
+  version: String!
+}
+
+"""
 Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene
 """
 input CreateMeshLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   materialColor: [Int!] = null
   mesh: ID!
@@ -1010,7 +1246,6 @@ input CreateMeshLayerInput {
 Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
 """
 input CreatePointLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   colorColumn: String = null
   colormap: ColorMap = null
@@ -1056,7 +1291,6 @@ input CreateRGBContextInput {
 Create a layer that composites three channels of a lens as red, green and blue
 """
 input CreateRgbLayerInput {
-  affineMatrix: [[Float!]!] = null
   blueIndex: Int = 2
   climMax: Float = null
   climMin: Float = null
@@ -1067,26 +1301,22 @@ input CreateRgbLayerInput {
   order: Int = null
   redIndex: Int = 0
   scene: ID!
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
-"""Input type for creating a scene from an array-like object"""
+"""
+Input type for creating a scene and the WORLD coordinate system its layers are registered into
+"""
 input CreateSceneInput {
+  axes: [AxisInput!] = null
   blending: Blending = null
   name: String!
-  spatialUnit: SpatialUnit = null
-  temporalUnit: TemporalUnit = null
 }
 
 """
 Create a layer that renders the vector geometry of a data ROI in a scene
 """
 input CreateShapeLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   dataRoi: ID!
   fillColor: [Int!] = null
@@ -1103,7 +1333,6 @@ input CreateShapeLayerInput {
 Create a layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id
 """
 input CreateTrackLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   colorByColumn: String = null
   colormap: ColorMap = null
@@ -1121,10 +1350,25 @@ input CreateTrackLayerInput {
 }
 
 """
+Input for creating one edge of the coordinate graph, mapping an input coordinate system to an output one
+"""
+input CreateTransformationInput {
+  affine: [[Float!]!] = null
+  input: ID!
+  inputAxes: [String!] = null
+  kind: TransformKind!
+  name: String = null
+  output: ID!
+  outputAxes: [String!] = null
+  scale: [Float!] = null
+  scene: ID = null
+  translation: [Float!] = null
+}
+
+"""
 Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface) over its z-axis
 """
 input CreateVolumeLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   climMax: Float = null
   climMin: Float = null
@@ -1137,23 +1381,26 @@ input CreateVolumeLayerInput {
   opacity: Float = null
   order: Int = null
   scene: ID!
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
 """
-A single scale of a dataset's multiscale pyramid: a zarr-backed array described by its shape, chunk shape, scale factors and pyramid level
+One level of a dataset's resolution pyramid: a zarr-backed array, with its own voxel-index coordinate system and a stored edge into the dataset's intrinsic space
 """
 type DataArray {
   chunkShape: [Int!]!
+
+  """This level's ARRAY (voxel index) coordinate system"""
+  coordinateSystem: CoordinateSystem
   id: ID!
   level: Int!
-  scaleFactors: [Float!]
   shape: [Int!]!
   store: ZarrStore!
+
+  """
+  The edge from this level's voxel space into the dataset's intrinsic space. Its scale is absolute -- derived from the actual shapes, not from a nominal 2**level -- so a pyramid whose axes do not halve cleanly is described correctly
+  """
+  toParent: Transformation
 }
 
 input DataArrayFilter {
@@ -1177,22 +1424,25 @@ input DataArrayOrder @oneOf {
 }
 
 """
-A region of interest in a data array, described by its vectors and per-dimension constraints
+A region of interest drawn in a coordinate system. It belongs to that system, not to a scene: delete the scene and the ROI survives
 """
 type DataRoi {
-  constraints: [Constraint!]!
-  dataset: ADataset!
+  coordinateSystem: CoordinateSystem!
+  createdWithTransforms: Int!
   description: String
   id: UUID!
+
+  """
+  The ROI's bounding box in its dataset's intrinsic space, derived from every corner of its geometry (an affine-transformed box is not a box: min/max alone gives a strictly too-small answer under rotation or shear). Intrinsic, not world: world is scene-owned, and one dataset can sit in two scenes under two registrations
+  """
+  intrinsicBbox: BoundingBox
   kind: RoiKind!
   name: String!
 
   """Provenance entries for this data ROI"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+  selectors: [RoiSelector!]!
   vectors: [[Float!]!]!
-  xDim: String!
-  yDim: String!
-  zDim: String
 }
 
 input DataRoiFilter {
@@ -1201,7 +1451,10 @@ input DataRoiFilter {
   NOT: DataRoiFilter
   OR: DataRoiFilter
 
-  """Filter by the dataset this ROI belongs to"""
+  """Filter by the coordinate system this ROI is drawn in"""
+  coordinateSystem: ID
+
+  """Filter by the dataset this ROI's coordinate system belongs to"""
   dataset: ID
   description: StrFilterLookup
   id: UUID
@@ -1213,12 +1466,6 @@ input DataRoiFilter {
 
   """Search by name (case-insensitive substring)"""
   search: String
-  xMax: IntFilterLookup
-  xMin: IntFilterLookup
-  yMax: IntFilterLookup
-  yMin: IntFilterLookup
-  zMax: IntFilterLookup
-  zMin: IntFilterLookup
 }
 
 input DataRoiOrder @oneOf {
@@ -1331,6 +1578,7 @@ input DeleteADatasetInput {
 
 """Input for deleting a camera by ID"""
 input DeleteCameraInput {
+  """The ID of the camera to delete"""
   id: ID!
 }
 
@@ -1388,6 +1636,12 @@ input DeleteLensInput {
   id: ID!
 }
 
+"""Input for deleting a mesh collection by ID"""
+input DeleteMeshCollectionInput {
+  """The ID of the mesh collection to delete"""
+  id: ID!
+}
+
 """Input for deleting a mesh by ID"""
 input DeleteMeshInput {
   """The ID of the mesh to delete"""
@@ -1439,6 +1693,12 @@ input DeleteSnaphotInput {
 """Input for deleting a stage by ID"""
 input DeleteStageInput {
   """The ID of the stage to delete"""
+  id: ID!
+}
+
+"""Input for deleting a transformation by ID"""
+input DeleteTransformationInput {
+  """The ID of the transformation to delete"""
   id: ID!
 }
 
@@ -1538,18 +1798,6 @@ input DimAnchorInput {
   value: Int!
 }
 
-"""
-A descriptor for a single named dimension of a dataset, recording its key, size and kind
-"""
-type DimDescriptor {
-  """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
-  key: String!
-
-  """The kind of the dimension, e.g. 'space', 'channel', or 'time'"""
-  kind: DimensionKind!
-  size: Int!
-}
-
 input DimSelector {
   end: Int = null
   index: Int = null
@@ -1566,19 +1814,17 @@ enum DimSelectorKind {
   SLICE
 }
 
-"""
-Input type for a dimension descriptor, which specifies a key and a kind for a dimension
-"""
-input DimensionDescriptorInput {
-  key: String!
-  kind: String!
-}
+"""A non-affine map given by a displacement field stored as a Zarr array"""
+type DisplacementsTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
 
-enum DimensionKind {
-  CHANNEL
-  FREQUENCY
-  SPACE
-  TIME
+  """The id of the Zarr store holding the displacement field"""
+  storeId: String
+  version: Int!
 }
 
 type DjangoModelType {
@@ -2354,6 +2600,16 @@ enum HistoryKind {
   UPDATE
 }
 
+"""The identity map: input and output coordinates are the same"""
+type IdentityTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+  version: Int!
+}
+
 """
 An image. Images are the central data type in mikro: a single 5D bioimage whose binary data is stored in a ZarrStore. Images can be annotated with views (coordinate-ordered subsets of the image) and are the primary container that rois, metrics, renders and generated tables are bound to.
 """
@@ -2574,13 +2830,11 @@ enum ImageKind {
 }
 
 """
-A layer that renders array (lens) data as an alpha-blended image. Its rendering is described entirely by the composable render graph.
+A layer that renders array (lens) data as an alpha-blended image. Its rendering is described entirely by the composable render graph; its placement, entirely by the coordinate graph.
 """
 type ImageLayer implements Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
   id: ID!
-  intensityDim: String
   kind: LayerKind!
   lens: Lens!
   opacity: Float!
@@ -2590,11 +2844,7 @@ type ImageLayer implements Layer {
   renderGraph: LayerRenderGraph
   scene: Scene!
   status: PlacementStatus!
-  tDim: String
   visible: Boolean!
-  xDim: String
-  yDim: String
-  zDim: String
 }
 
 """
@@ -2969,10 +3219,9 @@ type LaserElement implements OpticalElement {
 }
 
 """
-A layer placed in a scene and alpha-blended over the layers below it. The concrete kind (ImageLayer, ShapeLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
+A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: registration is a scene-level transformation edge, not a property of the view. The concrete kind (ImageLayer, ShapeLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
 """
 interface Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3090,14 +3339,32 @@ A Lens is a way of looking at a dataset: a dimensional selection (slices) over a
 """
 type Lens {
   activeAnchors: [CoordinateAnchor!]!
+
+  """The lens' own coordinate system: the space its slices cut out"""
+  coordinateSystem: CoordinateSystem
   dataset: ADataset!
   dimCount: Int!
-  dimDescriptors: [DimDescriptor!]!
+
+  """
+  The lens' dimension names, in array order. A selection never drops or reorders an axis
+  """
   dims: [String!]!
   id: ID!
+
+  """
+  Which axis of the data source maps to screen x, y, z, time and intensity. Derived from the axis types: spatial axes are in array order, so the last is x
+  """
+  renderAxes: RenderAxes!
+
+  """The shape this lens' slices cut out of its dataset"""
   shape: [Int!]!
   size: Int!
   slices: [Slice!]!
+
+  """
+  The edge from this lens' space back into its dataset's level-0 voxel space. A crop is a translation of the slice starts; a stepped lens also rescales. Without this edge an ROI drawn on a cropped lens has no defined path back to its dataset
+  """
+  toParent: Transformation
 }
 
 """Thin lens"""
@@ -3235,6 +3502,24 @@ type LightpathView implements View {
   yMin: Int
   zMax: Int
   zMin: Int
+}
+
+"""
+A permutation of axes, mapping each input axis to an output axis by name
+"""
+type MapAxisTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+
+  """The names of the input axes, positionally matched to `outputAxes`"""
+  inputAxes: [String!]!
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """The names of the output axes, positionally matched to `inputAxes`"""
+  outputAxes: [String!]!
+  version: Int!
 }
 
 """
@@ -3412,6 +3697,57 @@ type Mesh {
   store: BigFileStore!
 }
 
+"""
+An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL
+"""
+type MeshCollection {
+  """
+  The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly
+  """
+  catalog: ParquetStore!
+  coordinateSystem: CoordinateSystem!
+
+  """
+  The geometry encoding: how positions, normals and indices are quantized and compressed
+  """
+  encoding: Any!
+
+  """The Parquet stores holding the geometry shards"""
+  geometry: [ParquetStore!]!
+
+  """
+  The octree grid. Its `cellSize` is in voxels of the coordinate system, so the octree aligns to the label grid the meshes were extracted from
+  """
+  grid: Any!
+  id: ID!
+  specVersion: String!
+  version: String!
+}
+
+input MeshCollectionFilter {
+  AND: MeshCollectionFilter
+  DISTINCT: Boolean
+  NOT: MeshCollectionFilter
+  OR: MeshCollectionFilter
+
+  """Filter by the coordinate system the mesh geometry is expressed in"""
+  coordinateSystem: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+  version: StrFilterLookup
+}
+
 input MeshFilter {
   AND: MeshFilter
   DISTINCT: Boolean
@@ -3455,12 +3791,16 @@ input MeshInput {
 A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
 """
 type MeshLayer implements Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
+
+  """
+  The versioned, coordinate-system-anchored mesh collection this layer renders. Its geometry is fetched from the collection's Parquet catalog, not through this API
+  """
+  collection: MeshCollection
   id: ID!
   kind: LayerKind!
   materialColor: [Int!]
-  mesh: Mesh!
+  mesh: Mesh
   opacity: Float!
   order: Int!
   scene: Scene!
@@ -3576,6 +3916,9 @@ input MultiWellPlateOrder @oneOf {
 }
 
 type Mutation {
+  """Add an existing transformation edge to a scene's composition"""
+  addTransformationToScene(input: SceneTransformationInput!): Scene!
+
   """Assign a user permission to an object"""
   assignUserPermission(input: AssignUserPermissionInput!): [UserObjectPermission!]!
 
@@ -3650,6 +3993,11 @@ type Mutation {
   createMesh(input: MeshInput!): Mesh!
 
   """
+  Register an immutable, versioned mesh collection against a coordinate system
+  """
+  createMeshCollection(input: CreateMeshCollectionInput!): MeshCollection!
+
+  """
   Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene
   """
   createMeshLayer(input: CreateMeshLayerInput!): MeshLayer!
@@ -3691,7 +4039,9 @@ type Mutation {
   """Create a new view for region of interest data"""
   createRoiView(input: ROIViewInput!): ROIView!
 
-  """Create a new scene from an existing lens with optional blending mode"""
+  """
+  Create a new scene and the WORLD coordinate system its layers are registered into
+  """
   createScene(input: CreateSceneInput!): Scene!
 
   """
@@ -3712,6 +4062,11 @@ type Mutation {
   Create a layer that renders trajectories from columns of a table, grouped by a track id
   """
   createTrackLayer(input: CreateTrackLayerInput!): TrackLayer!
+
+  """
+  Create one edge of the coordinate graph, mapping an input coordinate system to an output one. This is where registration lives
+  """
+  createTransformation(input: CreateTransformationInput!): Transformation!
 
   """Create a new collection of views to organize related views"""
   createViewCollection(input: ViewCollectionInput!): ViewCollection!
@@ -3769,6 +4124,9 @@ type Mutation {
   """Delete an existing mesh"""
   deleteMesh(input: DeleteMeshInput!): ID!
 
+  """Delete an existing mesh collection"""
+  deleteMeshCollection(input: DeleteMeshCollectionInput!): ID!
+
   """Delete an existing multi-well plate configuration"""
   deleteMultiWellPlate(input: DeleteMultiWellInput!): ID!
 
@@ -3801,6 +4159,9 @@ type Mutation {
 
   """Delete an existing timepoint view"""
   deleteTimepointView(input: DeleteViewInput!): ID!
+
+  """Delete an existing transformation"""
+  deleteTransformation(input: DeleteTransformationInput!): ID!
 
   """Delete any type of view"""
   deleteView(input: DeleteViewInput!): ID!
@@ -3904,6 +4265,11 @@ type Mutation {
   """Remove images from a dataset"""
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
 
+  """
+  Remove a transformation edge from a scene's composition. The edge itself survives
+  """
+  removeTransformationFromScene(input: SceneTransformationInput!): Scene!
+
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
 
@@ -3965,6 +4331,9 @@ type Mutation {
 
   """Update an existing region of interest"""
   updateRoi(input: UpdateRoiInput!): ROI!
+
+  """Refine a transformation's parameters, bumping its version"""
+  updateTransformation(input: UpdateTransformationInput!): Transformation!
 }
 
 """
@@ -4261,11 +4630,10 @@ input OpticsViewInput {
 The hardware truth: the recorded microscope (Optikit) state pinned to a coordinate anchor
 """
 type OptikitState {
-  chunkShape: [Int!]!
-  dims: [String!]!
   id: ID!
-  shape: [Int!]!
-  store: ZarrStore!
+
+  """The recorded microscope state"""
+  state: Any!
 }
 
 enum Ordering {
@@ -5067,7 +5435,10 @@ type PermissionOption {
 
 """Input for pinning or unpinning a camera for quick access"""
 input PinCameraInput {
+  """The ID of the camera to pin or unpin"""
   id: ID!
+
+  """True to pin, false to unpin"""
   pin: Boolean!
 }
 
@@ -5223,7 +5594,6 @@ type PlaneInfo {
 A layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table.
 """
 type PointLayer implements Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
   colorColumn: String
   colormap: ColorMap
@@ -5382,6 +5752,12 @@ type Query {
   """List continuous scan views (recording scan directions)"""
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
 
+  """Get a single coordinate system by ID"""
+  coordinateSystem(id: ID!): CoordinateSystem!
+
+  """List coordinate systems (the nodes of the RFC-5 coordinate graph)"""
+  coordinateSystems(filters: CoordinateSystemFilter, ordering: [CoordinateSystemOrder!]! = [], pagination: OffsetPaginationInput): [CoordinateSystem!]!
+
   """Get a single data array by ID"""
   dataArray(id: ID!): DataArray!
 
@@ -5511,6 +5887,14 @@ type Query {
     """The unique identifier of an object"""
     id: ID!
   ): Mesh!
+
+  """Get a single mesh collection by ID"""
+  meshCollection(id: ID!): MeshCollection!
+
+  """
+  List mesh collections (immutable, versioned Parquet-backed mesh sets anchored to a coordinate system)
+  """
+  meshCollections(filters: MeshCollectionFilter, pagination: OffsetPaginationInput): [MeshCollection!]!
 
   """List 3D meshes"""
   meshes(filters: MeshFilter, ordering: [MeshOrder!]! = [], pagination: OffsetPaginationInput): [Mesh!]!
@@ -5678,6 +6062,14 @@ type Query {
 
   """List timepoint views (anchoring image regions in real time)"""
   timepointViews(filters: TimepointViewFilter, pagination: OffsetPaginationInput): [TimepointView!]!
+
+  """Get a single transformation by ID"""
+  transformation(id: ID!): Transformation!
+
+  """
+  List transformations (the directed edges of the coordinate graph). Compose them client-side; the server never resolves a path to world, because the same dataset can sit in two scenes under two registrations
+  """
+  transformations(filters: TransformationFilter, ordering: [TransformationOrder!]! = [], pagination: OffsetPaginationInput): [Transformation!]!
 
   """List well position views (mapping images to multi well plate wells)"""
   wellPositionViews(filters: WellPositionViewFilter, pagination: OffsetPaginationInput): [WellPositionView!]!
@@ -6120,6 +6512,28 @@ interface Render {
   creator: User
 }
 
+"""
+Which axis of a data source maps to screen x, y, z, time and intensity. Derived from the axis types, never stored
+"""
+type RenderAxes {
+  """The channel axis, if the data has one"""
+  intensity: String
+
+  """The time axis, if the data has one"""
+  t: String
+
+  """The axis mapped to screen x: the last (fastest-varying) spatial axis"""
+  x: String!
+
+  """The axis mapped to screen y: the second-to-last spatial axis"""
+  y: String!
+
+  """
+  The axis mapped to screen z: the third-to-last spatial axis, if the data is volumetric
+  """
+  z: String
+}
+
 enum RenderKind {
   SNAPSHOT
   VIDEO
@@ -6318,6 +6732,29 @@ enum RoiKindChoices {
   UNKNOWN
 }
 
+"""
+A discrete coordinate an ROI is pinned to, e.g. a timepoint or a channel
+"""
+type RoiSelector {
+  """The name of the discrete axis, e.g. 't' or 'c'"""
+  axis: String!
+
+  """The coordinate along that axis"""
+  index: Int!
+}
+
+"""A rotation, given as an orthonormal matrix"""
+type RotationTransformation implements Transformation {
+  """The rotation matrix"""
+  affine: [[Float!]!]!
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+  version: Int!
+}
+
 input RowFilter {
   clause: String = null
 }
@@ -6339,7 +6776,7 @@ type SampleElement implements OpticalElement {
 }
 
 """
-Input type for a scale, which specifies an array-like object to create the image from and optional scale factors for each dimension of the image
+Input type for one pyramid level: the array backing it. Its scale is derived from its actual shape, never supplied
 """
 input ScaleInput {
   """The array-like object to create the image from"""
@@ -6347,14 +6784,24 @@ input ScaleInput {
   level: Int!
 
   """
-  The scale factors for each dimension of the image, which specify the physical size of each pixel along each dimension and can be used to provide additional context about the spatial resolution of the image
-  """
-  scaleFactors: [Float!]
-
-  """
-  The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic', etc. This can be used to provide additional context about how the scale was created and the expected quality of the scale
+  The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic'. Recorded as provenance on the level's transformation
   """
   scaleMethod: String = null
+}
+
+"""A per-axis multiplication, with one entry per input axis"""
+type ScaleTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The per-axis scale factors, in the axis order of the input system. Absolute, not relative to another level
+  """
+  scale: [Float!]!
+  version: Int!
 }
 
 """
@@ -6421,16 +6868,33 @@ enum ScanDirection {
 }
 
 """
-The absolute coordinate universe in which layers are placed, with defined spatial and temporal base units
+A composition of layers over a shared WORLD coordinate system. The scene carries no units of its own -- they are per-axis, on the axes of its world system
 """
 type Scene {
+  """
+  Every coordinate system reachable in this scene: its world system plus those its transformation edges touch
+  """
+  coordinateSystems: [CoordinateSystem!]!
+
+  """
+  The transformation edges belonging to this scene, e.g. the registrations placing each layer's dataset into the world system. Compose them client-side: the server does not resolve paths, because the same dataset can sit in two scenes under two different registrations
+  """
+  coordinateTransformations: [Transformation!]!
   id: ID!
 
   """The layers placed in this scene (a heterogeneous list of layer kinds)"""
   layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   name: String!
-  spatialUnit: SpatialUnit!
-  temporalUnit: TemporalUnit!
+
+  """
+  The ROIs drawn in a coordinate system this scene can reach. Reachability, not containment: an ROI belongs to a coordinate system, and survives the scene's deletion
+  """
+  rois: [DataRoi!]!
+
+  """
+  The scene's shared WORLD coordinate system, into which each of its layers is registered
+  """
+  worldCoordinateSystem: CoordinateSystem
 }
 
 input SceneFilter {
@@ -6460,6 +6924,12 @@ input SceneOrder @oneOf {
   name: Ordering
 }
 
+"""Input for adding or removing an edge from a scene's composition"""
+input SceneTransformationInput {
+  scene: ID!
+  transformation: ID!
+}
+
 input Selector {
   c: DimSelector = null
   t: DimSelector = null
@@ -6469,10 +6939,32 @@ input Selector {
 }
 
 """
+Input for pinning an ROI to a coordinate on a discrete axis, e.g. a timepoint or a channel
+"""
+input SelectorInput {
+  axis: String!
+  index: Int!
+}
+
+"""An ordered composition of child transformations, applied first to last"""
+type SequenceTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The child transformations, applied first to last. They omit their own input and output: the sequence supplies them
+  """
+  transformations: [Transformation!]!
+  version: Int!
+}
+
+"""
 A layer that renders the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths), placed and styled in a scene.
 """
 type ShapeLayer implements Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
   dataRoi: DataRoi!
   fillColor: [Int!]
@@ -6600,30 +7092,6 @@ input SnapshotOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
-}
-
-"""
-The physical unit used to express spatial dimensions, e.g. of pixel sizes or stage positions.
-"""
-enum SpatialUnit {
-  """
-  Angstroms (1e-10 meters), the typical scale of atomic and molecular structures.
-  """
-  ANGSTROMS
-
-  """
-  Micrometers (1e-6 meters), the typical scale of cells in light microscopy.
-  """
-  MICROMETERS
-
-  """Nanometers (1e-9 meters), the typical scale of subcellular structures."""
-  NANOMETERS
-
-  """Raw pixel units without a calibrated physical size."""
-  PIXELS
-
-  """The spatial unit is not known or not specified."""
-  UNKNOWN
 }
 
 """Spectral window"""
@@ -6969,32 +7437,6 @@ input TaskOrder @oneOf {
   id: Ordering
 }
 
-"""
-The physical unit used to express temporal dimensions, e.g. of time-lapse intervals.
-"""
-enum TemporalUnit {
-  """Days (86400 seconds)."""
-  DAYS
-
-  """Hours (3600 seconds)."""
-  HOURS
-
-  """Milliseconds (1e-3 seconds)."""
-  MILLISECONDS
-
-  """Minutes (60 seconds)."""
-  MINUTES
-
-  """Nanoseconds (1e-9 seconds)."""
-  NANOSECONDS
-
-  """Seconds, the SI base unit of time."""
-  SECONDS
-
-  """The temporal unit is not known or not specified."""
-  UNKNOWN
-}
-
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar ThreeDVector
 
@@ -7117,7 +7559,6 @@ input TimepointViewInput {
 A layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id.
 """
 type TrackLayer implements Layer {
-  affineMatrix: FourByFourMatrix
   blending: Blending!
   colorByColumn: String
   colormap: ColorMap
@@ -7165,6 +7606,130 @@ input TransferFunctionInput {
   opacity: Float = null
 }
 
+"""
+The kind of a coordinate transformation, discriminating how its parameters are interpreted. Direction is always forward: input -> output.
+"""
+enum TransformKind {
+  """
+  A general affine map, given as an M x (N+1) matrix with rows outermost.
+  """
+  AFFINE
+
+  """
+  A pair of child transformations giving an explicit forward and inverse map.
+  """
+  BIJECTION
+
+  """
+  A composition of child transformations, each acting on a named subset of the axes.
+  """
+  BY_DIMENSION
+
+  """A non-affine map given by a displacement field stored as a Zarr array."""
+  DISPLACEMENTS
+
+  """The identity map. Input and output coordinates are the same."""
+  IDENTITY
+
+  """
+  A permutation of axes, mapping each input axis to an output axis by name.
+  """
+  MAP_AXIS
+
+  """A rotation, given as an orthonormal matrix."""
+  ROTATION
+
+  """A per-axis multiplication. Its `scale` has one entry per input axis."""
+  SCALE
+
+  """
+  An ordered composition of child transformations, applied first to last.
+  """
+  SEQUENCE
+
+  """A per-axis offset. Its `translation` has one entry per input axis."""
+  TRANSLATION
+}
+
+enum TransformKindChoices {
+  AFFINE
+  BIJECTION
+  BY_DIMENSION
+  DISPLACEMENTS
+  IDENTITY
+  MAP_AXIS
+  ROTATION
+  SCALE
+  SEQUENCE
+  TRANSLATION
+}
+
+"""
+A directed edge of the coordinate graph, mapping `input` to `output`. Direction is always forward. The concrete kind (Scale, Translation, Affine, Sequence, ...) carries the parameters
+"""
+interface Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+  version: Int!
+}
+
+input TransformationFilter {
+  AND: TransformationFilter
+  DISTINCT: Boolean
+  NOT: TransformationFilter
+  OR: TransformationFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """Filter by the coordinate system this transformation maps from"""
+  input: ID
+  kind: TransformKindChoices
+
+  """Filter by the coordinate system this transformation maps to"""
+  output: ID
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """
+  Show only top-level edges, excluding the children of SEQUENCE / BY_DIMENSION wrappers
+  """
+  rootsOnly: Boolean
+
+  """Filter by the scene this transformation is a member of"""
+  scene: ID
+}
+
+input TransformationOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  order: Ordering
+}
+
+"""A per-axis offset, with one entry per input axis"""
+type TranslationTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """The per-axis offsets, in the axis order of the input system"""
+  translation: [Float!]!
+  version: Int!
+}
+
 input TreeInput {
   children: [TreeNodeInput!]!
   id: String = "root"
@@ -7179,6 +7744,15 @@ input TreeNodeInput {
 }
 
 scalar UUID
+
+"""
+A physical unit of measurement (``"mV"``, ``"S/cm2"``, ``"second"``).
+
+A string scalar validating that the value parses as a pint unit — a bad unit,
+a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
+spelling (``"cm2"``) is accepted and the given spelling is preserved.
+"""
+scalar Unit
 
 """Unstructured metadata attached to a file."""
 type UnstructuredMeta {
@@ -7217,7 +7791,6 @@ input UpdateImageInput {
 
 """Input type for creating an image from an array-like object"""
 input UpdateLayerInput {
-  affineMatrix: [[Float!]!] = null
   blending: Blending = null
   id: ID!
   intensityDim: String = null
@@ -7226,11 +7799,7 @@ input UpdateLayerInput {
   order: Int = null
   renderGraph: LayerRenderGraphInput = null
   scene: ID = null
-  tDim: String = null
   visible: Boolean = null
-  xDim: String = null
-  yDim: String = null
-  zDim: String = null
 }
 
 """Input for updating an existing RGB render context"""
@@ -7337,6 +7906,17 @@ input UpdateRoiInput {
 
   """The new vector coordinates defining the ROI"""
   vectors: [FiveDVector!] = null
+}
+
+"""
+Input for refining an edge's parameters. Bumps its version, which is what tells an ROI its chain has moved
+"""
+input UpdateTransformationInput {
+  affine: [[Float!]!] = null
+  id: ID!
+  name: String = null
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """
@@ -7671,7 +8251,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformationView | BigFileStore | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | File | FileView | HistogramView | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MaskView | MediaStore | Membership | Mesh | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | ScaleView | Scene | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

@@ -1,11 +1,18 @@
 fragment Scene on Scene {
   id
-  spatialUnit
-  temporalUnit
+  name
+  worldCoordinateSystem {
+    ...CoordinateSystem
+  }
+  coordinateSystems {
+    ...CoordinateSystem
+  }
+  coordinateTransformations {
+    ...Transformation
+  }
   layers {
     ...SceneLayer
   }
-  name
 }
 
 fragment ListScene on Scene {

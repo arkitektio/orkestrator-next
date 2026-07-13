@@ -4,7 +4,11 @@ import { perfMonitor } from "./perfMonitor";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveBrickSpec } from "../core/octree/brickSpec";
 import { assessPoolViability } from "../core/octree/poolViability";
-import { buildLayerLevelGeometry, type LevelSource } from "../core/octree/levelGeometry";
+import {
+  buildLayerLevelGeometry,
+  buildLevelSources,
+  type LevelSource,
+} from "../core/octree/levelGeometry";
 import {
   planLayerNodes,
   sameNodePlan,
@@ -101,16 +105,11 @@ export function startNodePlanTracking({
     for (const layer of plannableLayers) {
       let levels: LevelSource[];
       try {
-        levels = layer.lens.dataset.dataArrays.map((dataArray) => {
-          const arr = viewerState.getArrayForStoreId(dataArray.store.id);
-          return {
-            shape: arr.shape,
-            chunks: arr.chunks,
-            dtype: String(arr.dtype),
-            storeId: dataArray.store.id,
-            scaleFactors: dataArray.scaleFactors ?? undefined,
-          };
-        });
+        levels = buildLevelSources(
+          layer.lens.dataset.dataArrays,
+          layer.lens.dataset.dims.length,
+          viewerState.getArrayForStoreId,
+        );
       } catch {
         // Arrays not opened for this layer (e.g. store still initializing).
         continue;

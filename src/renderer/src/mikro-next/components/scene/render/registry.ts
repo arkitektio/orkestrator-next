@@ -2,8 +2,8 @@ import { FC } from "react";
 import { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { ImagePlaneLayer } from "./image/ImagePlaneLayer";
 import { ImageVolumeLayer } from "./image/ImageVolumeLayer";
+import { MeshCollectionLayer } from "./mesh/MeshCollectionLayer";
 import {
-  MeshLayerRenderer,
   PointLayerRenderer,
   ShapeLayerRenderer,
   TrackLayerRenderer,
@@ -26,5 +26,5 @@ export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRend
   ShapeLayer: { Layer2D: ShapeLayerRenderer, Layer3D: ShapeLayerRenderer },
   PointLayer: { Layer2D: PointLayerRenderer, Layer3D: PointLayerRenderer },
   TrackLayer: { Layer2D: TrackLayerRenderer, Layer3D: TrackLayerRenderer },
-  MeshLayer: { Layer2D: null, Layer3D: MeshLayerRenderer },
+  MeshLayer: { Layer2D: null, Layer3D: MeshCollectionLayer },
 };

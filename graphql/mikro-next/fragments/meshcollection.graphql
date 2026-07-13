@@ -1,0 +1,20 @@
+# A MeshCollection is a DATASET, not a shape: the API node carries version,
+# grid, coordinate system and the Parquet stores; the individual meshes are
+# ROWS in those Parquet files, reached client-side through DuckDB. There is
+# deliberately no `meshes(...)` field to paginate.
+fragment MeshCollection on MeshCollection {
+  id
+  version
+  specVersion
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  catalog {
+    ...ParquetStore
+  }
+  geometry {
+    ...ParquetStore
+  }
+  grid
+  encoding
+}

@@ -22,19 +22,15 @@ const makeLayer = (
 ) =>
   ({
     id,
-    xDim: "x",
-    yDim: "y",
-    zDim: overrides.zDim ?? null,
-    intensityDim: "c",
     fixedLOD: overrides.fixedLOD ?? null,
     defaultVolumeLOD: overrides.defaultVolumeLOD ?? null,
     lens: {
       slices: overrides.slices ?? [],
+      renderAxes: { x: "x", y: "y", z: overrides.zDim ?? null, intensity: "c" },
       dataset: {
         dims: overrides.dims ?? ["y", "x", "c"],
         dataArrays: levels.map((level, index) => ({
           level: index,
-          scaleFactors: null,
           store: { id: `${id}-store-${index}`, shape: level.shape, dtype: level.dtype },
         })),
       },

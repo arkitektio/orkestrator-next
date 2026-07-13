@@ -7,46 +7,68 @@ fragment DimSlice on Slice {
 
 fragment SceneLens on Lens {
   id
-    shape
+  shape
+  dims
+  renderAxes {
+    x
+    y
+    z
+    t
+    intensity
+  }
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  toParent {
+    ...Transformation
+  }
+  slices {
+    ...DimSlice
+  }
+  dataset {
+    id
+    name
     dims
-    slices {
-      ...DimSlice
+    shape
+    multiscale
+    coordinateSystem {
+      ...CoordinateSystem
     }
-    dataset {
+    dataArrays {
       id
-      name
-      dims
-      dataArrays {
+      level
+      shape
+      chunkShape
+      coordinateSystem {
         id
-        level
-        store {
-          ...ZarrStore
-        }
-        scaleFactors
+        name
+      }
+      toParent {
+        ...Transformation
+      }
+      store {
+        ...ZarrStore
       }
     }
-    activeAnchors {
-      id
-      valueHistogram {
-        bins
-        histogram
-        min
-        max
-        p1
-        p99
-      }
-      channelLabel {
-        label
-      }
-      lightGraph {
-              graph {
-          ...LightpathGraph
-        }
+  }
+  activeAnchors {
+    id
+    coordinates
+    valueHistogram {
+      bins
+      histogram
+      min
+      max
+      p1
+      p99
+    }
+    channelLabel {
+      label
+    }
+    lightGraph {
+      graph {
+        ...LightpathGraph
       }
     }
-}
-
-fragment ListScene on Scene {
-  id
-  name
+  }
 }

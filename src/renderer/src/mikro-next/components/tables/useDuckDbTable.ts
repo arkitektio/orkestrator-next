@@ -73,7 +73,7 @@ const escapeSqlLiteral = (value: string) =>
 const resolveParquetUrl = (grant: CachedGrant) =>
   `s3://${grant.bucket}/${grant.key}`;
 
-const resolveDuckDbEndpoint = (datalayerEndpoint?: string) => {
+export const resolveDuckDbEndpoint = (datalayerEndpoint?: string) => {
   if (!datalayerEndpoint) {
     return null;
   }
@@ -168,7 +168,9 @@ const rowToRecord = (row: unknown): Record<string, unknown> => {
 // and closed by callers). We deliberately do NOT terminate the worker on component
 // unmount — tables mount/unmount frequently and re-instantiating WASM each time is
 // expensive. The single worker persists for the life of the renderer process.
-const getDuckDb = async () => {
+// Exported (with ensureHttpfs) so other Parquet consumers — the scene's mesh
+// collections (`scene/render/mesh/meshParquet.ts`) — share the one instance.
+export const getDuckDb = async () => {
   if (!duckDbPromise) {
     duckDbPromise = (async () => {
       const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
@@ -192,7 +194,7 @@ const getDuckDb = async () => {
   return duckDbPromise;
 };
 
-const ensureHttpfs = async (connection: duckdb.AsyncDuckDBConnection) => {
+export const ensureHttpfs = async (connection: duckdb.AsyncDuckDBConnection) => {
   if (!httpfsReadyPromise) {
     httpfsReadyPromise = (async () => {
       await connection.query("INSTALL httpfs");

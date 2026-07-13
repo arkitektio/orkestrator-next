@@ -5,6 +5,7 @@ import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "./brickSpec";
 import { brickGridForLevel } from "./nodeAddress";
 import {
   buildLayerLevelGeometry,
+  buildLevelSources,
   type LayerLevelGeometry,
   type LevelSource,
 } from "./levelGeometry";
@@ -72,16 +73,11 @@ export function assessLayerPoolViability(
 ): PoolViability | null {
   let levels: LevelSource[];
   try {
-    levels = layer.lens.dataset.dataArrays.map((dataArray) => {
-      const arr = getArrayForStoreId(dataArray.store.id);
-      return {
-        shape: arr.shape,
-        chunks: arr.chunks,
-        dtype: String(arr.dtype),
-        storeId: dataArray.store.id,
-        scaleFactors: dataArray.scaleFactors ?? undefined,
-      };
-    });
+    levels = buildLevelSources(
+      layer.lens.dataset.dataArrays,
+      layer.lens.dataset.dims.length,
+      getArrayForStoreId,
+    );
   } catch {
     return null;
   }

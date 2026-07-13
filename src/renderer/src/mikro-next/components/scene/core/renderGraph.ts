@@ -193,7 +193,7 @@ export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
       type: "channel",
       kind: CHANNEL_KIND,
       label: null,
-      intensityDim: layer.intensityDim ?? null,
+      intensityDim: layer.lens.renderAxes?.intensity ?? null,
       intensityIndex: 0,
       visible: layer.visible ?? true,
       transfer: { ...DEFAULT_TRANSFER },

@@ -1,5 +1,5 @@
 import { ColorMap } from "@/mikro-next/api/graphql";
-import { ImageLayerFragment } from "../../core/layerGuards";
+import type { LayerState } from "../../core/layerModel";
 import {
   colormapGradientCSS as sceneColormapGradientCSS,
   sampleColorMapCSS as sceneSampleColorMapCSS,
@@ -27,17 +27,14 @@ export const colormapGradientCSS = (
  * Whether a layer's dimension mapping differs from its persisted state — the
  * "Save changes" signal for the flyout's Advanced (dims) section. Contrast /
  * colormap / color now live in the render graph, whose unsaved state is tracked
- * separately by the render-graph editor (`RenderGraphSection`).
+ * separately by the render-graph editor (`RenderGraphSection`). The spatial
+ * axes are server-derived from axis types now, so only the intensity mapping
+ * is still user-editable.
  */
 export const isLayerDirty = (
-  current: ImageLayerFragment,
-  original: ImageLayerFragment | undefined,
+  current: Pick<LayerState, "intensityDim">,
+  original: Pick<LayerState, "intensityDim"> | undefined,
 ): boolean => {
   if (!original) return true;
-  return (
-    current.xDim !== original.xDim ||
-    current.yDim !== original.yDim ||
-    current.zDim !== original.zDim ||
-    current.intensityDim !== original.intensityDim
-  );
+  return current.intensityDim !== original.intensityDim;
 };

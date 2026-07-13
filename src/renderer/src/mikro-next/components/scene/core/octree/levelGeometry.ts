@@ -1,4 +1,5 @@
 import { resolveAxisIndices, type AxisIndices, type LayerAxisDims } from "../dims";
+import type { TransformLike } from "../transformGraph";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in
@@ -43,6 +44,95 @@ export type LayerLevelGeometry = {
 };
 
 export const MAX_BRICK_CHANNELS = 16;
+
+/**
+ * Absolute per-axis scale (array dim order) declared by a level's `toParent`
+ * edge: a bare `ScaleTransformation`, or the Scale child of a Sequence
+ * (Sequence[Scale, Translation] is the canonical pyramid-level edge; the
+ * translation is the half-voxel downsampling offset, not yet consumed).
+ * Identity / pure-translation edges scale nothing (all-1s). Null when the
+ * edge is absent or not expressible as per-axis factors — callers fall back
+ * to the shape-ratio chain in `resolveAxisScale`.
+ */
+export const absoluteLevelScale = (
+  toParent: TransformLike | undefined,
+  dimCount: number,
+): number[] | null => {
+  if (!toParent) return null;
+  const nodes = toParent.transformations?.length ? toParent.transformations : [toParent];
+  let scale: number[] | null = null;
+  for (const node of nodes) {
+    if (!node) continue;
+    if (node.scale?.length) {
+      if (scale) return null;
+      scale = [...node.scale];
+    } else if (
+      node.__typename !== "IdentityTransformation" &&
+      node.__typename !== "TranslationTransformation"
+    ) {
+      return null;
+    }
+  }
+  if (scale) return scale.length === dimCount ? scale : null;
+  return Array<number>(dimCount).fill(1);
+};
+
+/**
+ * Per-level factors relative to level 0 (array dim order) — the exact
+ * semantics the removed server-side `DataArray.scaleFactors` field had —
+ * derived from the levels' absolute `toParent` scales. The absolute scales
+ * obey `scale·shape == const` per axis, so these agree with the shape-ratio
+ * fallback by construction; declaring them here just short-circuits it.
+ */
+export const relativeLevelScaleFactors = (
+  dataArrays: readonly { level: number; toParent?: TransformLike }[],
+  dimCount: number,
+): (number[] | null)[] => {
+  if (dataArrays.length === 0) return [];
+  const abs = dataArrays.map((dataArray) => absoluteLevelScale(dataArray.toParent, dimCount));
+  const baseIndex = dataArrays.reduce(
+    (best, dataArray, i) => (dataArray.level < dataArrays[best].level ? i : best),
+    0,
+  );
+  const base = abs[baseIndex];
+  if (!base) return dataArrays.map(() => null);
+  return abs.map((a) => (a ? a.map((v, k) => (base[k] ? v / base[k] : 1)) : null));
+};
+
+/** Structural subset of a `DataArray` fragment that `buildLevelSources` needs. */
+export type DataArraySource = {
+  level: number;
+  toParent?: TransformLike;
+  store: { id: string };
+};
+
+/**
+ * The one shared `LevelSource[]` builder (plan tracker, residency manager and
+ * pool-viability probe previously each hand-rolled this): opened-array shapes
+ * per store plus the relative scale factors derived from the transform graph.
+ * Throws (like `getArrayForStoreId`) when a store's array isn't opened yet.
+ */
+export function buildLevelSources(
+  dataArrays: readonly DataArraySource[],
+  dimCount: number,
+  getArrayForStoreId: (storeId: string) => {
+    shape: readonly number[];
+    chunks: readonly number[];
+    dtype: unknown;
+  },
+): LevelSource[] {
+  const factors = relativeLevelScaleFactors(dataArrays, dimCount);
+  return dataArrays.map((dataArray, i) => {
+    const arr = getArrayForStoreId(dataArray.store.id);
+    return {
+      shape: arr.shape,
+      chunks: arr.chunks,
+      dtype: String(arr.dtype),
+      storeId: dataArray.store.id,
+      scaleFactors: factors[i] ?? undefined,
+    };
+  });
+}
 
 /**
  * Per-axis level scale with the same fallback chain `planLayerChunks` uses for

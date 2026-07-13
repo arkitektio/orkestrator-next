@@ -2,14 +2,19 @@ fragment DataRoi on DataRoi {
   id
   name
   kind
-  dataset {
-    id
-    name
+  coordinateSystem {
+    ...CoordinateSystem
   }
   vectors
-  xDim
-  yDim
-  zDim
+  selectors {
+    axis
+    index
+  }
+  createdWithTransforms
+  intrinsicBbox {
+    min
+    max
+  }
 }
 
 
@@ -17,12 +22,9 @@ fragment ListDataRoi on DataRoi {
   id
   name
   kind
-  dataset {
+  coordinateSystem {
     id
     name
   }
   vectors
-  xDim
-  yDim
-  zDim
 }

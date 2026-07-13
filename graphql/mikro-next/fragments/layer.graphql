@@ -79,7 +79,6 @@ fragment SceneLayer on Layer {
   id
   kind
   status
-  affineMatrix
   blending
   opacity
   visible
@@ -88,11 +87,6 @@ fragment SceneLayer on Layer {
     lens {
       ...SceneLens
     }
-    xDim
-    yDim
-    zDim
-    intensityDim
-    tDim
     renderGraph {
       ...LayerRenderGraph
     }
@@ -136,6 +130,9 @@ fragment SceneLayer on Layer {
   ... on MeshLayer {
     mesh {
       ...Mesh
+    }
+    collection {
+      ...MeshCollection
     }
     materialColor
     wireframe

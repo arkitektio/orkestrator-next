@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { ImageLayerFragment } from "./layerGuards";
+import type { LayerState } from "./layerModel";
 
 /**
  * Convert a raw affine matrix (number[][]) to a THREE.Matrix4.
@@ -45,13 +45,13 @@ export function affineToMatrix4(raw: number[][] | null | undefined): THREE.Matri
   return mat;
 }
 
-/** Build a THREE.Matrix4 from the raw affine matrix stored on a layer (x,y,z convention) */
-export function buildAffineMatrix(layer: ImageLayerFragment): THREE.Matrix4 {
+/** Build a THREE.Matrix4 from the layer's composed affine (x,y,z convention) */
+export function buildAffineMatrix(layer: LayerState): THREE.Matrix4 {
   return affineToMatrix4(layer.affineMatrix);
 }
 
 /** Get the number of Z voxels for a layer, or null if the layer has no Z dimension */
-export function getLayerZSize(layer: ImageLayerFragment): number | null {
+export function getLayerZSize(layer: LayerState): number | null {
   if (!layer.zDim) return null;
   const idx = layer.lens.dims.indexOf(layer.zDim);
   if (idx === -1) return null;
@@ -76,7 +76,7 @@ export function voxelToPhysicalZ(
  * physical Z ranges.
  */
 export function isLayerOutOfPlane(
-  layer: ImageLayerFragment,
+  layer: LayerState,
   currentZ: number,
 ): boolean {
   const zSize = getLayerZSize(layer);

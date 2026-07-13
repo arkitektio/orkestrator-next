@@ -1,0 +1,84 @@
+fragment Axis on Axis {
+  id
+  order
+  name
+  type
+  unit
+  discrete
+  longName
+}
+
+fragment CoordinateSystem on CoordinateSystem {
+  id
+  name
+  kind
+  axes {
+    ...Axis
+  }
+}
+
+# The concrete per-kind payload of a transformation edge, WITHOUT recursing
+# into composite children — the leaf selection shared by every nesting depth
+# in the Transformation fragment below.
+fragment LeafTransformation on Transformation {
+  __typename
+  id
+  kind
+  name
+  input {
+    id
+    name
+  }
+  output {
+    id
+    name
+  }
+  ... on ScaleTransformation {
+    scale
+  }
+  ... on TranslationTransformation {
+    translation
+  }
+  ... on AffineTransformation {
+    affine
+  }
+  ... on RotationTransformation {
+    affine
+  }
+  ... on MapAxisTransformation {
+    inputAxes
+    outputAxes
+  }
+  ... on DisplacementsTransformation {
+    storeId
+  }
+}
+
+# GraphQL cannot express unbounded recursion, so composite transformations
+# (Sequence / ByDimension / Bijection) are expanded to a fixed depth with
+# leaves inside. Real edges are shallow: a pyramid level is
+# Sequence[Scale, Translation]; a scene registration is
+# ByDimension[Identity | Affine] or a bare Affine.
+fragment Transformation on Transformation {
+  ...LeafTransformation
+  ... on SequenceTransformation {
+    transformations {
+      ...LeafTransformation
+    }
+  }
+  ... on ByDimensionTransformation {
+    transformations {
+      ...LeafTransformation
+      ... on SequenceTransformation {
+        transformations {
+          ...LeafTransformation
+        }
+      }
+    }
+  }
+  ... on BijectionTransformation {
+    transformations {
+      ...LeafTransformation
+    }
+  }
+}

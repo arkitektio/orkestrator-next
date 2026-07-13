@@ -7,6 +7,9 @@ import {
   resolveLayerGraph,
   resolveProjectionMode,
 } from "./renderGraph";
+import { composeLayerAffine, type SceneTransformContext } from "./transformGraph";
+
+export type { SceneTransformContext };
 
 /**
  * The scene renderer's per-layer view-model. Extracted from `store/sceneStore.ts`
@@ -21,6 +24,23 @@ export type LayerState = ImageLayerFragment & {
   fixedLOD?: number | null;
   defaultVolumeLOD?: number | null;
   visible?: boolean;
+  /**
+   * Voxel→world spatial affine (x, y, z rows), composed CLIENT-SIDE from the
+   * scene's coordinate-transformation graph (`transformGraph.ts`) — the server
+   * no longer carries a flat `affineMatrix` on layers. Null = identity.
+   */
+  affineMatrix: number[][] | null;
+  /**
+   * Axis-name mapping, from the lens' server-derived `renderAxes` (axis TYPES
+   * decide, so a dim cannot be both spatial and the channel axis anymore).
+   * Kept as flat fields because ~15 consumers (slice signatures, probes,
+   * panels, planners) read them by these names.
+   */
+  xDim: string | null;
+  yDim: string | null;
+  zDim: string | null;
+  tDim: string | null;
+  intensityDim: string | null;
   /** Channel sources flattened from the layer's render graph (tree order). */
   channels: ChannelRenderNode[];
   /** Blend mode of the render graph's root, used to composite channels. */
@@ -50,6 +70,7 @@ export type LayerState = ImageLayerFragment & {
 export const normalizeLayer = (
   layer: ImageLayerFragment,
   defaultVolumeLod: number | null,
+  scene: SceneTransformContext,
 ): LayerState => {
   const graph = resolveLayerGraph(layer);
   const channels = flattenChannels(graph);
@@ -68,6 +89,7 @@ export const normalizeLayer = (
       // keep [0,1] fallback
     }
   }
+  const renderAxes = layer.lens.renderAxes;
   return {
     ...layer,
     climMin: transfer?.climMin ?? baseMin,
@@ -75,7 +97,12 @@ export const normalizeLayer = (
     colormap: transfer?.colormap ?? null,
     color: transfer?.color ?? null,
     gamma: transfer?.gamma ?? null,
-    intensityDim: primary?.intensityDim ?? layer.intensityDim,
+    affineMatrix: composeLayerAffine(scene, layer),
+    xDim: renderAxes?.x ?? null,
+    yDim: renderAxes?.y ?? null,
+    zDim: renderAxes?.z ?? null,
+    tDim: renderAxes?.t ?? null,
+    intensityDim: primary?.intensityDim ?? renderAxes?.intensity ?? null,
     channels,
     blend: graph.blending,
     projection: resolveProjectionMode(graph),

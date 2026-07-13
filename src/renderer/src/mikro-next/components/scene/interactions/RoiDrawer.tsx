@@ -56,9 +56,12 @@ export const RoiDrawer = () => {
       try {
         await Promise.all(
           armedLayers.map(async (layer) => {
-            // xDim/yDim are required to place a data ROI; skip layers that
-            // don't declare them rather than sending an invalid mutation.
-            if (!layer.xDim || !layer.yDim) return;
+            // An ROI is anchored to the coordinate system it was drawn in —
+            // the clicked layer's lens space. The layer's composed affine maps
+            // lens voxels → world, so its inverse resolves the drawn world
+            // points into exactly that system, once, at creation time.
+            const coordinateSystemId = layer.lens.coordinateSystem?.id;
+            if (!coordinateSystemId) return;
 
             const invAffine = affineToMatrix4(layer.affineMatrix).invert();
             const voxelVectors = roi.worldVectors.map((worldVector) => {
@@ -68,24 +71,13 @@ export const RoiDrawer = () => {
               );
               return [Math.round(vector.x), Math.round(vector.y), Math.round(vector.z)] as [number, number, number];
             });
-            const slices = layer.lens.slices.map((slice) => ({
-              dim: slice.dim,
-              start: slice.start,
-              stop: slice.stop,
-              step: slice.step,
-            }));
 
             await createDataRoi({
               variables: {
                 input: {
-                  dataset: layer.lens.dataset.id,
-                  drawnOnLens: layer.lens.id,
+                  coordinateSystem: coordinateSystemId,
                   kind: roi.kind,
                   vectors: voxelVectors,
-                  slices,
-                  xDim: layer.xDim,
-                  yDim: layer.yDim,
-                  zDim: layer.zDim,
                 },
               },
             });

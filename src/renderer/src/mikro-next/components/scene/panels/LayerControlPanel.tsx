@@ -190,16 +190,14 @@ export const LayerControlPanel = () => {
     [setSelectedLayerId],
   );
   // Contrast/colormap/color live in the render graph (saved by the render-graph
-  // editor); this persists only the dimension mapping.
+  // editor); this persists only the intensity mapping — the spatial axes are
+  // server-derived from the coordinate system's axis types and not writable.
   const handleSaveDims = useCallback(
     (layer: LayerState) => {
       updateLater({
         variables: {
           input: {
             id: layer.id,
-            xDim: layer.xDim,
-            yDim: layer.yDim,
-            zDim: layer.zDim,
             intensityDim: layer.intensityDim,
           },
         },

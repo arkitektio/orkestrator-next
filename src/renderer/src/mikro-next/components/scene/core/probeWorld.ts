@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { buildAffineMatrix } from "./worldTransform";
 import { hasValidSpatialAxes, resolveAxisIndices } from "./dims";
+import { relativeLevelScaleFactors } from "./octree/levelGeometry";
 import { resolveSpatialSelection } from "./selection";
 import type { LayerState } from "../store/sceneStore";
 import type { ProbedCoordinate } from "../store/viewerStore";
@@ -111,9 +112,13 @@ export function resolveProbeMarkerGeometry(
     const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], arr.shape[xPos]);
     const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], arr.shape[yPos]);
     const zSelection = resolveSpatialSelection(sliceMap[layer.zDim as string], arr.shape[zPos]);
-    const scaleX = dataArray.scaleFactors?.[xPos] ?? 1;
-    const scaleY = dataArray.scaleFactors?.[yPos] ?? 1;
-    const scaleZ = dataArray.scaleFactors?.[zPos] ?? 1;
+    const scaleFactors = relativeLevelScaleFactors(
+      layer.lens.dataset.dataArrays,
+      dims.length,
+    )[resolvedVolumeLod];
+    const scaleX = scaleFactors?.[xPos] ?? 1;
+    const scaleY = scaleFactors?.[yPos] ?? 1;
+    const scaleZ = scaleFactors?.[zPos] ?? 1;
 
     const totalX = arr.shape[xPos] * scaleX;
     const totalY = arr.shape[yPos] * scaleY;

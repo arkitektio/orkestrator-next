@@ -2,7 +2,42 @@
 
 Renders a `MeshLayer`'s `MeshCollection`: segmentation meshes stored as rows
 in Parquet, streamed cell-by-cell through DuckDB-wasm, anchored to a
-coordinate system in the scene's transform graph.
+coordinate system in the scene's transform graph (see
+`../../COORDINATE_SYSTEMS.md`; planning discipline inherited from
+`../../OCTREE_RENDERER.md`).
+
+## The big picture
+
+```
+scene fragment (MeshCollection: coordinateSystem, grid, encoding,
+                geometry: ParquetStore[])
+        │
+        ▼
+MeshCollectionLayer.tsx ── resolveCollectionMatrix()
+        │                    (anchor image layer's frame, else graph compose)
+        │  camera SETTLE (vanilla viewStore subscription — never per frame)
+        ▼
+MeshCollectionManager.updatePlan()
+        │
+        ├─ planMeshCells()          pure: LOD level + frustum cull (in the
+        │                           collection's OWN voxel space) + near-first
+        │                           triangle budget
+        ├─ cache hits               mounted into the THREE.Group instantly
+        └─ misses ─► MeshParquetSource.fetchCellRows()
+                        │   ONE batched `cell IN (...)` SQL per plan
+                        ▼
+                  decodeGeometryRow()   BLOB → dequantized Float32/Uint16
+                        │               (meshopt / raw, oct normals)
+                        ▼
+                  BufferGeometry per fragment ─► per-cell Group
+                        │
+                        ├─ LruByteCache (plan-protected, evict → dispose)
+                        └─ group.add + invalidate()   (demand frameloop)
+```
+
+The cell index behind `planMeshCells` is ONE aggregate query per collection
+`version` (collections are immutable per version), projected to the count
+columns so the geometry BLOBs are never scanned for it.
 
 ## Module boundaries (one concern per file)
 
@@ -64,5 +99,43 @@ the collection's coordinate system (i.e. the labels layer the meshes were cut
 from) — the mesh group reuses `buildVolumeVoxelToWorld(thatLayer)`, so meshes
 and labels overlap by construction, centering/y-flip included. Fallback:
 `composeCsToWorld` over the scene graph plus dataset edges gathered from the
-scene's layers — correct in world units but uncentered relative to image
-layers until the scene-root frame normalization lands (tracked follow-up).
+scene's layers (`collectDatasetEdges` — an edge is an edge wherever the API
+delivered it) — correct in world units but uncentered relative to image
+layers until the scene-root frame normalization lands (tracked follow-up;
+see `../../COORDINATE_SYSTEMS.md` §4).
+
+Vertices decode to the collection CS's VOXEL coordinates — never micrometres.
+Storing physical units would bake a calibration into millions of vertices; a
+registration refinement here is one `group.matrix` update, no geometry
+rebuild, no refetch.
+
+## Conventions inherited from the brick renderer
+
+- **P17 (render-cadence state):** planning subscribes to the vanilla
+  viewStore and reacts only to the moving→settled edge; streaming mutates the
+  THREE.Group imperatively and calls `invalidate()`. Nothing here writes a
+  React-subscribed store field per batch.
+- **P13 (disposal):** every eviction/unmount path funnels through
+  `disposeCellGroup` / `LruByteCache.clear` — three never disposes GPU
+  buffers for you, and a streaming layer is exactly the kind of unbounded
+  leak that doc warns about.
+- **Plans describe desire, residency describes state:** a replan never waits
+  on fetches; cells stream in and mount only if still planned (stale results
+  are absorbed by the cache, mirroring the brick `protectedKeys` gate).
+- **Budget degrades distance-first:** near-first ordering before the
+  triangle/cell caps, same rationale as the brick planner's closest-first
+  DFS.
+
+## Deliberately deferred (do not build without cause)
+
+- **Per-cell octree refinement** (mixed LOD levels in one plan) — slots into
+  `meshPlanner.ts` alone; the data plane and manager already handle arbitrary
+  cell sets.
+- **Catalog-driven attributes** — `colorBy` (e.g. `cell_type`) coloring and a
+  per-cell `lodError` metric for the refinement test; both are catalog
+  columns, not geometry changes.
+- **Decode worker** — decoding is main-thread; cells are small and batched,
+  but a repack-dispatcher-style worker pool is the known next lever if
+  profiles say otherwise.
+- **Instance picking** — per-fragment ids for click→segment resolution
+  (needs an id column in the geometry rows first).

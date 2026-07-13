@@ -10,6 +10,12 @@ This document has two halves: **concepts** (how it works, and why each piece is
 shaped the way it is) and **pitfalls** (everything that bit us during live
 testing, so nobody re-learns it).
 
+Sibling documents: `COORDINATE_SYSTEMS.md` — how the RFC-5 coordinate-system
+graph (server edges → client-composed `LayerState.affineMatrix`, per-level
+scales from `toParent`) feeds this renderer; `render/mesh/README.md` — the
+mesh-collection renderer (Parquet/DuckDB streaming) built on the same graph
+and the same planning discipline.
+
 ---
 
 ## 1. The big picture
@@ -63,9 +69,20 @@ slabs, and the plane material composites with the same `sampleBrick` tap.
 
 `buildLayerLevelGeometry(dims, layer, allLevels)` normalizes a layer's zarr
 pyramid into canonical `[x, y, z]` spatial order with per-level scale factors.
-Scale resolution order: explicit `scaleFactors` → shape ratio vs. base →
-`2^levelIndex` (z falls back to 1, matching typical microscopy pyramids that
-never downsample z).
+Scale resolution order: factors derived from the levels' `toParent` transform
+edges (`relativeLevelScaleFactors` — absolute RFC-5 scales divided by level 0;
+see COORDINATE_SYSTEMS.md §3.2) → shape ratio vs. base → `2^levelIndex`
+(z falls back to 1, matching typical microscopy pyramids that never
+downsample z). `buildLevelSources` is the ONE `LevelSource[]` builder — the
+plan tracker, residency manager and pool-viability probe all go through it.
+
+True (non-nominal) factors mean adjacent levels need not divide evenly
+(z 36→4 levels give 4→9 = 2.25×): the addressing already tolerates this (no
+power-of-two assumptions), but the DFS can visit a straddling child from two
+parents — and the per-level half-voxel TRANSLATION on the `toParent` edges is
+parsed but deliberately not yet consumed (corner-aligned sampling, the
+pre-migration status quo). Both land together as the planner/shader/probe
+lockstep change; see COORDINATE_SYSTEMS.md §3.2.
 
 Channel count is `min(16, intensity extent)` — 16 is the compositor limit
 shared with the legacy path.
@@ -258,6 +275,8 @@ Keep the two in sync when touching either.
 | Area | Files |
 | --- | --- |
 | Pure core | `core/octree/{levelGeometry, brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling, voxelFrame}.ts` (each with a `.test.ts`) |
+| Coordinate graph | `core/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
+| Mesh layers | `render/mesh/` (Parquet/DuckDB cell streaming, own README + `meshCore.test.ts`) |
 | Drivers | `managers/nodePlanTracker.ts`, `managers/brickResidency.ts`, `managers/BrickSystemProvider.tsx`, started from `managers/VisibilityManager.tsx` |
 | GPU | `render/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `glsl/brickTraversal.ts`, `layers/bricks/channelUniforms.ts` |

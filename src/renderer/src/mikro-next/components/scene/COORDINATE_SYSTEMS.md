@@ -79,10 +79,12 @@ Gone from the wire (and from `ImageLayerFragment`): `Layer.affineMatrix`,
   requested lazily (zarr: existing store flow; parquet: mutation on mesh-layer
   mount).
 - `CoordinateAnchor.valueHistogram` IS still selected (clim defaults + the
-  brick pool's global min/max normalization need it, `core/dataRange.ts`). If
-  the server computes it on demand this is the scene query's heaviest field —
-  if scene loads get slow, split it into a deferred query and let clims
-  resolve against the dtype range until it lands.
+  brick pool's global min/max normalization need it, `core/dataRange.ts`).
+  It is always PRECOMPUTED server-side — there is no on-demand evaluation
+  path; the field is either present or null. So selecting it costs only wire
+  size (a few hundred floats per anchor), and a null histogram simply means
+  clims resolve against the dtype range (the fallback `dataRange.ts` already
+  implements).
 
 ---
 

@@ -75,6 +75,14 @@ export const describeTransformation = (
       return `map ${transformation.inputAxes.join(",")} → ${transformation.outputAxes.join(",")}`;
     case "DisplacementsTransformation":
       return "displacement field";
+    case "CoordinatesTransformation":
+      return "coordinate field";
+    // Not a map at all: a declared non-correspondence. The reason is the whole
+    // content of the edge, so it is what gets shown.
+    case "UnmappableTransformation":
+      return transformation.reason
+        ? `unmappable — ${transformation.reason}`
+        : "unmappable";
     case "SequenceTransformation":
       return `sequence of ${childCount(transformation)}`;
     case "ByDimensionTransformation":

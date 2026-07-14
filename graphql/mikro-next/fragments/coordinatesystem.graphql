@@ -56,8 +56,25 @@ fragment LeafTransformation on Transformation {
   ... on RotationTransformation {
     affine
   }
+  # The displacement field itself now arrives as the store, not a bare id, so
+  # a client can fetch it without a second round trip.
   ... on DisplacementsTransformation {
-    storeId
+    store {
+      ...ZarrStore
+    }
+  }
+  # Like DISPLACEMENTS, but the field holds absolute output positions rather
+  # than offsets. Also non-affine, also no closed-form inverse.
+  ... on CoordinatesTransformation {
+    store {
+      ...ZarrStore
+    }
+  }
+  # A declared NON-correspondence (a feature table vs. the image it was measured
+  # from). No parameters, no matrix, and no placement search walks it — so the
+  # only thing to show is why.
+  ... on UnmappableTransformation {
+    reason
   }
 }
 

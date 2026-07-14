@@ -285,6 +285,19 @@ input AffineTransformationViewInput {
   zMin: Int = null
 }
 
+"""
+How a collection's own coordinate system relates to the space it was computed from. The same edge, and the same rank check, that a derived dataset's `derivedFrom` writes
+"""
+input AnchorInput {
+  affine: [[Float!]!] = null
+  inputAxes: [String!] = null
+  kind: TransformKind! = IDENTITY
+  outputAxes: [String!] = null
+  reason: String = null
+  scale: [Float!] = null
+  translation: [Float!] = null
+}
+
 """The `Any` scalar any type"""
 scalar Any
 
@@ -376,6 +389,11 @@ enum AxisType {
   DISPLACEMENT
 
   """
+  An enumerating axis with no metric: an object id, a row number. It has no unit because there is nothing to measure — the distance between object 3 and object 4 means nothing.
+  """
+  INDEX
+
+  """
   A FLIM arrival-time bin. Continuous, so a pyramid may re-bin it, and a phasor may be taken over it.
   """
   MICROTIME
@@ -400,6 +418,7 @@ enum AxisTypeChoices {
   CHANNEL
   COORDINATE
   DISPLACEMENT
+  INDEX
   MICROTIME
   SPACE
   SPECTRUM
@@ -1205,9 +1224,19 @@ enum CoordinateSystemKind {
   ATLAS
 
   """
+  A feature table's row space: its rows are objects, not positions, so its one axis enumerates rather than measures. Nothing maps a pixel to a row, which is why the edge relating it to the image it came from is UNMAPPABLE.
+  """
+  FEATURE
+
+  """
   The dataset's level-0 pixel grid. Every pyramid level and lens maps into this one system, so it is the space in which a dataset's geometry is unambiguous — and it is stable: recalibrating the dataset never moves it.
   """
   INTRINSIC
+
+  """
+  The space a mesh collection's vertex coordinates are expressed in. The collection owns it, and an edge relates it to the dataset the meshes were extracted from — usually an identity, but a mesh extracted from a downsampled grid is a scale, and that is a fact the edge can carry and a borrowed system could not.
+  """
+  MESH
 
   """
   A calibrated physical space derived from metadata (pixel size, stage pose, ...). Its axes carry the units; a single transformation edge maps the dataset's intrinsic pixels into it. A dataset can have zero or many.
@@ -1221,7 +1250,9 @@ enum CoordinateSystemKind {
 enum CoordinateSystemKindChoices {
   ARRAY
   ATLAS
+  FEATURE
   INTRINSIC
+  MESH
   PHYSICAL
   WORLD
 }
@@ -1230,6 +1261,33 @@ input CoordinateSystemOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+A non-affine map given by a coordinate field: a Zarr array of absolute output positions, where DISPLACEMENTS stores offsets. It has no closed-form inverse either
+"""
+type CoordinatesTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
+
+  """
+  The Zarr array holding the coordinate field: an absolute output position per point
+  """
+  store: ZarrStore
+  version: Int!
 }
 
 """
@@ -1275,6 +1333,20 @@ input CreateDatasetInput {
 
   """The ID of the parent dataset to nest this dataset under"""
   parent: ID = null
+}
+
+"""
+Input for registering an immutable, versioned table of per-object measurements. It gets a coordinate system of its own -- its rows are objects, not positions -- and an UNMAPPABLE edge relates it to the data it was measured from
+"""
+input CreateFeatureCollectionInput {
+  anchor: AnchorInput = null
+  axes: [AxisInput!] = null
+  coordinateSystem: ID = null
+  name: String!
+  provenanceMetadata: Any = null
+  specVersion: String = null
+  store: ParquetLike!
+  version: String!
 }
 
 """
@@ -1327,11 +1399,13 @@ input CreateLensInput {
 }
 
 """
-Input for registering an immutable, versioned mesh collection against a coordinate system
+Input for registering an immutable, versioned mesh collection. The collection gets a coordinate system of its own, and an edge relates it to the space the meshes were extracted from
 """
 input CreateMeshCollectionInput {
+  anchor: AnchorInput = null
+  axes: [AxisInput!] = null
   catalog: ParquetLike!
-  coordinateSystem: ID!
+  coordinateSystem: ID = null
   encoding: Any = null
   geometry: [ParquetLike!] = null
   grid: Any = null
@@ -1548,8 +1622,10 @@ input CreateTransformationInput {
   name: String = null
   output: ID!
   outputAxes: [String!] = null
+  reason: String = null
   scale: [Float!] = null
   scene: ID = null
+  store: ArrayLike = null
   translation: [Float!] = null
 }
 
@@ -1806,6 +1882,12 @@ input DeleteEraInput {
   id: ID!
 }
 
+"""Input for deleting a feature collection by ID"""
+input DeleteFeatureCollectionInput {
+  """The ID of the feature collection to delete"""
+  id: ID!
+}
+
 """Input for deleting a file by ID"""
 input DeleteFileInput {
   """The ID of the file to delete"""
@@ -1923,6 +2005,7 @@ input DerivedFromInput {
   kind: TransformKind! = IDENTITY
   lens: ID!
   outputAxes: [String!] = null
+  reason: String = null
   scale: [Float!] = null
   translation: [Float!] = null
 }
@@ -2027,7 +2110,9 @@ enum DimSelectorKind {
   SLICE
 }
 
-"""A non-affine map given by a displacement field stored as a Zarr array"""
+"""
+A non-affine map given by a displacement field: a Zarr array of per-point offsets. It has no closed-form inverse, so a placement path never walks it backwards
+"""
 type DisplacementsTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
@@ -2045,8 +2130,10 @@ type DisplacementsTransformation implements Transformation {
   """
   outputAxes: [String!]!
 
-  """The id of the Zarr store holding the displacement field"""
-  storeId: String
+  """
+  The Zarr array holding the displacement field: a per-point offset. Ask it for an access grant and read it directly
+  """
+  store: ZarrStore
   version: Int!
 }
 
@@ -2305,6 +2392,72 @@ input ExperimentOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+An immutable, versioned table of per-object measurements, backed by a Parquet store. Its rows are objects, not positions, so it lives in a coordinate system of its own and the edge relating it to the data it was measured from is UNMAPPABLE. Ask the store for an access grant and query the Parquet directly rather than paginating rows through GraphQL
+"""
+type FeatureCollection {
+  """
+  The edge relating this table to the data it was measured from. UNMAPPABLE: the two are related, and no point of the image is one of these rows. This is the field that tells a client *why* the table cannot be placed, rather than leaving it to infer a missing registration
+  """
+  anchoredTo: Transformation
+
+  """
+  The FEATURE system this table's rows live in. Its one INDEX axis enumerates the objects: nothing here is a position
+  """
+  coordinateSystem: CoordinateSystem!
+  id: ID!
+  name: String!
+
+  """
+  How this table was produced: the measurement run, its parameters and its inputs
+  """
+  provenanceMetadata: Any!
+  specVersion: String
+
+  """
+  The Parquet store holding the table. Request an access grant from it and read the Parquet directly
+  """
+  store: ParquetStore!
+  version: String!
+}
+
+input FeatureCollectionFilter {
+  AND: FeatureCollectionFilter
+  DISTINCT: Boolean
+  NOT: FeatureCollectionFilter
+  OR: FeatureCollectionFilter
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the dataset the objects were measured from, following the UNMAPPABLE anchor edge
+  """
+  dataset: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+  version: StrFilterLookup
+}
+
+input FeatureCollectionOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+  version: Ordering
 }
 
 """
@@ -3094,6 +3247,11 @@ type ImageLayer implements Layer {
   """
   pathToWorld: [PlacementStep!]
 
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
+
   """The composable in-layer render graph, if this layer defines one"""
   renderGraph: LayerRenderGraph
   scene: Scene!
@@ -3491,6 +3649,11 @@ interface Layer {
   The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
   scene: Scene!
   status: PlacementStatus!
 
@@ -3994,9 +4157,18 @@ An immutable, versioned collection of meshes, backed by Parquet stores. Ask the 
 """
 type MeshCollection {
   """
+  The edge relating this collection's space to the space the meshes were extracted from -- an identity when the meshes are in that grid as-is, a scale when they came off a downsampled one. Null for a mesh anchored to no data at all
+  """
+  anchoredTo: Transformation
+
+  """
   The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly
   """
   catalog: ParquetStore!
+
+  """
+  The coordinate system the collection's vertices are expressed in. The collection owns it; `anchoredTo` relates it to the data the meshes were extracted from
+  """
   coordinateSystem: CoordinateSystem!
 
   """
@@ -4022,7 +4194,9 @@ input MeshCollectionFilter {
   NOT: MeshCollectionFilter
   OR: MeshCollectionFilter
 
-  """Filter by the coordinate system the mesh geometry is expressed in"""
+  """
+  Filter by the coordinate system the mesh geometry is expressed in (the collection's own)
+  """
   coordinateSystem: ID
 
   """Filter for items created after this datetime"""
@@ -4030,6 +4204,11 @@ input MeshCollectionFilter {
 
   """Filter for items created before this datetime"""
   createdBefore: DateTime
+
+  """
+  Filter by the dataset the meshes were extracted from, following the anchor edge
+  """
+  dataset: ID
   id: ID
 
   """Filter by list of IDs"""
@@ -4100,6 +4279,11 @@ type MeshLayer implements Layer {
   The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
   scene: Scene!
   status: PlacementStatus!
 
@@ -4259,6 +4443,11 @@ type Mutation {
 
   """Create a new era for temporal organization"""
   createEra(input: EraInput!): Era!
+
+  """
+  Register an immutable, versioned table of per-object measurements. It gets a coordinate system of its own -- its rows are objects, not positions -- and an UNMAPPABLE edge records that it came from an image while declaring that none of its rows is anywhere in it
+  """
+  createFeatureCollection(input: CreateFeatureCollectionInput!): FeatureCollection!
 
   """Create a new view for file data"""
   createFileView(input: FileViewInput!): FileView!
@@ -4429,6 +4618,9 @@ type Mutation {
 
   """Delete an existing era"""
   deleteEra(input: DeleteEraInput!): ID!
+
+  """Delete an existing feature collection"""
+  deleteFeatureCollection(input: DeleteFeatureCollectionInput!): ID!
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
@@ -6121,6 +6313,26 @@ input PintMultiWellPlateInput {
   pin: Boolean!
 }
 
+"""
+Whether a layer has a place in its scene's world, and if not, why not. Derived, never stored.
+"""
+enum PlacementState {
+  """
+  The layer's data reaches the scene's world: `pathToWorld` is the route.
+  """
+  PLACED
+
+  """
+  This layer's data can never be placed: it reaches the world only across an UNMAPPABLE edge, which declares that no point correspondence exists. `pathToWorld` is null because there is nothing to find — badge it, and do not go looking for the missing registration.
+  """
+  UNMAPPABLE
+
+  """
+  Nothing yet relates this layer's data to the scene's world. `pathToWorld` is null because the registration is *missing* — this is a gap in the data, and authoring the edge closes it.
+  """
+  UNREGISTERED
+}
+
 enum PlacementStatus {
   ACTIVE
   ARCHIVED
@@ -6175,6 +6387,11 @@ type PointLayer implements Layer {
   The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
   pointSize: Float
   scene: Scene!
   sizeColumn: String
@@ -6381,6 +6598,14 @@ type Query {
   """List experiments"""
   experiments(filters: ExperimentFilter, ordering: [ExperimentOrder!]! = [], pagination: OffsetPaginationInput): [Experiment!]!
 
+  """Get a single feature collection by ID"""
+  featureCollection(id: ID!): FeatureCollection!
+
+  """
+  List feature collections (immutable, versioned Parquet-backed tables of per-object measurements, whose rows are objects rather than positions)
+  """
+  featureCollections(filters: FeatureCollectionFilter, ordering: [FeatureCollectionOrder!]! = [], pagination: OffsetPaginationInput): [FeatureCollection!]!
+
   """Get a single file by ID"""
   file(
     """The unique identifier of an object"""
@@ -6475,7 +6700,7 @@ type Query {
   meshCollection(id: ID!): MeshCollection!
 
   """
-  List mesh collections (immutable, versioned Parquet-backed mesh sets anchored to a coordinate system)
+  List mesh collections (immutable, versioned Parquet-backed mesh sets, each in a coordinate system of its own)
   """
   meshCollections(filters: MeshCollectionFilter, pagination: OffsetPaginationInput): [MeshCollection!]!
 
@@ -7601,6 +7826,11 @@ type ShapeLayer implements Layer {
   The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
   scene: Scene!
   status: PlacementStatus!
   strokeColor: [Int!]
@@ -8210,6 +8440,11 @@ type TrackLayer implements Layer {
   The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
   scene: Scene!
   status: PlacementStatus!
   tColumn: String
@@ -8264,7 +8499,7 @@ enum TransformKind {
   AFFINE
 
   """
-  A pair of child transformations giving an explicit forward and inverse map.
+  A pair of child transformations giving an explicit forward and inverse map. This is how an inverse that cannot be derived is instead *given*.
   """
   BIJECTION
 
@@ -8273,7 +8508,14 @@ enum TransformKind {
   """
   BY_DIMENSION
 
-  """A non-affine map given by a displacement field stored as a Zarr array."""
+  """
+  A non-affine map given by a coordinate field: a Zarr array of absolute output POSITIONS, where DISPLACEMENTS stores offsets. Not invertible in closed form.
+  """
+  COORDINATES
+
+  """
+  A non-affine map given by a displacement field: a Zarr array of per-point OFFSETS. Not invertible in closed form, so a placement path never walks it backwards.
+  """
   DISPLACEMENTS
 
   """The identity map. Input and output coordinates are the same."""
@@ -8297,12 +8539,18 @@ enum TransformKind {
 
   """A per-axis offset. Its `translation` has one entry per input axis."""
   TRANSLATION
+
+  """
+  A declared NON-correspondence: the two systems are related — one was derived from the other — and no point of either maps to a point of the other. It carries no parameters, is constrained by no rank, has no matrix, and is never walked by a placement search, in either direction. Recording an IDENTITY instead would be a lie; recording nothing would lose the lineage.
+  """
+  UNMAPPABLE
 }
 
 enum TransformKindChoices {
   AFFINE
   BIJECTION
   BY_DIMENSION
+  COORDINATES
   DISPLACEMENTS
   IDENTITY
   MAP_AXIS
@@ -8310,6 +8558,7 @@ enum TransformKindChoices {
   SCALE
   SEQUENCE
   TRANSLATION
+  UNMAPPABLE
 }
 
 """
@@ -8421,6 +8670,33 @@ a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
 spelling (``"cm2"``) is accepted and the given spelling is preserved.
 """
 scalar Unit
+
+"""
+A declared NON-correspondence: the two systems are related -- one was computed from the other -- and no point of either maps to a point of the other. It has no parameters, no rank and no matrix, and no placement search will walk it, in either direction. This is what a per-object measurement table's relation to the image it was measured from looks like
+"""
+type UnmappableTransformation implements Transformation {
+  id: ID!
+  input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
+
+  """
+  Why the geometry does not survive, if the author said. Purely descriptive: the kind is what the graph acts on, and an absent reason does not make the edge any less of a statement
+  """
+  reason: String
+  version: Int!
+}
 
 """Unstructured metadata attached to a file."""
 type UnstructuredMeta {
@@ -8919,7 +9195,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | FeatureCollection | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

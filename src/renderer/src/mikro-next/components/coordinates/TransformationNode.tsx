@@ -8,7 +8,9 @@ import {
   Rows3,
   Scaling,
   Shuffle,
+  Unlink,
   Waves,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -27,6 +29,8 @@ const ICONS: Record<Kind, LucideIcon> = {
   IdentityTransformation: Equal,
   MapAxisTransformation: Shuffle,
   DisplacementsTransformation: Waves,
+  CoordinatesTransformation: Waypoints,
+  UnmappableTransformation: Unlink,
   SequenceTransformation: ListOrdered,
   ByDimensionTransformation: Rows3,
   BijectionTransformation: ArrowLeftRight,
@@ -45,6 +49,10 @@ export const TransformationNode = ({ data }: NodeProps<TNode>) => {
   const { transformation } = data;
   const Icon = ICONS[transformation.__typename];
   const composite = COMPOSITE.includes(transformation.__typename);
+  // Not an operation at all but a declared non-correspondence: no placement
+  // search will walk it in either direction. It must not read as a step the
+  // geometry can travel through, so it drops the primary tint entirely.
+  const unmappable = transformation.__typename === "UnmappableTransformation";
 
   // A composite's children hang off it rather than appearing in the graph's
   // edge list, so "sequence of 2" is only useful if it says which 2.
@@ -57,13 +65,17 @@ export const TransformationNode = ({ data }: NodeProps<TNode>) => {
       <div
         className={[
           "flex w-[190px] flex-col gap-1 rounded-md border-2 px-2 py-1.5 shadow-md",
-          composite
-            ? "border-dashed border-primary/50 bg-primary/5"
-            : "border-primary/70 bg-primary/10",
+          unmappable
+            ? "border-dashed border-muted-foreground/40 bg-muted/40 text-muted-foreground"
+            : composite
+              ? "border-dashed border-primary/50 bg-primary/5"
+              : "border-primary/70 bg-primary/10",
         ].join(" ")}
       >
         <div className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <Icon
+            className={`h-3.5 w-3.5 shrink-0 ${unmappable ? "text-muted-foreground" : "text-primary"}`}
+          />
           <span className="truncate text-xs font-semibold">
             {transformation.name || transformation.kind}
           </span>

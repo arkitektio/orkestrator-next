@@ -25,6 +25,7 @@
     "LayerRenderNode": [
       "BlendNode",
       "ChannelSourceNode",
+      "PhasorNode",
       "ProjectionNode"
     ],
     "OpticalElement": [
@@ -128,6 +129,8 @@
       "OptikitState",
       "Organization",
       "ParquetStore",
+      "PhasorCalibration",
+      "PhasorHistogram",
       "PointLayer",
       "RGBContext",
       "RGBView",

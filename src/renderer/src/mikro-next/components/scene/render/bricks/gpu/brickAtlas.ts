@@ -64,9 +64,16 @@ export function createBrickAtlas(opts: {
    * `createTexture` validation (r8 goes through a staging buffer in Phase B).
    */
   computeStorage?: boolean;
+  /**
+   * Override the dtype-derived kind. Used by phasor layers: their slabs hold a
+   * DERIVED (g, s) — signed, in [-1, 1] — which an r8unorm atlas can neither
+   * represent nor quantize acceptably (a 1/255 step in g is a visible step in
+   * lifetime), so they force r32f even over uint8 source data.
+   */
+  kind?: "r8" | "r32f";
 }): BrickAtlas {
   const { spec, dtype, desiredSlots, maxExtent, filter } = opts;
-  const kind = atlasKindForDtype(dtype);
+  const kind = opts.kind ?? atlasKindForDtype(dtype);
   const slotSize: Vec3 = [
     spec.stored[0],
     spec.stored[1],

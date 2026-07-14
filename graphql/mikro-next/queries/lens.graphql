@@ -1,0 +1,12 @@
+# The phasor context for one (axis, harmonic) of a lens. `SceneLens` already
+# carries the default-harmonic context; a phasor node on another harmonic
+# resolves its own here, because both the instrument calibration and the
+# persisted (g, s) distribution are harmonic-specific.
+query GetLensPhasor($id: ID!, $dim: String, $harmonic: Int!) {
+  lens(id: $id) {
+    id
+    phasor(dim: $dim, harmonic: $harmonic) {
+      ...PhasorContext
+    }
+  }
+}

@@ -16,8 +16,10 @@ const {
   Fn,
   If,
   Loop,
+  atan,
   bool,
   clamp,
+  cos,
   distance,
   dot,
   exp,
@@ -25,6 +27,7 @@ const {
   floor,
   fract,
   int,
+  ivec2,
   ivec3,
   max,
   min,
@@ -39,8 +42,11 @@ const {
   select,
   sign,
   sin,
+  sqrt,
+  tan,
   texture,
   texture3D,
+  textureLoad,
   uniform,
   uniformArray,
   uv,
@@ -61,7 +67,16 @@ export type UniformArrayNodeLike<T> = { array: T[] };
 
 import { MAX_BRICK_LEVELS } from "../../glsl/brickTraversal";
 import type { LayerBrickPool } from "../../managers/brickResidency";
-import { MAX_CHANNELS, type ChannelUniformData } from "./channelUniforms";
+import {
+  MAX_CHANNELS,
+  MAX_CURSORS,
+  PHASOR_MODE_AVERAGE,
+  PHASOR_MODE_MODULATION,
+  SOURCE_KIND_PHASOR,
+  CURSOR_KIND_POLYGON,
+  MAX_CURSOR_POINTS,
+  type ChannelUniformData,
+} from "./channelUniforms";
 
 /**
  * TSL (Three Shading Language) node materials for the brick-pool renderer —
@@ -114,10 +129,25 @@ export type ChannelNodesPublic = {
   maxValue: UniformNodeLike<number>;
   numChannels: UniformNodeLike<number>;
   blendMode: UniformNodeLike<number>;
-  /** Per channel: x = channel-slab index, y = climMin, z = climMax, w = gamma. */
+  /** Per source: x = atlas-slab index (a channel's slab, or a phasor's INTENSITY
+   * slab), y = climMin, z = climMax, w = gamma. */
   chParamsA: UniformArrayNodeLike<THREE.Vector4>;
-  /** Per channel: x = opacity, y = visible, z = invert, w = colormap row. */
+  /** Per source: x = opacity, y = visible, z = invert, w = colormap row. */
   chParamsB: UniformArrayNodeLike<THREE.Vector4>;
+  /**
+   * The phasor half of a source slot, as TEXTURES rather than uniform arrays —
+   * three more `uniformArray`s would each be another uniform-buffer binding and
+   * blow the WebGPU 12-per-stage limit (see the note above), while a texture
+   * costs none. `sourceParams` is 3 texels per row (one row per source):
+   *
+   *   (kind, gSlab, sSlab, iSlab)
+   *   (mode, phaseOffset, modulationFactor, omega)   omega 0 = uncalibrated
+   *   (valueMin, valueMax, weightByIntensity, -)
+   */
+  sourceParams: UniformNodeLike<THREE.Texture>;
+  /** One cursor per row; see `writeCursors` in channelUniforms.ts. */
+  cursorParams: UniformNodeLike<THREE.Texture>;
+  cursorCount: UniformNodeLike<number>;
 };
 
 /** Shared traversal uniform nodes for one (layer, mode) pool (node graph —
@@ -174,6 +204,9 @@ function makeChannelNodes(data: ChannelUniformData): any {
     blendMode: uniform(data.blendMode, "int"),
     chParamsA: uniformArray(paramsA, "vec4"),
     chParamsB: uniformArray(paramsB, "vec4"),
+    sourceParams: texture(data.sourceParams),
+    cursorParams: texture(data.cursors),
+    cursorCount: uniform(data.cursorCount, "int"),
   };
   copyChannelArrays(nodes, data);
   return nodes;
@@ -205,6 +238,31 @@ export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUnifo
   nodes.numChannels.value = data.numChannels;
   nodes.blendMode.value = data.blendMode;
   copyChannelArrays(nodes, data);
+  // Same in-place adoption as the colormap atlas, and for the same reason: the
+  // builders hand us NEW DataTextures on every edit, and swapping the object
+  // would leave the compiled material's bind group pointing at a disposed
+  // texture. These two are fixed-size, so the copy always applies.
+  adoptDataTexture(nodes.sourceParams, data.sourceParams);
+  adoptDataTexture(nodes.cursorParams, data.cursors);
+  nodes.cursorCount.value = data.cursorCount;
+}
+
+function adoptDataTexture(
+  node: UniformNodeLike<THREE.Texture>,
+  next: THREE.DataTexture,
+): void {
+  const bound = node.value as THREE.DataTexture;
+  if (bound === next) return;
+  const boundImage = bound.image as { width: number; height: number; data: Float32Array };
+  const nextImage = next.image as { width: number; height: number; data: Float32Array };
+  if (boundImage.width === nextImage.width && boundImage.height === nextImage.height) {
+    boundImage.data.set(nextImage.data);
+    bound.needsUpdate = true;
+    next.dispose();
+  } else {
+    node.value = next;
+    bound.dispose();
+  }
 }
 
 /**
@@ -347,18 +405,104 @@ function emitResolveBrickResidency(
  * channel's slab. Emitted inside the channel loop — `slabIndex` must be a
  * `.toVar()` (loop-dependent).
  */
-function emitChannelTap(t: any, resolved: ResolvedResidency, slabIndex: any): any {
-  const raw = float(0.0).toVar("chRaw");
+function emitChannelTap(
+  t: any,
+  resolved: ResolvedResidency,
+  slabIndex: any,
+  // A phasor source taps THREE slabs in one scope (g, s, intensity), so the tap
+  // vars must be uniquely named — two `chRaw`s in one scope would redeclare.
+  name = "ch",
+): any {
+  const raw = float(0.0).toVar(`${name}Raw`);
   If(resolved.status.greaterThan(1.5), () => {
     raw.assign(resolved.emptyValue);
   }).Else(() => {
     // COPY texelBase — addAssign on the shared var would leak this channel's
     // slab offset into the next channel's tap.
-    const texel = vec3(resolved.texelBase).toVar("chTexel");
+    const texel = vec3(resolved.texelBase).toVar(`${name}Texel`);
     texel.z.addAssign(float(int(slabIndex).mul(t.uChannelSlabDepth)));
     raw.assign(texture3D(t.brickAtlas, texel.div(t.uAtlasTexels)).r.mul(t.uAtlasScale));
   });
   return raw;
+}
+
+/** What one compositor slot contributes at one sample point. */
+type SourceSample = {
+  /** The slot's color, already cursor-painted for a phasor. */
+  color: any;
+  /** Blend weight (opacity × the normalized intensity). */
+  weight: any;
+  /** Normalized intensity — the ray weight the 3D projections rank samples by. */
+  norm: any;
+};
+
+/**
+ * Sample one compositor slot: a CHANNEL (one slab through the transfer
+ * function, colored by its colormap) or a PHASOR (three slabs — g, s and the
+ * mean photon count — colored by the phasor's value, and repainted where a
+ * cursor covers it).
+ *
+ * Both kinds end up in the same shape — color + weight — which is what lets the
+ * two blend under one blend mode, and lets a phasor source behave like any
+ * other leaf under MIP / volume / iso projection: its *intensity* is the ray
+ * weight, its *phasor* is only the hue.
+ *
+ * Emitted inside the slot loop, so every loop-dependent value is `.toVar()`
+ * (see the shadowing note on emitResolveBrickResidency).
+ */
+function emitSourceSample(
+  t: any,
+  c: any,
+  resolved: ResolvedResidency,
+  slot: any,
+  fns: { channelNormalize: any; phasorValue: any; cursorHit: any },
+): SourceSample {
+  const paramsA = vec4(c.chParamsA.element(slot)).toVar("srcA"); // (slab, climMin, climMax, gamma)
+  const paramsB = vec4(c.chParamsB.element(slot)).toVar("srcB"); // (opacity, visible, invert, row)
+  const p0 = vec4(textureLoad(c.sourceParams, ivec2(int(0), slot))).toVar("srcP0");
+
+  // The intensity tap: a channel's slab, or a phasor's mean-photon-count slab.
+  // Either way the ordinary clim/gamma/invert transfer applies to it.
+  const rawIntensity = emitChannelTap(t, resolved, int(paramsA.x).toVar("srcSlab"), "srcI");
+  const norm = float(fns.channelNormalize(slot, rawIntensity)).toVar("srcNorm");
+
+  const color = vec3(0.0).toVar("srcColor");
+  const weight = float(0.0).toVar("srcWeight");
+
+  If(int(p0.x).equal(int(SOURCE_KIND_PHASOR)), () => {
+    const p1 = vec4(textureLoad(c.sourceParams, ivec2(int(1), slot))).toVar("srcP1");
+    const p2 = vec4(textureLoad(c.sourceParams, ivec2(int(2), slot))).toVar("srcP2");
+
+    const rawG = emitChannelTap(t, resolved, int(p0.y).toVar("srcGSlab"), "srcG");
+    const rawS = emitChannelTap(t, resolved, int(p0.z).toVar("srcSSlab"), "srcS");
+
+    const value = float(fns.phasorValue(rawG, rawS, p1)).toVar("srcValue");
+    const valueNorm = clamp(
+      value.sub(p2.x).div(max(p2.y.sub(p2.x), 0.000001)),
+      0.0,
+      0.999,
+    ).toVar("srcValueNorm");
+    color.assign(c.colormapAtlas.sample(vec2(valueNorm, paramsB.w)).rgb);
+
+    // A cursor repaints the pixels of phasor space it covers. Test against the
+    // CALIBRATED phasor — the same (g, s) the plot draws the cursor in.
+    const cursor = vec4(fns.cursorHit(slot, rawG, rawS)).toVar("srcCursor");
+    If(cursor.w.greaterThan(0.5), () => {
+      color.assign(cursor.xyz);
+    });
+
+    // weightByIntensity (p2.z): off, the lifetime hue is painted flat wherever
+    // there are photons at all — which is what you want when the interesting
+    // structure is dim. The intensity still gates the pixel (norm > 0), so
+    // background does not bloom.
+    const gate = select(norm.greaterThan(0.0), float(1.0), float(0.0));
+    weight.assign(paramsB.x.mul(select(p2.z.greaterThan(0.5), norm, gate)));
+  }).Else(() => {
+    color.assign(c.colormapAtlas.sample(vec2(norm, paramsB.w)).rgb);
+    weight.assign(paramsB.x.mul(norm));
+  });
+
+  return { color, weight, norm };
 }
 
 /** TSL port of `channelNormalize` (lockstep with core mirrors). */
@@ -382,6 +526,158 @@ function makeChannelNormalize(c: any) {
     return normalized;
   });
 }
+
+const TAU = Math.PI * 2;
+
+/**
+ * TSL port of `core/phasor.ts` — keep the two in lockstep.
+ *
+ * Takes the three slabs the repack produced for a phasor node (g, s and the
+ * mean photon count is tapped by the caller) and returns the scalar its
+ * colormap maps: a lifetime (τ_φ / τ_m / their mean) when the instrument is
+ * known, and the raw phase-as-a-fraction / modulus when it is not (an
+ * uncalibrated phasor still renders — its hue is just not an absolute lifetime).
+ *
+ * `p1` is the source's (mode, phaseOffset, modulationFactor, omega) texel.
+ */
+const makePhasorValue = () =>
+  Fn(([rawG, rawS, p1]: any[]) => {
+    const phaseOffset = float(vec4(p1).y);
+    const modulationFactor = float(vec4(p1).z);
+    const omega = float(vec4(p1).w);
+    const mode = int(vec4(p1).x);
+
+    // Instrument response: rotate by the phase offset, scale by the modulation
+    // factor (calibratePhasor).
+    const co = cos(phaseOffset);
+    const si = sin(phaseOffset);
+    const g = modulationFactor.mul(float(rawG).mul(co).sub(float(rawS).mul(si))).toVar("phG");
+    const s = modulationFactor.mul(float(rawG).mul(si).add(float(rawS).mul(co))).toVar("phS");
+
+    const phase = atan(s, g).toVar("phPhase");
+    If(phase.lessThan(0.0), () => {
+      phase.assign(phase.add(TAU));
+    });
+    const modulation = sqrt(g.mul(g).add(s.mul(s))).toVar("phMod");
+
+    // Uncalibrated (omega == 0): the phasor is only readable in its own terms.
+    const phaseValue = float(0.0).toVar("phPhaseValue");
+    const modulationValue = float(0.0).toVar("phModValue");
+
+    If(omega.lessThanEqual(0.0), () => {
+      phaseValue.assign(phase.div(TAU));
+      modulationValue.assign(modulation);
+    }).Else(() => {
+      // tau_phi = tan(phase)/omega. Past the semicircle's apex (phase > pi/2)
+      // tan goes negative — there is no positive phase lifetime there, so clamp
+      // to 0 instead of feeding ±Inf into a colormap lookup.
+      phaseValue.assign(max(tan(phase), 0.0).div(omega));
+      // tau_m = sqrt(1/m^2 - 1)/omega.
+      const m = clamp(modulation, 0.000001, 1.0);
+      modulationValue.assign(sqrt(max(float(1.0).div(m.mul(m)).sub(1.0), 0.0)).div(omega));
+    });
+
+    return select(
+      mode.equal(int(PHASOR_MODE_MODULATION)),
+      modulationValue,
+      select(
+        mode.equal(int(PHASOR_MODE_AVERAGE)),
+        phaseValue.add(modulationValue).mul(0.5),
+        phaseValue,
+      ),
+    );
+  });
+
+/**
+ * Does this pixel's (calibrated) phasor fall inside any of the source's
+ * cursors? Returns the cursor's color in rgb and a hit flag in a — a cursor is
+ * a color RULE on the image, not a plot widget, so a hit repaints the pixel.
+ *
+ * Mirrors `cursorHit`: circles by distance, polygons by the even-odd crossing
+ * test. Vertices are packed two per texel after the two header texels.
+ */
+const makeCursorHit = (c: any) =>
+  Fn(([slot, g, s]: any[]) => {
+    const result = vec4(0.0).toVar("curResult");
+
+    Loop(
+      { start: int(0), end: int(MAX_CURSORS), type: "int", condition: "<", name: "cur" },
+      ({ cur }: any) => {
+        If(int(cur).greaterThanEqual(c.cursorCount), () => {
+          Break();
+        });
+        const header = vec4(textureLoad(c.cursorParams, ivec2(int(0), cur))).toVar("curHead");
+        // (kind, source slot, point count, visible)
+        If(int(header.y).notEqual(int(slot)).or(header.w.lessThan(0.5)), () => {
+          Continue();
+        });
+        const style = vec4(textureLoad(c.cursorParams, ivec2(int(1), cur))).toVar("curStyle");
+        const centre = vec4(textureLoad(c.cursorParams, ivec2(int(2), cur))).toVar("curCentre");
+
+        const inside = bool(false).toVar("curInside");
+
+        If(int(header.x).equal(int(CURSOR_KIND_POLYGON)), () => {
+          const count = int(header.z).toVar("curCount");
+          const crossings = int(0).toVar("curCross");
+          // Even-odd: count the edges the ray from (g, s) crosses. `j` trails
+          // `i` by one vertex, wrapping at the end.
+          Loop(
+            {
+              start: int(0),
+              end: int(MAX_CURSOR_POINTS),
+              type: "int",
+              condition: "<",
+              name: "cpt",
+            },
+            ({ cpt }: any) => {
+              If(int(cpt).greaterThanEqual(count), () => {
+                Break();
+              });
+              const j = select(int(cpt).equal(int(0)), count.sub(1), int(cpt).sub(1)).toVar("cptJ");
+              const pi = phasorPolygonPoint(c, cur, int(cpt)).toVar("curPi");
+              const pj = phasorPolygonPoint(c, cur, j).toVar("curPj");
+              const crosses = pi.y
+                .greaterThan(float(s))
+                .notEqual(pj.y.greaterThan(float(s)));
+              If(crosses, () => {
+                const x = pj.x
+                  .sub(pi.x)
+                  .mul(float(s).sub(pi.y))
+                  .div(pj.y.sub(pi.y).add(0.000001))
+                  .add(pi.x);
+                If(float(g).lessThan(x), () => {
+                  crossings.assign(crossings.add(int(1)));
+                });
+              });
+            },
+          );
+          inside.assign(crossings.mod(int(2)).equal(int(1)));
+        }).Else(() => {
+          const radius = style.w;
+          const dg = float(g).sub(centre.x);
+          const ds = float(s).sub(centre.y);
+          inside.assign(
+            radius.greaterThan(0.0).and(dg.mul(dg).add(ds.mul(ds)).lessThanEqual(radius.mul(radius))),
+          );
+        });
+
+        If(inside, () => {
+          result.assign(vec4(style.xyz, 1.0));
+          Break();
+        });
+      },
+    );
+
+    return result;
+  });
+
+/** Vertex `index` of a polygon cursor: two (g, s) pairs per texel, after the
+ * two header texels and the centre texel. */
+const phasorPolygonPoint = (c: any, cursor: any, index: any) => {
+  const texel = int(index).div(int(2)).add(int(3));
+  const value = vec4(textureLoad(c.cursorParams, ivec2(texel, cursor)));
+  return select(int(index).mod(int(2)).equal(int(0)), value.xy, value.zw);
+};
 
 /** GLSL_RAND port — same constants, motion-invariant jitter source. */
 const rand2 = Fn(([co]: any[]) => {
@@ -423,7 +719,11 @@ export function createPlaneNodeMaterial(
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
   c.maxValue.value = dataRange.maxValue;
-  const channelNormalize = makeChannelNormalize(c);
+  const fns = {
+    channelNormalize: makeChannelNormalize(c),
+    phasorValue: makePhasorValue(),
+    cursorHit: makeCursorHit(c),
+  };
 
   const uDesiredLevel = uniform(0, "int");
   /** INTEGER base slab z — the slab-mode resolve does the per-level floor +
@@ -462,17 +762,13 @@ export function createPlaneNodeMaterial(
           If(int(ch).greaterThanEqual(c.numChannels), () => {
             Break();
           });
-          const paramsB = vec4(c.chParamsB.element(ch)).toVar(); // (opacity, visible, invert, row)
-          If(paramsB.y.lessThan(0.5), () => {
+          If(vec4(c.chParamsB.element(ch)).y.lessThan(0.5), () => {
             Continue();
           });
 
-          const slabIndex = int(vec4(c.chParamsA.element(ch)).x).toVar();
-          const raw = emitChannelTap(t, resolved, slabIndex);
-
-          const normalized = float(channelNormalize(ch, raw)).toVar();
-          const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
-          const weight = paramsB.x.mul(normalized);
+          const sample = emitSourceSample(t, c, resolved, ch, fns);
+          const color = sample.color;
+          const weight = sample.weight;
 
           If(int(c.blendMode).equal(1), () => {
             accum.mulAssign(mix(vec3(1.0), color, weight));
@@ -523,7 +819,11 @@ export function createVolumeNodeMaterial(
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
   c.maxValue.value = dataRange.maxValue;
-  const channelNormalize = makeChannelNormalize(c);
+  const fns = {
+    channelNormalize: makeChannelNormalize(c),
+    phasorValue: makePhasorValue(),
+    cursorHit: makeCursorHit(c),
+  };
 
   const uDesiredLevel = uniform(0, "int");
   const uLodBias = uniform(1, "float");
@@ -669,18 +969,18 @@ export function createVolumeNodeMaterial(
             If(int(ch).greaterThanEqual(c.numChannels), () => {
               Break();
             });
-            const paramsB = vec4(c.chParamsB.element(ch)).toVar(); // (opacity, visible, invert, row)
-            If(paramsB.y.lessThan(0.5), () => {
+            If(vec4(c.chParamsB.element(ch)).y.lessThan(0.5), () => {
               Continue();
             });
 
-            const slabIndex = int(vec4(c.chParamsA.element(ch)).x).toVar();
-            const raw = emitChannelTap(t, resolved, slabIndex);
-
-            const normalized = float(channelNormalize(ch, raw)).toVar();
-            const color = c.colormapAtlas.sample(vec2(normalized, paramsB.w)).rgb;
-            const weight = paramsB.x.mul(normalized);
-            sampleNorm.assign(max(sampleNorm, normalized));
+            const sample = emitSourceSample(t, c, resolved, ch, fns);
+            const color = sample.color;
+            const weight = sample.weight;
+            // The ray ranks samples by INTENSITY, never by phasor value: a MIP
+            // through a lifetime overlay must pick the brightest voxel along the
+            // ray and show ITS lifetime — not the longest lifetime, which would
+            // pick out the dimmest background pixels.
+            sampleNorm.assign(max(sampleNorm, sample.norm));
 
             If(int(c.blendMode).equal(1), () => {
               sampleColor.mulAssign(mix(vec3(1.0), color, weight));

@@ -1,8 +1,13 @@
+import type { GenericQuantity } from "@/mikro-next/api/scalars";
 import {
   Blending,
   ColorMap,
   LayerNodeInput,
   LayerRenderGraphFragment,
+  PhasorColorMode,
+  PhasorCursorInput,
+  PhasorCursorKind,
+  PhasorTransferInput,
   ProjectionMode,
   TransferFunctionInput,
 } from "@/mikro-next/api/graphql";
@@ -21,6 +26,7 @@ import { ImageLayerFragment } from "./layerGuards";
  */
 
 export const CHANNEL_KIND = "channel";
+export const PHASOR_KIND = "phasor";
 export const BLEND_KIND = "blend";
 export const PROJECTION_KIND = "projection";
 
@@ -45,6 +51,57 @@ export type ChannelRenderNode = {
   transfer: TransferFn;
 };
 
+/** A region of phasor space and the color the pixels inside it are painted. */
+export type PhasorCursorDef = {
+  kind: PhasorCursorKind;
+  label: string | null;
+  visible: boolean;
+  /** RGB 0-255; null = the colormap's color at the cursor's own phasor value. */
+  color: number[] | null;
+  /** CIRCLE: centre + radius. */
+  g: number | null;
+  s: number | null;
+  radius: number | null;
+  /** POLYGON: ≥3 (g, s) vertices. */
+  points: number[][] | null;
+};
+
+/**
+ * How a phasor becomes a pixel's color. NOT a `TransferFn`: it maps the
+ * reduction's output — a (g, s) pair plus a photon count — rather than a
+ * sampled scalar. `min`/`max` are `GenericQuantity` strings (e.g. "0.5 ns"),
+ * because the value they window is a lifetime over a microtime axis and a
+ * wavelength over a spectrum one.
+ */
+export type PhasorTransferFn = {
+  colormap: ColorMap;
+  mode: PhasorColorMode;
+  min: GenericQuantity | null;
+  max: GenericQuantity | null;
+  weightByIntensity: boolean;
+  /** The ordinary transfer applied to the photon count. */
+  intensity: TransferFn;
+  cursors: PhasorCursorDef[];
+};
+
+/**
+ * Reduces one axis of the lens to a phasor and colors the pixel by it. A leaf,
+ * like a channel — it composites into the scene as a raster, not a scatter plot.
+ */
+export type PhasorRenderNode = {
+  type: "phasor";
+  kind: string;
+  label: string | null;
+  /** The axis reduced (a MICROTIME or SPECTRUM axis of the lens). */
+  phasorDim: string;
+  harmonic: number;
+  /** The channel the photons are counted in (a FLIM cube can be multi-channel). */
+  intensityDim: string | null;
+  intensityIndex: number;
+  visible: boolean;
+  transfer: PhasorTransferFn;
+};
+
 export type BlendRenderNode = {
   type: "blend";
   kind: string;
@@ -63,8 +120,12 @@ export type ProjectionRenderNode = {
 
 export type RenderNode =
   | ChannelRenderNode
+  | PhasorRenderNode
   | BlendRenderNode
   | ProjectionRenderNode;
+
+/** The leaves that produce pixels: a channel or a phasor. */
+export type SourceRenderNode = ChannelRenderNode | PhasorRenderNode;
 
 // Structural shape of a fragment node (any depth). The generated union members
 // all carry `__typename` plus the fields selected by RenderNodeCommon.
@@ -78,7 +139,22 @@ type FragmentNode = {
   intensityIndex?: number;
   visible?: boolean;
   transfer?: Partial<TransferFn> | null;
+  // Aliased in the fragment: `transfer` on a PhasorNode is a PhasorTransfer,
+  // which would otherwise collide with ChannelSourceNode's TransferFunction.
+  phasorTransfer?: Partial<FragmentPhasorTransfer> | null;
+  phasorDim?: string;
+  harmonic?: number;
   children?: FragmentNode[] | null;
+};
+
+type FragmentPhasorTransfer = {
+  colormap: ColorMap;
+  mode: PhasorColorMode;
+  min: GenericQuantity | null;
+  max: GenericQuantity | null;
+  weightByIntensity: boolean;
+  intensity: Partial<TransferFn> | null;
+  cursors: Partial<PhasorCursorDef>[] | null;
 };
 
 const DEFAULT_TRANSFER: TransferFn = {
@@ -105,8 +181,47 @@ const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): Transf
   categorical: transfer?.categorical ?? null,
 });
 
+const parseCursor = (cursor: Partial<PhasorCursorDef>): PhasorCursorDef => ({
+  kind: cursor.kind ?? PhasorCursorKind.Circle,
+  label: cursor.label ?? null,
+  visible: cursor.visible ?? true,
+  color: cursor.color ?? null,
+  g: cursor.g ?? null,
+  s: cursor.s ?? null,
+  radius: cursor.radius ?? null,
+  points: cursor.points ?? null,
+});
+
+const parsePhasorTransfer = (
+  transfer: Partial<FragmentPhasorTransfer> | null | undefined,
+): PhasorTransferFn => ({
+  colormap: transfer?.colormap ?? ColorMap.Viridis,
+  mode: transfer?.mode ?? PhasorColorMode.Phase,
+  // null min/max = "range the colormap over the data's own phasor extent",
+  // resolved by the consumer against the phasor histogram (or, absent one, the
+  // full turn / unit modulation).
+  min: transfer?.min ?? null,
+  max: transfer?.max ?? null,
+  weightByIntensity: transfer?.weightByIntensity ?? true,
+  intensity: parseTransfer(transfer?.intensity),
+  cursors: (transfer?.cursors ?? []).map(parseCursor),
+});
+
 /** Recursively convert a fragment node into the domain model. */
 export const parseRenderNode = (node: FragmentNode): RenderNode => {
+  if (node.__typename === "PhasorNode") {
+    return {
+      type: "phasor",
+      kind: node.kind ?? PHASOR_KIND,
+      label: node.label ?? null,
+      phasorDim: node.phasorDim ?? "",
+      harmonic: node.harmonic ?? 1,
+      intensityDim: node.intensityDim ?? null,
+      intensityIndex: node.intensityIndex ?? 0,
+      visible: node.visible ?? true,
+      transfer: parsePhasorTransfer(node.phasorTransfer),
+    };
+  }
   if (node.__typename === "ChannelSourceNode") {
     return {
       type: "channel",
@@ -150,7 +265,28 @@ export const parseRenderGraph = (
 export const flattenChannels = (node: RenderNode | null): ChannelRenderNode[] => {
   if (!node) return [];
   if (node.type === "channel") return [node];
+  if (node.type === "phasor") return [];
   return node.children.flatMap(flattenChannels);
+};
+
+/** All phasor leaves in tree order. */
+export const flattenPhasors = (node: RenderNode | null): PhasorRenderNode[] => {
+  if (!node) return [];
+  if (node.type === "phasor") return [node];
+  if (node.type === "channel") return [];
+  return node.children.flatMap(flattenPhasors);
+};
+
+/**
+ * Every pixel-producing leaf in tree order — channels AND phasors. This is what
+ * the compositor iterates: both kinds occupy a source slot and are blended by
+ * the same blend mode, they just tap a different number of atlas slabs (1 for a
+ * channel, 3 for a phasor: g, s and the photon count).
+ */
+export const flattenSources = (node: RenderNode | null): SourceRenderNode[] => {
+  if (!node) return [];
+  if (node.type === "channel" || node.type === "phasor") return [node];
+  return node.children.flatMap(flattenSources);
 };
 
 /** The first projection mode found in the tree, or MIP by default. */
@@ -205,6 +341,43 @@ export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
 export const resolveLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
   parseRenderGraph(layer.renderGraph) ?? defaultLayerGraph(layer);
 
+/** A fresh channel source, for the editor's "add node" menu. */
+export const newChannelNode = (layer: ImageLayerFragment): ChannelRenderNode => ({
+  type: "channel",
+  kind: CHANNEL_KIND,
+  label: null,
+  intensityDim: layer.lens.renderAxes?.intensity ?? null,
+  intensityIndex: 0,
+  visible: true,
+  transfer: { ...DEFAULT_TRANSFER },
+});
+
+/**
+ * A fresh phasor source over the lens' phasor axis (`renderAxes.phasor` — the
+ * server names the MICROTIME/SPECTRUM axis, if the data has one). Harmonic 1 is
+ * the fundamental, and the one the lens' default `PhasorContext` resolves.
+ */
+export const newPhasorNode = (layer: ImageLayerFragment): PhasorRenderNode => ({
+  type: "phasor",
+  kind: PHASOR_KIND,
+  label: null,
+  phasorDim: layer.lens.renderAxes?.phasor ?? "",
+  harmonic: 1,
+  intensityDim: layer.lens.renderAxes?.intensity ?? null,
+  intensityIndex: 0,
+  visible: true,
+  transfer: {
+    // Lifetime overlays are read as a continuous hue ramp, not a luminance one.
+    colormap: ColorMap.Rainbow,
+    mode: PhasorColorMode.Phase,
+    min: null,
+    max: null,
+    weightByIntensity: true,
+    intensity: { ...DEFAULT_TRANSFER },
+    cursors: [],
+  },
+});
+
 const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
   climMin: transfer.climMin,
   climMax: transfer.climMax,
@@ -216,8 +389,41 @@ const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
   categorical: transfer.categorical,
 });
 
+const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({
+  kind: cursor.kind,
+  label: cursor.label,
+  visible: cursor.visible,
+  color: cursor.color,
+  g: cursor.g,
+  s: cursor.s,
+  radius: cursor.radius,
+  points: cursor.points,
+});
+
+const serializePhasorTransfer = (transfer: PhasorTransferFn): PhasorTransferInput => ({
+  colormap: transfer.colormap,
+  mode: transfer.mode,
+  min: transfer.min,
+  max: transfer.max,
+  weightByIntensity: transfer.weightByIntensity,
+  intensity: serializeTransfer(transfer.intensity),
+  cursors: transfer.cursors.map(serializeCursor),
+});
+
 /** Convert a domain node back into the `LayerNodeInput` shape for `updateLayer`. */
 export const serializeRenderNode = (node: RenderNode): LayerNodeInput => {
+  if (node.type === "phasor") {
+    return {
+      kind: node.kind || PHASOR_KIND,
+      label: node.label,
+      phasorDim: node.phasorDim,
+      harmonic: node.harmonic,
+      intensityDim: node.intensityDim,
+      intensityIndex: node.intensityIndex,
+      visible: node.visible,
+      phasorTransfer: serializePhasorTransfer(node.transfer),
+    };
+  }
   if (node.type === "channel") {
     return {
       kind: node.kind || CHANNEL_KIND,

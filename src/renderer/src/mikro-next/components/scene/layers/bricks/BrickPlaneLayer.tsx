@@ -79,16 +79,20 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     () =>
       buildChannelUniformData(
         layer,
-        Math.max(0, (pool?.spec.channelCount ?? 1) - 1),
+        Math.max(0, (pool?.geometry.channelSlabCount ?? 1) - 1),
         pool?.minValue ?? 0,
         pool?.maxValue ?? 1,
+        pool?.geometry,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       layer?.channels,
+      layer?.phasors,
+      layer?.sources,
       layer?.blend,
       layer?.colormap,
       layer?.color,
+      pool?.geometry,
       pool?.spec.channelCount,
       pool?.minValue,
       pool?.maxValue,
@@ -127,8 +131,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     const material = bundle?.material;
     return () => {
       material?.dispose();
-      // Whatever atlas is bound at teardown (adoption keeps it long-lived).
+      // Whatever textures are bound at teardown (adoption keeps them long-lived).
       bundle?.nodes.colormapAtlas.value?.dispose();
+      bundle?.nodes.sourceParams.value?.dispose();
+      bundle?.nodes.cursorParams.value?.dispose();
     };
   }, [bundle]);
 

@@ -15,13 +15,20 @@ import type { LayerState } from "./layerModel";
 
 /**
  * The dims of this layer that collapse to ONE index at pool creation:
- * everything except the render axes (x/y/z spatial, intensity channel-slab)
- * with more than one sample. These are the dims the scene-wide sliders
- * (`viewerStore.dimSelections`) can scrub. Shared with `DimSliderPanel`.
+ * everything except the render axes (x/y/z spatial, intensity channel-slab,
+ * and a phasor axis) with more than one sample. These are the dims the
+ * scene-wide sliders (`viewerStore.dimSelections`) can scrub. Shared with
+ * `DimSliderPanel`.
+ *
+ * A phasor axis counts as RENDERED even though it maps to no screen axis: the
+ * repack consumes every one of its bins to produce the layer's g/s/intensity
+ * slabs, so there is no single index to pin and nothing for a slider to scrub.
  */
 export function collapsibleDims(layer: LayerState): string[] {
   const rendered = new Set(
-    [layer.xDim, layer.yDim, layer.zDim, layer.intensityDim].filter(Boolean),
+    [layer.xDim, layer.yDim, layer.zDim, layer.intensityDim, layer.phasorDim].filter(
+      Boolean,
+    ),
   );
   return layer.lens.dims.filter((dim, position) => {
     if (rendered.has(dim)) return false;
@@ -46,6 +53,16 @@ export function buildSliceSignature(
     yDim: layer.yDim ?? null,
     zDim: layer.zDim ?? null,
     intensityDim: layer.intensityDim ?? null,
+    // The phasor reduction is BAKED INTO the bricks (g/s/intensity slabs), so
+    // the axis it runs over, the harmonic it runs at, and the channel whose
+    // photons it counts all change what every cached brick holds — each must
+    // flush the pool. Everything else about a phasor node (colormap, mode,
+    // range, cursors) is a shader uniform and must NOT appear here.
+    phasorDim: layer.phasorDim ?? null,
+    phasors: (layer.phasors ?? []).map((phasor) => ({
+      harmonic: phasor.harmonic,
+      intensityIndex: phasor.intensityIndex,
+    })),
     selections,
     slices: layer.lens.slices.map((slice) => ({
       dim: slice.dim,

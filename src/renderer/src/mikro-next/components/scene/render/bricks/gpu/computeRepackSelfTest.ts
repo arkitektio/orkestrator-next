@@ -93,7 +93,14 @@ function makeFixture(): { input: RepackDispatchInput; elementCount: number } {
     input: {
       spec,
       level,
-      axes: { xPos: 3, yPos: 2, zPos: 1, intensityPos: 0 },
+      axes: { xPos: 3, yPos: 2, zPos: 1, intensityPos: 0, phasorPos: -1 },
+      // Two plain channel slabs: the GPU kernel is a strided copy and never
+      // sees a phasor layer (those take the CPU worker path).
+      slabs: [
+        { kind: "channel", channel: 0 },
+        { kind: "channel", channel: 1 },
+      ],
+      phasorBins: 0,
       // Brick [1,1,0]: payload x,y ∈ [4,8) straddles all four chunks; the
       // z border leaves the volume on both sides (replication).
       brickBox: { min: [4, 4, 0], max: [8, 8, 4] },

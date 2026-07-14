@@ -370,13 +370,20 @@ enum AxisType {
   """An axis of a displacement-valued array."""
   DISPLACEMENT
 
-  """A FLIM arrival-time bin. Continuous, so a pyramid may re-bin it."""
+  """
+  A FLIM arrival-time bin. Continuous, so a pyramid may re-bin it, and a phasor may be taken over it.
+  """
   MICROTIME
 
   """
   A spatial axis. Unitless pixel indices in an INTRINSIC/ARRAY system; carries a physical length unit in a calibrated system.
   """
   SPACE
+
+  """
+  A wavelength bin of a spectrally resolved acquisition. Continuous -- unlike a CHANNEL axis, whose coordinates index acquisitions rather than positions -- so a pyramid may re-bin it, and a phasor may be taken over it.
+  """
+  SPECTRUM
 
   """
   A time axis. Frame indices in an INTRINSIC/ARRAY system; carries a physical duration unit in a calibrated system.
@@ -390,6 +397,7 @@ enum AxisTypeChoices {
   DISPLACEMENT
   MICROTIME
   SPACE
+  SPECTRUM
   TIME
 }
 
@@ -1083,7 +1091,7 @@ input ContinousScanViewInput {
 }
 
 """
-The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata, value histograms, channel labels, light paths) to specific coordinates of a dataset
+The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata, value histograms, channel labels, light paths, phasor distributions and calibrations) to specific coordinates of a dataset
 """
 type CoordinateAnchor {
   channelLabel: ChannelLabel
@@ -1097,6 +1105,8 @@ type CoordinateAnchor {
 
   """The microscope state recorded at this coordinate"""
   microscope: OptikitState
+  phasorCalibrations(pagination: OffsetPaginationInput): [PhasorCalibration!]!
+  phasorHistograms(pagination: OffsetPaginationInput): [PhasorHistogram!]!
   valueHistogram: ValueHistogram
 }
 
@@ -1108,6 +1118,8 @@ input CoordinateAnchorInput {
   label: LabelInput = null
   lightGraph: LightpathGraphInput = null
   omeMetadata: OmeMetadataInput = null
+  phasorCalibration: PhasorCalibrationInput = null
+  phasorHistogram: PhasorHistogramInput = null
   valueHistogram: ValueHistogramInput = null
 }
 
@@ -1316,6 +1328,79 @@ input CreateMeshLayerInput {
   scene: ID!
   visible: Boolean = null
   wireframe: Boolean = null
+}
+
+"""
+Attach an instrument-response correction to a dataset, taking a raw phasor to a calibrated one. Measured once per detector from a reference acquisition. Its absence is legitimate: an uncalibrated phasor still renders, its hue is just not traceable to an absolute lifetime
+"""
+input CreatePhasorCalibrationInput {
+  """The ID of the dataset the correction applies to"""
+  dataset: ID!
+
+  """The axis the correction applies to"""
+  dim: String!
+
+  """The coordinates the correction is pinned to"""
+  dimAnchors: [DimAnchorInput!] = null
+
+  """The harmonic the correction applies at"""
+  harmonic: Int = null
+
+  """The modulation correction"""
+  modulationFactor: Float = null
+
+  """The phase correction in radians"""
+  phaseOffset: Float = null
+
+  """What the correction was measured against"""
+  reference: String = null
+}
+
+"""
+Attach a phasor distribution to a dataset: the 2D (g, s) density of a phasor taken over one axis at one harmonic. Computed after ingest by a task that reads the cube; recomputing at the same harmonic replaces it, while a second harmonic lands beside the first
+"""
+input CreatePhasorHistogramInput {
+  """The resolution of the square (g, s) density grid"""
+  bins: Int = null
+  calibrated: Boolean = null
+
+  """The flattened bins x bins density"""
+  counts: [Float!]!
+
+  """The ID of the dataset the phasor was computed from"""
+  dataset: ID!
+
+  """The axis the phasor was taken over"""
+  dim: String!
+
+  """The coordinates the distribution is pinned to"""
+  dimAnchors: [DimAnchorInput!] = null
+  gMax: Float = null
+  gMin: Float = null
+
+  """The harmonic the phasor was taken at"""
+  harmonic: Int = null
+  profile: [Float!] = null
+  sMax: Float = null
+  sMin: Float = null
+  total: Int = null
+}
+
+"""
+Create a layer that reduces one axis of a lens to a phasor and colors each pixel by it -- a lifetime overlay over a FLIM cube, or a spectral one over a hyperspectral cube
+"""
+input CreatePhasorLayerInput {
+  blending: Blending = null
+  harmonic: Int = null
+  intensityDim: String = null
+  intensityIndex: Int = 0
+  lens: ID!
+  opacity: Float = null
+  order: Int = null
+  phasorDim: String = null
+  scene: ID!
+  transfer: PhasorTransferInput = null
+  visible: Boolean = null
 }
 
 """
@@ -2600,6 +2685,17 @@ type GeneralZarrAccessGrant {
   store: String
 }
 
+"""
+A physical quantity of any dimension (``"0.12 S/cm2"``, ``"-54.3 mV"``, ``"2 mM"``).
+
+Unlike the dimension-locked scalars, this keeps whatever unit the value
+carries and does not normalize to a canonical integer — its dimension is
+whatever the value has. A bare number without a unit is rejected. On the wire
+it is a string; validating it against an expected dimension (e.g. a declared
+mechanism parameter) is the caller's job.
+"""
+scalar GenericQuantity
+
 enum Granularity {
   DAY
   HOUR
@@ -3426,16 +3522,19 @@ enum LayerKindChoices {
 }
 
 """
-A node in a layer's internal render graph. A 'channel' node carries an intensity source and transfer function; a 'blend' node composites its children.
+A node in a layer's internal render graph. A 'channel' node carries an intensity source and transfer function; a 'phasor' node reduces an axis to a phasor and colors the pixel by it; a 'blend' node composites its children; a 'projection' node projects theirs over z.
 """
 input LayerNodeInput {
   blending: Blending = null
   children: [LayerNodeInput!] = null
+  harmonic: Int = null
   intensityDim: String = null
   intensityIndex: Int = null
   kind: String!
   label: String = null
   mode: ProjectionMode = null
+  phasorDim: String = null
+  phasorTransfer: PhasorTransferInput = null
   transfer: TransferFunctionInput = null
   visible: Boolean = null
 }
@@ -3460,7 +3559,9 @@ input LayerRenderGraphInput {
 
 """A node in a layer's internal render graph"""
 interface LayerRenderNode {
-  """The discriminator of the node, either 'channel' or 'blend'"""
+  """
+  The discriminator of the node: 'channel', 'phasor', 'blend' or 'projection'
+  """
   kind: String!
 
   """An optional human-readable label for the node"""
@@ -3486,6 +3587,11 @@ type Lens {
   """
   dims: [String!]!
   id: ID!
+
+  """
+  Everything needed to reduce one axis of this lens to a phasor: the bin count and width, the period the transform runs over, the laser rate, the instrument-response correction and the persisted distribution. Null when the lens has no MICROTIME or SPECTRUM axis. Derived -- none of it is stored on the lens, and a phasor render node references it rather than copying it, so two layers over one dataset cannot disagree about the instrument
+  """
+  phasor(dim: String = null, harmonic: Int! = 1): PhasorContext
 
   """
   Which axis of the data source maps to screen x, y, z, time and intensity. Derived from the axis types: spatial axes are in array order, so the last is x
@@ -4174,6 +4280,21 @@ type Mutation {
 
   """Create a new view for optical settings"""
   createOpticsView(input: OpticsViewInput!): OpticsView!
+
+  """
+  Attach an instrument-response correction to a dataset, taking a raw phasor to a calibrated one
+  """
+  createPhasorCalibration(input: CreatePhasorCalibrationInput!): PhasorCalibration!
+
+  """
+  Attach a phasor distribution (the 2D g/s density at one axis and harmonic) to a dataset, so a client can range a phasor overlay without reading the cube
+  """
+  createPhasorHistogram(input: CreatePhasorHistogramInput!): PhasorHistogram!
+
+  """
+  Create a layer that reduces one axis of a lens to a phasor and colors each pixel by it: a lifetime overlay over a FLIM (microtime) cube, or a spectral one over a hyperspectral cube
+  """
+  createPhasorLayer(input: CreatePhasorLayerInput!): ImageLayer!
 
   """
   Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
@@ -5602,6 +5723,229 @@ type PermissionOption {
   value: ID!
 }
 
+"""
+The instrument-response correction taking a raw phasor to a calibrated one, pinned to a coordinate anchor. An acquisition fact, not a display choice: two layers over one dataset cannot coherently disagree about it. Its absence means the phasor is uncalibrated, which still renders
+"""
+type PhasorCalibration {
+  dim: String!
+  harmonic: Int!
+  id: ID!
+  modulationFactor: Float
+  phaseOffset: Float
+  reference: String
+}
+
+"""
+Input type for an instrument-response correction: the phase offset and modulation factor taking a raw phasor to a calibrated one
+"""
+input PhasorCalibrationInput {
+  """The axis the correction applies to"""
+  dim: String!
+
+  """The harmonic the correction applies at"""
+  harmonic: Int = null
+
+  """The modulation correction"""
+  modulationFactor: Float = null
+
+  """The phase correction in radians"""
+  phaseOffset: Float = null
+
+  """What the correction was measured against"""
+  reference: String = null
+}
+
+"""What a phasor render node derives a pixel's color from."""
+enum PhasorColorMode {
+  """The mean of the phase- and modulation-derived values."""
+  AVERAGE
+
+  """
+  The modulus of the phasor. Over a microtime axis this is the modulation lifetime (tau_m); it exceeds tau_phi exactly when the decay is multi-exponential.
+  """
+  MODULATION
+
+  """
+  The angle of the phasor. Over a microtime axis this is the phase lifetime (tau_phi); over a spectrum axis, the spectral centre of mass.
+  """
+  PHASE
+}
+
+"""
+Everything needed to reduce one axis of a lens to a phasor, at one harmonic. Derived from the dataset's calibration, its lightpath and its phasor spokes; nothing here is stored on the lens. A phasor render node states *which* axis and harmonic to reduce, and reads the rest from here -- the instrument is an acquisition fact, so two layers over one dataset cannot disagree about it
+"""
+type PhasorContext {
+  """
+  What that axis samples: MICROTIME (so the phase reads as a fluorescence lifetime) or SPECTRUM (so it reads as a spectral centre of mass)
+  """
+  axisType: AxisType!
+
+  """
+  The physical width of one bin, from the axis' PHYSICAL calibration: a duration ('0.098 ns') for a microtime axis, a wavelength step ('5 nm') for a spectrum axis. Null when the dataset has no calibration -- the phasor is then computable only in bin units
+  """
+  binWidth: GenericQuantity
+
+  """
+  The number of bins along that axis on this lens: the N of the transform
+  """
+  bins: Int!
+
+  """
+  The instrument-response correction at this axis and harmonic. Null means the phasor is uncalibrated -- which still renders, its hue is just not traceable to an absolute lifetime
+  """
+  calibration: PhasorCalibration
+
+  """The axis the phasor is taken over"""
+  dim: String!
+
+  """
+  The harmonic this context was resolved for. It selects the calibration and the distribution below, which are both harmonic-specific
+  """
+  harmonic: Int!
+
+  """
+  The repetition rate of the pulsed source, read from the lightpath graph anchored to this data: the clock a FLIM phasor runs on, and what makes a phase an absolute lifetime. Prefer it over `window` for a lifetime, and note the two diverge on a lens that crops its microtime axis. Null for a spectrum axis, or when no lightpath states a rate
+  """
+  laserFrequency: Frequency
+
+  """
+  The persisted (g, s) density at this axis and harmonic, so a client can range the overlay's colormap without reading the cube. Null until a task has computed one
+  """
+  phasorHistogram: PhasorHistogram
+
+  """
+  The period the transform actually runs over on THIS lens: bin_width x bins. It is the frequency to transform at, and the only one available over a spectrum axis. For an uncropped FLIM axis it should agree with laserFrequency -- but a lens that slices its phasor axis narrows it, and then it deliberately does not: the window follows the data, while the laser does not. Null when there is no calibration
+  """
+  window: GenericQuantity
+}
+
+"""
+A region of phasor space, and the color the pixels falling inside it are painted
+"""
+type PhasorCursor {
+  color: [Int!]
+  g: Float
+  kind: PhasorCursorKind!
+  label: String
+  points: [[Float!]!]
+  radius: Float
+  s: Float
+  visible: Boolean!
+}
+
+"""
+A region of phasor space, and the color the pixels falling inside it are painted. A color rule on the image, not a plot widget
+"""
+input PhasorCursorInput {
+  color: [Int!] = null
+  g: Float = null
+  kind: PhasorCursorKind = null
+  label: String = null
+  points: [[Float!]!] = null
+  radius: Float = null
+  s: Float = null
+  visible: Boolean = null
+}
+
+"""The shape of a region selected in phasor space."""
+enum PhasorCursorKind {
+  """A disc, given by its centre (g, s) and a radius."""
+  CIRCLE
+
+  """An arbitrary closed region, given by at least three (g, s) vertices."""
+  POLYGON
+}
+
+"""
+The distribution of a phasor pinned to a coordinate anchor: a 2D (g, s) density plus the summed profile it was computed from. What ValueHistogram is to an intensity channel -- it lets a client pick a sane value range for a phasor overlay without reading the cube
+"""
+type PhasorHistogram {
+  bins: Int!
+  calibrated: Boolean!
+
+  """The flattened bins x bins (g, s) density, row-major with s outermost"""
+  counts: [Float!]!
+  dim: String!
+  gMax: Float!
+  gMin: Float!
+  harmonic: Int!
+  id: ID!
+
+  """
+  The summed profile along the phasor axis (a decay for a MICROTIME axis, a spectrum for a SPECTRUM one), one value per bin
+  """
+  profile: [Float!]!
+  sMax: Float!
+  sMin: Float!
+  total: Int
+}
+
+"""
+Input type for a phasor distribution: the 2D (g, s) density of a phasor taken over one axis at one harmonic, plus the summed profile it came from. Persisted so a client can pick a value range for a phasor overlay without reading the cube
+"""
+input PhasorHistogramInput {
+  """The resolution of the square (g, s) density grid"""
+  bins: Int = null
+  calibrated: Boolean = null
+
+  """The flattened bins x bins density"""
+  counts: [Float!]!
+
+  """The axis the phasor was taken over"""
+  dim: String!
+  gMax: Float = null
+  gMin: Float = null
+
+  """The harmonic the phasor was taken at"""
+  harmonic: Int = null
+  profile: [Float!] = null
+  sMax: Float = null
+  sMin: Float = null
+  total: Int = null
+}
+
+"""
+Reduces one axis of the lens to a phasor -- the DFT of each pixel's profile along it, at a harmonic -- and colors the pixel by the result. Over a microtime axis the phase reads as a fluorescence lifetime; over a spectrum axis, as a spectral centre of mass. Its output is a raster that composites into the scene like any other leaf, not a scatter plot
+"""
+type PhasorNode implements LayerRenderNode {
+  harmonic: Int!
+  intensityDim: String
+  intensityIndex: Int!
+  kind: String!
+
+  """An optional human-readable label for the node"""
+  label: String
+  phasorDim: String!
+  transfer: PhasorTransfer!
+  visible: Boolean!
+}
+
+"""
+How a phasor becomes the pixel's color. The transfer function of a phasor source: it maps the reduction's output -- a (g, s) pair plus a photon count -- rather than a sampled scalar, which is why it is not a TransferFunction
+"""
+type PhasorTransfer {
+  colormap: ColorMap!
+  cursors: [PhasorCursor!]!
+  intensity: TransferFunction!
+  max: GenericQuantity
+  min: GenericQuantity
+  mode: PhasorColorMode!
+  weightByIntensity: Boolean!
+}
+
+"""
+How a phasor becomes the pixel's color: the transfer function of a phasor source
+"""
+input PhasorTransferInput {
+  colormap: ColorMap = null
+  cursors: [PhasorCursorInput!] = null
+  intensity: TransferFunctionInput = null
+  max: GenericQuantity = null
+  min: GenericQuantity = null
+  mode: PhasorColorMode = null
+  weightByIntensity: Boolean = null
+}
+
 """Input for pinning or unpinning a camera for quick access"""
 input PinCameraInput {
   """The ID of the camera to pin or unpin"""
@@ -6715,6 +7059,11 @@ Which axis of a data source maps to screen x, y, z, time and intensity. Derived 
 type RenderAxes {
   """The channel axis, if the data has one"""
   intensity: String
+
+  """
+  The axis a phasor may be taken over -- a MICROTIME (FLIM arrival time) or SPECTRUM (wavelength) axis -- if the data has one
+  """
+  phasor: String
 
   """The time axis, if the data has one"""
   t: String
@@ -8528,7 +8877,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

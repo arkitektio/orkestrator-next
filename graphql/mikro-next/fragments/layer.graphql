@@ -18,11 +18,58 @@ fragment ChannelSourceNode on ChannelSourceNode {
   }
 }
 
+# A region of phasor space and the color the pixels inside it are painted — a
+# color rule on the image, not a plot widget.
+fragment PhasorCursor on PhasorCursor {
+  kind
+  label
+  visible
+  color
+  g
+  s
+  radius
+  points
+}
+
+# Not a TransferFunction: it maps the reduction's output — a (g, s) pair plus a
+# photon count — rather than a sampled scalar. `intensity` is the ordinary
+# transfer applied to that photon count.
+fragment PhasorTransfer on PhasorTransfer {
+  colormap
+  mode
+  min
+  max
+  weightByIntensity
+  intensity {
+    ...TransferFunction
+  }
+  cursors {
+    ...PhasorCursor
+  }
+}
+
+fragment PhasorNode on PhasorNode {
+  phasorDim
+  harmonic
+  intensityDim
+  intensityIndex
+  visible
+  # Aliased: `transfer` on a ChannelSourceNode is a TransferFunction, here it is
+  # a PhasorTransfer. Same response key, different types — GraphQL rejects the
+  # merge, so the phasor one gets its own key.
+  phasorTransfer: transfer {
+    ...PhasorTransfer
+  }
+}
+
 fragment RenderNodeCommon on LayerRenderNode {
   kind
   label
   ... on ChannelSourceNode {
     ...ChannelSourceNode
+  }
+  ... on PhasorNode {
+    ...PhasorNode
   }
   ... on BlendNode {
     blending

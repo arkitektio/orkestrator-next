@@ -3,11 +3,15 @@ import { ImageLayerFragment } from "./layerGuards";
 import { resolveLayerDataRange } from "./dataRange";
 import {
   ChannelRenderNode,
+  PhasorRenderNode,
+  SourceRenderNode,
   flattenChannels,
+  flattenPhasors,
+  flattenSources,
   resolveLayerGraph,
   resolveProjectionMode,
 } from "./renderGraph";
-import { resolveIntensityDim } from "./dims";
+import { resolveIntensityDim, resolvePhasorDim } from "./dims";
 import { composeLayerAffine, type SceneTransformContext } from "./transformGraph";
 
 export type { SceneTransformContext };
@@ -42,8 +46,24 @@ export type LayerState = ImageLayerFragment & {
   zDim: string | null;
   tDim: string | null;
   intensityDim: string | null;
+  /**
+   * The axis the layer's phasor nodes reduce (a MICROTIME/SPECTRUM axis). Null
+   * when the graph has no phasor node — and when it is set, the axis is NOT
+   * collapsible: the phasor needs every bin, so there is no dim slider for it
+   * (`sliceSignature.collapsibleDims`), and the brick repack reduces it into
+   * g/s/intensity slabs instead of pinning one index.
+   */
+  phasorDim: string | null;
   /** Channel sources flattened from the layer's render graph (tree order). */
   channels: ChannelRenderNode[];
+  /** Phasor sources flattened from the layer's render graph (tree order). */
+  phasors: PhasorRenderNode[];
+  /**
+   * Every pixel-producing leaf in tree order — channels and phasors together.
+   * This is the compositor's slot list: slot i of the shader's source loop is
+   * `sources[i]`.
+   */
+  sources: SourceRenderNode[];
   /** Blend mode of the render graph's root, used to composite channels. */
   blend: Blending;
   /** Projection mode (from a ProjectionNode in the graph, else MIP) for 3D. */
@@ -75,6 +95,8 @@ export const normalizeLayer = (
 ): LayerState => {
   const graph = resolveLayerGraph(layer);
   const channels = flattenChannels(graph);
+  const phasors = flattenPhasors(graph);
+  const sources = flattenSources(graph);
   const primary = channels[0];
   const transfer = primary?.transfer;
   // Clim is stored in absolute base-native units; null = "full range". Resolve
@@ -104,7 +126,10 @@ export const normalizeLayer = (
     zDim: renderAxes?.z ?? null,
     tDim: renderAxes?.t ?? null,
     intensityDim: resolveIntensityDim(primary?.intensityDim, renderAxes),
+    phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, renderAxes),
     channels,
+    phasors,
+    sources,
     blend: graph.blending,
     projection: resolveProjectionMode(graph),
     fixedLOD: null,

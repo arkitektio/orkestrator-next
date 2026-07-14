@@ -5,6 +5,39 @@ fragment DimSlice on Slice {
   step
 }
 
+# Everything needed to reduce one axis of a lens to a phasor. Derived
+# server-side from the dataset's calibration, lightpath and phasor spokes — a
+# phasor render node states WHICH axis and harmonic, and reads the instrument
+# facts from here.
+fragment PhasorContext on PhasorContext {
+  dim
+  axisType
+  bins
+  binWidth
+  harmonic
+  laserFrequency
+  window
+  calibration {
+    id
+    harmonic
+    phaseOffset
+    modulationFactor
+    reference
+  }
+  phasorHistogram {
+    id
+    bins
+    counts
+    gMin
+    gMax
+    sMin
+    sMax
+    profile
+    total
+    calibrated
+  }
+}
+
 fragment SceneLens on Lens {
   id
   shape
@@ -15,6 +48,13 @@ fragment SceneLens on Lens {
     z
     t
     intensity
+    phasor
+  }
+  # The phasor context at the server's default harmonic (1). A node on another
+  # harmonic re-resolves it through the GetLensPhasor query — the calibration
+  # and the persisted distribution are both harmonic-specific.
+  phasor {
+    ...PhasorContext
   }
   # Id-only: the lens CS's axes are its dims by contract ("a selection never
   # drops or reorders an axis"), so selecting them would only duplicate dims.

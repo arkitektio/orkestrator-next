@@ -32,6 +32,43 @@ describe("collapsibleDims", () => {
   });
 });
 
+describe("collapsibleDims — a reduced phasor axis", () => {
+  const flimLayer = (phasorDim: string | null) =>
+    ({
+      ...makeLayer({ dims: ["tau", "c", "z", "y", "x"], shape: [256, 1, 18, 512, 512] }),
+      phasorDim,
+      phasors: phasorDim ? [{ harmonic: 1, intensityIndex: 0 }] : [],
+    }) as unknown as LayerState;
+
+  it("has no dim slider: the repack consumes every bin, so no index pins it", () => {
+    // Without a phasor node the microtime axis is just another scrubbable dim…
+    expect(collapsibleDims(flimLayer(null))).toEqual(["tau"]);
+    // …with one, it is RENDERED (reduced into g/s/intensity slabs) and gone
+    // from the sliders.
+    expect(collapsibleDims(flimLayer("tau"))).toEqual([]);
+  });
+
+  it("flushes the pool when the harmonic changes (the reduction is baked into the bricks)", () => {
+    const base = flimLayer("tau");
+    const secondHarmonic = {
+      ...base,
+      phasors: [{ harmonic: 2, intensityIndex: 0 }],
+    } as unknown as LayerState;
+    expect(buildSliceSignature(secondHarmonic, {})).not.toBe(buildSliceSignature(base, {}));
+  });
+
+  it("does not flush the pool when only the phasor's COLOR changes", () => {
+    // Mode / colormap / cursors are shader uniforms — re-fetching every brick
+    // because someone dragged a cursor would be a disaster.
+    const base = flimLayer("tau");
+    const recolored = {
+      ...base,
+      phasors: [{ harmonic: 1, intensityIndex: 0, transfer: { mode: "MODULATION" } }],
+    } as unknown as LayerState;
+    expect(buildSliceSignature(recolored, {})).toBe(buildSliceSignature(base, {}));
+  });
+});
+
 describe("buildSliceSignature with dim selections", () => {
   it("changes when a selection on the layer's own dim changes", () => {
     const layer = makeLayer();

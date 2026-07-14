@@ -34,16 +34,56 @@ export type LevelGeometry = {
   scale: Vec3;
 };
 
+/**
+ * What one z-slab of a brick slot holds. Channel slabs come first and are
+ * indexed by the channel itself (slab i = channel i), so the existing shader
+ * mapping (`intensityIndex` → slab) is unchanged; a phasor node then claims
+ * THREE slabs after them, because the repack reduces its axis into g, s and a
+ * mean photon count rather than storing the bins.
+ */
+export type SlabDesc =
+  | { kind: "channel"; channel: number }
+  | {
+      kind: "phasor";
+      /** g and s are the phasor; i is the MEAN photon count over the bins —
+       * mean, not sum, so it stays in the data's own value range and the
+       * ordinary clim/gamma transfer applies to it unchanged. */
+      component: "g" | "s" | "i";
+      /** Index of the phasor node in the layer's `phasors` (tree order). */
+      node: number;
+      /** The channel whose photons this phasor counts. */
+      channel: number;
+      harmonic: number;
+    };
+
 export type LayerLevelGeometry = {
   dims: readonly string[];
   axes: AxisIndices;
-  /** Channels co-resident in a brick slot (capped at 16 like the 2D shader). */
+  /**
+   * Slabs co-resident in a brick slot (capped at 16 like the 2D shader). Named
+   * for its history — every slab used to be a channel — but with a phasor node
+   * in the graph it counts channel slabs AND the node's g/s/i slabs. It is the
+   * atlas' z-stacking factor (`slotSize.z = stored.z * channelCount`).
+   */
   channelCount: number;
+  /** What each of those slabs holds. `slabs.length === channelCount`. */
+  slabs: readonly SlabDesc[];
+  /** Channel slabs only — the layer's real channels. */
+  channelSlabCount: number;
+  /** Samples along the reduced phasor axis; 0 when the layer has no phasor. */
+  phasorBins: number;
   /** Finest first (index 0 = level 0), matching `dataArrays` ordering. */
   levels: readonly LevelGeometry[];
 };
 
 export const MAX_BRICK_CHANNELS = 16;
+
+/** Slabs one phasor node occupies: g, s and the mean photon count. */
+export const SLABS_PER_PHASOR = 3;
+
+/** True when the geometry's bricks carry reduced phasor slabs. */
+export const hasPhasorSlabs = (geo: LayerLevelGeometry): boolean =>
+  geo.phasorBins > 0 && geo.slabs.some((slab) => slab.kind === "phasor");
 
 /**
  * Absolute per-axis scale (array dim order) declared by a level's `toParent`
@@ -178,7 +218,7 @@ export function buildLayerLevelGeometry(
   allLevels: readonly LevelSource[],
 ): LayerLevelGeometry | null {
   const axes = resolveAxisIndices([...dims], layer);
-  const { xPos, yPos, zPos, intensityPos } = axes;
+  const { xPos, yPos, zPos, intensityPos, phasorPos } = axes;
   if (allLevels.length === 0 || xPos === -1 || yPos === -1) return null;
 
   // Some pyramids carry duplicate resolutions (e.g. two level-0 dataArrays,
@@ -195,15 +235,44 @@ export function buildLayerLevelGeometry(
   });
   if (levels.length === 0) return null;
 
-  const channelCount =
+  const channelSlabCount =
     intensityPos !== -1
       ? Math.min(MAX_BRICK_CHANNELS, Math.max(1, levels[0].shape[intensityPos] ?? 1))
       : 1;
 
+  const slabs: SlabDesc[] = [];
+  for (let channel = 0; channel < channelSlabCount; channel++) {
+    slabs.push({ kind: "channel", channel });
+  }
+
+  const phasorBins =
+    phasorPos !== -1 ? Math.max(0, levels[0].shape[phasorPos] ?? 0) : 0;
+
+  if (phasorPos !== -1 && phasorBins > 1) {
+    // Each phasor node adds three slabs. A graph deep enough to overflow the
+    // slot (16 slabs) drops the phasors that no longer fit rather than
+    // silently mis-indexing the ones that do — the same "degrade, don't
+    // explode" contract as the axis guards in `dims.ts`.
+    (layer.phasors ?? []).forEach((phasor, node) => {
+      if (slabs.length + SLABS_PER_PHASOR > MAX_BRICK_CHANNELS) return;
+      const channel = Math.min(
+        Math.max(0, phasor.intensityIndex ?? 0),
+        channelSlabCount - 1,
+      );
+      const harmonic = Math.max(1, phasor.harmonic ?? 1);
+      for (const component of ["g", "s", "i"] as const) {
+        slabs.push({ kind: "phasor", component, node, channel, harmonic });
+      }
+    });
+  }
+
   return {
     dims,
     axes,
-    channelCount,
+    channelCount: slabs.length,
+    slabs,
+    channelSlabCount,
+    phasorBins: slabs.some((slab) => slab.kind === "phasor") ? phasorBins : 0,
     levels: levels.map((level, index) => ({
       index,
       storeId: level.storeId,

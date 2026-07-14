@@ -20,3 +20,12 @@ export type Frequency = string;
 
 /** A power, e.g. "5 mW", "2 W" (e.g. LaserElement.power, BeamState.power). */
 export type Power = string;
+
+/**
+ * A quantity of ANY dimension, e.g. "0.098 ns", "5 nm" (PhasorContext.binWidth /
+ * .window, PhasorTransfer.min / .max). Unlike the scalars above, its dimension
+ * is not fixed by the field — it follows the data: a MICROTIME axis' bin width
+ * is a time, a SPECTRUM axis' is a length. Resolve the dimension from the
+ * phasor's `axisType` and parse via `parseGenericQuantity` (`@/lib/quantities`).
+ */
+export type GenericQuantity = string;

@@ -27,6 +27,7 @@ import { RgbColorPicker } from "react-colorful";
 import {
   Blending,
   ColorMap,
+  PhasorColorMode,
   ProjectionMode,
   useUpdateLaterMutation,
 } from "@/mikro-next/api/graphql";
@@ -37,24 +38,36 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
+  Plus,
   Trash2,
+  Waves,
 } from "lucide-react";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
 import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
 import {
+  BLEND_KIND,
   BlendRenderNode,
   ChannelRenderNode,
+  PROJECTION_KIND,
+  PhasorRenderNode,
   ProjectionRenderNode,
   RenderNode,
   TransferFn,
   flattenChannels,
+  flattenPhasors,
+  flattenSources,
+  newChannelNode,
+  newPhasorNode,
   primaryChannelRenderFields,
   resolveLayerGraph,
   resolveProjectionMode,
   serializeRenderGraph,
 } from "../../../core/renderGraph";
+import { resolvePhasorDim } from "../../../core/dims";
+import { resolvePhasorScale } from "../../../core/phasor";
+import { PhasorPlot } from "../PhasorPlot";
 
 const colorToObj = (color: number[] | null) => ({
   r: Math.round(color?.[0] ?? 255),
@@ -407,6 +420,259 @@ const ChannelNodeEditor = ({
   );
 };
 
+/**
+ * A phasor source: the axis it reduces, the harmonic it reduces at, and how the
+ * resulting (g, s) becomes a color. The phasor plot is the primary control —
+ * cursors drawn on it are color rules on the image, not annotations.
+ *
+ * Changing the axis, the harmonic or the source channel changes what the BRICKS
+ * hold (the reduction is baked in at repack), so those edits flush and refetch
+ * the layer's pool. The rest — mode, colormap, range, cursors — are shader
+ * uniforms and update on the next frame.
+ */
+const PhasorNodeEditor = ({
+  node,
+  onChange,
+  onRemove,
+  layer,
+}: {
+  node: PhasorRenderNode;
+  onChange: (n: PhasorRenderNode) => void;
+  onRemove?: () => void;
+  layer?: LayerState;
+}) => {
+  const [open, setOpen] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const context = layer?.lens.phasor;
+  const scale = resolvePhasorScale({
+    axisType: context?.axisType,
+    harmonic: node.harmonic,
+    laserFrequency: context?.laserFrequency,
+    window: context?.window,
+  });
+  const histogram = context?.phasorHistogram ?? null;
+  const setTransfer = (patch: Partial<PhasorRenderNode["transfer"]>) =>
+    onChange({ ...node, transfer: { ...node.transfer, ...patch } });
+
+  const tint = colormapGradientCSS(node.transfer.colormap, 18, null);
+  const unit = scale.dimension === "time" ? "ns" : scale.dimension === "length" ? "nm" : "";
+
+  return (
+    <div className="relative overflow-hidden rounded border border-border/10 bg-background/50 p-2">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.28]"
+        style={{ background: tint }}
+      />
+      <div className="relative flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-1 text-left"
+        >
+          <ChevronRight
+            className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`}
+          />
+          <Waves className="h-3 w-3" />
+          <span className="font-medium">
+            {node.label || `Phasor ${node.phasorDim || "?"}`}
+          </span>
+        </button>
+        {onRemove && (
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+
+      {open && (
+        <div className="relative flex flex-col gap-2 pt-2">
+          <PhasorPlot
+            histogram={
+              histogram
+                ? {
+                    bins: histogram.bins,
+                    counts: histogram.counts,
+                    gMin: histogram.gMin,
+                    gMax: histogram.gMax,
+                    sMin: histogram.sMin,
+                    sMax: histogram.sMax,
+                  }
+                : null
+            }
+            cursors={node.transfer.cursors}
+            colormap={node.transfer.colormap}
+            scale={scale}
+            onCursorsChange={(cursors) => setTransfer({ cursors })}
+          />
+
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 flex-col gap-1">
+              <span className="text-muted-foreground">Color by</span>
+              <Select
+                value={node.transfer.mode}
+                onValueChange={(v) => setTransfer({ mode: v as PhasorColorMode })}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(PhasorColorMode).map((mode) => (
+                    <SelectItem key={mode} value={mode} className="text-xs">
+                      {mode.charAt(0) + mode.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <span className="text-muted-foreground">Colormap</span>
+              <ColormapControl
+                transfer={{ ...node.transfer.intensity, colormap: node.transfer.colormap }}
+                onChange={(t) =>
+                  setTransfer({ colormap: t.colormap ?? node.transfer.colormap })
+                }
+              />
+            </div>
+          </div>
+
+          {/* The value window the colormap is ranged over: a lifetime over a
+              microtime axis, a wavelength over a spectrum one. Empty = the axis'
+              own range. */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 flex-col gap-1">
+              <span className="text-muted-foreground">Min {unit && `(${unit})`}</span>
+              <Input
+                className="h-7 text-xs"
+                value={node.transfer.min ?? ""}
+                placeholder="auto"
+                onChange={(e) => setTransfer({ min: e.target.value || null })}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <span className="text-muted-foreground">Max {unit && `(${unit})`}</span>
+              <Input
+                className="h-7 text-xs"
+                value={node.transfer.max ?? ""}
+                placeholder="auto"
+                onChange={(e) => setTransfer({ max: e.target.value || null })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Weight by intensity</span>
+            <Switch
+              checked={node.transfer.weightByIntensity}
+              onCheckedChange={(v) => setTransfer({ weightByIntensity: v })}
+            />
+          </div>
+
+          {/* The photon count's own transfer — the same levels editor a channel
+              gets, over the mean photon count the reduction produced. */}
+          <TransferEditor
+            transfer={node.transfer.intensity}
+            onChange={(intensity) => setTransfer({ intensity })}
+            layer={layer}
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex items-center gap-1 self-start text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronRight
+              className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+            />
+            Advanced
+          </button>
+          {showAdvanced && (
+            <div className="flex flex-col gap-2 pl-1">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 flex-col gap-1">
+                  <span className="text-muted-foreground">Phasor dim</span>
+                  <Input
+                    className="h-7 text-xs"
+                    value={node.phasorDim}
+                    placeholder={layer?.lens.renderAxes?.phasor ?? "tau"}
+                    onChange={(e) => onChange({ ...node, phasorDim: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <span className="text-muted-foreground">Harmonic</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    className="h-7 text-xs"
+                    value={node.harmonic}
+                    onChange={(e) =>
+                      onChange({ ...node, harmonic: Math.max(1, Number(e.target.value) || 1) })
+                    }
+                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <span className="text-muted-foreground">Channel</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    className="h-7 text-xs"
+                    value={node.intensityIndex}
+                    onChange={(e) =>
+                      onChange({ ...node, intensityIndex: Math.max(0, Number(e.target.value) || 0) })
+                    }
+                  />
+                </div>
+              </div>
+              <PhasorContextSummary layer={layer} harmonic={node.harmonic} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** The instrument facts the reduction is running against — an uncalibrated
+ * phasor still renders, but its hue is not a lifetime, and that has to be
+ * visible rather than silently assumed. */
+const PhasorContextSummary = ({
+  layer,
+  harmonic,
+}: {
+  layer?: LayerState;
+  harmonic: number;
+}) => {
+  const context = layer?.lens.phasor;
+  if (!context) {
+    return (
+      <span className="text-[10px] text-muted-foreground">
+        This lens has no phasor axis — the server derives one only for a MICROTIME
+        or SPECTRUM axis.
+      </span>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground">
+      <span>
+        {context.bins} bins over {context.window ?? "an uncalibrated axis"}
+        {context.laserFrequency ? ` · laser ${context.laserFrequency}` : ""}
+      </span>
+      <span>
+        {context.calibration
+          ? `Calibrated (phase ${context.calibration.phaseOffset?.toFixed(3) ?? "—"} rad, modulation ${context.calibration.modulationFactor?.toFixed(3) ?? "—"})`
+          : "Uncalibrated — the hue is not traceable to an absolute lifetime"}
+      </span>
+      {harmonic !== context.harmonic && (
+        <span>
+          Harmonic {harmonic}: reusing the instrument facts resolved at harmonic{" "}
+          {context.harmonic}.
+        </span>
+      )}
+    </div>
+  );
+};
+
 const ContainerNodeEditor = ({
   node,
   onChange,
@@ -428,6 +694,9 @@ const ContainerNodeEditor = ({
     onChange({ ...node, children });
   };
 
+  const addChild = (child: RenderNode) =>
+    onChange({ ...node, children: [...node.children, child] });
+
   const childEditors = node.children.map((child, i) => (
     <RenderNodeEditor
       key={i}
@@ -437,6 +706,8 @@ const ContainerNodeEditor = ({
       layer={layer}
     />
   ));
+
+  const addMenu = <AddNodeMenu layer={layer} onAdd={addChild} />;
 
   // Root blend: not a collapsible tree. The blend mode is a quiet vertical
   // selector pinned to the far-left spine (clickable, but it doesn't stand out);
@@ -462,7 +733,10 @@ const ContainerNodeEditor = ({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex min-w-0 flex-1 flex-col">{childEditors}</div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {childEditors}
+          {addMenu}
+        </div>
       </div>
     );
   }
@@ -524,10 +798,110 @@ const ContainerNodeEditor = ({
         {open && (
           <div className="pt-2 flex flex-col gap-2 pl-3 border-l border-border/50 ml-1 bg-black/5">
             {childEditors}
+            {addMenu}
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+/**
+ * Adds a leaf or a container to a node's children. Until now the graph's SHAPE
+ * came from the server and the editor could only tweak or remove nodes — but a
+ * phasor node has to be addable, or a FLIM cube can never be turned into a
+ * lifetime overlay from the viewer.
+ */
+const AddNodeMenu = ({
+  layer,
+  onAdd,
+}: {
+  layer?: LayerState;
+  onAdd: (node: RenderNode) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  if (!layer) return null;
+
+  // The server derives `renderAxes.phasor` from the axis TYPES — it is set only
+  // when the lens actually has a MICROTIME or SPECTRUM axis. No axis, no phasor.
+  const canPhasor = Boolean(layer.lens.renderAxes?.phasor);
+
+  const add = (node: RenderNode) => {
+    onAdd(node);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 justify-start gap-1 self-start px-1 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-3 w-3" />
+          Add node
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-44 p-1">
+        <div className="flex flex-col">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 justify-start gap-2 text-xs"
+            onClick={() => add(newChannelNode(layer))}
+          >
+            <Layers className="h-3 w-3" /> Channel
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 justify-start gap-2 text-xs"
+            disabled={!canPhasor}
+            title={
+              canPhasor
+                ? "Reduce the lens' MICROTIME/SPECTRUM axis to a phasor"
+                : "This lens has no MICROTIME or SPECTRUM axis"
+            }
+            onClick={() => add(newPhasorNode(layer))}
+          >
+            <Waves className="h-3 w-3" /> Phasor
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 justify-start gap-2 text-xs"
+            onClick={() =>
+              add({
+                type: "blend",
+                kind: BLEND_KIND,
+                label: null,
+                blending: Blending.Additive,
+                children: [],
+              })
+            }
+          >
+            <Blend className="h-3 w-3" /> Blend
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 justify-start gap-2 text-xs"
+            onClick={() =>
+              add({
+                type: "projection",
+                kind: PROJECTION_KIND,
+                label: null,
+                mode: ProjectionMode.Mip,
+                children: [],
+              })
+            }
+          >
+            <Box className="h-3 w-3" /> Projection
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
@@ -544,6 +918,9 @@ export const RenderNodeEditor = ({
 }) => {
   if (node.type === "channel") {
     return <ChannelNodeEditor node={node} onChange={onChange} onRemove={onRemove} layer={layer} />;
+  }
+  if (node.type === "phasor") {
+    return <PhasorNodeEditor node={node} onChange={onChange} onRemove={onRemove} layer={layer} />;
   }
   return (
     <ContainerNodeEditor
@@ -595,10 +972,17 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
   // written directly by any panel.
   const pushPreview = (nextRoot: BlendRenderNode) => {
     const channels = flattenChannels(nextRoot);
+    const phasors = flattenPhasors(nextRoot);
     const primary = channels[0]?.transfer;
     updateStoreLayer({
       ...layer,
       channels,
+      phasors,
+      sources: flattenSources(nextRoot),
+      // Adding or removing a phasor node (or changing its axis/harmonic) changes
+      // what the BRICKS hold, not just a uniform: the slice signature picks that
+      // up and the residency manager flushes the pool (sliceSignature.ts).
+      phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, layer.lens.renderAxes),
       blend: nextRoot.blending,
       projection: resolveProjectionMode(nextRoot),
       climMin: primary?.climMin ?? layer.climMin,
@@ -625,10 +1009,14 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
     const nextGraph = result.data?.updateLayer?.renderGraph ?? layer.renderGraph;
     // Reflect the saved graph's primary channel in the (single-channel) viewer.
     const primary = primaryChannelRenderFields(nextGraph);
+    const phasors = flattenPhasors(root);
     updateStoreLayer({
       ...layer,
       renderGraph: nextGraph,
       channels: flattenChannels(root),
+      phasors,
+      sources: flattenSources(root),
+      phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, layer.lens.renderAxes),
       blend: root.blending,
       projection: resolveProjectionMode(root),
       climMin: primary?.climMin ?? layer.climMin,

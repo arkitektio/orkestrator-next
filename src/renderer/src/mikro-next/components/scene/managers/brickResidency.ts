@@ -19,6 +19,7 @@ import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree
 import {
   buildLayerLevelGeometry,
   buildLevelSources,
+  hasPhasorSlabs,
   type LayerLevelGeometry,
   type LevelSource,
   type Vec3,
@@ -609,7 +610,12 @@ export class BrickResidencyManager {
     const layout = buildPageTableLayout(geometry, spec.payload, PAGE_TEXTURE_MAX_EXTENT);
     if (!layout) return null;
 
-    const bytesPerVoxel = atlasKindForDtype(geometry.levels[0].dtype) === "r8" ? 1 : 4;
+    // A phasor layer's slabs are derived (g, s ∈ [-1, 1] and a mean photon
+    // count), so its atlas is float regardless of the source dtype.
+    const atlasKind = hasPhasorSlabs(geometry)
+      ? "r32f"
+      : atlasKindForDtype(geometry.levels[0].dtype);
+    const bytesPerVoxel = atlasKind === "r8" ? 1 : 4;
     const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
     const budgetShare = Math.min(
       MAX_LAYER_POOL_BYTES,
@@ -637,10 +643,13 @@ export class BrickResidencyManager {
     const atlas = createBrickAtlas({
       spec,
       dtype: geometry.levels[0].dtype,
+      kind: atlasKind,
       desiredSlots,
       maxExtent: maxTextureExtent,
       filter: spec.border > 0 ? "linear" : "nearest",
-      computeStorage: gpuRepacker !== null,
+      // A phasor layer never repacks on the GPU (the kernel cannot reduce), so
+      // it has no use for the storage-binding usage flag either.
+      computeStorage: gpuRepacker !== null && !hasPhasorSlabs(geometry),
     });
     const pageTable = createPageTableTexture(layout);
 
@@ -731,29 +740,54 @@ export class BrickResidencyManager {
     pool: LayerBrickPool,
     levelIndex: number,
     brickCoords: Vec3,
-  ): { spatial: Vec3; channelChunk: number; chunkCoords: number[] }[] {
+  ): {
+    spatial: Vec3;
+    channelChunk: number;
+    phasorChunk: number;
+    chunkCoords: number[];
+  }[] {
     const level = pool.geometry.levels[levelIndex];
-    const { xPos, yPos, zPos, intensityPos } = pool.geometry.axes;
+    const { xPos, yPos, zPos, intensityPos, phasorPos } = pool.geometry.axes;
     const spatialChunks = chunksTouchingBrick(pool.geometry, pool.spec, levelIndex, brickCoords);
     const channelsPerChunk =
       intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
     const channelChunkCount =
-      intensityPos !== -1 ? Math.ceil(pool.spec.channelCount / channelsPerChunk) : 1;
+      intensityPos !== -1
+        ? Math.ceil(pool.geometry.channelSlabCount / channelsPerChunk)
+        : 1;
 
-    const out: { spatial: Vec3; channelChunk: number; chunkCoords: number[] }[] = [];
+    // A reduced phasor axis is fetched WHOLE — every chunk along it, because the
+    // repack needs every bin of the profile. (Contrast the collapsed dims, which
+    // contribute one fixed chunk coord each.)
+    const phasorBins = pool.geometry.phasorBins;
+    const binsPerChunk =
+      phasorPos !== -1 ? Math.max(1, level.chunks[phasorPos] ?? 1) : 1;
+    const phasorChunkCount =
+      phasorPos !== -1 && phasorBins > 0 ? Math.ceil(phasorBins / binsPerChunk) : 1;
+
+    const out: {
+      spatial: Vec3;
+      channelChunk: number;
+      phasorChunk: number;
+      chunkCoords: number[];
+    }[] = [];
     for (const spatial of spatialChunks) {
       for (let channelChunk = 0; channelChunk < channelChunkCount; channelChunk++) {
-        out.push({
-          spatial,
-          channelChunk,
-          chunkCoords: pool.geometry.dims.map((_, d) => {
-            if (d === xPos) return spatial[0];
-            if (d === yPos) return spatial[1];
-            if (d === zPos) return spatial[2];
-            if (d === intensityPos) return channelChunk;
-            return pool.fixedChunkCoords[d];
-          }),
-        });
+        for (let phasorChunk = 0; phasorChunk < phasorChunkCount; phasorChunk++) {
+          out.push({
+            spatial,
+            channelChunk,
+            phasorChunk,
+            chunkCoords: pool.geometry.dims.map((_, d) => {
+              if (d === xPos) return spatial[0];
+              if (d === yPos) return spatial[1];
+              if (d === zPos) return spatial[2];
+              if (d === intensityPos) return channelChunk;
+              if (d === phasorPos && phasorBins > 0) return phasorChunk;
+              return pool.fixedChunkCoords[d];
+            }),
+          });
+        }
       }
     }
     return out;
@@ -772,10 +806,11 @@ export class BrickResidencyManager {
         pool,
         node.level,
         node.coords,
-      ).map(({ spatial, channelChunk, chunkCoords }) =>
+      ).map(({ spatial, channelChunk, phasorChunk, chunkCoords }) =>
         this.fetchChunkShared(arr, level.storeId, chunkCoords, node.level).then((chunk) => ({
           coords: spatial,
           channelChunk,
+          phasorChunk,
           data: chunk.data as BrickArray,
           shape: chunk.shape,
           stride: chunk.stride,
@@ -795,7 +830,11 @@ export class BrickResidencyManager {
 
       let pending: PendingBrick;
       const gpuRepacker = this.ensureGpuRepacker();
-      if (gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks)) {
+      // The GPU repack kernel is a strided COPY — it cannot reduce a phasor
+      // axis. A layer with a phasor node therefore always takes the CPU worker
+      // path (a follow-up can teach the compute kernel the DFT).
+      const reducesPhasor = hasPhasorSlabs(pool.geometry);
+      if (!reducesPhasor && gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks)) {
         // GPU path: the repack IS the upload (a compute dispatch straight
         // into the atlas slot at drain time) — only chunk handles queue here.
         pending = {
@@ -819,6 +858,8 @@ export class BrickResidencyManager {
             spec: pool.spec,
             level,
             axes: pool.geometry.axes,
+            slabs: pool.geometry.slabs,
+            phasorBins: pool.geometry.phasorBins,
             brickBox: nodeVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
             fetchBox: fetchVoxelBox(pool.geometry, pool.spec, node.level, node.coords),
             fixedOffsets: pool.fixedOffsets,
@@ -913,6 +954,10 @@ export class BrickResidencyManager {
               spec: pool.spec,
               level: pool.geometry.levels[pending.level],
               axes: pool.geometry.axes,
+              // Always plain channel slabs here: a phasor layer never reaches
+              // the GPU kernel (it cannot reduce — see fetchBrick).
+              slabs: pool.geometry.slabs,
+              phasorBins: pool.geometry.phasorBins,
               brickBox: nodeVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
               fetchBox: fetchVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
               fixedOffsets: pool.fixedOffsets,
@@ -1133,12 +1178,16 @@ export class BrickResidencyManager {
   }
 
   /**
-   * Fixed (collapsed) indices for every non-spatial, non-channel dim of a
-   * layer: the scene-wide dim-slider selection when present, else the lens
-   * slice's collapsed default. Computed at pool CREATION and recomputed on
+   * Fixed (collapsed) indices for every non-spatial, non-channel, non-phasor
+   * dim of a layer: the scene-wide dim-slider selection when present, else the
+   * lens slice's collapsed default. Computed at pool CREATION and recomputed on
    * every signature FLUSH — a flushed pool that kept its old indices would
    * refetch exactly the slice it just invalidated (the t-slider's data
    * would never change).
+   *
+   * A phasor axis is NOT collapsed: the repack reduces every one of its bins
+   * (`brickRepack.reduceChunks`), so pinning one index here would hand it a
+   * single bin and the DFT would read a constant.
    */
   private computeFixedIndices(
     layer: LayerState,
@@ -1146,7 +1195,7 @@ export class BrickResidencyManager {
     levels: LevelSource[],
   ): { fixedChunkCoords: number[]; fixedOffsets: number[] } {
     const dims = layer.lens.dataset.dims;
-    const { xPos, yPos, zPos, intensityPos } = geometry.axes;
+    const { xPos, yPos, zPos, intensityPos, phasorPos } = geometry.axes;
     const sliceMap = layer.lens.slices.reduce<Record<string, (typeof layer.lens.slices)[number]>>(
       (acc, slice) => {
         acc[slice.dim] = slice;
@@ -1159,6 +1208,7 @@ export class BrickResidencyManager {
     const fixedOffsets = dims.map(() => 0);
     dims.forEach((dim, d) => {
       if (d === xPos || d === yPos || d === zPos || d === intensityPos) return;
+      if (d === phasorPos && geometry.phasorBins > 0) return;
       const fixedIndex = resolveFixedDimIndex(
         sliceMap[dim],
         dimSelections[dim],

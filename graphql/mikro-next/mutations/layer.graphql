@@ -3,3 +3,12 @@ mutation UpdateLater($input: UpdateLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Creates an image layer whose render graph reduces one axis of the lens to a
+# phasor: a lifetime overlay over a FLIM (microtime) cube, a spectral one over a
+# hyperspectral cube.
+mutation CreatePhasorLayer($input: CreatePhasorLayerInput!) {
+  createPhasorLayer(input: $input) {
+    ...SceneLayer
+  }
+}

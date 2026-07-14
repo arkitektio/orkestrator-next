@@ -1,3 +1,18 @@
 mutation DeleteScene($id: ID!) {
   deleteScene(input: { id: $id })
 }
+
+# Bootstraps a whole renderable scene for an array dataset in one call: a world
+# mirroring the dataset's calibration, a full lens, and one default image layer.
+# `kind` is optional — the server infers the layer recipe from the dataset's
+# axes (RGB for a 3-channel 2D image, VOLUME when there is a z axis, …), and
+# only LABEL has to be asked for, since nothing structural marks a label map.
+mutation CreateSceneFromDataset(
+  $dataset: ID!
+  $name: String
+  $kind: BootstrapLayerKind
+) {
+  createSceneFromDataset(input: { dataset: $dataset, name: $name, kind: $kind }) {
+    ...ListScene
+  }
+}

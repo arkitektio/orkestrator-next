@@ -101,6 +101,8 @@ export type ADataset = {
   /** Whether this dataset carries a resolution pyramid. Derived: true when it has more than one level */
   multiscale: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. The scene createAdataset's bootstrapScene creates is found here */
+  scenes: Array<Scene>;
   /** The dataset's shape: that of its level-0 array */
   shape: Array<Scalars['Int']['output']>;
 };
@@ -549,6 +551,24 @@ export enum BlendingChoices {
   Multiplicative = 'MULTIPLICATIVE',
   Normal = 'NORMAL'
 }
+
+/** The render recipe a bootstrapped scene stages over its dataset: which default image layer createSceneFromDataset builds. */
+export enum BootstrapLayerKind {
+  /** One colormapped source per channel, additively blended (grey for a single channel). The fluorescence default, and the fallback when nothing else is inferred. */
+  Intensity = 'INTENSITY',
+  /** A single categorical source mapping discrete integer labels to distinct colors. Never inferred -- nothing structural distinguishes a label map from an image, so it is override-only. */
+  Label = 'LABEL',
+  /** Composite three channels as red, green and blue. Inferred for a 2D dataset whose channel axis has exactly three positions -- a photograph, a brightfield slide. */
+  Rgb = 'RGB',
+  /** The channel sources under a maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane. */
+  Volume = 'VOLUME'
+}
+
+/** Ask ingest to bootstrap a renderable scene for the new dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar for a separate createSceneFromDataset call */
+export type BootstrapSceneInput = {
+  kind?: InputMaybe<BootstrapLayerKind>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
 
 /** An axis-aligned bounding box, as a min and a max corner */
 export type BoundingBox = {
@@ -1151,6 +1171,7 @@ export type CoordinatesTransformation = Transformation & {
 export type CreateADatasetInput = {
   anchors?: InputMaybe<Array<CoordinateAnchorInput>>;
   axes: Array<AxisInput>;
+  bootstrapScene?: InputMaybe<BootstrapSceneInput>;
   calibration?: InputMaybe<CalibrationSpecInput>;
   data: Scalars['ArrayLike']['input'];
   derivedFrom?: InputMaybe<DerivedFromInput>;
@@ -1376,6 +1397,13 @@ export type CreateRgbLayerInput = {
   redIndex?: InputMaybe<Scalars['Int']['input']>;
   scene: Scalars['ID']['input'];
   visible?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Input for bootstrapping a renderable scene for a dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable */
+export type CreateSceneFromDatasetInput = {
+  dataset: Scalars['ID']['input'];
+  kind?: InputMaybe<BootstrapLayerKind>;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input type for creating a scene and the WORLD coordinate system its layers are registered into */
@@ -3983,6 +4011,8 @@ export type Mutation = {
   createRoiView: RoiView;
   /** Create a new scene and the WORLD coordinate system its layers are registered into */
   createScene: Scene;
+  /** Bootstrap a renderable scene for a dataset in one call: a world mirroring its calibration, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable */
+  createSceneFromDataset: Scene;
   /** Create a layer that renders the vector geometry of a data ROI in a scene */
   createShapeLayer: ShapeLayer;
   /** Create a new state snapshot */
@@ -4374,6 +4404,11 @@ export type MutationCreateRoiViewArgs = {
 
 export type MutationCreateSceneArgs = {
   input: CreateSceneInput;
+};
+
+
+export type MutationCreateSceneFromDatasetArgs = {
+  input: CreateSceneFromDatasetInput;
 };
 
 
@@ -9517,6 +9552,15 @@ export type DeleteSceneMutationVariables = Exact<{
 
 export type DeleteSceneMutation = { __typename?: 'Mutation', deleteScene: string };
 
+export type CreateSceneFromDatasetMutationVariables = Exact<{
+  dataset: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<BootstrapLayerKind>;
+}>;
+
+
+export type CreateSceneFromDatasetMutation = { __typename?: 'Mutation', createSceneFromDataset: { __typename?: 'Scene', id: string, name: string } };
+
 export type CreateSnapshotMutationVariables = Exact<{
   image: Scalars['ID']['input'];
   file: Scalars['ImageFileLike']['input'];
@@ -13338,6 +13382,41 @@ export function useDeleteSceneMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteSceneMutationHookResult = ReturnType<typeof useDeleteSceneMutation>;
 export type DeleteSceneMutationResult = Apollo.MutationResult<DeleteSceneMutation>;
 export type DeleteSceneMutationOptions = Apollo.BaseMutationOptions<DeleteSceneMutation, DeleteSceneMutationVariables>;
+export const CreateSceneFromDatasetDocument = gql`
+    mutation CreateSceneFromDataset($dataset: ID!, $name: String, $kind: BootstrapLayerKind) {
+  createSceneFromDataset(input: {dataset: $dataset, name: $name, kind: $kind}) {
+    ...ListScene
+  }
+}
+    ${ListSceneFragmentDoc}`;
+export type CreateSceneFromDatasetMutationFn = Apollo.MutationFunction<CreateSceneFromDatasetMutation, CreateSceneFromDatasetMutationVariables>;
+
+/**
+ * __useCreateSceneFromDatasetMutation__
+ *
+ * To run a mutation, you first call `useCreateSceneFromDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSceneFromDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSceneFromDatasetMutation, { data, loading, error }] = useCreateSceneFromDatasetMutation({
+ *   variables: {
+ *      dataset: // value for 'dataset'
+ *      name: // value for 'name'
+ *      kind: // value for 'kind'
+ *   },
+ * });
+ */
+export function useCreateSceneFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSceneFromDatasetMutation, CreateSceneFromDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateSceneFromDatasetMutation, CreateSceneFromDatasetMutationVariables>(CreateSceneFromDatasetDocument, options);
+      }
+export type CreateSceneFromDatasetMutationHookResult = ReturnType<typeof useCreateSceneFromDatasetMutation>;
+export type CreateSceneFromDatasetMutationResult = Apollo.MutationResult<CreateSceneFromDatasetMutation>;
+export type CreateSceneFromDatasetMutationOptions = Apollo.BaseMutationOptions<CreateSceneFromDatasetMutation, CreateSceneFromDatasetMutationVariables>;
 export const CreateSnapshotDocument = gql`
     mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
   createSnapshot(input: {file: $file, image: $image}) {

@@ -41,6 +41,11 @@ type ADataset {
   multiscale: Boolean!
   name: String!
 
+  """
+  The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. The scene createAdataset's bootstrapScene creates is found here
+  """
+  scenes: [Scene!]!
+
   """The dataset's shape: that of its level-0 array"""
   shape: [Int!]!
 }
@@ -571,6 +576,39 @@ enum BlendingChoices {
   ADDITIVE
   MULTIPLICATIVE
   NORMAL
+}
+
+"""
+The render recipe a bootstrapped scene stages over its dataset: which default image layer createSceneFromDataset builds.
+"""
+enum BootstrapLayerKind {
+  """
+  One colormapped source per channel, additively blended (grey for a single channel). The fluorescence default, and the fallback when nothing else is inferred.
+  """
+  INTENSITY
+
+  """
+  A single categorical source mapping discrete integer labels to distinct colors. Never inferred -- nothing structural distinguishes a label map from an image, so it is override-only.
+  """
+  LABEL
+
+  """
+  Composite three channels as red, green and blue. Inferred for a 2D dataset whose channel axis has exactly three positions -- a photograph, a brightfield slide.
+  """
+  RGB
+
+  """
+  The channel sources under a maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane.
+  """
+  VOLUME
+}
+
+"""
+Ask ingest to bootstrap a renderable scene for the new dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar for a separate createSceneFromDataset call
+"""
+input BootstrapSceneInput {
+  kind: BootstrapLayerKind = null
+  name: String = null
 }
 
 """An axis-aligned bounding box, as a min and a max corner"""
@@ -1296,6 +1334,7 @@ Input type for creating an array dataset. Its axes are structural (name and kind
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
   axes: [AxisInput!]!
+  bootstrapScene: BootstrapSceneInput = null
   calibration: CalibrationSpecInput = null
   data: ArrayLike!
   derivedFrom: DerivedFromInput = null
@@ -1562,6 +1601,15 @@ input CreateRgbLayerInput {
   redIndex: Int = 0
   scene: ID!
   visible: Boolean = null
+}
+
+"""
+Input for bootstrapping a renderable scene for a dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
+"""
+input CreateSceneFromDatasetInput {
+  dataset: ID!
+  kind: BootstrapLayerKind = null
+  name: String = null
 }
 
 """
@@ -4554,6 +4602,11 @@ type Mutation {
   Create a new scene and the WORLD coordinate system its layers are registered into
   """
   createScene(input: CreateSceneInput!): Scene!
+
+  """
+  Bootstrap a renderable scene for a dataset in one call: a world mirroring its calibration, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
+  """
+  createSceneFromDataset(input: CreateSceneFromDatasetInput!): Scene!
 
   """
   Create a layer that renders the vector geometry of a data ROI in a scene

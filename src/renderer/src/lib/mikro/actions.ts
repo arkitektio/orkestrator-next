@@ -1,12 +1,16 @@
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import type { Arkitekt } from "@/app/Arkitekt";
 import {
+  CreateSceneFromDatasetDocument,
+  CreateSceneFromDatasetMutation,
+  CreateSceneFromDatasetMutationVariables,
   DeleteDatasetDocument,
   DeleteFileDocument,
   DeleteImageDocument,
   DeleteRoiDocument,
   DeleteSceneDocument,
   GetDatasetDocument,
+  GetScenesDocument,
   GetDatasetQuery,
   GetDatasetQueryVariables,
   PutDatasetsInDatasetDocument,
@@ -19,13 +23,58 @@ import {
   PutImagesInDatasetMutation,
   PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
-import { File, FolderInput, Images, Pencil } from "lucide-react";
+import { linkBuilder } from "@/providers/smart/builder";
+import { Clapperboard, File, FolderInput, Images, Pencil } from "lucide-react";
 import { Action } from "../localactions/LocalActionProvider";
 import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetch";
 
 type MikroAction = Action<typeof Arkitekt>;
 
 export const MIKRO_ACTIONS: Record<string, MikroAction> = {
+  'create-scene-from-adataset': {
+    title: 'Create Scene',
+    description:
+      'Bootstrap a renderable scene for this array dataset: a world mirroring its calibration, a full lens, and a default image layer',
+    icon: Clapperboard,
+    pinned: true,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'nopartner' },
+    ],
+    collections: ['adataset'],
+    execute: async ({ state, services, navigate }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/adataset',
+      );
+
+      if (!selected?.object?.id) {
+        throw new Error('No array dataset selected for Create Scene action');
+      }
+
+      const mikro = services.mikro;
+      if (!mikro) {
+        throw new Error('Mikro service is not available');
+      }
+
+      const { data } = await mikro.client.mutate<
+        CreateSceneFromDatasetMutation,
+        CreateSceneFromDatasetMutationVariables
+      >({
+        mutation: CreateSceneFromDatasetDocument,
+        // `kind` is deliberately unset: the server infers the layer recipe from
+        // the dataset's axes. Only LABEL would need an explicit override.
+        variables: { dataset: selected.object.id },
+        refetchQueries: [GetScenesDocument],
+      });
+
+      const scene = data?.createSceneFromDataset;
+      if (!scene) {
+        throw new Error('Scene creation returned no scene');
+      }
+
+      navigate(linkBuilder('mikro/scenes')(scene.id));
+    },
+  },
   'update-mikro-dataset': {
     title: 'Rename / Update Dataset',
     description: 'Open the update dialog for this dataset',

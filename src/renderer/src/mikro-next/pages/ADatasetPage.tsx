@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -9,7 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MikroADataset, MikroCoordinateSystem } from "@/linkers";
+import { MikroADataset, MikroCoordinateSystem, MikroScene } from "@/linkers";
+import { Clapperboard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCreateSceneFromDatasetMutation } from "../api/graphql";
 import { useGetADatasetQuery } from "../api/graphql";
 import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
 import AxesTable from "../components/tables/AxesTable";
@@ -18,12 +22,33 @@ export const ADatasetPage = asDetailQueryRoute(
   useGetADatasetQuery,
   ({ data }) => {
     const dataset = data.adataset;
+    const navigate = useNavigate();
+
+    // The bootstrapped scene is the point of the call, so land in it rather
+    // than leaving the user on the dataset wondering whether anything happened.
+    // `kind` is left unset: the server infers the layer recipe from the axes.
+    const [createScene, { loading }] = useCreateSceneFromDatasetMutation({
+      variables: { dataset: dataset.id },
+      onCompleted: (result) =>
+        navigate(MikroScene.linkBuilder(result.createSceneFromDataset.id)),
+    });
 
     return (
       <MikroADataset.ModelPage
         object={dataset}
         title={dataset.name}
         actions={<MikroADataset.Actions object={dataset} />}
+        pageActions={
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() => createScene()}
+          >
+            <Clapperboard className="mr-2 h-4 w-4" />
+            {loading ? "Creating scene…" : "Create scene"}
+          </Button>
+        }
       >
         <div className="flex flex-col gap-3 p-3">
           <div className="flex flex-row items-center gap-2">

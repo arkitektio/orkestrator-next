@@ -1,0 +1,47 @@
+# One pyramid level of an array dataset: its own voxel (ARRAY) coordinate
+# system plus the edge that maps it into the dataset's intrinsic pixel grid.
+fragment DataArray on DataArray {
+  id
+  level
+  shape
+  chunkShape
+  coordinateSystem {
+    ...ListCoordinateSystem
+  }
+  toParent {
+    ...Transformation
+  }
+  store {
+    ...ZarrStore
+  }
+}
+
+fragment ListADataset on ADataset {
+  id
+  name
+  description
+  dims
+  shape
+  multiscale
+}
+
+fragment ADataset on ADataset {
+  id
+  name
+  description
+  dims
+  shape
+  multiscale
+  # The structural pixel grid: the space ROIs resolve against and every level
+  # and lens maps into.
+  intrinsicSystem {
+    ...CoordinateSystem
+  }
+  # The calibrated physical spaces derived from it — zero or many.
+  calibrations {
+    ...CoordinateSystem
+  }
+  dataArrays {
+    ...DataArray
+  }
+}

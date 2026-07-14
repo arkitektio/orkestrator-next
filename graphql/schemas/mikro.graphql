@@ -17,6 +17,11 @@ type ADataset {
 
   """The multiscale data arrays belonging to this dataset"""
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
+
+  """
+  The edge from this dataset's pixel grid back into the lens it was computed from, when it is a derived dataset (a deconvolution, a segmentation, a projection, a resample). Null for a dataset that was acquired rather than derived. It is an edge, not a label: it carries the map itself, so a client can compose it -- and it is why a derived dataset inherits its source's placement instead of needing its own registration
+  """
+  derivedFrom: Transformation
   description: String
 
   """
@@ -1124,6 +1129,24 @@ input CoordinateAnchorInput {
 }
 
 """
+The connected component of the coordinate graph around one system: every coordinate system it relates to, and every top-level edge between them. Reachability is undirected -- an edge pointing *into* the system you started from (a calibration, say) relates to it just as much as one pointing out -- but every edge is returned in its true stored direction, so composing a path is still the client's job and still needs the inversions flagged
+"""
+type CoordinateGraph {
+  """The coordinate system the walk started from"""
+  root: CoordinateSystem!
+
+  """
+  Every coordinate system reachable from the root, the root included, ordered by ID
+  """
+  systems: [CoordinateSystem!]!
+
+  """
+  Every top-level edge with both endpoints in `systems`, ordered by ID. The children of a SEQUENCE / BY_DIMENSION / BIJECTION wrapper are not listed here; they hang off their wrapper
+  """
+  transformations: [Transformation!]!
+}
+
+"""
 A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions
 """
 type CoordinateSystem {
@@ -1217,6 +1240,7 @@ input CreateADatasetInput {
   axes: [AxisInput!]!
   calibration: CalibrationSpecInput = null
   data: ArrayLike!
+  derivedFrom: DerivedFromInput = null
   name: String!
   scales: [ScaleInput!]!
 }
@@ -1888,6 +1912,19 @@ input DeleteViewCollectionInput {
 input DeleteViewInput {
   """The ID of the view to delete"""
   id: ID!
+}
+
+"""
+Input for stating where a new dataset's pixels came from: the lens it was computed from, and the map from its pixel grid back into that lens' space
+"""
+input DerivedFromInput {
+  affine: [[Float!]!] = null
+  inputAxes: [String!] = null
+  kind: TransformKind! = IDENTITY
+  lens: ID!
+  outputAxes: [String!] = null
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """
@@ -6292,6 +6329,11 @@ type Query {
 
   """List continuous scan views (recording scan directions)"""
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
+
+  """
+  Walk the coordinate graph out from one system: every coordinate system it reaches and every top-level edge between them. Reachability is undirected (an edge pointing into the system relates to it as much as one pointing out), the edges keep their true direction, and nothing is composed -- what the list queries cannot answer is 'which edges relate to *this* one', because relatedness is transitive and a filter is not
+  """
+  coordinateGraph(coordinateSystem: ID!, maxDepth: Int = null): CoordinateGraph!
 
   """Get a single coordinate system by ID"""
   coordinateSystem(id: ID!): CoordinateSystem!

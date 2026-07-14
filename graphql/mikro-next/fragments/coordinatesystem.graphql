@@ -7,6 +7,12 @@ fragment Axis on Axis {
   longName
 }
 
+fragment ListCoordinateSystem on CoordinateSystem {
+  id
+  name
+  kind
+}
+
 fragment CoordinateSystem on CoordinateSystem {
   id
   name

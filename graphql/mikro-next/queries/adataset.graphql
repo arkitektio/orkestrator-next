@@ -1,0 +1,15 @@
+query GetADataset($id: ID!) {
+  adataset(id: $id) {
+    ...ADataset
+  }
+}
+
+query GetADatasets(
+  $filters: ADatasetFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [ADatasetOrder!]
+) {
+  adatasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListADataset
+  }
+}

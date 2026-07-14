@@ -205,6 +205,18 @@ export const MikroDataset = buildSmart(
   { name: "Dataset (Mikro)" },
 );
 
+export const MikroADataset = buildSmart(
+  "@mikro/adataset",
+  "mikro/adatasets",
+  { name: "Array Dataset" },
+);
+
+export const MikroCoordinateSystem = buildSmart(
+  "@mikro/coordinatesystem",
+  "mikro/coordinatesystems",
+  { name: "Coordinate System" },
+);
+
 export const ElektroTrace = buildSmart(
   "@elektro/trace",
   "elektro/traces",

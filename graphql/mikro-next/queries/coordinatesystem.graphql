@@ -1,0 +1,35 @@
+query GetCoordinateSystem($id: ID!) {
+  coordinateSystem(id: $id) {
+    ...CoordinateSystem
+  }
+}
+
+# The connected component around one system: the systems it reaches and the
+# edges between them, each in its true stored direction (nothing is composed).
+query GetCoordinateGraph($coordinateSystem: ID!, $maxDepth: Int) {
+  coordinateGraph(coordinateSystem: $coordinateSystem, maxDepth: $maxDepth) {
+    root {
+      ...ListCoordinateSystem
+    }
+    systems {
+      ...CoordinateSystem
+    }
+    transformations {
+      ...Transformation
+    }
+  }
+}
+
+query GetCoordinateSystems(
+  $filters: CoordinateSystemFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [CoordinateSystemOrder!]
+) {
+  coordinateSystems(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    ...ListCoordinateSystem
+  }
+}

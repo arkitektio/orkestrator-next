@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Crosshair, Save, X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { isLayerDirty } from "./colormap-utils";
+import { PlacementChain } from "./PlacementChain";
 import {
   RenderGraphEditor,
   RenderGraphSection,
@@ -55,6 +56,8 @@ export const LayerGraphFlyout = ({
       }
     >
       <RenderGraphSection editor={editor} layer={layer} />
+
+      <PlacementChain layer={layer} />
 
         {dirty && (
           <Button

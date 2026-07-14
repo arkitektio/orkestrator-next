@@ -17,7 +17,9 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
+import { MikroCoordinateSystem } from "@/linkers";
 import { InteractionMode, useModeStore } from "../store/modeStore";
+import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 
 /** Icon per interaction mode for the compact, right-side mode control. */
@@ -58,6 +60,9 @@ export const SceneOverlay = () => {
   const setDisplayMode = useModeStore((s) => s.setDisplayMode);
   const setCameraControllerMode = useModeStore((s) => s.setCameraControllerMode);
   const isDebug = useViewerStore((state) => state.debug);
+  const world = useSceneStore(
+    (state) => state.transformContext.worldCoordinateSystem,
+  );
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
 
@@ -108,6 +113,18 @@ export const SceneOverlay = () => {
               onChange={setShowScaleGrid}
             />
             <SettingRow label="Debug" checked={isDebug} onChange={setDebug} />
+            {world && (
+              <div className="mt-1 flex items-center justify-between gap-2 border-t pt-2">
+                <span className="text-xs text-muted-foreground">World</span>
+                <MikroCoordinateSystem.DetailLink
+                  object={{ id: world.id }}
+                  title="The scene's world coordinate system — the space every layer is registered into"
+                  className="truncate font-mono text-xs"
+                >
+                  {world.name ?? world.id}
+                </MikroCoordinateSystem.DetailLink>
+              </div>
+            )}
           </PopoverContent>
         </Popover>
       </div>

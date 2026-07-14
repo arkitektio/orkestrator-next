@@ -16,7 +16,7 @@ import {
 } from "@/lok-next/components/UserAvatar";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
-import { ArrowDown, File, Folder, Home, Image } from "lucide-react";
+import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, Image } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
@@ -50,6 +50,20 @@ export const NavigationPane = () => {
           >
             <Image className="h-4 w-4" />
             Images
+          </PaneLink>
+          <PaneLink
+            to="/mikro/adatasets"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Grid3x3 className="h-4 w-4" />
+            Array Datasets
+          </PaneLink>
+          <PaneLink
+            to="/mikro/coordinatesystems"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Axis3d className="h-4 w-4" />
+            Coordinate Systems
           </PaneLink>
           <PaneLink
             to="/mikro/tables"

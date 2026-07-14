@@ -2,6 +2,10 @@ import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Route, Routes } from "react-router";
+import ADatasetPage from "./pages/ADatasetPage";
+import ADatasetsPage from "./pages/ADatasetsPage";
+import CoordinateSystemPage from "./pages/CoordinateSystemPage";
+import CoordinateSystemsPage from "./pages/CoordinateSystemsPage";
 import DatasetPage from "./pages/DatasetPage";
 import DatasetsPage from "./pages/DatasetsPage";
 import FilePage from "./pages/FilePage";
@@ -40,6 +44,13 @@ export const MikroNextModule = () => {
           <Route path="images" element={<ImagesPage />} />
           <Route path="datasets/:id" element={<DatasetPage />} />
           <Route path="datasets" element={<DatasetsPage />} />
+          <Route path="adatasets/:id" element={<ADatasetPage />} />
+          <Route path="adatasets" element={<ADatasetsPage />} />
+          <Route
+            path="coordinatesystems/:id"
+            element={<CoordinateSystemPage />}
+          />
+          <Route path="coordinatesystems" element={<CoordinateSystemsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="rois" element={<RoisPage />} />
           <Route path="scenes" element={<ScenesPage />} />

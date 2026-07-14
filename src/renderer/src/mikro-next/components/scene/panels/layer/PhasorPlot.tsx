@@ -6,12 +6,11 @@ import { cn } from "@/lib/utils";
 import {
   UNIVERSAL_SEMICIRCLE,
   cursorHit,
+  cursorPaletteColor,
   singleExponentialPhasor,
   type PhasorScale,
 } from "../../core/phasor";
 import type { PhasorCursorDef } from "../../core/renderGraph";
-import { sampleColorMapCSS } from "../../zarr/colormaps";
-import type { ColorMap } from "@/mikro-next/api/graphql";
 
 /**
  * The classic phasor plot: the (g, s) density of the layer's phasor, the
@@ -46,14 +45,12 @@ const PADDING = 18;
 export const PhasorPlot = ({
   histogram,
   cursors,
-  colormap,
   scale,
   onCursorsChange,
   className,
 }: {
   histogram: PhasorHistogramData | null;
   cursors: PhasorCursorDef[];
-  colormap: ColorMap;
   scale: PhasorScale;
   onCursorsChange: (cursors: PhasorCursorDef[]) => void;
   className?: string;
@@ -106,9 +103,11 @@ export const PhasorPlot = ({
 
     drawDensity(context, histogram, toPixel, extent);
     drawSemicircle(context, toPixel, scale);
-    for (const cursor of cursors) drawCursor(context, cursor, colormap, toPixel);
+    // Same color rule as the shader (`writeCursors`), so a cursor on the plot is
+    // drawn in exactly the color it paints the image with.
+    cursors.forEach((cursor, i) => drawCursor(context, cursor, i, toPixel));
     if (draft) drawDraft(context, draft, hover, toPixel);
-  }, [histogram, cursors, colormap, scale, draft, hover, toPixel, extent]);
+  }, [histogram, cursors, scale, draft, hover, toPixel, extent]);
 
   const pointerPhasor = (event: React.PointerEvent<HTMLCanvasElement>): [number, number] => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -358,12 +357,11 @@ function drawSemicircle(
 function drawCursor(
   context: CanvasRenderingContext2D,
   cursor: PhasorCursorDef,
-  colormap: ColorMap,
+  index: number,
   toPixel: ToPixel,
 ): void {
-  const color = cursor.color
-    ? `rgb(${cursor.color[0]}, ${cursor.color[1]}, ${cursor.color[2]})`
-    : sampleColorMapCSS(colormap, 0.5);
+  const rgb = cursor.color ?? cursorPaletteColor(index);
+  const color = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
   context.strokeStyle = color;
   context.lineWidth = cursor.visible ? 1.6 : 0.8;

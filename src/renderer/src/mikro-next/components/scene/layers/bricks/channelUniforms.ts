@@ -4,9 +4,9 @@ import { Blending, PhasorColorMode, PhasorCursorKind } from "@/mikro-next/api/gr
 import type { LayerState } from "../../core/layerModel";
 import { climToUnit } from "../../core/dataRange";
 import type { SlabDesc } from "../../core/octree/levelGeometry";
-import { phasorValue, resolvePhasorScale, type PhasorScale } from "../../core/phasor";
-import type { PhasorCursorDef, PhasorRenderNode } from "../../core/renderGraph";
-import { buildColormapAtlas, sampleColorMapRgb } from "../../zarr/colormaps";
+import { cursorPaletteColor, resolvePhasorScale, type PhasorScale } from "../../core/phasor";
+import type { PhasorRenderNode } from "../../core/renderGraph";
+import { buildColormapAtlas } from "../../zarr/colormaps";
 import { toBase } from "@/lib/quantities";
 
 /**
@@ -253,10 +253,7 @@ export function buildChannelUniformData(
     params[base + 10] = source.transfer.weightByIntensity ? 1 : 0;
     params[base + 11] = 0;
 
-    cursorCount = writeCursors(cursorData, cursorCount, i, source, scale, [
-      valueMin,
-      valueMax,
-    ]);
+    cursorCount = writeCursors(cursorData, cursorCount, i, source);
   });
 
   return {
@@ -285,16 +282,15 @@ export function buildChannelUniformData(
  *   texel 2: (centre g, centre s, 0, 0)
  *   texel 3+: polygon vertices, two (g, s) pairs per texel
  *
- * A cursor with no explicit color takes the colormap's color at its OWN phasor
- * value, so "the region I circled" reads as the same hue the pixels in it had.
+ * A cursor with no explicit color takes a distinct palette color (see
+ * `cursorPaletteColor`) — NOT the colormap's color at its own phasor value,
+ * which is the hue those pixels already have and would paint nothing.
  */
 function writeCursors(
   data: Float32Array,
   start: number,
   slot: number,
   phasor: PhasorRenderNode,
-  scale: PhasorScale,
-  valueRange: [number, number],
 ): number {
   let count = start;
   for (const cursor of phasor.transfer.cursors) {
@@ -310,9 +306,8 @@ function writeCursors(
     data[base + 2] = isPolygon ? points.length : 0;
     data[base + 3] = cursor.visible === false ? 0 : 1;
 
-    const color = cursor.color
-      ? cursor.color.map((channel) => channel / 255)
-      : cursorFallbackColor(phasor, cursor, scale, valueRange);
+    const rgb = cursor.color ?? cursorPaletteColor(count);
+    const color = rgb.map((channel) => channel / 255);
     data[base + 4] = color[0] ?? 1;
     data[base + 5] = color[1] ?? 1;
     data[base + 6] = color[2] ?? 1;
@@ -332,36 +327,6 @@ function writeCursors(
   }
   return count;
 }
-
-/**
- * A cursor with no explicit color takes the node's colormap at the cursor's OWN
- * phasor value — so circling a region paints it the hue those pixels already
- * had, and the cursor reads as "this lifetime", not as an arbitrary overlay.
- * A polygon's value is taken at its centroid.
- */
-const cursorFallbackColor = (
-  phasor: PhasorRenderNode,
-  cursor: PhasorCursorDef,
-  scale: PhasorScale,
-  [valueMin, valueMax]: [number, number],
-): [number, number, number] => {
-  const points = cursor.points ?? [];
-  const centre =
-    cursor.kind === PhasorCursorKind.Polygon && points.length > 0
-      ? points.reduce(
-          (acc, [g, s]) => [acc[0] + g / points.length, acc[1] + s / points.length],
-          [0, 0],
-        )
-      : [cursor.g ?? 0, cursor.s ?? 0];
-
-  const value = phasorValue(centre[0], centre[1], phasor.transfer.mode, scale);
-  const normalized = Math.min(
-    Math.max((value - valueMin) / Math.max(valueMax - valueMin, 1e-6), 0),
-    1,
-  );
-  const rgb = sampleColorMapRgb(phasor.transfer.colormap, normalized);
-  return [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
-};
 
 /** GLSL uniform declarations matching `ChannelUniformData` (fragment side). */
 export const CHANNEL_UNIFORMS_GLSL = /* glsl */ `

@@ -502,7 +502,6 @@ const PhasorNodeEditor = ({
                 : null
             }
             cursors={node.transfer.cursors}
-            colormap={node.transfer.colormap}
             scale={scale}
             onCursorsChange={(cursors) => setTransfer({ cursors })}
           />

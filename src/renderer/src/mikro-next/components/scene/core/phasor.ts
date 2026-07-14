@@ -215,6 +215,26 @@ export const phasorValue = (
   return (phaseValue(phase, scale) + modulationValue(modulation, scale)) / 2;
 };
 
+/**
+ * Default cursor colors, by cursor index.
+ *
+ * A cursor MUST default to a color the colormap would not have given those
+ * pixels anyway: painting a region with the colormap's own value there is a
+ * no-op, and the user who just drew a circle sees nothing change. These are the
+ * distinct, saturated hues FLIM tools conventionally cycle through.
+ */
+export const CURSOR_PALETTE: readonly (readonly [number, number, number])[] = [
+  [239, 68, 68], // red
+  [34, 197, 94], // green
+  [59, 130, 246], // blue
+  [234, 179, 8], // amber
+  [168, 85, 247], // violet
+  [20, 184, 166], // teal
+];
+
+export const cursorPaletteColor = (index: number): readonly [number, number, number] =>
+  CURSOR_PALETTE[index % CURSOR_PALETTE.length];
+
 /** The universal semicircle: every single-exponential decay lies on it. */
 export const UNIVERSAL_SEMICIRCLE = { centerG: 0.5, centerS: 0, radius: 0.5 };
 

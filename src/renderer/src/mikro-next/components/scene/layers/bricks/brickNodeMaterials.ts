@@ -837,6 +837,15 @@ export function createVolumeNodeMaterial(
   const material = new NodeMaterial();
   commonMaterialSettings(material);
   material.depthTest = true;
+  // BACK faces, not front: the box is only a proxy to generate fragments for
+  // the march, and once the camera dollies inside it every front face is behind
+  // the near plane — the volume would blink out exactly when you zoom into it.
+  // Back faces rasterize from inside AND outside. The ray is unaffected: its
+  // origin is the camera (vOrigin) and its entry distance comes from the slab
+  // test below, not from the rasterized face. DoubleSide would be wrong here —
+  // blending is additive, so front+back would each march the ray and composite
+  // the volume at double brightness.
+  material.side = THREE.BackSide;
 
   // Unit-box local ray, interpolated per fragment (parity with the GLSL
   // vertex stage): origin = camera in object space, direction toward vertex.

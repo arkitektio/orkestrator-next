@@ -1,21 +1,24 @@
 import * as THREE from "three";
-import { cellVoxelBox, type MeshGridSpec } from "./meshSpec";
+import { meshCellKey } from "./mortonCell";
+import { cellVoxelBox, type MeshGridSpec, type VoxelBox } from "./meshSpec";
 
 /**
  * Pure cell selection for a mesh collection — the mesh analog of
- * `planLayerNodes`, deliberately simpler for v1:
+ * `planLayerNodes`:
  *
- *  - ONE level is chosen per plan from the camera's screen-space voxel
- *    footprint (like the image planner's `desiredLevel`, without per-node
- *    refinement). Distant collections render coarse, zoomed-in ones fine.
- *  - The chosen level's cells are frustum-culled in the collection's OWN
- *    voxel space (the world frustum is pulled through the inverse layer
- *    matrix by the caller, mirroring `nodePlanning`'s culling frame).
+ *  - PER-CELL LOD: each coarsest-level root region picks its own level from
+ *    ITS OWN screen-space voxel footprint and descends to it via Morton
+ *    arithmetic. A depth-spanning collection renders fine near the camera
+ *    and coarse in the distance within one plan (mixed levels).
+ *  - HYSTERESIS: a root sticks to its previous level until the footprint
+ *    clears the level threshold by a margin, so a camera settling near a
+ *    boundary doesn't flip the region between levels on consecutive plans.
+ *  - Culling happens in the collection's OWN voxel space (the world frustum
+ *    is pulled through the inverse layer matrix by the caller), against
+ *    voxel boxes PRECOMPUTED once per index (`buildMeshCellIndex`) — no
+ *    Morton decoding on the plan path.
  *  - Survivors are ordered closest-first and capped by a triangle budget, so
  *    budget exhaustion degrades distant regions first.
- *
- * Per-cell octree refinement (mixed levels in one plan) is a follow-up; it
- * slots in here without touching the data plane or the renderer.
  */
 
 export type MeshCellRecord = {
@@ -25,8 +28,50 @@ export type MeshCellRecord = {
   indexCount: number;
 };
 
+export type IndexedMeshCell = MeshCellRecord & {
+  key: string;
+  box: VoxelBox;
+};
+
+export type MeshCellIndex = {
+  /** All cells, with cached keys/boxes. */
+  cells: readonly IndexedMeshCell[];
+  /** Fast lookup for Morton descent, keyed by `meshCellKey(level, cell)`. */
+  byKey: ReadonlyMap<string, IndexedMeshCell>;
+  /** Levels that actually carry geometry, ascending (sparse pyramids skip). */
+  levels: readonly number[];
+};
+
+/** Precompute boxes/keys once per collection version (index load time). */
+export function buildMeshCellIndex(
+  cells: readonly MeshCellRecord[],
+  grid: MeshGridSpec,
+): MeshCellIndex {
+  const indexed = cells.map((cell) => ({
+    ...cell,
+    key: meshCellKey(cell.level, cell.cell),
+    box: cellVoxelBox(grid, cell.level, cell.cell),
+  }));
+  return {
+    cells: indexed,
+    byKey: new Map(indexed.map((cell) => [cell.key, cell])),
+    levels: [...new Set(indexed.map((cell) => cell.level))].sort((a, b) => a - b),
+  };
+}
+
+/**
+ * Morton children of a cell one level finer. With x in the least-significant
+ * bit (`mortonCell.ts`), the 8 children of code c are exactly 8c … 8c+7 —
+ * no decode needed.
+ */
+export const mortonChildren = (code: number): number[] =>
+  Array.from({ length: 8 }, (_, k) => code * 8 + k);
+
+/** Morton parent of a cell one level coarser. */
+export const mortonParent = (code: number): number => Math.floor(code / 8);
+
 export type MeshPlanInput = {
-  cells: readonly MeshCellRecord[];
+  index: MeshCellIndex;
   grid: MeshGridSpec;
   /** Camera frustum in collection voxel space; null = no culling (plan all). */
   voxelFrustum: THREE.Frustum | null;
@@ -38,30 +83,46 @@ export type MeshPlanInput = {
   /** Triangle-index budget across the plan (≈ GPU + decode cost). */
   maxIndices: number;
   maxCells: number;
+  /** Previous plan's per-root levels (hysteresis); keyed by root cell key. */
+  previousRootLevels?: ReadonlyMap<string, number>;
 };
 
 export type MeshCellPlan = {
-  level: number;
-  cells: MeshCellRecord[];
+  /** Planned cells, possibly at MIXED levels, near-first. */
+  cells: IndexedMeshCell[];
   totalIndices: number;
-  /** Frustum-visible cells of the chosen level dropped by the budget. */
+  /** Frustum-visible cells dropped by the budget. */
   droppedCells: number;
+  /** Per-root chosen levels — feed back as `previousRootLevels` next plan. */
+  rootLevels: Map<string, number>;
 };
 
-const EMPTY_PLAN: MeshCellPlan = { level: 0, cells: [], totalIndices: 0, droppedCells: 0 };
+const EMPTY_PLAN: MeshCellPlan = {
+  cells: [],
+  totalIndices: 0,
+  droppedCells: 0,
+  rootLevels: new Map(),
+};
+
+/** Margin a footprint must clear before a root switches level (~15%). */
+export const LOD_HYSTERESIS = 1.15;
 
 const scratchBox = new THREE.Box3();
 
-const boxDistanceSq = (
-  box: { min: readonly number[]; max: readonly number[] },
-  point: readonly [number, number, number],
-): number => {
+const boxDistanceSq = (box: VoxelBox, point: readonly [number, number, number]): number => {
   let d = 0;
   for (const axis of [0, 1, 2] as const) {
     const v = Math.max(box.min[axis] - point[axis], 0, point[axis] - box.max[axis]);
     d += v * v;
   }
   return d;
+};
+
+const boxInFrustum = (box: VoxelBox, frustum: THREE.Frustum | null): boolean => {
+  if (!frustum) return true;
+  scratchBox.min.set(box.min[0], box.min[1], box.min[2]);
+  scratchBox.max.set(box.max[0], box.max[1], box.max[2]);
+  return frustum.intersectsBox(scratchBox);
 };
 
 /**
@@ -79,30 +140,9 @@ export const desiredMeshLevel = (
   return Math.min(levels - 1, Math.max(0, level));
 };
 
-export function planMeshCells(input: MeshPlanInput): MeshCellPlan {
-  const { cells, grid } = input;
-  if (cells.length === 0) return EMPTY_PLAN;
-
-  // Levels that actually have geometry (sparse collections may skip levels).
-  const availableLevels = [...new Set(cells.map((cell) => cell.level))].sort((a, b) => a - b);
-
-  // Footprint at the camera's distance to the collection's cell hull.
-  let pxPerVoxel = input.pxPerVoxelAtUnitDistance;
-  if (input.cameraVoxelPos) {
-    let minDistSq = Number.POSITIVE_INFINITY;
-    for (const cell of cells) {
-      minDistSq = Math.min(
-        minDistSq,
-        boxDistanceSq(cellVoxelBox(grid, cell.level, cell.cell), input.cameraVoxelPos),
-      );
-      if (minDistSq === 0) break;
-    }
-    pxPerVoxel = input.pxPerVoxelAtUnitDistance / Math.max(1, Math.sqrt(minDistSq));
-  }
-
-  const desired = desiredMeshLevel(pxPerVoxel, input.lodBias, grid.levels);
-  // Nearest available level, preferring coarser on a tie (cheaper).
-  const level = availableLevels.reduce((best, candidate) => {
+/** Nearest available level to `desired`, preferring coarser on a tie. */
+const snapToAvailable = (desired: number, available: readonly number[]): number =>
+  available.reduce((best, candidate) => {
     const bestDist = Math.abs(best - desired);
     const candidateDist = Math.abs(candidate - desired);
     if (candidateDist < bestDist) return candidate;
@@ -110,27 +150,97 @@ export function planMeshCells(input: MeshPlanInput): MeshCellPlan {
     return best;
   });
 
-  const visible = cells.filter((cell) => {
-    if (cell.level !== level) return false;
-    if (!input.voxelFrustum) return true;
-    const box = cellVoxelBox(grid, cell.level, cell.cell);
-    scratchBox.min.set(box.min[0], box.min[1], box.min[2]);
-    scratchBox.max.set(box.max[0], box.max[1], box.max[2]);
-    return input.voxelFrustum.intersectsBox(scratchBox);
-  });
+export function planMeshCells(input: MeshPlanInput): MeshCellPlan {
+  const { index, grid } = input;
+  if (index.cells.length === 0) return EMPTY_PLAN;
 
+  const availableLevels = index.levels;
+  const rootLevel = availableLevels[availableLevels.length - 1];
   const focus = input.cameraVoxelPos;
+
+  const desireAt = (pxPerVoxel: number, bias: number): number =>
+    snapToAvailable(desiredMeshLevel(pxPerVoxel, bias, grid.levels), availableLevels);
+
+  // --- Per-root level choice (footprint + hysteresis) -----------------------
+  const rootLevels = new Map<string, number>();
+  const emitted: IndexedMeshCell[] = [];
+
+  /** Collect the cells covering `code`'s region at `target`, descending only
+   * where finer geometry exists — a region with no finer rows stays covered
+   * by its coarser cell (sparse collections). */
+  const collect = (level: number, code: number, target: number): void => {
+    const cell = index.byKey.get(meshCellKey(level, code));
+    if (level <= target) {
+      if (cell && boxInFrustum(cell.box, input.voxelFrustum)) emitted.push(cell);
+      return;
+    }
+    // Which finer level do we step to? The next available one down.
+    const nextLevel = [...availableLevels].reverse().find((l) => l < level);
+    if (nextLevel === undefined) {
+      if (cell && boxInFrustum(cell.box, input.voxelFrustum)) emitted.push(cell);
+      return;
+    }
+    // Morton codes step ONE level at a time; expand across the level gap.
+    let codes = [code];
+    for (let l = level; l > nextLevel; l--) codes = codes.flatMap(mortonChildren);
+    let anyChild = false;
+    for (const childCode of codes) {
+      if (index.byKey.has(meshCellKey(nextLevel, childCode))) {
+        anyChild = true;
+        collect(nextLevel, childCode, target);
+      }
+    }
+    if (!anyChild && cell && boxInFrustum(cell.box, input.voxelFrustum)) {
+      // No finer geometry anywhere under this cell: it covers the region.
+      // (A region where SOME siblings exist but a code doesn't simply has no
+      // geometry there — nothing to cover.)
+      emitted.push(cell);
+    }
+  };
+
+  for (const root of index.cells) {
+    if (root.level !== rootLevel) continue;
+    if (!boxInFrustum(root.box, input.voxelFrustum)) {
+      rootLevels.delete(root.key);
+      continue;
+    }
+
+    let level: number;
+    if (focus) {
+      const dist = Math.max(1, Math.sqrt(boxDistanceSq(root.box, focus)));
+      const pxPerVoxel = input.pxPerVoxelAtUnitDistance / dist;
+      level = desireAt(pxPerVoxel, input.lodBias);
+      const previous = input.previousRootLevels?.get(root.key);
+      if (previous !== undefined && previous !== level) {
+        // Sticky levels: to switch, the footprint must clear the threshold
+        // with a margin. Re-evaluate with the bias nudged AGAINST the switch
+        // (finer needs a smaller effective bias to still win; coarser a
+        // larger one); the result either falls back to `previous` (inside
+        // the band — no flip) or confirms a genuine switch.
+        level = desireAt(
+          pxPerVoxel,
+          level < previous
+            ? input.lodBias / LOD_HYSTERESIS
+            : input.lodBias * LOD_HYSTERESIS,
+        );
+      }
+    } else {
+      level = desireAt(input.pxPerVoxelAtUnitDistance, input.lodBias);
+    }
+
+    rootLevels.set(root.key, level);
+    collect(rootLevel, root.cell, level);
+  }
+
+  // --- Near-first ordering + budget -----------------------------------------
   const ordered = focus
-    ? visible
-        .map((cell) => ({
-          cell,
-          dist: boxDistanceSq(cellVoxelBox(grid, cell.level, cell.cell), focus),
-        }))
+    ? emitted
+        .map((cell) => ({ cell, dist: boxDistanceSq(cell.box, focus) }))
         .sort((a, b) => a.dist - b.dist)
         .map((entry) => entry.cell)
-    : visible;
+    : emitted;
 
-  const planned: MeshCellRecord[] = [];
+  const planned: IndexedMeshCell[] = [];
   let totalIndices = 0;
   for (const cell of ordered) {
     if (planned.length >= input.maxCells) break;
@@ -139,5 +249,10 @@ export function planMeshCells(input: MeshPlanInput): MeshCellPlan {
     totalIndices += cell.indexCount;
   }
 
-  return { level, cells: planned, totalIndices, droppedCells: ordered.length - planned.length };
+  return {
+    cells: planned,
+    totalIndices,
+    droppedCells: ordered.length - planned.length,
+    rootLevels,
+  };
 }

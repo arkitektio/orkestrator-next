@@ -1,0 +1,3 @@
+mutation DeleteScene($id: ID!) {
+  deleteScene(input: { id: $id })
+}

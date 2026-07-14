@@ -12,10 +12,7 @@ import {
 
 import type { LayerState, SceneTransformContext } from "../../core/layerModel";
 import { buildVolumeVoxelToWorld } from "../../core/octree/voxelFrame";
-import {
-  collectDatasetEdges,
-  composeCsToWorld,
-} from "../../core/transformGraph";
+import { composePlacementPath } from "../../core/transformGraph";
 import { affineToMatrix4 } from "../../core/worldTransform";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
@@ -49,21 +46,23 @@ export const MeshCollectionLayer = ({ layerId }: { layerId: string }) => {
  * scene whose pyramid contains the collection's coordinate system (the labels
  * layer the meshes were extracted from) — reusing ITS frame reproduces the
  * image path's centering/y-flip convention exactly, so meshes and labels
- * overlap by construction. Fallback: compose through the transform graph
- * (correct in world µm, but uncentered relative to image layers — the shared
- * scene-frame normalization is the tracked follow-up).
+ * overlap by construction. Fallback: compose the mesh layer's own
+ * server-resolved `pathToWorld` (correct in world units, but uncentered
+ * relative to image layers — the shared scene-frame normalization is the
+ * tracked follow-up).
  */
 const resolveCollectionMatrix = (
+  layer: MeshLayerVariant,
   collection: MeshCollectionRef,
   imageLayers: readonly LayerState[],
   transformContext: SceneTransformContext,
 ): THREE.Matrix4 => {
   const csId = collection.coordinateSystem.id;
   const anchorLayer = imageLayers.find(
-    (layer) =>
-      layer.lens.coordinateSystem?.id === csId ||
-      layer.lens.dataset.coordinateSystem?.id === csId ||
-      layer.lens.dataset.dataArrays.some(
+    (imageLayer) =>
+      imageLayer.lens.coordinateSystem?.id === csId ||
+      imageLayer.lens.dataset.intrinsicSystem?.id === csId ||
+      imageLayer.lens.dataset.dataArrays.some(
         (dataArray) => dataArray.coordinateSystem?.id === csId,
       ),
   );
@@ -72,15 +71,10 @@ const resolveCollectionMatrix = (
   const axes = collection.coordinateSystem.axes ?? [];
   const names = axes.map((axis) => axis.name);
   const spatial = [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
-  const composed = composeCsToWorld(
-    transformContext,
-    csId,
-    spatial,
-    collectDatasetEdges(imageLayers),
-  );
+  const composed = composePlacementPath(layer.pathToWorld, transformContext, spatial, names);
   console.warn(
     `[mesh] collection ${collection.id}: no image layer shares CS ${csId}; ` +
-      `rendering in the composed world frame (uncentered relative to image layers)`,
+      `rendering via the layer's pathToWorld (uncentered relative to image layers)`,
   );
   return affineToMatrix4(composed);
 };
@@ -154,8 +148,8 @@ const MeshCollectionGroup = ({
   }, [manager, layer.materialColor, layer.wireframe, layer.opacity, invalidate]);
 
   const matrix = useMemo(
-    () => resolveCollectionMatrix(collection, imageLayers, transformContext),
-    [collection, imageLayers, transformContext],
+    () => resolveCollectionMatrix(layer, collection, imageLayers, transformContext),
+    [layer, collection, imageLayers, transformContext],
   );
   useEffect(() => {
     if (!manager) return;

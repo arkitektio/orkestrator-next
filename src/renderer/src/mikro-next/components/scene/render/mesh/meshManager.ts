@@ -3,7 +3,13 @@ import { LruByteCache } from "./lruByteCache";
 import { decodeGeometryRow, type MeshoptDecoderLike } from "./meshDecode";
 import { meshCellKey } from "./mortonCell";
 import { MeshParquetSource } from "./meshParquet";
-import { planMeshCells, type MeshCellRecord, type MeshPlanInput } from "./meshPlanner";
+import {
+  buildMeshCellIndex,
+  planMeshCells,
+  type IndexedMeshCell,
+  type MeshCellIndex,
+  type MeshPlanInput,
+} from "./meshPlanner";
 import { cellVoxelBox, type MeshEncodingSpec, type MeshGridSpec } from "./meshSpec";
 
 /**
@@ -39,8 +45,10 @@ export class MeshCollectionManager {
 
   private readonly material: THREE.MeshStandardMaterial;
   private readonly cache: LruByteCache<THREE.Group>;
-  private cells: MeshCellRecord[] | null = null;
-  private planned = new Map<string, MeshCellRecord>();
+  private index: MeshCellIndex | null = null;
+  private planned = new Map<string, IndexedMeshCell>();
+  /** Previous plan's per-root levels — the planner's hysteresis input. */
+  private rootLevels: ReadonlyMap<string, number> = new Map();
   private fetching = false;
   private pendingPlan: MeshPlanView | null = null;
   private decoderPromise: Promise<MeshoptDecoderLike | null> | null = null;
@@ -81,12 +89,13 @@ export class MeshCollectionManager {
     this.material.needsUpdate = true;
   }
 
-  /** Load the per-cell index (one aggregate query, memoized by the source). */
+  /** Load the per-cell index (one aggregate query, memoized by the source)
+   * and precompute cell boxes/keys so planning never Morton-decodes. */
   async ensureIndex(): Promise<void> {
-    if (this.cells) return;
+    if (this.index) return;
     const cells = await this.opts.source.loadCellIndex();
     if (this.disposed) return;
-    this.cells = cells;
+    this.index = buildMeshCellIndex(cells, this.opts.grid);
   }
 
   /**
@@ -96,17 +105,19 @@ export class MeshCollectionManager {
    * only the LATEST view is ever fetched next.
    */
   updatePlan(view: MeshPlanView): void {
-    if (this.disposed || !this.cells) return;
+    if (this.disposed || !this.index) return;
 
     const plan = planMeshCells({
-      cells: this.cells,
+      index: this.index,
       grid: this.opts.grid,
       maxIndices: this.opts.maxIndices ?? DEFAULT_MAX_INDICES,
       maxCells: DEFAULT_MAX_CELLS,
+      previousRootLevels: this.rootLevels,
       ...view,
     });
+    this.rootLevels = plan.rootLevels;
 
-    this.planned = new Map(plan.cells.map((cell) => [meshCellKey(cell.level, cell.cell), cell]));
+    this.planned = new Map(plan.cells.map((cell) => [cell.key, cell]));
     this.cache.protect(this.planned.keys());
 
     // Drop no-longer-planned cells from the scene (they stay cached).
@@ -114,7 +125,7 @@ export class MeshCollectionManager {
       if (!this.planned.has(child.name)) this.group.remove(child);
     }
     // Mount already-decoded cells instantly.
-    const missing: MeshCellRecord[] = [];
+    const missing: IndexedMeshCell[] = [];
     for (const [key, cell] of this.planned) {
       const cached = this.cache.get(key);
       if (cached) {
@@ -137,31 +148,45 @@ export class MeshCollectionManager {
     try {
       while (!this.disposed && this.pendingPlan) {
         this.pendingPlan = null;
-        const wanted = [...this.planned.values()].filter(
-          (cell) => !this.cache.has(meshCellKey(cell.level, cell.cell)),
-        );
+        const wanted = [...this.planned.values()].filter((cell) => !this.cache.has(cell.key));
         if (wanted.length === 0) continue;
-        const level = wanted[0].level; // one level per plan by construction
-        const rows = await this.opts.source.fetchCellRows(
-          level,
-          wanted.map((cell) => cell.cell),
-        );
+
+        // Plans mix levels (per-cell LOD): one batched query per level
+        // present — bounded by the pyramid depth, near cells' (finer) rows
+        // still arrive in a single round-trip per level.
+        const byLevel = new Map<number, IndexedMeshCell[]>();
+        for (const cell of wanted) {
+          const list = byLevel.get(cell.level) ?? [];
+          list.push(cell);
+          byLevel.set(cell.level, list);
+        }
+        const rows = (
+          await Promise.all(
+            [...byLevel.entries()].map(([level, cells]) =>
+              this.opts.source.fetchCellRows(
+                level,
+                cells.map((cell) => cell.cell),
+              ),
+            ),
+          )
+        ).flat();
         if (this.disposed) return;
 
         const decoder =
           this.opts.encoding.codec === "MESHOPT" ? await this.ensureDecoder() : null;
         if (this.disposed) return;
 
-        // Group rows per cell; a cell renders as the union of its fragments.
-        const byCell = new Map<number, typeof rows>();
+        // Group rows per (level, cell); a cell renders as the union of its
+        // fragments.
+        const byCell = new Map<string, typeof rows>();
         for (const row of rows) {
-          const list = byCell.get(row.cell) ?? [];
+          const key = meshCellKey(row.level, row.cell);
+          const list = byCell.get(key) ?? [];
           list.push(row);
-          byCell.set(row.cell, list);
+          byCell.set(key, list);
         }
 
-        for (const [cell, cellRows] of byCell) {
-          const key = meshCellKey(level, cell);
+        for (const [key, cellRows] of byCell) {
           const cellGroup = new THREE.Group();
           cellGroup.name = key;
           let bytes = 0;
@@ -170,7 +195,7 @@ export class MeshCollectionManager {
               const decoded = decodeGeometryRow(
                 row,
                 this.opts.encoding,
-                cellVoxelBox(this.opts.grid, level, cell),
+                cellVoxelBox(this.opts.grid, row.level, row.cell),
                 decoder,
               );
               const geometry = new THREE.BufferGeometry();

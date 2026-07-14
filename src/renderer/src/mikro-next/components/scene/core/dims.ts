@@ -38,6 +38,35 @@ export function resolveAxisIndices(dims: string[], layer: LayerAxisDims): AxisIn
   return { xPos, yPos, zPos, intensityPos };
 }
 
+/**
+ * The intensity (channel) dim actually used for rendering. The render
+ * graph's `ChannelSourceNode.intensityDim` wins ONLY when it does not name a
+ * spatial or time render axis — live data has shipped `intensityDim: "t"`
+ * on a time-lapse, which would stack every timepoint as a channel slab
+ * (min(16, extent) phantom channels, the P16 failure shape) AND hide the
+ * t-slider (t would count as "rendered"). Axis TYPES are authoritative
+ * (`renderAxes` is derived from them); an intensity mapping that contradicts
+ * them is a data bug we degrade around, like the collision guard above.
+ */
+export const resolveIntensityDim = (
+  graphIntensityDim: string | null | undefined,
+  renderAxes:
+    | { x?: string | null; y?: string | null; z?: string | null; t?: string | null; intensity?: string | null }
+    | null
+    | undefined,
+): string | null => {
+  if (
+    graphIntensityDim &&
+    graphIntensityDim !== renderAxes?.x &&
+    graphIntensityDim !== renderAxes?.y &&
+    graphIntensityDim !== renderAxes?.z &&
+    graphIntensityDim !== renderAxes?.t
+  ) {
+    return graphIntensityDim;
+  }
+  return renderAxes?.intensity ?? null;
+};
+
 /** True when x, y and z axes were all resolved (the usual "bail if -1" guard). */
 export const hasValidSpatialAxes = (axes: Pick<AxisIndices, "xPos" | "yPos" | "zPos">): boolean =>
   axes.xPos !== -1 && axes.yPos !== -1 && axes.zPos !== -1;

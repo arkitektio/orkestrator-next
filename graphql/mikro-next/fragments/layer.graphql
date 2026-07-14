@@ -83,10 +83,21 @@ fragment SceneLayer on Layer {
   opacity
   visible
   order
+  # Server-resolved path from this layer's source CS to the scene's world
+  # system (null = unregistered, [] = source IS world). The server orders the
+  # edges; the client composes the matrices (transformGraph.ts).
+  pathToWorld {
+    ...PlacementStep
+  }
   ... on ImageLayer {
     lens {
       ...SceneLens
     }
+    # levelPaths is deliberately NOT selected: the octree renderer uses one
+    # matrix per layer + relative level factors, so selecting it would pay a
+    # server-side path resolution per pyramid level (duplicating the shared
+    # registration tail) for zero client benefit. Reselect it when per-level
+    # placement lands (COORDINATE_SYSTEMS.md §3.1).
     renderGraph {
       ...LayerRenderGraph
     }

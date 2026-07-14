@@ -18,6 +18,7 @@ import { ProbeThresholdPanel } from "./panels/ProbeThresholdPanel";
 import { DebugPanel } from "./panels/DebugPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
+import { DimSliderPanel } from "./panels/DimSliderPanel";
 import { createModeStore, ModeStoreContext, useModeStore } from "./store/modeStore";
 import { createViewStore, ViewStoreContext } from "./store/viewStore";
 import { SceneFragment } from "@/mikro-next/api/graphql";
@@ -239,6 +240,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             </WhenDebug>
             <SelectedRoiPanel />
             <ZSliderPanel />
+            <DimSliderPanel />
             <VisibilityManager/>
             <ScaleBar />
 

@@ -4,7 +4,6 @@ fragment Axis on Axis {
   name
   type
   unit
-  discrete
   longName
 }
 
@@ -20,11 +19,17 @@ fragment CoordinateSystem on CoordinateSystem {
 # The concrete per-kind payload of a transformation edge, WITHOUT recursing
 # into composite children — the leaf selection shared by every nesting depth
 # in the Transformation fragment below.
+#
+# `inputAxes`/`outputAxes` are the SELF-DESCRIBED axis order of the edge's
+# parameters (scale/translation/affine columns follow inputAxes) — the reason
+# the scene fragment no longer needs to ship every coordinate system's axes.
 fragment LeafTransformation on Transformation {
   __typename
   id
   kind
   name
+  inputAxes
+  outputAxes
   input {
     id
     name
@@ -45,13 +50,19 @@ fragment LeafTransformation on Transformation {
   ... on RotationTransformation {
     affine
   }
-  ... on MapAxisTransformation {
-    inputAxes
-    outputAxes
-  }
   ... on DisplacementsTransformation {
     storeId
   }
+}
+
+# One step of a server-resolved placement path: the edge to walk, and whether
+# to walk it output→input (in which case the client inverts the composed
+# matrix before applying it).
+fragment PlacementStep on PlacementStep {
+  transformation {
+    ...Transformation
+  }
+  inverted
 }
 
 # GraphQL cannot express unbounded recursion, so composite transformations

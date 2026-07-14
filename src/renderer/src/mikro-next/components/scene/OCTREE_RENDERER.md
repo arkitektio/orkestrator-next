@@ -102,6 +102,19 @@ residency wholesale. `currentZ` is deliberately NOT in the signature — z is a
 spatial axis of the brick address (the page table holds every slab), so
 z-scrubbing keeps residency and revisited slabs render instantly (see P15).
 
+**Dim sliders (t, tau, …)** ride exactly this contract: `DimSliderPanel`
+writes `viewerStore.dimSelections[dim]` (scene-wide by dim NAME), which
+enters `buildSliceSignature` for layers that actually collapse that dim
+(`collapsibleDims`) → debounced replan → signature mismatch → pool flush +
+refetch at the new index (`resolveFixedDimIndex` in the `ensurePool`
+fixed-index collapse). Flushing is CORRECT here — a different t is different
+data in every brick — and scrubbing back to a recent index re-repacks from
+the decoded-chunk byte-LRU without refetching. Layers without the dim keep
+their signature and are untouched. Deliberate non-features until proven
+needed: t as a brick/page-table axis (would make t-scrubbing flush-free like
+z, at a multiplied atlas/page cost), anchor labels / physical-time display on
+the slider (needs the TIME calibration edge).
+
 **A brick is not a zarr chunk.** The fetch unit stays the zarr chunk (keeps
 the worker pipeline and caches untouched); `chunksTouchingBrick` maps a brick's
 fetch box to the 1–N chunks that intersect it, and repack cuts the brick out of
@@ -169,6 +182,11 @@ Refinement is a closest-first DFS from the coarsest level: a node splits into
 children while its screen footprint (`px per voxel × finerFactor × lodBias`)
 says finer data would be visible **and** the byte budget allows. Closest-first
 ordering means budget exhaustion degrades *distant* regions first.
+`finerFactor` is the **MAX spatial component** of the finer level's scale —
+true-factor pyramids are anisotropic (z can diverge from xy), so testing x
+alone under-refines z-dominant views. The shader's per-sample
+`desiredLevelAt` (`brickNodeMaterials.ts`) uses the same max-component test;
+keep the two in lockstep.
 
 Culling happens in **layer voxel space**: the world frustum is pulled through
 `buildVolumeVoxelToWorld(layer)⁻¹` so the per-node test is a cheap AABB check

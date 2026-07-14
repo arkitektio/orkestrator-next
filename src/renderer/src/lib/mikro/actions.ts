@@ -5,6 +5,7 @@ import {
   DeleteFileDocument,
   DeleteImageDocument,
   DeleteRoiDocument,
+  DeleteSceneDocument,
   GetDatasetDocument,
   GetDatasetQuery,
   GetDatasetQueryVariables,
@@ -232,6 +233,14 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
 
     }
   },
+  'delete-mikro-scene': buildDeleteAction<typeof Arkitekt>({
+    title: 'Delete Scene',
+    identifier: '@mikro/scene',
+    description: 'Delete the scene',
+    service: 'mikro',
+    typename: 'Scene',
+    mutation: DeleteSceneDocument
+  }),
   'delete-mikro-dataset': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Dataset',
     identifier: '@mikro/dataset',

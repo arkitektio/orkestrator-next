@@ -164,6 +164,7 @@ export function startNodePlanTracking({
         camera,
         lodBias: viewerState.lodBias,
         currentZ: viewerState.currentZ,
+        dimSelections: viewerState.dimSelections,
         maxPlanBytes,
       });
 
@@ -218,15 +219,18 @@ export function startNodePlanTracking({
   let lastViewRanges = initialViewer.layerViewRanges;
   let lastLodBias = initialViewer.lodBias;
   let lastCurrentZ = initialViewer.currentZ;
+  let lastDimSelections = initialViewer.dimSelections;
   const unsubscribeViewer = viewerStore.subscribe((state) => {
     if (
       state.layerViewRanges !== lastViewRanges ||
       state.lodBias !== lastLodBias ||
-      state.currentZ !== lastCurrentZ
+      state.currentZ !== lastCurrentZ ||
+      state.dimSelections !== lastDimSelections
     ) {
       lastViewRanges = state.layerViewRanges;
       lastLodBias = state.lodBias;
       lastCurrentZ = state.currentZ;
+      lastDimSelections = state.dimSelections;
       schedule();
     }
   });

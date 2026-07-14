@@ -7,6 +7,7 @@ import {
   resolveLayerGraph,
   resolveProjectionMode,
 } from "./renderGraph";
+import { resolveIntensityDim } from "./dims";
 import { composeLayerAffine, type SceneTransformContext } from "./transformGraph";
 
 export type { SceneTransformContext };
@@ -102,7 +103,7 @@ export const normalizeLayer = (
     yDim: renderAxes?.y ?? null,
     zDim: renderAxes?.z ?? null,
     tDim: renderAxes?.t ?? null,
-    intensityDim: primary?.intensityDim ?? renderAxes?.intensity ?? null,
+    intensityDim: resolveIntensityDim(primary?.intensityDim, renderAxes),
     channels,
     blend: graph.blending,
     projection: resolveProjectionMode(graph),

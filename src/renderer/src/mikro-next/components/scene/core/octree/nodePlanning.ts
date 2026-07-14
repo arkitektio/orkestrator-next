@@ -107,6 +107,8 @@ export type PlanLayerNodesInput = {
   camera: NodeCamera | null;
   lodBias: number;
   currentZ: number | undefined;
+  /** Scene-wide dim-slider selections (t, tau, …) — signature input only. */
+  dimSelections?: Record<string, number>;
   maxPlanBytes?: number;
 };
 
@@ -142,9 +144,10 @@ export function planLayerNodes({
   camera,
   lodBias,
   currentZ,
+  dimSelections,
   maxPlanBytes = Number.POSITIVE_INFINITY,
 }: PlanLayerNodesInput): LayerNodePlan {
-  const sliceSignature = buildSliceSignature(layer);
+  const sliceSignature = buildSliceSignature(layer, dimSelections);
   const levels = geometry.levels;
   const numLevels = levels.length;
   const coarsest = numLevels - 1;
@@ -318,7 +321,13 @@ export function planLayerNodes({
   const wantFiner = (level: number, baseBox: VoxelBox): boolean => {
     if (level <= minLevel) return false;
     if (fixedLOD !== null) return true; // refine all the way to the pinned LOD
-    const finerFactor = levels[level - 1].scale[0];
+    // MAX spatial factor: refine while ANY axis of the finer level still
+    // resolves ≥1 px. True-factor pyramids are anisotropic (z can diverge
+    // from xy), so testing x alone under-refines z-dominant views. MIRRORED
+    // by the shader's `desiredLevelAt` (brickNodeMaterials.ts) — keep in
+    // lockstep.
+    const finerScale = levels[level - 1].scale;
+    const finerFactor = Math.max(finerScale[0], finerScale[1], finerScale[2]);
     return footprintPxPerBaseVoxel(baseBox) * finerFactor * lodBias >= 1;
   };
 

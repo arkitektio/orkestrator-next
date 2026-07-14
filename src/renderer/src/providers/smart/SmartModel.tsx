@@ -16,7 +16,7 @@ import { Structure } from "@/types";
 import { Portal } from "@radix-ui/react-portal";
 import React from "react";
 import { motion } from "framer-motion";
-import { useSelectionSelector } from "../selection/SelectionContext";
+import { useSelectionStoreApi } from "../selection/SelectionContext";
 import {
   enterHoverGroup,
   leaveHoverGroup,
@@ -85,6 +85,7 @@ export const SmartModel = ({
             ref={floatingRef}
             style={floatingStyles}
             className="z-[10050] w-[320px] max-w-[min(90vw,320px)] shadow-2xl max-w-md rounded bg-popover border  rounded-lg p-1 shadow-xl"
+            data-nonbreaker
             onClick={(e) => e.stopPropagation()}
             initial={{ filter: "blur(2px)" }}
             animate={{ filter: "none" }}
@@ -106,7 +107,11 @@ export const SmartModel = ({
 
   const menu = (
     <ContextMenu modal={false} onOpenChange={setContextMenuOpen}>
-      <ContextMenuContent className="dark:border-gray-700 max-w-md">
+      {/* `data-nonbreaker`: the menu is portalled out of the card, so without it
+          SelectionBox's global mousedown handler would clear the selection the
+          moment a row is pressed — an action on a multi-selection would then run
+          against the single right-clicked item. */}
+      <ContextMenuContent className="dark:border-gray-700 max-w-md" data-nonbreaker>
         <SmartModelContext self={self} />
       </ContextMenuContent>
       <ContextMenuTrigger asChild>
@@ -215,15 +220,23 @@ const SmartHoverCard = ({
   );
 };
 
+// The menu content only mounts while the context menu is open, so the selection
+// it saw when it opened is the selection the user meant to act on. Snapshot it:
+// anything that clears the selection while the menu is open (a stray mousedown,
+// an item disappearing from a list) must not silently shrink an action's targets
+// down to the single right-clicked structure.
 const SmartModelContext = ({ self }: { self: Structure }) => {
-  const selection = useSelectionSelector((state) => state.selection);
-  const bselection = useSelectionSelector((state) => state.bselection);
+  const storeApi = useSelectionStoreApi();
 
-  if (selection.length > 0) {
-    return <SmartContext objects={selection} partners={bselection} />;
-  }
+  const [{ objects, partners }] = React.useState(() => {
+    const { selection, bselection } = storeApi.getState();
 
-  return <SmartContext objects={[self]} partners={[]} />;
+    return selection.length > 0
+      ? { objects: selection, partners: bselection }
+      : { objects: [self], partners: [] as Structure[] };
+  });
+
+  return <SmartContext objects={objects} partners={partners} />;
 };
 
 export const CombineButton = () => {

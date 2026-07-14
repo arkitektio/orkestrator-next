@@ -51,6 +51,23 @@ export function resolveCollapsedSelection(
   return Math.max(0, Math.min(axisLength - 1, centeredIndex));
 }
 
+/**
+ * Fixed index of a collapsible dim at pool creation: the scene-wide slider
+ * selection (`viewerStore.dimSelections`, clamped to this layer's extent)
+ * when present, else the lens slice's collapsed default. Pools are rebuilt
+ * on slice-signature change, so a new selection takes effect via the flush.
+ */
+export function resolveFixedDimIndex(
+  slice: DimSliceFragment | undefined,
+  selection: number | undefined,
+  axisLength: number,
+): number {
+  if (selection !== undefined) {
+    return Math.max(0, Math.min(axisLength - 1, Math.round(selection)));
+  }
+  return resolveCollapsedSelection(slice, axisLength);
+}
+
 export function resolveVoxelIndex(normalizedPosition: number, selection: AxisSelection): number {
   const clampedPosition = THREE.MathUtils.clamp(normalizedPosition, 0, 0.999999);
   const relativeIndex = Math.min(

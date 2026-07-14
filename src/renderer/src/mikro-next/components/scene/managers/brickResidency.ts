@@ -8,7 +8,7 @@ import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange } from "../core/dataRange";
-import { resolveCollapsedSelection } from "../core/selection";
+import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
@@ -596,7 +596,9 @@ export class BrickResidencyManager {
 
     const existing = this.pools.get(layer.id);
     if (existing && existing.structureSignature === structureSignature) {
-      if (existing.sliceSignature !== plan.sliceSignature) this.flushPool(existing, plan.sliceSignature);
+      if (existing.sliceSignature !== plan.sliceSignature) {
+        this.flushPool(existing, plan.sliceSignature, layer, levels);
+      }
       return existing;
     }
     if (existing) {
@@ -650,25 +652,7 @@ export class BrickResidencyManager {
       ).initTexture?.(atlas.texture);
     }
 
-    // Fixed (collapsed) indices for every non-spatial, non-channel dim.
-    const dims = layer.lens.dataset.dims;
-    const { xPos, yPos, zPos, intensityPos } = geometry.axes;
-    const sliceMap = layer.lens.slices.reduce<Record<string, (typeof layer.lens.slices)[number]>>(
-      (acc, slice) => {
-        acc[slice.dim] = slice;
-        return acc;
-      },
-      {},
-    );
-    const fixedChunkCoords = dims.map(() => 0);
-    const fixedOffsets = dims.map(() => 0);
-    dims.forEach((dim, d) => {
-      if (d === xPos || d === yPos || d === zPos || d === intensityPos) return;
-      const fixedIndex = resolveCollapsedSelection(sliceMap[dim], levels[0].shape[d] ?? 1);
-      const chunkExtent = Math.max(1, levels[0].chunks[d] ?? 1);
-      fixedChunkCoords[d] = Math.floor(fixedIndex / chunkExtent);
-      fixedOffsets[d] = fixedIndex % chunkExtent;
-    });
+    const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(layer, geometry, levels);
 
     const [minValue, maxValue] = resolveLayerDataRange(layer, geometry.levels[0].dtype);
 
@@ -1148,7 +1132,51 @@ export class BrickResidencyManager {
     }
   }
 
-  private flushPool(pool: LayerBrickPool, nextSliceSignature: string): void {
+  /**
+   * Fixed (collapsed) indices for every non-spatial, non-channel dim of a
+   * layer: the scene-wide dim-slider selection when present, else the lens
+   * slice's collapsed default. Computed at pool CREATION and recomputed on
+   * every signature FLUSH — a flushed pool that kept its old indices would
+   * refetch exactly the slice it just invalidated (the t-slider's data
+   * would never change).
+   */
+  private computeFixedIndices(
+    layer: LayerState,
+    geometry: LayerLevelGeometry,
+    levels: LevelSource[],
+  ): { fixedChunkCoords: number[]; fixedOffsets: number[] } {
+    const dims = layer.lens.dataset.dims;
+    const { xPos, yPos, zPos, intensityPos } = geometry.axes;
+    const sliceMap = layer.lens.slices.reduce<Record<string, (typeof layer.lens.slices)[number]>>(
+      (acc, slice) => {
+        acc[slice.dim] = slice;
+        return acc;
+      },
+      {},
+    );
+    const dimSelections = this.deps.viewerStore.getState().dimSelections;
+    const fixedChunkCoords = dims.map(() => 0);
+    const fixedOffsets = dims.map(() => 0);
+    dims.forEach((dim, d) => {
+      if (d === xPos || d === yPos || d === zPos || d === intensityPos) return;
+      const fixedIndex = resolveFixedDimIndex(
+        sliceMap[dim],
+        dimSelections[dim],
+        levels[0].shape[d] ?? 1,
+      );
+      const chunkExtent = Math.max(1, levels[0].chunks[d] ?? 1);
+      fixedChunkCoords[d] = Math.floor(fixedIndex / chunkExtent);
+      fixedOffsets[d] = fixedIndex % chunkExtent;
+    });
+    return { fixedChunkCoords, fixedOffsets };
+  }
+
+  private flushPool(
+    pool: LayerBrickPool,
+    nextSliceSignature: string,
+    layer: LayerState,
+    levels: LevelSource[],
+  ): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
     pool.pendingFetch = [];
@@ -1158,6 +1186,16 @@ export class BrickResidencyManager {
     pool.pool.clear();
     clearPageTable(pool.pageTable);
     pool.sliceSignature = nextSliceSignature;
+    // The signature changed because the SELECTION changed (slices or a dim
+    // slider) — the collapsed indices must follow, or the refetch reproduces
+    // the flushed data.
+    const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(
+      layer,
+      pool.geometry,
+      levels,
+    );
+    pool.fixedChunkCoords = fixedChunkCoords;
+    pool.fixedOffsets = fixedOffsets;
   }
 
   private disposePool(pool: LayerBrickPool): void {

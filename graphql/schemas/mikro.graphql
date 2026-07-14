@@ -1,13 +1,13 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
 """
-A multi-dimensional array dataset. Its dimensions, their types and their physical units live on the axes of its INTRINSIC coordinate system; its pyramid levels are DataArrays, each mapping into that one system
+A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on its calibrations; its pyramid levels are DataArrays, each mapping into the one intrinsic system
 """
 type ADataset {
   """
-  The dataset's own physical space: the coordinate system every one of its pyramid levels maps into
+  The dataset's calibrated PHYSICAL spaces (pixel size, stage pose, ...). Each is reached from the intrinsic system by a single transformation edge; refining a calibration bumps that edge's version and moves nothing drawn in pixels
   """
-  coordinateSystem: CoordinateSystem
+  calibrations(filters: CoordinateSystemFilter, ordering: [CoordinateSystemOrder!]! = [], pagination: OffsetPaginationInput): [CoordinateSystem!]!
 
   """The task this dataset was created through, if any"""
   createdThrough: Task
@@ -24,6 +24,15 @@ type ADataset {
   """
   dims: [String!]!
   id: ID!
+
+  """
+  The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and calibration-independent
+  """
+  intrinsicSystem: CoordinateSystem
+
+  """
+  Whether this dataset carries a resolution pyramid. Derived: true when it has more than one level
+  """
   multiscale: Boolean!
   name: String!
 
@@ -144,9 +153,19 @@ type AffineTransformation implements Transformation {
   affine: [[Float!]!]!
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
   version: Int!
 }
 
@@ -301,7 +320,6 @@ input AssociateInput {
 One named, typed dimension of a coordinate system. Its `order` is its index into the array shape
 """
 type Axis {
-  discrete: Boolean!
   id: ID!
   longName: String
   name: String!
@@ -327,26 +345,20 @@ input AxisFilter {
 }
 
 """
-Input type for one axis: its name, its kind, its physical unit and the size of one voxel along it
+Input type for one structural axis of a dataset's pixel grid: its name and its semantic kind. Units and spacings do not belong here -- they are a calibration, a separate coordinate system plus one edge
 """
 input AxisInput {
-  discrete: Boolean! = false
   longName: String = null
   name: String!
-  spacing: Float! = 1
   type: AxisType!
-  unit: Unit = null
 }
 
 """
-The kind of an axis. Ordering an array's axes by this type is an RFC-5 MUST: time, then channel and custom types, then space.
+The semantic kind of an axis. A system's axes must be ordered by type: time first, then channel and custom types, then space.
 """
 enum AxisType {
-  """A raw voxel index along one dimension of a stored array."""
-  ARRAY
-
   """
-  A discrete channel axis: its coordinates index acquisitions, not positions.
+  A categorical channel axis: its coordinates index acquisitions, not positions. Never downsampled.
   """
   CHANNEL
 
@@ -358,20 +370,21 @@ enum AxisType {
   """An axis of a displacement-valued array."""
   DISPLACEMENT
 
-  """
-  A FLIM arrival-time bin. Not an RFC-5 type; the spec permits types beyond its enum.
-  """
+  """A FLIM arrival-time bin. Continuous, so a pyramid may re-bin it."""
   MICROTIME
 
-  """A spatial axis, carrying a physical length unit."""
+  """
+  A spatial axis. Unitless pixel indices in an INTRINSIC/ARRAY system; carries a physical length unit in a calibrated system.
+  """
   SPACE
 
-  """A time axis, carrying a physical duration unit."""
+  """
+  A time axis. Frame indices in an INTRINSIC/ARRAY system; carries a physical duration unit in a calibrated system.
+  """
   TIME
 }
 
 enum AxisTypeChoices {
-  ARRAY
   CHANNEL
   COORDINATE
   DISPLACEMENT
@@ -473,9 +486,19 @@ A pair of child transformations giving an explicit forward and inverse map
 type BijectionTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
 
   """The forward transformation (order 0) and its inverse (order 1)"""
   transformations: [Transformation!]!
@@ -533,9 +556,19 @@ A composition of child transformations, each acting on a named subset of the axe
 type ByDimensionTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
 
   """
   The child transformations. Each carries the `inputAxes` and `outputAxes` it acts on
@@ -564,6 +597,27 @@ type CCDElement implements OpticalElement {
   pose: Pose3D
   resolution: [Int!]
   serialNumber: String
+}
+
+"""
+Input type for one axis of a calibrated coordinate system: its name, its semantic kind and its physical unit
+"""
+input CalibratedAxisInput {
+  longName: String = null
+  name: String!
+  type: AxisType!
+  unit: Unit!
+}
+
+"""
+A calibration: a PHYSICAL coordinate system (axes carrying the units) plus the single edge mapping the dataset's intrinsic pixels into it. Supply per-axis scale (the pixel size) and optionally a translation (e.g. a stage offset), or a full affine matrix
+"""
+input CalibrationSpecInput {
+  affine: [[Float!]!] = null
+  axes: [CalibratedAxisInput!]!
+  name: String! = "physical"
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """
@@ -1035,7 +1089,7 @@ type CoordinateAnchor {
   channelLabel: ChannelLabel
 
   """
-  The coordinates this anchor is pinned to, e.g. {'c': 0, 't': 5}. An anchor that omits an axis is global along it
+  The coordinates this anchor is pinned to, e.g. {'c': 0, 't': 5}. Level-0 pixel indices, i.e. coordinates of the dataset's INTRINSIC system. An anchor that omits an axis is global along it
   """
   coordinates: Any!
   id: ID!
@@ -1082,7 +1136,9 @@ input CoordinateSystemFilter {
   """Filter for items created before this datetime"""
   createdBefore: DateTime
 
-  """Filter by the dataset whose INTRINSIC system this is"""
+  """
+  Filter by the dataset this system belongs to directly: its INTRINSIC pixel grid or one of its PHYSICAL calibrations
+  """
   dataset: ID
   id: ID
 
@@ -1102,11 +1158,11 @@ input CoordinateSystemFilter {
 }
 
 """
-What a coordinate system denotes: raw voxel indices, a dataset's own physical space, or a space shared between datasets.
+What a coordinate system denotes: voxel indices, the dataset's pixel grid, a calibrated physical space, or a space shared between datasets.
 """
 enum CoordinateSystemKind {
   """
-  The raw voxel index space of a single pyramid level. Its axes are discrete and unitless.
+  The raw voxel index space of a single pyramid level or lens. Its axes are unitless indices.
   """
   ARRAY
 
@@ -1114,9 +1170,14 @@ enum CoordinateSystemKind {
   ATLAS
 
   """
-  The dataset's own physical space. Every pyramid level of the dataset maps into this one system, so it is the space in which a dataset's geometry is unambiguous.
+  The dataset's level-0 pixel grid. Every pyramid level and lens maps into this one system, so it is the space in which a dataset's geometry is unambiguous — and it is stable: recalibrating the dataset never moves it.
   """
   INTRINSIC
+
+  """
+  A calibrated physical space derived from metadata (pixel size, stage pose, ...). Its axes carry the units; a single transformation edge maps the dataset's intrinsic pixels into it. A dataset can have zero or many.
+  """
+  PHYSICAL
 
   """A scene's shared space, into which each of its layers is registered."""
   WORLD
@@ -1126,6 +1187,7 @@ enum CoordinateSystemKindChoices {
   ARRAY
   ATLAS
   INTRINSIC
+  PHYSICAL
   WORLD
 }
 
@@ -1136,15 +1198,29 @@ input CoordinateSystemOrder @oneOf {
 }
 
 """
-Input type for creating an array dataset, with the axes that give it a physical space
+Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive as an optional calibration
 """
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
   axes: [AxisInput!]!
+  calibration: CalibrationSpecInput = null
   data: ArrayLike!
-  multiscale: Boolean! = true
   name: String!
   scales: [ScaleInput!]!
+}
+
+"""
+Input for calibrating a dataset: creates a PHYSICAL coordinate system (axes carrying the units) and the single edge mapping the dataset's intrinsic pixels into it
+"""
+input CreateCalibrationInput {
+  affine: [[Float!]!] = null
+  axes: [CalibratedAxisInput!]!
+
+  """The ID of the dataset to calibrate"""
+  dataset: ID!
+  name: String! = "physical"
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """Input for drawing a region of interest in a coordinate system"""
@@ -1249,6 +1325,7 @@ input CreatePointLayerInput {
   blending: Blending = null
   colorColumn: String = null
   colormap: ColorMap = null
+  coordinateSystem: ID = null
   idColumn: String = null
   opacity: Float = null
   order: Int = null
@@ -1308,8 +1385,9 @@ input CreateRgbLayerInput {
 Input type for creating a scene and the WORLD coordinate system its layers are registered into
 """
 input CreateSceneInput {
-  axes: [AxisInput!] = null
+  axes: [CalibratedAxisInput!] = null
   blending: Blending = null
+  epoch: DateTime = null
   name: String!
 }
 
@@ -1336,6 +1414,7 @@ input CreateTrackLayerInput {
   blending: Blending = null
   colorByColumn: String = null
   colormap: ColorMap = null
+  coordinateSystem: ID = null
   lineWidth: Float = null
   opacity: Float = null
   order: Int = null
@@ -1441,6 +1520,10 @@ type DataRoi {
 
   """Provenance entries for this data ROI"""
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  The discrete coordinates this ROI is pinned to. An axis the ROI does not pin is one it spans
+  """
   selectors: [RoiSelector!]!
   vectors: [[Float!]!]!
 }
@@ -1454,7 +1537,9 @@ input DataRoiFilter {
   """Filter by the coordinate system this ROI is drawn in"""
   coordinateSystem: ID
 
-  """Filter by the dataset this ROI's coordinate system belongs to"""
+  """
+  Filter by the dataset this ROI's coordinate system belongs to, whichever way the system hangs off it (intrinsic, calibration, pyramid level or lens)
+  """
   dataset: ID
   description: StrFilterLookup
   id: UUID
@@ -1573,6 +1658,12 @@ scalar DateTime
 """Input for deleting an array dataset by ID"""
 input DeleteADatasetInput {
   """The ID of the array dataset to delete"""
+  id: ID!
+}
+
+"""Input for deleting a calibration (a PHYSICAL coordinate system) by ID"""
+input DeleteCalibrationInput {
+  """The ID of the PHYSICAL coordinate system to delete"""
   id: ID!
 }
 
@@ -1818,9 +1909,19 @@ enum DimSelectorKind {
 type DisplacementsTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
 
   """The id of the Zarr store holding the displacement field"""
   storeId: String
@@ -2604,9 +2705,19 @@ enum HistoryKind {
 type IdentityTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
   version: Int!
 }
 
@@ -2837,13 +2948,28 @@ type ImageLayer implements Layer {
   id: ID!
   kind: LayerKind!
   lens: Lens!
+
+  """
+  Per pyramid level, the path from that level's voxel grid to this scene's WORLD system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
+  """
+  levelPaths: [LevelPlacement!]!
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
 
   """The composable in-layer render graph, if this layer defines one"""
   renderGraph: LayerRenderGraph
   scene: Scene!
   status: PlacementStatus!
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
 }
 
@@ -3227,8 +3353,18 @@ interface Layer {
   kind: LayerKind!
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
   scene: Scene!
   status: PlacementStatus!
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
 }
 
@@ -3404,6 +3540,19 @@ input LensFilter {
 
 input LensOrder @oneOf {
   id: Ordering
+}
+
+"""
+The placement of one pyramid level in a layer's scene: the level and its path to the WORLD system
+"""
+type LevelPlacement {
+  """The pyramid level being placed"""
+  dataArray: DataArray!
+
+  """
+  The path from this level's voxel grid to the scene's WORLD system, or null when the dataset is not registered into the scene
+  """
+  path: [PlacementStep!]
 }
 
 """Directed edge connecting two ports"""
@@ -3803,8 +3952,18 @@ type MeshLayer implements Layer {
   mesh: Mesh
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
   scene: Scene!
   status: PlacementStatus!
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
   wireframe: Boolean!
 }
@@ -3932,6 +4091,11 @@ type Mutation {
 
   """Create a new view for affine transformation data"""
   createAffineTransformationView(input: AffineTransformationViewInput!): AffineTransformationView!
+
+  """
+  Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it
+  """
+  createCalibration(input: CreateCalibrationInput!): CoordinateSystem!
 
   """Create a new camera configuration"""
   createCamera(input: CameraInput!): Camera!
@@ -4084,6 +4248,11 @@ type Mutation {
 
   """Delete an existing affine transformation view"""
   deleteAffineTransformationView(input: DeleteViewInput!): ID!
+
+  """
+  Delete a calibration (a PHYSICAL coordinate system). Other system kinds cascade with their owner and cannot be deleted directly
+  """
+  deleteCalibration(input: DeleteCalibrationInput!): ID!
 
   """Delete an existing camera"""
   deleteCamera(input: DeleteCameraInput!): ID!
@@ -5578,6 +5747,19 @@ enum PlacementStatus {
   INACTIVE
 }
 
+"""
+One step of a placement path: a transformation edge, plus whether it is traversed against its stored direction. The server returns the steps; composing them into a matrix is the client's job (invert the flagged ones first)
+"""
+type PlacementStep {
+  """
+  True when the edge is traversed output-to-input; the client must invert it before composing
+  """
+  inverted: Boolean!
+
+  """The transformation edge this step walks along"""
+  transformation: Transformation!
+}
+
 enum PlacementValidity {
   INFERRED
   MANUAL
@@ -5597,17 +5779,32 @@ type PointLayer implements Layer {
   blending: Blending!
   colorColumn: String
   colormap: ColorMap
+
+  """
+  The coordinate system the table's coordinate columns are expressed in. Registering the points elsewhere is a transformation edge from this system, like every other spatial fact
+  """
+  coordinateSystem: CoordinateSystem
   id: ID!
   idColumn: String
   kind: LayerKind!
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
   pointSize: Float
   scene: Scene!
   sizeColumn: String
   status: PlacementStatus!
   tColumn: String
   table: Table!
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
   xColumn: String
   yColumn: String
@@ -6749,9 +6946,19 @@ type RotationTransformation implements Transformation {
   affine: [[Float!]!]!
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
   version: Int!
 }
 
@@ -6793,12 +7000,22 @@ input ScaleInput {
 type ScaleTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
 
   """
-  The per-axis scale factors, in the axis order of the input system. Absolute, not relative to another level
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
+
+  """
+  The per-axis scale factors, in the axis order of the input system, expressed in the units of the output system's axes (dimensionless between pixel systems, e.g. within a pyramid). Absolute, not relative to another level
   """
   scale: [Float!]!
   version: Int!
@@ -6877,9 +7094,14 @@ type Scene {
   coordinateSystems: [CoordinateSystem!]!
 
   """
-  The transformation edges belonging to this scene, e.g. the registrations placing each layer's dataset into the world system. Compose them client-side: the server does not resolve paths, because the same dataset can sit in two scenes under two different registrations
+  The transformation edges belonging to this scene, e.g. the registrations placing each layer's dataset into the world system. This membership set is what `layers.pathToWorld` searches; composing the matrices stays the client's job
   """
   coordinateTransformations: [Transformation!]!
+
+  """
+  The wall-clock instant the world system's time axis has its origin at: `wall_clock = epoch + t * unit`. Null when the scene's acquisition time is unknown -- the time axis is still a perfectly composable relative coordinate without it
+  """
+  epoch: DateTime
   id: ID!
 
   """The layers placed in this scene (a heterogeneous list of layer kinds)"""
@@ -6950,9 +7172,19 @@ input SelectorInput {
 type SequenceTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
 
   """
   The child transformations, applied first to last. They omit their own input and output: the sequence supplies them
@@ -6973,10 +7205,20 @@ type ShapeLayer implements Layer {
   kind: LayerKind!
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
   scene: Scene!
   status: PlacementStatus!
   strokeColor: [Int!]
   strokeWidth: Float
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
 }
 
@@ -7562,16 +7804,31 @@ type TrackLayer implements Layer {
   blending: Blending!
   colorByColumn: String
   colormap: ColorMap
+
+  """
+  The coordinate system the table's coordinate columns are expressed in. Registering the tracks elsewhere is a transformation edge from this system, like every other spatial fact
+  """
+  coordinateSystem: CoordinateSystem
   id: ID!
   kind: LayerKind!
   lineWidth: Float
   opacity: Float!
   order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
   scene: Scene!
   status: PlacementStatus!
   tColumn: String
   table: Table!
   trackIdColumn: String
+
+  """
+  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  """
+  validity: PlacementValidity!
   visible: Boolean!
   xColumn: String
   yColumn: String
@@ -7670,9 +7927,19 @@ A directed edge of the coordinate graph, mapping `input` to `output`. Direction 
 interface Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
   version: Int!
 }
 
@@ -7721,9 +7988,19 @@ input TransformationOrder @oneOf {
 type TranslationTransformation implements Transformation {
   id: ID!
   input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
 
   """The per-axis offsets, in the axis order of the input system"""
   translation: [Float!]!

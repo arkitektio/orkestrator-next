@@ -1,0 +1,90 @@
+import { describe, expect, it } from "vitest";
+import { buildSliceSignature, collapsibleDims } from "./sliceSignature";
+import { resolveFixedDimIndex } from "./selection";
+import { resolveIntensityDim } from "./dims";
+import type { LayerState } from "./layerModel";
+
+const makeLayer = (overrides?: {
+  dims?: string[];
+  shape?: number[];
+  zDim?: string | null;
+}): LayerState =>
+  ({
+    xDim: "x",
+    yDim: "y",
+    zDim: overrides?.zDim === undefined ? "z" : overrides.zDim,
+    intensityDim: "c",
+    lens: {
+      dims: overrides?.dims ?? ["t", "c", "z", "y", "x"],
+      shape: overrides?.shape ?? [10, 4, 36, 1024, 1024],
+      slices: [],
+    },
+  }) as unknown as LayerState;
+
+describe("collapsibleDims", () => {
+  it("returns non-rendered dims with extent > 1", () => {
+    expect(collapsibleDims(makeLayer())).toEqual(["t"]);
+    expect(
+      collapsibleDims(
+        makeLayer({ dims: ["t", "c", "z", "y", "x", "tau"], shape: [1, 1, 18, 512, 512, 256] }),
+      ),
+    ).toEqual(["tau"]); // t is singleton, tau collapses
+  });
+});
+
+describe("buildSliceSignature with dim selections", () => {
+  it("changes when a selection on the layer's own dim changes", () => {
+    const layer = makeLayer();
+    expect(buildSliceSignature(layer, { t: 0 })).not.toBe(buildSliceSignature(layer, { t: 1 }));
+  });
+
+  it("ignores selections for dims the layer does not collapse", () => {
+    const layer = makeLayer(); // has t, not tau
+    expect(buildSliceSignature(layer, { tau: 12 })).toBe(buildSliceSignature(layer, {}));
+    // z / spatial / channel selections can never leak into the signature.
+    expect(buildSliceSignature(layer, { z: 5, x: 3, c: 1 })).toBe(buildSliceSignature(layer, {}));
+  });
+
+  it("is stable when no selections exist (default collapse)", () => {
+    const layer = makeLayer();
+    expect(buildSliceSignature(layer)).toBe(buildSliceSignature(layer, {}));
+  });
+});
+
+describe("resolveIntensityDim", () => {
+  const renderAxes = { x: "x", y: "y", z: null, t: "t", intensity: "c" };
+
+  it("accepts a graph intensityDim that is a genuine extra axis", () => {
+    expect(resolveIntensityDim("c", renderAxes)).toBe("c");
+    expect(resolveIntensityDim("lambda", renderAxes)).toBe("lambda");
+  });
+
+  it("rejects a graph intensityDim that names a render axis (live t bug)", () => {
+    // Shipped data: time-lapse layer whose ChannelSourceNode said
+    // intensityDim: "t" — 16 timepoints would become 16 channel slabs and
+    // the t-slider would vanish. Falls back to renderAxes.intensity.
+    expect(resolveIntensityDim("t", { ...renderAxes, intensity: null })).toBeNull();
+    expect(resolveIntensityDim("x", renderAxes)).toBe("c");
+  });
+
+  it("falls back to renderAxes.intensity when the graph has none", () => {
+    expect(resolveIntensityDim(null, renderAxes)).toBe("c");
+    expect(resolveIntensityDim(undefined, { ...renderAxes, intensity: null })).toBeNull();
+  });
+});
+
+describe("resolveFixedDimIndex", () => {
+  it("prefers the slider selection, clamped to the axis", () => {
+    expect(resolveFixedDimIndex(undefined, 7, 10)).toBe(7);
+    expect(resolveFixedDimIndex(undefined, 99, 10)).toBe(9);
+    expect(resolveFixedDimIndex(undefined, -3, 10)).toBe(0);
+  });
+
+  it("falls back to the lens slice's collapsed default", () => {
+    // Center of the slice [2, 8): indices 2..7 → center 4 (floor((6-1)/2)+2).
+    expect(
+      resolveFixedDimIndex({ dim: "t", start: 2, stop: 8, step: 1 }, undefined, 10),
+    ).toBe(4);
+    expect(resolveFixedDimIndex(undefined, undefined, 10)).toBe(0);
+  });
+});

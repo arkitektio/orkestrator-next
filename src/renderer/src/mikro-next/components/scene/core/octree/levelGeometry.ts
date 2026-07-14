@@ -84,19 +84,34 @@ export const absoluteLevelScale = (
  * obey `scale·shape == const` per axis, so these agree with the shape-ratio
  * fallback by construction; declaring them here just short-circuits it.
  */
+// Memoized on the `dataArrays` ARRAY IDENTITY: fragments are normalized, so
+// the array reference is stable across replans (nodePlanTracker calls
+// `buildLevelSources` per layer every ~200 ms during interaction) and a new
+// scene fetch mints a new array. Without this, every replan re-parses the
+// levels' `toParent` edges for factors that cannot have changed.
+const factorsCache = new WeakMap<
+  object,
+  { dimCount: number; factors: (number[] | null)[] }
+>();
+
 export const relativeLevelScaleFactors = (
   dataArrays: readonly { level: number; toParent?: TransformLike }[],
   dimCount: number,
 ): (number[] | null)[] => {
   if (dataArrays.length === 0) return [];
+  const cached = factorsCache.get(dataArrays);
+  if (cached && cached.dimCount === dimCount) return cached.factors;
   const abs = dataArrays.map((dataArray) => absoluteLevelScale(dataArray.toParent, dimCount));
   const baseIndex = dataArrays.reduce(
     (best, dataArray, i) => (dataArray.level < dataArrays[best].level ? i : best),
     0,
   );
   const base = abs[baseIndex];
-  if (!base) return dataArrays.map(() => null);
-  return abs.map((a) => (a ? a.map((v, k) => (base[k] ? v / base[k] : 1)) : null));
+  const factors = base
+    ? abs.map((a) => (a ? a.map((v, k) => (base[k] ? v / base[k] : 1)) : null))
+    : dataArrays.map(() => null);
+  factorsCache.set(dataArrays, { dimCount, factors });
+  return factors;
 };
 
 /** Structural subset of a `DataArray` fragment that `buildLevelSources` needs. */

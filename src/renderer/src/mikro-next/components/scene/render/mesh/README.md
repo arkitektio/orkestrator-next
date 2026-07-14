@@ -19,12 +19,18 @@ MeshCollectionLayer.tsx ── resolveCollectionMatrix()
         ▼
 MeshCollectionManager.updatePlan()
         │
-        ├─ planMeshCells()          pure: LOD level + frustum cull (in the
-        │                           collection's OWN voxel space) + near-first
-        │                           triangle budget
+        ├─ planMeshCells()          pure: PER-CELL LOD (each coarsest-level
+        │                           root picks its own level from its own
+        │                           distance and descends via Morton
+        │                           arithmetic — mixed levels per plan) +
+        │                           hysteresis (±15% band per root) +
+        │                           frustum cull (collection voxel space,
+        │                           against boxes precomputed at index load)
+        │                           + near-first triangle budget
         ├─ cache hits               mounted into the THREE.Group instantly
         └─ misses ─► MeshParquetSource.fetchCellRows()
-                        │   ONE batched `cell IN (...)` SQL per plan
+                        │   ONE batched `cell IN (...)` SQL per LEVEL in
+                        │   the plan (bounded by pyramid depth)
                         ▼
                   decodeGeometryRow()   BLOB → dequantized Float32/Uint16
                         │               (meshopt / raw, oct normals)
@@ -59,15 +65,25 @@ columns so the geometry BLOBs are never scanned for it.
   mesh layers and the table UI never clobber each other's credentials.
 - **One aggregate query per collection version** builds the cell index
   (projected columns only — geometry BLOBs are never scanned for it); one
-  **batched `cell IN (...)` query per plan** fetches geometry. Morton-sorted
-  shards + Parquet row-group pruning make that range reads, not full scans.
+  **batched `cell IN (...)` query per LEVEL in the plan** (bounded by pyramid
+  depth) fetches geometry. Morton-sorted shards + Parquet row-group pruning
+  make that range reads, not full scans.
 - **Planning runs at camera-SETTLE cadence** (vanilla store subscription, no
   React re-render per batch — OCTREE_RENDERER.md P17), and eviction goes
   through a byte-bounded LRU whose eviction callback disposes GPU buffers
   (P13). The current plan's cells are protected from eviction.
-- v1 plans **one LOD level per view** (nearest available to the screen-space
-  desired level). Per-cell octree refinement slots into `meshPlanner.ts`
-  without touching the data plane or the manager.
+- **Per-cell LOD (mixed levels per plan)**: each coarsest-level root region
+  picks its own level from ITS OWN screen-space footprint and descends via
+  Morton arithmetic (children of code c are exactly 8c…8c+7 under the LSB-x
+  interleave — no decode). Depth-spanning collections render fine near the
+  camera and coarse in the distance; regions with no finer rows stay covered
+  by their coarser cell (sparse pyramids).
+- **Hysteresis**: a root sticks to its previous level until the footprint
+  clears the threshold by ~15% (`LOD_HYSTERESIS`) — settling near a boundary
+  cannot flip a region between levels (and refetch it) on consecutive plans.
+  The manager feeds the previous plan's `rootLevels` back into the next.
+- **No Morton decode on the plan path**: cell voxel boxes and keys are
+  precomputed once per collection version (`buildMeshCellIndex`).
 
 ## Parquet data contract (v1 — the writer must match this)
 
@@ -94,15 +110,14 @@ attribute-driven coloring (`colorBy` columns) and per-cell `lodError`.
 
 ## Transform / co-registration
 
-Preferred: an image layer in the scene whose lens/dataset/pyramid contains
-the collection's coordinate system (i.e. the labels layer the meshes were cut
-from) — the mesh group reuses `buildVolumeVoxelToWorld(thatLayer)`, so meshes
-and labels overlap by construction, centering/y-flip included. Fallback:
-`composeCsToWorld` over the scene graph plus dataset edges gathered from the
-scene's layers (`collectDatasetEdges` — an edge is an edge wherever the API
-delivered it) — correct in world units but uncentered relative to image
-layers until the scene-root frame normalization lands (tracked follow-up;
-see `../../COORDINATE_SYSTEMS.md` §4).
+Preferred: an image layer in the scene whose lens/intrinsic-system/pyramid
+contains the collection's coordinate system (i.e. the labels layer the meshes
+were cut from) — the mesh group reuses `buildVolumeVoxelToWorld(thatLayer)`,
+so meshes and labels overlap by construction, centering/y-flip included.
+Fallback: compose the mesh layer's own server-resolved `pathToWorld` via
+`composePlacementPath` — correct in world units but uncentered relative to
+image layers until the scene-root frame normalization lands (tracked
+follow-up; see `../../COORDINATE_SYSTEMS.md` §4).
 
 Vertices decode to the collection CS's VOXEL coordinates — never micrometres.
 Storing physical units would bake a calibration into millions of vertices; a
@@ -128,9 +143,6 @@ rebuild, no refetch.
 
 ## Deliberately deferred (do not build without cause)
 
-- **Per-cell octree refinement** (mixed LOD levels in one plan) — slots into
-  `meshPlanner.ts` alone; the data plane and manager already handle arbitrary
-  cell sets.
 - **Catalog-driven attributes** — `colorBy` (e.g. `cell_type`) coloring and a
   per-cell `lodError` metric for the refinement test; both are catalog
   columns, not geometry changes.

@@ -16,8 +16,11 @@ fragment SceneLens on Lens {
     t
     intensity
   }
+  # Id-only: the lens CS's axes are its dims by contract ("a selection never
+  # drops or reorders an axis"), so selecting them would only duplicate dims.
   coordinateSystem {
-    ...CoordinateSystem
+    id
+    name
   }
   toParent {
     ...Transformation
@@ -31,8 +34,11 @@ fragment SceneLens on Lens {
     dims
     shape
     multiscale
-    coordinateSystem {
-      ...CoordinateSystem
+    # Id-only: consumed for CS-id matching (mesh anchoring, path prefixes);
+    # its axis order is the dataset's dims by definition.
+    intrinsicSystem {
+      id
+      name
     }
     dataArrays {
       id

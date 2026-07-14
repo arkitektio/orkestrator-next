@@ -420,6 +420,46 @@ describe("planLayerNodes (3D octree)", () => {
     expect(p.nodes.every((n) => n.level === 1 && n.role === "target")).toBe(true);
   });
 
+  it("refines on the MAX spatial factor for anisotropic pyramids", () => {
+    // True-factor pyramid: L1 downsamples xy by 2 but z by 9 (36-slice-style
+    // z stack). Refining L2→L1 tests L1's scale: at a footprint where L1's
+    // xy voxels are sub-pixel (0.2·2 < 1) but its z voxels still span >1 px
+    // (0.2·9 ≥ 1), the planner must refine into L1 — testing x alone would
+    // park the plan at L2 with unresolved z detail. L1→L0 then stops
+    // (max(L0.scale) = 1, 0.2 < 1). Mirrors the shader's `desiredLevelAt`
+    // max-component test.
+    const anisoLevels: LevelSource[] = [
+      { shape: [252, 256, 256], chunks: [64, 64, 64], dtype: "uint8", storeId: "a0" },
+      {
+        shape: [28, 128, 128],
+        chunks: [28, 64, 64],
+        dtype: "uint8",
+        storeId: "a1",
+        scaleFactors: [9, 2, 2], // dim order [z, y, x]
+      },
+      {
+        shape: [14, 64, 64],
+        chunks: [14, 64, 64],
+        dtype: "uint8",
+        storeId: "a2",
+        scaleFactors: [18, 4, 4],
+      },
+    ];
+    const anisoGeo = buildLayerLevelGeometry(["z", "y", "x"], volLayer, anisoLevels)!;
+    const anisoSpec = resolveBrickSpec(anisoGeo, "3D");
+    const p = planLayerNodes({
+      layer: volLayer,
+      geometry: anisoGeo,
+      spec: anisoSpec,
+      mode: "3D",
+      viewRange: { ...VOL_VIEW, scale: 0.2 },
+      camera: null,
+      lodBias: 1,
+      currentZ: undefined,
+    });
+    expect(p.targetLevel).toBe(1);
+  });
+
   it("3D budget degrades refinement instead of overflowing", () => {
     const coarseOnly = planLayerNodes({
       layer: volLayer,

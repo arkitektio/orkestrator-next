@@ -40,9 +40,11 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
   return createStore<SceneState>()(
     immer((set) => ({
       spatialUnit: spaceAxis?.unit ? String(spaceAxis.unit) : "px",
+      // No `coordinateSystems`: edges self-describe their axis order
+      // (inputAxes/outputAxes), so the axis index degenerates to the world
+      // system — the fragment no longer ships the global CS list.
       transformContext: {
         worldCoordinateSystem: scene.worldCoordinateSystem,
-        coordinateSystems: scene.coordinateSystems,
         coordinateTransformations: scene.coordinateTransformations,
       },
       sceneLayers: scene.layers,

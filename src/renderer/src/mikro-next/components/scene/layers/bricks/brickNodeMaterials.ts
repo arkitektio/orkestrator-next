@@ -566,9 +566,14 @@ export function createVolumeNodeMaterial(
         { start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<", name: "dlv" },
         ({ dlv }: any) => {
           If(found.not(), () => {
+            // MAX spatial factor — mirrors the planner's `wantFiner`
+            // (nodePlanning.ts): a level counts as resolvable while ANY of
+            // its axes still spans ≥1 px (true-factor pyramids are
+            // anisotropic). Keep the two in lockstep.
+            const lvlScale = vec3(t.uLevelScale.element(dlv));
             If(
               pxPerBaseVoxel
-                .mul(vec3(t.uLevelScale.element(dlv)).x)
+                .mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)))
                 .mul(uLodBias)
                 .greaterThanEqual(1.0),
               () => {

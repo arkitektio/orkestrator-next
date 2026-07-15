@@ -1,6 +1,11 @@
 query GetCoordinateSystem($id: ID!) {
   coordinateSystem(id: $id) {
     ...CoordinateSystem
+    # The scenes worlded on this system (inverse of Scene.worldCoordinateSystem);
+    # non-empty only for a SHARED space (a scene's world or an ownerless hub).
+    scenes {
+      ...ListScene
+    }
   }
 }
 

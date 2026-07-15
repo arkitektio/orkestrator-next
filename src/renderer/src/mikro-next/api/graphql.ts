@@ -1091,12 +1091,22 @@ export type CoordinateSystem = {
   /** What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for a space sources register into (a scene's world, an ownerless hub) */
   kind: CoordinateSystemKind;
   name: Scalars['String']['output'];
+  /** The scenes that compose over this system as their world. Non-empty only for a SHARED space (a world minted for one scene, or an ownerless hub): a hub lists every scene sharing it, and outlives each of them. The inverse of `Scene.worldCoordinateSystem` */
+  scenes: Array<Scene>;
 };
 
 
 /** A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions */
 export type CoordinateSystemAxesArgs = {
   filters?: InputMaybe<AxisFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions */
+export type CoordinateSystemScenesArgs = {
+  filters?: InputMaybe<SceneFilter>;
+  ordering?: Array<SceneOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -9773,6 +9783,13 @@ export type CreateSceneFromDatasetMutationVariables = Exact<{
 
 export type CreateSceneFromDatasetMutation = { __typename?: 'Mutation', createSceneFromDataset: { __typename?: 'Scene', id: string, name: string } };
 
+export type CreateSceneFromCoordinateSystemMutationVariables = Exact<{
+  input: CreateSceneFromCoordinateSystemInput;
+}>;
+
+
+export type CreateSceneFromCoordinateSystemMutation = { __typename?: 'Mutation', createSceneFromCoordinateSystem: { __typename?: 'Scene', id: string, name: string } };
+
 export type CreateSnapshotMutationVariables = Exact<{
   image: Scalars['ID']['input'];
   file: Scalars['ImageFileLike']['input'];
@@ -9952,7 +9969,7 @@ export type GetCoordinateSystemQueryVariables = Exact<{
 }>;
 
 
-export type GetCoordinateSystemQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, kind: CoordinateSystemKind, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } };
+export type GetCoordinateSystemQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, kind: CoordinateSystemKind, scenes: Array<{ __typename?: 'Scene', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } };
 
 export type GetCoordinateGraphQueryVariables = Exact<{
   coordinateSystem: Scalars['ID']['input'];
@@ -13968,6 +13985,39 @@ export function useCreateSceneFromDatasetMutation(baseOptions?: ApolloReactHooks
 export type CreateSceneFromDatasetMutationHookResult = ReturnType<typeof useCreateSceneFromDatasetMutation>;
 export type CreateSceneFromDatasetMutationResult = Apollo.MutationResult<CreateSceneFromDatasetMutation>;
 export type CreateSceneFromDatasetMutationOptions = Apollo.BaseMutationOptions<CreateSceneFromDatasetMutation, CreateSceneFromDatasetMutationVariables>;
+export const CreateSceneFromCoordinateSystemDocument = gql`
+    mutation CreateSceneFromCoordinateSystem($input: CreateSceneFromCoordinateSystemInput!) {
+  createSceneFromCoordinateSystem(input: $input) {
+    ...ListScene
+  }
+}
+    ${ListSceneFragmentDoc}`;
+export type CreateSceneFromCoordinateSystemMutationFn = Apollo.MutationFunction<CreateSceneFromCoordinateSystemMutation, CreateSceneFromCoordinateSystemMutationVariables>;
+
+/**
+ * __useCreateSceneFromCoordinateSystemMutation__
+ *
+ * To run a mutation, you first call `useCreateSceneFromCoordinateSystemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSceneFromCoordinateSystemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSceneFromCoordinateSystemMutation, { data, loading, error }] = useCreateSceneFromCoordinateSystemMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateSceneFromCoordinateSystemMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSceneFromCoordinateSystemMutation, CreateSceneFromCoordinateSystemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateSceneFromCoordinateSystemMutation, CreateSceneFromCoordinateSystemMutationVariables>(CreateSceneFromCoordinateSystemDocument, options);
+      }
+export type CreateSceneFromCoordinateSystemMutationHookResult = ReturnType<typeof useCreateSceneFromCoordinateSystemMutation>;
+export type CreateSceneFromCoordinateSystemMutationResult = Apollo.MutationResult<CreateSceneFromCoordinateSystemMutation>;
+export type CreateSceneFromCoordinateSystemMutationOptions = Apollo.BaseMutationOptions<CreateSceneFromCoordinateSystemMutation, CreateSceneFromCoordinateSystemMutationVariables>;
 export const CreateSnapshotDocument = gql`
     mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
   createSnapshot(input: {file: $file, image: $image}) {
@@ -14752,9 +14802,13 @@ export const GetCoordinateSystemDocument = gql`
     query GetCoordinateSystem($id: ID!) {
   coordinateSystem(id: $id) {
     ...CoordinateSystem
+    scenes {
+      ...ListScene
+    }
   }
 }
-    ${CoordinateSystemFragmentDoc}`;
+    ${CoordinateSystemFragmentDoc}
+${ListSceneFragmentDoc}`;
 
 /**
  * __useGetCoordinateSystemQuery__

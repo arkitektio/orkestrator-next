@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroCoordinateSystem } from "@/linkers";
 import { useGetCoordinateSystemQuery } from "../api/graphql";
+import SceneCard from "../components/cards/SceneCard";
 import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
 import AxesTable from "../components/tables/AxesTable";
 
@@ -42,6 +43,25 @@ export const CoordinateSystemPage = asDetailQueryRoute(
             </CardHeader>
             <CardContent>
               <AxesTable axes={system.axes} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Scenes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {system.scenes.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  No scenes use this coordinate system as their world yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                  {system.scenes.map((scene) => (
+                    <SceneCard key={scene.id} scene={scene} />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

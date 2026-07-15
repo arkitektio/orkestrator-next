@@ -1,6 +1,9 @@
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import type { Arkitekt } from "@/app/Arkitekt";
 import {
+  CreateSceneFromCoordinateSystemDocument,
+  CreateSceneFromCoordinateSystemMutation,
+  CreateSceneFromCoordinateSystemMutationVariables,
   CreateSceneFromDatasetDocument,
   CreateSceneFromDatasetMutation,
   CreateSceneFromDatasetMutationVariables,
@@ -9,6 +12,7 @@ import {
   DeleteImageDocument,
   DeleteRoiDocument,
   DeleteSceneDocument,
+  GetCoordinateSystemDocument,
   GetDatasetDocument,
   GetScenesDocument,
   GetDatasetQuery,
@@ -68,6 +72,52 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       });
 
       const scene = data?.createSceneFromDataset;
+      if (!scene) {
+        throw new Error('Scene creation returned no scene');
+      }
+
+      navigate(linkBuilder('mikro/scenes')(scene.id));
+    },
+  },
+  'create-scene-from-coordinatesystem': {
+    title: 'Create Scene',
+    description:
+      'Mirror this coordinate system into a new scene, materializing the sources registered into it as layers',
+    icon: Clapperboard,
+    pinned: true,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/coordinatesystem' },
+      { type: 'nopartner' },
+    ],
+    collections: ['coordinatesystem'],
+    execute: async ({ state, services, navigate }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/coordinatesystem',
+      );
+
+      if (!selected?.object?.id) {
+        throw new Error('No coordinate system selected for Create Scene action');
+      }
+
+      const mikro = services.mikro;
+      if (!mikro) {
+        throw new Error('Mikro service is not available');
+      }
+
+      const { data } = await mikro.client.mutate<
+        CreateSceneFromCoordinateSystemMutation,
+        CreateSceneFromCoordinateSystemMutationVariables
+      >({
+        mutation: CreateSceneFromCoordinateSystemDocument,
+        // `policy` is left to the server default (nchildren cap, meshes on,
+        // tables untransformed).
+        variables: { input: { coordinateSystem: selected.object.id } },
+        // Refresh the global scene list and the source system's page, whose
+        // Scenes section lists exactly this inverse relation.
+        refetchQueries: [GetScenesDocument, GetCoordinateSystemDocument],
+      });
+
+      const scene = data?.createSceneFromCoordinateSystem;
       if (!scene) {
         throw new Error('Scene creation returned no scene');
       }

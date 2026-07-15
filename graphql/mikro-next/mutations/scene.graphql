@@ -16,3 +16,14 @@ mutation CreateSceneFromDataset(
     ...ListScene
   }
 }
+
+# Mirrors a coordinate system (usually a SHARED hub) into a new scene and
+# materializes the sources already registered into it as layers, filtered by the
+# policy (nchildren cap, meshes, table transforms — server defaults apply).
+mutation CreateSceneFromCoordinateSystem(
+  $input: CreateSceneFromCoordinateSystemInput!
+) {
+  createSceneFromCoordinateSystem(input: $input) {
+    ...ListScene
+  }
+}

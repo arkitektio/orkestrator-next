@@ -1236,6 +1236,11 @@ type CoordinateSystem {
   """
   kind: CoordinateSystemKind!
   name: String!
+
+  """
+  The scenes that compose over this system as their world. Non-empty only for a SHARED space (a world minted for one scene, or an ownerless hub): a hub lists every scene sharing it, and outlives each of them. The inverse of `Scene.worldCoordinateSystem`
+  """
+  scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
 }
 
 input CoordinateSystemFilter {

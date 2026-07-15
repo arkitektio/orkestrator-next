@@ -48,3 +48,10 @@ mutation CreateTrackLayer($input: CreateTrackLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Removes a layer from its scene. Returns the deleted id; the scene view
+# reinitializes its stores when GetScene refetches, so the layer disappears
+# without any store plumbing.
+mutation DeleteLayer($input: DeleteLayerInput!) {
+  deleteLayer(input: $input)
+}

@@ -1,19 +1,25 @@
-# Candidate sources for the Add Layer dialog: list-level fields plus the
-# coordinate-system ids needed to decide composability into a scene
-# client-side (there is no server-side "composable in scene" filter).
-query AddLayerADatasetCandidates(
-  $filters: ADatasetFilter
+# Candidate sources for the Add Layer dialog. Placeability into the scene is now
+# decided server-side by the `placeableIn` filter (a lens/table whose space has a
+# traversable path to the scene's world), so the dialog no longer walks the
+# coordinate graph client-side.
+
+# Image layers are created from a lens, so the image section lists placeable
+# lenses directly — the selected lens is the layer's source.
+query AddLayerLensCandidates(
+  $filters: LensFilter
   $pagination: OffsetPaginationInput
 ) {
-  adatasets(filters: $filters, pagination: $pagination) {
-    ...ListADataset
-    intrinsicSystem {
-      id
-      name
+  lenses(filters: $filters, pagination: $pagination) {
+    id
+    shape
+    axisNames
+    slices {
+      ...DimSlice
     }
-    calibrations {
+    dataset {
       id
       name
+      description
     }
   }
 }

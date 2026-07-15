@@ -3,7 +3,9 @@ import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { isLayerOutOfPlane } from "../core/worldTransform";
 import { perfMonitor } from "../managers/perfMonitor";
@@ -83,6 +85,7 @@ const LayerCard = memo(function LayerCard({
   onToggleArm,
   onUpdate,
   onFocus,
+  onRemove,
   onClose,
 }: {
   layer: LayerState;
@@ -95,6 +98,7 @@ const LayerCard = memo(function LayerCard({
   onToggleArm: (id: string) => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
+  onRemove: (id: string) => void;
   onClose: () => void;
 }) {
   perfMonitor.countRender("LayerCard"); // no-op unless a perf recording is armed
@@ -104,6 +108,7 @@ const LayerCard = memo(function LayerCard({
   // the card actually re-renders.
   const handleSelect = () => onSelect(layer.id);
   const handleToggleArm = () => onToggleArm(layer.id);
+  const handleRemove = () => onRemove(layer.id);
   return (
     <Collapsible
       open={expanded}
@@ -127,6 +132,7 @@ const LayerCard = memo(function LayerCard({
         onToggleArm={handleToggleArm}
         onUpdate={onUpdate}
         onFocus={onFocus}
+        onRemove={handleRemove}
       />
       {unplannable && <UnplannableNotice layer={layer} info={unplannable} />}
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
@@ -165,6 +171,13 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   const displayMode = useModeStore((s) => s.displayMode);
   const [showOffscreen, setShowOffscreen] = useState(false);
 
+  // Deleting refetches GetScene, which reinitializes the scene stores so the
+  // removed layer drops out — the same store-free path layer creation uses.
+  const [deleteLayer] = useDeleteLayerMutation({
+    refetchQueries: ["GetScene"],
+    awaitRefetchQueries: true,
+  });
+
   // Stable handlers so the memoized LayerCard actually skips re-render during a
   // pan/orbit. The zustand actions (setSelectedLayerId, toggleArmedLayerId,
   // updateLayer, fitToLayer) are already stable refs; these wrap
@@ -183,6 +196,17 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   const handleClose = useCallback(
     () => setSelectedLayerId(null),
     [setSelectedLayerId],
+  );
+  const handleRemove = useCallback(
+    (id: string) => {
+      // Drop the selection first if it points at the layer being removed, so
+      // the panel doesn't try to keep an unfolded editor for a gone layer.
+      if (selectedRef.current === id) setSelectedLayerId(null);
+      void deleteLayer({ variables: { input: { id } } }).catch((e) =>
+        toast.error("Could not remove layer: " + (e as Error).message),
+      );
+    },
+    [deleteLayer, setSelectedLayerId],
   );
 
   // A layer is "in view" when it is inside the camera frustum
@@ -239,6 +263,7 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
         onToggleArm={handleToggleArm}
         onUpdate={updateLayer}
         onFocus={fitToLayer}
+        onRemove={handleRemove}
         onClose={handleClose}
       />
     );

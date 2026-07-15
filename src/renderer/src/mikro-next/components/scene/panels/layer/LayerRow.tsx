@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Crosshair, Eye, EyeOff, Focus, Save } from "lucide-react";
+import { Crosshair, Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { isLayerDirty } from "./colormap-utils";
 import { layerSwatchBackground } from "./renderGraphSwatch";
@@ -19,6 +19,7 @@ export const LayerRow = ({
   onToggleArm,
   onUpdate,
   onFocus,
+  onRemove,
   embedded = false,
   viewportPercent,
   graphDirty = false,
@@ -33,6 +34,8 @@ export const LayerRow = ({
   onToggleArm: () => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
+  /** Remove the layer from its scene. */
+  onRemove?: () => void;
   /**
    * Rough percentage of the viewport this layer occupies, shown as a small
    * badge. Undefined for off-view layers (no coverage entry).
@@ -149,6 +152,20 @@ export const LayerRow = ({
             <Eye className="h-3 w-3" />
           )}
         </Button>
+        {onRemove && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-6 w-6 p-0 text-white/70 hover:text-red-400"
+            title="Remove layer from scene"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
       </div>
     </div>
   );

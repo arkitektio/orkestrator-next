@@ -13,33 +13,29 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import {
-  AddLayerADatasetCandidatesQuery,
+  AddLayerLensCandidatesQuery,
   AddLayerTableDatasetCandidatesQuery,
   AxisType,
   ProjectionMode,
   TableColumnRole,
-  useAddLayerADatasetCandidatesQuery,
+  useAddLayerLensCandidatesQuery,
   useAddLayerTableDatasetCandidatesQuery,
   useCreateIntensityLayerMutation,
   useCreateLabelLayerMutation,
-  useCreateLensMutation,
   useCreatePointLayerMutation,
   useCreateRgbLayerMutation,
   useCreateTrackLayerMutation,
   useCreateVolumeLayerMutation,
-  useGetCoordinateGraphQuery,
   useGetSceneQuery,
-  useListLensesForDatasetQuery,
 } from "../api/graphql";
 
-type DatasetCandidate = AddLayerADatasetCandidatesQuery["adatasets"][number];
+type LensCandidate = AddLayerLensCandidatesQuery["lenses"][number];
 type TableCandidate =
   AddLayerTableDatasetCandidatesQuery["tableDatasets"][number];
 
 type Source =
-  | { kind: "adataset"; dataset: DatasetCandidate }
+  | { kind: "lens"; lens: LensCandidate }
   | { kind: "tabledataset"; table: TableCandidate };
 
 // The mutation options every layer creation submits with: the scene view
@@ -50,9 +46,6 @@ const REFETCH_SCENE = {
   awaitRefetchQueries: true,
 };
 
-const NOT_COMPOSABLE_HINT =
-  "No transformation path connects this data's coordinate system to the scene's world system. Register it into the scene first.";
-
 const kindButton = (active: boolean) =>
   `rounded border px-3 py-1 text-sm transition-colors ${
     active
@@ -60,59 +53,53 @@ const kindButton = (active: boolean) =>
       : "border-input hover:bg-accent"
   }`;
 
+// Placeability is decided server-side (the `placeableIn` filter), so every row
+// shown is a valid drop target — the row is always selectable.
 const SourceRow = (props: {
   name: string;
-  description?: string | null;
-  meta: string;
-  composable: boolean | null;
+  secondary?: string | null;
   onClick: () => void;
 }) => (
   <button
     type="button"
-    disabled={props.composable === false}
-    title={props.composable === false ? NOT_COMPOSABLE_HINT : undefined}
     onClick={props.onClick}
-    className={`flex w-full items-center justify-between gap-2 rounded border border-input p-2 text-left transition-colors ${
-      props.composable === false
-        ? "cursor-not-allowed opacity-50"
-        : "hover:bg-accent"
-    }`}
+    className="flex w-full items-center justify-between gap-2 rounded border border-input p-2 text-left transition-colors hover:bg-accent"
   >
     <div className="min-w-0">
       <div className="truncate text-sm font-medium">{props.name}</div>
-      <div className="truncate text-xs text-muted-foreground">
-        {props.description || props.meta}
-      </div>
-    </div>
-    <div className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-      {props.composable === null
-        ? "checking…"
-        : props.composable
-          ? "composable"
-          : "no path to scene"}
+      {props.secondary && (
+        <div className="truncate text-xs text-muted-foreground">
+          {props.secondary}
+        </div>
+      )}
     </div>
   </button>
 );
 
+// A one-line descriptor that distinguishes lenses of the same dataset: whether
+// the lens is the full array (slices: []) or a slice, plus its axes and shape.
+const lensLabel = (lens: LensCandidate) => {
+  const dims = `${lens.axisNames.join(" × ")} · ${lens.shape.join(" × ")}`;
+  if (lens.slices.length === 0) return `full — ${dims}`;
+  const slices = lens.slices
+    .map((s) => `${s.axis}[${s.start ?? ""}:${s.stop ?? ""}]`)
+    .join(", ");
+  return `${slices} — ${dims}`;
+};
+
 /**
- * Step 2a: an ADataset becomes an image layer. Image layers hang off a Lens,
- * so submitting reuses the dataset's full lens (slices: []) when one exists
- * and mints one otherwise, then creates the chosen layer kind.
+ * Step 2a: a lens becomes an image layer. Image layers hang off a lens, and the
+ * chosen lens is the layer's source directly — no lens resolution needed.
  */
-const DatasetLayerForm = (props: {
+const LensLayerForm = (props: {
   scene: string;
-  dataset: DatasetCandidate;
+  lens: LensCandidate;
   onBack: () => void;
 }) => {
   const [kind, setKind] = useState<"INTENSITY" | "RGB" | "VOLUME" | "LABEL">(
     "INTENSITY",
   );
 
-  const { data: lensData } = useListLensesForDatasetQuery({
-    variables: { dataset: props.dataset.id },
-  });
-
-  const [createLens] = useCreateLensMutation();
   const [createIntensity] = useCreateIntensityLayerMutation();
   const [createRgb] = useCreateRgbLayerMutation();
   const [createVolume] = useCreateVolumeLayerMutation();
@@ -132,26 +119,7 @@ const DatasetLayerForm = (props: {
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
-    let lensId = lensData?.lenses.find((l) => l.slices.length === 0)?.id;
-    if (!lensId) {
-      // Outside useGraphQLDialog: a failed lens creation must not close the
-      // dialog or toast "Layer added".
-      try {
-        const result = await createLens({
-          variables: { input: { dataset: props.dataset.id, slices: [] } },
-        });
-        lensId = result.data?.createLens.id;
-      } catch (e) {
-        toast.error("Could not create lens: " + (e as Error).message);
-        return;
-      }
-    }
-    if (!lensId) {
-      toast.error("Could not resolve a lens for this dataset");
-      return;
-    }
-
-    const base = { lens: lensId, scene: props.scene };
+    const base = { lens: props.lens.id, scene: props.scene };
     switch (kind) {
       case "INTENSITY":
         return submitIntensity({ variables: { input: base }, ...REFETCH_SCENE });
@@ -396,40 +364,33 @@ const AddLayerFormInner = (props: { scene: string }) => {
   const { data: sceneData } = useGetSceneQuery({
     variables: { id: props.scene },
   });
-  const worldCsId = sceneData?.scene.worldCoordinateSystem?.id;
 
-  // Composability is decided client-side: a source composes into the scene
-  // when one of its coordinate systems sits in the connected component around
-  // the scene's world system (Scene.coordinateSystems is not transitive).
-  const { data: graphData } = useGetCoordinateGraphQuery({
-    variables: { coordinateSystem: worldCsId ?? "" },
-    skip: !worldCsId,
-  });
-  const reachable = useMemo(
-    () =>
-      graphData
-        ? new Set(graphData.coordinateGraph.systems.map((s) => s.id))
-        : null,
-    [graphData],
-  );
-
-  const filters = search ? { search } : undefined;
-  const { data: datasetData, loading: datasetsLoading } =
-    useAddLayerADatasetCandidatesQuery({
-      variables: { filters, pagination: { limit: 50 } },
+  // The server returns only sources placeable into this scene: a lens whose
+  // space (or a table's coordinate system) has a traversable path to the
+  // scene's world. No client-side coordinate-graph walk is needed.
+  const { data: lensData, loading: lensesLoading } =
+    useAddLayerLensCandidatesQuery({
+      variables: {
+        filters: { placeableIn: props.scene },
+        pagination: { limit: 50 },
+      },
     });
   const { data: tableData, loading: tablesLoading } =
     useAddLayerTableDatasetCandidatesQuery({
-      variables: { filters, pagination: { limit: 50 } },
+      variables: {
+        filters: { placeableIn: props.scene, ...(search ? { search } : {}) },
+        pagination: { limit: 50 },
+      },
     });
 
-  const datasetComposable = (d: DatasetCandidate) =>
-    reachable === null
-      ? null
-      : (d.intrinsicSystem != null && reachable.has(d.intrinsicSystem.id)) ||
-        d.calibrations.some((c) => reachable.has(c.id));
-  const tableComposable = (t: TableCandidate) =>
-    reachable === null ? null : reachable.has(t.coordinateSystem.id);
+  // LensFilter has no text search, so filter the placeable lenses by their
+  // dataset name client-side (tables are searched server-side above).
+  const lenses = useMemo(() => {
+    const all = lensData?.lenses ?? [];
+    if (!search) return all;
+    const q = search.toLowerCase();
+    return all.filter((l) => l.dataset.name.toLowerCase().includes(q));
+  }, [lensData, search]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -437,38 +398,36 @@ const AddLayerFormInner = (props: { scene: string }) => {
         <DialogTitle>Add layer</DialogTitle>
         <DialogDescription>
           {source
-            ? source.kind === "adataset"
-              ? `What kind of image layer should "${source.dataset.name}" become?`
+            ? source.kind === "lens"
+              ? `What kind of image layer should "${source.lens.dataset.name}" become?`
               : `How should the rows of "${source.table.name}" be rendered?`
-            : `Pick a dataset or table to add to "${sceneData?.scene.name ?? "this scene"}".`}
+            : `Pick a lens or table to add to "${sceneData?.scene.name ?? "this scene"}".`}
         </DialogDescription>
       </DialogHeader>
 
       {source === null ? (
         <>
           <Input
-            placeholder="Search datasets and tables…"
+            placeholder="Search lenses and tables…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto">
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium uppercase text-muted-foreground">
-                Array datasets
+                Lenses
               </div>
-              {datasetData?.adatasets.map((d) => (
+              {lenses.map((l) => (
                 <SourceRow
-                  key={d.id}
-                  name={d.name}
-                  description={d.description}
-                  meta={`${d.axisNames.join(" × ")} — ${d.shape.join(" × ")}`}
-                  composable={datasetComposable(d)}
-                  onClick={() => setSource({ kind: "adataset", dataset: d })}
+                  key={l.id}
+                  name={l.dataset.name}
+                  secondary={lensLabel(l)}
+                  onClick={() => setSource({ kind: "lens", lens: l })}
                 />
               ))}
-              {!datasetsLoading && !datasetData?.adatasets.length && (
+              {!lensesLoading && !lenses.length && (
                 <div className="text-xs text-muted-foreground">
-                  No datasets found
+                  No placeable lenses found
                 </div>
               )}
             </div>
@@ -480,24 +439,24 @@ const AddLayerFormInner = (props: { scene: string }) => {
                 <SourceRow
                   key={t.id}
                   name={t.name}
-                  description={t.description}
-                  meta={t.columns.map((c) => c.name).join(", ")}
-                  composable={tableComposable(t)}
+                  secondary={
+                    t.description || t.columns.map((c) => c.name).join(", ")
+                  }
                   onClick={() => setSource({ kind: "tabledataset", table: t })}
                 />
               ))}
               {!tablesLoading && !tableData?.tableDatasets.length && (
                 <div className="text-xs text-muted-foreground">
-                  No tables found
+                  No placeable tables found
                 </div>
               )}
             </div>
           </div>
         </>
-      ) : source.kind === "adataset" ? (
-        <DatasetLayerForm
+      ) : source.kind === "lens" ? (
+        <LensLayerForm
           scene={props.scene}
-          dataset={source.dataset}
+          lens={source.lens}
           onBack={() => setSource(null)}
         />
       ) : (

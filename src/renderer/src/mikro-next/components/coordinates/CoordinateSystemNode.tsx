@@ -4,21 +4,15 @@ import { CoordinateSystemKind } from "@/mikro-next/api/graphql";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { CoordinateSystemNode as TNode } from "./types";
 
-// The five kinds are the whole vocabulary of the graph, and colour is the
-// fastest way to read a component: which node is the pixel grid, which are the
-// calibrated physical spaces hanging off it, which is the scene's world.
+// The four kinds are the whole vocabulary of the graph, and colour is the
+// fastest way to read a component: which node is the container's native space,
+// which are the calibrated physical spaces hanging off it, and which is the
+// shared space sources register into (a scene's world or an ownerless hub).
 export const KIND_DOT: Record<CoordinateSystemKind, string> = {
   [CoordinateSystemKind.Intrinsic]: "bg-blue-500",
   [CoordinateSystemKind.Physical]: "bg-emerald-500",
   [CoordinateSystemKind.Array]: "bg-slate-400",
-  [CoordinateSystemKind.World]: "bg-violet-500",
-  [CoordinateSystemKind.Atlas]: "bg-amber-500",
-  // A table dataset's row/coordinate space enumerates objects rather than
-  // measuring positions, and a mesh collection's vertex space is owned by the
-  // collection — neither is a pixel or physical grid, so neither borrows their
-  // colours.
-  [CoordinateSystemKind.Table]: "bg-rose-500",
-  [CoordinateSystemKind.Mesh]: "bg-cyan-500",
+  [CoordinateSystemKind.Shared]: "bg-violet-500",
 };
 
 export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {

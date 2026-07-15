@@ -1226,10 +1226,14 @@ type CoordinateSystem {
   axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
 
   """
-  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a WORLD, an ATLAS); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
+  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a scene's world, a shared hub); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
   """
   epoch: DateTime
   id: ID!
+
+  """
+  What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for a space sources register into (a scene's world, an ownerless hub)
+  """
   kind: CoordinateSystemKind!
   name: String!
 }
@@ -1254,13 +1258,19 @@ input CoordinateSystemFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
-  kind: CoordinateSystemKindChoices
+
+  """
+  Filter by what the system denotes, derived from its owner: INTRINSIC (a container's own native space), ARRAY (a pyramid level's or lens' grid), PHYSICAL (a calibration), SHARED (a scene's world or an ownerless hub)
+  """
+  kind: CoordinateSystemKind
   name: StrFilterLookup
 
   """Filter by the creator's subject ID"""
   owner: ID
 
-  """Filter by the scene whose WORLD system this is"""
+  """
+  Filter by a scene composing over this system -- its minted world or an adopted hub
+  """
   scene: ID
 
   """Search by name (case-insensitive substring)"""
@@ -1268,26 +1278,18 @@ input CoordinateSystemFilter {
 }
 
 """
-What a coordinate system denotes: voxel indices, the dataset's pixel grid, a calibrated physical space, or a space shared between datasets.
+What a coordinate system denotes, derived entirely from which container owns it: a container's own native space, a derived pixel grid, a calibrated interpretation, or a space shared between sources.
 """
 enum CoordinateSystemKind {
   """
-  The raw voxel index space of a single pyramid level or lens. Its axes are unitless indices.
+  A derived pixel grid: the voxel index space of a non-level-0 pyramid level or of a slicing lens. Its axes are unitless indices, and an edge maps it into the dataset's intrinsic grid.
   """
   ARRAY
 
-  """A reference space shared across scenes, e.g. an anatomical atlas."""
-  ATLAS
-
   """
-  The dataset's level-0 pixel grid. Every pyramid level and lens maps into this one system, so it is the space in which a dataset's geometry is unambiguous — and it is stable: recalibrating the dataset never moves it.
+  The native space of its container: a dataset's level-0 pixel grid, the space a mesh collection's vertices are expressed in, or a table dataset's coordinate-column space. Always defined, never revised — recalibrating never moves it — which is why geometry anchors to it. What the coordinates mean is on the axes (semantic type, unit or unitless), and which container it is, on the owner.
   """
   INTRINSIC
-
-  """
-  The space a mesh collection's vertex coordinates are expressed in. The collection owns it, and an edge relates it to the dataset the meshes were extracted from — usually an identity, but a mesh extracted from a downsampled grid is a scale, and that is a fact the edge can carry and a borrowed system could not.
-  """
-  MESH
 
   """
   A calibrated physical space derived from metadata (pixel size, stage pose, ...). Its axes carry the units; a single transformation edge maps the dataset's intrinsic pixels into it. A dataset can have zero or many.
@@ -1295,22 +1297,9 @@ enum CoordinateSystemKind {
   PHYSICAL
 
   """
-  A table dataset's row/coordinate space. Its axes ARE its declared coordinate columns: with metric SPACE/TIME columns it is a placeable space (a mappable edge registers it, or a scene does), and with none it degenerates to a single INDEX axis whose only honest edge is UNMAPPABLE — the measurement-table case.
+  A space sources are registered into rather than owned by any of them: a scene's world (scene-owned, cascades with it) or an ownerless hub such as an anatomical atlas (standing, shared across scenes). The scene link tells the two apart.
   """
-  TABLE
-
-  """A scene's shared space, into which each of its layers is registered."""
-  WORLD
-}
-
-enum CoordinateSystemKindChoices {
-  ARRAY
-  ATLAS
-  INTRINSIC
-  MESH
-  PHYSICAL
-  TABLE
-  WORLD
+  SHARED
 }
 
 input CoordinateSystemOrder @oneOf {
@@ -1377,6 +1366,16 @@ input CreateCalibrationInput {
   name: String! = "physical"
   scale: [Float!] = null
   translation: [Float!] = null
+}
+
+"""
+Create a hub coordinate system -- a SHARED reference space with no owner, e.g. an atlas -- and, in the same call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it. Every other system is owned by a container and created with it, so a hub is the only system created directly. createSceneFromCoordinateSystem later mirrors the hub into a scene and materializes those sources as layers
+"""
+input CreateCoordinateSystemInput {
+  axes: [CalibratedAxisInput!]!
+  epoch: DateTime = null
+  name: String!
+  registrations: [RegistrationPathInput!]! = []
 }
 
 """Input for drawing a region of interest in a coordinate system"""
@@ -1613,6 +1612,15 @@ input CreateRgbLayerInput {
 }
 
 """
+Bootstrap a renderable scene over a hub coordinate system (an ownerless SHARED space): the scene adopts the hub as its world, then materializes the sources already registered into the hub as layers, up to the policy's nchildren. It authors no edges -- every registration composed into the scene was authored by createCoordinateSystem, and each source's path to world is that one edge. The hub is shared, not owned: rerunning makes another scene over the same space, and the hub outlives them all
+"""
+input CreateSceneFromCoordinateSystemInput {
+  coordinateSystem: ID!
+  name: String = null
+  policy: ScenePolicyInput! = {includeMeshes: true, nchildren: 8, transformTables: false}
+}
+
+"""
 Input for bootstrapping a renderable scene for a dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
 """
 input CreateSceneFromDatasetInput {
@@ -1622,11 +1630,12 @@ input CreateSceneFromDatasetInput {
 }
 
 """
-Input type for creating a scene and the WORLD coordinate system its layers are registered into
+Input type for creating a scene over a world coordinate system: an adopted existing hub, or one minted for the scene
 """
 input CreateSceneInput {
   axes: [CalibratedAxisInput!] = null
   blending: Blending = null
+  coordinateSystem: ID = null
   epoch: DateTime = null
   name: String!
 }
@@ -3259,7 +3268,7 @@ type ImageLayer implements Layer {
   lens: Lens!
 
   """
-  Per pyramid level, the path from that level's voxel grid to this scene's WORLD system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
+  Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
   """
   levelPaths: [LevelPlacement!]!
   opacity: Float!
@@ -3861,6 +3870,11 @@ input LensFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
+
+  """
+  Filter to lenses placeable into this scene: those whose space has a traversable path to the scene's world, walking the transformation edges under the scene's membership
+  """
+  placeableIn: ID
 }
 
 input LensOrder @oneOf {
@@ -3868,14 +3882,14 @@ input LensOrder @oneOf {
 }
 
 """
-The placement of one pyramid level in a layer's scene: the level and its path to the WORLD system
+The placement of one pyramid level in a layer's scene: the level and its path to the world system
 """
 type LevelPlacement {
   """The pyramid level being placed"""
   dataArray: DataArray!
 
   """
-  The path from this level's voxel grid to the scene's WORLD system, or null when the dataset is not registered into the scene
+  The path from this level's voxel grid to the scene's world system, or null when the dataset is not registered into the scene
   """
   path: [PlacementStep!]
 }
@@ -4459,6 +4473,11 @@ type Mutation {
   createContinousScanView(input: ContinousScanViewInput!): ContinousScanView!
 
   """
+  Create a hub (ATLAS) coordinate system and, in one call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it
+  """
+  createCoordinateSystem(input: CreateCoordinateSystemInput!): CoordinateSystem!
+
+  """
   Create a new data ROI from vector or slice definitions with optional coordinate anchors and OME metadata
   """
   createDataRoi(input: CreateDataRoiInput!): DataRoi!
@@ -4574,6 +4593,11 @@ type Mutation {
   Create a new scene and the WORLD coordinate system its layers are registered into
   """
   createScene(input: CreateSceneInput!): Scene!
+
+  """
+  Bootstrap a renderable scene from a hub (ATLAS) coordinate system: mirror the hub into a fresh world, then materialize the sources already registered into it as layers, up to the policy's nchildren. Authors exactly one edge (the mirror) and otherwise only composes registrations createCoordinateSystem authored
+  """
+  createSceneFromCoordinateSystem(input: CreateSceneFromCoordinateSystemInput!): Scene!
 
   """
   Bootstrap a renderable scene for a dataset in one call: a world mirroring its calibration, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
@@ -7369,6 +7393,26 @@ input ReferenceViewInput {
   zMin: Int = null
 }
 
+"""
+A source (dataset, table dataset, mesh collection, or coordinate system) to register into a hub, plus the edge that places it. The edge points from the source's own coordinate system to the hub; the transform is validated exactly as createTransformation validates one
+"""
+input RegistrationPathInput {
+  affine: [[Float!]!] = null
+  coordinateSystem: ID = null
+  dataset: ID = null
+  inputAxes: [String!] = null
+  kind: TransformKind! = IDENTITY
+  meshCollection: ID = null
+  name: String = null
+  outputAxes: [String!] = null
+  reason: String = null
+  scale: [Float!] = null
+  store: ArrayLike = null
+  tableDataset: ID = null
+  translation: [Float!] = null
+  validity: PlacementValidity = null
+}
+
 interface Render {
   createdAt: DateTime!
 
@@ -7771,7 +7815,7 @@ enum ScanDirection {
 }
 
 """
-A composition of layers over a shared WORLD coordinate system. The scene carries no units of its own -- they are per-axis, on the axes of its world system
+A composition of layers over a shared world coordinate system. The scene carries no units of its own -- they are per-axis, on the axes of its world system
 """
 type Scene {
   """
@@ -7785,7 +7829,7 @@ type Scene {
   name: String!
 
   """
-  The registration edges belonging to this scene's composition -- mostly the edges placing each layer's dataset into the world system. This membership set is what `layers.pathToWorld` searches; composing the matrices stays the client's job. Removing one does not undo it: the edge remains a fact about two coordinate systems
+  The registration edges belonging to this scene's composition -- the edges placing each layer's dataset into the world. This membership set is what `layers.pathToWorld` searches, and for an edge into a shared space it is what places: removing one un-places the layers that relied on it, though the edge itself remains a fact about two coordinate systems. Composing the matrices stays the client's job
   """
   registrations: [Transformation!]!
 
@@ -7795,9 +7839,9 @@ type Scene {
   rois: [DataRoi!]!
 
   """
-  The scene's shared WORLD coordinate system, into which each of its layers is registered
+  The shared space this scene composes its layers over: a world minted for this scene, or an adopted ownerless hub that many scenes can share and that outlives each of them
   """
-  worldCoordinateSystem: CoordinateSystem
+  worldCoordinateSystem: CoordinateSystem!
 }
 
 input SceneFilter {
@@ -7825,6 +7869,15 @@ input SceneFilter {
 input SceneOrder @oneOf {
   id: Ordering
   name: Ordering
+}
+
+"""
+The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources already registered into the hub, filtered by kind
+"""
+input ScenePolicyInput {
+  includeMeshes: Boolean! = true
+  nchildren: Int! = 8
+  transformTables: Boolean! = false
 }
 
 """
@@ -8349,6 +8402,11 @@ input TableDatasetFilter {
 
   """Filter by the creator's subject ID"""
   owner: ID
+
+  """
+  Filter to table datasets placeable into this scene: those whose coordinate system has a traversable path to the scene's world, walking the transformation edges under the scene's membership
+  """
+  placeableIn: ID
 
   """Search by name (case-insensitive substring)"""
   search: String

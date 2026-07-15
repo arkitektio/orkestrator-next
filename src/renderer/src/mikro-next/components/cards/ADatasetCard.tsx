@@ -18,7 +18,7 @@ const TheCard = ({ adataset }: Props) => {
         </CardTitle>
         <div className="flex flex-row flex-wrap gap-1 items-center">
           <span className="text-xs text-muted-foreground font-mono">
-            {adataset.dims.join(" × ")}
+            {adataset.axisNames.join(" × ")}
           </span>
           <span className="text-xs text-muted-foreground font-mono">
             ({adataset.shape.join(", ")})

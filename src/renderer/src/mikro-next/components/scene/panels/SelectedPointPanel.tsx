@@ -101,7 +101,7 @@ export const SelectedPointPanel = () => {
 
           {layer && (
             <div className="rounded border border-border/50 bg-background/40 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
-              {layer.xDim}: {probedCoordinate.voxelIndex[0]} | {layer.yDim}: {probedCoordinate.voxelIndex[1]} | {layer.zDim ?? 'z'}: {probedCoordinate.voxelIndex[2]}
+              {layer.xAxis}: {probedCoordinate.voxelIndex[0]} | {layer.yAxis}: {probedCoordinate.voxelIndex[1]} | {layer.zAxis ?? 'z'}: {probedCoordinate.voxelIndex[2]}
             </div>
           )}
         </div>

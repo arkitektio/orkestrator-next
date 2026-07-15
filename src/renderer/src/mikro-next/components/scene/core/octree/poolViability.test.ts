@@ -11,10 +11,10 @@ import type { LayerState } from "../layerModel";
  */
 
 const LAYER = {
-  xDim: "x",
-  yDim: "y",
-  zDim: "z",
-  intensityDim: null,
+  xAxis: "x",
+  yAxis: "y",
+  zAxis: "z",
+  intensityAxis: null,
 } as unknown as LayerState;
 const DIMS = ["z", "y", "x"];
 

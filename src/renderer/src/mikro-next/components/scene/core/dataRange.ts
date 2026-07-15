@@ -17,21 +17,35 @@ export function resolveLayerDataRange(
   dtype: string,
 ): [number, number] {
   if (dtype === "float32" || dtype === "float64") {
-    const vh = layer.lens?.activeAnchors?.find((a) => a.valueHistogram)
-      ?.valueHistogram;
-    const min = vh?.min;
-    const max = vh?.max;
-    if (
-      min != null &&
-      max != null &&
-      Number.isFinite(min) &&
-      Number.isFinite(max) &&
-      max > min
-    ) {
-      return [min, max];
-    }
+    const range = serverHistogramRange(layer);
+    if (range) return range;
   }
   return mapDTypeToMinMax(dtype as DataType);
+}
+
+/**
+ * The `[min, max]` from the layer's server-provided value histogram (the first
+ * anchor that carries one), or `null` when absent/unusable. `null` for a float
+ * layer means the dtype fallback `[0,1]` would be used — the case that
+ * saturates non-normalized data to white and that client auto-contrast covers.
+ */
+export function serverHistogramRange(
+  layer: ImageLayerFragment,
+): [number, number] | null {
+  const vh = layer.lens?.activeAnchors?.find((a) => a.valueHistogram)
+    ?.valueHistogram;
+  const min = vh?.min;
+  const max = vh?.max;
+  if (
+    min != null &&
+    max != null &&
+    Number.isFinite(min) &&
+    Number.isFinite(max) &&
+    max > min
+  ) {
+    return [min, max];
+  }
+  return null;
 }
 
 /**

@@ -5,19 +5,19 @@ import type { LayerState } from "./layerModel";
 
 /** Minimal layer for the metadata box math (same casting style as visibility.test.ts). */
 const makeLayer = (opts: {
-  shape: number[]; // [z, y, x] under DIMS below (or use dims override)
-  dims?: string[];
+  shape: number[]; // [z, y, x] under DIMS below (or use axisNames override)
+  axisNames?: string[];
   affineMatrix?: number[][] | null;
-  xDim?: string | null;
+  xAxis?: string | null;
 }): LayerState =>
   ({
     id: "layer",
     affineMatrix: opts.affineMatrix ?? null,
-    xDim: opts.xDim === undefined ? "x" : opts.xDim,
-    yDim: "y",
-    zDim: "z",
-    intensityDim: null,
-    lens: { dims: opts.dims ?? ["z", "y", "x"], shape: opts.shape },
+    xAxis: opts.xAxis === undefined ? "x" : opts.xAxis,
+    yAxis: "y",
+    zAxis: "z",
+    intensityAxis: null,
+    lens: { axisNames: opts.axisNames ?? ["z", "y", "x"], shape: opts.shape },
   }) as unknown as LayerState;
 
 describe("computeSceneWorldBox", () => {
@@ -86,12 +86,12 @@ describe("computeSceneWorldBox", () => {
 
   it("returns null for no layers or layers without valid spatial axes", () => {
     expect(computeSceneWorldBox([])).toBeNull();
-    expect(computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], xDim: null })])).toBeNull();
+    expect(computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], xAxis: null })])).toBeNull();
   });
 
   it("fits a z-less (2D) layer as a flat box", () => {
-    const layer = makeLayer({ shape: [50, 100], dims: ["y", "x"] });
-    (layer as { zDim: string | null }).zDim = null;
+    const layer = makeLayer({ shape: [50, 100], axisNames: ["y", "x"] });
+    (layer as { zAxis: string | null }).zAxis = null;
     const box = computeSceneWorldBox([layer])!;
     expect(box.min.toArray()).toEqual([-50, -25, 0]);
     expect(box.max.toArray()).toEqual([50, 25, 0]);

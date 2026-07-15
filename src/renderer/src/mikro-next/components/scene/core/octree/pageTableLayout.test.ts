@@ -10,7 +10,7 @@ import {
 } from "./pageTableLayout";
 
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 
 const geo3 = buildLayerLevelGeometry(DIMS, LAYER, [
   { shape: [3, 40, 500, 600], chunks: [1, 16, 128, 128], dtype: "uint8", storeId: "s0" },

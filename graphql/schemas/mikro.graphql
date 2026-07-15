@@ -5,6 +5,11 @@ A multi-dimensional array dataset. Its dimensions and their types live on the ax
 """
 type ADataset {
   """
+  The dataset's axis names, in array order. Derived from the axes of its intrinsic coordinate system
+  """
+  axisNames: [String!]!
+
+  """
   The dataset's calibrated PHYSICAL spaces (pixel size, stage pose, ...). Each is reached from the intrinsic system by a single transformation edge; refining a calibration bumps that edge's version and moves nothing drawn in pixels
   """
   calibrations(filters: CoordinateSystemFilter, ordering: [CoordinateSystemOrder!]! = [], pagination: OffsetPaginationInput): [CoordinateSystem!]!
@@ -19,15 +24,10 @@ type ADataset {
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
 
   """
-  The edge from this dataset's pixel grid back into the lens it was computed from, when it is a derived dataset (a deconvolution, a segmentation, a projection, a resample). Null for a dataset that was acquired rather than derived. It is an edge, not a label: it carries the map itself, so a client can compose it -- and it is why a derived dataset inherits its source's placement instead of needing its own registration
+  The edges from this dataset's pixel grid back into the lenses it was computed from, when it is a derived dataset: one for a deconvolution or a resample, several for a fusion of channels or tiles. Empty for a dataset that was acquired rather than derived. The order is the priority its creator declared: the first edge is the primary parent, the one that places the dataset. They are edges, not labels: each carries the map itself, so a client can compose it -- and they are why a derived dataset inherits its sources' placements instead of needing its own registration
   """
-  derivedFrom: Transformation
+  derivedFrom: [Transformation!]!
   description: String
-
-  """
-  The dataset's dimension names, in array order. Derived from the axes of its intrinsic coordinate system
-  """
-  dims: [String!]!
   id: ID!
 
   """
@@ -42,7 +42,7 @@ type ADataset {
   name: String!
 
   """
-  The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. The scene createAdataset's bootstrapScene creates is found here
+  The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. The scene createADataset's bootstrapScene creates is found here
   """
   scenes: [Scene!]!
 
@@ -165,7 +165,7 @@ type AffineTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -176,6 +176,11 @@ type AffineTransformation implements Transformation {
   The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
   """
   outputAxes: [String!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -290,19 +295,6 @@ input AffineTransformationViewInput {
   zMin: Int = null
 }
 
-"""
-How a collection's own coordinate system relates to the space it was computed from. The same edge, and the same rank check, that a derived dataset's `derivedFrom` writes
-"""
-input AnchorInput {
-  affine: [[Float!]!] = null
-  inputAxes: [String!] = null
-  kind: TransformKind! = IDENTITY
-  outputAxes: [String!] = null
-  reason: String = null
-  scale: [Float!] = null
-  translation: [Float!] = null
-}
-
 """The `Any` scalar any type"""
 scalar Any
 
@@ -343,12 +335,21 @@ input AssociateInput {
 One named, typed dimension of a coordinate system. Its `order` is its index into the array shape
 """
 type Axis {
+  description: String
   id: ID!
   longName: String
   name: String!
   order: Int!
   type: AxisType!
   unit: Unit
+}
+
+"""
+Input type for an axis anchor, which pins one axis to one discrete position
+"""
+input AxisAnchorInput {
+  axis: String!
+  value: Int!
 }
 
 input AxisFilter {
@@ -371,6 +372,7 @@ input AxisFilter {
 Input type for one structural axis of a dataset's pixel grid: its name and its semantic kind. Units and spacings do not belong here -- they are a calibration, a separate coordinate system plus one edge
 """
 input AxisInput {
+  description: String = null
   longName: String = null
   name: String!
   type: AxisType!
@@ -525,7 +527,7 @@ type BijectionTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -539,6 +541,11 @@ type BijectionTransformation implements Transformation {
 
   """The forward transformation (order 0) and its inverse (order 1)"""
   transformations: [Transformation!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -628,7 +635,7 @@ type ByDimensionTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -644,6 +651,11 @@ type ByDimensionTransformation implements Transformation {
   The child transformations. Each carries the `inputAxes` and `outputAxes` it acts on
   """
   transformations: [Transformation!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -673,6 +685,7 @@ type CCDElement implements OpticalElement {
 Input type for one axis of a calibrated coordinate system: its name, its semantic kind and its physical unit
 """
 input CalibratedAxisInput {
+  description: String = null
   longName: String = null
   name: String!
   type: AxisType!
@@ -802,7 +815,7 @@ type ChannelLabel {
 A single intensity channel of the layer's lens, with its own transfer function
 """
 type ChannelSourceNode implements LayerRenderNode {
-  intensityDim: String
+  intensityAxis: String
   intensityIndex: Int!
   kind: String!
 
@@ -1176,7 +1189,7 @@ type CoordinateAnchor {
 Input type for a coordinate anchor, which specifies a list of dimension anchors to anchor to
 """
 input CoordinateAnchorInput {
-  dimAnchors: [DimAnchorInput!]!
+  axisAnchors: [AxisAnchorInput!]!
   label: LabelInput = null
   lightGraph: LightpathGraphInput = null
   omeMetadata: OmeMetadataInput = null
@@ -1211,6 +1224,11 @@ type CoordinateSystem {
   The system's axes, in array order (slowest-varying first). RFC-5 requires them ordered by type: time, then channel and custom types, then space
   """
   axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
+
+  """
+  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a WORLD, an ATLAS); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
+  """
+  epoch: DateTime
   id: ID!
   kind: CoordinateSystemKind!
   name: String!
@@ -1262,11 +1280,6 @@ enum CoordinateSystemKind {
   ATLAS
 
   """
-  A feature table's row space: its rows are objects, not positions, so its one axis enumerates rather than measures. Nothing maps a pixel to a row, which is why the edge relating it to the image it came from is UNMAPPABLE.
-  """
-  FEATURE
-
-  """
   The dataset's level-0 pixel grid. Every pyramid level and lens maps into this one system, so it is the space in which a dataset's geometry is unambiguous — and it is stable: recalibrating the dataset never moves it.
   """
   INTRINSIC
@@ -1281,6 +1294,11 @@ enum CoordinateSystemKind {
   """
   PHYSICAL
 
+  """
+  A table dataset's row/coordinate space. Its axes ARE its declared coordinate columns: with metric SPACE/TIME columns it is a placeable space (a mappable edge registers it, or a scene does), and with none it degenerates to a single INDEX axis whose only honest edge is UNMAPPABLE — the measurement-table case.
+  """
+  TABLE
+
   """A scene's shared space, into which each of its layers is registered."""
   WORLD
 }
@@ -1288,10 +1306,10 @@ enum CoordinateSystemKind {
 enum CoordinateSystemKindChoices {
   ARRAY
   ATLAS
-  FEATURE
   INTRINSIC
   MESH
   PHYSICAL
+  TABLE
   WORLD
 }
 
@@ -1309,7 +1327,7 @@ type CoordinatesTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -1325,6 +1343,11 @@ type CoordinatesTransformation implements Transformation {
   The Zarr array holding the coordinate field: an absolute output position per point
   """
   store: ZarrStore
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -1337,7 +1360,7 @@ input CreateADatasetInput {
   bootstrapScene: BootstrapSceneInput = null
   calibration: CalibrationSpecInput = null
   data: ArrayLike!
-  derivedFrom: DerivedFromInput = null
+  derivedFrom: [DerivedFromInput!] = null
   name: String!
   scales: [ScaleInput!]!
 }
@@ -1375,20 +1398,6 @@ input CreateDatasetInput {
 }
 
 """
-Input for registering an immutable, versioned table of per-object measurements. It gets a coordinate system of its own -- its rows are objects, not positions -- and an UNMAPPABLE edge relates it to the data it was measured from
-"""
-input CreateFeatureCollectionInput {
-  anchor: AnchorInput = null
-  axes: [AxisInput!] = null
-  coordinateSystem: ID = null
-  name: String!
-  provenanceMetadata: Any = null
-  specVersion: String = null
-  store: ParquetLike!
-  version: String!
-}
-
-"""
 Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel)
 """
 input CreateIntensityLayerInput {
@@ -1397,7 +1406,7 @@ input CreateIntensityLayerInput {
   climMin: Float = null
   colormap: ColorMap = null
   gamma: Float = null
-  intensityDim: String = null
+  intensityAxis: String = null
   intensityIndex: Int = 0
   lens: ID!
   opacity: Float = null
@@ -1410,7 +1419,7 @@ input CreateIntensityLayerInput {
 Create a label layer that renders an instance / segmentation map, mapping discrete integer labels to distinct colors
 """
 input CreateLabelLayerInput {
-  intensityDim: String = null
+  intensityAxis: String = null
   intensityIndex: Int = 0
   lens: ID!
   opacity: Float = null
@@ -1422,7 +1431,6 @@ input CreateLabelLayerInput {
 """Input type for creating an image from an array-like object"""
 input CreateLayerInput {
   blending: Blending = null
-  intensityDim: String = null
   lens: ID!
   opacity: Float = null
   order: Int = null
@@ -1441,10 +1449,10 @@ input CreateLensInput {
 Input for registering an immutable, versioned mesh collection. The collection gets a coordinate system of its own, and an edge relates it to the space the meshes were extracted from
 """
 input CreateMeshCollectionInput {
-  anchor: AnchorInput = null
   axes: [AxisInput!] = null
   catalog: ParquetLike!
   coordinateSystem: ID = null
+  derivedFrom: DerivationInput = null
   encoding: Any = null
   geometry: [ParquetLike!] = null
   grid: Any = null
@@ -1454,12 +1462,12 @@ input CreateMeshCollectionInput {
 }
 
 """
-Create a layer that renders a 3D mesh (surface reconstruction / isosurface) in a scene
+Create a layer that renders a mesh collection (surface reconstructions / isosurfaces) in a scene. The collection's own coordinate system is the layer's space, so it must already have a path to the scene's world
 """
 input CreateMeshLayerInput {
   blending: Blending = null
   materialColor: [Int!] = null
-  mesh: ID!
+  meshCollection: ID!
   opacity: Float = null
   order: Int = null
   scene: ID!
@@ -1471,14 +1479,14 @@ input CreateMeshLayerInput {
 Attach an instrument-response correction to a dataset, taking a raw phasor to a calibrated one. Measured once per detector from a reference acquisition. Its absence is legitimate: an uncalibrated phasor still renders, its hue is just not traceable to an absolute lifetime
 """
 input CreatePhasorCalibrationInput {
-  """The ID of the dataset the correction applies to"""
-  dataset: ID!
-
   """The axis the correction applies to"""
-  dim: String!
+  axis: String!
 
   """The coordinates the correction is pinned to"""
-  dimAnchors: [DimAnchorInput!] = null
+  axisAnchors: [AxisAnchorInput!] = null
+
+  """The ID of the dataset the correction applies to"""
+  dataset: ID!
 
   """The harmonic the correction applies at"""
   harmonic: Int = null
@@ -1497,6 +1505,12 @@ input CreatePhasorCalibrationInput {
 Attach a phasor distribution to a dataset: the 2D (g, s) density of a phasor taken over one axis at one harmonic. Computed after ingest by a task that reads the cube; recomputing at the same harmonic replaces it, while a second harmonic lands beside the first
 """
 input CreatePhasorHistogramInput {
+  """The axis the phasor was taken over"""
+  axis: String!
+
+  """The coordinates the distribution is pinned to"""
+  axisAnchors: [AxisAnchorInput!] = null
+
   """The resolution of the square (g, s) density grid"""
   bins: Int = null
   calibrated: Boolean = null
@@ -1506,12 +1520,6 @@ input CreatePhasorHistogramInput {
 
   """The ID of the dataset the phasor was computed from"""
   dataset: ID!
-
-  """The axis the phasor was taken over"""
-  dim: String!
-
-  """The coordinates the distribution is pinned to"""
-  dimAnchors: [DimAnchorInput!] = null
   gMax: Float = null
   gMin: Float = null
 
@@ -1529,19 +1537,19 @@ Create a layer that reduces one axis of a lens to a phasor and colors each pixel
 input CreatePhasorLayerInput {
   blending: Blending = null
   harmonic: Int = null
-  intensityDim: String = null
+  intensityAxis: String = null
   intensityIndex: Int = 0
   lens: ID!
   opacity: Float = null
   order: Int = null
-  phasorDim: String = null
+  phasorAxis: String = null
   scene: ID!
   transfer: PhasorTransferInput = null
   visible: Boolean = null
 }
 
 """
-Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
+Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset or a legacy table
 """
 input CreatePointLayerInput {
   blending: Blending = null
@@ -1555,10 +1563,11 @@ input CreatePointLayerInput {
   scene: ID!
   sizeColumn: String = null
   tColumn: String = null
-  table: ID!
+  table: ID = null
+  tableDataset: ID = null
   visible: Boolean = null
-  xColumn: String!
-  yColumn: String!
+  xColumn: String = null
+  yColumn: String = null
   zColumn: String = null
 }
 
@@ -1594,7 +1603,7 @@ input CreateRgbLayerInput {
   climMax: Float = null
   climMin: Float = null
   greenIndex: Int = 1
-  intensityDim: String = null
+  intensityAxis: String = null
   lens: ID!
   opacity: Float = null
   order: Int = null
@@ -1639,7 +1648,20 @@ input CreateShapeLayerInput {
 }
 
 """
-Create a layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id
+Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE)
+"""
+input CreateTableDatasetInput {
+  columns: [TableColumnInput!]! = []
+  coordinateSystem: ID = null
+  data: ParquetLike!
+  derivedFrom: DerivationInput = null
+  description: String = null
+  name: String!
+  validateSchema: Boolean! = false
+}
+
+"""
+Create a layer that renders trajectories (e.g. particle/cell tracks) from a table dataset or a legacy table, grouped by a track id
 """
 input CreateTrackLayerInput {
   blending: Blending = null
@@ -1651,11 +1673,12 @@ input CreateTrackLayerInput {
   order: Int = null
   scene: ID!
   tColumn: String = null
-  table: ID!
-  trackIdColumn: String!
+  table: ID = null
+  tableDataset: ID = null
+  trackIdColumn: String = null
   visible: Boolean = null
-  xColumn: String!
-  yColumn: String!
+  xColumn: String = null
+  yColumn: String = null
   zColumn: String = null
 }
 
@@ -1675,6 +1698,7 @@ input CreateTransformationInput {
   scene: ID = null
   store: ArrayLike = null
   translation: [Float!] = null
+  validity: PlacementValidity = null
 }
 
 """
@@ -1686,7 +1710,7 @@ input CreateVolumeLayerInput {
   climMin: Float = null
   colormap: ColorMap = null
   gamma: Float = null
-  intensityDim: String = null
+  intensityAxis: String = null
   intensityIndex: Int = 0
   lens: ID!
   mode: ProjectionMode = null
@@ -1702,7 +1726,9 @@ One level of a dataset's resolution pyramid: a zarr-backed array, with its own v
 type DataArray {
   chunkShape: [Int!]!
 
-  """This level's ARRAY (voxel index) coordinate system"""
+  """
+  The coordinate system this level's voxels live in. Level 0 owns none: the dataset's INTRINSIC system IS the level-0 pixel grid, so this resolves to it. Higher levels own an ARRAY (voxel index) system
+  """
   coordinateSystem: CoordinateSystem
   id: ID!
   level: Int!
@@ -1710,7 +1736,7 @@ type DataArray {
   store: ZarrStore!
 
   """
-  The edge from this level's voxel space into the dataset's intrinsic space. Its scale is absolute -- derived from the actual shapes, not from a nominal 2**level -- so a pyramid whose axes do not halve cleanly is described correctly
+  The edge from this level's voxel space into the dataset's intrinsic space. Its scale is absolute -- derived from the actual shapes, not from a nominal 2**level -- so a pyramid whose axes do not halve cleanly is described correctly. Null for level 0: its space IS the intrinsic space, and there is nothing to map
   """
   toParent: Transformation
 }
@@ -1930,12 +1956,6 @@ input DeleteEraInput {
   id: ID!
 }
 
-"""Input for deleting a feature collection by ID"""
-input DeleteFeatureCollectionInput {
-  """The ID of the feature collection to delete"""
-  id: ID!
-}
-
 """Input for deleting a file by ID"""
 input DeleteFileInput {
   """The ID of the file to delete"""
@@ -2026,6 +2046,12 @@ input DeleteStageInput {
   id: ID!
 }
 
+"""Input for deleting a table dataset by ID"""
+input DeleteTableDatasetInput {
+  """The ID of the table dataset to delete"""
+  id: ID!
+}
+
 """Input for deleting a transformation by ID"""
 input DeleteTransformationInput {
   """The ID of the transformation to delete"""
@@ -2042,6 +2068,19 @@ input DeleteViewCollectionInput {
 input DeleteViewInput {
   """The ID of the view to delete"""
   id: ID!
+}
+
+"""
+How a collection's own coordinate system relates to the space it was derived from. The same edge, and the same rank check, that a derived dataset's `derivedFrom` writes
+"""
+input DerivationInput {
+  affine: [[Float!]!] = null
+  inputAxes: [String!] = null
+  kind: TransformKind! = IDENTITY
+  outputAxes: [String!] = null
+  reason: String = null
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """
@@ -2134,14 +2173,6 @@ type DetectorElement implements OpticalElement {
   serialNumber: String
 }
 
-"""
-Input type for a dimension anchor, which specifies a dimension and a value to anchor to
-"""
-input DimAnchorInput {
-  dim: String!
-  value: Int!
-}
-
 input DimSelector {
   end: Int = null
   index: Int = null
@@ -2166,7 +2197,7 @@ type DisplacementsTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -2182,6 +2213,11 @@ type DisplacementsTransformation implements Transformation {
   The Zarr array holding the displacement field: a per-point offset. Ask it for an access grant and read it directly
   """
   store: ZarrStore
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -2440,72 +2476,6 @@ input ExperimentOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
-}
-
-"""
-An immutable, versioned table of per-object measurements, backed by a Parquet store. Its rows are objects, not positions, so it lives in a coordinate system of its own and the edge relating it to the data it was measured from is UNMAPPABLE. Ask the store for an access grant and query the Parquet directly rather than paginating rows through GraphQL
-"""
-type FeatureCollection {
-  """
-  The edge relating this table to the data it was measured from. UNMAPPABLE: the two are related, and no point of the image is one of these rows. This is the field that tells a client *why* the table cannot be placed, rather than leaving it to infer a missing registration
-  """
-  anchoredTo: Transformation
-
-  """
-  The FEATURE system this table's rows live in. Its one INDEX axis enumerates the objects: nothing here is a position
-  """
-  coordinateSystem: CoordinateSystem!
-  id: ID!
-  name: String!
-
-  """
-  How this table was produced: the measurement run, its parameters and its inputs
-  """
-  provenanceMetadata: Any!
-  specVersion: String
-
-  """
-  The Parquet store holding the table. Request an access grant from it and read the Parquet directly
-  """
-  store: ParquetStore!
-  version: String!
-}
-
-input FeatureCollectionFilter {
-  AND: FeatureCollectionFilter
-  DISTINCT: Boolean
-  NOT: FeatureCollectionFilter
-  OR: FeatureCollectionFilter
-
-  """Filter for items created after this datetime"""
-  createdAfter: DateTime
-
-  """Filter for items created before this datetime"""
-  createdBefore: DateTime
-
-  """
-  Filter by the dataset the objects were measured from, following the UNMAPPABLE anchor edge
-  """
-  dataset: ID
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  name: StrFilterLookup
-
-  """Filter by the creator's subject ID"""
-  owner: ID
-
-  """Search by name (case-insensitive substring)"""
-  search: String
-  version: StrFilterLookup
-}
-
-input FeatureCollectionOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  name: Ordering
-  version: Ordering
 }
 
 """
@@ -3041,7 +3011,7 @@ type IdentityTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -3052,6 +3022,11 @@ type IdentityTransformation implements Transformation {
   The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
   """
   outputAxes: [String!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -3300,15 +3275,14 @@ type ImageLayer implements Layer {
   """
   placement: PlacementState!
 
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity: PlacementValidity!
+
   """The composable in-layer render graph, if this layer defines one"""
   renderGraph: LayerRenderGraph
   scene: Scene!
-  status: PlacementStatus!
-
-  """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
-  """
-  validity: PlacementValidity!
   visible: Boolean!
 }
 
@@ -3702,13 +3676,12 @@ interface Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
-  scene: Scene!
-  status: PlacementStatus!
 
   """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
-  validity: PlacementValidity!
+  placementValidity: PlacementValidity!
+  scene: Scene!
   visible: Boolean!
 }
 
@@ -3729,8 +3702,6 @@ input LayerFilter {
 
   """Filter by the scene this layer is placed in"""
   scene: ID
-  status: PlacementStatus
-  validity: PlacementValidity
 }
 
 """
@@ -3776,12 +3747,12 @@ input LayerNodeInput {
   blending: Blending = null
   children: [LayerNodeInput!] = null
   harmonic: Int = null
-  intensityDim: String = null
+  intensityAxis: String = null
   intensityIndex: Int = null
   kind: String!
   label: String = null
   mode: ProjectionMode = null
-  phasorDim: String = null
+  phasorAxis: String = null
   phasorTransfer: PhasorTransferInput = null
   transfer: TransferFunctionInput = null
   visible: Boolean = null
@@ -3825,21 +3796,22 @@ A Lens is a way of looking at a dataset: a dimensional selection (slices) over a
 type Lens {
   activeAnchors: [CoordinateAnchor!]!
 
-  """The lens' own coordinate system: the space its slices cut out"""
-  coordinateSystem: CoordinateSystem
-  dataset: ADataset!
-  dimCount: Int!
+  """
+  The lens' axis names, in array order. A selection never drops or reorders an axis
+  """
+  axisNames: [String!]!
 
   """
-  The lens' dimension names, in array order. A selection never drops or reorders an axis
+  The coordinate system the lens' selection is expressed in. A sliced lens owns one (the space its slices cut out, with the derived edge recording the shift); an unsliced lens selects everything, so this resolves to the dataset's INTRINSIC system
   """
-  dims: [String!]!
+  coordinateSystem: CoordinateSystem
+  dataset: ADataset!
   id: ID!
 
   """
   Everything needed to reduce one axis of this lens to a phasor: the bin count and width, the period the transform runs over, the laser rate, the instrument-response correction and the persisted distribution. Null when the lens has no MICROTIME or SPECTRUM axis. Derived -- none of it is stored on the lens, and a phasor render node references it rather than copying it, so two layers over one dataset cannot disagree about the instrument
   """
-  phasor(dim: String = null, harmonic: Int! = 1): PhasorContext
+  phasor(axis: String = null, harmonic: Int! = 1): PhasorContext
 
   """
   Which axis of the data source maps to screen x, y, z, time and intensity. Derived from the axis types: spatial axes are in array order, so the last is x
@@ -3848,11 +3820,10 @@ type Lens {
 
   """The shape this lens' slices cut out of its dataset"""
   shape: [Int!]!
-  size: Int!
   slices: [Slice!]!
 
   """
-  The edge from this lens' space back into its dataset's level-0 voxel space. A crop is a translation of the slice starts; a stepped lens also rescales. Without this edge an ROI drawn on a cropped lens has no defined path back to its dataset
+  The edge from this lens' space back into its dataset's intrinsic pixel space. A crop is a translation of the slice starts; a stepped lens also rescales. Without this edge an ROI drawn on a cropped lens has no defined path back to its dataset. Null for an unsliced lens: its space IS the intrinsic space, and there is no shift to record
   """
   toParent: Transformation
 }
@@ -4022,6 +3993,11 @@ type MapAxisTransformation implements Transformation {
 
   """The names of the output axes, positionally matched to `inputAxes`"""
   outputAxes: [String!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -4205,19 +4181,19 @@ An immutable, versioned collection of meshes, backed by Parquet stores. Ask the 
 """
 type MeshCollection {
   """
-  The edge relating this collection's space to the space the meshes were extracted from -- an identity when the meshes are in that grid as-is, a scale when they came off a downsampled one. Null for a mesh anchored to no data at all
-  """
-  anchoredTo: Transformation
-
-  """
   The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly
   """
   catalog: ParquetStore!
 
   """
-  The coordinate system the collection's vertices are expressed in. The collection owns it; `anchoredTo` relates it to the data the meshes were extracted from
+  The coordinate system the collection's vertices are expressed in. The collection owns it; `derivedFrom` relates it to the data the meshes were extracted from
   """
   coordinateSystem: CoordinateSystem!
+
+  """
+  The edge relating this collection's space to the space the meshes were extracted from -- an identity when the meshes are in that grid as-is, a scale when they came off a downsampled one. The same relation a derived dataset's `derivedFrom` records. Null for a mesh derived from no data at all
+  """
+  derivedFrom: Transformation
 
   """
   The geometry encoding: how positions, normals and indices are quantized and compressed
@@ -4254,7 +4230,7 @@ input MeshCollectionFilter {
   createdBefore: DateTime
 
   """
-  Filter by the dataset the meshes were extracted from, following the anchor edge
+  Filter by the dataset the meshes were extracted from, following the derivation edge
   """
   dataset: ID
   id: ID
@@ -4332,13 +4308,12 @@ type MeshLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
-  scene: Scene!
-  status: PlacementStatus!
 
   """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
-  validity: PlacementValidity!
+  placementValidity: PlacementValidity!
+  scene: Scene!
   visible: Boolean!
   wireframe: Boolean!
 }
@@ -4450,8 +4425,10 @@ input MultiWellPlateOrder @oneOf {
 }
 
 type Mutation {
-  """Add an existing transformation edge to a scene's composition"""
-  addTransformationToScene(input: SceneTransformationInput!): Scene!
+  """
+  Add an existing transformation edge to a scene's composition as a registration
+  """
+  addRegistrationToScene(input: SceneRegistrationInput!): Scene!
 
   """Assign a user permission to an object"""
   assignUserPermission(input: AssignUserPermissionInput!): [UserObjectPermission!]!
@@ -4460,9 +4437,9 @@ type Mutation {
   attachUnstructuredMeta(input: UnstructuredMetaInput!): UnstructuredMeta!
 
   """
-  Create a new dataset from array-like data with optional choordinate anchors and OME  metadata
+  Create a new dataset from array-like data with optional coordinate anchors and OME metadata
   """
-  createAdataset(input: CreateADatasetInput!): ADataset!
+  createADataset(input: CreateADatasetInput!): ADataset!
 
   """Create a new view for affine transformation data"""
   createAffineTransformationView(input: AffineTransformationViewInput!): AffineTransformationView!
@@ -4482,7 +4459,7 @@ type Mutation {
   createContinousScanView(input: ContinousScanViewInput!): ContinousScanView!
 
   """
-  Create a new data ROI from vector or slice definitions with optional choordinate anchors and OME metadata
+  Create a new data ROI from vector or slice definitions with optional coordinate anchors and OME metadata
   """
   createDataRoi(input: CreateDataRoiInput!): DataRoi!
 
@@ -4491,11 +4468,6 @@ type Mutation {
 
   """Create a new era for temporal organization"""
   createEra(input: EraInput!): Era!
-
-  """
-  Register an immutable, versioned table of per-object measurements. It gets a coordinate system of its own -- its rows are objects, not positions -- and an UNMAPPABLE edge records that it came from an image while declaring that none of its rows is anywhere in it
-  """
-  createFeatureCollection(input: CreateFeatureCollectionInput!): FeatureCollection!
 
   """Create a new view for file data"""
   createFileView(input: FileViewInput!): FileView!
@@ -4619,6 +4591,11 @@ type Mutation {
   """Create a new stage for organizing data"""
   createStage(input: StageInput!): Stage!
 
+  """
+  Create a table dataset from a Parquet store. Its declared coordinate columns become the axes of a coordinate system it owns, which lets a localization table be placed in a scene; a table with no coordinate columns is a measurement table whose rows enumerate objects and whose lineage edge is UNMAPPABLE
+  """
+  createTableDataset(input: CreateTableDatasetInput!): TableDataset!
+
   """Create a new view for temporal data"""
   createTimepointView(input: TimepointViewInput!): TimepointView!
 
@@ -4644,7 +4621,7 @@ type Mutation {
   createWellPositionView(input: WellPositionViewInput!): WellPositionView!
 
   """Delete an existing array dataset"""
-  deleteAdataset(input: DeleteADatasetInput!): ID!
+  deleteADataset(input: DeleteADatasetInput!): ID!
 
   """Delete an existing affine transformation view"""
   deleteAffineTransformationView(input: DeleteViewInput!): ID!
@@ -4671,9 +4648,6 @@ type Mutation {
 
   """Delete an existing era"""
   deleteEra(input: DeleteEraInput!): ID!
-
-  """Delete an existing feature collection"""
-  deleteFeatureCollection(input: DeleteFeatureCollectionInput!): ID!
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
@@ -4728,6 +4702,9 @@ type Mutation {
 
   """Delete an existing stage"""
   deleteStage(input: DeleteStageInput!): ID!
+
+  """Delete an existing table dataset"""
+  deleteTableDataset(input: DeleteTableDatasetInput!): ID!
 
   """Delete an existing timepoint view"""
   deleteTimepointView(input: DeleteViewInput!): ID!
@@ -4838,9 +4815,9 @@ type Mutation {
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
 
   """
-  Remove a transformation edge from a scene's composition. The edge itself survives
+  Remove a registration edge from a scene's composition. The edge itself survives, and removal does not undo the registration it records
   """
-  removeTransformationFromScene(input: SceneTransformationInput!): Scene!
+  removeRegistrationFromScene(input: SceneRegistrationInput!): Scene!
 
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
@@ -4903,6 +4880,9 @@ type Mutation {
 
   """Update an existing region of interest"""
   updateRoi(input: UpdateRoiInput!): ROI!
+
+  """Update a table dataset's name or description"""
+  updateTableDataset(input: UpdateTableDatasetInput!): TableDataset!
 
   """Refine a transformation's parameters, bumping its version"""
   updateTransformation(input: UpdateTransformationInput!): Transformation!
@@ -6009,7 +5989,7 @@ type PermissionOption {
 The instrument-response correction taking a raw phasor to a calibrated one, pinned to a coordinate anchor. An acquisition fact, not a display choice: two layers over one dataset cannot coherently disagree about it. Its absence means the phasor is uncalibrated, which still renders
 """
 type PhasorCalibration {
-  dim: String!
+  axis: String!
   harmonic: Int!
   id: ID!
   modulationFactor: Float
@@ -6022,7 +6002,7 @@ Input type for an instrument-response correction: the phase offset and modulatio
 """
 input PhasorCalibrationInput {
   """The axis the correction applies to"""
-  dim: String!
+  axis: String!
 
   """The harmonic the correction applies at"""
   harmonic: Int = null
@@ -6057,6 +6037,9 @@ enum PhasorColorMode {
 Everything needed to reduce one axis of a lens to a phasor, at one harmonic. Derived from the dataset's calibration, its lightpath and its phasor spokes; nothing here is stored on the lens. A phasor render node states *which* axis and harmonic to reduce, and reads the rest from here -- the instrument is an acquisition fact, so two layers over one dataset cannot disagree about it
 """
 type PhasorContext {
+  """The axis the phasor is taken over"""
+  axis: String!
+
   """
   What that axis samples: MICROTIME (so the phase reads as a fluorescence lifetime) or SPECTRUM (so it reads as a spectral centre of mass)
   """
@@ -6076,9 +6059,6 @@ type PhasorContext {
   The instrument-response correction at this axis and harmonic. Null means the phasor is uncalibrated -- which still renders, its hue is just not traceable to an absolute lifetime
   """
   calibration: PhasorCalibration
-
-  """The axis the phasor is taken over"""
-  dim: String!
 
   """
   The harmonic this context was resolved for. It selects the calibration and the distribution below, which are both harmonic-specific
@@ -6142,12 +6122,12 @@ enum PhasorCursorKind {
 The distribution of a phasor pinned to a coordinate anchor: a 2D (g, s) density plus the summed profile it was computed from. What ValueHistogram is to an intensity channel -- it lets a client pick a sane value range for a phasor overlay without reading the cube
 """
 type PhasorHistogram {
+  axis: String!
   bins: Int!
   calibrated: Boolean!
 
   """The flattened bins x bins (g, s) density, row-major with s outermost"""
   counts: [Float!]!
-  dim: String!
   gMax: Float!
   gMin: Float!
   harmonic: Int!
@@ -6166,15 +6146,15 @@ type PhasorHistogram {
 Input type for a phasor distribution: the 2D (g, s) density of a phasor taken over one axis at one harmonic, plus the summed profile it came from. Persisted so a client can pick a value range for a phasor overlay without reading the cube
 """
 input PhasorHistogramInput {
+  """The axis the phasor was taken over"""
+  axis: String!
+
   """The resolution of the square (g, s) density grid"""
   bins: Int = null
   calibrated: Boolean = null
 
   """The flattened bins x bins density"""
   counts: [Float!]!
-
-  """The axis the phasor was taken over"""
-  dim: String!
   gMax: Float = null
   gMin: Float = null
 
@@ -6191,13 +6171,13 @@ Reduces one axis of the lens to a phasor -- the DFT of each pixel's profile alon
 """
 type PhasorNode implements LayerRenderNode {
   harmonic: Int!
-  intensityDim: String
+  intensityAxis: String
   intensityIndex: Int!
   kind: String!
 
   """An optional human-readable label for the node"""
   label: String
-  phasorDim: String!
+  phasorAxis: String!
   transfer: PhasorTransfer!
   visible: Boolean!
 }
@@ -6386,13 +6366,6 @@ enum PlacementState {
   UNREGISTERED
 }
 
-enum PlacementStatus {
-  ACTIVE
-  ARCHIVED
-  DELETED
-  INACTIVE
-}
-
 """
 One step of a placement path: a transformation edge, plus whether it is traversed against its stored direction. The server returns the steps; composing them into a matrix is the client's job (invert the flagged ones first)
 """
@@ -6406,10 +6379,28 @@ type PlacementStep {
   transformation: Transformation!
 }
 
+"""
+How much a transformation edge's map is actually known: assumed by the server, inferred from metadata, authored by someone, or validated against the data. A layer's validity is derived from it, never stored: the weakest edge on its path to world.
+"""
 enum PlacementValidity {
+  """
+  The numbers were read from acquisition metadata (a pixel size, a stage pose). As right as the metadata is.
+  """
   INFERRED
+
+  """
+  Someone authored this map -- a registration pipeline, a human with a matrix. It exists on purpose, but nothing has checked it against the data.
+  """
   MANUAL
+
+  """
+  This map was assumed, never measured -- badge it. The one writer left is the scene bootstrap mirroring an uncalibrated dataset's pixels into a world under default units; it also remains on historical auto-registered edges.
+  """
   UNKNOWN
+
+  """
+  Exact or checked: either the server derived the map from shapes and slices, so it cannot be wrong, or someone validated an authored registration against the data.
+  """
   VALIDATED
 }
 
@@ -6419,7 +6410,7 @@ type PlaneInfo {
 }
 
 """
-A layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table.
+A layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset or a legacy table.
 """
 type PointLayer implements Layer {
   blending: Blending!
@@ -6427,10 +6418,12 @@ type PointLayer implements Layer {
   colormap: ColorMap
 
   """
-  The coordinate system the table's coordinate columns are expressed in. Registering the points elsewhere is a transformation edge from this system, like every other spatial fact
+  (legacy table) The coordinate system the table's coordinate columns are expressed in. Null for a table dataset layer, whose space is the dataset's own system
   """
   coordinateSystem: CoordinateSystem
   id: ID!
+
+  """The column identifying each point, if any"""
   idColumn: String
   kind: LayerKind!
   opacity: Float!
@@ -6445,20 +6438,34 @@ type PointLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity: PlacementValidity!
   pointSize: Float
   scene: Scene!
   sizeColumn: String
-  status: PlacementStatus!
+
+  """The column mapped to the time coordinate, if any"""
   tColumn: String
-  table: Table!
+  table: Table
 
   """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  The table dataset the points are drawn from, when the layer uses one. Its declared coordinate columns provide the coordinates and its own system provides the placement
   """
-  validity: PlacementValidity!
+  tableDataset: TableDataset
   visible: Boolean!
+
+  """
+  The column mapped to the x coordinate. For a table dataset layer, the coordinate column whose axis is named 'x'
+  """
   xColumn: String
+
+  """The column mapped to the y coordinate"""
   yColumn: String
+
+  """The column mapped to the z coordinate, if any"""
   zColumn: String
 }
 
@@ -6650,14 +6657,6 @@ type Query {
 
   """List experiments"""
   experiments(filters: ExperimentFilter, ordering: [ExperimentOrder!]! = [], pagination: OffsetPaginationInput): [Experiment!]!
-
-  """Get a single feature collection by ID"""
-  featureCollection(id: ID!): FeatureCollection!
-
-  """
-  List feature collections (immutable, versioned Parquet-backed tables of per-object measurements, whose rows are objects rather than positions)
-  """
-  featureCollections(filters: FeatureCollectionFilter, ordering: [FeatureCollectionOrder!]! = [], pagination: OffsetPaginationInput): [FeatureCollection!]!
 
   """Get a single file by ID"""
   file(
@@ -6893,6 +6892,14 @@ type Query {
     """The unique identifier of an object"""
     table: ID!
   ): [TableCell!]!
+
+  """Get a single table dataset by ID"""
+  tableDataset(id: ID!): TableDataset!
+
+  """
+  List table datasets (Parquet-backed tables of scientific records: measurements, localizations, expression levels)
+  """
+  tableDatasets(filters: TableDatasetFilter, ordering: [TableDatasetOrder!]! = [], pagination: OffsetPaginationInput): [TableDataset!]!
 
   """Get a single table row by its compound ID (tableId-rowId)"""
   tableRow(
@@ -7617,7 +7624,7 @@ type RotationTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -7628,6 +7635,11 @@ type RotationTransformation implements Transformation {
   The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
   """
   outputAxes: [String!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -7671,7 +7683,7 @@ type ScaleTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -7687,6 +7699,11 @@ type ScaleTransformation implements Transformation {
   The per-axis scale factors, in the axis order of the input system, expressed in the units of the output system's axes (dimensionless between pixel systems, e.g. within a pyramid). Absolute, not relative to another level
   """
   scale: [Float!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -7761,21 +7778,16 @@ type Scene {
   Every coordinate system reachable in this scene: its world system plus those its transformation edges touch
   """
   coordinateSystems: [CoordinateSystem!]!
-
-  """
-  The transformation edges belonging to this scene, e.g. the registrations placing each layer's dataset into the world system. This membership set is what `layers.pathToWorld` searches; composing the matrices stays the client's job
-  """
-  coordinateTransformations: [Transformation!]!
-
-  """
-  The wall-clock instant the world system's time axis has its origin at: `wall_clock = epoch + t * unit`. Null when the scene's acquisition time is unknown -- the time axis is still a perfectly composable relative coordinate without it
-  """
-  epoch: DateTime
   id: ID!
 
   """The layers placed in this scene (a heterogeneous list of layer kinds)"""
   layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   name: String!
+
+  """
+  The registration edges belonging to this scene's composition -- mostly the edges placing each layer's dataset into the world system. This membership set is what `layers.pathToWorld` searches; composing the matrices stays the client's job. Removing one does not undo it: the edge remains a fact about two coordinate systems
+  """
+  registrations: [Transformation!]!
 
   """
   The ROIs drawn in a coordinate system this scene can reach. Reachability, not containment: an ROI belongs to a coordinate system, and survives the scene's deletion
@@ -7815,8 +7827,10 @@ input SceneOrder @oneOf {
   name: Ordering
 }
 
-"""Input for adding or removing an edge from a scene's composition"""
-input SceneTransformationInput {
+"""
+Input for adding a registration edge to, or removing one from, a scene's composition
+"""
+input SceneRegistrationInput {
   scene: ID!
   transformation: ID!
 }
@@ -7843,7 +7857,7 @@ type SequenceTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -7859,6 +7873,11 @@ type SequenceTransformation implements Transformation {
   The child transformations, applied first to last. They omit their own input and output: the sequence supplies them
   """
   transformations: [Transformation!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -7884,22 +7903,23 @@ type ShapeLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
-  scene: Scene!
-  status: PlacementStatus!
-  strokeColor: [Int!]
-  strokeWidth: Float
 
   """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
-  validity: PlacementValidity!
+  placementValidity: PlacementValidity!
+  scene: Scene!
+  strokeColor: [Int!]
+  strokeWidth: Float
   visible: Boolean!
 }
 
-"""A slice along a named dimension, with optional start, stop and step"""
+"""A slice along a named axis, with optional start, stop and step"""
 type Slice {
-  """The key of the dimension, e.g. 'x', 'y', 'z', 'c', or 't'"""
-  dim: String!
+  """
+  The name of the axis the slice acts on, e.g. 'x', 'y', 'z', 'c', or 't'
+  """
+  axis: String!
 
   """The starting index of the slice, or None to start from the beginning"""
   start: Int
@@ -7911,11 +7931,9 @@ type Slice {
   stop: Int
 }
 
-"""
-Input type for a dimension descriptor, which specifies a key and a kind for a dimension
-"""
+"""Input type for a slice along one axis of a dataset"""
 input SliceInput {
-  dim: String!
+  axis: String!
   start: Int = null
   step: Int = null
   stop: Int = null
@@ -8190,6 +8208,156 @@ type TableColumn {
   name: String!
   nullable: Boolean!
   type: DuckDBDataType!
+}
+
+"""
+One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and optional unit and becomes an axis of the table's space
+"""
+input TableColumnInput {
+  axisType: AxisType = null
+  description: String = null
+  dtype: String!
+  longName: String = null
+  name: String!
+  role: TableColumnRole! = ATTRIBUTE
+  unit: String = null
+}
+
+"""
+What a table dataset's column is for: a coordinate that places the row, or data hanging off it.
+"""
+enum TableColumnRole {
+  """
+  A measurement or property column — area, an intensity, a marker level. Data only; it does not place the row.
+  """
+  ATTRIBUTE
+
+  """A per-row color, or a value a layer colors the rows by."""
+  COLOR
+
+  """
+  A spatial or temporal column whose values are coordinates. The coordinate columns become the axes of the table's own coordinate system, which is what makes the table placeable.
+  """
+  COORDINATE
+
+  """A per-row identifier."""
+  ID
+
+  """A per-row text label."""
+  LABEL
+
+  """Groups rows into a trajectory. Required to render a table as tracks."""
+  TRACK_ID
+}
+
+"""
+A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL
+"""
+type TableDataset {
+  """The table's axis names, in order. Derived from the coordinate columns"""
+  axisNames: [String!]!
+
+  """
+  The declared column schema, in order. The COORDINATE columns are the axes of this table's coordinate system
+  """
+  columns: [TableDatasetColumn!]!
+
+  """
+  The coordinate system this table owns. Its axes are the table's coordinate columns (or a single INDEX axis for a pure measurement table)
+  """
+  coordinateSystem: CoordinateSystem!
+
+  """The task this table was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
+
+  """
+  The edge from this table's space back into the data it was computed from. UNMAPPABLE for a measurement table (its rows are not positions), a real map for a placeable localization table. Null for a freestanding table. It is the same relation a derived dataset's `derivedFrom` records
+  """
+  derivedFrom: Transformation
+  description: String
+  id: ID!
+  name: String!
+
+  """How this table was produced: the run, its parameters and its inputs"""
+  provenanceMetadata: Any!
+
+  """
+  The Parquet store holding the rows. Request an access grant from it and read the Parquet directly
+  """
+  store: ParquetStore!
+}
+
+"""
+One declared column of a table dataset: its name, dtype and role. A COORDINATE column is also an axis of the table's space
+"""
+type TableDatasetColumn {
+  axisType: AxisType
+  description: String
+  dtype: String!
+  id: ID!
+  longName: String
+  name: String!
+  order: Int!
+  role: TableColumnRole!
+  unit: String
+}
+
+input TableDatasetFilter {
+  AND: TableDatasetFilter
+  DISTINCT: Boolean
+  NOT: TableDatasetFilter
+  OR: TableDatasetFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+
+  """
+  Filter by the dataset the table was computed from, following its derivation edge
+  """
+  dataset: ID
+  description: StrFilterLookup
+
+  """Filter to tables that declare a column of this role, e.g. TRACK_ID"""
+  hasColumnRole: TableColumnRole
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+input TableDatasetOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 input TableFilter {
@@ -8472,7 +8640,7 @@ input TimepointViewInput {
 }
 
 """
-A layer that renders trajectories (e.g. particle/cell tracks) from columns of a table, grouped by a track id.
+A layer that renders trajectories (e.g. particle/cell tracks) from a table dataset or a legacy table, grouped by a track id.
 """
 type TrackLayer implements Layer {
   blending: Blending!
@@ -8480,7 +8648,7 @@ type TrackLayer implements Layer {
   colormap: ColorMap
 
   """
-  The coordinate system the table's coordinate columns are expressed in. Registering the tracks elsewhere is a transformation edge from this system, like every other spatial fact
+  (legacy table) The coordinate system the table's coordinate columns are expressed in. Null for a table dataset layer, whose space is the dataset's own system
   """
   coordinateSystem: CoordinateSystem
   id: ID!
@@ -8498,19 +8666,35 @@ type TrackLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
-  scene: Scene!
-  status: PlacementStatus!
-  tColumn: String
-  table: Table!
-  trackIdColumn: String
 
   """
-  How much this layer's placement is actually known. A registration the server assumed (the identity on the axes the dataset and the world share, created when the layer was placed) stays UNKNOWN -- badge it. MANUAL and VALIDATED are what a registration someone actually made or checked looks like
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
-  validity: PlacementValidity!
+  placementValidity: PlacementValidity!
+  scene: Scene!
+
+  """The column mapped to the time coordinate, if any"""
+  tColumn: String
+  table: Table
+
+  """
+  The table dataset the tracks are drawn from, when the layer uses one. Its coordinate and TRACK_ID columns provide the trajectories
+  """
+  tableDataset: TableDataset
+
+  """
+  The column that groups rows into tracks. For a table dataset layer, its TRACK_ID column
+  """
+  trackIdColumn: String
   visible: Boolean!
+
+  """The column mapped to the x coordinate"""
   xColumn: String
+
+  """The column mapped to the y coordinate"""
   yColumn: String
+
+  """The column mapped to the z coordinate, if any"""
   zColumn: String
 }
 
@@ -8622,7 +8806,7 @@ interface Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -8633,6 +8817,11 @@ interface Transformation {
   The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
   """
   outputAxes: [String!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -8669,6 +8858,11 @@ input TransformationFilter {
 
   """Filter by the scene this transformation is a member of"""
   scene: ID
+
+  """
+  Filter by how much the edge's map is actually known, e.g. UNKNOWN to list every placement that is still an assumption
+  """
+  validity: PlacementValidity
 }
 
 input TransformationOrder @oneOf {
@@ -8683,7 +8877,7 @@ type TranslationTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -8697,6 +8891,11 @@ type TranslationTransformation implements Transformation {
 
   """The per-axis offsets, in the axis order of the input system"""
   translation: [Float!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -8732,7 +8931,7 @@ type UnmappableTransformation implements Transformation {
   input: CoordinateSystem
 
   """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's dims, and the two differ often enough that indexing the arrays against dims silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
   kind: TransformKind!
@@ -8748,6 +8947,11 @@ type UnmappableTransformation implements Transformation {
   Why the geometry does not survive, if the author said. Purely descriptive: the kind is what the graph acts on, and an absent reason does not make the edge any less of a statement
   """
   reason: String
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
   version: Int!
 }
 
@@ -8790,7 +8994,6 @@ input UpdateImageInput {
 input UpdateLayerInput {
   blending: Blending = null
   id: ID!
-  intensityDim: String = null
   lens: ID = null
   opacity: Float = null
   order: Int = null
@@ -8905,6 +9108,13 @@ input UpdateRoiInput {
   vectors: [FiveDVector!] = null
 }
 
+"""Input for updating a table dataset's name or description"""
+input UpdateTableDatasetInput {
+  description: String = null
+  id: ID!
+  name: String = null
+}
+
 """
 Input for refining an edge's parameters. Bumps its version, which is what tells an ROI its chain has moved
 """
@@ -8914,6 +9124,7 @@ input UpdateTransformationInput {
   name: String = null
   scale: [Float!] = null
   translation: [Float!] = null
+  validity: PlacementValidity = null
 }
 
 """
@@ -9248,7 +9459,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | FeatureCollection | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

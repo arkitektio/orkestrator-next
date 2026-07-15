@@ -476,8 +476,8 @@ z-scrubbing must not flush the layer; revisited slabs come straight from the
 pool. Flushing per z was legacy ChunkPlane semantics and made every slider
 step a multi-second refetch on plane-chunked data.
 
-**P16 — Guard axis-mapping collisions from layer config.** `intensityDim` is
-server/user data; a live layer shipped `intensityDim === zDim === "z"` on a
+**P16 — Guard axis-mapping collisions from layer config.** `intensityAxis` is
+server/user data; a live layer shipped `intensityAxis === zAxis === "z"` on a
 single-channel 256³ stack. The geometry builder read the z extent as the
 channel count → 16 phantom channels → every brick slot, fetch and atlas
 inflated 16× (4 MB slots, a 512 MB atlas blowing straight through the 128 MB

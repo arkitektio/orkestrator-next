@@ -151,7 +151,7 @@ const LayerDataRois = ({ layerId }: { layerId: string }) => {
   const sliceFilter = useMemo(() => {
     if (!layer) return undefined;
     return layer.lens.slices.map((s) => ({
-      dim: s.dim,
+      dim: s.axis,
       start: s.start,
       stop: s.stop,
       step: s.step,

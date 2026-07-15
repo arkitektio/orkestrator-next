@@ -131,7 +131,7 @@ const SCENE = {
     { id: "cs:intrinsic", axes: [{ name: "t" }, { name: "c" }, { name: "z" }, { name: "y" }, { name: "x" }] },
     { id: "cs:phys", axes: [{ name: "z" }, { name: "y" }, { name: "x" }] },
   ],
-  coordinateTransformations: [],
+  registrations: [],
 };
 
 // intrinsic pixels → calibrated µm (the calibration edge)…
@@ -259,7 +259,7 @@ describe("composeLayerAffine", () => {
   }) => ({
     pathToWorld: (opts?.pathToWorld ?? null) as never,
     lens: {
-      dims: DIMS,
+      axisNames: DIMS,
       renderAxes: { x: "x", y: "y", z: "z" },
       coordinateSystem: { id: "cs:lens" },
       toParent: (opts?.lensToParent ?? null) as never,

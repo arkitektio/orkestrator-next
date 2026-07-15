@@ -1,0 +1,35 @@
+# Candidate sources for the Add Layer dialog: list-level fields plus the
+# coordinate-system ids needed to decide composability into a scene
+# client-side (there is no server-side "composable in scene" filter).
+query AddLayerADatasetCandidates(
+  $filters: ADatasetFilter
+  $pagination: OffsetPaginationInput
+) {
+  adatasets(filters: $filters, pagination: $pagination) {
+    ...ListADataset
+    intrinsicSystem {
+      id
+      name
+    }
+    calibrations {
+      id
+      name
+    }
+  }
+}
+
+query AddLayerTableDatasetCandidates(
+  $filters: TableDatasetFilter
+  $pagination: OffsetPaginationInput
+) {
+  tableDatasets(filters: $filters, pagination: $pagination) {
+    ...ListTableDataset
+    coordinateSystem {
+      id
+      name
+    }
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+}

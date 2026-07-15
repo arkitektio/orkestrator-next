@@ -7,7 +7,7 @@ import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
  * into a quadtree along z.
  */
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 
 const LEVELS: LevelSource[] = [
   { shape: [3, 40, 500, 600], chunks: [1, 16, 128, 128], dtype: "uint8", storeId: "s0" },
@@ -43,7 +43,7 @@ describe("buildLayerLevelGeometry", () => {
   it("treats a layer without a z axis as depth 1", () => {
     const geo = buildLayerLevelGeometry(
       ["y", "x", "c"],
-      { xDim: "x", yDim: "y", zDim: null, intensityDim: "c" },
+      { xAxis: "x", yAxis: "y", zAxis: null, intensityAxis: "c" },
       [{ shape: [512, 512, 2], chunks: [256, 256, 1], dtype: "float32", storeId: "s0" }],
     )!;
     expect(geo.levels[0].spatialShape).toEqual([512, 512, 1]);
@@ -58,13 +58,13 @@ describe("buildLayerLevelGeometry", () => {
     expect(geo.channelCount).toBe(16);
   });
 
-  it("ignores an intensityDim that collides with a spatial dim", () => {
-    // Seen live: a layer configured with intensityDim === zDim === "z" on a
+  it("ignores an intensityAxis that collides with a spatial dim", () => {
+    // Seen live: a layer configured with intensityAxis === zAxis === "z" on a
     // single-channel 256³ stack — without the guard this becomes 16 phantom
     // channels that multiply every brick slot and fetch 16×.
     const geo = buildLayerLevelGeometry(
       ["z", "y", "x"],
-      { xDim: "x", yDim: "y", zDim: "z", intensityDim: "z" },
+      { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "z" },
       [{ shape: [256, 256, 256], chunks: [76, 256, 256], dtype: "float32", storeId: "s0" }],
     )!;
     expect(geo.axes.intensityPos).toBe(-1);
@@ -89,7 +89,7 @@ describe("buildLayerLevelGeometry", () => {
   it("returns null without spatial axes or levels", () => {
     expect(buildLayerLevelGeometry(DIMS, LAYER, [])).toBeNull();
     expect(
-      buildLayerLevelGeometry(["a", "b"], { xDim: "x", yDim: "y" }, LEVELS),
+      buildLayerLevelGeometry(["a", "b"], { xAxis: "x", yAxis: "y" }, LEVELS),
     ).toBeNull();
   });
 });

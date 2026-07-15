@@ -45,7 +45,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
       // system — the fragment no longer ships the global CS list.
       transformContext: {
         worldCoordinateSystem: scene.worldCoordinateSystem,
-        coordinateTransformations: scene.coordinateTransformations,
+        registrations: scene.registrations,
       },
       sceneLayers: scene.layers,
       layers: imageLayers.map((layer) => normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)),

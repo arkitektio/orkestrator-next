@@ -1,8 +1,8 @@
+import { useDialog } from "@/app/dialog";
 import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
-import { useUpdateLaterMutation } from "@/mikro-next/api/graphql";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { isLayerOutOfPlane } from "../core/worldTransform";
@@ -83,7 +83,6 @@ const LayerCard = memo(function LayerCard({
   onToggleArm,
   onUpdate,
   onFocus,
-  onSaveDims,
   onClose,
 }: {
   layer: LayerState;
@@ -96,7 +95,6 @@ const LayerCard = memo(function LayerCard({
   onToggleArm: (id: string) => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
-  onSaveDims: (layer: LayerState) => void;
   onClose: () => void;
 }) {
   perfMonitor.countRender("LayerCard"); // no-op unless a perf recording is armed
@@ -137,11 +135,9 @@ const LayerCard = memo(function LayerCard({
             inline
             editor={editor}
             layer={layer}
-            originalLayer={originalLayer}
             isArmed={isArmed}
             onUpdate={onUpdate}
             onToggleArm={handleToggleArm}
-            onSave={onSaveDims}
             onClose={onClose}
           />
         </div>
@@ -150,12 +146,12 @@ const LayerCard = memo(function LayerCard({
   );
 });
 
-export const LayerControlPanel = () => {
+export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   perfMonitor.countRender("LayerControlPanel"); // no-op unless a perf recording is armed
+  const { openDialog } = useDialog();
   const layers = useSceneStore((s) => s.layers);
   const originalLayers = useSceneStore((s) => s.originalLayers);
   const updateLayer = useSceneStore((s) => s.updateLayer);
-  const markLayerClean = useSceneStore((s) => s.markLayerClean);
   const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -167,12 +163,11 @@ export const LayerControlPanel = () => {
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const currentZ = useViewerStore((s) => s.currentZ);
   const displayMode = useModeStore((s) => s.displayMode);
-  const [updateLater] = useUpdateLaterMutation();
   const [showOffscreen, setShowOffscreen] = useState(false);
 
   // Stable handlers so the memoized LayerCard actually skips re-render during a
   // pan/orbit. The zustand actions (setSelectedLayerId, toggleArmedLayerId,
-  // updateLayer, fitToLayer, markLayerClean) are already stable refs; these wrap
+  // updateLayer, fitToLayer) are already stable refs; these wrap
   // them without capturing per-render values (selection is read via a ref).
   const selectedRef = useRef(selectedLayerId);
   selectedRef.current = selectedLayerId;
@@ -189,25 +184,6 @@ export const LayerControlPanel = () => {
     () => setSelectedLayerId(null),
     [setSelectedLayerId],
   );
-  // Contrast/colormap/color live in the render graph (saved by the render-graph
-  // editor); this persists only the intensity mapping — the spatial axes are
-  // server-derived from the coordinate system's axis types and not writable.
-  const handleSaveDims = useCallback(
-    (layer: LayerState) => {
-      updateLater({
-        variables: {
-          input: {
-            id: layer.id,
-            intensityDim: layer.intensityDim,
-          },
-        },
-      });
-      markLayerClean(layer.id);
-    },
-    [updateLater, markLayerClean],
-  );
-
-  if (layers.length === 0) return null;
 
   // A layer is "in view" when it is inside the camera frustum
   // (viewerStore.visibleLayers) AND — in 2D — its data intersects the current Z
@@ -263,7 +239,6 @@ export const LayerControlPanel = () => {
         onToggleArm={handleToggleArm}
         onUpdate={updateLayer}
         onFocus={fitToLayer}
-        onSaveDims={handleSaveDims}
         onClose={handleClose}
       />
     );
@@ -284,6 +259,15 @@ export const LayerControlPanel = () => {
               : `+${offscreenLayers.length} off-view`}
           </button>
         )}
+
+        <button
+          className="self-end rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] text-white/60 backdrop-blur-md transition-colors hover:border-white/20 hover:text-white/90"
+          onClick={() =>
+            openDialog("addlayer", { scene: sceneId }, { className: "max-w-3xl" })
+          }
+        >
+          + Add layer
+        </button>
       </div>
     </div>
   );

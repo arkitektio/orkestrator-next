@@ -73,6 +73,13 @@ export const NavigationPane = () => {
             Tables
           </PaneLink>
           <PaneLink
+            to="/mikro/tabledatasets"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Axis3d className="h-4 w-4" />
+            Table Datasets
+          </PaneLink>
+          <PaneLink
             to="/mikro/stages"
             className="flex gap-3 w-full hover:text-primary"
           >

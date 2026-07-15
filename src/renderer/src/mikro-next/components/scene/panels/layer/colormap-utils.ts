@@ -32,9 +32,9 @@ export const colormapGradientCSS = (
  * is still user-editable.
  */
 export const isLayerDirty = (
-  current: Pick<LayerState, "intensityDim">,
-  original: Pick<LayerState, "intensityDim"> | undefined,
+  current: Pick<LayerState, "intensityAxis">,
+  original: Pick<LayerState, "intensityAxis"> | undefined,
 ): boolean => {
   if (!original) return true;
-  return current.intensityDim !== original.intensityDim;
+  return current.intensityAxis !== original.intensityAxis;
 };

@@ -4,7 +4,7 @@ import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
 import { buildPageTableLayout, levelPageGrids } from "./pageTableLayout";
 
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 
 const makeGeo = (levels: LevelSource[]) => buildLayerLevelGeometry(DIMS, LAYER, levels)!;
 

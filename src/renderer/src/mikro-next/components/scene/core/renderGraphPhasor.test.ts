@@ -26,7 +26,7 @@ const GRAPH = {
       {
         __typename: "ChannelSourceNode",
         kind: "channel",
-        intensityDim: "c",
+        intensityAxis: "c",
         intensityIndex: 0,
         visible: true,
         transfer: { climMin: 10, climMax: 200, colormap: ColorMap.Grey, gamma: 1 },
@@ -35,9 +35,9 @@ const GRAPH = {
         __typename: "PhasorNode",
         kind: "phasor",
         label: "lifetime",
-        phasorDim: "tau",
+        phasorAxis: "tau",
         harmonic: 2,
-        intensityDim: "c",
+        intensityAxis: "c",
         intensityIndex: 0,
         visible: true,
         phasorTransfer: {
@@ -74,7 +74,7 @@ describe("parseRenderGraph — a phasor node", () => {
     const phasors = flattenPhasors(graph);
     expect(phasors).toHaveLength(1);
     expect(phasors[0].type).toBe("phasor");
-    expect(phasors[0].phasorDim).toBe("tau");
+    expect(phasors[0].phasorAxis).toBe("tau");
     expect(phasors[0].harmonic).toBe(2);
     expect(phasors[0].transfer.mode).toBe(PhasorColorMode.Phase);
     expect(phasors[0].transfer.min).toBe("0.5 ns");
@@ -94,7 +94,7 @@ describe("parseRenderGraph — a phasor node", () => {
     const input = serializeRenderGraph(graph);
     const phasor = input.root.children?.[1];
     expect(phasor?.kind).toBe("phasor");
-    expect(phasor?.phasorDim).toBe("tau");
+    expect(phasor?.phasorAxis).toBe("tau");
     expect(phasor?.harmonic).toBe(2);
     // Serialized under the SCHEMA's name (`phasorTransfer` on LayerNodeInput),
     // not the fragment's alias.

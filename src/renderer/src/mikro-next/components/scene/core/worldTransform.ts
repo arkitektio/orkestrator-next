@@ -52,8 +52,8 @@ export function buildAffineMatrix(layer: LayerState): THREE.Matrix4 {
 
 /** Get the number of Z voxels for a layer, or null if the layer has no Z dimension */
 export function getLayerZSize(layer: LayerState): number | null {
-  if (!layer.zDim) return null;
-  const idx = layer.lens.dims.indexOf(layer.zDim);
+  if (!layer.zAxis) return null;
+  const idx = layer.lens.axisNames.indexOf(layer.zAxis);
   if (idx === -1) return null;
   return layer.lens.shape[idx] ?? null;
 }

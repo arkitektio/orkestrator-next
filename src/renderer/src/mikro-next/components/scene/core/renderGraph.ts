@@ -45,7 +45,7 @@ export type ChannelRenderNode = {
   type: "channel";
   kind: string;
   label: string | null;
-  intensityDim: string | null;
+  intensityAxis: string | null;
   intensityIndex: number;
   visible: boolean;
   transfer: TransferFn;
@@ -93,10 +93,10 @@ export type PhasorRenderNode = {
   kind: string;
   label: string | null;
   /** The axis reduced (a MICROTIME or SPECTRUM axis of the lens). */
-  phasorDim: string;
+  phasorAxis: string;
   harmonic: number;
   /** The channel the photons are counted in (a FLIM cube can be multi-channel). */
-  intensityDim: string | null;
+  intensityAxis: string | null;
   intensityIndex: number;
   visible: boolean;
   transfer: PhasorTransferFn;
@@ -135,14 +135,14 @@ type FragmentNode = {
   label?: string | null;
   blending?: Blending;
   mode?: ProjectionMode;
-  intensityDim?: string | null;
+  intensityAxis?: string | null;
   intensityIndex?: number;
   visible?: boolean;
   transfer?: Partial<TransferFn> | null;
   // Aliased in the fragment: `transfer` on a PhasorNode is a PhasorTransfer,
   // which would otherwise collide with ChannelSourceNode's TransferFunction.
   phasorTransfer?: Partial<FragmentPhasorTransfer> | null;
-  phasorDim?: string;
+  phasorAxis?: string;
   harmonic?: number;
   children?: FragmentNode[] | null;
 };
@@ -214,9 +214,9 @@ export const parseRenderNode = (node: FragmentNode): RenderNode => {
       type: "phasor",
       kind: node.kind ?? PHASOR_KIND,
       label: node.label ?? null,
-      phasorDim: node.phasorDim ?? "",
+      phasorAxis: node.phasorAxis ?? "",
       harmonic: node.harmonic ?? 1,
-      intensityDim: node.intensityDim ?? null,
+      intensityAxis: node.intensityAxis ?? null,
       intensityIndex: node.intensityIndex ?? 0,
       visible: node.visible ?? true,
       transfer: parsePhasorTransfer(node.phasorTransfer),
@@ -227,7 +227,7 @@ export const parseRenderNode = (node: FragmentNode): RenderNode => {
       type: "channel",
       kind: node.kind ?? CHANNEL_KIND,
       label: node.label ?? null,
-      intensityDim: node.intensityDim ?? null,
+      intensityAxis: node.intensityAxis ?? null,
       intensityIndex: node.intensityIndex ?? 0,
       visible: node.visible ?? true,
       transfer: parseTransfer(node.transfer),
@@ -329,7 +329,7 @@ export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
       type: "channel",
       kind: CHANNEL_KIND,
       label: null,
-      intensityDim: layer.lens.renderAxes?.intensity ?? null,
+      intensityAxis: layer.lens.renderAxes?.intensity ?? null,
       intensityIndex: 0,
       visible: layer.visible ?? true,
       transfer: { ...DEFAULT_TRANSFER },
@@ -346,7 +346,7 @@ export const newChannelNode = (layer: ImageLayerFragment): ChannelRenderNode => 
   type: "channel",
   kind: CHANNEL_KIND,
   label: null,
-  intensityDim: layer.lens.renderAxes?.intensity ?? null,
+  intensityAxis: layer.lens.renderAxes?.intensity ?? null,
   intensityIndex: 0,
   visible: true,
   transfer: { ...DEFAULT_TRANSFER },
@@ -361,9 +361,9 @@ export const newPhasorNode = (layer: ImageLayerFragment): PhasorRenderNode => ({
   type: "phasor",
   kind: PHASOR_KIND,
   label: null,
-  phasorDim: layer.lens.renderAxes?.phasor ?? "",
+  phasorAxis: layer.lens.renderAxes?.phasor ?? "",
   harmonic: 1,
-  intensityDim: layer.lens.renderAxes?.intensity ?? null,
+  intensityAxis: layer.lens.renderAxes?.intensity ?? null,
   intensityIndex: 0,
   visible: true,
   transfer: {
@@ -416,9 +416,9 @@ export const serializeRenderNode = (node: RenderNode): LayerNodeInput => {
     return {
       kind: node.kind || PHASOR_KIND,
       label: node.label,
-      phasorDim: node.phasorDim,
+      phasorAxis: node.phasorAxis,
       harmonic: node.harmonic,
-      intensityDim: node.intensityDim,
+      intensityAxis: node.intensityAxis,
       intensityIndex: node.intensityIndex,
       visible: node.visible,
       phasorTransfer: serializePhasorTransfer(node.transfer),
@@ -428,7 +428,7 @@ export const serializeRenderNode = (node: RenderNode): LayerNodeInput => {
     return {
       kind: node.kind || CHANNEL_KIND,
       label: node.label,
-      intensityDim: node.intensityDim,
+      intensityAxis: node.intensityAxis,
       intensityIndex: node.intensityIndex,
       visible: node.visible,
       transfer: serializeTransfer(node.transfer),
@@ -470,7 +470,7 @@ export const primaryChannelRenderFields = (
   colormap: ColorMap | null;
   color: number[] | null;
   gamma: number | null;
-  intensityDim: string | null;
+  intensityAxis: string | null;
 } | null => {
   const parsed = parseRenderGraph(graph);
   const primary = flattenChannels(parsed)[0];
@@ -481,6 +481,6 @@ export const primaryChannelRenderFields = (
     colormap: primary.transfer.colormap,
     color: primary.transfer.color,
     gamma: primary.transfer.gamma,
-    intensityDim: primary.intensityDim,
+    intensityAxis: primary.intensityAxis,
   };
 };

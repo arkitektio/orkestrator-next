@@ -24,6 +24,8 @@ import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
+import TableDatasetPage from "./pages/TableDatasetPage";
+import TableDatasetsPage from "./pages/TableDatasetsPage";
 import ScenesPage from "./pages/ScenesPage";
 import ScenePage from "./pages/ScenePage";
 import StandardPane from "./panes/StandardPane";
@@ -60,6 +62,8 @@ export const MikroNextModule = () => {
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="tables/:id" element={<TablePage />} />
+          <Route path="tabledatasets" element={<TableDatasetsPage />} />
+          <Route path="tabledatasets/:id" element={<TableDatasetPage />} />
           <Route path="meshes/:id" element={<MeshPage />} />
           <Route path="meshes" element={<MeshesPage />} />
           <Route path="stages/:id" element={<StagePage />} />

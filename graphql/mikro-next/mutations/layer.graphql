@@ -12,3 +12,39 @@ mutation CreatePhasorLayer($input: CreatePhasorLayerInput!) {
     ...SceneLayer
   }
 }
+
+mutation CreateIntensityLayer($input: CreateIntensityLayerInput!) {
+  createIntensityLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateRgbLayer($input: CreateRgbLayerInput!) {
+  createRgbLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateVolumeLayer($input: CreateVolumeLayerInput!) {
+  createVolumeLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateLabelLayer($input: CreateLabelLayerInput!) {
+  createLabelLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreatePointLayer($input: CreatePointLayerInput!) {
+  createPointLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation CreateTrackLayer($input: CreateTrackLayerInput!) {
+  createTrackLayer(input: $input) {
+    ...SceneLayer
+  }
+}

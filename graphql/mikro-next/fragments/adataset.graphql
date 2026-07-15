@@ -20,7 +20,7 @@ fragment ListADataset on ADataset {
   id
   name
   description
-  dims
+  axisNames
   shape
   multiscale
 }
@@ -29,7 +29,7 @@ fragment ADataset on ADataset {
   id
   name
   description
-  dims
+  axisNames
   shape
   multiscale
   # The structural pixel grid: the space ROIs resolve against and every level

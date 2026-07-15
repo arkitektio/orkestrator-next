@@ -10,7 +10,7 @@ import { fetchVoxelBox, nodeVoxelBox } from "./nodeAddress";
  * payload 4³ with a 1-voxel border.
  */
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 const GEO = buildLayerLevelGeometry(DIMS, LAYER, [
   { shape: [2, 4, 12, 12], chunks: [1, 4, 8, 8], dtype: "uint8", storeId: "s0" },
 ])!;
@@ -245,7 +245,7 @@ describe("repackBrick (packed channels, one chunk carries all slabs)", () => {
  */
 describe("repackBrick (interleaved c-last channels)", () => {
   const I_DIMS = ["y", "x", "c"];
-  const I_LAYER = { xDim: "x", yDim: "y", zDim: null, intensityDim: "c" };
+  const I_LAYER = { xAxis: "x", yAxis: "y", zAxis: null, intensityAxis: "c" };
   const I_GEO = buildLayerLevelGeometry(I_DIMS, I_LAYER, [
     { shape: [12, 12, 3], chunks: [8, 8, 3], dtype: "uint8", storeId: "i0" },
   ])!;

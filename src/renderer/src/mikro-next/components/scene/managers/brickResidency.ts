@@ -7,7 +7,7 @@ import { getMax3DTextureSize, type SceneRenderer } from "../render/gpu/sceneRend
 import { getChunkWorker } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
-import { resolveLayerDataRange } from "../core/dataRange";
+import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
@@ -151,6 +151,14 @@ export type LayerBrickPool = {
   /** Layer data range (raw value space) — shader normalization + EMPTY encode. */
   minValue: number;
   maxValue: number;
+  /** Float layers with no server value histogram would normalize against the
+   * dtype fallback `[0,1]`, saturating any data valued >1 to white. When true,
+   * `minValue`/`maxValue` are instead derived from a running min/max over the
+   * per-brick ranges the repack pipeline already computes (auto-contrast). */
+  autoRange: boolean;
+  /** True once a non-degenerate brick has seeded the real auto-range, so the
+   * first update replaces the provisional `[0,1]` seed instead of unioning. */
+  autoRangeInitialized: boolean;
   /** True once any slot was written by the GPU repack kernel: the CPU atlas
    * mirror no longer reflects atlas contents, so `sampleResident` must not
    * read it (probes degrade to null until the Phase D chunk-cache probe). */
@@ -547,14 +555,14 @@ export class BrickResidencyManager {
     try {
       levels = buildLevelSources(
         layer.lens.dataset.dataArrays,
-        layer.lens.dataset.dims.length,
+        layer.lens.dataset.axisNames.length,
         viewerState.getArrayForStoreId,
       );
     } catch {
       return null;
     }
 
-    const geometry = buildLayerLevelGeometry(layer.lens.dataset.dims, layer, levels);
+    const geometry = buildLayerLevelGeometry(layer.lens.dataset.axisNames, layer, levels);
     if (!geometry) return null;
     const spec = resolveBrickSpec(geometry, plan.mode);
 
@@ -663,7 +671,13 @@ export class BrickResidencyManager {
 
     const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(layer, geometry, levels);
 
-    const [minValue, maxValue] = resolveLayerDataRange(layer, geometry.levels[0].dtype);
+    const dtype = geometry.levels[0].dtype;
+    const [minValue, maxValue] = resolveLayerDataRange(layer, dtype);
+    // Float layers without a server histogram normalize against the `[0,1]`
+    // dtype fallback, which whites-out any data valued >1. Accumulate the real
+    // range from decoded bricks instead (see `accumulateAutoRange`).
+    const autoRange =
+      (dtype === "float32" || dtype === "float64") && serverHistogramRange(layer) === null;
 
     const pool: LayerBrickPool = {
       layerId: layer.id,
@@ -685,6 +699,8 @@ export class BrickResidencyManager {
       fixedOffsets,
       minValue,
       maxValue,
+      autoRange,
+      autoRangeInitialized: false,
       atlasMirrorStale: false,
     };
     this.pools.set(layer.id, pool);
@@ -868,6 +884,7 @@ export class BrickResidencyManager {
         });
         this.stats.repackMs += performance.now() - repackStartedAt;
         if (controller.signal.aborted || this.disposed) return;
+        this.accumulateAutoRange(pool, result.min, result.max);
         pending = {
           key: node.key,
           level: node.level,
@@ -1039,6 +1056,56 @@ export class BrickResidencyManager {
   }
 
   /**
+   * Fold one brick's raw min/max into the layer's auto-contrast range (float
+   * layers with no server histogram — see `LayerBrickPool.autoRange`). The
+   * per-brick min/max is already computed by both repack paths; this is the
+   * only consumer of it for range purposes.
+   *
+   * When the range moves, EMPTY page entries must be re-encoded (they store
+   * the value quantized against the pool range), and `poolsVersion` is bumped
+   * so `BrickVolumeLayer` rebuilds the `minValue`/`maxValue` uniforms — no
+   * material rebuild. Bricks resident in the atlas hold raw values and
+   * normalize live in the shader, so they need no rewrite.
+   */
+  private accumulateAutoRange(pool: LayerBrickPool, brickMin: number, brickMax: number): void {
+    if (!pool.autoRange) return;
+    if (!Number.isFinite(brickMin) || !Number.isFinite(brickMax) || brickMax <= brickMin) return;
+
+    const nextMin = pool.autoRangeInitialized ? Math.min(pool.minValue, brickMin) : brickMin;
+    const nextMax = pool.autoRangeInitialized ? Math.max(pool.maxValue, brickMax) : brickMax;
+
+    // Ignore sub-1% wobble so a stream of bricks doesn't churn the uniforms;
+    // the first (uninitialized) update always applies.
+    const span = Math.max(pool.maxValue - pool.minValue, 1e-6);
+    const changed =
+      !pool.autoRangeInitialized ||
+      Math.abs(nextMin - pool.minValue) > span * 0.01 ||
+      Math.abs(nextMax - pool.maxValue) > span * 0.01;
+    if (!changed) return;
+
+    pool.minValue = nextMin;
+    pool.maxValue = nextMax;
+    pool.autoRangeInitialized = true;
+
+    if (pool.emptyValues.size > 0) {
+      for (const [key, value] of pool.emptyValues) {
+        const { level, coords } = parseNodeKey(key);
+        setPageEntry(
+          pool.pageTable,
+          level,
+          coords,
+          [encodeEmptyValue(value, pool), 0, 0],
+          PAGE_FLAG_EMPTY,
+        );
+      }
+      flushPageTable(this.deps.renderer, pool.pageTable);
+    }
+
+    this.deps.viewerStore.getState().bumpPoolsVersion();
+    this.deps.invalidate();
+  }
+
+  /**
    * Min/max-readback continuation for a GPU repack batch: EMPTY demotion of
    * uniform bricks and unmapping of failed dispatches. Lands a few frames
    * after the dispatch, so every token re-validates against the CURRENT slot
@@ -1049,9 +1116,11 @@ export class BrickResidencyManager {
     const touchedPools = new Set<LayerBrickPool>();
 
     for (const result of outcome.results) {
-      if (result.uniformValue === null) continue;
       const pool = this.resolveGpuToken(result.token);
       if (!pool) continue;
+      // Fold every brick's range into the layer auto-contrast, uniform or not.
+      this.accumulateAutoRange(pool, result.min, result.max);
+      if (result.uniformValue === null) continue;
       const { level, coords } = parseNodeKey(result.token.key);
       // Uniform brick: the same EMPTY demotion the CPU path applies before
       // acquiring a slot — just deferred to the readback; the slot frees up.
@@ -1194,11 +1263,11 @@ export class BrickResidencyManager {
     geometry: LayerLevelGeometry,
     levels: LevelSource[],
   ): { fixedChunkCoords: number[]; fixedOffsets: number[] } {
-    const dims = layer.lens.dataset.dims;
+    const dims = layer.lens.dataset.axisNames;
     const { xPos, yPos, zPos, intensityPos, phasorPos } = geometry.axes;
     const sliceMap = layer.lens.slices.reduce<Record<string, (typeof layer.lens.slices)[number]>>(
       (acc, slice) => {
-        acc[slice.dim] = slice;
+        acc[slice.axis] = slice;
         return acc;
       },
       {},

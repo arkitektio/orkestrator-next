@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Crosshair, Save, X } from "lucide-react";
+import { Crosshair, X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
-import { isLayerDirty } from "./colormap-utils";
 import { PlacementChain } from "./PlacementChain";
 import {
   RenderGraphEditor,
@@ -16,23 +15,19 @@ import {
  */
 export const LayerGraphFlyout = ({
   layer,
-  originalLayer,
   isArmed,
   editor,
   onUpdate: _onUpdate,
   onToggleArm,
-  onSave,
   onClose,
   inline = false,
 }: {
   layer: LayerState;
-  originalLayer: LayerState | undefined;
   isArmed: boolean;
   /** Lifted render-graph editing state (shared with the card header's Save). */
   editor: RenderGraphEditor;
   onUpdate: (updated: LayerState) => void;
   onToggleArm: () => void;
-  onSave: (layer: LayerState) => void;
   onClose: () => void;
   /**
    * When true, render only the editing body (no floating panel chrome or
@@ -41,8 +36,6 @@ export const LayerGraphFlyout = ({
    */
   inline?: boolean;
 }) => {
-  const dirty = isLayerDirty(layer, originalLayer);
-
   const label =
     layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel
       ?.label ?? "Untitled Layer";
@@ -58,20 +51,6 @@ export const LayerGraphFlyout = ({
       <RenderGraphSection editor={editor} layer={layer} />
 
       <PlacementChain layer={layer} />
-
-        {dirty && (
-          <Button
-            variant="outline"
-            size="xs"
-            className="h-7 border-white/10 bg-black/20 text-[10px] text-white hover:bg-white/10"
-            onClick={() => onSave(layer)}
-          >
-            <Save className="mr-1 h-3 w-3" />
-            Save changes
-          </Button>
-        )}
-
-
       </div>
   );
 

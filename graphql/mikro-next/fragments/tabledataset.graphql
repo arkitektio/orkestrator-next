@@ -1,0 +1,37 @@
+# One declared column of a table dataset. A COORDINATE column is also an axis
+# of the table's own coordinate system.
+fragment TableDatasetColumn on TableDatasetColumn {
+  id
+  name
+  longName
+  dtype
+  role
+  axisType
+  unit
+  order
+}
+
+fragment ListTableDataset on TableDataset {
+  id
+  name
+  description
+  axisNames
+}
+
+fragment TableDataset on TableDataset {
+  id
+  name
+  description
+  axisNames
+  store {
+    ...ParquetStore
+  }
+  columns {
+    ...TableDatasetColumn
+  }
+  # The coordinate system this table owns — its axes are the table's coordinate
+  # columns (or a single INDEX axis for a pure measurement table).
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+}

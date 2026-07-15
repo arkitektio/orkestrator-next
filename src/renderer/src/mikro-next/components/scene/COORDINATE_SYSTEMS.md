@@ -51,7 +51,7 @@ through a specific CS's axis list.
 Scene
 ├─ worldCoordinateSystem            # the scene's shared frame; axes may carry units
 ├─ (coordinateSystems NOT selected) # edges self-describe their axis order now
-├─ coordinateTransformations[]      # scene-level edges (registrations), each with
+├─ registrations[]                  # scene-level edges (registrations), each with
 │                                   #   inputAxes/outputAxes (param order)
 └─ layers[]
    ├─ pathToWorld[]                 # SERVER-RESOLVED: ordered {transformation,
@@ -141,7 +141,7 @@ have. The migration is an adapter, not a rewrite.
 | Derived fact | From | Where | Consumed by |
 | --- | --- | --- | --- |
 | `LayerState.affineMatrix` (voxel→world 4×4, x/y/z rows) | local prefix (`lens.toParent`, level-0 `toParent`) ∘ `pathToWorld` steps | `composeLayerAffine` (`core/transformGraph.ts`), once per scene load in `normalizeLayer` | `worldTransform.buildAffineMatrix`, `voxelFrame.buildVolumeVoxelToWorld`, `nodePlanning` 2D slab inverse, `visibility`, `RoiDrawer` |
-| `LayerState.xDim/yDim/zDim/tDim/intensityDim` | `lens.renderAxes` | `normalizeLayer` (`core/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
+| `LayerState.xAxis/yAxis/zAxis/tAxis/intensityAxis` | `lens.renderAxes` | `normalizeLayer` (`core/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
 | Relative level factors (old `scaleFactors` semantics) | `toParent` pixel scales, `rel = abs_L / abs_0` (a no-op now that level 0 = 1) | `relativeLevelScaleFactors` / `buildLevelSources` (`core/octree/levelGeometry.ts`) | level geometry, plan tracker, residency, pool viability, probe geometry |
 | `spatialUnit` | first SPACE axis of the world CS | `sceneStore` | `ScaleBar` |
 | Mesh transforms | `MeshLayer.pathToWorld` via `composePlacementPath` | `core/transformGraph.ts` | `render/mesh/MeshCollectionLayer` |
@@ -261,11 +261,12 @@ anchors to. No mirrored world geometry, no reconciliation at read time.
 ### 3.5 Axis mapping is structural now
 
 `renderAxes` is derived server-side from axis TYPES (SPACE/TIME/CHANNEL), so
-the P16 class of bug (`intensityDim === zDim`, 16 phantom channels, 512 MB
+the P16 class of bug (`intensityAxis === zAxis`, 16 phantom channels, 512 MB
 atlas) is structurally impossible — a dim cannot be two types. The
 `resolveAxisIndices` collision guard stays as defense in depth. The spatial
-dims are no longer user-editable; the layer panel persists only
-`intensityDim`.
+dims are no longer user-editable, and the intensity mapping is persisted
+through the render graph (`ChannelSourceNode.intensityAxis`), not a flat
+layer field.
 
 ---
 
@@ -355,13 +356,13 @@ degradation hides data bugs — enforce these server-side:
    `scene.coordinateSystems` from the fragment; axis resolution is
    edge-carried → world-CS index → layer dims.
 2. **An ACTIVE layer always has a path to world.** Scene 82's layer ships
-   `pathToWorld: null` with empty `coordinateTransformations` — the layer was
+   `pathToWorld: null` with empty `registrations` — the layer was
    never registered. Placing a layer into a scene MUST create the
    registration edge (identity by default, editable later); if a layer can
    legitimately be unregistered, give it a distinct `status` so the client
    can badge it instead of silently drawing in the pixel frame.
-3. **`ChannelSourceNode.intensityDim` must name a CHANNEL-typed axis.**
-   Live data shipped `intensityDim: "t"` on a time-lapse — 16 timepoints
+3. **`ChannelSourceNode.intensityAxis` must name a CHANNEL-typed axis.**
+   Live data shipped `intensityAxis: "t"` on a time-lapse — 16 timepoints
    would render as 16 stacked channel slabs (the P16 failure shape) and the
    t-slider would vanish (t counts as "rendered"). The client now guards
    (`resolveIntensityDim`, `core/dims.ts`: graph mapping wins only when it

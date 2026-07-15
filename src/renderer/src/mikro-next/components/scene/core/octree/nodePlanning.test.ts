@@ -13,21 +13,21 @@ import {
 } from "./nodePlanning";
 
 const makeLayer = (
-  overrides: Partial<{ fixedLOD: number | null; zDim: string | null }> = {},
+  overrides: Partial<{ fixedLOD: number | null; zAxis: string | null }> = {},
 ): LayerState =>
   ({
     id: "layer-1",
     affineMatrix: null,
-    xDim: "x",
-    yDim: "y",
-    zDim: overrides.zDim ?? null,
-    intensityDim: "c",
+    xAxis: "x",
+    yAxis: "y",
+    zAxis: overrides.zAxis ?? null,
+    intensityAxis: "c",
     fixedLOD: overrides.fixedLOD ?? null,
     lens: {
       slices: [],
-      dims: overrides.zDim ? ["z", "y", "x", "c"] : ["y", "x", "c"],
-      shape: overrides.zDim ? [3, 512, 512, 1] : [512, 512, 1],
-      dataset: { dims: overrides.zDim ? ["z", "y", "x", "c"] : ["y", "x", "c"], dataArrays: [] },
+      axisNames: overrides.zAxis ? ["z", "y", "x", "c"] : ["y", "x", "c"],
+      shape: overrides.zAxis ? [3, 512, 512, 1] : [512, 512, 1],
+      dataset: { axisNames: overrides.zAxis ? ["z", "y", "x", "c"] : ["y", "x", "c"], dataArrays: [] },
     },
   }) as unknown as LayerState;
 
@@ -165,7 +165,7 @@ describe("planLayerNodes (2D z slabs)", () => {
     { shape: [3, 512, 512, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "s0" },
     { shape: [3, 256, 256, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "s1", scaleFactors: [1, 2, 2, 1] },
   ];
-  const layer = makeLayer({ zDim: "z" });
+  const layer = makeLayer({ zAxis: "z" });
   const geo = buildLayerLevelGeometry(["z", "y", "x", "c"], layer, zLevels)!;
   const spec = resolveBrickSpec(geo, "2D");
 
@@ -215,16 +215,16 @@ describe("planLayerNodes (2D z slabs)", () => {
     const deepLayer = {
       id: "layer-deep",
       affineMatrix: null,
-      xDim: "x",
-      yDim: "y",
-      zDim: "z",
-      intensityDim: null,
+      xAxis: "x",
+      yAxis: "y",
+      zAxis: "z",
+      intensityAxis: null,
       fixedLOD: null,
       lens: {
         slices: [],
-        dims: ["z", "y", "x"],
+        axisNames: ["z", "y", "x"],
         shape: [256, 256, 256],
-        dataset: { dims: ["z", "y", "x"], dataArrays: [] },
+        dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
       },
     } as unknown as LayerState;
     const deepGeo = buildLayerLevelGeometry(["z", "y", "x"], deepLayer, deepLevels)!;
@@ -280,16 +280,16 @@ describe("planLayerNodes (2D z slabs)", () => {
     const spimLayer = {
       id: "layer-spim",
       affineMatrix: null,
-      xDim: "x",
-      yDim: "y",
-      zDim: "z",
-      intensityDim: null,
+      xAxis: "x",
+      yAxis: "y",
+      zAxis: "z",
+      intensityAxis: null,
       fixedLOD: null,
       lens: {
         slices: [],
-        dims: ["z", "y", "x"],
+        axisNames: ["z", "y", "x"],
         shape: [81, 2048, 2048],
-        dataset: { dims: ["z", "y", "x"], dataArrays: [] },
+        dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
       },
     } as unknown as LayerState;
     const spimGeo = buildLayerLevelGeometry(["z", "y", "x"], spimLayer, spimLevels)!;
@@ -324,12 +324,12 @@ describe("planLayerNodes (2D z slabs)", () => {
 
 describe("planLayerNodes (3D octree)", () => {
   const volLayer = {
-    ...makeLayer({ zDim: "z" }),
+    ...makeLayer({ zAxis: "z" }),
     lens: {
       slices: [],
-      dims: ["z", "y", "x"],
+      axisNames: ["z", "y", "x"],
       shape: [256, 256, 256],
-      dataset: { dims: ["z", "y", "x"], dataArrays: [] },
+      dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
     },
   } as unknown as LayerState;
   const volLevels: LevelSource[] = [

@@ -45,7 +45,7 @@ export type CoordinateSystemLike = {
 export type SceneTransformContext = {
   worldCoordinateSystem?: CoordinateSystemLike;
   coordinateSystems?: readonly NonNullable<CoordinateSystemLike>[] | null;
-  coordinateTransformations?: readonly NonNullable<TransformLike>[] | null;
+  registrations?: readonly NonNullable<TransformLike>[] | null;
 };
 
 /** One step of a server-resolved placement path. */
@@ -60,7 +60,7 @@ export type LayerTransformSource = {
   /** Server-resolved path to the scene's world system (null = unregistered). */
   pathToWorld?: readonly PlacementStepLike[] | null;
   lens: {
-    dims: readonly string[];
+    axisNames: readonly string[];
     renderAxes: { x: string; y: string; z?: string | null };
     coordinateSystem?: { id: string } | null;
     toParent?: TransformLike;
@@ -292,7 +292,7 @@ export function composeLayerAffine(
   scene: SceneTransformContext,
   layer: LayerTransformSource,
 ): number[][] | null {
-  const dims = layer.lens.dims;
+  const dims = layer.lens.axisNames;
   const ra = layer.lens.renderAxes;
   const spatial = [ra.x, ra.y, ra.z] as const;
 

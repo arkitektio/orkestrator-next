@@ -97,9 +97,9 @@ export function resolveProbeMarkerGeometry(
 
   try {
     const arr = getArrayForStoreId(dataArray.store.id);
-    const dims = layer.lens.dataset.dims;
+    const dims = layer.lens.dataset.axisNames;
     const sliceMap = layer.lens.slices.reduce<Record<string, LayerState["lens"]["slices"][number]>>((acc, slice) => {
-      acc[slice.dim] = slice;
+      acc[slice.axis] = slice;
       return acc;
     }, {});
 
@@ -109,9 +109,9 @@ export function resolveProbeMarkerGeometry(
       return null;
     }
 
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], arr.shape[xPos]);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], arr.shape[yPos]);
-    const zSelection = resolveSpatialSelection(sliceMap[layer.zDim as string], arr.shape[zPos]);
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xAxis ?? ""], arr.shape[xPos]);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yAxis ?? ""], arr.shape[yPos]);
+    const zSelection = resolveSpatialSelection(sliceMap[layer.zAxis as string], arr.shape[zPos]);
     const scaleFactors = relativeLevelScaleFactors(
       layer.lens.dataset.dataArrays,
       dims.length,

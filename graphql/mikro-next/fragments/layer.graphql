@@ -10,7 +10,7 @@ fragment TransferFunction on TransferFunction {
 }
 
 fragment ChannelSourceNode on ChannelSourceNode {
-  intensityDim
+  intensityAxis
   intensityIndex
   visible
   transfer {
@@ -49,9 +49,9 @@ fragment PhasorTransfer on PhasorTransfer {
 }
 
 fragment PhasorNode on PhasorNode {
-  phasorDim
+  phasorAxis
   harmonic
-  intensityDim
+  intensityAxis
   intensityIndex
   visible
   # Aliased: `transfer` on a ChannelSourceNode is a TransferFunction, here it is
@@ -125,7 +125,6 @@ fragment SceneLayer on Layer {
   __typename
   id
   kind
-  status
   blending
   opacity
   visible

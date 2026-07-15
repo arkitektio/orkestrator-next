@@ -75,13 +75,13 @@ export function assessLayerPoolViability(
   try {
     levels = buildLevelSources(
       layer.lens.dataset.dataArrays,
-      layer.lens.dataset.dims.length,
+      layer.lens.dataset.axisNames.length,
       getArrayForStoreId,
     );
   } catch {
     return null;
   }
-  const geometry = buildLayerLevelGeometry(layer.lens.dataset.dims, layer, levels);
+  const geometry = buildLayerLevelGeometry(layer.lens.dataset.axisNames, layer, levels);
   if (!geometry) return null;
   return assessPoolViability(geometry, resolveBrickSpec(geometry, mode));
 }

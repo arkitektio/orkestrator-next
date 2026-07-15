@@ -233,11 +233,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     const [scaleX, scaleY, scaleZ] = level.scale;
 
     const sliceMap = buildSliceMap(layer.lens.slices);
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xDim ?? ""], shapeX);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yDim ?? ""], shapeY);
+    const xSelection = resolveSpatialSelection(sliceMap[layer.xAxis ?? ""], shapeX);
+    const ySelection = resolveSpatialSelection(sliceMap[layer.yAxis ?? ""], shapeY);
 
     let zSelection = resolveSpatialSelection(
-      layer.zDim ? sliceMap[layer.zDim] : undefined,
+      layer.zAxis ? sliceMap[layer.zAxis] : undefined,
       shapeZ,
     );
     if (currentZ !== undefined && Number.isFinite(currentZ)) {

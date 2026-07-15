@@ -131,6 +131,14 @@ export interface ViewerState {
   setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
+  /**
+   * Renders the current scene to an offscreen target and returns a PNG Blob.
+   * Null until an in-Canvas component (SceneScreenshot) registers it; the
+   * registered fn resolves to null if the capture itself fails. Registered from
+   * inside <Canvas> because the renderer/scene live in R3F world, not the store.
+   */
+  captureScreenshot: (() => Promise<Blob | null>) | null;
+  registerCapture: (fn: (() => Promise<Blob | null>) | null) => void;
   /** Fit the camera so that the given layer fills the viewport */
   fitToLayer: (layerId: string) => void;
 }
@@ -202,6 +210,8 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
       set((state) => ({ dimSelections: { ...state.dimSelections, [dim]: index } }));
     },
     registerCanvas: (ctx) => set({ canvas: ctx }),
+    captureScreenshot: null,
+    registerCapture: (fn) => set({ captureScreenshot: fn }),
     fitToLayer: (layerId) => {
       const { trackables, canvas } = get();
 

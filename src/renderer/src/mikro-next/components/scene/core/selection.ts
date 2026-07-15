@@ -82,7 +82,7 @@ export function buildSliceMap(
   slices: readonly DimSliceFragment[],
 ): Record<string, DimSliceFragment> {
   return slices.reduce<Record<string, DimSliceFragment>>((acc, slice) => {
-    acc[slice.dim] = slice;
+    acc[slice.axis] = slice;
     return acc;
   }, {});
 }

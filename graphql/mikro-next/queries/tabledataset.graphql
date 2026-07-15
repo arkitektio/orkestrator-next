@@ -1,0 +1,19 @@
+query GetTableDataset($id: ID!) {
+  tableDataset(id: $id) {
+    ...TableDataset
+  }
+}
+
+query GetTableDatasets(
+  $filters: TableDatasetFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [TableDatasetOrder!]
+) {
+  tableDatasets(
+    filters: $filters
+    pagination: $pagination
+    ordering: $ordering
+  ) {
+    ...ListTableDataset
+  }
+}

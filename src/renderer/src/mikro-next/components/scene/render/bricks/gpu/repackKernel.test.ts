@@ -28,7 +28,7 @@ import {
 // Same fixture family as brickRepack.test.ts: dims [c, z, y, x], one
 // 12×12×4 level with 2 channels, chunks [1, 4, 8, 8], payload 4³ + border.
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 const GEO = buildLayerLevelGeometry(DIMS, LAYER, [
   { shape: [2, 4, 12, 12], chunks: [1, 4, 8, 8], dtype: "float32", storeId: "s0" },
 ])!;
@@ -249,7 +249,7 @@ describe("buildKernelDispatches parity — packed & interleaved channel layouts"
   const interleavedInput = (): RepackDispatchInput => {
     const geo = buildLayerLevelGeometry(
       ["y", "x", "c"],
-      { xDim: "x", yDim: "y", zDim: null, intensityDim: "c" },
+      { xAxis: "x", yAxis: "y", zAxis: null, intensityAxis: "c" },
       [{ shape: [12, 12, 3], chunks: [8, 8, 3], dtype: "float32", storeId: "i0" }],
     )!;
     const spec: BrickSpec = { payload: [4, 4, 1], border: 0, stored: [4, 4, 1], channelCount: 3 };

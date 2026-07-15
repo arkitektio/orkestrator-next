@@ -29,7 +29,7 @@ export function computeSceneWorldBox(layers: readonly LayerState[]): THREE.Box3 
   let contributed = false;
 
   for (const layer of layers) {
-    const { xPos, yPos, zPos } = resolveAxisIndices(layer.lens.dims, layer);
+    const { xPos, yPos, zPos } = resolveAxisIndices(layer.lens.axisNames, layer);
     // x/y are required; z is optional (2D layers have no z dim → flat box).
     if (xPos === -1 || yPos === -1) continue;
     const xMax = layer.lens.shape[xPos] ?? 0;

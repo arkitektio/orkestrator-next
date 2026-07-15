@@ -8,6 +8,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   BoxSelect,
+  Camera,
   Hand,
   Move,
   ScanEye,
@@ -70,7 +71,25 @@ export const SceneOverlay = () => {
   const setShowScaleBar = useViewerStore((state) => state.setShowScaleBar);
   const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
 
+  const captureScreenshot = useViewerStore((state) => state.captureScreenshot);
+
   const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
+
+  // Capture the current 3D scene (layers + in-scene axis/grid, not HTML overlays
+  // or the gizmo) and save it as a PNG via the standard <a download> pattern.
+  const onScreenshot = async () => {
+    if (!captureScreenshot) return;
+    const blob = await captureScreenshot();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${world?.name ?? "scene"}-screenshot.png`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // One control card, styled like the layer cards below it. Holds the display
   // (2D/3D) toggle, the view-settings/debug popover, the camera-controller modes
@@ -90,12 +109,23 @@ export const SceneOverlay = () => {
           <span className="text-xs font-bold">{displayMode}</span>
         </Button>
 
+        <Button
+          variant={"outline"}
+          size={"xs"}
+          className="ml-auto h-7 bg-black"
+          onClick={onScreenshot}
+          disabled={!captureScreenshot}
+          title="Save a PNG screenshot of the current view"
+        >
+          <Camera className="h-3.5 w-3.5" />
+        </Button>
+
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant={isDebug ? "destructive" : "outline"}
               size={"xs"}
-              className={isDebug ? "ml-auto h-7" : "ml-auto h-7 bg-black"}
+              className={isDebug ? "h-7" : "h-7 bg-black"}
               title="View settings"
             >
               <Settings2 className="h-3.5 w-3.5" />

@@ -53,7 +53,7 @@ export async function createConfiguredSceneStores(
 ): Promise<Map<string, ZarrStore>> {
   const descriptors = collectSceneStoreDescriptors(scene);
   const credentials = await requestGeneralAccess(client);
-  const expiresAt = Date.now() + credentials.expiresIn * 1000;
+  const expiresAt = Date.now() + credentials.expiresIn * 1000; //TODO: make that set corctly in credentials
 
   const stores = await Promise.all(
     Array.from(descriptors.values()).map(async (descriptor) => {

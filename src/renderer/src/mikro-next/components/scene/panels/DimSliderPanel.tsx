@@ -39,7 +39,7 @@ export const DimSliderPanel = () => {
       if (layer.visible === false) continue;
       const sliceMap = buildSliceMap(layer.lens.slices);
       for (const dim of collapsibleDims(layer)) {
-        const position = layer.lens.dims.indexOf(dim);
+        const position = layer.lens.axisNames.indexOf(dim);
         const extent = layer.lens.shape[position] ?? 1;
         const layerDefault = resolveCollapsedSelection(sliceMap[dim], extent);
         const selected = dimSelections[dim];

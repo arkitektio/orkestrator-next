@@ -8,13 +8,13 @@ import type { ImageLayerFragment } from "./layerGuards";
 
 type LevelSpec = { shape: number[]; dtype: string };
 
-/** Minimal ImageLayerFragment-shaped fixture (dims [y, x, c] like the debug scenes). */
+/** Minimal ImageLayerFragment-shaped fixture (axisNames [y, x, c] like the debug scenes). */
 const makeLayer = (
   id: string,
   levels: LevelSpec[],
   overrides: Partial<{
-    dims: string[];
-    zDim: string | null;
+    axisNames: string[];
+    zAxis: string | null;
     fixedLOD: number | null;
     defaultVolumeLOD: number | null;
     slices: unknown[];
@@ -26,9 +26,9 @@ const makeLayer = (
     defaultVolumeLOD: overrides.defaultVolumeLOD ?? null,
     lens: {
       slices: overrides.slices ?? [],
-      renderAxes: { x: "x", y: "y", z: overrides.zDim ?? null, intensity: "c" },
+      renderAxes: { x: "x", y: "y", z: overrides.zAxis ?? null, intensity: "c" },
       dataset: {
-        dims: overrides.dims ?? ["y", "x", "c"],
+        axisNames: overrides.axisNames ?? ["y", "x", "c"],
         dataArrays: levels.map((level, index) => ({
           level: index,
           store: { id: `${id}-store-${index}`, shape: level.shape, dtype: level.dtype },
@@ -37,7 +37,7 @@ const makeLayer = (
     },
   }) as unknown as ImageLayerFragment & { fixedLOD?: number | null; defaultVolumeLOD?: number | null };
 
-// The reported scene: 256×256×1 float32, single level, dims [y, x, c].
+// The reported scene: 256×256×1 float32, single level, axisNames [y, x, c].
 const debugGalleryLayer = (id: string) => makeLayer(id, [{ shape: [256, 256, 1], dtype: "float32" }]);
 
 describe("estimateImageLayerRenderCostBytes", () => {
@@ -74,7 +74,7 @@ describe("estimateImageLayerRenderCostBytes", () => {
         { shape: [512, 512, 512], dtype: "float32" },
         { shape: [256, 256, 256], dtype: "float32" },
       ],
-      { dims: ["z", "y", "x"], zDim: "z", defaultVolumeLOD: 1 },
+      { axisNames: ["z", "y", "x"], zAxis: "z", defaultVolumeLOD: 1 },
     );
     // Spatial-only estimate at the default volume LOD (level 1).
     expect(estimateImageLayerRenderCostBytes(volume, "3D")).toBe(256 * 256 * 256 * 4);

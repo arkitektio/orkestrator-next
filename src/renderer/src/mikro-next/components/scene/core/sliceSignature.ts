@@ -26,11 +26,11 @@ import type { LayerState } from "./layerModel";
  */
 export function collapsibleDims(layer: LayerState): string[] {
   const rendered = new Set(
-    [layer.xDim, layer.yDim, layer.zDim, layer.intensityDim, layer.phasorDim].filter(
+    [layer.xAxis, layer.yAxis, layer.zAxis, layer.intensityAxis, layer.phasorAxis].filter(
       Boolean,
     ),
   );
-  return layer.lens.dims.filter((dim, position) => {
+  return layer.lens.axisNames.filter((dim, position) => {
     if (rendered.has(dim)) return false;
     return (layer.lens.shape[position] ?? 1) > 1;
   });
@@ -49,23 +49,23 @@ export function buildSliceSignature(
     if (selected !== undefined) selections[dim] = selected;
   }
   return JSON.stringify({
-    xDim: layer.xDim ?? null,
-    yDim: layer.yDim ?? null,
-    zDim: layer.zDim ?? null,
-    intensityDim: layer.intensityDim ?? null,
+    xAxis: layer.xAxis ?? null,
+    yAxis: layer.yAxis ?? null,
+    zAxis: layer.zAxis ?? null,
+    intensityAxis: layer.intensityAxis ?? null,
     // The phasor reduction is BAKED INTO the bricks (g/s/intensity slabs), so
     // the axis it runs over, the harmonic it runs at, and the channel whose
     // photons it counts all change what every cached brick holds — each must
     // flush the pool. Everything else about a phasor node (colormap, mode,
     // range, cursors) is a shader uniform and must NOT appear here.
-    phasorDim: layer.phasorDim ?? null,
+    phasorAxis: layer.phasorAxis ?? null,
     phasors: (layer.phasors ?? []).map((phasor) => ({
       harmonic: phasor.harmonic,
       intensityIndex: phasor.intensityIndex,
     })),
     selections,
     slices: layer.lens.slices.map((slice) => ({
-      dim: slice.dim,
+      dim: slice.axis,
       start: slice.start ?? null,
       stop: slice.stop ?? null,
       step: slice.step ?? null,

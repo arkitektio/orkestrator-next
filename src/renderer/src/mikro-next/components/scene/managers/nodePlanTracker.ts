@@ -107,7 +107,7 @@ export function startNodePlanTracking({
       try {
         levels = buildLevelSources(
           layer.lens.dataset.dataArrays,
-          layer.lens.dataset.dims.length,
+          layer.lens.dataset.axisNames.length,
           viewerState.getArrayForStoreId,
         );
       } catch {
@@ -115,7 +115,7 @@ export function startNodePlanTracking({
         continue;
       }
 
-      const geometry = buildLayerLevelGeometry(layer.lens.dataset.dims, layer, levels);
+      const geometry = buildLayerLevelGeometry(layer.lens.dataset.axisNames, layer, levels);
       if (!geometry) continue;
       const spec = resolveBrickSpec(geometry, mode);
 

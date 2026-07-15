@@ -1,0 +1,7 @@
+# A lens with no slices views the whole dataset — the same "full lens"
+# createSceneFromDataset bootstraps.
+mutation CreateLens($input: CreateLensInput!) {
+  createLens(input: $input) {
+    ...SceneLens
+  }
+}

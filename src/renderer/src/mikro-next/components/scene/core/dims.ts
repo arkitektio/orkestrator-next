@@ -1,15 +1,15 @@
 /**
- * Canonical mapping from a layer's named dimensions (xDim/yDim/zDim/intensityDim)
+ * Canonical mapping from a layer's named dimensions (xAxis/yAxis/zAxis/intensityAxis)
  * to their positional indices within an array's dim list. Replaces the
- * hand-rolled `dims.indexOf(layer.xDim ?? "")` blocks that were duplicated
+ * hand-rolled `dims.indexOf(layer.xAxis ?? "")` blocks that were duplicated
  * across the plane, volume, probe and visibility code paths.
  */
 export type LayerAxisDims = {
-  xDim?: string | null;
-  yDim?: string | null;
-  zDim?: string | null;
-  intensityDim?: string | null;
-  phasorDim?: string | null;
+  xAxis?: string | null;
+  yAxis?: string | null;
+  zAxis?: string | null;
+  intensityAxis?: string | null;
+  phasorAxis?: string | null;
   /**
    * The layer's phasor sources (tree order). Only what the DATA layer needs of
    * them: the harmonic the reduction runs at, and the channel whose photons it
@@ -35,13 +35,13 @@ export type AxisIndices = {
 };
 
 export function resolveAxisIndices(dims: string[], layer: LayerAxisDims): AxisIndices {
-  const xPos = dims.indexOf(layer.xDim ?? "");
-  const yPos = dims.indexOf(layer.yDim ?? "");
-  const zPos = layer.zDim ? dims.indexOf(layer.zDim) : -1;
-  let intensityPos = dims.indexOf(layer.intensityDim ?? "");
-  let phasorPos = layer.phasorDim ? dims.indexOf(layer.phasorDim) : -1;
+  const xPos = dims.indexOf(layer.xAxis ?? "");
+  const yPos = dims.indexOf(layer.yAxis ?? "");
+  const zPos = layer.zAxis ? dims.indexOf(layer.zAxis) : -1;
+  let intensityPos = dims.indexOf(layer.intensityAxis ?? "");
+  let phasorPos = layer.phasorAxis ? dims.indexOf(layer.phasorAxis) : -1;
   // A dim cannot be both spatial and the channel axis. Misconfigured layers
-  // (seen live: intensityDim === zDim === "z" on a single-channel 256³ stack)
+  // (seen live: intensityAxis === zAxis === "z" on a single-channel 256³ stack)
   // otherwise explode into phantom channels — min(extent, 16) of them — which
   // multiply every brick slot, fetch and atlas 16×. Degrade to "no channel
   // dim" instead.
@@ -68,15 +68,15 @@ export function resolveAxisIndices(dims: string[], layer: LayerAxisDims): AxisIn
 
 /**
  * The intensity (channel) dim actually used for rendering. The render
- * graph's `ChannelSourceNode.intensityDim` wins ONLY when it does not name a
- * spatial or time render axis — live data has shipped `intensityDim: "t"`
+ * graph's `ChannelSourceNode.intensityAxis` wins ONLY when it does not name a
+ * spatial or time render axis — live data has shipped `intensityAxis: "t"`
  * on a time-lapse, which would stack every timepoint as a channel slab
  * (min(16, extent) phantom channels, the P16 failure shape) AND hide the
  * t-slider (t would count as "rendered"). Axis TYPES are authoritative
  * (`renderAxes` is derived from them); an intensity mapping that contradicts
  * them is a data bug we degrade around, like the collision guard above.
  */
-export const resolveIntensityDim = (
+export const resolveIntensityAxis = (
   graphIntensityDim: string | null | undefined,
   renderAxes:
     | { x?: string | null; y?: string | null; z?: string | null; t?: string | null; intensity?: string | null }
@@ -96,9 +96,9 @@ export const resolveIntensityDim = (
 };
 
 /**
- * The axis a phasor node actually reduces. The node's `phasorDim` wins only
+ * The axis a phasor node actually reduces. The node's `phasorAxis` wins only
  * when it does not name a spatial, time or channel render axis — the same
- * degradation as `resolveIntensityDim`, for the same reason: axis TYPES are
+ * degradation as `resolveIntensityAxis`, for the same reason: axis TYPES are
  * authoritative (`renderAxes.phasor` is derived from them, and is null unless
  * the lens HAS a MICROTIME/SPECTRUM axis), and a node that contradicts them is
  * a data bug we render around rather than exploding on.
@@ -106,7 +106,7 @@ export const resolveIntensityDim = (
  * Returns null when there is no phasor node (`nodePhasorDim` undefined) — the
  * layer then has no reduced axis at all, and nothing downstream changes.
  */
-export const resolvePhasorDim = (
+export const resolvePhasorAxis = (
   nodePhasorDim: string | null | undefined,
   renderAxes:
     | {

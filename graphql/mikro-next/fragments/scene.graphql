@@ -8,7 +8,7 @@ fragment Scene on Scene {
   # self-describes its parameter order (Transformation.inputAxes/outputAxes),
   # which was the global list's only client-side job — everything else was
   # duplication of systems already delivered inline where they're used.
-  coordinateTransformations {
+  registrations {
     ...Transformation
   }
   layers {

@@ -121,7 +121,7 @@ function computeLayerViewRange(
     }
   }
 
-  const { xPos: xIdx, yPos: yIdx, zPos: zIdx } = resolveAxisIndices(layer.lens.dims, layer);
+  const { xPos: xIdx, yPos: yIdx, zPos: zIdx } = resolveAxisIndices(layer.lens.axisNames, layer);
   const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0;
   const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0;
 
@@ -135,7 +135,7 @@ function computeLayerViewRange(
   const voxelYMax = yMax / 2 - localBox.min.y;
 
   let zRange: [number, number] | null = null;
-  if (layer.zDim) {
+  if (layer.zAxis) {
     const zMax = zIdx >= 0 ? layer.lens.shape[zIdx] : 0;
     zRange = [
       Math.max(0, Math.floor(localBox.min.z + zMax / 2)),

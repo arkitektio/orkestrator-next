@@ -26,6 +26,7 @@ import { CreateOrganizationForm } from "@/lok-next/dialogs/CreateOrganization";
 import { CreateRedeemTokenForm } from "@/lok-next/forms/CreateRedeemTokenForm";
 import { CreateServiceInstanceForm } from "@/lok-next/forms/CreateServiceInstance";
 import { UpdateServiceInstanceForm } from "@/lok-next/forms/UpdateServiceInstanceForm";
+import { AddLayerForm } from "@/mikro-next/forms/AddLayerForm";
 import { CreateDatasetForm as CreateMikroDatasetForm } from "@/mikro-next/forms/CreateDatasetForm";
 import { UpdateDatasetForm } from "@/mikro-next/forms/UpdateDatasetForm";
 import { UpdateImageForm } from "@/mikro-next/forms/UpdateImageForm";
@@ -83,6 +84,7 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   // elektro
   neuroneditorhelp: NeuronEditorHelp,
   // mikro-next
+  addlayer: AddLayerForm,
   createmikrodataset: CreateMikroDatasetForm,
   updateimage: UpdateImageForm,
   updatedataset: UpdateDatasetForm,

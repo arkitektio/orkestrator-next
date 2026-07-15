@@ -14,17 +14,17 @@ const layer = {
   id: LAYER_ID,
   visible: true,
   affineMatrix: null,
-  xDim: "x",
-  yDim: "y",
-  zDim: null,
-  intensityDim: "c",
+  xAxis: "x",
+  yAxis: "y",
+  zAxis: null,
+  intensityAxis: "c",
   fixedLOD: null,
   lens: {
     slices: [],
-    dims: ["y", "x", "c"],
+    axisNames: ["y", "x", "c"],
     shape: [512, 512, 1],
     dataset: {
-      dims: ["y", "x", "c"],
+      axisNames: ["y", "x", "c"],
       dataArrays: [
         { level: 0, scaleFactors: null, store: { id: "store-0" } },
         { level: 1, scaleFactors: [2, 2, 1], store: { id: "store-1" } },
@@ -156,7 +156,7 @@ describe("startNodePlanTracking", () => {
         ...layer.lens,
         shape: [16384, 16384, 1],
         dataset: {
-          dims: ["y", "x", "c"],
+          axisNames: ["y", "x", "c"],
           dataArrays: [{ level: 0, scaleFactors: null, store: { id: "store-huge" } }],
         },
       },

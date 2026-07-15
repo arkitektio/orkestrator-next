@@ -59,7 +59,7 @@ export function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: nu
   const dtype = dataArray.store.dtype;
   const bytesPerVoxel = dtype ? mapDTypeToTextureBytes(dtype as DataType) : 4;
   const sliceMap = layer.lens.slices.reduce<Record<string, ImageLayerFragment["lens"]["slices"][number]>>((acc, slice) => {
-    acc[slice.dim] = slice;
+    acc[slice.axis] = slice;
     return acc;
   }, {});
 
@@ -69,7 +69,7 @@ export function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: nu
   const spatialDims = new Set([renderAxes?.x, renderAxes?.y, renderAxes?.z].filter(Boolean));
 
   const selectedVoxelCount = dataArray.store.shape.reduce((total, axisLength, axisIndex) => {
-    const dim = layer.lens.dataset.dims[axisIndex];
+    const dim = layer.lens.dataset.axisNames[axisIndex];
     if (!dim || !spatialDims.has(dim)) return total;
     return total * Math.max(getSliceLength(axisLength, sliceMap[dim]), 1);
   }, 1);

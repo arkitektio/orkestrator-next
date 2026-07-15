@@ -46,6 +46,7 @@ import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
 import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
+import { useViewerStore } from "../../../store/viewerStore";
 import {
   BLEND_KIND,
   BlendRenderNode,
@@ -65,7 +66,7 @@ import {
   resolveProjectionMode,
   serializeRenderGraph,
 } from "../../../core/renderGraph";
-import { resolvePhasorDim } from "../../../core/dims";
+import { resolvePhasorAxis } from "../../../core/dims";
 import { resolvePhasorScale } from "../../../core/phasor";
 import { PhasorPlot } from "../PhasorPlot";
 
@@ -180,9 +181,20 @@ const TransferHistogram = ({
   transfer: TransferFn;
   onLevelsChange: (climMin: number, climMax: number, gamma: number) => void;
 }) => {
-  const [dtypeMin, dtypeMax] = getLayerDtypeRange(layer);
   const anchor = layer.lens.activeAnchors.find((a) => a.valueHistogram);
   const vh = anchor?.valueHistogram;
+
+  // Float layers with no server histogram would fall back to the dtype range
+  // `[0,1]`, so the sliders would operate on the wrong scale. Prefer the live
+  // auto-contrast range the brick pool accumulates from decoded voxels; the
+  // `poolsVersion` subscription re-renders this editor when it settles.
+  const brickSystem = useViewerStore((s) => s.brickSystem);
+  useViewerStore((s) => s.poolsVersion);
+  const pool = brickSystem?.getLayerPool(layer.id) ?? null;
+  const [dtypeMin, dtypeMax] =
+    pool?.autoRange && pool.autoRangeInitialized
+      ? [pool.minValue, pool.maxValue]
+      : getLayerDtypeRange(layer);
 
   // Clim is stored in absolute base-native units, exactly the space the editor
   // works in — so pass it straight through (null = full range).
@@ -400,10 +412,10 @@ const ChannelNodeEditor = ({
                   <span className="text-muted-foreground">Intensity dim</span>
                   <Input
                     className="h-7 text-xs"
-                    value={node.intensityDim ?? ""}
+                    value={node.intensityAxis ?? ""}
                     placeholder="c"
                     onChange={(e) =>
-                      onChange({ ...node, intensityDim: e.target.value || null })
+                      onChange({ ...node, intensityAxis: e.target.value || null })
                     }
                   />
                 </div>
@@ -476,7 +488,7 @@ const PhasorNodeEditor = ({
           />
           <Waves className="h-3 w-3" />
           <span className="font-medium">
-            {node.label || `Phasor ${node.phasorDim || "?"}`}
+            {node.label || `Phasor ${node.phasorAxis || "?"}`}
           </span>
         </button>
         {onRemove && (
@@ -593,9 +605,9 @@ const PhasorNodeEditor = ({
                   <span className="text-muted-foreground">Phasor dim</span>
                   <Input
                     className="h-7 text-xs"
-                    value={node.phasorDim}
+                    value={node.phasorAxis}
                     placeholder={layer?.lens.renderAxes?.phasor ?? "tau"}
-                    onChange={(e) => onChange({ ...node, phasorDim: e.target.value })}
+                    onChange={(e) => onChange({ ...node, phasorAxis: e.target.value })}
                   />
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
@@ -981,7 +993,7 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
       // Adding or removing a phasor node (or changing its axis/harmonic) changes
       // what the BRICKS hold, not just a uniform: the slice signature picks that
       // up and the residency manager flushes the pool (sliceSignature.ts).
-      phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, layer.lens.renderAxes),
+      phasorAxis: resolvePhasorAxis(phasors[0]?.phasorAxis, layer.lens.renderAxes),
       blend: nextRoot.blending,
       projection: resolveProjectionMode(nextRoot),
       climMin: primary?.climMin ?? layer.climMin,
@@ -989,7 +1001,7 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
       colormap: primary?.colormap ?? layer.colormap,
       color: primary?.color ?? layer.color,
       gamma: primary?.gamma ?? layer.gamma,
-      intensityDim: channels[0]?.intensityDim ?? layer.intensityDim,
+      intensityAxis: channels[0]?.intensityAxis ?? layer.intensityAxis,
     });
   };
 
@@ -1015,7 +1027,7 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
       channels: flattenChannels(root),
       phasors,
       sources: flattenSources(root),
-      phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, layer.lens.renderAxes),
+      phasorAxis: resolvePhasorAxis(phasors[0]?.phasorAxis, layer.lens.renderAxes),
       blend: root.blending,
       projection: resolveProjectionMode(root),
       climMin: primary?.climMin ?? layer.climMin,
@@ -1023,7 +1035,7 @@ export const useRenderGraphEditor = (layer: LayerState): RenderGraphEditor => {
       colormap: primary?.colormap ?? layer.colormap,
       color: primary?.color ?? layer.color,
       gamma: primary?.gamma ?? layer.gamma,
-      intensityDim: primary?.intensityDim ?? layer.intensityDim,
+      intensityAxis: primary?.intensityAxis ?? layer.intensityAxis,
     });
     setDirty(false);
   };

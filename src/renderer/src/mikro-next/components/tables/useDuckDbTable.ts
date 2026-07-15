@@ -7,11 +7,19 @@ import duckdbMvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type TableFragment,
   useRequestParquetAccessMutation,
   useRequestGeneralParquetAccessMutation,
 } from "@/mikro-next/api/graphql";
 import { useDatalayerEndpoint } from "@/app/Arkitekt";
+
+// The minimal shape the DuckDB reader needs from a parquet-backed model: a
+// ParquetStore id to request an access grant against, and the declared column
+// names to build search/filter/export SQL. Both `Table` and `TableDataset`
+// satisfy this, so the hook backs either.
+export type DuckDbParquetSource = {
+  store: { id: string };
+  columns: { name: string }[];
+};
 
 type PaginationState = {
   pageIndex: number;
@@ -87,6 +95,17 @@ export const resolveDuckDbEndpoint = (datalayerEndpoint?: string) => {
   };
 };
 
+// CORS gotcha (dev / any browser origin): DuckDB-WASM's httpfs cannot set the
+// forbidden `Host`/`User-Agent` request headers, so it rewrites them to
+// `X-Host-Override` / `X-user-agent` on every S3 range request it makes below.
+// The browser then lists `x-host-override` in the preflight's
+// `Access-Control-Request-Headers`, and the datalayer's S3/MinIO endpoint must
+// echo it back in `Access-Control-Allow-Headers` (plus `Range`, `Authorization`,
+// the `x-amz-*` signing headers, and GET/HEAD) or the read is blocked with
+// "Request header field x-host-override is not allowed". Wildcarding
+// `AllowedHeaders: ["*"]` on the bucket CORS is the standard fix. This only
+// bites from an http(s) origin like the Vite dev server; the packaged Electron
+// app does not enforce CORS the same way.
 const buildCreateSecretQuery = (
   grant: CachedGrant,
   datalayerEndpoint?: string,
@@ -208,7 +227,7 @@ export const ensureHttpfs = async (connection: duckdb.AsyncDuckDBConnection) => 
   await httpfsReadyPromise;
 };
 
-const buildSearchClause = (table: TableFragment, search: string) => {
+const buildSearchClause = (table: DuckDbParquetSource, search: string) => {
   const trimmedSearch = search.trim();
   if (!trimmedSearch) {
     return "";
@@ -226,7 +245,7 @@ const buildSearchClause = (table: TableFragment, search: string) => {
 };
 
 const buildWhereClause = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   search: string,
   columnFilters: DuckDbColumnFilters,
 ) => {
@@ -265,7 +284,7 @@ const buildSortingClause = (sorting: SortingState) => {
 };
 
 const buildCountQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -276,7 +295,7 @@ const buildCountQuery = (
 };
 
 const buildRowsQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -301,7 +320,7 @@ const buildRowsQuery = (
 };
 
 const buildExportQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -343,7 +362,7 @@ const escapeCsvValue = (value: unknown) => {
 };
 
 const buildHistogramQuery = (
-  table: TableFragment,
+  table: DuckDbParquetSource,
   parquetUrl: string,
   search: string,
   columnFilters: DuckDbColumnFilters,
@@ -373,7 +392,7 @@ export const useDuckDbTable = ({
   search,
   columnFilters,
 }: {
-  table: TableFragment;
+  table: DuckDbParquetSource;
   pagination: PaginationState;
   sorting: SortingState;
   search: string;

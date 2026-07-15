@@ -24,7 +24,7 @@ import {
   PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { linkBuilder } from "@/providers/smart/builder";
-import { Clapperboard, File, FolderInput, Images, Pencil } from "lucide-react";
+import { Clapperboard, File, FolderInput, Images, Layers, Pencil } from "lucide-react";
 import { Action } from "../localactions/LocalActionProvider";
 import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetch";
 
@@ -73,6 +73,32 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       }
 
       navigate(linkBuilder('mikro/scenes')(scene.id));
+    },
+  },
+  'add-layer-to-scene': {
+    title: 'Add Layer',
+    description:
+      'Add a dataset or table composable in this scene\'s coordinate system as a new layer',
+    icon: Layers,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/scene' },
+      { type: 'nopartner' },
+    ],
+    collections: ['scene'],
+    execute: async ({ state, dialog }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/scene',
+      );
+
+      if (!selected?.object?.id) {
+        throw new Error('No scene selected for Add Layer action');
+      }
+
+      dialog.openDialog(
+        'addlayer',
+        { scene: selected.object.id },
+        { className: 'max-w-3xl' },
+      );
     },
   },
   'update-mikro-dataset': {

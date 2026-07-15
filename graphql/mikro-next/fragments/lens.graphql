@@ -1,5 +1,5 @@
 fragment DimSlice on Slice {
-  dim
+  axis
   start
   stop
   step
@@ -10,7 +10,7 @@ fragment DimSlice on Slice {
 # phasor render node states WHICH axis and harmonic, and reads the instrument
 # facts from here.
 fragment PhasorContext on PhasorContext {
-  dim
+  axis
   axisType
   bins
   binWidth
@@ -41,7 +41,7 @@ fragment PhasorContext on PhasorContext {
 fragment SceneLens on Lens {
   id
   shape
-  dims
+  axisNames
   renderAxes {
     x
     y
@@ -56,8 +56,9 @@ fragment SceneLens on Lens {
   phasor {
     ...PhasorContext
   }
-  # Id-only: the lens CS's axes are its dims by contract ("a selection never
-  # drops or reorders an axis"), so selecting them would only duplicate dims.
+  # Id-only: the lens CS's axes are its axisNames by contract ("a selection
+  # never drops or reorders an axis"), so selecting them would only duplicate
+  # axisNames.
   coordinateSystem {
     id
     name
@@ -71,11 +72,11 @@ fragment SceneLens on Lens {
   dataset {
     id
     name
-    dims
+    axisNames
     shape
     multiscale
     # Id-only: consumed for CS-id matching (mesh anchoring, path prefixes);
-    # its axis order is the dataset's dims by definition.
+    # its axis order is the dataset's axisNames by definition.
     intrinsicSystem {
       id
       name

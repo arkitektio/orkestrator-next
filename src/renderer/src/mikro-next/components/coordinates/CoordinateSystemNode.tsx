@@ -13,10 +13,11 @@ export const KIND_DOT: Record<CoordinateSystemKind, string> = {
   [CoordinateSystemKind.Array]: "bg-slate-400",
   [CoordinateSystemKind.World]: "bg-violet-500",
   [CoordinateSystemKind.Atlas]: "bg-amber-500",
-  // A feature table's row space enumerates objects rather than measuring
-  // positions, and a mesh collection's vertex space is owned by the collection
-  // — neither is a pixel or physical grid, so neither borrows their colours.
-  [CoordinateSystemKind.Feature]: "bg-rose-500",
+  // A table dataset's row/coordinate space enumerates objects rather than
+  // measuring positions, and a mesh collection's vertex space is owned by the
+  // collection — neither is a pixel or physical grid, so neither borrows their
+  // colours.
+  [CoordinateSystemKind.Table]: "bg-rose-500",
   [CoordinateSystemKind.Mesh]: "bg-cyan-500",
 };
 

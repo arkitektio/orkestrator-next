@@ -15,11 +15,11 @@ const makeLayer = (): LayerState =>
   ({
     id: LAYER_ID,
     affineMatrix: null,
-    xDim: "x",
-    yDim: "y",
-    zDim: null,
-    intensityDim: null,
-    lens: { dims: ["y", "x"], shape: [50, 100] },
+    xAxis: "x",
+    yAxis: "y",
+    zAxis: null,
+    intensityAxis: null,
+    lens: { axisNames: ["y", "x"], shape: [50, 100] },
   }) as unknown as LayerState;
 
 const makeTrackable = () => {

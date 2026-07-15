@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { buildSliceSignature, collapsibleDims } from "./sliceSignature";
 import { resolveFixedDimIndex } from "./selection";
-import { resolveIntensityDim } from "./dims";
+import { resolveIntensityAxis } from "./dims";
 import type { LayerState } from "./layerModel";
 
 const makeLayer = (overrides?: {
-  dims?: string[];
+  axisNames?: string[];
   shape?: number[];
-  zDim?: string | null;
+  zAxis?: string | null;
 }): LayerState =>
   ({
-    xDim: "x",
-    yDim: "y",
-    zDim: overrides?.zDim === undefined ? "z" : overrides.zDim,
-    intensityDim: "c",
+    xAxis: "x",
+    yAxis: "y",
+    zAxis: overrides?.zAxis === undefined ? "z" : overrides.zAxis,
+    intensityAxis: "c",
     lens: {
-      dims: overrides?.dims ?? ["t", "c", "z", "y", "x"],
+      axisNames: overrides?.axisNames ?? ["t", "c", "z", "y", "x"],
       shape: overrides?.shape ?? [10, 4, 36, 1024, 1024],
       slices: [],
     },
@@ -26,18 +26,18 @@ describe("collapsibleDims", () => {
     expect(collapsibleDims(makeLayer())).toEqual(["t"]);
     expect(
       collapsibleDims(
-        makeLayer({ dims: ["t", "c", "z", "y", "x", "tau"], shape: [1, 1, 18, 512, 512, 256] }),
+        makeLayer({ axisNames: ["t", "c", "z", "y", "x", "tau"], shape: [1, 1, 18, 512, 512, 256] }),
       ),
     ).toEqual(["tau"]); // t is singleton, tau collapses
   });
 });
 
 describe("collapsibleDims — a reduced phasor axis", () => {
-  const flimLayer = (phasorDim: string | null) =>
+  const flimLayer = (phasorAxis: string | null) =>
     ({
-      ...makeLayer({ dims: ["tau", "c", "z", "y", "x"], shape: [256, 1, 18, 512, 512] }),
-      phasorDim,
-      phasors: phasorDim ? [{ harmonic: 1, intensityIndex: 0 }] : [],
+      ...makeLayer({ axisNames: ["tau", "c", "z", "y", "x"], shape: [256, 1, 18, 512, 512] }),
+      phasorAxis,
+      phasors: phasorAxis ? [{ harmonic: 1, intensityIndex: 0 }] : [],
     }) as unknown as LayerState;
 
   it("has no dim slider: the repack consumes every bin, so no index pins it", () => {
@@ -88,25 +88,25 @@ describe("buildSliceSignature with dim selections", () => {
   });
 });
 
-describe("resolveIntensityDim", () => {
+describe("resolveIntensityAxis", () => {
   const renderAxes = { x: "x", y: "y", z: null, t: "t", intensity: "c" };
 
-  it("accepts a graph intensityDim that is a genuine extra axis", () => {
-    expect(resolveIntensityDim("c", renderAxes)).toBe("c");
-    expect(resolveIntensityDim("lambda", renderAxes)).toBe("lambda");
+  it("accepts a graph intensityAxis that is a genuine extra axis", () => {
+    expect(resolveIntensityAxis("c", renderAxes)).toBe("c");
+    expect(resolveIntensityAxis("lambda", renderAxes)).toBe("lambda");
   });
 
-  it("rejects a graph intensityDim that names a render axis (live t bug)", () => {
+  it("rejects a graph intensityAxis that names a render axis (live t bug)", () => {
     // Shipped data: time-lapse layer whose ChannelSourceNode said
-    // intensityDim: "t" — 16 timepoints would become 16 channel slabs and
+    // intensityAxis: "t" — 16 timepoints would become 16 channel slabs and
     // the t-slider would vanish. Falls back to renderAxes.intensity.
-    expect(resolveIntensityDim("t", { ...renderAxes, intensity: null })).toBeNull();
-    expect(resolveIntensityDim("x", renderAxes)).toBe("c");
+    expect(resolveIntensityAxis("t", { ...renderAxes, intensity: null })).toBeNull();
+    expect(resolveIntensityAxis("x", renderAxes)).toBe("c");
   });
 
   it("falls back to renderAxes.intensity when the graph has none", () => {
-    expect(resolveIntensityDim(null, renderAxes)).toBe("c");
-    expect(resolveIntensityDim(undefined, { ...renderAxes, intensity: null })).toBeNull();
+    expect(resolveIntensityAxis(null, renderAxes)).toBe("c");
+    expect(resolveIntensityAxis(undefined, { ...renderAxes, intensity: null })).toBeNull();
   });
 });
 
@@ -120,7 +120,7 @@ describe("resolveFixedDimIndex", () => {
   it("falls back to the lens slice's collapsed default", () => {
     // Center of the slice [2, 8): indices 2..7 → center 4 (floor((6-1)/2)+2).
     expect(
-      resolveFixedDimIndex({ dim: "t", start: 2, stop: 8, step: 1 }, undefined, 10),
+      resolveFixedDimIndex({ axis: "t", start: 2, stop: 8, step: 1 }, undefined, 10),
     ).toBe(4);
     expect(resolveFixedDimIndex(undefined, undefined, 10)).toBe(0);
   });

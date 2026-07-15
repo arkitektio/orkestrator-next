@@ -61,7 +61,7 @@ export const ADatasetPage = asDetailQueryRoute(
             <div className="text-muted-foreground">{dataset.description}</div>
           )}
           <div className="font-mono text-sm text-muted-foreground">
-            {dataset.dims.join(" × ")} ({dataset.shape.join(", ")})
+            {dataset.axisNames.join(" × ")} ({dataset.shape.join(", ")})
           </div>
 
           {dataset.intrinsicSystem && (

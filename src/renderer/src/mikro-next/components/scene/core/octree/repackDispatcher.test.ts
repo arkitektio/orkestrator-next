@@ -11,7 +11,7 @@ import { createRepackDispatcher, createSyncRepackDispatcher } from "./repackDisp
  * level, 2 channels, brick payload 4³ + border).
  */
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 const GEO = buildLayerLevelGeometry(DIMS, LAYER, [
   { shape: [2, 4, 12, 12], chunks: [1, 4, 8, 8], dtype: "uint8", storeId: "s0" },
 ])!;

@@ -2,11 +2,22 @@
 # carries the default-harmonic context; a phasor node on another harmonic
 # resolves its own here, because both the instrument calibration and the
 # persisted (g, s) distribution are harmonic-specific.
-query GetLensPhasor($id: ID!, $dim: String, $harmonic: Int!) {
+query GetLensPhasor($id: ID!, $axis: String, $harmonic: Int!) {
   lens(id: $id) {
     id
-    phasor(dim: $dim, harmonic: $harmonic) {
+    phasor(axis: $axis, harmonic: $harmonic) {
       ...PhasorContext
+    }
+  }
+}
+
+# Existing lenses over a dataset, so adding a layer can reuse a full lens
+# (slices: []) instead of minting a new one per layer.
+query ListLensesForDataset($dataset: ID!) {
+  lenses(filters: { dataset: $dataset }) {
+    id
+    slices {
+      ...DimSlice
     }
   }
 }

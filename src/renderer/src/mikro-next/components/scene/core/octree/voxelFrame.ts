@@ -17,7 +17,7 @@ import type { LayerState } from "../layerModel";
  * 2D slab selection.
  */
 export function buildVolumeVoxelToWorld(layer: LayerState): THREE.Matrix4 {
-  const { xPos, yPos, zPos } = resolveAxisIndices(layer.lens.dims, layer);
+  const { xPos, yPos, zPos } = resolveAxisIndices(layer.lens.axisNames, layer);
   const xMax = xPos !== -1 ? layer.lens.shape[xPos] ?? 0 : 0;
   const yMax = yPos !== -1 ? layer.lens.shape[yPos] ?? 0 : 0;
   const zMax = zPos !== -1 ? layer.lens.shape[zPos] ?? 0 : 0;

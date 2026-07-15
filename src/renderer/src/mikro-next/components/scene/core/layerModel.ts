@@ -11,7 +11,7 @@ import {
   resolveLayerGraph,
   resolveProjectionMode,
 } from "./renderGraph";
-import { resolveIntensityDim, resolvePhasorDim } from "./dims";
+import { resolveIntensityAxis, resolvePhasorAxis } from "./dims";
 import { composeLayerAffine, type SceneTransformContext } from "./transformGraph";
 
 export type { SceneTransformContext };
@@ -41,11 +41,11 @@ export type LayerState = ImageLayerFragment & {
    * Kept as flat fields because ~15 consumers (slice signatures, probes,
    * panels, planners) read them by these names.
    */
-  xDim: string | null;
-  yDim: string | null;
-  zDim: string | null;
-  tDim: string | null;
-  intensityDim: string | null;
+  xAxis: string | null;
+  yAxis: string | null;
+  zAxis: string | null;
+  tAxis: string | null;
+  intensityAxis: string | null;
   /**
    * The axis the layer's phasor nodes reduce (a MICROTIME/SPECTRUM axis). Null
    * when the graph has no phasor node — and when it is set, the axis is NOT
@@ -53,7 +53,7 @@ export type LayerState = ImageLayerFragment & {
    * (`sliceSignature.collapsibleDims`), and the brick repack reduces it into
    * g/s/intensity slabs instead of pinning one index.
    */
-  phasorDim: string | null;
+  phasorAxis: string | null;
   /** Channel sources flattened from the layer's render graph (tree order). */
   channels: ChannelRenderNode[];
   /** Phasor sources flattened from the layer's render graph (tree order). */
@@ -121,12 +121,12 @@ export const normalizeLayer = (
     color: transfer?.color ?? null,
     gamma: transfer?.gamma ?? null,
     affineMatrix: composeLayerAffine(scene, layer),
-    xDim: renderAxes?.x ?? null,
-    yDim: renderAxes?.y ?? null,
-    zDim: renderAxes?.z ?? null,
-    tDim: renderAxes?.t ?? null,
-    intensityDim: resolveIntensityDim(primary?.intensityDim, renderAxes),
-    phasorDim: resolvePhasorDim(phasors[0]?.phasorDim, renderAxes),
+    xAxis: renderAxes?.x ?? null,
+    yAxis: renderAxes?.y ?? null,
+    zAxis: renderAxes?.z ?? null,
+    tAxis: renderAxes?.t ?? null,
+    intensityAxis: resolveIntensityAxis(primary?.intensityAxis, renderAxes),
+    phasorAxis: resolvePhasorAxis(phasors[0]?.phasorAxis, renderAxes),
     channels,
     phasors,
     sources,

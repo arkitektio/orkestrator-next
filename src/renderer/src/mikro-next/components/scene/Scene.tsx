@@ -10,6 +10,7 @@ import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
+import { SceneScreenshot } from "./overlays/SceneScreenshot";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
 import { PanelProvider } from "./PanelProvider";
@@ -209,6 +210,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
               <InitialCameraFit />
               <QualityAdapter />
               <CanvasSync />
+              <SceneScreenshot />
 
               {/* Interaction Layers */}
               {/* The SceneAxis is a simple XYZ axis helper that also shows the scale of the scene */}
@@ -233,7 +235,7 @@ export const Scene = (props: { scene: SceneFragment }) => {
             <div className="pointer-events-none absolute right-3 top-3 bottom-3 z-30 flex w-72 flex-col gap-2">
               <SceneOverlay />
               <ProbeThresholdPanel />
-              <LayerControlPanel />
+              <LayerControlPanel sceneId={props.scene.id} />
             </div>
             <WhenDebug>
               <DebugPanel />

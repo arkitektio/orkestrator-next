@@ -25,11 +25,11 @@ const DIMS = ["tau", "c", "z", "y", "x"];
 const BINS = 8;
 const BINS_PER_CHUNK = 4;
 const LAYER = {
-  xDim: "x",
-  yDim: "y",
-  zDim: "z",
-  intensityDim: "c",
-  phasorDim: "tau",
+  xAxis: "x",
+  yAxis: "y",
+  zAxis: "z",
+  intensityAxis: "c",
+  phasorAxis: "tau",
   phasors: [{ harmonic: 1, intensityIndex: 0 }],
 };
 

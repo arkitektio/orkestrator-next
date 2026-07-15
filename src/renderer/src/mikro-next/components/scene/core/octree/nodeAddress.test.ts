@@ -14,7 +14,7 @@ import {
 } from "./nodeAddress";
 
 const DIMS = ["c", "z", "y", "x"];
-const LAYER = { xDim: "x", yDim: "y", zDim: "z", intensityDim: "c" };
+const LAYER = { xAxis: "x", yAxis: "y", zAxis: "z", intensityAxis: "c" };
 
 /** 600×500×40 with x/y-only downsampling — quadtree along z. */
 const GEO = buildLayerLevelGeometry(DIMS, LAYER, [

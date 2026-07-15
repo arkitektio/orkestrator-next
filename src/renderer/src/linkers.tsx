@@ -651,6 +651,11 @@ export const MikroTable = buildSmart(
   "mikro/tables",
   { name: "Table" },
 );
+export const MikroTableDataset = buildSmart(
+  "@mikro/tabledataset",
+  "mikro/tabledatasets",
+  { name: "Table Dataset" },
+);
 
 export const MikroChannelView = buildSmart(
   "@mikro/channelview",

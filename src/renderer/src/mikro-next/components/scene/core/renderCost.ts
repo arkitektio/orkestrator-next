@@ -27,7 +27,7 @@ type CostLayer = ImageLayerFragment & {
 
 const axisLength = (layer: CostLayer, lodIndex: number, dim: string | null | undefined): number => {
   if (!dim) return 1;
-  const position = layer.lens.dataset.dims.indexOf(dim);
+  const position = layer.lens.dataset.axisNames.indexOf(dim);
   if (position === -1) return 1;
   return layer.lens.dataset.dataArrays[lodIndex]?.store.shape[position] ?? 1;
 };

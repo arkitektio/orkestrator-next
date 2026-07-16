@@ -630,12 +630,6 @@ export const MikroFile = buildSmart(
   "mikro/files",
   { name: "File (Mikro)" },
 );
-export const MikroMesh = buildSmart(
-  "@mikro/mesh",
-  "mikro/meshes",
-  { name: "Mesh" },
-);
-
 export const MikroStage = buildSmart(
   "@mikro/stage",
   "mikro/stages",

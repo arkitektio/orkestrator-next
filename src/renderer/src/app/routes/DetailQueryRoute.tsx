@@ -1,4 +1,5 @@
 import { useDebug } from "@/providers/debug/DebugContext";
+import { RefetchProvider } from "@/providers/refetch/RefetchContext";
 import {
   ApolloQueryResult,
   DocumentNode,
@@ -101,14 +102,20 @@ export const asDetailQueryRoute = <T extends any>(
       return <ErrorPage error={passyProps.error} />;
     }
 
-    if (passyProps.loading) return <LoadingPage />;
+    // Guard on data as well: were a route to set notifyOnNetworkStatusChange,
+    // a refetch would otherwise tear the whole page down to the loading state.
+    if (passyProps.loading && !passyProps.data) return <LoadingPage />;
 
     if (passyProps && passyProps.data) {
       if (debug) {
         return <DebugPage data={passyProps.data} />;
       }
 
-      return <Component {...passyProps} id={id ?? ""} />;
+      return (
+        <RefetchProvider refetch={passyProps.refetch}>
+          <Component {...passyProps} id={id ?? ""} />
+        </RefetchProvider>
+      );
     }
 
     return null;

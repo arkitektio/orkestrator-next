@@ -161,6 +161,8 @@ type AffineTransformation implements Transformation {
   The affine matrix, M x (N+1), rows outermost. The last column is the translation
   """
   affine: [[Float!]!]!
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -178,9 +180,19 @@ type AffineTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -523,6 +535,8 @@ type BigFileUploadGrant {
 A pair of child transformations giving an explicit forward and inverse map
 """
 type BijectionTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -539,6 +553,11 @@ type BijectionTransformation implements Transformation {
   """
   outputAxes: [String!]!
 
+  """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
   """The forward transformation (order 0) and its inverse (order 1)"""
   transformations: [Transformation!]!
 
@@ -546,6 +565,11 @@ type BijectionTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -631,6 +655,8 @@ type BoundingBox {
 A composition of child transformations, each acting on a named subset of the axes
 """
 type ByDimensionTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -648,6 +674,11 @@ type ByDimensionTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   The child transformations. Each carries the `inputAxes` and `outputAxes` it acts on
   """
   transformations: [Transformation!]!
@@ -656,6 +687,11 @@ type ByDimensionTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -1192,6 +1228,7 @@ input CoordinateAnchorInput {
   axisAnchors: [AxisAnchorInput!]!
   label: LabelInput = null
   lightGraph: LightpathGraphInput = null
+  microscope: OptikitStateInput = null
   omeMetadata: OmeMetadataInput = null
   phasorCalibration: PhasorCalibrationInput = null
   phasorHistogram: PhasorHistogramInput = null
@@ -1224,6 +1261,8 @@ type CoordinateSystem {
   The system's axes, in array order (slowest-varying first). RFC-5 requires them ordered by type: time, then channel and custom types, then space
   """
   axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
+  createdAt: DateTime!
+  creator: User
 
   """
   The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a scene's world, a shared hub); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
@@ -1232,10 +1271,30 @@ type CoordinateSystem {
   id: ID!
 
   """
+  Whether a scene may compose over this system as its world, i.e. whether `createSceneFromCoordinateSystem` will accept it. False for an ARRAY system (a pyramid level, a lens crop -- a slice *of* a space, not a space to compose in; its container's intrinsic system is the honest root one hop away) and for another scene's minted world (which cascades with its scene and would be deleted out from under the adopter)
+  """
+  isAdoptableWorld: Boolean!
+
+  """
+  Whether this is an ownerless shared space, built to be registered into. The one kind of system created bare (`createCoordinateSystem`), and the only adoptable world that can receive registrations -- a scene's own world is SHARED too, but it is scene-owned and cascades away with its scene
+  """
+  isHub: Boolean!
+
+  """
   What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for a space sources register into (a scene's world, an ownerless hub)
   """
   kind: CoordinateSystemKind!
   name: String!
+
+  """
+  The container this system belongs to and cascades with: the dataset whose pixel grid or calibration it is, the pyramid level or lens whose grid it is, the collection or table whose native space it is, or the scene the world was minted for. Null for a hub, which nobody owns -- `kind` tells you *what* a system denotes, this tells you *whose* it is
+  """
+  owner: CoordinateSystemOwner
+
+  """
+  Provenance entries for this coordinate system: who created it, and every subsequent change
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
   The scenes that compose over this system as their world. Non-empty only for a SHARED space (a world minted for one scene, or an ownerless hub): a hub lists every scene sharing it, and outlives each of them. The inverse of `Scene.worldCoordinateSystem`
@@ -1263,6 +1322,11 @@ input CoordinateSystemFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
+
+  """
+  Filter to ownerless shared spaces -- the hubs, the only systems that can receive registrations and be shared between scenes. Narrower than `kind: SHARED`, which also matches each scene's own minted world
+  """
+  isHub: Boolean
 
   """
   Filter by what the system denotes, derived from its owner: INTRINSIC (a container's own native space), ARRAY (a pyramid level's or lens' grid), PHYSICAL (a calibration), SHARED (a scene's world or an ownerless hub)
@@ -1314,9 +1378,16 @@ input CoordinateSystemOrder @oneOf {
 }
 
 """
+The container that owns a coordinate system and that it cascades with. A hub has none
+"""
+union CoordinateSystemOwner = ADataset | DataArray | Lens | MeshCollection | Scene | TableDataset
+
+"""
 A non-affine map given by a coordinate field: a Zarr array of absolute output positions, where DISPLACEMENTS stores offsets. It has no closed-form inverse either
 """
 type CoordinatesTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -1334,6 +1405,11 @@ type CoordinatesTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   The Zarr array holding the coordinate field: an absolute output position per point
   """
   store: ZarrStore
@@ -1342,6 +1418,11 @@ type CoordinatesTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -1553,26 +1634,19 @@ input CreatePhasorLayerInput {
 }
 
 """
-Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset or a legacy table
+Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset
 """
 input CreatePointLayerInput {
   blending: Blending = null
   colorColumn: String = null
   colormap: ColorMap = null
-  coordinateSystem: ID = null
-  idColumn: String = null
   opacity: Float = null
   order: Int = null
   pointSize: Float = null
   scene: ID!
   sizeColumn: String = null
-  tColumn: String = null
-  table: ID = null
-  tableDataset: ID = null
+  tableDataset: ID!
   visible: Boolean = null
-  xColumn: String = null
-  yColumn: String = null
-  zColumn: String = null
 }
 
 """Input for creating an RGB render context for an image"""
@@ -1617,7 +1691,7 @@ input CreateRgbLayerInput {
 }
 
 """
-Bootstrap a renderable scene over a hub coordinate system (an ownerless SHARED space): the scene adopts the hub as its world, then materializes the sources already registered into the hub as layers, up to the policy's nchildren. It authors no edges -- every registration composed into the scene was authored by createCoordinateSystem, and each source's path to world is that one edge. The hub is shared, not owned: rerunning makes another scene over the same space, and the hub outlives them all
+Bootstrap a renderable scene over an existing coordinate system. Over a hub (an ownerless SHARED space) the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's INTRINSIC pixels, a PHYSICAL calibration, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
 """
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
@@ -1635,7 +1709,7 @@ input CreateSceneFromDatasetInput {
 }
 
 """
-Input type for creating a scene over a world coordinate system: an adopted existing hub, or one minted for the scene
+Input type for creating a scene over a world coordinate system: an adopted existing system (a hub, a dataset's intrinsic grid, a calibration), or one minted for the scene
 """
 input CreateSceneInput {
   axes: [CalibratedAxisInput!] = null
@@ -1675,25 +1749,18 @@ input CreateTableDatasetInput {
 }
 
 """
-Create a layer that renders trajectories (e.g. particle/cell tracks) from a table dataset or a legacy table, grouped by a track id
+Create a layer that renders trajectories (e.g. particle/cell tracks) from a table dataset, grouped by its TRACK_ID column
 """
 input CreateTrackLayerInput {
   blending: Blending = null
   colorByColumn: String = null
   colormap: ColorMap = null
-  coordinateSystem: ID = null
   lineWidth: Float = null
   opacity: Float = null
   order: Int = null
   scene: ID!
-  tColumn: String = null
-  table: ID = null
-  tableDataset: ID = null
-  trackIdColumn: String = null
+  tableDataset: ID!
   visible: Boolean = null
-  xColumn: String = null
-  yColumn: String = null
-  zColumn: String = null
 }
 
 """
@@ -1709,10 +1776,10 @@ input CreateTransformationInput {
   outputAxes: [String!] = null
   reason: String = null
   scale: [Float!] = null
-  scene: ID = null
   store: ArrayLike = null
   translation: [Float!] = null
   validity: PlacementValidity = null
+  valueRelation: ValueRelation = null
 }
 
 """
@@ -1946,6 +2013,12 @@ input DeleteCameraInput {
   id: ID!
 }
 
+"""Input for deleting a hub coordinate system by ID"""
+input DeleteCoordinateSystemInput {
+  """The ID of the hub coordinate system to delete"""
+  id: ID!
+}
+
 """Input for deleting a data array by ID"""
 input DeleteDataArrayInput {
   """The ID of the data array to delete"""
@@ -2003,12 +2076,6 @@ input DeleteLensInput {
 """Input for deleting a mesh collection by ID"""
 input DeleteMeshCollectionInput {
   """The ID of the mesh collection to delete"""
-  id: ID!
-}
-
-"""Input for deleting a mesh by ID"""
-input DeleteMeshInput {
-  """The ID of the mesh to delete"""
   id: ID!
 }
 
@@ -2109,6 +2176,7 @@ input DerivedFromInput {
   reason: String = null
   scale: [Float!] = null
   translation: [Float!] = null
+  valueRelation: ValueRelation = null
 }
 
 """
@@ -2187,6 +2255,28 @@ type DetectorElement implements OpticalElement {
   serialNumber: String
 }
 
+"""One hardware device's recorded state"""
+type DeviceState {
+  """A free-form device kind, e.g. 'laser', 'filter-wheel'"""
+  kind: String
+
+  """The device's identity in the setup, e.g. 'filter-wheel-1'"""
+  label: String!
+  settings: [Setting!]!
+}
+
+"""
+One hardware device's recorded state: its identity in the setup plus its settings at this coordinate
+"""
+input DeviceStateInput {
+  """A free-form device kind, e.g. 'laser', 'filter-wheel'"""
+  kind: String = null
+
+  """The device's identity in the setup, e.g. 'filter-wheel-1'"""
+  label: String!
+  settings: [SettingInput!]! = []
+}
+
 input DimSelector {
   end: Int = null
   index: Int = null
@@ -2207,6 +2297,8 @@ enum DimSelectorKind {
 A non-affine map given by a displacement field: a Zarr array of per-point offsets. It has no closed-form inverse, so a placement path never walks it backwards
 """
 type DisplacementsTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -2224,6 +2316,11 @@ type DisplacementsTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   The Zarr array holding the displacement field: a per-point offset. Ask it for an access grant and read it directly
   """
   store: ZarrStore
@@ -2232,6 +2329,11 @@ type DisplacementsTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -3021,6 +3123,8 @@ enum HistoryKind {
 
 """The identity map: input and output coordinates are the same"""
 type IdentityTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -3038,9 +3142,19 @@ type IdentityTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -4001,6 +4115,8 @@ type LightpathView implements View {
 A permutation of axes, mapping each input axis to an output axis by name
 """
 type MapAxisTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -4014,9 +4130,19 @@ type MapAxisTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -4187,15 +4313,6 @@ type Membership {
 }
 
 """
-A 3D mesh belonging to a dataset, with its geometry kept in a big file store. Clients use it to download or visualize surface reconstructions derived from image data.
-"""
-type Mesh {
-  id: ID!
-  name: String!
-  store: BigFileStore!
-}
-
-"""
 An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL
 """
 type MeshCollection {
@@ -4262,45 +4379,6 @@ input MeshCollectionFilter {
   version: StrFilterLookup
 }
 
-input MeshFilter {
-  AND: MeshFilter
-  DISTINCT: Boolean
-  NOT: MeshFilter
-  OR: MeshFilter
-
-  """Filter for items created after this datetime"""
-  createdAfter: DateTime
-
-  """Filter for items created before this datetime"""
-  createdBefore: DateTime
-
-  """Filter by the dataset this mesh belongs to"""
-  dataset: ID
-
-  """Filter by a list of dataset IDs"""
-  datasets: [ID!]
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  name: StrFilterLookup
-
-  """Filter by whether the current user has pinned the item"""
-  pinned: Boolean
-
-  """Search by name (case-insensitive substring)"""
-  search: String
-}
-
-"""Input for creating a 3D mesh from an uploaded mesh file"""
-input MeshInput {
-  """The uploaded mesh file store to create the mesh from"""
-  mesh: MeshLike!
-
-  """The name of the mesh"""
-  name: String!
-}
-
 """
 A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
 """
@@ -4314,7 +4392,6 @@ type MeshLayer implements Layer {
   id: ID!
   kind: LayerKind!
   materialColor: [Int!]
-  mesh: Mesh
   opacity: Float!
   order: Int!
 
@@ -4335,17 +4412,6 @@ type MeshLayer implements Layer {
   scene: Scene!
   visible: Boolean!
   wireframe: Boolean!
-}
-
-"""
-The `MeshLike` scalar type represents a reference to a mesh previously created by the user n a datalayer
-"""
-scalar MeshLike
-
-input MeshOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  name: Ordering
 }
 
 """Schema for unstructured metadata attached to a file."""
@@ -4444,11 +4510,6 @@ input MultiWellPlateOrder @oneOf {
 }
 
 type Mutation {
-  """
-  Add an existing transformation edge to a scene's composition as a registration
-  """
-  addRegistrationToScene(input: SceneRegistrationInput!): Scene!
-
   """Assign a user permission to an object"""
   assignUserPermission(input: AssignUserPermissionInput!): [UserObjectPermission!]!
 
@@ -4529,9 +4590,6 @@ type Mutation {
   """Create a new view for masked data"""
   createMaskView(input: MaskViewInput!): MaskView!
 
-  """Create a new mesh"""
-  createMesh(input: MeshInput!): Mesh!
-
   """
   Register an immutable, versioned mesh collection against a coordinate system
   """
@@ -4600,7 +4658,7 @@ type Mutation {
   createScene(input: CreateSceneInput!): Scene!
 
   """
-  Bootstrap a renderable scene from a hub (ATLAS) coordinate system: mirror the hub into a fresh world, then materialize the sources already registered into it as layers, up to the policy's nchildren. Authors exactly one edge (the mirror) and otherwise only composes registrations createCoordinateSystem authored
+  Bootstrap a renderable scene over an existing coordinate system: a hub (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a calibration (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
   """
   createSceneFromCoordinateSystem(input: CreateSceneFromCoordinateSystemInput!): Scene!
 
@@ -4666,6 +4724,11 @@ type Mutation {
   """Delete an existing channel view"""
   deleteChannelView(input: DeleteViewInput!): ID!
 
+  """
+  Delete an unused hub coordinate system. Refused while any scene composes over it, any transformation edge touches it, or any ROI is drawn in it -- each of those would otherwise cascade away with it. Other system kinds cascade with their owner and cannot be deleted directly
+  """
+  deleteCoordinateSystem(input: DeleteCoordinateSystemInput!): ID!
+
   """Delete an existing data array"""
   deleteDataArray(input: DeleteDataArrayInput!): ID!
 
@@ -4695,9 +4758,6 @@ type Mutation {
 
   """Delete an existing lens"""
   deleteLens(input: DeleteLensInput!): ID!
-
-  """Delete an existing mesh"""
-  deleteMesh(input: DeleteMeshInput!): ID!
 
   """Delete an existing mesh collection"""
   deleteMeshCollection(input: DeleteMeshCollectionInput!): ID!
@@ -4798,9 +4858,6 @@ type Mutation {
   """Pin an instrument for quick access"""
   pinInstrument(input: PinInstrumentInput!): Instrument!
 
-  """Pin a mesh for quick access"""
-  pinMesh(input: PinMeshInput!): Mesh!
-
   """Pin a multi-well plate for quick access"""
   pinMultiWellPlate(input: PintMultiWellPlateInput!): MultiWellPlate!
 
@@ -4843,11 +4900,6 @@ type Mutation {
   """Remove images from a dataset"""
   releaseImagesFromDataset(input: DesociateInput!): Dataset!
 
-  """
-  Remove a registration edge from a scene's composition. The edge itself survives, and removal does not undo the registration it records
-  """
-  removeRegistrationFromScene(input: SceneRegistrationInput!): Scene!
-
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
 
@@ -4889,6 +4941,11 @@ type Mutation {
 
   """Revert dataset to a previous version"""
   revertDataset(input: RevertInput!): Dataset!
+
+  """
+  Rename a hub coordinate system or anchor its clock. Hubs only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space
+  """
+  updateCoordinateSystem(input: UpdateCoordinateSystemInput!): CoordinateSystem!
 
   """Update dataset metadata"""
   updateDataset(input: ChangeDatasetInput!): Dataset!
@@ -5213,8 +5270,28 @@ The hardware truth: the recorded microscope (Optikit) state pinned to a coordina
 type OptikitState {
   id: ID!
 
-  """The recorded microscope state"""
-  state: Any!
+  """
+  The recorded microscope state, reconstructed into its typed form: stage pose and environment as quantities, everything else as per-device named settings
+  """
+  state: OptikitStateGraph!
+}
+
+"""
+The recorded microscope (Optikit) state: the hardware truth at the moment of acquisition
+"""
+type OptikitStateGraph {
+  devices: [DeviceState!]!
+  stage: StageState
+  temperature: Temperature
+}
+
+"""
+The recorded microscope (Optikit) state: the hardware truth at the moment of acquisition. The common facts (stage, environment) are first-class and quantity-typed; everything else is per-device named settings
+"""
+input OptikitStateInput {
+  devices: [DeviceStateInput!]! = []
+  stage: StageStateInput = null
+  temperature: Temperature = null
 }
 
 enum Ordering {
@@ -6282,15 +6359,6 @@ input PinInstrumentInput {
   pin: Boolean!
 }
 
-"""Input for pinning or unpinning a mesh for quick access"""
-input PinMeshInput {
-  """The ID of the mesh to pin or unpin"""
-  id: ID!
-
-  """True to pin, false to unpin"""
-  pin: Boolean!
-}
-
 """Input for pinning or unpinning an objective for quick access"""
 input PinObjectiveInput {
   """The ID of the objective to pin or unpin"""
@@ -6439,20 +6507,15 @@ type PlaneInfo {
 }
 
 """
-A layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset or a legacy table.
+A layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset.
 """
 type PointLayer implements Layer {
   blending: Blending!
   colorColumn: String
   colormap: ColorMap
-
-  """
-  (legacy table) The coordinate system the table's coordinate columns are expressed in. Null for a table dataset layer, whose space is the dataset's own system
-  """
-  coordinateSystem: CoordinateSystem
   id: ID!
 
-  """The column identifying each point, if any"""
+  """The dataset's ID-role column identifying each point, if any"""
   idColumn: String
   kind: LayerKind!
   opacity: Float!
@@ -6476,25 +6539,24 @@ type PointLayer implements Layer {
   scene: Scene!
   sizeColumn: String
 
-  """The column mapped to the time coordinate, if any"""
+  """The coordinate column whose axis is named 't', if any"""
   tColumn: String
-  table: Table
 
   """
-  The table dataset the points are drawn from, when the layer uses one. Its declared coordinate columns provide the coordinates and its own system provides the placement
+  The table dataset the points are drawn from. Its declared coordinate columns provide the coordinates and its own system provides the placement -- the column fields below are derived from its schema, never stored per layer
   """
-  tableDataset: TableDataset
+  tableDataset: TableDataset!
   visible: Boolean!
 
   """
-  The column mapped to the x coordinate. For a table dataset layer, the coordinate column whose axis is named 'x'
+  The coordinate column whose axis is named 'x', from the dataset's declared schema
   """
   xColumn: String
 
-  """The column mapped to the y coordinate"""
+  """The coordinate column whose axis is named 'y'"""
   yColumn: String
 
-  """The column mapped to the z coordinate, if any"""
+  """The coordinate column whose axis is named 'z', if any"""
   zColumn: String
 }
 
@@ -6771,12 +6833,6 @@ type Query {
   """List the memberships of the current organization (excluding bots)"""
   members: [Membership!]!
 
-  """Get a single 3D mesh by ID"""
-  mesh(
-    """The unique identifier of an object"""
-    id: ID!
-  ): Mesh!
-
   """Get a single mesh collection by ID"""
   meshCollection(id: ID!): MeshCollection!
 
@@ -6784,9 +6840,6 @@ type Query {
   List mesh collections (immutable, versioned Parquet-backed mesh sets, each in a coordinate system of its own)
   """
   meshCollections(filters: MeshCollectionFilter, pagination: OffsetPaginationInput): [MeshCollection!]!
-
-  """List 3D meshes"""
-  meshes(filters: MeshFilter, ordering: [MeshOrder!]! = [], pagination: OffsetPaginationInput): [Mesh!]!
 
   """Get a single multi well plate by ID"""
   multiWellPlate(
@@ -7669,6 +7722,8 @@ type RoiSelector {
 type RotationTransformation implements Transformation {
   """The rotation matrix"""
   affine: [[Float!]!]!
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -7686,9 +7741,19 @@ type RotationTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -7728,6 +7793,8 @@ input ScaleInput {
 
 """A per-axis multiplication, with one entry per input axis"""
 type ScaleTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -7745,6 +7812,11 @@ type ScaleTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   The per-axis scale factors, in the axis order of the input system, expressed in the units of the output system's axes (dimensionless between pixel systems, e.g. within a pyramid). Absolute, not relative to another level
   """
   scale: [Float!]!
@@ -7753,6 +7825,11 @@ type ScaleTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -7834,7 +7911,7 @@ type Scene {
   name: String!
 
   """
-  The registration edges belonging to this scene's composition -- the edges placing each layer's dataset into the world. This membership set is what `layers.pathToWorld` searches, and for an edge into a shared space it is what places: removing one un-places the layers that relied on it, though the edge itself remains a fact about two coordinate systems. Composing the matrices stays the client's job
+  The registrations composing this scene: every top-level edge into its world system. A property of the *space*, not of the scene (one truth per space) -- every scene over the same world shares them, each unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. Composing the matrices stays the client's job
   """
   registrations: [Transformation!]!
 
@@ -7861,12 +7938,6 @@ input SceneFilter {
   ids: [ID!]
   name: StrFilterLookup
 
-  """Filter by the parent scene"""
-  parent: ID
-
-  """Filter for scenes with (true) or without (false) a parent"""
-  parentless: Boolean
-
   """Search by name (case-insensitive substring)"""
   search: String
 }
@@ -7883,14 +7954,6 @@ input ScenePolicyInput {
   includeMeshes: Boolean! = true
   nchildren: Int! = 8
   transformTables: Boolean! = false
-}
-
-"""
-Input for adding a registration edge to, or removing one from, a scene's composition
-"""
-input SceneRegistrationInput {
-  scene: ID!
-  transformation: ID!
 }
 
 input Selector {
@@ -7911,6 +7974,8 @@ input SelectorInput {
 
 """An ordered composition of child transformations, applied first to last"""
 type SequenceTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -7928,6 +7993,11 @@ type SequenceTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   The child transformations, applied first to last. They omit their own input and output: the sequence supplies them
   """
   transformations: [Transformation!]!
@@ -7936,7 +8006,32 @@ type SequenceTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
+}
+
+"""One named device setting, exactly one value slot filled"""
+type Setting {
+  flag: Boolean
+  name: String!
+  number: Float
+  quantity: GenericQuantity
+  text: String
+}
+
+"""
+One named device setting with exactly one value slot filled: a quantity when the setting carries a unit, else a number, text or flag. A setting holding two values is two settings
+"""
+input SettingInput {
+  flag: Boolean = null
+  name: String!
+  number: Float = null
+  quantity: GenericQuantity = null
+  text: String = null
 }
 
 """
@@ -8180,6 +8275,20 @@ input StageOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""Where the stage was, per axis, as physical lengths"""
+type StageState {
+  x: Length
+  y: Length
+  z: Length
+}
+
+"""Where the stage was, per axis, as physical lengths (e.g. '100.5 um')"""
+input StageStateInput {
+  x: Length = null
+  y: Length = null
+  z: Length = null
 }
 
 input StrFilterLookup {
@@ -8584,6 +8693,9 @@ input TaskOrder @oneOf {
   id: Ordering
 }
 
+"""A temperature (``"310 K"``, ``"37 degC"``)."""
+scalar Temperature
+
 """The `Vector` scalar type represents a matrix values as specified by"""
 scalar ThreeDVector
 
@@ -8703,17 +8815,12 @@ input TimepointViewInput {
 }
 
 """
-A layer that renders trajectories (e.g. particle/cell tracks) from a table dataset or a legacy table, grouped by a track id.
+A layer that renders trajectories (e.g. particle/cell tracks) from a table dataset, grouped by its TRACK_ID column.
 """
 type TrackLayer implements Layer {
   blending: Blending!
   colorByColumn: String
   colormap: ColorMap
-
-  """
-  (legacy table) The coordinate system the table's coordinate columns are expressed in. Null for a table dataset layer, whose space is the dataset's own system
-  """
-  coordinateSystem: CoordinateSystem
   id: ID!
   kind: LayerKind!
   lineWidth: Float
@@ -8736,28 +8843,27 @@ type TrackLayer implements Layer {
   placementValidity: PlacementValidity!
   scene: Scene!
 
-  """The column mapped to the time coordinate, if any"""
+  """The coordinate column whose axis is named 't', if any"""
   tColumn: String
-  table: Table
 
   """
-  The table dataset the tracks are drawn from, when the layer uses one. Its coordinate and TRACK_ID columns provide the trajectories
+  The table dataset the tracks are drawn from. Its coordinate and TRACK_ID columns provide the trajectories -- the column fields below are derived from its schema, never stored per layer
   """
-  tableDataset: TableDataset
+  tableDataset: TableDataset!
 
-  """
-  The column that groups rows into tracks. For a table dataset layer, its TRACK_ID column
-  """
+  """The dataset's TRACK_ID column, which groups rows into tracks"""
   trackIdColumn: String
   visible: Boolean!
 
-  """The column mapped to the x coordinate"""
+  """
+  The coordinate column whose axis is named 'x', from the dataset's declared schema
+  """
   xColumn: String
 
-  """The column mapped to the y coordinate"""
+  """The coordinate column whose axis is named 'y'"""
   yColumn: String
 
-  """The column mapped to the z coordinate, if any"""
+  """The coordinate column whose axis is named 'z', if any"""
   zColumn: String
 }
 
@@ -8865,6 +8971,8 @@ enum TransformKindChoices {
 A directed edge of the coordinate graph, mapping `input` to `output`. Direction is always forward. The concrete kind (Scale, Translation, Affine, Sequence, ...) carries the parameters
 """
 interface Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -8882,9 +8990,19 @@ interface Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -8936,6 +9054,8 @@ input TransformationOrder @oneOf {
 
 """A per-axis offset, with one entry per input axis"""
 type TranslationTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -8952,6 +9072,11 @@ type TranslationTransformation implements Transformation {
   """
   outputAxes: [String!]!
 
+  """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
   """The per-axis offsets, in the axis order of the input system"""
   translation: [Float!]!
 
@@ -8959,6 +9084,11 @@ type TranslationTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -8990,6 +9120,8 @@ scalar Unit
 A declared NON-correspondence: the two systems are related -- one was computed from the other -- and no point of either maps to a point of the other. It has no parameters, no rank and no matrix, and no placement search will walk it, in either direction. This is what a per-object measurement table's relation to the image it was measured from looks like
 """
 type UnmappableTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
   id: ID!
   input: CoordinateSystem
 
@@ -9007,6 +9139,11 @@ type UnmappableTransformation implements Transformation {
   outputAxes: [String!]!
 
   """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
   Why the geometry does not survive, if the author said. Purely descriptive: the kind is what the graph acts on, and an absent reason does not make the edge any less of a statement
   """
   reason: String
@@ -9015,6 +9152,11 @@ type UnmappableTransformation implements Transformation {
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
   version: Int!
 }
 
@@ -9039,6 +9181,15 @@ input UnstructuredMetaInput {
 
   """The ID of the schema describing the metadata structure"""
   schema: ID = null
+}
+
+"""
+Input for renaming a hub coordinate system or anchoring its clock. Hubs only: every other system is named by the container that owns it
+"""
+input UpdateCoordinateSystemInput {
+  epoch: DateTime = null
+  id: ID!
+  name: String = null
 }
 
 """Input for updating an image's name or tags"""
@@ -9242,6 +9393,26 @@ input ValueHistogramInput {
 
   """The 99th percentile pixel value of the histogram"""
   p99: Float = null
+}
+
+"""
+What a derivation did to the values -- the axis the spatial kind says nothing about. A threshold is spatially IDENTITY with categorized values; a crop is value-identical. Stated on the derivation edge (one event, one row, two orthogonal statements); the algorithm and its parameters belong to task provenance, not here.
+"""
+enum ValueRelation {
+  """
+  The values became labels or classes (a threshold, a segmentation): a different value domain. This is the structural signal that lets a bootstrapped scene render the data as a label map.
+  """
+  CATEGORIZED
+
+  """
+  The target's numbers are the source's numbers (a crop, an axis reorder): value statistics -- histograms, contrast limits -- transfer across the edge.
+  """
+  IDENTICAL
+
+  """
+  The same quantity with new numbers (a deconvolution, a normalization, a denoise): still an intensity, but nothing computed on the source's values transfers.
+  """
+  TRANSFORMED
 }
 
 """3D vector or point in space"""
@@ -9522,7 +9693,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | Mesh | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

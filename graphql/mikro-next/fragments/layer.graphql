@@ -158,8 +158,8 @@ fragment SceneLayer on Layer {
     filled
   }
   ... on PointLayer {
-    table {
-      ...Table
+    tableDataset {
+      ...TableDataset
     }
     xColumn
     yColumn
@@ -172,8 +172,8 @@ fragment SceneLayer on Layer {
     colormap
   }
   ... on TrackLayer {
-    table {
-      ...Table
+    tableDataset {
+      ...TableDataset
     }
     trackIdColumn
     xColumn
@@ -185,9 +185,6 @@ fragment SceneLayer on Layer {
     colormap
   }
   ... on MeshLayer {
-    mesh {
-      ...Mesh
-    }
     collection {
       ...MeshCollection
     }

@@ -13,10 +13,63 @@ fragment ListCoordinateSystem on CoordinateSystem {
   kind
 }
 
+# What a system is a space OF — `kind` says what a system DENOTES, this says
+# whose it is. Null for a hub, which nobody owns.
+#
+# Each member selects only what the breadcrumb renders. A Lens has no name of
+# its own so it borrows its dataset's; a DataArray has neither a name nor a
+# back-reference to its dataset, so a pyramid level can name only its level.
+fragment CoordinateSystemOwner on CoordinateSystemOwner {
+  __typename
+  ... on ADataset {
+    id
+    name
+  }
+  ... on TableDataset {
+    id
+    name
+  }
+  ... on MeshCollection {
+    id
+    version
+  }
+  ... on Scene {
+    id
+    name
+  }
+  ... on Lens {
+    id
+    dataset {
+      id
+      name
+    }
+  }
+  ... on DataArray {
+    id
+    level
+  }
+}
+
 fragment CoordinateSystem on CoordinateSystem {
   id
   name
   kind
+  # The wall-clock instant the time axis has its origin at
+  # (`wall_clock = epoch + t * unit`). A property of the space itself, and only
+  # meaningful for a calibrated system with a TIME axis — null means the clock
+  # is unanchored, NOT that the time axis is unusable: it is still a perfectly
+  # composable relative coordinate.
+  epoch
+  # A hub (ownerless, built to be registered into) vs. a scene's minted world.
+  # Both are SHARED, so `kind` alone cannot tell them apart and the distinction
+  # is not derivable client-side — a hub receives registrations and outlives
+  # every scene over it; a scene's world cascades away with its scene.
+  isHub
+  # Whether createSceneFromCoordinateSystem will accept this system as a world.
+  isAdoptableWorld
+  owner {
+    ...CoordinateSystemOwner
+  }
   axes {
     ...Axis
   }
@@ -36,6 +89,11 @@ fragment LeafTransformation on Transformation {
   name
   inputAxes
   outputAxes
+  # How much this map is actually known. The schema is emphatic that an assumed
+  # placement must be visible — "This map was assumed, never measured -- badge
+  # it" — and a layer's validity is the WEAKEST edge on its path to world, so
+  # this is per-edge or it is nothing.
+  validity
   input {
     id
     name

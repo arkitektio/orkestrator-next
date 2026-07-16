@@ -10,6 +10,14 @@
       "ImageAccessor",
       "LabelAccessor"
     ],
+    "CoordinateSystemOwner": [
+      "ADataset",
+      "DataArray",
+      "Lens",
+      "MeshCollection",
+      "Scene",
+      "TableDataset"
+    ],
     "DatasetImageFile": [
       "Dataset",
       "File",
@@ -123,7 +131,6 @@
       "MaskView",
       "MediaStore",
       "Membership",
-      "Mesh",
       "MeshCollection",
       "MeshLayer",
       "MultiWellPlate",

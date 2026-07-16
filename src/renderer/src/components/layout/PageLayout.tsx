@@ -1,8 +1,11 @@
+import { usePullToRefetch } from "@/hooks/use-pull-to-refetch";
 import { useReport } from "@/hooks/use-report";
 import { cn } from "@/lib/utils";
+import { useRefetch } from "@/providers/refetch/RefetchContext";
 import { ChevronDownIcon, PanelLeft, PanelRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { PullToRefetchIndicator } from "./PullToRefetchIndicator";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
 import { ButtonGroup } from "../ui/button-group";
@@ -44,6 +47,13 @@ export const PageLayout = ({
 
   const location = useLocation();
 
+  const refetch = useRefetch();
+  const {
+    ref: pullRef,
+    pull,
+    progress,
+    refreshing,
+  } = usePullToRefetch(refetch);
 
   const reportBug = useReport();
 
@@ -124,7 +134,7 @@ export const PageLayout = ({
       <ResizablePanel className="h-full w-full" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col ",
+            "h-full w-full flex flex-col relative",
             variant == "default" ? "bg-radial-[at_100%_100%] from-background to-backgroundpaired" : "bg-black text-gray-300",
           )}
         >
@@ -185,9 +195,22 @@ export const PageLayout = ({
             </div>
           </div>
 
-          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto">
+          <div
+            ref={pullRef}
+            className={cn(
+              "p-3 flex-grow @container flex flex-col overflow-y-auto",
+              "transition-[filter,opacity] duration-200 ease-out",
+              refreshing && "blur-[3px] opacity-60",
+            )}
+          >
             {children}
           </div>
+
+          <PullToRefetchIndicator
+            pull={pull}
+            progress={progress}
+            refreshing={refreshing}
+          />
         </div>
       </ResizablePanel>
       {params.get("pageSidebar") == "true" && (

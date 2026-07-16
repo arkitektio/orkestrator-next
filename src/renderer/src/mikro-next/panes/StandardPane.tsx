@@ -87,13 +87,6 @@ export const NavigationPane = () => {
             Stages
           </PaneLink>
           <PaneLink
-            to="/mikro/meshes"
-            className="flex gap-3 w-full hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            Meshes
-          </PaneLink>
-          <PaneLink
             to="/mikro/rois"
             className="flex gap-3 w-full hover:text-primary"
           >

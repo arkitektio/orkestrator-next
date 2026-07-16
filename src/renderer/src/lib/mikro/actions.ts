@@ -28,7 +28,16 @@ import {
   PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { linkBuilder } from "@/providers/smart/builder";
-import { Clapperboard, File, FolderInput, Images, Layers, Pencil } from "lucide-react";
+import {
+  Clapperboard,
+  File,
+  FolderInput,
+  Images,
+  Layers,
+  Pencil,
+  Ruler,
+  Waypoints,
+} from "lucide-react";
 import { Action } from "../localactions/LocalActionProvider";
 import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetch";
 
@@ -123,6 +132,144 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       }
 
       navigate(linkBuilder('mikro/scenes')(scene.id));
+    },
+  },
+  // The three registration entry points. All open the same dialog; they differ
+  // only in which of its two slots the entry point can already fill.
+  //
+  // A partner action's `state.left` is the drop target and `state.right` the
+  // dragged payload, so these three read: "drop a dataset ON a system",
+  // "register FROM a system's page", "register a dataset INTO something".
+  'register-into-coordinatesystem': {
+    title: 'Register…',
+    description:
+      'Author an edge placing a dataset, table or another space into this coordinate system',
+    icon: Waypoints,
+    pinned: true,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/coordinatesystem' },
+      { type: 'nopartner' },
+    ],
+    collections: ['coordinatesystem'],
+    execute: async ({ state, dialog }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/coordinatesystem',
+      );
+      if (!selected?.object?.id) {
+        throw new Error('No coordinate system selected for Register action');
+      }
+      dialog.openDialog(
+        'register',
+        { target: selected.object.id },
+        // The axis-mapping table needs the width addlayer already claims.
+        { className: 'max-w-3xl' },
+      );
+    },
+  },
+  'register-adataset-into-coordinatesystem': {
+    title: 'Register Dataset Here',
+    description: 'Place this dataset into the coordinate system it was dropped on',
+    icon: Waypoints,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/coordinatesystem' },
+      { type: 'partner', partner: '@mikro/adataset' },
+    ],
+    collections: ['coordinatesystem'],
+    execute: async ({ state, dialog }) => {
+      const target = state.left.find(
+        (item) => item.identifier === '@mikro/coordinatesystem',
+      );
+      const dataset = state.right?.find(
+        (item) => item.identifier === '@mikro/adataset',
+      );
+      if (!target?.object?.id || !dataset?.object?.id) {
+        throw new Error('Register needs both a coordinate system and a dataset');
+      }
+      dialog.openDialog(
+        'register',
+        {
+          target: target.object.id,
+          source: { kind: 'adataset', id: dataset.object.id },
+        },
+        { className: 'max-w-3xl' },
+      );
+    },
+  },
+  'register-tabledataset-into-coordinatesystem': {
+    title: 'Register Table Here',
+    description: 'Place this table into the coordinate system it was dropped on',
+    icon: Waypoints,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/coordinatesystem' },
+      { type: 'partner', partner: '@mikro/tabledataset' },
+    ],
+    collections: ['coordinatesystem'],
+    execute: async ({ state, dialog }) => {
+      const target = state.left.find(
+        (item) => item.identifier === '@mikro/coordinatesystem',
+      );
+      const table = state.right?.find(
+        (item) => item.identifier === '@mikro/tabledataset',
+      );
+      if (!target?.object?.id || !table?.object?.id) {
+        throw new Error('Register needs both a coordinate system and a table');
+      }
+      dialog.openDialog(
+        'register',
+        {
+          target: target.object.id,
+          source: { kind: 'tabledataset', id: table.object.id },
+        },
+        { className: 'max-w-3xl' },
+      );
+    },
+  },
+  'calibrate-adataset': {
+    title: 'Calibrate…',
+    description:
+      "Create a physical space for this dataset's pixels: a pixel size, a unit per axis",
+    icon: Ruler,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'nopartner' },
+    ],
+    collections: ['adataset'],
+    execute: async ({ state, dialog }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/adataset',
+      );
+      if (!selected?.object?.id) {
+        throw new Error('No dataset selected for Calibrate action');
+      }
+      dialog.openDialog(
+        'calibrate',
+        { dataset: selected.object.id },
+        { className: 'max-w-2xl' },
+      );
+    },
+  },
+  'register-adataset-into': {
+    title: 'Register Into…',
+    description:
+      "Place this dataset into a coordinate system: a scene's world, an atlas hub, or any other space",
+    icon: Waypoints,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'nopartner' },
+    ],
+    collections: ['adataset'],
+    execute: async ({ state, dialog }) => {
+      const selected = state.left.find(
+        (item) => item.identifier === '@mikro/adataset',
+      );
+      if (!selected?.object?.id) {
+        throw new Error('No dataset selected for Register Into action');
+      }
+      dialog.openDialog(
+        'register',
+        { source: { kind: 'adataset', id: selected.object.id } },
+        { className: 'max-w-3xl' },
+      );
     },
   },
   'add-layer-to-scene': {

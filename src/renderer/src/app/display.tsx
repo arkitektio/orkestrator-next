@@ -26,7 +26,6 @@ import { DatasetDisplay } from "@/mikro-next/displays/DatasetDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
 import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { InstrumentDisplay } from "@/mikro-next/displays/InstrumentDisplay";
-import { MeshWidget as MeshDisplay } from "@/mikro-next/displays/MeshDisplay";
 import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
 import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
@@ -57,7 +56,6 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@mikro/table": TableDisplay,
     "@mikro/tabledataset": TableDatasetDisplay,
     "@mikro/instrument": InstrumentDisplay,
-    "@mikro/mesh": MeshDisplay,
     // elektro
     "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
     "@elektro/simulation": SimulationDisplay,

@@ -15,8 +15,6 @@ import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
 import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
 import LightpathViewPage from "./pages/LightpathViewPage";
-import MeshPage from "./pages/MeshPage";
-import MeshesPage from "./pages/MeshesPage";
 import PeerHomePage from "./pages/PeerHomePage";
 import RoiPage from "./pages/RoiPage";
 import RoisPage from "./pages/RoisPage";
@@ -64,8 +62,6 @@ export const MikroNextModule = () => {
           <Route path="tables/:id" element={<TablePage />} />
           <Route path="tabledatasets" element={<TableDatasetsPage />} />
           <Route path="tabledatasets/:id" element={<TableDatasetPage />} />
-          <Route path="meshes/:id" element={<MeshPage />} />
-          <Route path="meshes" element={<MeshesPage />} />
           <Route path="stages/:id" element={<StagePage />} />
           <Route path="stages" element={<StagesPage />} />
           <Route path="*" element={<NotFound />} />

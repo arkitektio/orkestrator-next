@@ -1,0 +1,16 @@
+# Author one edge of the coordinate graph: "This is where registration lives".
+#
+# `inputAxes` orders `scale`, `translation` and the COLUMNS of `affine`, and it
+# is the INPUT SYSTEM's axis order — never the reading layer's dimension names.
+# The two differ often enough that indexing the arrays against the wrong one
+# silently misplaces the data, so the form builds every one of those arrays from
+# a single pass over a single row list (see forms/registration/mapping.ts).
+#
+# Selecting the full Transformation fragment (rather than just an id) puts a
+# complete edge — per-kind parameters and composite children — straight into the
+# cache, so the coordinate graph redraws without a follow-up round trip.
+mutation CreateTransformation($input: CreateTransformationInput!) {
+  createTransformation(input: $input) {
+    ...Transformation
+  }
+}

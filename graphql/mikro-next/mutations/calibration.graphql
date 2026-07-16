@@ -1,0 +1,14 @@
+# Calibrate a dataset: creates a PHYSICAL coordinate system (whose axes carry
+# the units) AND the single transformation edge mapping the dataset's intrinsic
+# pixels into it — one call, two objects.
+#
+# `axes` order defines `scale` order: entry i of `scale` is the pixel size of
+# axis i of `axes`. Same discipline as CreateTransformation's `inputAxes` — the
+# form emits both from one ordered row list so they cannot disagree.
+#
+# Returns the new PHYSICAL system, so the caller can navigate straight to it.
+mutation CreateCalibration($input: CreateCalibrationInput!) {
+  createCalibration(input: $input) {
+    ...CoordinateSystem
+  }
+}

@@ -16,7 +16,6 @@ import { useForm } from "react-hook-form";
 import {
   AddLayerLensCandidatesQuery,
   AddLayerTableDatasetCandidatesQuery,
-  AxisType,
   ProjectionMode,
   TableColumnRole,
   useAddLayerLensCandidatesQuery,
@@ -177,8 +176,10 @@ const LensLayerForm = (props: {
 };
 
 /**
- * Step 2b: a TableDataset becomes a point or track layer. Column mappings
- * default from the table's declared column roles; the user can remap them.
+ * Step 2b: a TableDataset becomes a point or track layer. The coordinate, time
+ * and track-id columns are not chosen here: the server derives them from the
+ * dataset's declared column schema. Only the styling columns — which have no
+ * declared role to derive from — are picked.
  */
 const TableLayerForm = (props: {
   scene: string;
@@ -198,33 +199,20 @@ const TableLayerForm = (props: {
   const submitPoint = useGraphQLDialog(createPoint, dialogOptions);
   const submitTrack = useGraphQLDialog(createTrack, dialogOptions);
 
-  const defaults = useMemo(() => {
-    const coordinates = columns.filter(
-      (c) => c.role === TableColumnRole.Coordinate,
-    );
-    const space = coordinates.filter((c) => c.axisType === AxisType.Space);
-    const byName = (name: string) =>
-      space.find((c) => c.name.toLowerCase() === name)?.name;
-    const byRole = (role: TableColumnRole) =>
-      columns.find((c) => c.role === role)?.name;
-    return {
-      xColumn: byName("x") ?? space[0]?.name ?? "",
-      yColumn: byName("y") ?? space[1]?.name ?? "",
-      zColumn: byName("z") ?? (space.length > 2 ? space[2]?.name : "") ?? "",
-      tColumn: coordinates.find((c) => c.axisType === AxisType.Time)?.name ?? "",
-      trackIdColumn: byRole(TableColumnRole.TrackId) ?? "",
-      colorColumn: byRole(TableColumnRole.Color) ?? "",
-      idColumn: byRole(TableColumnRole.Id) ?? "",
+  const defaults = useMemo(
+    () => ({
+      colorColumn: columns.find((c) => c.role === TableColumnRole.Color)?.name ?? "",
       sizeColumn: "",
       pointSize: undefined as number | undefined,
       lineWidth: undefined as number | undefined,
-    };
-  }, [columns]);
+    }),
+    [columns],
+  );
 
   const form = useForm({ defaultValues: defaults });
 
-  const columnOptions = (optional: boolean) => [
-    ...(optional ? [{ value: "", label: "None" }] : []),
+  const columnOptions = [
+    { value: "", label: "None" },
     ...columns.map((c) => ({
       value: c.name,
       label:
@@ -240,11 +228,6 @@ const TableLayerForm = (props: {
     const base = {
       scene: props.scene,
       tableDataset: props.table.id,
-      coordinateSystem: props.table.coordinateSystem.id,
-      xColumn: orUndefined(data.xColumn),
-      yColumn: orUndefined(data.yColumn),
-      zColumn: orUndefined(data.zColumn),
-      tColumn: orUndefined(data.tColumn),
     };
     if (kind === "POINT") {
       return submitPoint({
@@ -253,7 +236,6 @@ const TableLayerForm = (props: {
             ...base,
             sizeColumn: orUndefined(data.sizeColumn),
             colorColumn: orUndefined(data.colorColumn),
-            idColumn: orUndefined(data.idColumn),
             pointSize: data.pointSize ?? undefined,
           },
         },
@@ -264,7 +246,6 @@ const TableLayerForm = (props: {
       variables: {
         input: {
           ...base,
-          trackIdColumn: orUndefined(data.trackIdColumn),
           colorByColumn: orUndefined(data.colorColumn),
           lineWidth: data.lineWidth ?? undefined,
         },
@@ -298,26 +279,17 @@ const TableLayerForm = (props: {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <ChoicesField name="xColumn" label="X column" options={columnOptions(false)} />
-          <ChoicesField name="yColumn" label="Y column" options={columnOptions(false)} />
-          <ChoicesField name="zColumn" label="Z column" options={columnOptions(true)} />
-          <ChoicesField name="tColumn" label="Time column" options={columnOptions(true)} />
           {kind === "POINT" ? (
             <>
               <ChoicesField
                 name="colorColumn"
                 label="Color column"
-                options={columnOptions(true)}
+                options={columnOptions}
               />
               <ChoicesField
                 name="sizeColumn"
                 label="Size column"
-                options={columnOptions(true)}
-              />
-              <ChoicesField
-                name="idColumn"
-                label="Id column"
-                options={columnOptions(true)}
+                options={columnOptions}
               />
               <FloatField
                 name="pointSize"
@@ -328,14 +300,9 @@ const TableLayerForm = (props: {
           ) : (
             <>
               <ChoicesField
-                name="trackIdColumn"
-                label="Track id column"
-                options={columnOptions(false)}
-              />
-              <ChoicesField
                 name="colorColumn"
                 label="Color by column"
-                options={columnOptions(true)}
+                options={columnOptions}
               />
               <FloatField
                 name="lineWidth"

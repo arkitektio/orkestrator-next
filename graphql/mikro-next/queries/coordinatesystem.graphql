@@ -38,3 +38,71 @@ query GetCoordinateSystems(
     ...ListCoordinateSystem
   }
 }
+
+# Both endpoints of a registration edge in ONE round trip. The form needs each
+# system's full ordered axes (name, order, type, unit) to build the mapping
+# table; fetching them as two queries would let the prefill heuristic run
+# against half a picture, and prefill must see both systems at once or it
+# cannot tell an unambiguous type match from an ambiguous one.
+query GetRegistrationSystems($input: ID!, $output: ID!) {
+  input: coordinateSystem(id: $input) {
+    ...CoordinateSystem
+  }
+  output: coordinateSystem(id: $output) {
+    ...CoordinateSystem
+  }
+}
+
+# The systems an ADataset owns: "its INTRINSIC pixel grid or one of its PHYSICAL
+# calibrations" (the filter's own words).
+#
+# Registering the pixel grid and registering a calibration are DIFFERENT edges
+# with different correct matrices — into a µm world the former's scale is the
+# pixel size, the latter's is 1 — so the form makes the user see the choice
+# whenever a dataset has more than one candidate. Filtered here rather than
+# selected off ADataset to keep dataArrays and their stores off the wire for
+# what is usually a two-row radio group.
+query GetDatasetSystems($dataset: ID!) {
+  coordinateSystems(filters: { dataset: $dataset }) {
+    ...CoordinateSystem
+  }
+}
+
+# The single system a table owns — its coordinate columns as axes.
+query GetTableDatasetSystem($id: ID!) {
+  tableDataset(id: $id) {
+    id
+    name
+    coordinateSystem {
+      ...CoordinateSystem
+    }
+  }
+}
+
+# Source/target picker candidates, in the `options { value, label }` shape
+# GraphQLSearchField requires (cf. StageOptions). `search` is a case-insensitive
+# name substring.
+query CoordinateSystemOptions($search: String, $values: [ID!]) {
+  options: coordinateSystems(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}
+
+# Step-1 candidates for the registration source picker.
+#
+# MeshCollections are deliberately absent: MeshCollectionFilter has no `search`
+# and MeshCollection has no `name`, so there is nothing to list or search them
+# by — and there is no @mikro/meshcollection linker either, so nothing can drag
+# one. They are reachable only once both of those exist.
+query RegisterSourceCandidates($search: String) {
+  adatasets(filters: { search: $search }, pagination: { limit: 20 }) {
+    ...ListADataset
+  }
+  tableDatasets(filters: { search: $search }, pagination: { limit: 20 }) {
+    ...ListTableDataset
+  }
+}

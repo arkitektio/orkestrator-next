@@ -86,7 +86,7 @@ describe("evalTransform", () => {
 
   it("returns null for kinds it cannot represent", () => {
     expect(
-      evalTransform({ __typename: "DisplacementsTransformation" }, DIMS, DIMS, SPATIAL),
+      evalTransform({ __typename: "FieldTransformation" }, DIMS, DIMS, SPATIAL),
     ).toBeNull();
   });
 });
@@ -240,7 +240,7 @@ describe("composePlacementPath", () => {
   it("degrades unresolvable steps to identity, keeps the rest", () => {
     const m = composePlacementPath(
       [
-        { transformation: { __typename: "DisplacementsTransformation" }, inverted: false },
+        { transformation: { __typename: "FieldTransformation" }, inverted: false },
         REGISTRATION_STEP,
       ],
       SCENE,

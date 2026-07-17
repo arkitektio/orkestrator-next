@@ -11,6 +11,7 @@ import {
   Camera,
   Hand,
   Move,
+  Pin,
   ScanEye,
   Settings2,
   Sparkles,
@@ -22,6 +23,8 @@ import { MikroCoordinateSystem } from "@/linkers";
 import { InteractionMode, useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
+import { displayModeToPreferredView } from "../core/preferredView";
+import { useScenePreferencesEditor } from "../panels/animation/useAnimationEditor";
 
 /** Icon per interaction mode for the compact, right-side mode control. */
 const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
@@ -73,6 +76,11 @@ export const SceneOverlay = () => {
 
   const captureScreenshot = useViewerStore((state) => state.captureScreenshot);
 
+  const preferredView = useSceneStore((state) => state.preferredView);
+  const { savePreferredView, saving: savingPreferences } = useScenePreferencesEditor();
+  const isDefaultView = preferredView === displayModeToPreferredView(displayMode);
+  const onPinView = () => savePreferredView(displayModeToPreferredView(displayMode));
+
   const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
 
   // Capture the current 3D scene (layers + in-scene axis/grid, not HTML overlays
@@ -107,6 +115,27 @@ export const SceneOverlay = () => {
           title={`Switch to ${nextDisplayMode} view`}
         >
           <span className="text-xs font-bold">{displayMode}</span>
+        </Button>
+
+        {/* Sits next to the display toggle because it is about exactly that:
+            which view the scene opens in for everyone. A preference, not a
+            lock — anyone can still switch once the scene is up. Saving also
+            refreshes the scene's tile from the current canvas. */}
+        <Button
+          variant={"outline"}
+          size={"xs"}
+          className={
+            isDefaultView ? "h-7 bg-black text-sky-400" : "h-7 bg-black text-white/60"
+          }
+          onClick={onPinView}
+          disabled={savingPreferences}
+          title={
+            isDefaultView
+              ? `This scene opens in ${displayMode}`
+              : `Open this scene in ${displayMode} by default (and snapshot the current view)`
+          }
+        >
+          <Pin className="h-3.5 w-3.5" />
         </Button>
 
         <Button

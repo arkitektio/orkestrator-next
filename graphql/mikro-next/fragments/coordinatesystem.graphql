@@ -114,18 +114,15 @@ fragment LeafTransformation on Transformation {
   ... on RotationTransformation {
     affine
   }
-  # The displacement field itself now arrives as the store, not a bare id, so
-  # a client can fetch it without a second round trip.
-  ... on DisplacementsTransformation {
-    store {
-      ...ZarrStore
-    }
-  }
-  # Like DISPLACEMENTS, but the field holds absolute output positions rather
-  # than offsets. Also non-affine, also no closed-form inverse.
-  ... on CoordinatesTransformation {
-    store {
-      ...ZarrStore
+  # A non-affine map given by the VALUES of an array (what DISPLACEMENTS and
+  # COORDINATES used to be, merged: the offsets-vs-absolute-positions
+  # distinction now lives in the field's own axes rather than in two edge
+  # types). The field is a node of the graph, not a payload on the edge — so
+  # this is the system it is a space of, and its lineage and axes are reachable
+  # from there. No closed-form inverse, so a path never walks it backwards.
+  ... on FieldTransformation {
+    field {
+      ...ListCoordinateSystem
     }
   }
   # A declared NON-correspondence (a feature table vs. the image it was measured

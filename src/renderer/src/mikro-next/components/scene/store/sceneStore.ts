@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
-import { AxisType, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { AxisType, PreferredView, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "./createScopedStore";
 import { isImageLayer } from "../core/layerGuards";
 import {
@@ -20,6 +20,14 @@ export interface SceneState {
    * identity everywhere else.
    */
   id: string;
+  /**
+   * How the scene asks to be opened. Read only by the preference control (the
+   * opening view is decided once, at mount, in `Scene.tsx`) — held here so the
+   * control shows what the scene ACTUALLY says rather than only what this
+   * session saved, and so a save reflects without a refetch.
+   */
+  preferredView: PreferredView;
+  setPreferredView: (view: PreferredView) => void;
   spatialUnit: string;
   /**
    * The scene's coordinate-system graph (world CS, reachable systems, edges) —
@@ -46,6 +54,11 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
   return createStore<SceneState>()(
     immer((set) => ({
       id: scene.id,
+      preferredView: scene.preferredView,
+      setPreferredView: (view) =>
+        set((state) => {
+          state.preferredView = view;
+        }),
       spatialUnit: spaceAxis?.unit ? String(spaceAxis.unit) : "px",
       // No `coordinateSystems`: edges self-describe their axis order
       // (inputAxes/outputAxes), so the axis index degenerates to the world

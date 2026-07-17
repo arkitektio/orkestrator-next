@@ -6,6 +6,7 @@ import { PerfFrameProbe } from "./PerfFrameProbe";
 import { QualityAdapter } from "./cameras/QualityAdapter";
 import { CameraController } from "./cameras/CameraController";
 import { InitialCameraFit } from "./cameras/InitialCameraFit";
+import { AnimationPlayer } from "./cameras/AnimationPlayer";
 import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./controllers/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
@@ -21,6 +22,7 @@ import {
 } from "./SceneColumn";
 import { SceneDock } from "./SceneDock";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
+import { AnimationPanel } from "./panels/AnimationPanel";
 import { ProbeThresholdPanel } from "./panels/ProbeThresholdPanel";
 import { DebugPanel } from "./panels/DebugPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
@@ -37,6 +39,12 @@ import {
   SceneStoreContext,
   useSceneStore,
 } from "./store/sceneStore";
+import {
+  createAnimationStore,
+  AnimationStoreContext,
+} from "./store/animationStore";
+import { resolveSceneCameraFrame } from "./core/cameraState";
+import { resolvePreferredDisplayMode } from "./core/preferredView";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
@@ -124,6 +132,24 @@ const SceneModeContent = () => {
 };
 
 /**
+ * The scene's `backgroundColor` as an inline style, or nothing at all.
+ *
+ * Null means "the viewer keeps its own", so it must fall through to the
+ * `bg-black` class rather than resolve to a colour here. Components are RGBA in
+ * 0..1 (the schema's own convention, as on `SceneSnapshot.majorColor`); alpha
+ * is optional and defaults to opaque. The Canvas itself stays transparent, so
+ * this div showing through IS the background.
+ */
+const backgroundStyle = (
+  color: readonly number[] | null | undefined,
+): { backgroundColor: string } | undefined => {
+  if (!color || color.length < 3) return undefined;
+  const [r, g, b, a = 1] = color;
+  const channel = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255);
+  return { backgroundColor: `rgba(${channel(r)}, ${channel(g)}, ${channel(b)}, ${a})` };
+};
+
+/**
  * Mount-gate for debug consumers. The DebugPanel and BrickResidencyOverlay
  * subscribe to streaming-cadence state (`residencyVersion`, `nodePlans`); when
  * mounted with debug off they still re-render (to null) on every bump. Gating
@@ -141,6 +167,7 @@ type SceneScope = {
   viewerStore: Awaited<ReturnType<typeof createViewerStore>>;
   selectionStore: ReturnType<typeof createSelectionStore>;
   sceneStore: ReturnType<typeof createSceneStore>;
+  animationStore: ReturnType<typeof createAnimationStore>;
   roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
   roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
 };
@@ -169,6 +196,7 @@ const DefaultScenePanels = () => (
         <SceneOverlay />
         <ProbeThresholdPanel />
         <SceneLayers />
+        <AnimationPanel />
       </SceneColumnPanels>
     </SceneColumn>
     {/* Z docks right, opposite the panel column: both defaulting left would
@@ -207,12 +235,24 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
           throw new Error("No datalayer endpoint configured");
         }
 
+        const sceneStore = createSceneStore({ scene: props.scene });
+        // Both the opening view and the pose frame are facts about the scene AS
+        // LOADED, so they are resolved from the normalized layers the scene
+        // store just built rather than re-derived per consumer.
+        const layers = sceneStore.getState().originalLayers;
+
         const localScope: SceneScope = {
-          modeStore: createModeStore(),
+          modeStore: createModeStore({
+            displayMode: resolvePreferredDisplayMode(props.scene.preferredView, layers),
+          }),
           viewStore: createViewStore(),
           viewerStore: await createViewerStore(props.scene, client, datalayer),
           selectionStore: createSelectionStore(),
-          sceneStore: createSceneStore({ scene: props.scene }),
+          sceneStore,
+          animationStore: createAnimationStore({
+            scene: props.scene,
+            frame: resolveSceneCameraFrame(props.scene.worldCoordinateSystem, layers),
+          }),
           roiDrawingStore: createRoiDrawingStore(),
           roiSelectionStore: createRoiSelectionStore(),
         };
@@ -265,12 +305,16 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
         <ViewerStoreContext.Provider value={scope.viewerStore}>
           <SelectionStoreContext.Provider value={scope.selectionStore}>
             <SceneStoreContext.Provider value={scope.sceneStore}>
+            <AnimationStoreContext.Provider value={scope.animationStore}>
             <RoiDrawingStoreContext.Provider value={scope.roiDrawingStore}>
             <RoiSelectionStoreContext.Provider value={scope.roiSelectionStore}>
 
 
 
-        <div className="relative h-full w-full overflow-hidden rounded-lg bg-black">
+        <div
+          className="relative h-full w-full overflow-hidden rounded-lg bg-black"
+          style={backgroundStyle(props.scene.backgroundColor)}
+        >
           <PanelProvider>
             <KeyboardModeController />
             <SceneWrapper>
@@ -284,6 +328,9 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
               {/* Must follow CameraController: fits the as-loaded scene extent
                   before the first painted frame (and on 2D/3D remounts). */}
               <InitialCameraFit />
+              {/* Also after CameraController: drives the camera along a playing
+                  tour. Idle (and free) until something calls `play`. */}
+              <AnimationPlayer />
               <QualityAdapter />
               <CanvasSync />
               <SceneScreenshot />
@@ -323,6 +370,7 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
         </div>
                 </RoiSelectionStoreContext.Provider>
                 </RoiDrawingStoreContext.Provider>
+                </AnimationStoreContext.Provider>
                 </SceneStoreContext.Provider>
         </SelectionStoreContext.Provider>
           </ViewerStoreContext.Provider>
@@ -365,6 +413,7 @@ export const Scene = Object.assign(SceneRoot, {
   Controls: SceneOverlay,
   Probe: ProbeThresholdPanel,
   Layers: SceneLayers,
+  Animations: AnimationPanel,
   Dock: SceneDock,
   ZSlider: ZSliderPanel,
   DimSliders: DimSliderPanel,

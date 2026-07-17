@@ -1,6 +1,21 @@
 fragment Scene on Scene {
   id
   name
+  # How the scene asks to be opened: flat, volumetric, or AUTO (no preference
+  # stated — the viewer decides from the data). A preference, not a constraint:
+  # nothing server-side reads it, and the viewer stays free to overrule it.
+  preferredView
+  # The viewer background as RGBA; null lets the viewer keep its own.
+  backgroundColor
+  # The named camera tours through this composition.
+  animations {
+    ...Animation
+  }
+  # The most recent picture of this composition — the tile to put on the scene.
+  # Null until something snapshots it.
+  latestSnapshot {
+    ...SceneSnapshot
+  }
   worldCoordinateSystem {
     ...CoordinateSystem
   }

@@ -1,0 +1,15 @@
+# A pre-rendered picture of a composition, for previewing it without
+# compositing the layers.
+#
+# `scene` is deliberately NOT selected: a snapshot is only ever reached through
+# its scene, so selecting it back would recurse the whole composition.
+fragment SceneSnapshot on SceneSnapshot {
+  id
+  name
+  createdAt
+  # The dominant colour, for tinting a placeholder while the image loads.
+  majorColor
+  store {
+    ...MediaStore
+  }
+}

@@ -2,6 +2,39 @@ mutation DeleteScene($id: ID!) {
   deleteScene(input: { id: $id })
 }
 
+# Adopt an already-uploaded media file as a picture of the scene — the tile that
+# represents the composition without loading its layers. `file` is an
+# `ImageFileLike`: the media store's id, as returned by the upload flow in
+# `components/scene/data/mediaUpload.ts`.
+mutation CreateSceneSnapshot($scene: ID!, $file: ImageFileLike!, $name: String) {
+  createSceneSnapshot(input: { scene: $scene, file: $file, name: $name }) {
+    ...SceneSnapshot
+  }
+}
+
+# The scene's viewer preferences: how a client should open it. Both fields are
+# nullable-and-optional server-side, so omitting one leaves it untouched —
+# which is why the client sends only what it means to change.
+#
+# Returns the full Scene so Apollo writes the new preferences straight into the
+# normalized cache; the viewer hydrates its stores at mount, so the refetched
+# fields matter for the NEXT open, not for the live canvas.
+mutation UpdateScene(
+  $id: ID!
+  $preferredView: PreferredView
+  $backgroundColor: [Float!]
+) {
+  updateScene(
+    input: {
+      id: $id
+      preferredView: $preferredView
+      backgroundColor: $backgroundColor
+    }
+  ) {
+    ...Scene
+  }
+}
+
 # Bootstraps a whole renderable scene for an array dataset in one call: a world
 # mirroring the dataset's calibration, a full lens, and one default image layer.
 # `kind` is optional — the server infers the layer recipe from the dataset's

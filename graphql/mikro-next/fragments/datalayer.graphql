@@ -17,8 +17,13 @@ fragment MediaUploadGrant on MediaUploadGrant {
   path
   key
   bucket
+  # Needed to sign the PUT: SigV4's credential scope includes the region, so a
+  # renderer-side upload (data/mediaUpload.ts) cannot guess it.
+  region
   expiresIn
   maxBytes
+  # The media store's id — what `finishMediaUpload` takes as `storeId`, and the
+  # value the `ImageFileLike` scalar wants (see data/mediaUpload.ts).
   store
 }
 

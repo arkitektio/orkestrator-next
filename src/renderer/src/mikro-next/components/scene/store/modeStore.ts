@@ -108,11 +108,19 @@ export interface ModeState {
 
 
 
-export const createModeStore = () =>
+/**
+ * `displayMode` seeds from the scene's `preferredView` (resolved by
+ * `core/preferredView.ts`, which is where the AUTO policy lives) and is the
+ * user's from then on — nothing rehydrates it, so switching view never fights
+ * the scene's stated preference.
+ */
+export const createModeStore = ({
+  displayMode = "2D",
+}: { displayMode?: DisplayMode } = {}) =>
   createStore<ModeState>()(
     immer((set) => ({
     interactionMode: "PAN", // Default starting mode
-    displayMode: "2D", // Active when holding a modifier key
+    displayMode,
     cameraControllerMode: "ORBIT",
     interactionModeOptions,
     displayModeOptions,

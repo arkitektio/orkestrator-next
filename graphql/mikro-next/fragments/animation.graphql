@@ -1,0 +1,44 @@
+# Where the camera is at one stop of a tour.
+#
+# `position` is a map keyed by the WORLD system's axis names, not a positional
+# triple — per COORDINATE_SYSTEMS.md R3, an axis name only means anything
+# within a specific CS, and a tour through a timelapse moves in `t` as much as
+# in `z`. The client maps it to three-space via the world axis names the
+# layers' `lens.renderAxes` already name (see core/cameraState.ts).
+#
+# Each view has its own orientation/scale pair, and only the pair for the view
+# that was live when the pose was captured is filled — the viewer keeps its own
+# for the other. Null is "leave it to the viewer", never "reset it".
+fragment CameraState on CameraState {
+  position
+  crossSectionOrientation
+  crossSectionScale
+  projectionOrientation
+  projectionScale
+}
+
+fragment AnimationWaypoint on AnimationWaypoint {
+  id
+  order
+  name
+  # How long the viewer takes to travel TO this pose. Ignored for the first
+  # waypoint, which is where the tour starts.
+  durationMs
+  easing
+  camera {
+    ...CameraState
+  }
+}
+
+# `scene` is deliberately NOT selected: an Animation is only ever reached
+# through its scene (the Scene fragment spreads this), so selecting it back
+# would recurse the whole composition per tour.
+fragment Animation on Animation {
+  id
+  name
+  description
+  createdAt
+  waypoints {
+    ...AnimationWaypoint
+  }
+}

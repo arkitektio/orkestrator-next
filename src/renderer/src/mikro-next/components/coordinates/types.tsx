@@ -73,10 +73,12 @@ export const describeTransformation = (
       return "identity";
     case "MapAxisTransformation":
       return `map ${transformation.inputAxes.join(",")} → ${transformation.outputAxes.join(",")}`;
-    case "DisplacementsTransformation":
-      return "displacement field";
-    case "CoordinatesTransformation":
-      return "coordinate field";
+    // Was DISPLACEMENTS + COORDINATES, now one edge: what the numbers mean is
+    // the field's business, so name the field rather than guess the flavour.
+    case "FieldTransformation":
+      return transformation.field?.name
+        ? `field — ${transformation.field.name}`
+        : "field";
     // Not a map at all: a declared non-correspondence. The reason is the whole
     // content of the edge, so it is what gets shown.
     case "UnmappableTransformation":

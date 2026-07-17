@@ -41,6 +41,11 @@ type ADataset {
   intrinsicSystem: CoordinateSystem
 
   """
+  The most recent picture that shows this dataset and nothing else, for previewing it without loading the array. Snapshots are taken of scenes, not of datasets, so this only answers with a scene whose *only* placed dataset is this one -- a picture blending several datasets is a preview of none of them. Null when every scene it is placed in also holds other data. Two caveats it cannot rule out: the dataset may be placed in that scene without any layer drawing it (the picture can be empty), and a mesh or table collection may be drawn over it as an annotation
+  """
+  latestSnapshot: SceneSnapshot
+
+  """
   Whether this dataset carries a resolution pyramid. Derived: true when it has more than one level
   """
   multiscale: Boolean!
@@ -397,6 +402,123 @@ input AffineTransformationViewInput {
   zMin: Int = null
 }
 
+"""
+A named camera tour of a scene: the poses a viewer pans through, in order. A view artifact -- it cascades with the scene, no placement walk crosses it, and refining a registration moves the data but never the camera
+"""
+type Animation {
+  createdAt: DateTime!
+
+  """The task this tour was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
+  creator: User
+  description: String
+  id: ID!
+  name: String!
+
+  """The scene this tour flies through"""
+  scene: Scene!
+
+  """The poses the viewer pans through, in tour order"""
+  waypoints(pagination: OffsetPaginationInput): [AnimationWaypoint!]!
+}
+
+input AnimationFilter {
+  AND: AnimationFilter
+  DISTINCT: Boolean
+  NOT: AnimationFilter
+  OR: AnimationFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by the scene this tour flies through"""
+  scene: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+input AnimationOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""One camera pose in a tour, and how the viewer travels to it"""
+type AnimationWaypoint {
+  """The tour this pose belongs to"""
+  animation: Animation!
+
+  """
+  Where the camera is: a position keyed by the world's axis names, plus the flat and volumetric views of it
+  """
+  camera: CameraState!
+
+  """
+  How long the viewer takes to travel TO this pose, in milliseconds. Ignored for the first pose, which is where the tour starts
+  """
+  durationMs: Int!
+
+  """How the viewer eases the camera along that travel"""
+  easing: Easing!
+  id: ID!
+
+  """What this stop shows, e.g. 'the nucleus'"""
+  name: String!
+
+  """
+  The pose's index in the tour. Written by enumeration when the tour is authored, so it always runs 0, 1, 2 ... with no gaps
+  """
+  order: Int!
+}
+
+"""
+One camera pose in a tour, and how the viewer travels to it. Its position in the tour is its position in the `waypoints` list -- there is no order field to pass
+"""
+input AnimationWaypointInput {
+  """Where the camera is at this stop"""
+  camera: CameraStateInput!
+
+  """How long the viewer takes to travel to this stop, in milliseconds"""
+  durationMs: Int = null
+
+  """How the viewer eases the camera along that travel"""
+  easing: Easing = null
+
+  """What this stop shows"""
+  name: String = null
+}
+
 """The `Any` scalar any type"""
 scalar Any
 
@@ -490,11 +612,13 @@ enum AxisType {
   CHANNEL
 
   """
-  An axis of a coordinate-valued array (as used by a displacement field's target).
+  The value axis of a coordinate-valued array: its positions enumerate the components of an absolute output position. This is what makes the array readable as the `field` of a FIELD edge. A scalar-valued field (a label mask, whose one value is an object id) carries no value axis at all -- absent means scalar, and scalar means COORDINATE.
   """
   COORDINATE
 
-  """An axis of a displacement-valued array."""
+  """
+  The value axis of a displacement-valued array: its positions enumerate the components of a per-point OFFSET, where COORDINATE enumerates absolute positions. Stating it here rather than on the edge is deliberate: it is a property of the array, and an array that says it twice can disagree with itself.
+  """
   DISPLACEMENT
 
   """
@@ -897,6 +1021,66 @@ input CameraInput {
 
   """The unique serial number of the camera"""
   serialNumber: String!
+}
+
+"""
+Where a viewer's camera is in a scene, and how it is looking at it. Carries a flat cross-section view and a volumetric projection view of one position, so a single pose serves both and `Scene.preferredView` picks which is used. Every number is read against the scene's world coordinate system, whose axes carry the units
+"""
+type CameraState {
+  """
+  The flat view's orientation, as a quaternion. Null to leave it to the viewer.
+  """
+  crossSectionOrientation: [Float!]
+
+  """
+  The flat view's zoom, in world units per screen pixel. Null to leave it to the viewer.
+  """
+  crossSectionScale: Float
+
+  """
+  Where the camera is centred, keyed by the world's axis names. Keyed rather than a positional list because the world's axes are named and a tour through a timelapse moves in t as much as in z -- a list would silently depend on axis order. Axes the pose does not name are left wherever the viewer already had them.
+  """
+  position: Any!
+
+  """
+  The volumetric view's orientation, as a quaternion. Null to leave it to the viewer.
+  """
+  projectionOrientation: [Float!]
+
+  """
+  The volumetric view's zoom, in world units per screen pixel. Null to leave it to the viewer.
+  """
+  projectionScale: Float
+}
+
+"""
+Where a viewer's camera is in a scene, and how it is looking at it. Give the flat view, the volumetric view, or both -- one pose serves either, and `Scene.preferredView` picks which a viewer opens. Every number is read against the scene's world coordinate system, whose axes carry the units, so they are bare numbers here
+"""
+input CameraStateInput {
+  """
+  The flat view's orientation, as a quaternion. Null to leave it to the viewer.
+  """
+  crossSectionOrientation: [Float!] = null
+
+  """
+  The flat view's zoom, in world units per screen pixel. Null to leave it to the viewer.
+  """
+  crossSectionScale: Float = null
+
+  """
+  Where the camera is centred, keyed by the world's axis names. Keyed rather than a positional list because the world's axes are named and a tour through a timelapse moves in t as much as in z -- a list would silently depend on axis order. Axes the pose does not name are left wherever the viewer already had them.
+  """
+  position: Any!
+
+  """
+  The volumetric view's orientation, as a quaternion. Null to leave it to the viewer.
+  """
+  projectionOrientation: [Float!] = null
+
+  """
+  The volumetric view's zoom, in world units per screen pixel. Null to leave it to the viewer.
+  """
+  projectionScale: Float = null
 }
 
 """Input for changing an existing dataset's name or parent"""
@@ -1473,50 +1657,6 @@ The container that owns a coordinate system and that it cascades with. A hub has
 union CoordinateSystemOwner = ADataset | DataArray | Lens | MeshCollection | Scene | TableDataset
 
 """
-A non-affine map given by a coordinate field: a Zarr array of absolute output positions, where DISPLACEMENTS stores offsets. It has no closed-form inverse either
-"""
-type CoordinatesTransformation implements Transformation {
-  createdAt: DateTime!
-  creator: User
-  id: ID!
-  input: CoordinateSystem
-
-  """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
-  """
-  inputAxes: [String!]!
-  kind: TransformKind!
-  name: String
-  output: CoordinateSystem
-
-  """
-  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
-  """
-  outputAxes: [String!]!
-
-  """
-  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
-  """
-  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-
-  """
-  The Zarr array holding the coordinate field: an absolute output position per point
-  """
-  store: ZarrStore
-
-  """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
-  """
-  validity: PlacementValidity!
-
-  """
-  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
-  """
-  valueRelation: ValueRelation
-  version: Int!
-}
-
-"""
 Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive as an optional calibration
 """
 input CreateADatasetInput {
@@ -1528,6 +1668,23 @@ input CreateADatasetInput {
   derivedFrom: [DerivedFromInput!] = null
   name: String!
   scales: [ScaleInput!]!
+}
+
+"""
+Input for creating a named camera tour of a scene. The waypoints are given in tour order and that order is what is stored -- a tour is authored as a whole, never a stop at a time
+"""
+input CreateAnimationInput {
+  """What the tour shows"""
+  description: String = null
+
+  """The name of the tour"""
+  name: String!
+
+  """The ID of the scene this tour flies through"""
+  scene: ID!
+
+  """The poses the viewer pans through, in tour order"""
+  waypoints: [AnimationWaypointInput!]!
 }
 
 """
@@ -1803,10 +1960,12 @@ Input type for creating a scene over a world coordinate system: an adopted exist
 """
 input CreateSceneInput {
   axes: [CalibratedAxisInput!] = null
+  backgroundColor: [Float!] = null
   blending: Blending = null
   coordinateSystem: ID = null
   epoch: DateTime = null
   name: String!
+  preferredView: PreferredView = null
 }
 
 """
@@ -1858,6 +2017,7 @@ Input for creating one edge of the coordinate graph, mapping an input coordinate
 """
 input CreateTransformationInput {
   affine: [[Float!]!] = null
+  field: ID = null
   input: ID!
   inputAxes: [String!] = null
   kind: TransformKind!
@@ -1866,7 +2026,6 @@ input CreateTransformationInput {
   outputAxes: [String!] = null
   reason: String = null
   scale: [Float!] = null
-  store: ArrayLike = null
   translation: [Float!] = null
   validity: PlacementValidity = null
   valueRelation: ValueRelation = null
@@ -2091,6 +2250,12 @@ input DeleteADatasetInput {
   id: ID!
 }
 
+"""Input for deleting a camera tour by ID"""
+input DeleteAnimationInput {
+  """The ID of the tour to delete"""
+  id: ID!
+}
+
 """Input for deleting a calibration (a PHYSICAL coordinate system) by ID"""
 input DeleteCalibrationInput {
   """The ID of the PHYSICAL coordinate system to delete"""
@@ -2202,6 +2367,12 @@ input DeleteRoiInput {
 """Input for deleting a scene by ID"""
 input DeleteSceneInput {
   """The ID of the scene to delete"""
+  id: ID!
+}
+
+"""Input for deleting a lens snapshot by ID"""
+input DeleteSceneSnapshotInput {
+  """The ID of the snapshot to delete"""
   id: ID!
 }
 
@@ -2383,50 +2554,6 @@ enum DimSelectorKind {
   SLICE
 }
 
-"""
-A non-affine map given by a displacement field: a Zarr array of per-point offsets. It has no closed-form inverse, so a placement path never walks it backwards
-"""
-type DisplacementsTransformation implements Transformation {
-  createdAt: DateTime!
-  creator: User
-  id: ID!
-  input: CoordinateSystem
-
-  """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
-  """
-  inputAxes: [String!]!
-  kind: TransformKind!
-  name: String
-  output: CoordinateSystem
-
-  """
-  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
-  """
-  outputAxes: [String!]!
-
-  """
-  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
-  """
-  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-
-  """
-  The Zarr array holding the displacement field: a per-point offset. Ask it for an access grant and read it directly
-  """
-  store: ZarrStore
-
-  """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
-  """
-  validity: PlacementValidity!
-
-  """
-  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
-  """
-  valueRelation: ValueRelation
-  version: Int!
-}
-
 type DjangoModelType {
   pk: ID!
 }
@@ -2522,6 +2649,31 @@ enum DuckDBDataType {
 
 """A quantity of time (``"5 ms"``, ``"2 s"``, ``"1 hour"``)."""
 scalar Duration
+
+"""
+How a viewer eases the camera along the travel into an animation waypoint.
+"""
+enum Easing {
+  """
+  Start slow, arrive at full speed. Right for the first leg, pulling away from rest.
+  """
+  EASE_IN
+
+  """
+  Slow at both ends, quick in the middle. The default: it reads as deliberate on a leg that stands alone.
+  """
+  EASE_IN_OUT
+
+  """
+  Start at full speed, arrive slowly. Right for the last leg, settling onto the final pose.
+  """
+  EASE_OUT
+
+  """
+  Constant speed the whole way. Right for a leg in the middle of a continuous move, where an ease would read as a stutter.
+  """
+  LINEAR
+}
 
 enum ElementKind {
   APERTURE
@@ -2682,6 +2834,50 @@ input ExperimentOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+A non-affine map given by the values of an array rather than by a formula. The array is a `field`: a node of this graph, not a payload on this edge, so it keeps its own lineage and its axes say what its numbers mean. It has no closed-form inverse, so a placement path never walks it backwards
+"""
+type FieldTransformation implements Transformation {
+  createdAt: DateTime!
+  creator: User
+
+  """
+  The coordinate system of the array whose values are this map. Its value axis says what they mean: COORDINATE for absolute positions, DISPLACEMENT for offsets, none at all for a scalar array whose single value is a position. Equal to `input` when the array's own pixels are the map, as for a label mask keying a table of objects
+  """
+  field: CoordinateSystem
+  id: ID!
+  input: CoordinateSystem
+
+  """
+  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
+  """
+  inputAxes: [String!]!
+  kind: TransformKind!
+  name: String
+  output: CoordinateSystem
+
+  """
+  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
+  """
+  outputAxes: [String!]!
+
+  """
+  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  """
+  validity: PlacementValidity!
+
+  """
+  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
+  """
+  valueRelation: ValueRelation
+  version: Int!
 }
 
 """
@@ -4032,6 +4228,11 @@ type Lens {
   id: ID!
 
   """
+  The most recent picture that shows this lens' dataset and nothing else -- the tile to put on this lens. The same picture the dataset itself reports: snapshots are taken of scenes, and sole occupancy is a fact about the dataset, so every lens over one dataset answers alike. Null when every scene it is placed in also holds other data
+  """
+  latestSnapshot: SceneSnapshot
+
+  """
   Everything needed to reduce one axis of this lens to a phasor: the bin count and width, the period the transform runs over, the laser rate, the instrument-response correction and the persisted distribution. Null when the lens has no MICROTIME or SPECTRUM axis. Derived -- none of it is stored on the lens, and a phasor render node references it rather than copying it, so two layers over one dataset cannot disagree about the instrument
   """
   phasor(axis: String = null, harmonic: Int! = 1): PhasorContext
@@ -4619,6 +4820,9 @@ type Mutation {
   """Create a new view for affine transformation data"""
   createAffineTransformationView(input: AffineTransformationViewInput!): AffineTransformationView!
 
+  """Author a named camera tour of a scene"""
+  createAnimation(input: CreateAnimationInput!): Animation!
+
   """
   Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it
   """
@@ -4762,6 +4966,9 @@ type Mutation {
   """
   createSceneFromDataset(input: CreateSceneFromDatasetInput!): Scene!
 
+  """Adopt an uploaded media file as a pre-rendered picture of a scene"""
+  createSceneSnapshot(input: SceneSnapshotInput!): SceneSnapshot!
+
   """
   Create a layer that renders the vector geometry of a data ROI in a scene
   """
@@ -4807,6 +5014,9 @@ type Mutation {
 
   """Delete an existing affine transformation view"""
   deleteAffineTransformationView(input: DeleteViewInput!): ID!
+
+  """Delete an existing camera tour"""
+  deleteAnimation(input: DeleteAnimationInput!): ID!
 
   """
   Delete a calibration (a PHYSICAL coordinate system). Other system kinds cascade with their owner and cannot be deleted directly
@@ -4880,6 +5090,9 @@ type Mutation {
 
   """Delete an existing scene"""
   deleteScene(input: DeleteSceneInput!): ID!
+
+  """Delete an existing scene snapshot"""
+  deleteSceneSnapshot(input: DeleteSceneSnapshotInput!): ID!
 
   """Delete an existing snapshot"""
   deleteSnapshot(input: DeleteSnaphotInput!): ID!
@@ -4962,6 +5175,9 @@ type Mutation {
   """Pin a region of interest for quick access"""
   pinRoi(input: PinROIInput!): ROI!
 
+  """Pin a scene snapshot for quick access"""
+  pinSceneSnapshot(input: PinSceneSnapshotInput!): SceneSnapshot!
+
   """Pin a snapshot for quick access"""
   pinSnapshot(input: PinSnapshotInput!): Snapshot!
 
@@ -5037,6 +5253,9 @@ type Mutation {
   """Revert dataset to a previous version"""
   revertDataset(input: RevertInput!): Dataset!
 
+  """Re-author a camera tour: rename it, or replace its stops"""
+  updateAnimation(input: UpdateAnimationInput!): Animation!
+
   """
   Rename a hub coordinate system or anchor its clock. Hubs only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space
   """
@@ -5061,6 +5280,9 @@ type Mutation {
 
   """Update an existing region of interest"""
   updateRoi(input: UpdateRoiInput!): ROI!
+
+  """Set a scene's viewer preferences: how a client should open it"""
+  updateScene(input: UpdateSceneInput!): Scene!
 
   """Update a table dataset's name or description"""
   updateTableDataset(input: UpdateTableDatasetInput!): TableDataset!
@@ -6472,6 +6694,15 @@ input PinROIInput {
   pin: Boolean!
 }
 
+"""Input for pinning or unpinning a lens snapshot for quick access"""
+input PinSceneSnapshotInput {
+  """The ID of the snapshot to pin or unpin"""
+  id: ID!
+
+  """True to pin, false to unpin"""
+  pin: Boolean!
+}
+
 """Input for pinning or unpinning a snapshot for quick access"""
 input PinSnapshotInput {
   """The ID of the snapshot to pin or unpin"""
@@ -6675,6 +6906,20 @@ input Pose3DInput {
 """A power (``"5 mW"``, ``"2 W"``)."""
 scalar Power
 
+"""How a viewer should open a scene: flat, volumetric, or its own choice."""
+enum PreferredView {
+  """
+  No preference stated -- the viewer decides, e.g. from whether the data has a z axis with depth. The default: a scene nobody has expressed a preference for should not claim one.
+  """
+  AUTO
+
+  """Open volumetric: the projection view, looking at the data as a body."""
+  THREE_D
+
+  """Open flat: the cross-section view, one slice at a time."""
+  TWO_D
+}
+
 """
 The 3D projection / rendering mode applied to a volumetric (z-stacked) render node.
 """
@@ -6766,6 +7011,15 @@ type Query {
   List affine transformation views (placing images in physical stage space)
   """
   affineTransformationViews(filters: AffineTransformationViewFilter, pagination: OffsetPaginationInput): [AffineTransformationView!]!
+
+  """Get a single animation by ID"""
+  animation(
+    """The unique identifier of an object"""
+    id: ID!
+  ): Animation!
+
+  """List animations (named camera tours through a scene)"""
+  animations(filters: AnimationFilter, ordering: [AnimationOrder!]! = [], pagination: OffsetPaginationInput): [Animation!]!
 
   """Get available permissions for a specific identifier"""
   availablePermissions(identifier: String!, search: String = null, values: [ID!] = null): [PermissionOption!]!
@@ -7027,6 +7281,17 @@ type Query {
 
   """Get a single scene by ID"""
   scene(id: ID!): Scene!
+
+  """Get a single scene snapshot by ID"""
+  sceneSnapshot(
+    """The unique identifier of an object"""
+    id: ID!
+  ): SceneSnapshot!
+
+  """
+  List scene snapshots (pre-rendered pictures of a composition, for previewing it without compositing the layers)
+  """
+  sceneSnapshots(filters: SceneSnapshotFilter, ordering: [SceneSnapshotOrder!]! = [], pagination: OffsetPaginationInput): [SceneSnapshot!]!
 
   """List scenes (compositions of layers over array datasets)"""
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
@@ -7553,6 +7818,7 @@ input RegistrationPathInput {
   affine: [[Float!]!] = null
   coordinateSystem: ID = null
   dataset: ID = null
+  field: ID = null
   inputAxes: [String!] = null
   kind: TransformKind! = IDENTITY
   meshCollection: ID = null
@@ -7560,7 +7826,6 @@ input RegistrationPathInput {
   outputAxes: [String!] = null
   reason: String = null
   scale: [Float!] = null
-  store: ArrayLike = null
   tableDataset: ID = null
   translation: [Float!] = null
   validity: PlacementValidity = null
@@ -7995,15 +8260,31 @@ enum ScanDirection {
 A composition of layers over a shared world coordinate system. The scene carries no units of its own -- they are per-axis, on the axes of its world system
 """
 type Scene {
+  """The named camera tours through this composition"""
+  animations(filters: AnimationFilter, ordering: [AnimationOrder!]! = [], pagination: OffsetPaginationInput): [Animation!]!
+
+  """The viewer background, as RGBA. Null lets the viewer use its own"""
+  backgroundColor: [Float!]
+
   """
   Every coordinate system reachable in this scene: its world system plus those its transformation edges touch
   """
   coordinateSystems: [CoordinateSystem!]!
   id: ID!
 
+  """
+  The most recent picture of this composition -- the tile to put on the scene. Null until something snapshots it
+  """
+  latestSnapshot: SceneSnapshot
+
   """The layers placed in this scene (a heterogeneous list of layer kinds)"""
   layers(filters: LayerFilter, ordering: [LayerOrder!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   name: String!
+
+  """
+  How a viewer should open this scene: flat, volumetric, or its own choice. A preference, not a constraint -- nothing server-side reads it, and a viewer that cannot render volumes is not wrong to show the slice view
+  """
+  preferredView: PreferredView!
 
   """
   The registrations composing this scene: every top-level edge into its world system. A property of the *space*, not of the scene (one truth per space) -- every scene over the same world shares them, each unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. Composing the matrices stays the client's job
@@ -8014,6 +8295,11 @@ type Scene {
   The ROIs drawn in a coordinate system this scene can reach. Reachability, not containment: an ROI belongs to a coordinate system, and survives the scene's deletion
   """
   rois: [DataRoi!]!
+
+  """
+  The pre-rendered pictures of this composition, for previewing it without compositing the layers
+  """
+  snapshots(filters: SceneSnapshotFilter, ordering: [SceneSnapshotOrder!]! = [], pagination: OffsetPaginationInput): [SceneSnapshot!]!
 
   """
   The shared space this scene composes its layers over: a world minted for this scene, or an adopted ownerless hub that many scenes can share and that outlives each of them
@@ -8049,6 +8335,106 @@ input ScenePolicyInput {
   includeMeshes: Boolean! = true
   nchildren: Int! = 8
   transformTables: Boolean! = false
+}
+
+"""
+A pre-rendered picture of a composition: every layer of the scene, blended. Clients use snapshots to preview without compositing the layers themselves. A picture of the scene, not of any one dataset in it -- though `ADataset.latestSnapshot` will offer one of these where the scene's only placed dataset is that dataset, since then the picture shows it and nothing else
+"""
+type SceneSnapshot {
+  createdAt: DateTime!
+
+  """The task this snapshot was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
+  creator: User
+  id: ID!
+
+  """
+  The dominant color of the image, for tinting a placeholder while it loads
+  """
+  majorColor: [Float!]
+  name: String!
+
+  """The composition this is a picture of"""
+  scene: Scene!
+
+  """
+  The media store holding the rendered image. Ask it for a presignedUrl or an accessGrant to actually fetch the bytes
+  """
+  store: MediaStore!
+}
+
+input SceneSnapshotFilter {
+  AND: SceneSnapshotFilter
+  DISTINCT: Boolean
+  NOT: SceneSnapshotFilter
+  OR: SceneSnapshotFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Filter by the scene this snapshot is a picture of"""
+  scene: ID
+
+  """
+  Filter by a list of scenes (fetch the tiles for a set of scenes in one query, the way a picker does)
+  """
+  scenes: [ID!]
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+"""
+Input for creating a snapshot (a pre-rendered picture) of a scene from an already-uploaded media file
+"""
+input SceneSnapshotInput {
+  """The uploaded media file store containing the rendered image"""
+  file: ImageFileLike!
+
+  """The name of the snapshot"""
+  name: String = null
+
+  """The ID of the scene this is a picture of"""
+  scene: ID!
+}
+
+input SceneSnapshotOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
 }
 
 input Selector {
@@ -9010,14 +9396,9 @@ enum TransformKind {
   BY_DIMENSION
 
   """
-  A non-affine map given by a coordinate field: a Zarr array of absolute output POSITIONS, where DISPLACEMENTS stores offsets. Not invertible in closed form.
+  A non-affine map given by the values of an array rather than by a formula. The array is a `field`: a coordinate system, and so a node of this graph, not a payload on this edge. Whether its values are absolute POSITIONS or per-point OFFSETS is read from the value axis of that node -- COORDINATE or DISPLACEMENT -- never restated here. A label mask is the case where the field IS the input: its own pixels are the map. Not invertible in closed form, so a placement path never walks it backwards -- which is also the right semantics for a dereference, an object being a set of pixels.
   """
-  COORDINATES
-
-  """
-  A non-affine map given by a displacement field: a Zarr array of per-point OFFSETS. Not invertible in closed form, so a placement path never walks it backwards.
-  """
-  DISPLACEMENTS
+  FIELD
 
   """The identity map. Input and output coordinates are the same."""
   IDENTITY
@@ -9051,8 +9432,7 @@ enum TransformKindChoices {
   AFFINE
   BIJECTION
   BY_DIMENSION
-  COORDINATES
-  DISPLACEMENTS
+  FIELD
   IDENTITY
   MAP_AXIS
   ROTATION
@@ -9279,6 +9659,23 @@ input UnstructuredMetaInput {
 }
 
 """
+Input for re-authoring a camera tour. Passing `waypoints` replaces every stop -- which is also how a tour is reordered, since a stop's position in the tour is its position in this list
+"""
+input UpdateAnimationInput {
+  """What the tour shows"""
+  description: String = null
+
+  """The ID of the tour to update"""
+  id: ID!
+
+  """The name of the tour"""
+  name: String = null
+
+  """The poses, in tour order. Replaces the tour's stops entirely"""
+  waypoints: [AnimationWaypointInput!] = null
+}
+
+"""
 Input for renaming a hub coordinate system or anchoring its clock. Hubs only: every other system is named by the container that owns it
 """
 input UpdateCoordinateSystemInput {
@@ -9415,6 +9812,17 @@ input UpdateRoiInput {
 
   """The new vector coordinates defining the ROI"""
   vectors: [FiveDVector!] = null
+}
+
+"""
+Input for setting a scene's viewer preferences. Every field is optional and an omitted one is left alone, so a client may set one preference without restating the others
+"""
+input UpdateSceneInput {
+  backgroundColor: [Float!] = null
+
+  """The ID of the scene to update"""
+  id: ID!
+  preferredView: PreferredView = null
 }
 
 """Input for updating a table dataset's name or description"""
@@ -9788,7 +10196,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | CoordinatesTransformation | DataArray | DataRoi | Dataset | DerivedView | DisplacementsTransformation | Era | Experiment | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

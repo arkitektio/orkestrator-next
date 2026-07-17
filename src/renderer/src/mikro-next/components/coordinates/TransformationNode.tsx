@@ -10,7 +10,6 @@ import {
   Shuffle,
   Unlink,
   Waves,
-  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -28,8 +27,7 @@ const ICONS: Record<Kind, LucideIcon> = {
   RotationTransformation: Grid3x3,
   IdentityTransformation: Equal,
   MapAxisTransformation: Shuffle,
-  DisplacementsTransformation: Waves,
-  CoordinatesTransformation: Waypoints,
+  FieldTransformation: Waves,
   UnmappableTransformation: Unlink,
   SequenceTransformation: ListOrdered,
   ByDimensionTransformation: Rows3,

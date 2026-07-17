@@ -1,4 +1,5 @@
 import { Slider } from "@/components/ui/slider";
+import { AttributeRowsSection } from "./AttributeRowsSection";
 import { resolveProbeStrategy } from "../core/probe/probeModes";
 import type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
 import { formatProbeValue } from "../core/probe/valueFormat";
@@ -196,6 +197,10 @@ export const SelectedPointPanel = () => {
               </div>
             ))}
           </div>
+
+          {/* Attribute-plan results: what the tables attached to this pixel's
+              object know about it (AttributeProbeTracker fills the store). */}
+          <AttributeRowsSection probe={probedCoordinate} />
         </div>
       )}
 

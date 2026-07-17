@@ -31,6 +31,16 @@ import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
 
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
+import {
+  applyAttributeRows,
+  planIdentity,
+  type AttributeColumnLike,
+  type AttributeFetchKey,
+  type AttributePlanLike,
+  type AttributeRow,
+  type PlanRowsState,
+  type ProbedAttributes,
+} from "../core/attributes/attributeTypes";
 
 /** Historical name for the probe result; kept so the markers / probe-orbit
  * consumers (`layerId`/`localPos`/`voxelIndex`) compile untouched. */
@@ -133,6 +143,28 @@ export interface ViewerState {
    * arrivals never cause renders). See ProbeValueTracker. */
   mergeExactProbeValues: (key: ProbeFetchKey, values: number[]) => void
 
+  /** "What is under this pixel?" — per-table lookup results for the active
+   * probe, written by AttributeProbeTracker executing the probed system's
+   * attribute plans locally (zarr sample + DuckDB lookup). */
+  probedAttributes: ProbedAttributes | null;
+  /** A new probed point's plans are known: reset the slice to all-pending. */
+  beginProbedAttributes: (key: AttributeFetchKey, plans: readonly AttributePlanLike[]) => void;
+  /** Async per-plan settlement: no-op set when the key went stale (same
+   * late-arrival contract as mergeExactProbeValues). */
+  mergeAttributeRows: (key: AttributeFetchKey, planKey: string, state: PlanRowsState) => void;
+  clearProbedAttributes: () => void;
+  /** The lazy one-hop FK follow (`references`), registered by the tracker so
+   * the HUD can expand a referencing attribute without owning the engine —
+   * the captureScreenshot registration pattern. */
+  followAttributeReference:
+    | ((column: AttributeColumnLike, value: number | bigint) => Promise<readonly AttributeRow[] | null>)
+    | null;
+  registerFollowAttributeReference: (
+    fn:
+      | ((column: AttributeColumnLike, value: number | bigint) => Promise<readonly AttributeRow[] | null>)
+      | null,
+  ) => void;
+
   setDebug: (debug: boolean) => void;
   setShowScaleBar: (show: boolean) => void;
   setShowScaleGrid: (show: boolean) => void;
@@ -200,6 +232,35 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setProbeMode: (mode) => set({ probeMode: mode }),
     mergeExactProbeValues: (key, values) =>
       set((state) => applyExactValues(state, key, values) ?? state),
+    probedAttributes: null,
+    beginProbedAttributes: (key, plans) =>
+      set({
+        probedAttributes: {
+          key,
+          byPlan: Object.fromEntries(
+            plans.map((plan) => [planIdentity(plan), { status: "pending", rows: [] } as PlanRowsState]),
+          ),
+          planMeta: Object.fromEntries(
+            plans.map((plan) => [
+              planIdentity(plan),
+              {
+                tableName: plan.table.name,
+                tableId: plan.table.id,
+                attributes: plan.lookup.attributes,
+              },
+            ]),
+          ),
+        },
+      }),
+    mergeAttributeRows: (key, planKey, planState) =>
+      set((state) => {
+        const next = applyAttributeRows(state.probedAttributes, key, planKey, planState);
+        return next ? { probedAttributes: next } : state;
+      }),
+    clearProbedAttributes: () =>
+      set((state) => (state.probedAttributes === null ? state : { probedAttributes: null })),
+    followAttributeReference: null,
+    registerFollowAttributeReference: (fn) => set({ followAttributeReference: fn }),
     currentZ: 0,
     debug: false,
     showScaleBar: true,

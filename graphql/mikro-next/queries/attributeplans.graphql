@@ -1,0 +1,5 @@
+query AttributePlans($system: ID!, $maxDepth: Int) {
+  attributePlans(system: $system, maxDepth: $maxDepth) {
+    ...AttributePlan
+  }
+}

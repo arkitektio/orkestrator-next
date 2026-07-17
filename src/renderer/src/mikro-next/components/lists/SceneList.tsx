@@ -24,6 +24,9 @@ const List = ({ filters, pagination }: Props) => {
         <MikroScene.ListLink className="flex-0">Scenes</MikroScene.ListLink>
       }
       refetch={refetch}
+      // The card is its scene's snapshot; the grid's default ladder would pack
+      // that picture into a column too narrow to recognise it in.
+      minItemWidth={260}
     >
       {(ex, index) => <SceneCard key={index} scene={ex} />}
     </ListRender>

@@ -29,6 +29,8 @@ export type GroupableListRendererProps<T> = {
   groupBy?: GroupByDef<T>;
   ItemComponent: React.ComponentType<{ item: T } & any>;
   cardProps?: Record<string, any>;
+  /** Minimum card width in px; opts the grid out of its default column ladder. */
+  minItemWidth?: number;
 };
 
 type Group<T> = { id: string; title: React.ReactNode; items: T[] };
@@ -43,10 +45,11 @@ export function GroupableListRenderer<T extends { id?: string | number }>({
   groupBy,
   ItemComponent,
   cardProps,
+  minItemWidth,
 }: GroupableListRendererProps<T>) {
   if (!groupBy) {
     return (
-      <ListLayout.Grid>
+      <ListLayout.Grid minItemWidth={minItemWidth}>
         {items.map((item, index) => (
           <ItemComponent key={item.id ?? index} item={item} {...cardProps} />
         ))}
@@ -88,7 +91,7 @@ export function GroupableListRenderer<T extends { id?: string | number }>({
             <span className="truncate">{group.title}</span>
             <span className="text-xs tabular-nums">{group.items.length}</span>
           </div>
-          <ListLayout.Grid>
+          <ListLayout.Grid minItemWidth={minItemWidth}>
             {group.items.map((item, index) => (
               <ItemComponent
                 key={item.id ?? index}

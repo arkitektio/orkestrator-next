@@ -114,6 +114,12 @@ interface CreateListOptions<TData, TFilters, TOrder, TOrdering, TItem> {
   defaultLimit?: number;
   smart?: Smart;
   cardProps?: Record<string, any>;
+  /**
+   * Minimum card width in px. Set it for lists whose cards carry a picture or
+   * several rows of metadata — the grid's default ladder packs up to ten
+   * columns, which is right for scalars and far too narrow for those.
+   */
+  minItemWidth?: number;
 }
 
 export const createList = <
@@ -138,7 +144,8 @@ export const createList = <
     emptyTitle: defaultEmptyTitle = "No items found",
     emptyDescription: defaultEmptyDesc = "No results match your criteria.",
     defaultLimit: initialLimit = 20,
-    cardProps: defaultCardProps = {}
+    cardProps: defaultCardProps = {},
+    minItemWidth,
   } = options;
 
   const GenericList = (props: GeneratedListProps<TFilters, TOrder, TOrdering>) => {
@@ -255,6 +262,7 @@ export const createList = <
             groupBy={props.groupBy}
             ItemComponent={ItemComponent}
             cardProps={cardProps}
+            minItemWidth={minItemWidth}
           />
         )}
 

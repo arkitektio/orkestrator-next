@@ -1,6 +1,13 @@
+import { EXCLUDE_FROM_CAPTURE } from "../core/captureVisibility";
 import { useModeStore } from "../store/modeStore";
 import { Line } from "../primitives/Line";
 
+/**
+ * The origin crosshair: X in red, Y in green, marking where the stage is.
+ *
+ * Excluded from captures — it orients you while you work, but in a saved PNG or
+ * an exported animation it reads as data that isn't there.
+ */
 export const SceneAxis = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
 
@@ -12,7 +19,7 @@ export const SceneAxis = () => {
 
 
   return (
-    <group>
+    <group userData={{ [EXCLUDE_FROM_CAPTURE]: true }}>
       <Line
         points={[
           [-stageRangeX / 2, 0, 0.1],

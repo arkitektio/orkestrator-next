@@ -17,6 +17,12 @@ export type ListRenderProps<T> = {
   fit?: boolean;
   actions?: React.ReactNode;
   refetch?: (values: { pagination: OffsetPaginationInput }) => Promise<any>;
+  /**
+   * Minimum card width in px. Set it for lists whose cards carry a picture or
+   * several rows of metadata — the grid's default ladder packs up to ten
+   * columns, which is right for scalars and far too narrow for those.
+   */
+  minItemWidth?: number;
 };
 
 export const ListRender = <T extends any>({
@@ -31,6 +37,7 @@ export const ListRender = <T extends any>({
   additionalChildren,
   loader,
   limit = 20,
+  minItemWidth,
 }: ListRenderProps<T>) => {
   const [offset, setOffset] = useState(0);
 
@@ -79,6 +86,7 @@ export const ListRender = <T extends any>({
           </ListTitle>
           <ContainerGrid
             fitLength={fit ? childrenComponents.length : undefined}
+            minItemWidth={minItemWidth}
           >
             {childrenComponents}
             {additionalChildren}

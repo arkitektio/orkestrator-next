@@ -27,6 +27,12 @@ fragment ListADataset on ADataset {
   # system's axes. Cheap (no nested selection) and it is what a card leads with,
   # so it belongs on the list fragment rather than a second round trip.
   spec
+  # A picture of a scene that places this dataset and nothing else — null
+  # whenever every scene it sits in also holds other data, so most datasets will
+  # not have one and the card cannot lean on it.
+  latestSnapshot {
+    ...SceneSnapshot
+  }
 }
 
 fragment ADataset on ADataset {

@@ -14,7 +14,9 @@ Sibling documents: `COORDINATE_SYSTEMS.md` — how the RFC-5 coordinate-system
 graph (server edges → client-composed `LayerState.affineMatrix`, per-level
 scales from `toParent`) feeds this renderer; `render/mesh/README.md` — the
 mesh-collection renderer (Parquet/DuckDB streaming) built on the same graph
-and the same planning discipline.
+and the same planning discipline; `CINEMATIC_MODE.md` — an **unimplemented
+proposal** for lit (shaded) volume rendering, which leans on §2.3's 1-voxel
+brick border to take a gradient without extra page-table walks.
 
 ---
 

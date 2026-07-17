@@ -34,4 +34,9 @@ fragment Scene on Scene {
 fragment ListScene on Scene {
   id
   name
+  # The tile the card shows. Null until something snapshots the scene, so the
+  # card must still stand on its own without one.
+  latestSnapshot {
+    ...SceneSnapshot
+  }
 }

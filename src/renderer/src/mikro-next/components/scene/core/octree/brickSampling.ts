@@ -66,16 +66,12 @@ export type MarchResidentBricksInput = {
  */
 export const VOLUME_ACCUM_GAIN = 4;
 
-const toBaseVoxel = (p: Vec3, baseShape: Vec3): Vec3 => [
-  (p[0] + 0.5) * baseShape[0],
-  (0.5 - p[1]) * baseShape[1],
-  (p[2] + 0.5) * baseShape[2],
-];
+const clamp01 = (v: number): number => Math.min(Math.max(v, -0.5), 0.5);
 
-const clampLocal = (p: Vec3): Vec3 => [
-  Math.min(Math.max(p[0], -0.5), 0.5),
-  Math.min(Math.max(p[1], -0.5), 0.5),
-  Math.min(Math.max(p[2], -0.5), 0.5),
+const clampLocal3 = (x: number, y: number, z: number): Vec3 => [
+  clamp01(x),
+  clamp01(y),
+  clamp01(z),
 ];
 
 /**
@@ -125,15 +121,22 @@ export function marchResidentBricks({
    * other strategy's coverage fallback. */
   let strongest: ProbeMarchHit | null = null;
 
+  // The march runs ≤256 steps per hover FRAME: keep the per-step position and
+  // base-voxel in a reused scratch (samplers read it synchronously and must
+  // not retain it); arrays are only allocated when a hit is actually stored.
+  const baseVoxelScratch: [number, number, number] = [0, 0, 0];
+
   for (let i = 0; i < steps; i++) {
     const t = tNear + i * delta;
-    const p: Vec3 = [
-      origin[0] + direction[0] * t,
-      origin[1] + direction[1] * t,
-      origin[2] + direction[2] * t,
-    ];
+    const px = origin[0] + direction[0] * t;
+    const py = origin[1] + direction[1] * t;
+    const pz = origin[2] + direction[2] * t;
 
-    const rawValue = sample(toBaseVoxel(p, baseShape), desiredLevel, channel);
+    // Unit-box local ([-0.5,0.5], y up) → base voxel (y down) — shader parity.
+    baseVoxelScratch[0] = (px + 0.5) * baseShape[0];
+    baseVoxelScratch[1] = (0.5 - py) * baseShape[1];
+    baseVoxelScratch[2] = (pz + 0.5) * baseShape[2];
+    const rawValue = sample(baseVoxelScratch, desiredLevel, channel);
     if (rawValue === null) {
       // Unresident: never a hit, and it breaks gradient pair continuity.
       prev = null;
@@ -150,13 +153,13 @@ export function marchResidentBricks({
     normalized = Math.pow(normalized, Math.max(gamma, 1e-4));
 
     if (normalized > 0 && (strongest === null || normalized > strongest.normalized)) {
-      strongest = { position: clampLocal(p), t, rawValue, normalized, fallback: true };
+      strongest = { position: clampLocal3(px, py, pz), t, rawValue, normalized, fallback: true };
     }
 
     switch (strategy) {
       case "first-hit": {
         if (normalized > threshold) {
-          return { position: clampLocal(p), t, rawValue, normalized };
+          return { position: clampLocal3(px, py, pz), t, rawValue, normalized };
         }
         break;
       }
@@ -170,11 +173,11 @@ export function marchResidentBricks({
             bestEdge = edge;
             const tMid = (t + prev.t) / 2;
             best = {
-              position: clampLocal([
+              position: clampLocal3(
                 origin[0] + direction[0] * tMid,
                 origin[1] + direction[1] * tMid,
                 origin[2] + direction[2] * tMid,
-              ]),
+              ),
               t: tMid,
               rawValue,
               normalized,
@@ -188,7 +191,7 @@ export function marchResidentBricks({
         const alpha = Math.min(normalized * delta * VOLUME_ACCUM_GAIN, 1);
         accumulated += (1 - accumulated) * alpha;
         if (accumulated >= 0.5) {
-          return { position: clampLocal(p), t, rawValue, normalized };
+          return { position: clampLocal3(px, py, pz), t, rawValue, normalized };
         }
         break;
       }

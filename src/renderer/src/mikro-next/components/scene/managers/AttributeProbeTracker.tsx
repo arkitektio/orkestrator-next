@@ -251,10 +251,74 @@ export function AttributeProbeTracker() {
       };
     };
 
+    /**
+     * Synchronous fast path: when EVERYTHING needed is already cached —
+     * plans fetched, mask value resident, rows in the engine's result LRU —
+     * deliver instantly instead of waiting out the debounce. Any miss (a
+     * step that would fetch) returns false and the debounced resolver path
+     * runs unchanged, so the read-avoidance contract holds.
+     */
+    const tryInstant = (key: AttributeFetchKey): boolean => {
+      const plans = planCache.peek(key.systemId);
+      if (plans === null) return false;
+      if (plans.length === 0) {
+        viewerStore.getState().beginProbedAttributes(key, plans);
+        return true;
+      }
+      const layer = layerById(key.layerId);
+      if (!layer) return false;
+      const startCoords = coordsFor(layer, key);
+
+      const states: [string, PlanRowsState][] = [];
+      for (const plan of plans) {
+        const planKey = planIdentity(plan);
+        const mapped = plan.path.length
+          ? applyPathToCoords(plan.path, startCoords)
+          : startCoords;
+        if (mapped === null) {
+          states.push([planKey, { status: "unreachable", rows: [] }]);
+          continue;
+        }
+        const index = resolveSampleIndex(plan, mapped);
+        if (index === null) {
+          states.push([planKey, { status: "unreachable", rows: [] }]);
+          continue;
+        }
+        const value = sampleSourceFor(plan).sampleSync(index);
+        if (value === null) return false; // not resident: needs the async path
+        if (isBackground(value)) {
+          states.push([
+            planKey,
+            { status: "background", rows: [], sampledValue: value, sampleSource: "resident" },
+          ]);
+          continue;
+        }
+        const held = buildHeld(plan, mapped, value);
+        if (held === null) {
+          states.push([planKey, { status: "unreachable", rows: [] }]);
+          continue;
+        }
+        const rows = engine.peek(plan, held);
+        if (rows === null) return false; // LRU miss: a real lookup is needed
+        states.push([
+          planKey,
+          { status: "rows", rows, sampledValue: value, sampleSource: "resident" },
+        ]);
+      }
+
+      const store = viewerStore.getState();
+      store.beginProbedAttributes(key, plans);
+      for (const [planKey, state] of states) {
+        store.mergeAttributeRows(key, planKey, state);
+      }
+      return true;
+    };
+
     // Debounced execution: attribute lookups fire only once the probe has
     // rested on a voxel for a beat — a hover sweep across the image costs
     // nothing until it settles. (The upstream probe is RAF-coalesced; this is
-    // the slower, read-avoiding tier on top.)
+    // the slower, read-avoiding tier on top.) The instant path above bypasses
+    // the wait when no fetch would happen anyway.
     const ATTRIBUTE_DEBOUNCE_MS = 150;
     let debounce: ReturnType<typeof setTimeout> | null = null;
     const request = (probe: ProbeResult | null) => {
@@ -266,10 +330,12 @@ export function AttributeProbeTracker() {
         viewerStore.getState().clearProbedAttributes();
         return;
       }
+      const key = keyOf(probe);
+      if (!key) return;
+      if (tryInstant(key)) return;
       debounce = setTimeout(() => {
         debounce = null;
-        const key = keyOf(probe);
-        if (key) resolver.request(key);
+        resolver.request(key);
       }, ATTRIBUTE_DEBOUNCE_MS);
     };
 

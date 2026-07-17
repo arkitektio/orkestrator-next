@@ -140,6 +140,26 @@ describe("AttributeLookupEngine", () => {
     expect(log.prepared).toHaveLength(0);
   });
 
+  it("peek answers a seen key tuple synchronously without any query", async () => {
+    const { deps, log } = makeFake();
+    const engine = new AttributeLookupEngine(deps);
+    await engine.lookup(plan(), { t: 1, i: 7 });
+    const queriesBefore = log.queries.length;
+    const statementsBefore = log.statementCalls.length;
+    expect(engine.peek(plan(), { t: 1, i: 7 })).toEqual([{ area: 12.5 }]);
+    expect(log.queries.length).toBe(queriesBefore);
+    expect(log.statementCalls.length).toBe(statementsBefore);
+  });
+
+  it("peek misses unseen tuples and uncovered keys without side effects", async () => {
+    const { deps, log } = makeFake();
+    const engine = new AttributeLookupEngine(deps);
+    expect(engine.peek(plan(), { t: 1, i: 7 })).toBeNull(); // never looked up
+    expect(engine.peek(plan(), { i: 7 })).toBeNull(); // key axis missing
+    expect(log.queries).toHaveLength(0);
+    expect(log.statementCalls).toHaveLength(0);
+  });
+
   it("skips the query entirely when the request went stale", async () => {
     const { deps, log } = makeFake();
     const engine = new AttributeLookupEngine(deps);

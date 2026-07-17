@@ -41,8 +41,15 @@ const toStructuralPlans = (
 
 export class AttributePlanCache {
   private plans = new Map<string, Promise<readonly AttributePlanLike[]>>();
+  /** Settled results, for the tracker's synchronous fast path. */
+  private resolved = new Map<string, readonly AttributePlanLike[]>();
 
   constructor(private readonly client: QueryClient) {}
+
+  /** Already-fetched plans for a system, synchronously; null while unknown. */
+  peek(systemId: string): readonly AttributePlanLike[] | null {
+    return this.resolved.get(systemId) ?? null;
+  }
 
   get(systemId: string): Promise<readonly AttributePlanLike[]> {
     let pending = this.plans.get(systemId);
@@ -72,6 +79,7 @@ export class AttributePlanCache {
               })),
             );
           }
+          this.resolved.set(systemId, plans);
           return plans;
         })
         .catch((error) => {

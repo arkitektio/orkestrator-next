@@ -217,6 +217,19 @@ export class BrickResidencyManager {
   /** Per-store zarr chunk-key encoders for the sync chunk-cache probe read
    * (`sampleChunkCacheSync`). null = metadata resolution in flight. */
   private readonly chunkKeyEncoders = new Map<string, ((coords: number[]) => string) | null>();
+  /** Single-entry memo for the sync chunk-cache probe: consecutive march
+   * steps overwhelmingly read the SAME decoded chunk, so the last one is
+   * kept keyed by its FULL zarr chunk coords — a hit skips the cache-key
+   * string build and the LRU mutation entirely (≈256×/frame during a 3D
+   * hover). Safe without invalidation: decoded chunks are immutable and any
+   * slice/dim change alters the coord tuple, which is compared in full. */
+  private lastChunkRead: {
+    storeId: string;
+    coords: number[];
+    chunk: Chunk<DataType>;
+  } | null = null;
+  /** Scratch for the memo's coord tuple (avoids a per-sample allocation). */
+  private readonly chunkCoordsScratch: number[] = [];
   /** In-flight decoded-chunk promises, shared across bricks: without this,
    * N concurrent bricks touching the same plane chunk decode it N times
    * (observed 73× fetch amplification on plane-chunked SPIM data). */
@@ -541,65 +554,91 @@ export class BrickResidencyManager {
   ): number | null {
     const { geometry } = pool;
     const level = geometry.levels[levelIndex];
-    let arr: Parameters<typeof getChunkWorker>[0];
-    try {
-      arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
-    } catch {
-      return null;
-    }
-
-    const encoder = this.chunkKeyEncoders.get(level.storeId);
-    if (encoder === undefined) {
-      this.chunkKeyEncoders.set(level.storeId, null); // resolving
-      void readArrayMetadataCached(arr)
-        .then((meta) => this.chunkKeyEncoders.set(level.storeId, meta.encodeChunkKey))
-        .catch(() => this.chunkKeyEncoders.delete(level.storeId));
-      return null;
-    }
-    if (encoder === null) return null; // metadata still resolving
-
     const { xPos, yPos, zPos, intensityPos } = geometry.axes;
-    const levelVoxel = [0, 1, 2].map((i) =>
+
+    // Allocation-free address math: this runs per march STEP on the hover
+    // path (≤256×/frame), so plain locals instead of mapped arrays.
+    const clampVoxel = (i: number) =>
       Math.min(
         Math.max(Math.floor(baseVoxel[i] / level.scale[i]), 0),
         level.spatialShape[i] - 1,
-      ),
-    );
-    const spatialChunk = [0, 1, 2].map((i) =>
-      Math.floor(levelVoxel[i] / level.spatialChunks[i]),
-    );
-    const spatialOffset = [0, 1, 2].map(
-      (i) => levelVoxel[i] - spatialChunk[i] * level.spatialChunks[i],
-    );
+      );
+    const vx = clampVoxel(0);
+    const vy = clampVoxel(1);
+    const vz = clampVoxel(2);
+    const cx = Math.floor(vx / level.spatialChunks[0]);
+    const cy = Math.floor(vy / level.spatialChunks[1]);
+    const cz = Math.floor(vz / level.spatialChunks[2]);
+    const ox = vx - cx * level.spatialChunks[0];
+    const oy = vy - cy * level.spatialChunks[1];
+    const oz = vz - cz * level.spatialChunks[2];
     const channelsPerChunk =
       intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
+    const channelChunk = intensityPos !== -1 ? Math.floor(channel / channelsPerChunk) : 0;
 
     // Same coords the brick fetch used — the cache key must match what was
     // fetched (collapsed dims via the pool's fixed chunk coords, like the
     // node fetch itself).
-    const chunkCoords = geometry.dims.map((_, d) => {
-      if (d === xPos) return spatialChunk[0];
-      if (d === yPos) return spatialChunk[1];
-      if (d === zPos) return spatialChunk[2];
-      if (d === intensityPos) return Math.floor(channel / channelsPerChunk);
-      return pool.fixedChunkCoords[d];
-    });
-    const chunk = this.chunkCache.get(createCacheKey(arr, encoder, chunkCoords));
-    if (!chunk) return null;
+    const dims = geometry.dims;
+    const coords = this.chunkCoordsScratch;
+    coords.length = dims.length;
+    for (let d = 0; d < dims.length; d++) {
+      coords[d] =
+        d === xPos
+          ? cx
+          : d === yPos
+            ? cy
+            : d === zPos
+              ? cz
+              : d === intensityPos
+                ? channelChunk
+                : pool.fixedChunkCoords[d];
+    }
 
-    const index = geometry.dims.reduce((acc, _, d) => {
+    let chunk: Chunk<DataType> | undefined;
+    const memo = this.lastChunkRead;
+    if (
+      memo &&
+      memo.storeId === level.storeId &&
+      memo.coords.length === coords.length &&
+      memo.coords.every((v, d) => v === coords[d])
+    ) {
+      chunk = memo.chunk; // hot path: no key build, no LRU touch
+    } else {
+      let arr: Parameters<typeof getChunkWorker>[0];
+      try {
+        arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
+      } catch {
+        return null;
+      }
+      const encoder = this.chunkKeyEncoders.get(level.storeId);
+      if (encoder === undefined) {
+        this.chunkKeyEncoders.set(level.storeId, null); // resolving
+        void readArrayMetadataCached(arr)
+          .then((meta) => this.chunkKeyEncoders.set(level.storeId, meta.encodeChunkKey))
+          .catch(() => this.chunkKeyEncoders.delete(level.storeId));
+        return null;
+      }
+      if (encoder === null) return null; // metadata still resolving
+      chunk = this.chunkCache.get(createCacheKey(arr, encoder, coords));
+      if (!chunk) return null;
+      this.lastChunkRead = { storeId: level.storeId, coords: coords.slice(), chunk };
+    }
+
+    let index = 0;
+    for (let d = 0; d < dims.length; d++) {
       const offset =
         d === xPos
-          ? spatialOffset[0]
+          ? ox
           : d === yPos
-            ? spatialOffset[1]
+            ? oy
             : d === zPos
-              ? spatialOffset[2]
+              ? oz
               : d === intensityPos
                 ? channel % channelsPerChunk
                 : pool.fixedOffsets[d];
-      return acc + offset * (chunk.stride[d] ?? 0);
-    }, 0);
+      index += offset * (chunk.stride[d] ?? 0);
+    }
     const value = (chunk.data as ArrayLike<number | bigint>)[index];
     return value === undefined ? null : Number(value);
   }
@@ -1567,6 +1606,7 @@ export class BrickResidencyManager {
     this.disposed = true;
     this.fetchAbort.abort();
     this.inFlightChunks.clear();
+    this.lastChunkRead = null;
     this.gpuRepacker?.dispose();
     this.gpuRepacker = null;
     for (const pool of this.pools.values()) this.disposePool(pool);

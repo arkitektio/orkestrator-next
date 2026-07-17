@@ -151,6 +151,28 @@ export class AttributeLookupEngine {
   }
 
   /**
+   * Synchronous result-LRU lookup: the rows for `(plan, held)` if this
+   * session already ran that lookup — no connection, no query, no promise.
+   * Powers the tracker's instant repeat-hover path (re-hovering an object
+   * whose key tuple was already answered must not wait out the debounce).
+   * Null on a miss OR when `held` does not cover the key columns.
+   */
+  peek(
+    plan: AttributePlanLike,
+    held: Record<string, HeldValue>,
+  ): readonly AttributeRow[] | null {
+    const keyValues = buildKeyValues(plan, held);
+    if (keyValues === null) return null;
+    const cacheKey = `${planIdentity(plan)}|${keyValues.map(String).join(",")}`;
+    const cached = this.results.get(cacheKey);
+    if (cached === undefined) return null;
+    // Refresh LRU recency.
+    this.results.delete(cacheKey);
+    this.results.set(cacheKey, cached);
+    return cached;
+  }
+
+  /**
    * The one-hop foreign-key follow: look a returned value up in the table the
    * column `references`. Never on the hover path — the UI calls this on
    * expand. The target is keyed by its single INDEX coordinate column.

@@ -6,7 +6,8 @@ import { ListADatasetFragment } from '../../api/graphql'
 import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec, type ADatasetAxis } from '../../specs'
 
 interface Props {
-  adataset: ListADatasetFragment
+  /** Named `item` because createList passes items in under that name. */
+  item: ListADatasetFragment
 }
 
 /** `512 y` — extent leads, axis name annotates it. */
@@ -32,7 +33,7 @@ const AxisChip = ({ axis, muted }: { axis: ADatasetAxis; muted?: boolean }) => (
  * run together with the spatial ones, which is what made the old single
  * `t × c × z × y × x (1, 3, 8, 512, 512)` line unreadable.
  */
-const TheCard = ({ adataset }: Props) => {
+const TheCard = ({ item: adataset }: Props) => {
   const spatial = spatialSpecOf(adataset.spec)
   const modifiers = modifierSpecsOf(adataset.spec)
   const axes = splitAxesBySpec(adataset.axisNames, adataset.shape, adataset.spec)

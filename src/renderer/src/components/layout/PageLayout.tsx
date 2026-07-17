@@ -115,19 +115,32 @@ export const PageLayout = ({
     window.api.openSecondWindow(location.pathname);
   }, []);
 
+  // Both toggles edit a COPY of the current params rather than passing an object
+  // literal: `setParams({...})` replaces the whole query string, so toggling a
+  // sidebar used to wipe every other param — a page's search, sort, date range
+  // and filters all vanished mid-session.
+  const setSidebarParam = useCallback(
+    (key: "pageSidebar" | "sidebar", value: string) => {
+      const next = new URLSearchParams(params);
+      next.set(key, value);
+      setParams(next);
+    },
+    [params, setParams],
+  );
+
   const togglePageSidebar = useCallback(() => {
-    setParams({
-      pageSidebar: params.get("pageSidebar") == "true" ? "false" : "true",
-      sidebar: params.get("sidebar") || "true",
-    });
-  }, [params]);
+    setSidebarParam(
+      "pageSidebar",
+      params.get("pageSidebar") == "true" ? "false" : "true",
+    );
+  }, [params, setSidebarParam]);
 
   const toggleSidebar = useCallback(() => {
-    setParams({
-      sidebar: params.get("sidebar") == "true" ? "false" : "true",
-      pageSidebar: params.get("pageSidebar") || "true",
-    });
-  }, [params]);
+    setSidebarParam(
+      "sidebar",
+      params.get("sidebar") == "true" ? "false" : "true",
+    );
+  }, [params, setSidebarParam]);
 
   return (
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">

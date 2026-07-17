@@ -6,7 +6,7 @@ import type {
 } from "./attributeTypes";
 import { planIdentity } from "./attributeTypes";
 import type { BindParam, HeldValue } from "./planExec";
-import { buildParams } from "./planExec";
+import { buildKeyValues } from "./planExec";
 import { bindSqlLiteral, escapeSqlIdentifier, escapeSqlLiteral } from "./sqlBind";
 
 /**
@@ -71,7 +71,14 @@ const GRANT_EXPIRY_SKEW_MS = 60_000;
 const secretName = (storeId: string) =>
   `attr_store_${storeId.replaceAll(/[^a-zA-Z0-9_]/g, "_")}`;
 
-const parquetUrl = (store: ParquetStoreLike) => `s3://${store.bucket}/${store.key}`;
+/**
+ * The queried URL comes from the GRANT, never from the store's declared
+ * bucket/key: the secret is scoped to the grant's `s3://bucket/key`, and a
+ * URL built from anything else can silently miss that scope — DuckDB then
+ * falls back to its default AWS endpoint (the classic
+ * `https://<bucket>.s3.amazonaws.com` CORS failure). One source, no mismatch.
+ */
+const grantUrl = (grant: ParquetGrantLike) => `s3://${grant.bucket}/${grant.key}`;
 
 const normalizeValue = (value: unknown): unknown => {
   if (typeof value === "bigint") {
@@ -128,8 +135,8 @@ export class AttributeLookupEngine {
     held: Record<string, HeldValue>,
     isStale: () => boolean = () => false,
   ): Promise<readonly AttributeRow[] | null> {
-    const params = buildParams(plan, parquetUrl(plan.lookup.store), held);
-    if (params === null) {
+    const keyValues = buildKeyValues(plan, held);
+    if (keyValues === null) {
       return Promise.reject(
         new Error("held values do not cover the plan's key columns"),
       );
@@ -137,7 +144,7 @@ export class AttributeLookupEngine {
     return this.cachedQuery(
       planIdentity(plan),
       plan.lookup.sql,
-      params,
+      keyValues,
       plan.lookup.store,
       isStale,
     );
@@ -172,13 +179,7 @@ export class AttributeLookupEngine {
       ? attributes.map((attr) => escapeSqlIdentifier(attr.name)).join(", ")
       : "*";
     const sql = `SELECT ${selectList} FROM read_parquet(?) WHERE ${escapeSqlIdentifier(keyColumn.name)} = ?`;
-    return this.cachedQuery(
-      `ref:${target.id}`,
-      sql,
-      [parquetUrl(target.store), value],
-      target.store,
-      () => false,
-    );
+    return this.cachedQuery(`ref:${target.id}`, sql, [value], target.store, () => false);
   }
 
   dispose(): void {
@@ -206,11 +207,11 @@ export class AttributeLookupEngine {
   private cachedQuery(
     statementKey: string,
     sql: string,
-    params: readonly BindParam[],
+    keyValues: readonly BindParam[],
     store: ParquetStoreLike,
     isStale: () => boolean,
   ): Promise<readonly AttributeRow[] | null> {
-    const cacheKey = `${statementKey}|${params.slice(1).map(String).join(",")}`;
+    const cacheKey = `${statementKey}|${keyValues.map(String).join(",")}`;
     const cached = this.results.get(cacheKey);
     if (cached !== undefined) {
       // Refresh LRU recency.
@@ -226,7 +227,8 @@ export class AttributeLookupEngine {
       const again = this.results.get(cacheKey);
       if (again !== undefined) return again;
       const connection = await this.ensureConnection();
-      await this.ensureSecret(connection, store);
+      const grant = await this.ensureSecret(connection, store);
+      const params: BindParam[] = [grantUrl(grant), ...keyValues];
       const rows = await this.runQuery(connection, statementKey, sql, params);
       this.rememberResult(cacheKey, rows);
       return rows;
@@ -260,10 +262,10 @@ export class AttributeLookupEngine {
   private async ensureSecret(
     connection: DuckConnectionLike,
     store: ParquetStoreLike,
-  ): Promise<void> {
+  ): Promise<ParquetGrantLike> {
     const cached = this.grants.get(store.id);
     if (cached && cached.expiresAt > Date.now() + GRANT_EXPIRY_SKEW_MS) {
-      return; // Secret for this grant already exists and is fresh.
+      return cached; // Secret for this grant already exists and is fresh.
     }
     if (this.region === null) this.region = await this.deps.requestRegion();
     const grant = {
@@ -280,7 +282,7 @@ export class AttributeLookupEngine {
       `SECRET ${escapeSqlLiteral(grant.secretKey)}`,
       `SESSION_TOKEN ${escapeSqlLiteral(grant.sessionToken)}`,
       `REGION ${escapeSqlLiteral(this.region ?? "us-east-1")}`,
-      `SCOPE ${escapeSqlLiteral(`s3://${grant.bucket}/${grant.key}`)}`,
+      `SCOPE ${escapeSqlLiteral(grantUrl(grant))}`,
     ];
     const endpoint = this.deps.endpoint;
     if (endpoint) {
@@ -291,6 +293,7 @@ export class AttributeLookupEngine {
     await connection.query(
       `CREATE OR REPLACE SECRET "${secretName(store.id)}" (${options.join(", ")})`,
     );
+    return grant;
   }
 
   private async runQuery(

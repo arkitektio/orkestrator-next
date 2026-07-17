@@ -4,7 +4,11 @@ import { perfMonitor } from "./perfMonitor";
 import { FRAME_UPLOAD_BUDGET, shouldContinueDrain } from "./uploadBudget";
 import { qualityGovernor } from "../core/qualityGovernor";
 import { getMax3DTextureSize, type SceneRenderer } from "../render/gpu/sceneRenderer";
-import { getChunkWorker } from "../../../../lib/zarr/runner";
+import {
+  createCacheKey,
+  getChunkWorker,
+  readArrayMetadataCached,
+} from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
@@ -210,6 +214,9 @@ export type BrickSystemStats = {
 export class BrickResidencyManager {
   private readonly pools = new Map<string, LayerBrickPool>();
   private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
+  /** Per-store zarr chunk-key encoders for the sync chunk-cache probe read
+   * (`sampleChunkCacheSync`). null = metadata resolution in flight. */
+  private readonly chunkKeyEncoders = new Map<string, ((coords: number[]) => string) | null>();
   /** In-flight decoded-chunk promises, shared across bricks: without this,
    * N concurrent bricks touching the same plane chunk decode it N times
    * (observed 73× fetch amplification on plane-chunked SPIM data). */
@@ -390,9 +397,12 @@ export class BrickResidencyManager {
    * desiredLevel to coarsest, resolve the finest resident brick and return
    * either its (page-table-quantized) uniform value or the atlas backing
    * index of the voxel at channel slab 0 plus the per-slab index stride.
-   * Null when nothing is resident, or when the CPU mirror is stale (GPU
-   * repack path — reading it would return stale zeros, which is worse than
-   * not reading; the Phase D chunk-cache probe replaces that case).
+   * When the CPU mirror is stale (GPU repack path — reading it would return
+   * stale zeros, which is worse than not reading), a resident brick resolves
+   * to `kind: "gpu"`: the caller reads the voxel from the DECODED CHUNK CACHE
+   * instead (`sampleChunkCacheSync` — the "Phase D" probe), which holds the
+   * CPU copy of exactly what the GPU repacked. Null only when nothing is
+   * resident at any level.
    */
   private resolveResidentRead(
     pool: LayerBrickPool,
@@ -401,6 +411,7 @@ export class BrickResidencyManager {
   ):
     | { kind: "empty"; level: number; value: number }
     | { kind: "slot"; level: number; index0: number; slabStride: number }
+    | { kind: "gpu"; level: number }
     | null {
     const { geometry, spec, atlas } = pool;
 
@@ -432,7 +443,7 @@ export class BrickResidencyManager {
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
-      if (pool.atlasMirrorStale) return null;
+      if (pool.atlasMirrorStale) return { kind: "gpu", level };
 
       const texel: Vec3 = [
         slot.coords[0] * atlas.slotSize[0] +
@@ -471,6 +482,9 @@ export class BrickResidencyManager {
     const read = this.resolveResidentRead(pool, baseVoxel, desiredLevel);
     if (!read) return null;
     if (read.kind === "empty") return read.value;
+    if (read.kind === "gpu") {
+      return this.sampleChunkCacheSync(pool, read.level, baseVoxel, channel);
+    }
     const clampedChannel = Math.min(Math.max(channel, 0), pool.spec.channelCount - 1);
     return pool.atlas.backing[read.index0 + clampedChannel * read.slabStride];
   }
@@ -494,11 +508,100 @@ export class BrickResidencyManager {
     if (read.kind === "empty") {
       return { values: Array<number>(channelCount).fill(read.value), level: read.level };
     }
+    if (read.kind === "gpu") {
+      const values = new Array<number>(channelCount);
+      for (let channel = 0; channel < channelCount; channel++) {
+        const value = this.sampleChunkCacheSync(pool, read.level, baseVoxel, channel);
+        if (value === null) return null; // chunk evicted: whole readout pends
+        values[channel] = value;
+      }
+      return { values, level: read.level };
+    }
     const values = new Array<number>(channelCount);
     for (let channel = 0; channel < channelCount; channel++) {
       values[channel] = pool.atlas.backing[read.index0 + channel * read.slabStride];
     }
     return { values, level: read.level };
+  }
+
+  /**
+   * "Phase D" probe read: a voxel value straight from the DECODED CHUNK
+   * CACHE, synchronously. This is the CPU-side answer for GPU-repacked
+   * bricks — their data never reaches the atlas CPU mirror, but the decoded
+   * source chunks passed through `fetchChunkShared`'s byte-budget cache on
+   * the way to the GPU kernel and usually still live there. Null when the
+   * chunk was evicted or the store's chunk-key encoder is still resolving
+   * (kicked off here; the next probe move finds it cached).
+   */
+  private sampleChunkCacheSync(
+    pool: LayerBrickPool,
+    levelIndex: number,
+    baseVoxel: Vec3,
+    channel: number,
+  ): number | null {
+    const { geometry } = pool;
+    const level = geometry.levels[levelIndex];
+    let arr: Parameters<typeof getChunkWorker>[0];
+    try {
+      arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
+    } catch {
+      return null;
+    }
+
+    const encoder = this.chunkKeyEncoders.get(level.storeId);
+    if (encoder === undefined) {
+      this.chunkKeyEncoders.set(level.storeId, null); // resolving
+      void readArrayMetadataCached(arr)
+        .then((meta) => this.chunkKeyEncoders.set(level.storeId, meta.encodeChunkKey))
+        .catch(() => this.chunkKeyEncoders.delete(level.storeId));
+      return null;
+    }
+    if (encoder === null) return null; // metadata still resolving
+
+    const { xPos, yPos, zPos, intensityPos } = geometry.axes;
+    const levelVoxel = [0, 1, 2].map((i) =>
+      Math.min(
+        Math.max(Math.floor(baseVoxel[i] / level.scale[i]), 0),
+        level.spatialShape[i] - 1,
+      ),
+    );
+    const spatialChunk = [0, 1, 2].map((i) =>
+      Math.floor(levelVoxel[i] / level.spatialChunks[i]),
+    );
+    const spatialOffset = [0, 1, 2].map(
+      (i) => levelVoxel[i] - spatialChunk[i] * level.spatialChunks[i],
+    );
+    const channelsPerChunk =
+      intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
+
+    // Same coords the brick fetch used — the cache key must match what was
+    // fetched (collapsed dims via the pool's fixed chunk coords, like the
+    // node fetch itself).
+    const chunkCoords = geometry.dims.map((_, d) => {
+      if (d === xPos) return spatialChunk[0];
+      if (d === yPos) return spatialChunk[1];
+      if (d === zPos) return spatialChunk[2];
+      if (d === intensityPos) return Math.floor(channel / channelsPerChunk);
+      return pool.fixedChunkCoords[d];
+    });
+    const chunk = this.chunkCache.get(createCacheKey(arr, encoder, chunkCoords));
+    if (!chunk) return null;
+
+    const index = geometry.dims.reduce((acc, _, d) => {
+      const offset =
+        d === xPos
+          ? spatialOffset[0]
+          : d === yPos
+            ? spatialOffset[1]
+            : d === zPos
+              ? spatialOffset[2]
+              : d === intensityPos
+                ? channel % channelsPerChunk
+                : pool.fixedOffsets[d];
+      return acc + offset * (chunk.stride[d] ?? 0);
+    }, 0);
+    const value = (chunk.data as ArrayLike<number | bigint>)[index];
+    return value === undefined ? null : Number(value);
   }
 
   /**

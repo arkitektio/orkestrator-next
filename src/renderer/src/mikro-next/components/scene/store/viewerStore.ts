@@ -140,7 +140,9 @@ export interface ViewerState {
   setProbeMode: (mode: ProbeMode) => void
   /** Async exact-value upgrade: patches the active probe / matching saved
    * probes when the fetched key still matches (no-op set otherwise, so late
-   * arrivals never cause renders). See ProbeValueTracker. */
+   * arrivals never cause renders). Currently unwired on the hover path — the
+   * hover readout deliberately stays at resident-LOD values (no per-hover
+   * chunk reads); retained for a future save-time upgrade. */
   mergeExactProbeValues: (key: ProbeFetchKey, values: number[]) => void
 
   /** "What is under this pixel?" — per-table lookup results for the active

@@ -56,22 +56,35 @@ export function buildHeld(
 }
 
 /**
- * The positional bind list for `plan.lookup.sql`: parquet URL first, then the
- * key values in `keyColumns` order, each read from `held` by the plan's own
- * axis name. Null when a key axis is missing.
+ * The key values for `plan.lookup.sql` in `keyColumns` order, each read from
+ * `held` by the plan's own axis name. Null when a key axis is missing. The
+ * parquet URL is prepended separately (`buildParams`) because it comes from
+ * the store's ACCESS GRANT at query time, not from the plan.
+ */
+export function buildKeyValues(
+  plan: AttributePlanLike,
+  held: Record<string, HeldValue>,
+): BindParam[] | null {
+  const values: BindParam[] = [];
+  for (const keyColumn of plan.lookup.keyColumns) {
+    const value = held[keyColumn.axis];
+    if (value === undefined) return null;
+    values.push(value);
+  }
+  return values;
+}
+
+/**
+ * The full positional bind list: parquet URL first (the `read_parquet(?)`
+ * argument), then the key values in `keyColumns` order.
  */
 export function buildParams(
   plan: AttributePlanLike,
   parquetUrl: string,
   held: Record<string, HeldValue>,
 ): BindParam[] | null {
-  const params: BindParam[] = [parquetUrl];
-  for (const keyColumn of plan.lookup.keyColumns) {
-    const value = held[keyColumn.axis];
-    if (value === undefined) return null;
-    params.push(value);
-  }
-  return params;
+  const keyValues = buildKeyValues(plan, held);
+  return keyValues === null ? null : [parquetUrl, ...keyValues];
 }
 
 /**

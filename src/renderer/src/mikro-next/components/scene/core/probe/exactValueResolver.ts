@@ -4,9 +4,11 @@ import type { ProbeFetchKey } from "./probeTypes";
  * Async exact-value orchestration for the probe: at most ONE fetch in flight,
  * a hover storm collapses into a latest-wins pending slot, stale settlements
  * are dropped, and a small delivered-LRU absorbs cursor jitter across a voxel
- * boundary and back. Pure and dependency-injected for unit tests; the app
- * wires `fetch` to `BrickResidencyManager.fetchExactVoxel` and `deliver` to
- * the store's exact-value merge (ProbeValueTracker).
+ * boundary and back. Pure and dependency-injected for unit tests. Currently
+ * unwired on the hover path (the hover readout stays at resident-LOD values
+ * by design); wire `fetch` to `BrickResidencyManager.fetchExactVoxel` and
+ * `deliver` to the store's exact-value merge to reintroduce upgrades (e.g.
+ * for saved probes).
  */
 
 const DELIVERED_LRU_SIZE = 8;

@@ -288,44 +288,55 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       const probeContext = resolveProbeGeometryContext();
       if (!probeContext) return;
 
-      const [volumeX, volumeY] = probeContext.volumePosition;
-      const [width, height] = probeContext.volumeSize;
-      const normalizedX = (points.local.x - volumeX) / width;
-      const normalizedY = (points.local.y - volumeY) / height;
+      // QUAD-PARITY mapping (createPlaneNodeMaterial): the rendered plane is
+      // a CENTERED totalX×totalY quad showing the FULL base array,
+      // `baseVoxel = (u·shapeX, (1−v)·shapeY)` — NOT a slice-anchored box.
+      // The previous math normalized against `volumePosition` (the quad's
+      // CENTER, not a corner), which rejected everything left of / below the
+      // center — only the upper-right quadrant ever probed — and compressed
+      // the voxel mapping 2× inside it.
+      const base = pool.geometry.levels[0];
+      const totalX = base.spatialShape[0] * base.scale[0];
+      const totalY = base.spatialShape[1] * base.scale[1];
+      const u = points.local.x / totalX + 0.5;
+      const v = points.local.y / totalY + 0.5;
 
-      if (normalizedX < 0 || normalizedX > 1 || normalizedY < 0 || normalizedY > 1) {
+      if (u < 0 || u > 1 || v < 0 || v > 1) {
         if (currentProbe?.layerId === layer.id) {
           viewerStoreApi.getState().setProbedCoordinate(null);
         }
         return;
       }
 
-      const clampedX = THREE.MathUtils.clamp(normalizedX, 0, 1);
-      const clampedY = THREE.MathUtils.clamp(normalizedY, 0, 1);
+      const clampedU = THREE.MathUtils.clamp(u, 0, 0.999999);
+      const clampedV = THREE.MathUtils.clamp(v, 0, 0.999999);
 
-      // Selections are resolved at the plan's target level; report BASE
-      // (level-0) voxels like the volume probe, so the readout and the exact
-      // fetch address one coordinate system regardless of the displayed LOD.
+      // Report BASE (level-0) voxels like the volume probe, so the readout
+      // and downstream consumers address one coordinate system regardless of
+      // the displayed LOD. The z slab still resolves through the slice /
+      // currentZ selection at the displayed level.
       const levelIndex = Math.min(
         planTargetLevel ?? pool.geometry.levels.length - 1,
         pool.geometry.levels.length - 1,
       );
       const level = pool.geometry.levels[levelIndex];
-      const baseShape = pool.geometry.levels[0].spatialShape;
-      const levelVoxel = [
-        resolveVoxelIndex(clampedX, probeContext.xSelection),
-        resolveVoxelIndex(1 - clampedY, probeContext.ySelection),
-        resolveVoxelIndex(0.5, probeContext.zSelection),
+      const baseShape = base.spatialShape;
+      const baseZ = Math.round(
+        resolveVoxelIndex(0.5, probeContext.zSelection) * level.scale[2],
+      );
+      const voxelIndex: [number, number, number] = [
+        Math.min(baseShape[0] - 1, Math.floor(clampedU * baseShape[0])),
+        Math.min(baseShape[1] - 1, Math.floor((1 - clampedV) * baseShape[1])),
+        Math.max(0, Math.min(baseShape[2] - 1, baseZ)),
       ];
-      const voxelIndex = levelVoxel.map((v, i) =>
-        Math.max(0, Math.min(baseShape[i] - 1, Math.round(v * level.scale[i]))),
-      ) as [number, number, number];
 
       const resident = brickSystem?.sampleResidentEx(layer.id, voxelIndex, levelIndex) ?? null;
       const channelCount = Math.max(1, pool.geometry.channelSlabCount);
       const nextProbe: ProbeResult = {
         layerId: layer.id,
-        localPos: [clampedX - 0.5, clampedY - 0.5, 0],
+        // Quad-centered normalized offset — the same ±0.5 frame the rendered
+        // quad and the volume probe use (markers use `worldPos` anyway).
+        localPos: [clampedU - 0.5, clampedV - 0.5, 0],
         voxelIndex,
         worldPos: [points.world.x, points.world.y, points.world.z],
         strategy: "plane",

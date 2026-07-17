@@ -58,9 +58,13 @@ export function createAttributeResolver(deps: {
     } catch {
       return; // Discovery failure: a later request may retry.
     }
-    if (isStale() || plans === null || plans.length === 0) return;
+    if (isStale() || plans === null) return;
 
+    // Empty discovery still BEGINS: the store's key moves to this point with
+    // an empty plan set, so a previous point's attributes never linger as if
+    // they belonged here.
     deps.begin(key, plans);
+    if (plans.length === 0) return;
     for (const plan of plans) {
       const planKey = planIdentity(plan);
       deps

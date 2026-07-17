@@ -41,8 +41,9 @@ import { buildSliceMap, resolveFixedDimIndex } from "../core/selection";
  * run each one locally — map the point along the plan's path, sample the
  * field array, look the value up in its parquet with DuckDB — merging
  * per-table row states into the store as they settle. Transient store
- * subscription (no React re-render per probe move, P17) and a latest-wins
- * resolver, mirroring ProbeValueTracker.
+ * subscription (no React re-render per probe move, P17), a debounce so hover
+ * sweeps cost nothing until they settle, and a latest-wins resolver (the
+ * exactValueResolver pattern).
  *
  * All GraphQL here is imperative (`client.query`/`client.mutate`, the
  * sceneStores.ts pattern): no hooks mount, so the Guard.Mikro obligation
@@ -144,65 +145,90 @@ export function AttributeProbeTracker() {
     const layerById = (layerId: string): LayerState | null =>
       sceneStore.getState().layers.find((layer) => layer.id === layerId) ?? null;
 
-    const unreachable: PlanRowsState = { status: "unreachable", rows: [] };
+    // Warn-once diagnostics: an unreachable plan is an honest absence in the
+    // UI, but a silent one is undebuggable — say WHERE it died, once per
+    // (plan, reason).
+    const warned = new Set<string>();
+    const unreachable = (
+      planKey: string,
+      reason: string,
+      detail?: unknown,
+    ): PlanRowsState => {
+      const dedupeKey = `${planKey}:${reason}`;
+      if (!warned.has(dedupeKey)) {
+        warned.add(dedupeKey);
+        console.warn(`[attributePlans] plan unreachable: ${reason}`, detail ?? "");
+      }
+      return { status: "unreachable", rows: [] };
+    };
 
     const executePlan = async (
       key: AttributeFetchKey,
       plan: AttributePlanLike,
       isStale: () => boolean,
     ): Promise<PlanRowsState | null> => {
+      const planKey = planIdentity(plan);
       const layer = layerById(key.layerId);
-      if (!layer) return unreachable;
+      if (!layer) {
+        return unreachable(planKey, "probed layer missing from scene", {
+          layerId: key.layerId,
+        });
+      }
 
       const startCoords = coordsFor(layer, key);
       const mapped = plan.path.length
         ? applyPathToCoords(plan.path, startCoords)
         : startCoords;
-      if (mapped === null) return unreachable;
+      if (mapped === null) {
+        return unreachable(planKey, "cannot map the probed point along the plan's path", {
+          table: plan.table.name,
+          startCoords,
+          path: plan.path.map(
+            (step) => `${step.inverted ? "~" : ""}${step.transformation?.__typename}`,
+          ),
+        });
+      }
       const index = resolveSampleIndex(plan, mapped);
-      if (index === null) return unreachable;
+      if (index === null) {
+        return unreachable(planKey, "mapped point does not index the field array", {
+          table: plan.table.name,
+          mapped,
+          axes: [...plan.sample.system.axes].sort((a, b) => a.order - b.order).map((a) => a.name),
+          shape: plan.sample.store.shape,
+        });
+      }
 
       const source = sampleSourceFor(plan);
-      const planKey = planIdentity(plan);
 
-      // Optimistic resident pre-read: an instant provisional row set from the
-      // atlas CPU mirror, always superseded by the exact read below (coarser
-      // LODs can misattribute a label at object boundaries).
-      const residentValue = source.sampleSync(index);
-      if (residentValue !== null && !isBackground(residentValue)) {
-        const residentHeld = buildHeld(plan, mapped, residentValue);
-        if (residentHeld) {
-          engine
-            .lookup(plan, residentHeld, isStale)
-            .then((rows) => {
-              if (rows !== null && !isStale()) {
-                viewerStore.getState().mergeAttributeRows(key, planKey, {
-                  status: "rows",
-                  rows,
-                  sampledValue: residentValue,
-                  sampleSource: "resident",
-                });
-              }
-            })
-            .catch(() => undefined);
-        }
+      // Resident-first sampling: the atlas CPU mirror is free and already on
+      // screen. The chunk read is a FALLBACK only (mask not rendered, mirror
+      // stale) — the point is to avoid network reads on the hover path, and
+      // hover does not need exactness.
+      let value = source.sampleSync(index);
+      let sampleSource: "resident" | "exact" = "resident";
+      if (value === null) {
+        value = await source.sampleExact(index);
+        sampleSource = "exact";
+        if (isStale()) return null;
       }
-
-      const exactValue = await source.sampleExact(index);
-      if (isStale()) return null;
-      if (exactValue === null) {
-        // Keep the provisional resident state if one was delivered.
-        if (residentValue !== null) return null;
+      if (value === null) {
         return { status: "error", rows: [], error: "could not sample the field array" };
       }
-      if (isBackground(exactValue)) {
-        return { status: "background", rows: [], sampledValue: exactValue, sampleSource: "exact" };
+      if (isBackground(value)) {
+        return { status: "background", rows: [], sampledValue: value, sampleSource };
       }
-      const held = buildHeld(plan, mapped, exactValue);
-      if (held === null) return unreachable;
+      const held = buildHeld(plan, mapped, value);
+      if (held === null) {
+        return unreachable(planKey, "held values do not cover the plan's key axes", {
+          table: plan.table.name,
+          passthrough: plan.sample.passthrough,
+          produces: plan.sample.produces,
+          mapped,
+        });
+      }
       const rows = await engine.lookup(plan, held, isStale);
       if (rows === null) return null;
-      return { status: "rows", rows, sampledValue: exactValue, sampleSource: "exact" };
+      return { status: "rows", rows, sampledValue: value, sampleSource };
     };
 
     const resolver = createAttributeResolver({
@@ -225,13 +251,26 @@ export function AttributeProbeTracker() {
       };
     };
 
+    // Debounced execution: attribute lookups fire only once the probe has
+    // rested on a voxel for a beat — a hover sweep across the image costs
+    // nothing until it settles. (The upstream probe is RAF-coalesced; this is
+    // the slower, read-avoiding tier on top.)
+    const ATTRIBUTE_DEBOUNCE_MS = 150;
+    let debounce: ReturnType<typeof setTimeout> | null = null;
     const request = (probe: ProbeResult | null) => {
+      if (debounce !== null) {
+        clearTimeout(debounce);
+        debounce = null;
+      }
       if (probe === null) {
         viewerStore.getState().clearProbedAttributes();
         return;
       }
-      const key = keyOf(probe);
-      if (key) resolver.request(key);
+      debounce = setTimeout(() => {
+        debounce = null;
+        const key = keyOf(probe);
+        if (key) resolver.request(key);
+      }, ATTRIBUTE_DEBOUNCE_MS);
     };
 
     viewerStore
@@ -253,6 +292,7 @@ export function AttributeProbeTracker() {
 
     return () => {
       unsubscribe();
+      if (debounce !== null) clearTimeout(debounce);
       resolver.dispose();
       engine.dispose();
       viewerStore.getState().registerFollowAttributeReference(null);

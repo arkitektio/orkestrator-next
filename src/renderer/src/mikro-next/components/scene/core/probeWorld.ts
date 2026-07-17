@@ -109,6 +109,51 @@ export function resolveProbeMarkerGeometry(
       return null;
     }
 
+    // GROUND TRUTH FIRST: the caster already computed the hit's world
+    // position ON the event ray (`probeFromRay` / the plane's `points.world`).
+    // Re-deriving the marker position from layer geometry can only agree or
+    // be wrong — so when `worldPos` exists, map it back through the layer
+    // affine and use it verbatim; the geometry below then only supplies the
+    // radius clamp basis. A marker placed this way CANNOT sit off the ray:
+    // any remaining cursor offset is upstream, in the event ray itself.
+    const worldTruth = (affine: THREE.Matrix4): [number, number, number] | null => {
+      if (!probe.worldPos) return null;
+      const inverse = affine.clone().invert();
+      const local = new THREE.Vector3(...probe.worldPos).applyMatrix4(inverse);
+      return [local.x, local.y, local.z];
+    };
+
+    // VOLUME probes: `localPos` is normalized in the box BrickVolumeLayer
+    // actually renders — the FULL base-level extent, centered on the affine
+    // origin, with no slice cropping (`volumeSize = base.spatialShape`).
+    // Mapping it through the slice-cropped box below would displace the
+    // marker off the ray by the crop offset (and by coarse-LOD rounding), so
+    // mirror the mesh's own frame instead. The "plane" branch keeps the
+    // slice-aware math: the 2D probe's localPos is stated in the sliced
+    // plane's box, and the plane mesh is positioned to match.
+    if (probe.strategy !== "plane") {
+      const level0 = layer.lens.dataset.dataArrays.reduce<
+        LayerState["lens"]["dataset"]["dataArrays"][number] | null
+      >((best, da) => (best === null || da.level < best.level ? da : best), null);
+      const arr0 = level0 ? getArrayForStoreId(level0.store.id) : arr;
+      const totals: [number, number, number] = [
+        arr0.shape[xPos] ?? 1,
+        arr0.shape[yPos] ?? 1,
+        zPos !== -1 ? arr0.shape[zPos] ?? 1 : 1,
+      ];
+      const nonZero = totals.filter((axis) => axis > 0);
+      const affineMatrix = buildAffineMatrix(layer);
+      return {
+        affineMatrix,
+        markerPosition: worldTruth(affineMatrix) ?? [
+          probe.localPos[0] * totals[0],
+          probe.localPos[1] * totals[1],
+          probe.localPos[2] * totals[2],
+        ],
+        minAxis: nonZero.length > 0 ? Math.min(...nonZero) : 1,
+      };
+    }
+
     const xSelection = resolveSpatialSelection(sliceMap[layer.xAxis ?? ""], arr.shape[xPos]);
     const ySelection = resolveSpatialSelection(sliceMap[layer.yAxis ?? ""], arr.shape[yPos]);
     const zSelection = resolveSpatialSelection(sliceMap[layer.zAxis as string], arr.shape[zPos]);
@@ -134,7 +179,8 @@ export function resolveProbeMarkerGeometry(
       zSelection.start * scaleZ + depth / 2 - totalZ / 2,
     ];
     const volumeSize: [number, number, number] = [width, height, depth];
-    const markerPosition: [number, number, number] = [
+    const affineMatrix = buildAffineMatrix(layer);
+    const markerPosition: [number, number, number] = worldTruth(affineMatrix) ?? [
       volumePosition[0] + probe.localPos[0] * volumeSize[0],
       volumePosition[1] + probe.localPos[1] * volumeSize[1],
       volumePosition[2] + probe.localPos[2] * volumeSize[2],
@@ -143,7 +189,7 @@ export function resolveProbeMarkerGeometry(
     const minAxis = nonZeroAxes.length > 0 ? Math.min(...nonZeroAxes) : 1;
 
     return {
-      affineMatrix: buildAffineMatrix(layer),
+      affineMatrix,
       markerPosition,
       minAxis,
     };
@@ -162,6 +208,8 @@ export function computeProbeWorldPosition(
   probe: ProbedCoordinate,
   getArrayForStoreId: (storeId: string) => { shape: readonly number[] },
 ): THREE.Vector3 | null {
+  // The caster's own world hit is the truth (it lies on the event ray).
+  if (probe.worldPos) return new THREE.Vector3(...probe.worldPos);
   const geometry = resolveProbeMarkerGeometry(layer, probe, getArrayForStoreId);
   if (!geometry) {
     return null;

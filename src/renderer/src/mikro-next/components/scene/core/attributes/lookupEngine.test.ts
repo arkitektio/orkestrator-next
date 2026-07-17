@@ -39,6 +39,7 @@ type FakeLog = {
 const makeFake = (options?: {
   failPrepare?: boolean;
   rows?: unknown[];
+  grant?: { bucket: string; key: string };
 }): { deps: LookupEngineDeps; log: FakeLog } => {
   const log: FakeLog = { queries: [], prepared: [], statementCalls: [], closedStatements: 0 };
   const rows = options?.rows ?? [{ area: 12.5 }];
@@ -69,8 +70,10 @@ const makeFake = (options?: {
       accessKey: `ak-${storeId}`,
       secretKey: "sk",
       sessionToken: "st",
-      bucket: "b",
-      key: "morph.parquet",
+      bucket: options?.grant?.bucket ?? "b",
+      // Per-store default so reference lookups (their own store) get their
+      // own grant, as the real backend does.
+      key: options?.grant?.key ?? (storeId === "pq2" ? "tracks.parquet" : "morph.parquet"),
       expiresIn: 3600,
     }),
     requestRegion: async () => "us-east-1",
@@ -102,6 +105,18 @@ describe("AttributeLookupEngine", () => {
       ["s3://b/morph.parquet", 1, 7],
       ["s3://b/morph.parquet", 1, 8],
     ]);
+  });
+
+  it("queries the GRANT's URL, never the store's declared bucket/key", async () => {
+    // The secret is scoped to the grant's s3://bucket/key; a URL built from
+    // the store's own fields could miss that scope and fall back to the AWS
+    // default endpoint (the parquet.s3.amazonaws.com CORS failure).
+    const { deps, log } = makeFake({ grant: { bucket: "granted", key: "other/morph.parquet" } });
+    const engine = new AttributeLookupEngine(deps);
+    await engine.lookup(plan(), { t: 1, i: 7 });
+    expect(log.statementCalls).toEqual([["s3://granted/other/morph.parquet", 1, 7]]);
+    const secret = log.queries.find((q) => q.includes("CREATE OR REPLACE SECRET"));
+    expect(secret).toContain("SCOPE 's3://granted/other/morph.parquet'");
   });
 
   it("serves repeat lookups for the same key tuple from the result LRU", async () => {

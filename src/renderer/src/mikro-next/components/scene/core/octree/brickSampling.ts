@@ -25,6 +25,14 @@ export type ProbeMarchHit = {
   rawValue: number;
   /** Shader-lockstep normalized value at the hit. */
   normalized: number;
+  /**
+   * True when the strategy's own criterion never fired and this is the
+   * COVERAGE FALLBACK: the strongest visible sample along the ray. Without
+   * it, first-hit/gradient/volume-accum answer null over most of a sparse
+   * or dim volume and the cursor only "works" in tiny dense spots — a probe
+   * should report what is under the cursor wherever anything is rendered.
+   */
+  fallback?: boolean;
 };
 
 export type MarchResidentBricksInput = {
@@ -81,6 +89,11 @@ const clampLocal = (p: Vec3): Vec3 => [
  *   a data edge); hit at the pair midpoint, value of the far sample.
  * - "volume-accum": front-to-back transmittance accumulation; hit where
  *   accumulated opacity crosses 0.5 (median opacity depth, early-out).
+ *
+ * When the strategy's criterion never fires but the ray DID cross visible
+ * data, the strongest visible sample is returned with `fallback: true`
+ * instead of null — the cursor probes wherever anything is rendered. Only a
+ * ray through pure background (normalized 0 everywhere) answers null.
  */
 export function marchResidentBricks({
   origin,
@@ -104,10 +117,13 @@ export function marchResidentBricks({
   const delta = (tFar - tNear) / steps;
 
   // Accumulators for the non-early-out strategies.
-  let best: ProbeMarchHit | null = null; // "max"
+  let best: ProbeMarchHit | null = null; // "gradient"
   let bestEdge = 0; // "gradient"
   let prev: { t: number; normalized: number } | null = null;
   let accumulated = 0; // "volume-accum"
+  /** Strongest visible sample anywhere on the ray — "max"'s answer and every
+   * other strategy's coverage fallback. */
+  let strongest: ProbeMarchHit | null = null;
 
   for (let i = 0; i < steps; i++) {
     const t = tNear + i * delta;
@@ -133,6 +149,10 @@ export function marchResidentBricks({
     let normalized = Math.min(Math.max((baseNorm - climMin) / climRange, 0), 0.999);
     normalized = Math.pow(normalized, Math.max(gamma, 1e-4));
 
+    if (normalized > 0 && (strongest === null || normalized > strongest.normalized)) {
+      strongest = { position: clampLocal(p), t, rawValue, normalized, fallback: true };
+    }
+
     switch (strategy) {
       case "first-hit": {
         if (normalized > threshold) {
@@ -141,10 +161,7 @@ export function marchResidentBricks({
         break;
       }
       case "max": {
-        if (best === null || normalized > best.normalized) {
-          best = { position: clampLocal(p), t, rawValue, normalized };
-        }
-        break;
+        break; // `strongest` IS the answer, collected above.
       }
       case "gradient": {
         if (prev !== null) {
@@ -179,10 +196,14 @@ export function marchResidentBricks({
   }
 
   if (strategy === "max") {
-    return best !== null && best.normalized > 0 ? best : null;
+    // The strongest sample is max's own criterion, not a fallback.
+    return strongest !== null ? { ...strongest, fallback: false } : null;
   }
-  if (strategy === "gradient") {
-    return bestEdge > 0 ? best : null;
+  if (strategy === "gradient" && bestEdge > 0) {
+    return best;
   }
-  return null;
+  // first-hit below threshold, volume-accum that never crossed 0.5, gradient
+  // with no edge: answer with the strongest visible sample rather than
+  // nothing (null only when the ray saw pure background).
+  return strongest;
 }

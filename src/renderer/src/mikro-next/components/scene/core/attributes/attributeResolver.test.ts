@@ -117,6 +117,19 @@ describe("createAttributeResolver", () => {
     expect(executedFor).toEqual([2]);
   });
 
+  it("begins with an empty plan set so stale attributes clear", async () => {
+    const began: (readonly AttributePlanLike[])[] = [];
+    const resolver = createAttributeResolver({
+      resolvePlans: async () => [],
+      executePlan: async () => null,
+      begin: (_k, plans) => began.push(plans),
+      deliver: () => {},
+    });
+    resolver.request(key([1, 0, 0]));
+    await tick();
+    expect(began).toEqual([[]]);
+  });
+
   it("dedupes repeated requests for the same point", async () => {
     let discoveries = 0;
     const resolver = createAttributeResolver({

@@ -17,6 +17,7 @@ export {
   inferChunkShape,
   probeActualChunkShape,
   readArrayMetadata,
+  readArrayMetadataCached,
   readBloscFrameContentSize,
   readZstdFrameContentSize,
 } from "./get-worker.js"

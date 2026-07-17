@@ -46,7 +46,6 @@ import {
 import { resolveSceneCameraFrame } from "./core/cameraState";
 import { resolvePreferredDisplayMode } from "./core/preferredView";
 import { VisibilityManager } from "./managers/VisibilityManager";
-import { ProbeValueTracker } from "./managers/ProbeValueTracker";
 import { AttributeProbeTracker } from "./managers/AttributeProbeTracker";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
@@ -365,7 +364,6 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
             </WhenDebug>
             <SelectedRoiPanel />
             <VisibilityManager/>
-            <ProbeValueTracker />
             <AttributeProbeTracker />
             <ScaleBar />
 

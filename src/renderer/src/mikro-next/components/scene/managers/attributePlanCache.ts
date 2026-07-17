@@ -50,9 +50,33 @@ export class AttributePlanCache {
       const variables: AttributePlansQueryVariables = { system: systemId };
       pending = this.client
         .query({ query: AttributePlansDocument, variables })
-        .then((result) => toStructuralPlans(result.data?.attributePlans ?? []))
+        .then((result) => {
+          const plans = toStructuralPlans(result.data?.attributePlans ?? []);
+          if (plans.length === 0) {
+            // The one silent way the feature can "do nothing": make it loud.
+            console.warn(
+              `[attributePlans] system ${systemId}: no plans discovered — ` +
+                `nothing links this system to a table (negative-cached for this scene)`,
+            );
+          } else {
+            console.debug(
+              `[attributePlans] system ${systemId}: ${plans.length} plan(s)`,
+              plans.map((plan) => ({
+                table: plan.table.name,
+                pathSteps: plan.path.map(
+                  (step) =>
+                    `${step.inverted ? "~" : ""}${step.transformation?.__typename ?? "?"}`,
+                ),
+                consumes: plan.sample.consumes,
+                passthrough: plan.sample.passthrough,
+              })),
+            );
+          }
+          return plans;
+        })
         .catch((error) => {
           this.plans.delete(systemId); // do not cache failures
+          console.warn(`[attributePlans] system ${systemId}: discovery failed`, error);
           throw error;
         });
       this.plans.set(systemId, pending);

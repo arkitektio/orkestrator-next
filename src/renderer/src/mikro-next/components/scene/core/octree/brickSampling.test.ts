@@ -42,9 +42,17 @@ describe("marchResidentBricks (first-hit)", () => {
     expect(hit!.normalized).toBeGreaterThan(0.7);
   });
 
-  it("misses when the threshold exceeds the normalized value", () => {
-    // 200/255 ≈ 0.784 normalized.
-    expect(march(0.9)).toBeNull();
+  it("falls back to the strongest visible sample when nothing crosses the threshold", () => {
+    // 200/255 ≈ 0.784 normalized — below a 0.9 threshold, but the ray DID
+    // cross visible data, so the cursor still probes it (flagged fallback).
+    const hit = march(0.9);
+    expect(hit).not.toBeNull();
+    expect(hit!.fallback).toBe(true);
+    expect(hit!.rawValue).toBe(200);
+  });
+
+  it("misses pure background even with the fallback", () => {
+    expect(march(0.5, () => 0)).toBeNull();
   });
 
   it("skips unresident samples instead of treating them as hits", () => {
@@ -114,14 +122,20 @@ describe("marchResidentBricks (gradient)", () => {
 
   it("does not treat a residency gap boundary as an edge", () => {
     // Uniform value 200 everywhere resident; a gap at x ∈ [40, 60) of nulls.
-    // Real data has no edge, so no gradient hit despite the gap boundary.
+    // Real data has no edge — the answer is the coverage fallback, never an
+    // edge hit at the gap boundary.
     const gapUniform = (baseVoxel: Vec3) =>
       baseVoxel[0] >= 40 && baseVoxel[0] < 60 ? null : 200;
-    expect(march(0.01, gapUniform, "gradient")).toBeNull();
+    const hit = march(0.01, gapUniform, "gradient");
+    expect(hit).not.toBeNull();
+    expect(hit!.fallback).toBe(true);
   });
 
-  it("misses a uniform volume", () => {
-    expect(march(0.01, () => 128, "gradient")).toBeNull();
+  it("answers a uniform volume with the fallback sample, not an edge", () => {
+    const hit = march(0.01, () => 128, "gradient");
+    expect(hit).not.toBeNull();
+    expect(hit!.fallback).toBe(true);
+    expect(hit!.rawValue).toBe(128);
   });
 });
 
@@ -140,6 +154,15 @@ describe("marchResidentBricks (volume-accum)", () => {
     expect(dense).not.toBeNull();
     expect(thin).not.toBeNull();
     expect(dense!.t).toBeLessThan(thin!.t);
+  });
+
+  it("falls back to the strongest sample when accumulation never crosses 0.5", () => {
+    // 20/255 ≈ 0.078 normalized: far too thin to accumulate to 0.5, yet the
+    // data is faintly visible — the probe must still answer.
+    const hit = march(0.01, () => 20, "volume-accum");
+    expect(hit).not.toBeNull();
+    expect(hit!.fallback).toBe(true);
+    expect(hit!.rawValue).toBe(20);
   });
 
   it("misses an all-zero volume", () => {

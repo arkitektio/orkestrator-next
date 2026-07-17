@@ -286,7 +286,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     }
 
     // AUTO_PROBE fires per frame; only voxel-crossings (or strategy flips)
-    // reach the store. Value freshness is the ProbeValueTracker's job.
+    // reach the store. Values are the resident-LOD read — good enough for
+    // hover by design (no per-hover chunk fetches).
     const cur = state.probedCoordinate;
     if (
       !save &&

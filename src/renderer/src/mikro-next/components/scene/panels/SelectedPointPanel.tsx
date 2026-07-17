@@ -1,11 +1,69 @@
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { resolveProbeStrategy } from "../core/probe/probeModes";
+import type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
+import { formatProbeValue } from "../core/probe/valueFormat";
 import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
+import type { LayerState } from "../core/layerModel";
+
+/**
+ * The probe HUD: strategy selector, threshold (only while the effective
+ * strategy uses it), the probed coordinate with per-channel raw values and
+ * their provenance (exact vs LOD-approximate vs pending), and the saved
+ * probes. Composes in the scene column (Scene.Probe).
+ */
+
+const PROBE_MODES: { mode: ProbeMode; label: string }[] = [
+  { mode: "auto", label: "Auto" },
+  { mode: "first-hit", label: "First hit" },
+  { mode: "max", label: "Max" },
+  { mode: "gradient", label: "Gradient" },
+];
+
+const STRATEGY_LABELS: Record<string, string> = {
+  "first-hit": "first hit",
+  max: "max intensity",
+  gradient: "strongest gradient",
+  "volume-accum": "opacity depth",
+  plane: "plane",
+};
+
+const layerLabel = (layer: LayerState | null | undefined, fallback: string): string =>
+  layer?.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel?.label ??
+  fallback;
+
+const channelLabel = (layer: LayerState | null | undefined, channel: number): string =>
+  layer?.channels.find((node) => node.intensityIndex === channel)?.label ??
+  `Ch ${channel}`;
+
+const ProvenanceBadge = ({ probe }: { probe: ProbeResult }) => {
+  const { source, level } = probe.provenance;
+  if (source === "exact") {
+    return (
+      <span className="rounded bg-emerald-500/20 px-1 text-[9px] font-medium text-emerald-300">
+        exact
+      </span>
+    );
+  }
+  if (source === "resident") {
+    return (
+      <span className="rounded bg-white/10 px-1 text-[9px] font-medium text-white/50">
+        {level === 0 ? "level 0" : `~LOD ${level}`}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded bg-white/10 px-1 text-[9px] font-medium text-white/40">…</span>
+  );
+};
+
+const smallButton =
+  "pointer-events-auto rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/70 hover:bg-white/15 hover:text-white";
 
 export const SelectedPointPanel = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
+  const displayMode = useModeStore((s) => s.displayMode);
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
   const savedProbes = useViewerStore((s) => s.savedProbes);
@@ -14,126 +72,162 @@ export const SelectedPointPanel = () => {
   const clearSavedProbes = useViewerStore((s) => s.clearSavedProbes);
   const probeThreshold = useViewerStore((s) => s.probeThreshold);
   const setProbeThreshold = useViewerStore((s) => s.setProbeThreshold);
+  const probeMode = useViewerStore((s) => s.probeMode);
+  const setProbeMode = useViewerStore((s) => s.setProbeMode);
   const layer = useSceneStore((s) =>
     probedCoordinate
       ? s.layers.find((candidate) => candidate.id === probedCoordinate.layerId)
       : null,
   );
 
+  const inProbeMode = interactionMode === "PROBE" || interactionMode === "AUTO_PROBE";
+  if (!inProbeMode && !probedCoordinate && savedProbes.length === 0) return null;
+
+  const resolved = resolveProbeStrategy(probeMode, layer?.projection, probeThreshold);
+  // The slider matters only where the march actually consumes it: 3D, an
+  // effective first-hit strategy, and not the iso override.
+  const showThreshold =
+    displayMode === "3D" &&
+    resolved.strategy === "first-hit" &&
+    resolved.threshold === probeThreshold;
+
   return (
-    <div className="absolute bottom-2 left-2 z-30 w-72 rounded-md border border-border/50 bg-background/85 p-3 text-xs shadow-lg backdrop-blur-md pointer-events-auto">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Volume Probe
-          </div>
-          <div className="text-sm font-medium text-foreground">
-            {probedCoordinate ? probedCoordinate.layerId : 'No point selected'}
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            Mode: {interactionMode}
-          </div>
-        </div>
+    <div className="pointer-events-auto rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
+      <div className="flex items-center justify-between text-[10px] font-medium text-white/60">
+        <span>Probe</span>
         <div className="flex gap-1">
           {probedCoordinate && (
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={() => addSavedProbe(probedCoordinate)}
-            >
-              Save
-            </Button>
-          )}
-          {probedCoordinate && (
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={() => setProbedCoordinate(null)}
-            >
-              Clear
-            </Button>
+            <>
+              <button className={smallButton} onClick={() => addSavedProbe(probedCoordinate)}>
+                Save
+              </button>
+              <button className={smallButton} onClick={() => setProbedCoordinate(null)}>
+                Clear
+              </button>
+            </>
           )}
         </div>
       </div>
 
+      {displayMode === "3D" && (
+        <div className="mt-2">
+          <div className="grid grid-cols-4 gap-0.5 rounded bg-white/5 p-0.5">
+            {PROBE_MODES.map(({ mode, label }) => (
+              <button
+                key={mode}
+                onClick={() => setProbeMode(mode)}
+                className={`rounded px-1 py-0.5 text-[10px] transition-colors ${
+                  probeMode === mode
+                    ? "bg-white/20 font-medium text-white"
+                    : "text-white/50 hover:bg-white/10 hover:text-white/80"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {probeMode === "auto" && (
+            <p className="mt-1 text-[10px] leading-4 text-white/50">
+              Following the projection: {STRATEGY_LABELS[resolved.strategy]}.
+            </p>
+          )}
+        </div>
+      )}
+
+      {showThreshold && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between text-[10px] font-medium text-white/60">
+            <span>Threshold</span>
+            <span className="rounded bg-white/10 px-1 font-mono text-white/90">
+              {probeThreshold.toFixed(3)}
+            </span>
+          </div>
+          <Slider
+            min={0}
+            max={1}
+            step={0.005}
+            value={[probeThreshold]}
+            onValueChange={([value]) => setProbeThreshold(value)}
+            className="py-2"
+          />
+        </div>
+      )}
+
       {!probedCoordinate && (
-        <p className="text-[11px] leading-5 text-muted-foreground">
-          Use Probe mode to click a volume, or Auto Probe mode to hover. Hold Shift while probing to save the point.
+        <p className="mt-2 text-[10px] leading-4 text-white/50">
+          Click a layer to probe it{interactionMode === "AUTO_PROBE" ? " (or hover)" : ""}.
+          Hold Shift to save the point.
         </p>
       )}
 
-      <div className="mt-3 space-y-1 rounded border border-border/50 bg-background/40 px-2 py-2">
-        <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-          <span>Probe Threshold</span>
-          <span className="font-mono bg-accent px-1 rounded text-foreground">
-            {probeThreshold.toFixed(3)}
-          </span>
-        </div>
-        <Slider
-          min={0}
-          max={1}
-          step={0.005}
-          value={[probeThreshold]}
-          onValueChange={([value]) => setProbeThreshold(value)}
-          className="py-1"
-        />
-        <p className="text-[10px] leading-4 text-muted-foreground">
-          Higher values ignore faint surface hits and probe deeper into the volume.
-        </p>
-      </div>
-
       {probedCoordinate && (
-        <div className="space-y-2 text-[11px]">
-          <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
-            <span className="text-muted-foreground">Layer</span>
-            <span className="truncate font-medium text-foreground">
-              {probedCoordinate.layerId}
+        <div className="mt-2 space-y-1.5 text-[11px]">
+          <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
+            <span className="text-white/50">Layer</span>
+            <span className="truncate font-medium text-white/90">
+              {layerLabel(layer, probedCoordinate.layerId)}
             </span>
-            <span className="text-muted-foreground">Local</span>
-            <span className="font-mono text-foreground">
-              {probedCoordinate.localPos.map((value) => value.toFixed(4)).join(', ')}
+            <span className="text-white/50">Voxel</span>
+            <span className="font-mono text-white/90">
+              [{probedCoordinate.voxelIndex.join(", ")}]
             </span>
-            <span className="text-muted-foreground">Voxel</span>
-            <span className="font-mono text-foreground">
-              [{probedCoordinate.voxelIndex.join(', ')}]
-            </span>
+            {probedCoordinate.worldPos && (
+              <>
+                <span className="text-white/50">World</span>
+                <span className="font-mono text-white/90">
+                  {probedCoordinate.worldPos.map((v) => v.toFixed(3)).join(", ")}
+                </span>
+              </>
+            )}
           </div>
 
-          {layer && (
-            <div className="rounded border border-border/50 bg-background/40 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
-              {layer.xAxis}: {probedCoordinate.voxelIndex[0]} | {layer.yAxis}: {probedCoordinate.voxelIndex[1]} | {layer.zAxis ?? 'z'}: {probedCoordinate.voxelIndex[2]}
-            </div>
-          )}
+          <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
+            {probedCoordinate.values.map((entry) => (
+              <div key={entry.channel} className="flex items-center justify-between gap-2">
+                <span className="truncate text-[10px] text-white/60">
+                  {channelLabel(layer, entry.channel)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-mono text-white/90">
+                    {formatProbeValue(entry.value, probedCoordinate.dtype)}
+                  </span>
+                  <ProvenanceBadge probe={probedCoordinate} />
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {savedProbes.length > 0 && (
-        <div className="mt-3 space-y-2 border-t border-border/50 pt-2">
+        <div className="mt-2 space-y-1 border-t border-white/10 pt-2">
           <div className="flex items-center justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Saved Probes
-            </div>
-            <Button variant="outline" size="xs" onClick={() => clearSavedProbes()}>
-              Clear All
-            </Button>
+            <span className="text-[10px] font-medium text-white/60">Saved</span>
+            <button className={smallButton} onClick={() => clearSavedProbes()}>
+              Clear all
+            </button>
           </div>
           <div className="max-h-40 space-y-1 overflow-y-auto">
             {savedProbes.map((probe) => (
               <div
-                key={`${probe.layerId}:${probe.voxelIndex.join(':')}`}
-                className="rounded border border-border/50 bg-background/40 px-2 py-1.5"
+                key={`${probe.layerId}:${probe.voxelIndex.join(":")}`}
+                className="flex items-center justify-between gap-2 rounded border border-white/10 bg-white/5 px-2 py-1"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-[11px] font-medium text-foreground">{probe.layerId}</div>
-                    <div className="font-mono text-[10px] text-muted-foreground">
-                      [{probe.voxelIndex.join(', ')}]
-                    </div>
+                <div className="min-w-0">
+                  <div className="font-mono text-[10px] text-white/80">
+                    [{probe.voxelIndex.join(", ")}]
                   </div>
-                  <Button variant="outline" size="xs" onClick={() => removeSavedProbe(probe)}>
-                    Remove
-                  </Button>
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-white/60">
+                    {formatProbeValue(probe.values[0]?.value ?? null, probe.dtype)}
+                    {probe.values.length > 1 && (
+                      <span className="text-white/40">+{probe.values.length - 1}</span>
+                    )}
+                    <ProvenanceBadge probe={probe} />
+                  </div>
                 </div>
+                <button className={smallButton} onClick={() => removeSavedProbe(probe)}>
+                  ×
+                </button>
               </div>
             ))}
           </div>

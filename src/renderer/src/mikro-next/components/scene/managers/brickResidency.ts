@@ -386,18 +386,22 @@ export class BrickResidencyManager {
   }
 
   /**
-   * CPU mirror of the shader's `sampleBrickEx`: raw value of the finest
-   * resident brick at or coarser than desiredLevel, read from the atlas
-   * backing store (probes, CPU raymarching). Null when nothing is resident.
+   * Shared address resolution for the CPU-mirror reads: walk levels from
+   * desiredLevel to coarsest, resolve the finest resident brick and return
+   * either its (page-table-quantized) uniform value or the atlas backing
+   * index of the voxel at channel slab 0 plus the per-slab index stride.
+   * Null when nothing is resident, or when the CPU mirror is stale (GPU
+   * repack path — reading it would return stale zeros, which is worse than
+   * not reading; the Phase D chunk-cache probe replaces that case).
    */
-  sampleResident(
-    layerId: string,
+  private resolveResidentRead(
+    pool: LayerBrickPool,
     baseVoxel: Vec3,
     desiredLevel: number,
-    channel: number,
-  ): number | null {
-    const pool = this.pools.get(layerId);
-    if (!pool) return null;
+  ):
+    | { kind: "empty"; level: number; value: number }
+    | { kind: "slot"; level: number; index0: number; slabStride: number }
+    | null {
     const { geometry, spec, atlas } = pool;
 
     for (let level = Math.max(0, desiredLevel); level < geometry.levels.length; level++) {
@@ -419,17 +423,17 @@ export class BrickResidencyManager {
         // The GPU only has the 8-bit page-table encoding of this value; mirror
         // the same encode→decode round-trip so the CPU march matches the
         // rendered image (OCTREE_RENDERER.md P11).
-        return decodeEmptyValue(encodeEmptyValue(emptyValue, pool), pool);
+        return {
+          kind: "empty",
+          level,
+          value: decodeEmptyValue(encodeEmptyValue(emptyValue, pool), pool),
+        };
       }
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
-      // GPU-repacked slots never touch the CPU mirror — reading it would
-      // return stale zeros, which is worse than no reading. Phase D replaces
-      // this path with a decoded-chunk-cache read.
       if (pool.atlasMirrorStale) return null;
 
-      const clampedChannel = Math.min(Math.max(channel, 0), spec.channelCount - 1);
       const texel: Vec3 = [
         slot.coords[0] * atlas.slotSize[0] +
           spec.border +
@@ -439,13 +443,142 @@ export class BrickResidencyManager {
           Math.floor(levelVoxel[1] - brick[1] * spec.payload[1]),
         slot.coords[2] * atlas.slotSize[2] +
           spec.border +
-          Math.floor(levelVoxel[2] - brick[2] * spec.payload[2]) +
-          clampedChannel * spec.stored[2],
+          Math.floor(levelVoxel[2] - brick[2] * spec.payload[2]),
       ];
-      const index = (texel[2] * atlas.size[1] + texel[1]) * atlas.size[0] + texel[0];
-      return atlas.backing[index];
+      return {
+        kind: "slot",
+        level,
+        index0: (texel[2] * atlas.size[1] + texel[1]) * atlas.size[0] + texel[0],
+        slabStride: spec.stored[2] * atlas.size[1] * atlas.size[0],
+      };
     }
     return null;
+  }
+
+  /**
+   * CPU mirror of the shader's `sampleBrickEx`: raw value of the finest
+   * resident brick at or coarser than desiredLevel, read from the atlas
+   * backing store (probes, CPU raymarching). Null when nothing is resident.
+   */
+  sampleResident(
+    layerId: string,
+    baseVoxel: Vec3,
+    desiredLevel: number,
+    channel: number,
+  ): number | null {
+    const pool = this.pools.get(layerId);
+    if (!pool) return null;
+    const read = this.resolveResidentRead(pool, baseVoxel, desiredLevel);
+    if (!read) return null;
+    if (read.kind === "empty") return read.value;
+    const clampedChannel = Math.min(Math.max(channel, 0), pool.spec.channelCount - 1);
+    return pool.atlas.backing[read.index0 + clampedChannel * read.slabStride];
+  }
+
+  /**
+   * All-channel variant of `sampleResident` for the probe readout: one
+   * address resolution, then one read per channel slab (phasor slabs are
+   * excluded — they hold derived g/s/i values, not the layer's channels).
+   * A uniform ("empty") brick replicates its single value across channels.
+   */
+  sampleResidentEx(
+    layerId: string,
+    baseVoxel: Vec3,
+    desiredLevel: number,
+  ): { values: number[]; level: number } | null {
+    const pool = this.pools.get(layerId);
+    if (!pool) return null;
+    const read = this.resolveResidentRead(pool, baseVoxel, desiredLevel);
+    if (!read) return null;
+    const channelCount = Math.max(1, pool.geometry.channelSlabCount);
+    if (read.kind === "empty") {
+      return { values: Array<number>(channelCount).fill(read.value), level: read.level };
+    }
+    const values = new Array<number>(channelCount);
+    for (let channel = 0; channel < channelCount; channel++) {
+      values[channel] = pool.atlas.backing[read.index0 + channel * read.slabStride];
+    }
+    return { values, level: read.level };
+  }
+
+  /**
+   * Exact level-0 voxel read for the probe's async value upgrade: fetches the
+   * decoded chunk(s) covering the voxel through `fetchChunkShared` (in-flight
+   * dedup + byte-budget cache + worker decode) and reads every channel value
+   * with the chunk's strides. Resolves null when the pool is gone or its
+   * slice signature changed while awaiting (the caller re-guards on merge),
+   * and for phasor layers — their slabs are derived at repack time and have
+   * no per-voxel source value to read.
+   */
+  async fetchExactVoxel(
+    layerId: string,
+    baseVoxel: Vec3,
+  ): Promise<{ values: number[]; sliceSignature: string } | null> {
+    const pool = this.pools.get(layerId);
+    if (!pool || hasPhasorSlabs(pool.geometry)) return null;
+    const sliceSignature = pool.sliceSignature;
+    const { geometry } = pool;
+    const level = geometry.levels[0];
+    const { xPos, yPos, zPos, intensityPos } = geometry.axes;
+    const arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
+
+    const voxel = [0, 1, 2].map((i) =>
+      Math.min(Math.max(Math.floor(baseVoxel[i]), 0), level.spatialShape[i] - 1),
+    ) as unknown as Vec3;
+    const spatialChunk = [0, 1, 2].map((i) =>
+      Math.floor(voxel[i] / level.spatialChunks[i]),
+    );
+    const spatialOffset = [0, 1, 2].map(
+      (i) => voxel[i] - spatialChunk[i] * level.spatialChunks[i],
+    );
+
+    const channelCount = Math.max(1, geometry.channelSlabCount);
+    const channelsPerChunk =
+      intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
+
+    // Group channels sharing a chunk into one fetch.
+    const groups = new Map<number, number[]>();
+    for (let channel = 0; channel < channelCount; channel++) {
+      const chunk = intensityPos !== -1 ? Math.floor(channel / channelsPerChunk) : 0;
+      const group = groups.get(chunk);
+      if (group) group.push(channel);
+      else groups.set(chunk, [channel]);
+    }
+
+    const values = new Array<number>(channelCount).fill(Number.NaN);
+    await Promise.all(
+      [...groups.entries()].map(async ([channelChunk, channels]) => {
+        const chunkCoords = geometry.dims.map((_, d) => {
+          if (d === xPos) return spatialChunk[0];
+          if (d === yPos) return spatialChunk[1];
+          if (d === zPos) return spatialChunk[2];
+          if (d === intensityPos) return channelChunk;
+          return pool.fixedChunkCoords[d];
+        });
+        const chunk = await this.fetchChunkShared(arr, level.storeId, chunkCoords, 0);
+        for (const channel of channels) {
+          const index = geometry.dims.reduce((acc, _, d) => {
+            const offset =
+              d === xPos
+                ? spatialOffset[0]
+                : d === yPos
+                  ? spatialOffset[1]
+                  : d === zPos
+                    ? spatialOffset[2]
+                    : d === intensityPos
+                      ? channel % channelsPerChunk
+                      : pool.fixedOffsets[d];
+            return acc + offset * (chunk.stride[d] ?? 0);
+          }, 0);
+          values[channel] = Number(chunk.data[index]);
+        }
+      }),
+    );
+
+    if (this.disposed) return null;
+    const current = this.pools.get(layerId);
+    if (!current || current.sliceSignature !== sliceSignature) return null;
+    return { values, sliceSignature };
   }
 
   private reconcileAll(plans: Record<string, LayerNodePlan>): void {

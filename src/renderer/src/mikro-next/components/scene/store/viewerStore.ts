@@ -30,11 +30,12 @@ import type { LayerViewRange } from "../core/visibility";
 import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
 
-export interface ProbedCoordinate {
-  layerId: string;
-  localPos: [number, number, number];
-  voxelIndex: [number, number, number];
-}
+import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
+
+/** Historical name for the probe result; kept so the markers / probe-orbit
+ * consumers (`layerId`/`localPos`/`voxelIndex`) compile untouched. */
+export type ProbedCoordinate = ProbeResult;
+export type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
 
 /** Why layers were culled from display by the render-cost budget. */
 export interface RenderBudgetInfo {
@@ -85,6 +86,8 @@ export interface ViewerState {
   probedCoordinate: ProbedCoordinate | null;
   savedProbes: ProbedCoordinate[];
   probeThreshold: number;
+  /** User-selected probe strategy; "auto" follows the layer's projection. */
+  probeMode: ProbeMode;
 
   lodBias: number;
   setLodBias: (bias: number) => void;
@@ -124,6 +127,11 @@ export interface ViewerState {
   removeSavedProbe: (coordinate: ProbedCoordinate) => void
   clearSavedProbes: () => void
   setProbeThreshold: (threshold: number) => void
+  setProbeMode: (mode: ProbeMode) => void
+  /** Async exact-value upgrade: patches the active probe / matching saved
+   * probes when the fetched key still matches (no-op set otherwise, so late
+   * arrivals never cause renders). See ProbeValueTracker. */
+  mergeExactProbeValues: (key: ProbeFetchKey, values: number[]) => void
 
   setDebug: (debug: boolean) => void;
   setShowScaleBar: (show: boolean) => void;
@@ -188,6 +196,10 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     })),
     clearSavedProbes: () => set({ savedProbes: [] }),
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
+    probeMode: "auto",
+    setProbeMode: (mode) => set({ probeMode: mode }),
+    mergeExactProbeValues: (key, values) =>
+      set((state) => applyExactValues(state, key, values) ?? state),
     currentZ: 0,
     debug: false,
     showScaleBar: true,

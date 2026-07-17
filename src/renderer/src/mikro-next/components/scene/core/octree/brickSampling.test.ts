@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { marchResidentBricks } from "./brickSampling";
+import { marchResidentBricks, type ProbeMarchStrategy } from "./brickSampling";
 import type { Vec3 } from "./levelGeometry";
 
 /**
@@ -9,7 +9,11 @@ import type { Vec3 } from "./levelGeometry";
 const BASE: Vec3 = [100, 100, 100];
 const sampler = (baseVoxel: Vec3) => (baseVoxel[0] >= 60 ? 200 : 0);
 
-const march = (threshold: number, sample = sampler) =>
+const march = (
+  threshold: number,
+  sample = sampler,
+  strategy: ProbeMarchStrategy = "first-hit",
+) =>
   marchResidentBricks({
     origin: [-0.5, 0, 0],
     direction: [1, 0, 0],
@@ -24,15 +28,18 @@ const march = (threshold: number, sample = sampler) =>
     threshold,
     sample,
     steps: 1000,
+    strategy,
   });
 
-describe("marchResidentBricks", () => {
+describe("marchResidentBricks (first-hit)", () => {
   it("reports the first sample crossing the threshold", () => {
     const hit = march(0.5);
     expect(hit).not.toBeNull();
-    expect(hit![0]).toBeGreaterThan(0.09);
-    expect(hit![0]).toBeLessThan(0.12);
-    expect(hit![1]).toBeCloseTo(0, 5);
+    expect(hit!.position[0]).toBeGreaterThan(0.09);
+    expect(hit!.position[0]).toBeLessThan(0.12);
+    expect(hit!.position[1]).toBeCloseTo(0, 5);
+    expect(hit!.rawValue).toBe(200);
+    expect(hit!.normalized).toBeGreaterThan(0.7);
   });
 
   it("misses when the threshold exceeds the normalized value", () => {
@@ -44,7 +51,7 @@ describe("marchResidentBricks", () => {
     const gappy = (baseVoxel: Vec3) => (baseVoxel[0] < 80 ? null : 255);
     const hit = march(0.5, gappy);
     expect(hit).not.toBeNull();
-    expect(hit![0]).toBeGreaterThan(0.29);
+    expect(hit!.position[0]).toBeGreaterThan(0.29);
   });
 
   it("applies the clim window in shader lockstep", () => {
@@ -64,5 +71,78 @@ describe("marchResidentBricks", () => {
       sample: sampler,
     });
     expect(hit).toBeNull();
+  });
+});
+
+describe("marchResidentBricks (max)", () => {
+  it("returns the brightest sample along the ray, not the first hit", () => {
+    // Dim slab at x ∈ [20, 40), bright peak at x ∈ [70, 75).
+    const ramp = (baseVoxel: Vec3) => {
+      if (baseVoxel[0] >= 70 && baseVoxel[0] < 75) return 250;
+      if (baseVoxel[0] >= 20 && baseVoxel[0] < 40) return 100;
+      return 0;
+    };
+    const hit = march(0.01, ramp, "max");
+    expect(hit).not.toBeNull();
+    expect(hit!.rawValue).toBe(250);
+    // Peak spans local x ∈ [0.2, 0.25).
+    expect(hit!.position[0]).toBeGreaterThanOrEqual(0.2);
+    expect(hit!.position[0]).toBeLessThan(0.25);
+  });
+
+  it("misses an all-zero volume", () => {
+    expect(march(0.01, () => 0, "max")).toBeNull();
+  });
+
+  it("ignores the threshold entirely", () => {
+    // Threshold 0.9 would kill first-hit; max still reports the peak.
+    const hit = march(0.9, sampler, "max");
+    expect(hit).not.toBeNull();
+    expect(hit!.rawValue).toBe(200);
+  });
+});
+
+describe("marchResidentBricks (gradient)", () => {
+  it("locates the strongest edge of a step function", () => {
+    const hit = march(0.01, sampler, "gradient");
+    expect(hit).not.toBeNull();
+    // The edge sits at local x ≈ 0.1 (base voxel 60).
+    expect(hit!.position[0]).toBeGreaterThan(0.09);
+    expect(hit!.position[0]).toBeLessThan(0.12);
+    expect(hit!.rawValue).toBe(200);
+  });
+
+  it("does not treat a residency gap boundary as an edge", () => {
+    // Uniform value 200 everywhere resident; a gap at x ∈ [40, 60) of nulls.
+    // Real data has no edge, so no gradient hit despite the gap boundary.
+    const gapUniform = (baseVoxel: Vec3) =>
+      baseVoxel[0] >= 40 && baseVoxel[0] < 60 ? null : 200;
+    expect(march(0.01, gapUniform, "gradient")).toBeNull();
+  });
+
+  it("misses a uniform volume", () => {
+    expect(march(0.01, () => 128, "gradient")).toBeNull();
+  });
+});
+
+describe("marchResidentBricks (volume-accum)", () => {
+  it("reports a depth inside dense material, past the entry face", () => {
+    const hit = march(0.01, sampler, "volume-accum");
+    expect(hit).not.toBeNull();
+    // Accumulation starts at the box entry (x ≈ 0.1) and crosses 0.5 within it.
+    expect(hit!.position[0]).toBeGreaterThan(0.1);
+    expect(hit!.rawValue).toBe(200);
+  });
+
+  it("crosses earlier in denser material", () => {
+    const dense = march(0.01, () => 255, "volume-accum");
+    const thin = march(0.01, () => 80, "volume-accum");
+    expect(dense).not.toBeNull();
+    expect(thin).not.toBeNull();
+    expect(dense!.t).toBeLessThan(thin!.t);
+  });
+
+  it("misses an all-zero volume", () => {
+    expect(march(0.01, () => 0, "volume-accum")).toBeNull();
   });
 });

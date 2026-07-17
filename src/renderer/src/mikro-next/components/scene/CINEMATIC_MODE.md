@@ -217,7 +217,8 @@ returns only its declaration, its read at line 1040, and its export. Isosurface 
 permanently pinned at 0.5, and a shaded iso is worthless without a working
 threshold. It *must* be session-only: `ProjectionNode` (`api/graphql.ts:6414`) is
 `{children, kind, label, mode}` — there is no threshold field to persist to. Mirror
-`viewerStore.probeThreshold` + `panels/ProbeThresholdPanel.tsx` verbatim. Worth
+`viewerStore.probeThreshold` + the threshold block of
+`panels/SelectedPointPanel.tsx` (the probe HUD) verbatim. Worth
 landing on its own merit, independent of cinematic.
 
 **Phase 1 — lit ISOSURFACE (~1 day). The honest first cut.** One gradient per
@@ -247,7 +248,7 @@ shadowing hazard bites hardest. Loop iterator names are not auto-renamed the way
 | `layers/bricks/BrickVolumeLayer.tsx` | read `useModeStore(s => s.cinematic)`; push `uCinematic` in the existing uniform effect (~179-200); set `uBaseScale` in the `bundle` useMemo beside `uBaseShape`. |
 | `store/modeStore.ts` | `cinematic` + setter. |
 | `store/viewerStore.ts` | Phase 0: `isoThreshold` + setter. |
-| `panels/IsoThresholdPanel.tsx` | Phase 0: new, from `ProbeThresholdPanel.tsx`. |
+| `panels/IsoThresholdPanel.tsx` | Phase 0: new, from `SelectedPointPanel.tsx`'s threshold block. |
 | `overlays/SceneOverlay.tsx` | one `SettingRow` in the Settings2 popover. |
 | `core/qualityGovernor.ts` | Phase 2: `litVolumeWhileActive` + pure `resolveCinematic`. |
 | `OCTREE_RENDERER.md` | C2 as a numbered invariant beside the existing pitfalls. |

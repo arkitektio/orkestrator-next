@@ -8,6 +8,9 @@ import { perfMonitor } from "../../managers/perfMonitor";
 import { qualityGovernor } from "../../core/qualityGovernor";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
+import { resolveProbeStrategy } from "../../core/probe/probeModes";
+import { createRafCoalescer } from "../../core/probe/rafCoalesce";
+import type { ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
@@ -201,10 +204,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
-  const probeCoordinateFromRay = (ray: THREE.Ray): [number, number, number] | null => {
+  const probeFromRay = (ray: THREE.Ray): ProbeResult | null => {
     const mesh = meshRef.current;
     // Event-time read of the full plan — no render subscription needed for it.
-    const plan = viewerStoreApi.getState().nodePlans[layerId];
+    const state = viewerStoreApi.getState();
+    const plan = state.nodePlans[layerId];
     if (!mesh || !pool || !plan || !brickSystem) return null;
     const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
     const localOrigin = ray.origin.clone().applyMatrix4(inverseMatrix);
@@ -212,8 +216,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     const bounds = intersectLocalVolumeBox(localOrigin, localDirection);
     if (!bounds) return null;
 
+    // "Auto" picks the strategy matching what the projection shows on screen.
+    const { strategy, threshold } = resolveProbeStrategy(
+      state.probeMode,
+      layer?.projection,
+      state.probeThreshold,
+    );
     const baseLevel = pool.geometry.levels[0];
-    return marchResidentBricks({
+    const hit = marchResidentBricks({
       origin: [localOrigin.x, localOrigin.y, localOrigin.z],
       direction: [localDirection.x, localDirection.y, localDirection.z],
       bounds: [Math.max(bounds.start, 0), bounds.end],
@@ -227,42 +237,74 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       climMin: climToUnit(layer?.climMin, pool.minValue, pool.maxValue, 0),
       climMax: climToUnit(layer?.climMax, pool.minValue, pool.maxValue, 1),
       gamma: layer?.gamma ?? 1,
-      threshold: viewerStoreApi.getState().probeThreshold,
+      threshold,
+      strategy,
       sample: (baseVoxel, desiredLevel, channel) =>
         brickSystem.sampleResident(layerId, baseVoxel, desiredLevel, channel),
-    }) as [number, number, number] | null;
+    });
+    if (!hit) return null;
+
+    const localPos = [hit.position[0], hit.position[1], hit.position[2]] as [
+      number,
+      number,
+      number,
+    ];
+    const shape = baseLevel.spatialShape;
+    const clampIndex = (norm: number, extent: number) =>
+      Math.max(0, Math.min(extent - 1, Math.floor(norm * extent)));
+    const voxelIndex: [number, number, number] = [
+      clampIndex(localPos[0] + 0.5, shape[0]),
+      clampIndex(0.5 - localPos[1], shape[1]),
+      clampIndex(localPos[2] + 0.5, shape[2]),
+    ];
+    // One all-channels read at the hit voxel (per hit, not per march step).
+    const resident = brickSystem.sampleResidentEx(layerId, voxelIndex, plan.targetLevel);
+    const channelCount = Math.max(1, pool.geometry.channelSlabCount);
+    const world = new THREE.Vector3(...localPos).applyMatrix4(mesh.matrixWorld);
+    return {
+      layerId,
+      localPos,
+      voxelIndex,
+      worldPos: [world.x, world.y, world.z],
+      strategy,
+      values: resident
+        ? resident.values.map((value, channel) => ({ channel, value }))
+        : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
+      provenance: resident
+        ? { source: "resident", level: resident.level }
+        : { source: "pending", level: plan.targetLevel },
+      dtype: baseLevel.dtype,
+      sliceSignature: pool.sliceSignature,
+    };
   };
 
-  const updateProbe = (localPos: [number, number, number] | null, save: boolean) => {
+  const updateProbe = (probe: ProbeResult | null, save: boolean) => {
     const state = viewerStoreApi.getState();
-    if (!localPos || !pool) {
+    if (!probe) {
       if (state.probedCoordinate?.layerId === layerId) state.setProbedCoordinate(null);
       return;
     }
 
-    const shape = pool.geometry.levels[0].spatialShape;
-    const clampIndex = (norm: number, extent: number) =>
-      Math.max(0, Math.min(extent - 1, Math.floor(norm * extent)));
-    const nextProbe = {
-      layerId,
-      localPos,
-      voxelIndex: [
-        clampIndex(localPos[0] + 0.5, shape[0]),
-        clampIndex(0.5 - localPos[1], shape[1]),
-        clampIndex(localPos[2] + 0.5, shape[2]),
-      ] as [number, number, number],
-    };
-
+    // AUTO_PROBE fires per frame; only voxel-crossings (or strategy flips)
+    // reach the store. Value freshness is the ProbeValueTracker's job.
     const cur = state.probedCoordinate;
     if (
-      cur?.layerId === nextProbe.layerId &&
-      cur.voxelIndex.every((v, i) => v === nextProbe.voxelIndex[i])
+      !save &&
+      cur?.layerId === probe.layerId &&
+      cur.strategy === probe.strategy &&
+      cur.voxelIndex.every((v, i) => v === probe.voxelIndex[i])
     ) {
       return;
     }
-    state.setProbedCoordinate(nextProbe);
-    if (save) state.addSavedProbe(nextProbe);
+    state.setProbedCoordinate(probe);
+    if (save) state.addSavedProbe(probe);
   };
+
+  // Pointermove storms coalesce to ≤1 march per frame: the handler schedules
+  // a thunk (built at event time, so it closes over fresh props and a cloned
+  // ray — R3F mutates the event's ray in place) and only the newest runs.
+  const probeCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
+  useEffect(() => () => probeCoalescer.cancel(), [probeCoalescer]);
 
   if (layer?.visible === false) return null;
   if (planMode !== "3D" || !pool || !bundle) return null;
@@ -281,16 +323,23 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       matrixAutoUpdate={false}
       onPointerMove={(e) => {
         if (interactionMode !== "AUTO_PROBE" || e.buttons !== 0) return;
-        const localPos = probeCoordinateFromRay(e.ray);
-        updateProbe(localPos, false);
-        if (localPos) e.stopPropagation();
+        // The event already raycast this volume's box, so the front-most
+        // volume claims the hover; the march itself is deferred to the frame.
+        e.stopPropagation();
+        const ray = e.ray.clone();
+        probeCoalescer.schedule(() => updateProbe(probeFromRay(ray), false));
       }}
-      onPointerOut={() => interactionMode === "AUTO_PROBE" && updateProbe(null, false)}
+      onPointerOut={() => {
+        if (interactionMode !== "AUTO_PROBE") return;
+        probeCoalescer.cancel();
+        updateProbe(null, false);
+      }}
       onPointerDown={(e) => {
         if (!["PROBE", "AUTO_PROBE"].includes(interactionMode)) return;
         e.stopPropagation();
         skipSelectionClickRef.current = true;
-        updateProbe(probeCoordinateFromRay(e.ray), e.shiftKey);
+        // Synchronous: click latency matters, click storms don't.
+        updateProbe(probeFromRay(e.ray), e.shiftKey);
       }}
       onClick={(e) => {
         if (skipSelectionClickRef.current) {

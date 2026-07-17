@@ -23,7 +23,7 @@ import {
 import { SceneDock } from "./SceneDock";
 import { LayerControlPanel } from "./panels/LayerControlPanel";
 import { AnimationPanel } from "./panels/AnimationPanel";
-import { ProbeThresholdPanel } from "./panels/ProbeThresholdPanel";
+import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { DebugPanel } from "./panels/DebugPanel";
 import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
@@ -46,6 +46,7 @@ import {
 import { resolveSceneCameraFrame } from "./core/cameraState";
 import { resolvePreferredDisplayMode } from "./core/preferredView";
 import { VisibilityManager } from "./managers/VisibilityManager";
+import { ProbeValueTracker } from "./managers/ProbeValueTracker";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
@@ -194,7 +195,7 @@ const DefaultScenePanels = () => (
       <SceneColumnTrigger />
       <SceneColumnPanels>
         <SceneOverlay />
-        <ProbeThresholdPanel />
+        <SelectedPointPanel />
         <SceneLayers />
         <AnimationPanel />
       </SceneColumnPanels>
@@ -363,6 +364,7 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
             </WhenDebug>
             <SelectedRoiPanel />
             <VisibilityManager/>
+            <ProbeValueTracker />
             <ScaleBar />
 
             <RoiToolbar />
@@ -411,7 +413,7 @@ export const Scene = Object.assign(SceneRoot, {
   Panels: SceneColumnPanels,
   DefaultPanels: DefaultScenePanels,
   Controls: SceneOverlay,
-  Probe: ProbeThresholdPanel,
+  Probe: SelectedPointPanel,
   Layers: SceneLayers,
   Animations: AnimationPanel,
   Dock: SceneDock,

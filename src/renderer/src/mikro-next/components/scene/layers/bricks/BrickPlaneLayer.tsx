@@ -11,6 +11,8 @@ import {
   resolveVoxelIndex,
   type AxisSelection,
 } from "../../core/selection";
+import { createRafCoalescer } from "../../core/probe/rafCoalesce";
+import type { ProbeResult } from "../../core/probe/probeTypes";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
@@ -270,10 +272,13 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   }, [planTargetLevel, currentZ, layer, pool]);
 
   const updateProbe = useCallback(
-    (localPoint: THREE.Vector3 | null, save: boolean) => {
+    (
+      points: { local: THREE.Vector3; world: THREE.Vector3 } | null,
+      save: boolean,
+    ) => {
       const currentProbe = viewerStoreApi.getState().probedCoordinate;
 
-      if (!localPoint || !layer) {
+      if (!points || !layer || !pool) {
         if (currentProbe?.layerId === layer?.id) {
           viewerStoreApi.getState().setProbedCoordinate(null);
         }
@@ -285,8 +290,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
       const [volumeX, volumeY] = probeContext.volumePosition;
       const [width, height] = probeContext.volumeSize;
-      const normalizedX = (localPoint.x - volumeX) / width;
-      const normalizedY = (localPoint.y - volumeY) / height;
+      const normalizedX = (points.local.x - volumeX) / width;
+      const normalizedY = (points.local.y - volumeY) / height;
 
       if (normalizedX < 0 || normalizedX > 1 || normalizedY < 0 || normalizedY > 1) {
         if (currentProbe?.layerId === layer.id) {
@@ -298,17 +303,44 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       const clampedX = THREE.MathUtils.clamp(normalizedX, 0, 1);
       const clampedY = THREE.MathUtils.clamp(normalizedY, 0, 1);
 
-      const nextProbe = {
+      // Selections are resolved at the plan's target level; report BASE
+      // (level-0) voxels like the volume probe, so the readout and the exact
+      // fetch address one coordinate system regardless of the displayed LOD.
+      const levelIndex = Math.min(
+        planTargetLevel ?? pool.geometry.levels.length - 1,
+        pool.geometry.levels.length - 1,
+      );
+      const level = pool.geometry.levels[levelIndex];
+      const baseShape = pool.geometry.levels[0].spatialShape;
+      const levelVoxel = [
+        resolveVoxelIndex(clampedX, probeContext.xSelection),
+        resolveVoxelIndex(1 - clampedY, probeContext.ySelection),
+        resolveVoxelIndex(0.5, probeContext.zSelection),
+      ];
+      const voxelIndex = levelVoxel.map((v, i) =>
+        Math.max(0, Math.min(baseShape[i] - 1, Math.round(v * level.scale[i]))),
+      ) as [number, number, number];
+
+      const resident = brickSystem?.sampleResidentEx(layer.id, voxelIndex, levelIndex) ?? null;
+      const channelCount = Math.max(1, pool.geometry.channelSlabCount);
+      const nextProbe: ProbeResult = {
         layerId: layer.id,
-        localPos: [clampedX - 0.5, clampedY - 0.5, 0] as [number, number, number],
-        voxelIndex: [
-          resolveVoxelIndex(clampedX, probeContext.xSelection),
-          resolveVoxelIndex(1 - clampedY, probeContext.ySelection),
-          resolveVoxelIndex(0.5, probeContext.zSelection),
-        ] as [number, number, number],
+        localPos: [clampedX - 0.5, clampedY - 0.5, 0],
+        voxelIndex,
+        worldPos: [points.world.x, points.world.y, points.world.z],
+        strategy: "plane",
+        values: resident
+          ? resident.values.map((value, channel) => ({ channel, value }))
+          : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
+        provenance: resident
+          ? { source: "resident", level: resident.level }
+          : { source: "pending", level: levelIndex },
+        dtype: pool.geometry.levels[0].dtype,
+        sliceSignature: pool.sliceSignature,
       };
 
       if (
+        !save &&
         currentProbe?.layerId === nextProbe.layerId &&
         currentProbe.voxelIndex.every((v, i) => v === nextProbe.voxelIndex[i])
       ) {
@@ -318,8 +350,13 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       viewerStoreApi.getState().setProbedCoordinate(nextProbe);
       if (save) viewerStoreApi.getState().addSavedProbe(nextProbe);
     },
-    [layer, resolveProbeGeometryContext, viewerStoreApi],
+    [layer, pool, brickSystem, planTargetLevel, resolveProbeGeometryContext, viewerStoreApi],
   );
+
+  // Pointermove storms coalesce to ≤1 probe per frame (see BrickVolumeLayer):
+  // event-time thunks close over fresh props; only the newest runs per frame.
+  const probeCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
+  useEffect(() => () => probeCoalescer.cancel(), [probeCoalescer]);
 
   if (layer?.visible === false) return null;
   if (!planHasNodes || !pool || !bundle) return null;
@@ -337,11 +374,14 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         if (interactionMode !== "AUTO_PROBE" || event.buttons !== 0) return;
         const group = groupRef.current;
         if (!group) return;
-        updateProbe(group.worldToLocal(event.point.clone()), false);
         event.stopPropagation();
+        const world = event.point.clone();
+        const local = group.worldToLocal(world.clone());
+        probeCoalescer.schedule(() => updateProbe({ local, world }, false));
       }}
       onPointerOut={() => {
         if (interactionMode !== "AUTO_PROBE") return;
+        probeCoalescer.cancel();
         updateProbe(null, false);
       }}
       onPointerDown={(event) => {
@@ -349,7 +389,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();
-        updateProbe(group.worldToLocal(event.point.clone()), event.shiftKey);
+        const world = event.point.clone();
+        updateProbe({ local: group.worldToLocal(world.clone()), world }, event.shiftKey);
       }}
     >
       <mesh key={pool.structureSignature} scale={[totalX, totalY, 1]} renderOrder={1}>

@@ -3,6 +3,7 @@ import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Route, Routes } from "react-router";
 import ADatasetPage from "./pages/ADatasetPage";
+import ADatasetSpecPage from "./pages/ADatasetSpecPage";
 import ADatasetsPage from "./pages/ADatasetsPage";
 import CoordinateSystemPage from "./pages/CoordinateSystemPage";
 import CoordinateSystemsPage from "./pages/CoordinateSystemsPage";
@@ -44,6 +45,8 @@ export const MikroNextModule = () => {
           <Route path="images" element={<ImagesPage />} />
           <Route path="datasets/:id" element={<DatasetPage />} />
           <Route path="datasets" element={<DatasetsPage />} />
+          {/* Three segments, so it cannot be mistaken for adatasets/:id. */}
+          <Route path="adatasets/spec/:spec" element={<ADatasetSpecPage />} />
           <Route path="adatasets/:id" element={<ADatasetPage />} />
           <Route path="adatasets" element={<ADatasetsPage />} />
           <Route

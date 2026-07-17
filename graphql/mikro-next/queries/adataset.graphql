@@ -1,6 +1,12 @@
 query GetADataset($id: ID!) {
   adataset(id: $id) {
     ...ADataset
+    # The scenes this dataset is rendered in, reached through its lenses'
+    # layers. Selected on the query rather than the fragment because it is an
+    # inverse relation the list views have no use for.
+    scenes {
+      ...ListScene
+    }
   }
 }
 

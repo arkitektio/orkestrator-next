@@ -23,6 +23,10 @@ fragment ListADataset on ADataset {
   axisNames
   shape
   multiscale
+  # What the dataset structurally is — derived server-side from the intrinsic
+  # system's axes. Cheap (no nested selection) and it is what a card leads with,
+  # so it belongs on the list fragment rather than a second round trip.
+  spec
 }
 
 fragment ADataset on ADataset {

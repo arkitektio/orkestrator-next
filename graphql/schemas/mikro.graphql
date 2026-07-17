@@ -24,6 +24,11 @@ type ADataset {
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
 
   """
+  The datasets computed from this one -- the other end of `derivedFrom`, and the way to ask what a source produced: the deconvolutions, segmentations and projections that named a space of this dataset as their parent. Derived from the same edges, never a stored back-reference that could disagree with them. Every child, not just those this dataset places: a fusion that named this source second is listed here, and so is a child whose derivation is UNMAPPABLE -- it came from here even though its geometry did not survive. The maps themselves are on each child's own `derivedFrom`
+  """
+  derivedDatasets: [ADataset!]!
+
+  """
   The edges from this dataset's pixel grid back into the lenses it was computed from, when it is a derived dataset: one for a deconvolution or a resample, several for a fusion of channels or tiles. Empty for a dataset that was acquired rather than derived. The order is the priority its creator declared: the first edge is the primary parent, the one that places the dataset. They are edges, not labels: each carries the map itself, so a client can compose it -- and they are why a derived dataset inherits its sources' placements instead of needing its own registration
   """
   derivedFrom: [Transformation!]!
@@ -48,6 +53,11 @@ type ADataset {
 
   """The dataset's shape: that of its level-0 array"""
   shape: [Int!]!
+
+  """
+  What this dataset structurally is, derived from the axes of its intrinsic coordinate system: the one spatial spec its SPACE axis count denotes, then a modifier per acquisition axis present. A 3D timelapse is [VOLUME, TIMESERIES, MULTICHANNEL]. Presence, not size: a stack with a single plane is still a VOLUME. Empty while the intrinsic system does not exist yet
+  """
+  spec: [ADatasetSpec!]!
 }
 
 input ADatasetFilter {
@@ -58,6 +68,11 @@ input ADatasetFilter {
 
   """Filter by the sub of the user that assigned the creating task"""
   assignedBy: ID
+
+  """
+  Filter by whether the dataset carries at least one PHYSICAL calibration -- a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
+  """
+  calibrated: Boolean
 
   """Filter for items created after this datetime"""
   createdAfter: DateTime
@@ -77,24 +92,99 @@ input ADatasetFilter {
 
   """Filter by the rekuest task id the item was created through"""
   createdThroughTask: String
+
+  """
+  Filter to the datasets computed from this one -- the deconvolutions, segmentations and projections that named a space of it as their parent. Every child, not just the ones it places: a fusion that named it second is listed, and so is a child whose derivation is UNMAPPABLE, since it still came from here
+  """
+  derivedFrom: ID
   description: StrFilterLookup
+
+  """
+  Filter to datasets whose intrinsic coordinate system carries every one of these axis types, e.g. [TIME, CHANNEL]. The raw form of `spec`, for the types no spec names: COORDINATE, DISPLACEMENT, INDEX
+  """
+  hasAxisTypes: [AxisType!]
   id: ID
 
   """Filter by list of IDs"""
   ids: [ID!]
+
+  """
+  Filter by whether the dataset carries a resolution pyramid: true for the multiscale ones, false for those with a single level
+  """
+  multiscale: Boolean
   name: StrFilterLookup
+
+  """
+  Filter for datasets that were acquired rather than computed: true for the roots, those with no derivation edge into another dataset's space
+  """
+  notDerived: Boolean
 
   """Filter by the creator's subject ID"""
   owner: ID
 
+  """
+  Filter to datasets placeable into this scene: those with a lens whose space has a traversable path to the scene's world, walking the transformation edges. What could be staged there -- for what already is, use `scene`
+  """
+  placeableIn: ID
+
+  """
+  Filter to datasets rendered in this scene, through their lenses' layers. What is actually staged there -- for what merely could be, use `placeableIn`
+  """
+  scene: ID
+
   """Search by name (case-insensitive substring)"""
   search: String
+
+  """
+  Filter to datasets satisfying every one of these specs, e.g. [VOLUME, TIMESERIES] for 3D timelapses. Derived from the axes of the intrinsic coordinate system, never stored. A dataset carries one spatial spec (by how many SPACE axes it has) plus a modifier per acquisition axis present, so two spatial specs together match nothing
+  """
+  spec: [ADatasetSpec!]
 }
 
 input ADatasetOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+What a dataset structurally is, derived from the axes of its intrinsic coordinate system. Specs stack: a 3D timelapse is VOLUME, TIMESERIES and MULTICHANNEL at once. Exactly one spatial member (SCALAR/PROFILE/IMAGE/VOLUME/HYPERVOLUME) ever holds.
+"""
+enum ADatasetSpec {
+  """Carries a MICROTIME axis: fluorescence-lifetime arrival-time bins."""
+  FLIM
+
+  """Four or more spatial axes."""
+  HYPERVOLUME
+
+  """Two spatial axes: a plane. The ordinary micrograph."""
+  IMAGE
+
+  """
+  Carries a CHANNEL axis. Presence only: a one-channel axis still counts.
+  """
+  MULTICHANNEL
+
+  """One spatial axis -- a line profile, a depth trace."""
+  PROFILE
+
+  """No spatial extent: the array carries no SPACE axis at all."""
+  SCALAR
+
+  """
+  Carries a SPECTRUM axis: a spectrally resolved acquisition, a lambda stack.
+  """
+  SPECTRAL
+
+  """
+  Carries a TIME axis -- a timelapse. Presence only: a single-frame time axis still counts.
+  """
+  TIMESERIES
+
+  """
+  Three spatial axes: a stack. Holds whenever a z axis is present, even if it carries a single plane.
+  """
+  VOLUME
 }
 
 """
@@ -3934,6 +4024,11 @@ type Lens {
   """
   coordinateSystem: CoordinateSystem
   dataset: ADataset!
+
+  """
+  The datasets computed from this lens' selection: the direct other end of `derivedFrom`, which names a *lens* as a parent rather than a dataset. An unsliced lens reports what was derived from the whole intrinsic grid -- its space is that grid, so it can say nothing narrower. Like the forward field this reports every child, whether or not this lens is its primary parent and whether or not its geometry survived
+  """
+  derivedDatasets: [ADataset!]!
   id: ID!
 
   """

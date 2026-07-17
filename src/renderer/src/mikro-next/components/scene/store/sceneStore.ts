@@ -14,6 +14,12 @@ import { planDefaultVolumeLods } from "../core/lodPlanning";
 export type { LayerState };
 
 export interface SceneState {
+  /**
+   * The scene's id. Here so a composed panel can reach it from context instead
+   * of having it threaded down as a prop — the store is already the scene's
+   * identity everywhere else.
+   */
+  id: string;
   spatialUnit: string;
   /**
    * The scene's coordinate-system graph (world CS, reachable systems, edges) —
@@ -39,6 +45,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
 
   return createStore<SceneState>()(
     immer((set) => ({
+      id: scene.id,
       spatialUnit: spaceAxis?.unit ? String(spaceAxis.unit) : "px",
       // No `coordinateSystems`: edges self-describe their axis order
       // (inputAxes/outputAxes), so the axis index degenerates to the world

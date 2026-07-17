@@ -116,7 +116,7 @@ export async function runGpuRepackSelfTest(
   renderer: SceneRenderer,
 ): Promise<GpuRepackSelfTestResult> {
   if (!getWebGPUDevice(renderer)) {
-    return { supported: false, pass: false, detail: "WebGL2 fallback backend (no compute)" };
+    return { supported: false, pass: false, detail: "no GPU device (no compute)" };
   }
   const repacker = createGpuRepacker<string>(renderer);
   if (!repacker) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeEmptyValue, encodeEmptyValue } from "./brickTraversal";
+import { decodeEmptyValue, encodeEmptyValue } from "./brickEncoding";
 
 /**
  * EMPTY (uniform-fill) bricks survive only as an 8-bit page-table byte, so the

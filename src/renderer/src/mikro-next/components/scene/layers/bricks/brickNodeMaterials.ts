@@ -65,7 +65,7 @@ export type UniformNodeLike<T> = { value: T };
 /** A TSL uniformArray node: elements are mutated in place via `.array`. */
 export type UniformArrayNodeLike<T> = { array: T[] };
 
-import { MAX_BRICK_LEVELS } from "../../glsl/brickTraversal";
+import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import {
   MAX_CHANNELS,
@@ -80,10 +80,9 @@ import {
 
 /**
  * TSL (Three Shading Language) node materials for the brick-pool renderer —
- * the WebGPU-migration port of the raw GLSL that lived in
- * `glsl/brickTraversal.ts`, `glsl/common.ts`, `CHANNEL_UNIFORMS_GLSL` and the
- * two ShaderMaterials. TSL compiles to WGSL on the WebGPU backend and GLSL on
- * the WebGL2 fallback, so this single implementation serves both.
+ * the WebGPU-migration port of the raw GLSL that used to live in a `glsl/`
+ * directory alongside two ShaderMaterials, since deleted. TSL compiles to WGSL,
+ * the scene's only backend.
  *
  * Semantics are a 1:1 port — the CPU mirrors (`core/octree/brickSampling.ts`,
  * `core/opacityCorrection.ts`, `core/probeMath.ts` normalization) remain in
@@ -679,7 +678,7 @@ const phasorPolygonPoint = (c: any, cursor: any, index: any) => {
   return select(int(index).mod(int(2)).equal(int(0)), value.xy, value.zw);
 };
 
-/** GLSL_RAND port — same constants, motion-invariant jitter source. */
+/** Motion-invariant jitter source (the classic sin/dot/fract hash). */
 const rand2 = Fn(([co]: any[]) => {
   return fract(
     sin(dot(vec2(co), vec2(12.9898, 78.233))).mul(43758.5453),

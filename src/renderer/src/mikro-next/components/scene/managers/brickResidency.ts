@@ -9,7 +9,7 @@ import { workerPool } from "../../../workers/pool";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
-import { decodeEmptyValue, encodeEmptyValue } from "../glsl/brickTraversal";
+import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
 import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
@@ -79,7 +79,7 @@ import {
  * stored bricks, and drains a byte-budgeted upload queue into the per-layer
  * brick atlas + page table each frame.
  *
- * Owned by `BrickSystemProvider` (needs the WebGLRenderer); a plain class
+ * Owned by `BrickSystemProvider` (needs the renderer); a plain class
  * like `CanvasContext`, referenced from the store by handle only.
  */
 
@@ -240,7 +240,7 @@ export class BrickResidencyManager {
   private readonly countedChunkKeys = new Set<string>();
   /** Layers already warned about a non-viable pool (one warning per layer). */
   private readonly warnedUnviable = new Set<string>();
-  /** undefined = not yet attempted; null = unavailable (WebGL2 backend or
+  /** undefined = not yet attempted; null = unavailable (pipeline failed, or
    * disabled via the localStorage kill switch) — the CPU worker path then
    * handles every brick. */
   private gpuRepacker: GpuRepacker<GpuBrickToken> | null | undefined;

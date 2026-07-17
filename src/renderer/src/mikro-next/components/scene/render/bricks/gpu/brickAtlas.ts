@@ -98,10 +98,10 @@ export function createBrickAtlas(opts: {
     kind === "r8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
 
   const texture = new THREE.Data3DTexture(backing, size[0], size[1], size[2]);
-  // No explicit internalFormat: both backends derive it from format+type
-  // (R8/R32F on WebGL2, r8unorm/r32float on WebGPU). Setting the WebGL enum
-  // string here would be passed verbatim to GPUDevice.createTexture, which
-  // throws and silently degrades the texture to a 1x1 2D placeholder.
+  // No explicit internalFormat: the backend derives it from format+type
+  // (r8unorm/r32float). Setting a WebGL enum string here would be passed
+  // verbatim to GPUDevice.createTexture, which throws and silently degrades
+  // the texture to a 1x1 2D placeholder.
   texture.format = THREE.RedFormat;
   texture.type = kind === "r8" ? THREE.UnsignedByteType : THREE.FloatType;
   texture.minFilter = filter === "linear" ? THREE.LinearFilter : THREE.NearestFilter;

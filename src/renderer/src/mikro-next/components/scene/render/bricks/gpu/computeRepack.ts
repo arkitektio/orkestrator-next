@@ -31,7 +31,7 @@ import type { BrickAtlas } from "./brickAtlas";
  * frames later — the page entry is optimistically RESIDENT meanwhile).
  *
  * Availability is three-tiered, all falling back to the CPU worker path:
- * - no `GPUDevice` (WebGL2 fallback backend) → `createGpuRepacker` = null;
+ * - no `GPUDevice`, or disabled via the kill switch → `createGpuRepacker` = null;
  * - pipeline still compiling / compile failed → `ready()` = false;
  * - unsupported job (non-f32 chunks, r8 atlas until Phase B, chunk larger
  *   than `maxStorageBufferBindingSize`) → `supports()` = false per brick.
@@ -558,8 +558,8 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
 }
 
 /**
- * Null when the renderer runs the WebGL2 fallback backend (no compute) —
- * callers then keep the worker repack path unconditionally.
+ * Null when there is no device to compute on (the renderer failed to
+ * initialize) — callers then keep the worker repack path unconditionally.
  */
 export function createGpuRepacker<Token = unknown>(
   renderer: SceneRenderer,

@@ -5,9 +5,8 @@ import { useViewerStore } from "../store/viewerStore";
 
 /**
  * Minimal subset of three's WebGPURenderer we call for a screenshot. Typed
- * locally because R3F types `gl` as WebGLRenderer, whereas SceneWrapper's `gl`
- * factory returns a WebGPURenderer (see Scene.tsx). The render-target readback
- * below is backend-agnostic — it works on both the WebGPU and WebGL2 backends.
+ * locally because R3F types `gl` as WebGLRenderer, whereas the scene's `gl`
+ * factory returns a WebGPURenderer (see Scene.tsx).
  */
 interface CaptureRenderer {
   getPixelRatio: () => number;
@@ -31,8 +30,7 @@ interface CaptureRenderer {
  *
  * The scene renders on demand with no `preserveDrawingBuffer`, so reading the
  * live canvas at click time can be blank. Instead we render the scene into an
- * offscreen RenderTarget and read those pixels back — reliable on both the
- * WebGPU and WebGL2 backends.
+ * offscreen RenderTarget and read those pixels back.
  *
  * Renders null; mounted inside <Canvas> next to <CanvasSync />.
  */

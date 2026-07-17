@@ -112,7 +112,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
    * in level-0 slices; scale to base voxels like `slabLevelZ` does. */
   const slabBaseZ = (planSlabZ ?? 0) * (pool?.geometry.levels[0]?.scale[2] ?? 1);
 
-  // TSL node material (WebGPU + WebGL2-fallback backends). Recreated only when
+  // TSL node material. Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
   const bundle = useMemo(() => {

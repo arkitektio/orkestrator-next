@@ -149,7 +149,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
   }, [pool, planTargetLevel]);
 
-  // TSL node material (WebGPU + WebGL2-fallback backends). Recreated only when
+  // TSL node material. Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
   const bundle = useMemo(() => {

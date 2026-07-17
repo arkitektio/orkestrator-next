@@ -40,7 +40,7 @@ const storedFor = (payload: Vec3, border: 0 | 1): Vec3 => [
  * Resolve the brick spec for a layer: start from the mode default (clamped to
  * the finest level's extents so shallow volumes don't waste slot space), then
  * double the payload until every level's page grid — packed into one page
- * texture — fits `maxExtent` (WebGL2 MAX_3D_TEXTURE_SIZE, typically 2048).
+ * texture — fits `maxExtent` (the device's maxTextureDimension3D).
  */
 export function resolveBrickSpec(
   geo: LayerLevelGeometry,

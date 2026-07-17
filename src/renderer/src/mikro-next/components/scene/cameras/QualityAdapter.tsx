@@ -31,9 +31,8 @@ export const QualityAdapter = () => {
   const lastFrameAtRef = useRef<number | null>(null);
   const appliedDprRef = useRef<number | null>(null);
 
-  // Persistence: the learned tier is a property of the GPU (and backend —
-  // WebGPU vs WebGL fallback have different perf), keyed so a driver/backend
-  // change re-learns.
+  // Persistence: the learned tier is a property of the GPU, keyed so a
+  // driver/GPU change re-learns.
   useEffect(() => {
     if (typeof localStorage === "undefined") return;
     qualityGovernor.configurePersistence(

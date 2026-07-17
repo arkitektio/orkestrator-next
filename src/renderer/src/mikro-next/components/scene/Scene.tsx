@@ -46,15 +46,19 @@ import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSe
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { TwoDScene } from "./TwoDScene";
 import { ThreeDScene } from "./ThreeDScene";
+import {
+  assertWebGPUSupported,
+  WebGPUUnavailableError,
+} from "./render/gpu/webgpuSupport";
 
-export const SceneWrapper = ({ children }: { children: ReactNode }) => {
+const SceneWrapper = ({ children }: { children: ReactNode }) => {
   // `select-none` on the canvas surface stops a drag (pan / ROI draw / probe)
   // from ever turning into a text selection. Overlays keep normal selection.
   //
   // Renderer: three's WebGPURenderer (async init via R3F v9's gl factory).
-  // On macOS this is native Metal — killing the ANGLE texSubImage3D upload
-  // stalls (P19) — and where WebGPU is unavailable it transparently falls back
-  // to its WebGL2 backend; the TSL brick shaders compile for both.
+  // WebGPU is required — SceneRoot gates on assertWebGPUSupported() before this
+  // ever mounts. On macOS this is native Metal, which is what kills the ANGLE
+  // texSubImage3D upload stalls (P19).
   return <Canvas
         className="select-none [-webkit-user-select:none]"
         frameloop="demand"
@@ -63,6 +67,17 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
             ...(props as Record<string, unknown>),
             antialias: true,
           });
+
+          // three 0.184 has no forceWebGPU, and WebGPURenderer's constructor
+          // unconditionally overwrites parameters.getFallback with its own
+          // WebGL2 closure (three.webgpu.js:82651), so a caller-supplied one is
+          // discarded. Nulling the private field the base Renderer read it into
+          // (three.webgpu.js:58077) is the only lever: init() then rejects at
+          // three.webgpu.js:58528 instead of silently swapping in a WebGL2
+          // backend we no longer carry upload paths for. Re-verify on any three
+          // upgrade.
+          (renderer as unknown as { _getFallback: unknown })._getFallback = null;
+
           await renderer.init();
 
           const anyRenderer = renderer as unknown as {
@@ -84,17 +99,20 @@ export const SceneWrapper = ({ children }: { children: ReactNode }) => {
               anyRenderer.getMaxAnisotropy?.() ?? 1;
           }
 
-          const isWebGPU = anyRenderer.backend?.isWebGPUBackend === true;
-          const gpuApiPresent =
-            typeof navigator !== "undefined" && "gpu" in navigator;
-          console.info(
-            `[scene] renderer initialized — backend: ${isWebGPU ? "WebGPU" : "WebGL2 fallback"}` +
-              (isWebGPU
-                ? ""
-                : gpuApiPresent
-                  ? " (navigator.gpu present but no adapter — GPU/driver rejected WebGPU)"
-                  : " (navigator.gpu missing — Chromium flags not active; on Linux the main-process switches need a full Electron restart)"),
-          );
+          // Tripwire, not a UX path: if a three upgrade reintroduces a fallback
+          // route, fail loudly rather than render a scene that lies about its
+          // backend. R3F v9 fire-and-forgets this factory's promise
+          // (react-three-fiber.esm.js:111), so this surfaces only as an
+          // unhandled rejection — the user-facing gate is
+          // assertWebGPUSupported() in SceneRoot.
+          if (anyRenderer.backend?.isWebGPUBackend !== true) {
+            throw new Error(
+              "[scene] WebGPURenderer initialized on a non-WebGPU backend — " +
+                "three's WebGL2 fallback should be unreachable.",
+            );
+          }
+
+          console.info("[scene] renderer initialized — backend: WebGPU");
           return renderer;
         }}>{children}</Canvas>;
 };
@@ -169,7 +187,8 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
   const client = useMikro();
   const datalayer = useDatalayerEndpoint();
   const [scope, setScope] = useState<SceneScope | null>(null);
-  const [sceneInitializationError, setSceneInitializationError] = useState<string | null>(null);
+  const [sceneInitializationError, setSceneInitializationError] =
+    useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,6 +198,11 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
       setSceneInitializationError(null);
 
       try {
+        // Gate before anything expensive: a scene without WebGPU cannot render
+        // at all, so fail here rather than mount a Canvas that would silently
+        // downgrade itself to a backend we no longer support.
+        await assertWebGPUSupported();
+
         if (!datalayer) {
           throw new Error("No datalayer endpoint configured");
         }
@@ -199,7 +223,7 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
       } catch (error) {
         if (!cancelled) {
           setSceneInitializationError(
-            error instanceof Error ? error.message : String(error),
+            error instanceof Error ? error : new Error(String(error)),
           );
         }
       }
@@ -214,11 +238,18 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
 
 
     if (!scope) {
+      // A missing GPU is an environment problem, not a scene problem — saying
+      // "scene initialization failed" would send the reader hunting in the
+      // wrong place.
+      const prefix =
+        sceneInitializationError instanceof WebGPUUnavailableError
+          ? "This scene cannot be rendered"
+          : "Scene initialization failed";
       return (
         <div className="relative h-full w-full overflow-hidden rounded-lg bg-black">
-          <div className="flex h-full w-full items-center justify-center text-sm text-zinc-300">
+          <div className="flex h-full w-full items-center justify-center px-8 text-center text-sm text-zinc-300">
             {sceneInitializationError
-              ? `Scene initialization failed: ${sceneInitializationError}`
+              ? `${prefix}: ${sceneInitializationError.message}`
               : "Initializing scene data..."}
           </div>
         </div>

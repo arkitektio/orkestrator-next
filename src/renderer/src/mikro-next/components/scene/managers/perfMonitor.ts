@@ -15,9 +15,10 @@
  *
  * The CPU/GPU split is the key signal: a long `frameCpuMs` with a small `gpuMs`
  * is a main-thread stall (e.g. a React re-render storm), not a GPU bottleneck.
+ * `gpuMs` is currently always null — see `PerfFrameProbe`.
  *
- * Kept free of WebGL and React so it is unit-testable; the rAF timing loop and
- * the EXT_disjoint_timer_query wiring live in `PerfFrameProbe`.
+ * Kept free of the renderer and React so it is unit-testable; the rAF timing
+ * loop lives in `PerfFrameProbe`.
  */
 
 const now = (): number =>

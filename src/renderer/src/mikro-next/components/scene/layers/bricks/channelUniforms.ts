@@ -327,30 +327,3 @@ function writeCursors(
   }
   return count;
 }
-
-/** GLSL uniform declarations matching `ChannelUniformData` (fragment side). */
-export const CHANNEL_UNIFORMS_GLSL = /* glsl */ `
-#define MAX_CHANNELS ${MAX_CHANNELS}
-uniform sampler2D colormapAtlas;
-uniform float minValue;
-uniform float maxValue;
-uniform int numChannels;
-uniform int blendMode;      // 0 additive, 1 multiplicative, 2 normal
-uniform float chChannel[MAX_CHANNELS];
-uniform float chClimMin[MAX_CHANNELS];
-uniform float chClimMax[MAX_CHANNELS];
-uniform float chGamma[MAX_CHANNELS];
-uniform float chOpacity[MAX_CHANNELS];
-uniform float chVisible[MAX_CHANNELS];
-uniform float chInvert[MAX_CHANNELS];
-uniform float chRow[MAX_CHANNELS];
-
-float channelNormalize(int i, float rawValue) {
-  float baseNorm = clamp((rawValue - minValue) / max(maxValue - minValue, 0.00001), 0.0, 1.0);
-  float climRange = max(chClimMax[i] - chClimMin[i], 0.00001);
-  float normalized = clamp((baseNorm - chClimMin[i]) / climRange, 0.0, 0.999);
-  normalized = pow(normalized, max(chGamma[i], 0.0001));
-  if (chInvert[i] > 0.5) normalized = 1.0 - normalized;
-  return normalized;
-}
-`;

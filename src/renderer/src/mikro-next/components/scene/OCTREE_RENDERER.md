@@ -40,7 +40,7 @@ camera / z / mode / view ranges
         │
         ▼
   drainUploads() in useFrame (byte/brick budget per frame)
-        ├─ texSubImage3D into the layer's brick ATLAS (one Data3DTexture)
+        ├─ writeTexture into the layer's brick ATLAS (one Data3DTexture)
         ├─ page-table mirror write + flush (RGBA8UI Data3DTexture)
         └─ residencyVersion++ → invalidate()
         │
@@ -259,7 +259,7 @@ context-loss restore both read `atlas.backing`, and the copy is bounded by the
 was removed via a per-array metadata memo
 (`lib/zarr/runner/get-worker.ts` `readArrayMetadataCached`).
 
-### 2.10 Shader traversal (`glsl/brickTraversal.ts`)
+### 2.10 Shader traversal (`layers/bricks/brickNodeMaterials.ts`)
 
 `sampleBrickEx(p01, desiredLevel, channel)` → `0 unmapped / 1 resident / 2
 empty`. Resident path: page `texelFetch` → atlas tap at
@@ -297,7 +297,7 @@ Keep the two in sync when touching either.
 | Mesh layers | `render/mesh/` (Parquet/DuckDB cell streaming, own README + `meshCore.test.ts`) |
 | Drivers | `managers/nodePlanTracker.ts`, `managers/brickResidency.ts`, `managers/BrickSystemProvider.tsx`, started from `managers/VisibilityManager.tsx` |
 | GPU | `render/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
-| Shaders | `glsl/brickTraversal.ts`, `layers/bricks/channelUniforms.ts` |
+| Shaders | `layers/bricks/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
 | Materials | `layers/bricks/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
 | Registry entries | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
 | Debug | `panels/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `overlays/BrickResidencyOverlay.tsx` (per-level wireframes) |
@@ -364,14 +364,13 @@ selector; camera position reaches the shader via `vOrigin` anyway).
 pageTables[N]` with a loop variable. The single packed page-table texture with
 `uPageOffset[level]` offsets is a *requirement*, not a style choice.
 
-**P3 — WebGL unpack state is global and three leaks it.** three sets
-`UNPACK_FLIP_Y_WEBGL` / `UNPACK_PREMULTIPLY_ALPHA_WEBGL` for 2D uploads (e.g.
-colormap atlases) and leaves them set; WebGL2 then hard-errors on any
-`texSubImage3D`. Our upload helper (`texSubImage3d.ts`) force-clears **all**
-UNPACK_* state every call. It also binds through three's internal
-`renderer.state.bindTexture` — this keeps three's binding cache coherent *and*
-avoids a per-upload `gl.getParameter(TEXTURE_BINDING_3D)`, which is a
-potential sync point under ANGLE (13×/frame while streaming).
+**P3 — WebGL unpack state is global and three leaks it.** *Obsolete since the
+WebGPU-only migration (§5) — recorded because it explains an entire class of
+bug that no longer exists.* three set `UNPACK_FLIP_Y_WEBGL` /
+`UNPACK_PREMULTIPLY_ALPHA_WEBGL` for 2D uploads (e.g. colormap atlases) and
+left them set; WebGL2 then hard-errored on any `texSubImage3D`, so the upload
+helper had to force-clear **all** UNPACK_* state on every call. WebGPU's
+`device.queue.writeTexture` has no global unpack state and no such hazard.
 
 **P1 — Texture-extent limits shape the design.** `MAX_3D_TEXTURE_SIZE` is 2048
 under ANGLE. Page grids of deep stacks (3000 z-slices in 2D mode) exceed it;
@@ -396,8 +395,8 @@ round-trip, **not** the raw value — a quantization of ≈`(max-min)/255` raw u
 window band). This is inherent to the 8-bit page encoding. The CPU probe path
 (`sampleResident`) applies the SAME round-trip (`decodeEmptyValue(encodeEmptyValue
 (v))`) so `marchResidentBricks` stays in lockstep with the rendered image rather
-than reporting the exact-but-not-rendered raw value. Tested in
-`glsl/brickTraversal.test.ts`.
+than reporting the exact-but-not-rendered raw value. Encode/decode live in
+`core/octree/brickEncoding.ts`; tested in `core/octree/brickEncoding.test.ts`.
 
 **Atlas format must mirror the worker's promotion, not the dtype string.**
 `atlasKindForDtype` (`render/bricks/gpu/brickAtlas.ts`) picks R8 only for unsigned
@@ -607,40 +606,58 @@ mask everything downstream, so check touched files individually).
 
 ---
 
-## 5. WebGPU backend (migration, 2026-07)
+## 5. WebGPU backend (migration complete, 2026-07)
 
-The scene renders through three's **`WebGPURenderer`** (async init in
-`Scene.tsx`'s Canvas `gl` factory): native WebGPU where available (macOS =
-Metal — eliminating the ANGLE `texSubImage3D` upload stalls of P19), and its
-automatic **WebGL2 fallback backend** elsewhere (Linux needs the Electron
-switches added in `src/main/index.ts`; the startup log prints the active
-backend). Consequences and contracts:
+The scene renders through three's **`WebGPURenderer`** on native WebGPU (macOS
+= Metal — eliminating the ANGLE `texSubImage3D` upload stalls of P19), async
+init in `Scene.tsx`'s Canvas `gl` factory.
+
+**WebGPU is a hard requirement — there is no WebGL2 fallback.** The migration
+initially rode on three's automatic WebGL2 fallback backend; that path is now
+deleted, because a silent downgrade rendered a subtly degraded scene while
+reporting success only to the console. Two mechanisms replace it:
+
+- `render/gpu/webgpuSupport.ts` — `assertWebGPUSupported()` probes
+  `navigator.gpu.requestAdapter()` and is awaited in `SceneRoot`'s existing
+  init gate, *before* `<Canvas>` mounts, so an unsupported machine gets a
+  legible "This scene cannot be rendered: …" message. This is the user-facing
+  gate; it must stay ahead of the Canvas, because R3F v9 fire-and-forgets the
+  async `gl` factory (`react-three-fiber.esm.js:111`) and a throw from inside
+  it can never reach React.
+- The factory nulls `renderer._getFallback` before `init()`. three 0.184 has no
+  `forceWebGPU` and clobbers any caller-supplied `getFallback`
+  (`three.webgpu.js:82651`); nulling the private field the base `Renderer` read
+  it into (`:58077`) makes `init()` reject at `:58528` rather than swap
+  backends. **Re-verify this on every three upgrade** — the `isWebGPUBackend`
+  assert below it is the tripwire.
+
+Consequences and contracts:
 
 - **TSL only — no raw GLSL `ShaderMaterial`s.** `WebGPURenderer` does not run
-  them on either backend. The brick shaders live in
-  `layers/bricks/brickNodeMaterials.ts` (TSL → WGSL or GLSL per backend); the
-  old GLSL strings are kept `@deprecated` as reference until visual parity is
-  confirmed, then deleted. NodeMaterials go through the renderer's output
-  transform, so the brick materials pin `toneMapped = false` for parity with
-  the raw FragColor path. Uniform updates go through the returned NODE records
-  (`bundle.nodes.uDesiredLevel.value = …`), not a `.uniforms` map.
+  them. The brick shaders live in `layers/bricks/brickNodeMaterials.ts` (TSL →
+  WGSL); the old GLSL reference strings are deleted, and the value semantics
+  the CPU must mirror moved to `core/octree/brickEncoding.ts`. NodeMaterials go
+  through the renderer's output transform, so the brick materials pin
+  `toneMapped = false` for parity with the raw FragColor path. Uniform updates
+  go through the returned NODE records (`bundle.nodes.uDesiredLevel.value = …`),
+  not a `.uniforms` map.
 - **Backend internals are isolated in `render/gpu/sceneRenderer.ts`** (device,
-  fallback GL context, texture handles, `maxTextureDimension3D`, GPU identity
-  for the quality governor). Nothing else may touch `renderer.backend`.
-- **Uploads** (`render/bricks/gpu/texSubImage3d.ts`): WebGPU backend →
-  `device.queue.writeTexture` partial 3D writes (no alignment constraints, no
-  unpack state — P3 is obsolete there); WebGL backend → the historical raw
-  `gl.texSubImage3D` path with UNPACK resets; uninitialized texture → full
-  `needsUpdate` re-spec from the CPU backing mirror.
+  texture handles, `maxTextureDimension3D`, GPU identity for the quality
+  governor). Nothing else may touch `renderer.backend`.
+- **Uploads** (`render/bricks/gpu/texSubImage3d.ts`):
+  `device.queue.writeTexture` partial 3D writes — no alignment constraints, no
+  unpack state (P3 is obsolete). Uninitialized texture → full `needsUpdate`
+  re-spec from the CPU backing mirror.
 - **Integer page table**: three maps `RGBAIntegerFormat` + `UnsignedByteType`
   → `rgba8uint`; the TSL walk uses `textureLoad` (texelFetch equivalent). The
   R32F atlas's LinearFilter relies on the `float32-filterable` device feature,
   which three requests automatically when the adapter supports it.
-- **GPU frame timing** (`PerfFrameProbe`): the GL timer only runs on the
-  fallback backend; under native WebGPU `gpuMs` is null for now
-  (timestamp-query integration is a follow-up).
+- **GPU frame timing** (`PerfFrameProbe`): `gpuMs` is always null. It came from
+  `EXT_disjoint_timer_query_webgl2`, which needed the WebGL2 backend; the
+  WebGPU replacement is timestamp-queries, still a follow-up. CPU timing is
+  unaffected.
 - Deferred WebGPU-era upgrades: storage-buffer page table (obsoletes the P2
-  packed-texture workaround), compute-shader repack, timestamp queries.
+  packed-texture workaround), timestamp queries.
 
 ## 6. Status & what's deliberately deferred
 

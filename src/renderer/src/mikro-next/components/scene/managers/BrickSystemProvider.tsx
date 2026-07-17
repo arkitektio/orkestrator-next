@@ -10,8 +10,8 @@ import { BrickResidencyManager } from "./brickResidency";
 
 /**
  * Owns the brick residency manager's lifecycle. Lives INSIDE the R3F canvas
- * because the manager needs the WebGLRenderer for texSubImage3D uploads and
- * the demand-frameloop `invalidate`. The per-frame `useFrame` drain applies
+ * because the manager needs the renderer for its 3D-texture uploads and the
+ * demand-frameloop `invalidate`. The per-frame `useFrame` drain applies
  * the byte-budgeted upload batch; the manager itself re-invalidates while
  * work remains, so `frameloop="demand"` keeps ticking until the queue is dry.
  */
@@ -35,8 +35,8 @@ export function BrickSystemProvider() {
     const repack = createRepackDispatcher();
     const manager = new BrickResidencyManager({
       // R3F types `gl` as WebGLRenderer; the Canvas factory actually creates a
-      // WebGPURenderer (Scene.tsx) — the manager only touches backend-agnostic
-      // helpers (sceneRenderer.ts).
+      // WebGPURenderer (Scene.tsx) — the manager reaches the device only
+      // through sceneRenderer.ts.
       renderer: gl as unknown as SceneRenderer,
       viewerStore,
       sceneStore,

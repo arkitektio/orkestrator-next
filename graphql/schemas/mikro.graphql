@@ -656,6 +656,11 @@ input AnnotationFilter {
   collection: ID
 
   """
+  Filter to annotations whose intrinsic bounding box contains this point (GiST-backed). Only meaningful within one frame: pass `collection` or `coordinateSystem` alongside
+  """
+  containsPoint: [Float!]
+
+  """
   Filter by the coordinate system this annotation is drawn in (its collection's own)
   """
   coordinateSystem: ID
@@ -669,8 +674,18 @@ input AnnotationFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
+
+  """
+  Filter to annotations whose intrinsic bounding box overlaps this box (GiST-backed). Only meaningful within one frame: pass `collection` or `coordinateSystem` alongside. A box of lower rank is zero-filled on the missing coordinates
+  """
+  intersects: BoundingBoxInput
   kind: RoiKindChoices
   name: StrFilterLookup
+
+  """
+  Filter to annotations pinned to every one of these coordinates, e.g. [{name: 't', value: 3}]. GIN-backed containment on the stored coordinate dict; an annotation that spans a coordinate does not match a pin on it
+  """
+  pinnedTo: [CoordinateInput!]
 
   """Search by name (case-insensitive substring)"""
   search: String
@@ -711,6 +726,21 @@ type AnnotationLayer implements Layer {
 input AnnotationOrder @oneOf {
   id: Ordering
   name: Ordering
+}
+
+"""
+One shape of a bulk draw: the per-annotation subset of CreateAnnotationInput, without the collection/scene target
+"""
+input AnnotationSpecInput {
+  coordinates: [CoordinateInput!] = null
+  description: String = null
+  fillColor: [Int!] = null
+  filled: Boolean = null
+  kind: RoiKind!
+  name: String = null
+  strokeColor: [Int!] = null
+  strokeWidth: Float = null
+  vectors: [ThreeDVector!]!
 }
 
 """The `Any` scalar any type"""
@@ -1082,6 +1112,14 @@ type BoundingBox {
   max: [Float!]!
 
   """The lower corner, in the coordinate order of the coordinate system"""
+  min: [Float!]!
+}
+
+"""
+An axis-aligned box as a min and a max corner, in the coordinate order of the frame it is asked in
+"""
+input BoundingBoxInput {
+  max: [Float!]!
   min: [Float!]!
 }
 
@@ -1759,6 +1797,14 @@ type CoordinateGraph {
 }
 
 """
+A discrete coordinate an annotation is pinned to, e.g. a timepoint or a channel
+"""
+input CoordinateInput {
+  name: String!
+  value: Int!
+}
+
+"""
 A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions
 """
 type CoordinateSystem {
@@ -1934,13 +1980,13 @@ Input for drawing an annotation. Provide exactly one of `collection` (append to 
 """
 input CreateAnnotationInput {
   collection: ID = null
+  coordinates: [CoordinateInput!] = null
   description: String = null
   fillColor: [Int!] = null
   filled: Boolean = null
   kind: RoiKind!
   name: String = null
   scene: ID = null
-  selectors: [SelectorInput!] = null
   strokeColor: [Int!] = null
   strokeWidth: Float = null
   vectors: [ThreeDVector!]!
@@ -1956,6 +2002,15 @@ input CreateAnnotationLayerInput {
   order: Int = null
   scene: ID!
   visible: Boolean = null
+}
+
+"""
+Input for drawing many annotations in one call. Provide exactly one of `collection` or `scene` (same semantics as createAnnotation); the transform chain and version resolve once for the whole batch
+"""
+input CreateAnnotationsInput {
+  annotations: [AnnotationSpecInput!]!
+  collection: ID = null
+  scene: ID = null
 }
 
 """
@@ -5059,6 +5114,11 @@ type Mutation {
   createAnnotationLayer(input: CreateAnnotationLayerInput!): AnnotationLayer!
 
   """
+  Draw many annotations in one call, into a collection or onto a scene (exactly one of the two, same semantics as createAnnotation). The transform chain and version resolve once for the whole batch, and the rows insert in bulk
+  """
+  createAnnotations(input: CreateAnnotationsInput!): [Annotation!]!
+
+  """
   Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it
   """
   createCalibration(input: CreateCalibrationInput!): CoordinateSystem!
@@ -7492,6 +7552,11 @@ type Query {
   """List tables created by the current user"""
   mytables(filters: TableFilter, ordering: [TableOrder!]! = [], pagination: OffsetPaginationInput): [Table!]!
 
+  """
+  The k annotations of one collection nearest to a point, by cube distance between the point and each annotation's intrinsic bounding box (GiST-accelerated; 0 inside the box). Scoped to one collection because boxes only compare within one frame; the point is in the collection's nearest-intrinsic space, in its coordinate order
+  """
+  nearestAnnotations(collection: ID!, limit: Int! = 10, point: [Float!]!): [Annotation!]!
+
   """Get a single objective by ID"""
   objective(
     """The unique identifier of an object"""
@@ -8742,14 +8807,6 @@ input Selector {
   z: DimSelector = null
 }
 
-"""
-Input for pinning an annotation to a coordinate on a discrete axis, e.g. a timepoint or a channel
-"""
-input SelectorInput {
-  axis: String!
-  index: Int!
-}
-
 """An ordered composition of child transformations, applied first to last"""
 type SequenceTransformation implements Transformation {
   createdAt: DateTime!
@@ -9968,13 +10025,13 @@ input UpdateAnimationInput {
 Input for editing an annotation. Only the supplied fields change; new vectors re-derive the bounding box against the current transform chain
 """
 input UpdateAnnotationInput {
+  coordinates: [CoordinateInput!] = null
   description: String = null
   fillColor: [Int!] = null
   filled: Boolean = null
   id: ID!
   kind: RoiKind = null
   name: String = null
-  selectors: [SelectorInput!] = null
   strokeColor: [Int!] = null
   strokeWidth: Float = null
   vectors: [ThreeDVector!] = null

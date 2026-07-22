@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router";
 import { useDeleteAnnotationMutation } from "@/mikro-next/api/graphql";
 import { useRoiSelectionStore } from "../store/roiSelectionStore";
 
@@ -9,8 +8,11 @@ function formatRoiKind(kind: string) {
   return kind.charAt(0) + kind.slice(1).toLowerCase();
 }
 
+// No detail link: `/mikro/rois/:id` is the LEGACY image-anchored `ROI` page
+// (`roi(id:)`), a different table with a different id space — these are
+// `Annotation` UUIDs. Restore a link here once annotations have a page of
+// their own.
 export const SelectedRoiPanel = () => {
-  const navigate = useNavigate();
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
   const removeSelectedRoi = useRoiSelectionStore((s) => s.removeSelectedRoi);
   const clearSelectedRois = useRoiSelectionStore((s) => s.clearSelectedRois);
@@ -122,14 +124,6 @@ export const SelectedRoiPanel = () => {
                 Remove
               </Button>
             </div>
-
-            <Button
-              size="xs"
-              className="mt-2 w-full"
-              onClick={() => navigate(`/mikro/rois/${roi.id}`)}
-            >
-              Open Data ROI
-            </Button>
           </div>
         ))}
       </div>

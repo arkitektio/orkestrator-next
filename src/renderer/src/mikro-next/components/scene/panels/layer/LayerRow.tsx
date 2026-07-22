@@ -1,22 +1,20 @@
 import { Button } from "@/components/ui/button";
-import { Crosshair, Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { isLayerDirty } from "./colormap-utils";
 import { layerSwatchBackground } from "./renderGraphSwatch";
 
 /**
  * A single compact layer row for the right-hand Layers panel. Displays a
- * colormap swatch, the layer name and quick toggles (visibility, focus, arm).
+ * colormap swatch, the layer name and quick toggles (visibility, focus).
  * Clicking the row selects the layer, which opens the render-graph flyout to
  * the left. All detailed editing lives in that flyout, never here.
  */
 export const LayerRow = ({
   layer,
   originalLayer,
-  isArmed,
   isSelected,
   onSelect,
-  onToggleArm,
   onUpdate,
   onFocus,
   onRemove,
@@ -28,10 +26,8 @@ export const LayerRow = ({
 }: {
   layer: LayerState;
   originalLayer: LayerState | undefined;
-  isArmed: boolean;
   isSelected: boolean;
   onSelect: () => void;
-  onToggleArm: () => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
   /** Remove the layer from its scene. */
@@ -108,22 +104,6 @@ export const LayerRow = ({
         />
       )}
       <div className="flex shrink-0 items-center opacity-60 transition-opacity group-hover:opacity-100">
-        <Button
-          variant="ghost"
-          size="xs"
-          className={`h-6 w-6 p-0 ${
-            isArmed
-              ? "text-cyan-200 hover:text-cyan-100"
-              : "text-white/70 hover:text-white"
-          }`}
-          title={isArmed ? "Disarm ROI constraints" : "Arm for ROI constraints"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleArm();
-          }}
-        >
-          <Crosshair className="h-3 w-3" />
-        </Button>
         <Button
           variant="ghost"
           size="xs"

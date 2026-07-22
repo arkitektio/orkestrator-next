@@ -263,7 +263,9 @@ server finds the scene's collection or mints it on first use together with its
 CS, its registration into the world, and its layer. That registration is an
 identity into the world, so the drawn **world** points are submitted as-is —
 there is no inverse transform at creation any more, and no per-armed-layer copy.
-Arming still gates drawing, but no longer decides where the shape lands.
+Arming plays no part: a shape lands in the scene's own coordinate system, so
+there is no layer for the user to be pointing at. EDIT mode + an active tool is
+the whole precondition for drawing.
 
 Reading (`layers/annotation/AnnotationLayer.tsx`): the layer composes its own
 server-resolved `pathToWorld` via `composePlacementPath`, the same way the mesh

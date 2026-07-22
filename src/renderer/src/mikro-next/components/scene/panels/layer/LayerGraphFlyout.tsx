@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Crosshair, X } from "lucide-react";
+import { X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { PlacementChain } from "./PlacementChain";
 import {
@@ -15,19 +15,15 @@ import {
  */
 export const LayerGraphFlyout = ({
   layer,
-  isArmed,
   editor,
   onUpdate: _onUpdate,
-  onToggleArm,
   onClose,
   inline = false,
 }: {
   layer: LayerState;
-  isArmed: boolean;
   /** Lifted render-graph editing state (shared with the card header's Save). */
   editor: RenderGraphEditor;
   onUpdate: (updated: LayerState) => void;
-  onToggleArm: () => void;
   onClose: () => void;
   /**
    * When true, render only the editing body (no floating panel chrome or
@@ -63,17 +59,6 @@ export const LayerGraphFlyout = ({
         <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white/90">
           {label}
         </span>
-        <Button
-          variant="ghost"
-          size="xs"
-          className={`h-6 w-6 p-0 ${
-            isArmed ? "text-cyan-200" : "text-white/60 hover:text-white"
-          }`}
-          title={isArmed ? "Disarm ROI constraints" : "Arm for ROI constraints"}
-          onClick={onToggleArm}
-        >
-          <Crosshair className="h-3 w-3" />
-        </Button>
         <Button
           variant="ghost"
           size="xs"

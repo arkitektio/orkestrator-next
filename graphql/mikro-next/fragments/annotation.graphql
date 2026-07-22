@@ -22,7 +22,7 @@ fragment Annotation on Annotation {
     ...CoordinateSystem
   }
   # The discrete coordinates the shape is pinned to; one it does not pin, it
-  # spans. Read back as `coordinates`, written as `selectors` on the inputs.
+  # spans. `pinnedTo` on AnnotationFilter matches on exactly these.
   coordinates {
     name
     value
@@ -46,7 +46,7 @@ fragment ListAnnotation on Annotation {
   strokeWidth
   filled
   # The discrete coordinates the shape is pinned to; one it does not pin, it
-  # spans. Read back as `coordinates`, written as `selectors` on the inputs.
+  # spans. `pinnedTo` on AnnotationFilter matches on exactly these.
   coordinates {
     name
     value

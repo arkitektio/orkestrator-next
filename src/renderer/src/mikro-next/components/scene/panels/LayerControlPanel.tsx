@@ -78,11 +78,9 @@ const LayerCard = memo(function LayerCard({
   layer,
   expanded,
   originalLayer,
-  isArmed,
   viewportPercent,
   unplannable,
   onSelect,
-  onToggleArm,
   onUpdate,
   onFocus,
   onRemove,
@@ -91,11 +89,9 @@ const LayerCard = memo(function LayerCard({
   layer: LayerState;
   expanded: boolean;
   originalLayer: LayerState | undefined;
-  isArmed: boolean;
   viewportPercent?: number;
   unplannable?: UnplannableLayerInfo;
   onSelect: (id: string) => void;
-  onToggleArm: (id: string) => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
   onRemove: (id: string) => void;
@@ -107,7 +103,6 @@ const LayerCard = memo(function LayerCard({
   // children expect. Created inside the memoized card, so they only churn when
   // the card actually re-renders.
   const handleSelect = () => onSelect(layer.id);
-  const handleToggleArm = () => onToggleArm(layer.id);
   const handleRemove = () => onRemove(layer.id);
   return (
     <Collapsible
@@ -122,14 +117,12 @@ const LayerCard = memo(function LayerCard({
         embedded
         layer={layer}
         originalLayer={originalLayer}
-        isArmed={isArmed}
         isSelected={expanded}
         viewportPercent={viewportPercent}
         graphDirty={editor.dirty}
         savingGraph={editor.loading}
         onSaveGraph={editor.save}
         onSelect={handleSelect}
-        onToggleArm={handleToggleArm}
         onUpdate={onUpdate}
         onFocus={onFocus}
         onRemove={handleRemove}
@@ -141,9 +134,7 @@ const LayerCard = memo(function LayerCard({
             inline
             editor={editor}
             layer={layer}
-            isArmed={isArmed}
             onUpdate={onUpdate}
-            onToggleArm={handleToggleArm}
             onClose={onClose}
           />
         </div>
@@ -158,10 +149,8 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   const layers = useSceneStore((s) => s.layers);
   const originalLayers = useSceneStore((s) => s.originalLayers);
   const updateLayer = useSceneStore((s) => s.updateLayer);
-  const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
-  const toggleArmedLayerId = useSelectionStore((s) => s.toggleArmedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
   const layerViewRanges = useViewerStore((s) => s.layerViewRanges);
@@ -179,8 +168,8 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   });
 
   // Stable handlers so the memoized LayerCard actually skips re-render during a
-  // pan/orbit. The zustand actions (setSelectedLayerId, toggleArmedLayerId,
-  // updateLayer, fitToLayer) are already stable refs; these wrap
+  // pan/orbit. The zustand actions (setSelectedLayerId, updateLayer,
+  // fitToLayer) are already stable refs; these wrap
   // them without capturing per-render values (selection is read via a ref).
   const selectedRef = useRef(selectedLayerId);
   selectedRef.current = selectedLayerId;
@@ -188,10 +177,6 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   const handleSelect = useCallback(
     (id: string) => setSelectedLayerId(selectedRef.current === id ? null : id),
     [setSelectedLayerId],
-  );
-  const handleToggleArm = useCallback(
-    (id: string) => toggleArmedLayerId(id),
-    [toggleArmedLayerId],
   );
   const handleClose = useCallback(
     () => setSelectedLayerId(null),
@@ -256,11 +241,9 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
         layer={layer}
         expanded={isExpanded(layer)}
         originalLayer={originalLayers.find((o) => o.id === layer.id)}
-        isArmed={armedLayerIds.includes(layer.id)}
         viewportPercent={fraction != null ? Math.round(fraction * 100) : undefined}
         unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
-        onToggleArm={handleToggleArm}
         onUpdate={updateLayer}
         onFocus={fitToLayer}
         onRemove={handleRemove}

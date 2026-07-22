@@ -583,6 +583,8 @@ export type AnnotationFilter = {
   OR?: InputMaybe<AnnotationFilter>;
   /** Filter by the collection this annotation belongs to */
   collection?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter to annotations whose intrinsic bounding box contains this point (GiST-backed). Only meaningful within one frame: pass `collection` or `coordinateSystem` alongside */
+  containsPoint?: InputMaybe<Array<Scalars['Float']['input']>>;
   /** Filter by the coordinate system this annotation is drawn in (its collection's own) */
   coordinateSystem?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the dataset the annotations are drawn over, following the collection's derivation edge */
@@ -591,8 +593,12 @@ export type AnnotationFilter = {
   id?: InputMaybe<Scalars['UUID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter to annotations whose intrinsic bounding box overlaps this box (GiST-backed). Only meaningful within one frame: pass `collection` or `coordinateSystem` alongside. A box of lower rank is zero-filled on the missing coordinates */
+  intersects?: InputMaybe<BoundingBoxInput>;
   kind?: InputMaybe<RoiKindChoices>;
   name?: InputMaybe<StrFilterLookup>;
+  /** Filter to annotations pinned to every one of these coordinates, e.g. [{name: 't', value: 3}]. GIN-backed containment on the stored coordinate dict; an annotation that spans a coordinate does not match a pin on it */
+  pinnedTo?: InputMaybe<Array<CoordinateInput>>;
   /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -620,6 +626,19 @@ export type AnnotationLayer = Layer & {
 export type AnnotationOrder =
   { id: Ordering; name?: never; }
   |  { id?: never; name: Ordering; };
+
+/** One shape of a bulk draw: the per-annotation subset of CreateAnnotationInput, without the collection/scene target */
+export type AnnotationSpecInput = {
+  coordinates?: InputMaybe<Array<CoordinateInput>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
+  filled?: InputMaybe<Scalars['Boolean']['input']>;
+  kind: RoiKind;
+  name?: InputMaybe<Scalars['String']['input']>;
+  strokeColor?: InputMaybe<Array<Scalars['Int']['input']>>;
+  strokeWidth?: InputMaybe<Scalars['Float']['input']>;
+  vectors: Array<Scalars['ThreeDVector']['input']>;
+};
 
 /** Input for assigning object-level permissions to a user */
 export type AssignUserPermissionInput = {
@@ -901,6 +920,12 @@ export type BoundingBox = {
   max: Array<Scalars['Float']['output']>;
   /** The lower corner, in the coordinate order of the coordinate system */
   min: Array<Scalars['Float']['output']>;
+};
+
+/** An axis-aligned box as a min and a max corner, in the coordinate order of the frame it is asked in */
+export type BoundingBoxInput = {
+  max: Array<Scalars['Float']['input']>;
+  min: Array<Scalars['Float']['input']>;
 };
 
 /** A composition of child transformations, each acting on a named subset of the axes */
@@ -1454,6 +1479,12 @@ export type CoordinateGraph = {
   transformations: Array<Transformation>;
 };
 
+/** A discrete coordinate an annotation is pinned to, e.g. a timepoint or a channel */
+export type CoordinateInput = {
+  name: Scalars['String']['input'];
+  value: Scalars['Int']['input'];
+};
+
 /** A named coordinate space: a node in the transformation graph. Its axes are ordered, and that order is the order of the array's dimensions */
 export type CoordinateSystem = {
   __typename?: 'CoordinateSystem';
@@ -1583,13 +1614,13 @@ export type CreateAnnotationCollectionInput = {
 /** Input for drawing an annotation. Provide exactly one of `collection` (append to it) or `scene` (draw on the scene: its annotation collection is found, or minted on first use together with its coordinate system, its registration into the world, and its layer) */
 export type CreateAnnotationInput = {
   collection?: InputMaybe<Scalars['ID']['input']>;
+  coordinates?: InputMaybe<Array<CoordinateInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   filled?: InputMaybe<Scalars['Boolean']['input']>;
   kind: RoiKind;
   name?: InputMaybe<Scalars['String']['input']>;
   scene?: InputMaybe<Scalars['ID']['input']>;
-  selectors?: InputMaybe<Array<SelectorInput>>;
   strokeColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   strokeWidth?: InputMaybe<Scalars['Float']['input']>;
   vectors: Array<Scalars['ThreeDVector']['input']>;
@@ -1603,6 +1634,13 @@ export type CreateAnnotationLayerInput = {
   order?: InputMaybe<Scalars['Int']['input']>;
   scene: Scalars['ID']['input'];
   visible?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** Input for drawing many annotations in one call. Provide exactly one of `collection` or `scene` (same semantics as createAnnotation); the transform chain and version resolve once for the whole batch */
+export type CreateAnnotationsInput = {
+  annotations: Array<AnnotationSpecInput>;
+  collection?: InputMaybe<Scalars['ID']['input']>;
+  scene?: InputMaybe<Scalars['ID']['input']>;
 };
 
 /** Input for calibrating a dataset: creates a PHYSICAL coordinate system (axes carrying the units) and the single edge mapping the dataset's intrinsic pixels into it */
@@ -4324,6 +4362,8 @@ export type Mutation = {
   createAnnotationCollection: AnnotationCollection;
   /** Create a layer that renders an annotation collection's drawn shapes in a scene. The explicit path for a second scene: the collection's system must already be registered into that scene's world */
   createAnnotationLayer: AnnotationLayer;
+  /** Draw many annotations in one call, into a collection or onto a scene (exactly one of the two, same semantics as createAnnotation). The transform chain and version resolve once for the whole batch, and the rows insert in bulk */
+  createAnnotations: Array<Annotation>;
   /** Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it */
   createCalibration: CoordinateSystem;
   /** Create a new camera configuration */
@@ -4640,6 +4680,11 @@ export type MutationCreateAnnotationCollectionArgs = {
 
 export type MutationCreateAnnotationLayerArgs = {
   input: CreateAnnotationLayerInput;
+};
+
+
+export type MutationCreateAnnotationsArgs = {
+  input: CreateAnnotationsInput;
 };
 
 
@@ -6766,6 +6811,8 @@ export type Query = {
   mysnapshots: Array<Snapshot>;
   /** List tables created by the current user */
   mytables: Array<Table>;
+  /** The k annotations of one collection nearest to a point, by cube distance between the point and each annotation's intrinsic bounding box (GiST-accelerated; 0 inside the box). Scoped to one collection because boxes only compare within one frame; the point is in the collection's nearest-intrinsic space, in its coordinate order */
+  nearestAnnotations: Array<Annotation>;
   /** Get a single objective by ID */
   objective: Objective;
   /** List microscope objectives */
@@ -7174,6 +7221,13 @@ export type QueryMytablesArgs = {
   filters?: InputMaybe<TableFilter>;
   ordering?: Array<TableOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryNearestAnnotationsArgs = {
+  collection: Scalars['ID']['input'];
+  limit?: Scalars['Int']['input'];
+  point: Array<Scalars['Float']['input']>;
 };
 
 
@@ -8295,12 +8349,6 @@ export type Selector = {
   z?: InputMaybe<DimSelector>;
 };
 
-/** Input for pinning an annotation to a coordinate on a discrete axis, e.g. a timepoint or a channel */
-export type SelectorInput = {
-  axis: Scalars['String']['input'];
-  index: Scalars['Int']['input'];
-};
-
 /** An ordered composition of child transformations, applied first to last */
 export type SequenceTransformation = Transformation & {
   __typename?: 'SequenceTransformation';
@@ -9271,13 +9319,13 @@ export type UpdateAnimationInput = {
 
 /** Input for editing an annotation. Only the supplied fields change; new vectors re-derive the bounding box against the current transform chain */
 export type UpdateAnnotationInput = {
+  coordinates?: InputMaybe<Array<CoordinateInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   filled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   kind?: InputMaybe<RoiKind>;
   name?: InputMaybe<Scalars['String']['input']>;
-  selectors?: InputMaybe<Array<SelectorInput>>;
   strokeColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   strokeWidth?: InputMaybe<Scalars['Float']['input']>;
   vectors?: InputMaybe<Array<Scalars['ThreeDVector']['input']>>;

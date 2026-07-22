@@ -4,7 +4,6 @@ import { Line } from "../primitives/Line";
 import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
-import { useSelectionStore } from "../store/selectionStore";
 import { useViewerStore } from "../store/viewerStore";
 import { useCreateAnnotationMutation } from "@/mikro-next/api/graphql";
 import type { DrawnRoi } from "../store/roiDrawingStore";
@@ -17,8 +16,6 @@ export const RoiDrawer = () => {
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
   const sceneId = useSceneStore((s) => s.id);
   const sceneLayers = useSceneStore((s) => s.sceneLayers);
-  const layers = useSceneStore((s) => s.layers);
-  const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
   const currentZ = useViewerStore((s) => s.currentZ);
 
   // Drawing on the scene mints its annotation collection, the collection's
@@ -37,11 +34,6 @@ export const RoiDrawer = () => {
   const [startPos, setStartPos] = useState<THREE.Vector3 | null>(null);
   const [currentPos, setCurrentPos] = useState<THREE.Vector3 | null>(null);
   const [polyPoints, setPolyPoints] = useState<THREE.Vector3[]>([]);
-
-  const armedLayers = useMemo(
-    () => layers.filter((layer) => armedLayerIds.includes(layer.id)),
-    [armedLayerIds, layers],
-  );
 
   const pointOnCurrentSlice = useCallback(
     (point: THREE.Vector3) => new THREE.Vector3(point.x, point.y, currentZ),
@@ -90,11 +82,10 @@ export const RoiDrawer = () => {
     [activeTool, addDrawnRoi, submitRoi],
   );
 
-  // Only render when in EDIT mode with an active tool and at least one armed
-  // layer. Arming no longer decides WHERE the shape lands — the scene does —
-  // but it still gates drawing, so a stray click on an empty scene cannot mint
-  // an annotation collection.
-  if (interactionMode !== "EDIT" || !activeTool || armedLayers.length === 0) return null;
+  // EDIT mode + a tool is the whole condition. Arming a layer is not part of
+  // it: shapes land in the scene's own coordinate system, so there is no layer
+  // for the user to be pointing at.
+  if (interactionMode !== "EDIT" || !activeTool) return null;
 
   const isPolygonLike = activeTool === "POLYGON" || activeTool === "PATH";
 

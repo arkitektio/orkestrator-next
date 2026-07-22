@@ -1,12 +1,14 @@
 import {
-  GeneralZarrAccessGrant,
   MikroClient,
   SceneZarrStoreDescriptor,
   ZarrStore,
-} from "../zarr/zarr_stores/type";
-import { ConfiguredS3Store } from "../zarr/zarr_stores/s3Store";
-import { RequestGeneralZarrAccessDocument, RequestGeneralZarrAccessMutation, SceneFragment } from "@/mikro-next/api/graphql";
+} from "@/lib/zarr/store/types";
+import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
+import { SceneFragment } from "@/mikro-next/api/graphql";
 import { isImageLayer } from "../core/layerGuards";
+import { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
+
+export { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
 
 /**
  * Zarr store construction for a scene: gather the unique data-array stores an
@@ -30,20 +32,6 @@ export function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, 
   }
 
   return descriptors;
-}
-
-export async function requestGeneralAccess(client: MikroClient): Promise<GeneralZarrAccessGrant> {
-  const access = (await client.mutate({
-    mutation: RequestGeneralZarrAccessDocument,
-    variables: { input: {} },
-  })) as { data?: RequestGeneralZarrAccessMutation };
-
-  const credentials = access.data?.requestGeneralZarrAccess;
-  if (!credentials) {
-    throw new Error("Failed to obtain general Zarr access credentials");
-  }
-
-  return credentials;
 }
 
 export async function createConfiguredSceneStores(

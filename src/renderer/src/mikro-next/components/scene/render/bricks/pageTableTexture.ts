@@ -1,13 +1,13 @@
 import * as THREE from "three";
-import type { Vec3 } from "../../../core/octree/levelGeometry";
+import type { Vec3 } from "../../core/octree/levelGeometry";
 import {
   encodePageEntry,
   pageEntryIndex,
   type PageFlag,
   type PageTableLayout,
-} from "../../../core/octree/pageTableLayout";
+} from "../../core/octree/pageTableLayout";
 import { uploadTexSubImage3D } from "./texSubImage3d";
-import type { SceneRenderer } from "../../gpu/sceneRenderer";
+import type { SceneRenderer } from "../gpu/sceneRenderer";
 
 /**
  * GPU page table: ONE packed RGBA8 3D texture per (layer, mode) holding

@@ -20,7 +20,7 @@ import type {
   Array as ZarrArray,
 } from "zarrita"
 
-import { LRUCache } from "@/mikro-next/components/scene/zarr/caches/in_memory_lru"
+import { LRUCache } from "@/lib/zarr/caches/inMemoryLru"
 import { create_codec_pipeline } from "./internals/codec-pipeline"
 import { BasicIndexer } from "./internals/indexer"
 import { setter } from "./internals/setter"
@@ -32,7 +32,7 @@ import {
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
 import { disposeWorker, getMetaId, workerFetchDecode, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
-import { isWorkerFetchCapableStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type"
+import { isWorkerFetchCapableStore } from "@/lib/zarr/store/types"
 import { serializeRequestInit } from "./s3-request"
 
 /**

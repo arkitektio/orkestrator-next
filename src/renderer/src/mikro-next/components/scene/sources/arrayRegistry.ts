@@ -1,5 +1,5 @@
 import { open, type Array as ZarrArray, type DataType } from "zarrita";
-import { ZarrStore } from "../zarr/zarr_stores/type";
+import { ZarrStore } from "@/lib/zarr/store/types";
 
 export type OpenedZarrArray = ZarrArray<DataType, ZarrStore>;
 

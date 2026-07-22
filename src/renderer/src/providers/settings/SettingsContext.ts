@@ -1,4 +1,4 @@
-import { createScopedStoreHooks } from "@/mikro-next/components/scene/store/createScopedStore";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import { defaultSettings, Settings } from "./validator";
 import type { SettingsStoreState } from "./settingsStore";
 

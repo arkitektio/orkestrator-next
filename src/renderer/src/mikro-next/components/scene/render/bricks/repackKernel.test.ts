@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { repackBrick, type RepackChunk } from "../../../core/octree/brickRepack";
-import type { BrickSpec } from "../../../core/octree/brickSpec";
-import { buildLayerLevelGeometry } from "../../../core/octree/levelGeometry";
-import { fetchVoxelBox, nodeVoxelBox } from "../../../core/octree/nodeAddress";
+import { repackBrick, type RepackChunk } from "../../core/octree/brickRepack";
+import type { BrickSpec } from "../../core/octree/brickSpec";
+import { buildLayerLevelGeometry } from "../../core/octree/levelGeometry";
+import { fetchVoxelBox, nodeVoxelBox } from "../../core/octree/nodeAddress";
 import {
   MINMAX_INIT_MAX,
   MINMAX_INIT_MIN,

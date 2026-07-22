@@ -23,10 +23,8 @@ const plan = (over: Partial<AttributePlanLike> = {}): AttributePlanLike => ({
 });
 
 const key = (voxel: [number, number, number] = [1, 2, 0]): AttributeFetchKey => ({
-  layerId: "layer-a",
-  voxelIndex: voxel,
-  sliceSignature: "sig",
   systemId: "sys-1",
+  pointId: `layer-a:${voxel.join(",")}:sig`,
 });
 
 describe("planIdentity", () => {

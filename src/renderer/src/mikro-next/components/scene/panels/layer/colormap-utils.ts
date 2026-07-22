@@ -3,7 +3,7 @@ import type { LayerState } from "../../core/layerModel";
 import {
   colormapGradientCSS as sceneColormapGradientCSS,
   sampleColorMapCSS as sceneSampleColorMapCSS,
-} from "../../zarr/colormaps";
+} from "../../render/colormaps";
 
 export const COLORMAP_OPTIONS = Object.values(ColorMap);
 

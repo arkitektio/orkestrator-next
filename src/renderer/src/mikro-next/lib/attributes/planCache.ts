@@ -4,7 +4,8 @@ import {
   AttributePlansQuery,
   AttributePlansQueryVariables,
 } from "@/mikro-next/api/graphql";
-import type { AttributePlanLike } from "../core/attributes/attributeTypes";
+import type { AttributePlanLike } from "./attributeTypes";
+import { LruMap } from "./lruMap";
 
 /**
  * Plan discovery, memoized per probed system for the scene's life. The
@@ -16,7 +17,7 @@ import type { AttributePlanLike } from "../core/attributes/attributeTypes";
  * subsequent hover with one map lookup. Discovery failures are not cached, so
  * a later hover retries.
  *
- * Fetched imperatively (the `sceneStores.ts` pattern) — no hook mounts, so
+ * Fetched imperatively (the `zarrSources.ts` pattern) — no hook mounts, so
  * the Guard.Mikro obligation stays where it already is, on the hosts
  * mounting `<Scene>`.
  */
@@ -39,16 +40,40 @@ const toStructuralPlans = (
   fragments: readonly AttributePlanFragment[],
 ): readonly AttributePlanLike[] => fragments;
 
-export class AttributePlanCache {
-  private plans = new Map<string, Promise<readonly AttributePlanLike[]>>();
-  /** Settled results, for the tracker's synchronous fast path. */
-  private resolved = new Map<string, readonly AttributePlanLike[]>();
+const DEFAULT_SYSTEM_CAP = 64;
 
-  constructor(private readonly client: QueryClient) {}
+export class AttributePlanCache {
+  private plans: LruMap<Promise<readonly AttributePlanLike[]>>;
+  /** Settled results, for the tracker's synchronous fast path. */
+  private resolved: LruMap<readonly AttributePlanLike[]>;
+
+  constructor(
+    private readonly client: QueryClient,
+    /** Bounded per SYSTEM (GC for app-lifetime hosts; a scene never nears it). */
+    systemCap: number = DEFAULT_SYSTEM_CAP,
+  ) {
+    this.plans = new LruMap(systemCap);
+    this.resolved = new LruMap(systemCap);
+  }
 
   /** Already-fetched plans for a system, synchronously; null while unknown. */
   peek(systemId: string): readonly AttributePlanLike[] | null {
     return this.resolved.get(systemId) ?? null;
+  }
+
+  /**
+   * Drop one system's cached discovery (or everything). For long-lived
+   * hosts whose FIELD edges may change under them — the next request
+   * re-discovers; a scene's remount-freshness contract never needs this.
+   */
+  invalidate(systemId?: string): void {
+    if (systemId === undefined) {
+      this.plans.drain();
+      this.resolved.drain();
+      return;
+    }
+    this.plans.take(systemId);
+    this.resolved.take(systemId);
   }
 
   get(systemId: string): Promise<readonly AttributePlanLike[]> {
@@ -83,7 +108,7 @@ export class AttributePlanCache {
           return plans;
         })
         .catch((error) => {
-          this.plans.delete(systemId); // do not cache failures
+          this.plans.take(systemId); // do not cache failures
           console.warn(`[attributePlans] system ${systemId}: discovery failed`, error);
           throw error;
         });

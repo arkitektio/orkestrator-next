@@ -8,7 +8,7 @@ import { CameraController } from "./cameras/CameraController";
 import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { AnimationPlayer } from "./cameras/AnimationPlayer";
 import { CanvasSync } from "./cameras/CanvasSync";
-import { KeyboardModeController } from "./controllers/KeyboardModeController";
+import { KeyboardModeController } from "./interactions/KeyboardModeController";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";

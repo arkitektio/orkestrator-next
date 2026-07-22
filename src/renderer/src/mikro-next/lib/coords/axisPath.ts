@@ -1,4 +1,4 @@
-import type { AttributePathStep, AttributePathTransformLike } from "./attributeTypes";
+import type { PathStep, PathTransformLike } from "./pathTypes";
 
 /**
  * Named-axis application of a server-resolved transformation path.
@@ -74,7 +74,7 @@ const writeNamed = (
 };
 
 const applyTransform = (
-  transform: AttributePathTransformLike | null,
+  transform: PathTransformLike | null,
   inverted: boolean,
   coords: AxisCoords,
 ): AxisCoords | null => {
@@ -157,7 +157,7 @@ const applyTransform = (
       let current: AxisCoords | null = coords;
       for (const child of ordered) {
         current = applyTransform(
-          child as AttributePathTransformLike,
+          child as PathTransformLike,
           inverted,
           current,
         );
@@ -171,7 +171,7 @@ const applyTransform = (
       let current: AxisCoords | null = coords;
       for (const child of transform.transformations ?? []) {
         current = applyTransform(
-          child as AttributePathTransformLike,
+          child as PathTransformLike,
           inverted,
           current,
         );
@@ -186,7 +186,7 @@ const applyTransform = (
 };
 
 export const applyStepToCoords = (
-  step: AttributePathStep,
+  step: PathStep,
   coords: AxisCoords,
 ): AxisCoords | null => applyTransform(step.transformation, step.inverted, coords);
 
@@ -196,7 +196,7 @@ export const applyStepToCoords = (
  * reachable from this point.
  */
 export function applyPathToCoords(
-  path: readonly AttributePathStep[],
+  path: readonly PathStep[],
   coords: AxisCoords,
 ): AxisCoords | null {
   let current: AxisCoords | null = coords;

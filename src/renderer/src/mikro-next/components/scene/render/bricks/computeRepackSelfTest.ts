@@ -1,7 +1,7 @@
-import { repackBrick, type RepackChunk } from "../../../core/octree/brickRepack";
-import type { BrickSpec } from "../../../core/octree/brickSpec";
-import type { LevelGeometry } from "../../../core/octree/levelGeometry";
-import { getWebGPUDevice, type SceneRenderer } from "../../gpu/sceneRenderer";
+import { repackBrick, type RepackChunk } from "../../core/octree/brickRepack";
+import type { BrickSpec } from "../../core/octree/brickSpec";
+import type { LevelGeometry } from "../../core/octree/levelGeometry";
+import { getWebGPUDevice, type SceneRenderer } from "../gpu/sceneRenderer";
 import { createBrickAtlas, disposeBrickAtlas } from "./brickAtlas";
 import { createGpuRepacker } from "./computeRepack";
 import type { RepackDispatchInput } from "./repackKernel";

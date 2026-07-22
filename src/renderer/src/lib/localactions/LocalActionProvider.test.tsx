@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // (the scoped-store factory) and pulls in the dialog registry. Stub those heavy
 // imports so the unit under test (condition matching) is isolated.
 vi.mock("@/app/dialog", () => ({ useDialog: () => ({}) }));
-vi.mock("@/mikro-next/components/scene/store/createScopedStore", () => ({
+vi.mock("@/lib/generic/createScopedStore", () => ({
   createScopedStoreHooks: () => ({
     StoreContext: { Provider: ({ children }: { children: unknown }) => children },
     useScopedStore: () => undefined,

@@ -1,11 +1,11 @@
 import type * as THREE from "three";
-import type { RepackChunk } from "../../../core/octree/brickRepack";
-import type { Vec3 } from "../../../core/octree/levelGeometry";
+import type { RepackChunk } from "../../core/octree/brickRepack";
+import type { Vec3 } from "../../core/octree/levelGeometry";
 import {
   getBackendTexture,
   getWebGPUDevice,
   type SceneRenderer,
-} from "../../gpu/sceneRenderer";
+} from "../gpu/sceneRenderer";
 import {
   MINMAX_ENTRY_BYTES,
   MINMAX_INIT_MAX,

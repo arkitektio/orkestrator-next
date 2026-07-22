@@ -12,14 +12,14 @@ import {
 
 import type { LayerState, SceneTransformContext } from "../../core/layerModel";
 import { buildVolumeVoxelToWorld } from "../../core/octree/voxelFrame";
-import { composePlacementPath } from "../../core/transformGraph";
+import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 import { affineToMatrix4 } from "../../core/worldTransform";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
-import { MeshCollectionManager } from "./meshManager";
-import { MeshParquetSource } from "./meshParquet";
-import { parseMeshEncoding, parseMeshGrid } from "./meshSpec";
+import { MeshCollectionManager } from "../../render/mesh/meshManager";
+import { MeshParquetSource } from "../../render/mesh/meshParquet";
+import { parseMeshEncoding, parseMeshGrid } from "../../render/mesh/meshSpec";
 
 /**
  * MeshLayer renderer: a versioned, coordinate-system-anchored MeshCollection

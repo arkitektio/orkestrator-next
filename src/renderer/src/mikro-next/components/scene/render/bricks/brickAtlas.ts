@@ -1,9 +1,10 @@
 import * as THREE from "three";
-import type { BrickArray } from "../../../core/octree/brickRepack";
-import type { BrickSpec } from "../../../core/octree/brickSpec";
-import type { Vec3 } from "../../../core/octree/levelGeometry";
+import { atlasKindForDtype, type AtlasKind } from "../../core/octree/atlasFormat";
+import type { BrickArray } from "../../core/octree/brickRepack";
+import type { BrickSpec } from "../../core/octree/brickSpec";
+import type { Vec3 } from "../../core/octree/levelGeometry";
 import { uploadTexSubImage3D } from "./texSubImage3d";
-import type { SceneRenderer } from "../../gpu/sceneRenderer";
+import type { SceneRenderer } from "../gpu/sceneRenderer";
 
 /**
  * The brick pool's GPU side: one big `Data3DTexture` per (layer, mode)
@@ -17,7 +18,7 @@ import type { SceneRenderer } from "../../gpu/sceneRenderer";
 
 export type BrickAtlas = {
   texture: THREE.Data3DTexture;
-  kind: "r8" | "r32f";
+  kind: AtlasKind;
   /** Texels one slot occupies ([stored.x, stored.y, stored.z × channels]). */
   slotSize: Vec3;
   slotGrid: Vec3;
@@ -27,28 +28,6 @@ export type BrickAtlas = {
   /** Hardware-normalization factor (255 for R8, 1 for R32F). */
   dataScale: number;
   backing: BrickArray;
-};
-
-/**
- * Atlas storage format for a layer's dtype. This MUST mirror the codec worker's
- * DEFAULT-fidelity promotion (`lib/zarr/runner/codec-worker.ts`
- * `promoteChunkForTexture`): only **unsigned 8-bit** stays a `Uint8Array` and
- * uses an `R8` atlas; **every other dtype is promoted to `Float32Array`** and
- * uses `R32F`. In particular `int8`/`int16`/`uint16`/`uint32` all promote to
- * float32 — an earlier `dtype.includes("8")` test wrongly routed `int8` (a
- * signed, possibly-negative Float32Array) into a Uint8 R8 atlas, wrapping/
- * truncating its values.
- *
- * The scene never sets `textureFidelity`, so 'default' promotion is assumed. If
- * a caller ever requests 'low'/'high' fidelity (per-chunk-normalized uint8/
- * uint16), this decision would no longer match the worker's `promotedType` and
- * normalization would break — keep the two in lockstep.
- */
-export const atlasKindForDtype = (dtype: string): "r8" | "r32f" => {
-  const d = dtype.toLowerCase();
-  // Canonical "uint8" contains no "u1"; numpy-style unsigned 8-bit is "|u1".
-  const isUnsigned8 = d === "uint8" || d === "uint8clamped" || d.includes("u1");
-  return isUnsigned8 ? "r8" : "r32f";
 };
 
 export function createBrickAtlas(opts: {
@@ -70,7 +49,7 @@ export function createBrickAtlas(opts: {
    * represent nor quantize acceptably (a 1/255 step in g is a visible step in
    * lifetime), so they force r32f even over uint8 source data.
    */
-  kind?: "r8" | "r32f";
+  kind?: AtlasKind;
 }): BrickAtlas {
   const { spec, dtype, desiredSlots, maxExtent, filter } = opts;
   const kind = opts.kind ?? atlasKindForDtype(dtype);

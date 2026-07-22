@@ -8,10 +8,8 @@ import { planIdentity } from "./attributeTypes";
 import { createAttributeResolver } from "./attributeResolver";
 
 const key = (voxel: [number, number, number]): AttributeFetchKey => ({
-  layerId: "layer-a",
-  voxelIndex: voxel,
-  sliceSignature: "sig",
   systemId: "sys-1",
+  pointId: `layer-a:${voxel.join(",")}:sig`,
 });
 
 const makePlan = (edgeId: string): AttributePlanLike => ({
@@ -91,17 +89,17 @@ describe("createAttributeResolver", () => {
     settles[1]({ status: "rows", rows: [{ fresh: true }] });
     await tick();
     expect(delivered).toHaveLength(1);
-    expect(delivered[0][0].voxelIndex).toEqual([2, 0, 0]);
+    expect(delivered[0][0].pointId).toBe(key([2, 0, 0]).pointId);
   });
 
   it("never starts execution for a request superseded during discovery", async () => {
     const plans = [makePlan("a")];
-    const executedFor: number[] = [];
+    const executedFor: string[] = [];
 
     const resolver = createAttributeResolver({
       resolvePlans: async () => plans,
       executePlan: async (k, _p, isStale) => {
-        executedFor.push(k.voxelIndex[0]);
+        executedFor.push(k.pointId);
         expect(isStale()).toBe(false);
         return null;
       },
@@ -114,7 +112,7 @@ describe("createAttributeResolver", () => {
     await tick();
     await tick();
     // Only the newest request reaches execution at all.
-    expect(executedFor).toEqual([2]);
+    expect(executedFor).toEqual([key([2, 0, 0]).pointId]);
   });
 
   it("begins with an empty plan set so stale attributes clear", async () => {

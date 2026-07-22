@@ -206,9 +206,13 @@ export const evalTransform = (
   }
 };
 
+// Intentional module-level dedupe set for one-time diagnostics, capped so an
+// app-lifetime consumer can't grow it without bound (past the cap, warn-once
+// degrades to warn-never — acceptable for a diagnostics channel).
+const WARNED_EDGES_CAP = 256;
 const warnedEdges = new Set<string>();
 const warnOnce = (key: string, message: string) => {
-  if (warnedEdges.has(key)) return;
+  if (warnedEdges.has(key) || warnedEdges.size >= WARNED_EDGES_CAP) return;
   warnedEdges.add(key);
   console.warn(`[transformGraph] ${message}`);
 };

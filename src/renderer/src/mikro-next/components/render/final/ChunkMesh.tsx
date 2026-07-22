@@ -21,7 +21,7 @@ import {
   redColormap,
   viridisColormap,
 } from "./colormaps";
-import { resolveBaseColorRgb, sampleColorMapRgb } from "../../scene/zarr/colormaps";
+import { resolveBaseColorRgb, sampleColorMapRgb } from "../../scene/render/colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
 
 const VIEW_RADIUS = 20000; // Render radius around camera center

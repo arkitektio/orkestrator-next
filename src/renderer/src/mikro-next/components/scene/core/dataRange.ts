@@ -1,5 +1,5 @@
 import type { DataType } from "zarrita";
-import { mapDTypeToMinMax } from "../stores/utils";
+import { mapDTypeToMinMax } from "@/lib/zarr/indexing/dtype";
 import type { ImageLayerFragment } from "./layerGuards";
 
 /**

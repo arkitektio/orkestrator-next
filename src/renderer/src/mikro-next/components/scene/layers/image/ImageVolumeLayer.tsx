@@ -1,4 +1,4 @@
-import { BrickVolumeLayer } from "../../layers/bricks/BrickVolumeLayer";
+import { BrickVolumeLayer } from "../bricks/BrickVolumeLayer";
 
 /**
  * Registry entry for rendering an ImageLayer in 3D: the brick-pool

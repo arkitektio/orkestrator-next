@@ -14,7 +14,7 @@ import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../cor
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
-import { ByteBudgetChunkCache } from "../zarr/caches/byteBudgetChunkCache";
+import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache";
 import { BrickPoolState } from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
@@ -51,23 +51,23 @@ import {
 import type { LayerState } from "../core/layerModel";
 import type { SceneState } from "../store/sceneStore";
 import type { ViewerState } from "../store/viewerStore";
+import { atlasKindForDtype } from "../core/octree/atlasFormat";
 import {
-  atlasKindForDtype,
   createBrickAtlas,
   disposeBrickAtlas,
   writeBrickToAtlas,
   type BrickAtlas,
-} from "../render/bricks/gpu/brickAtlas";
+} from "../render/bricks/brickAtlas";
 import {
   createGpuRepacker,
   isGpuRepackEnabled,
   type GpuFlushOutcome,
   type GpuRepacker,
-} from "../render/bricks/gpu/computeRepack";
+} from "../render/bricks/computeRepack";
 import {
   runGpuRepackSelfTest,
   type GpuRepackSelfTestResult,
-} from "../render/bricks/gpu/computeRepackSelfTest";
+} from "../render/bricks/computeRepackSelfTest";
 import {
   clearPageTable,
   createPageTableTexture,
@@ -75,7 +75,7 @@ import {
   flushPageTable,
   setPageEntry,
   type PageTableTexture,
-} from "../render/bricks/gpu/pageTableTexture";
+} from "../render/bricks/pageTableTexture";
 
 /**
  * CPU-side octree residency: subscribes to `viewerStore.nodePlans`, fetches

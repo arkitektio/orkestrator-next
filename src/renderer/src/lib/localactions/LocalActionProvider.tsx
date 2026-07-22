@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 import { useDialog } from "@/app/dialog";
-import { createScopedStoreHooks } from "@/mikro-next/components/scene/store/createScopedStore";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import type { Structure as AppStructure } from "@/types";
 import type { InferedServiceMap, ServiceBuilderMap } from "../arkitekt/types";
 import type { ServiceMap } from "../arkitekt/provider";

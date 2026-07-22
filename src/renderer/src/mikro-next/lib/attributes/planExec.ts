@@ -1,4 +1,4 @@
-import type { AxisCoords } from "./axisPath";
+import type { AxisCoords } from "../coords/axisPath";
 import type { AttributePlanLike } from "./attributeTypes";
 
 /**

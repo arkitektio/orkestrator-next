@@ -1,4 +1,4 @@
-import { BrickPlaneLayer } from "../../layers/bricks/BrickPlaneLayer";
+import { BrickPlaneLayer } from "../bricks/BrickPlaneLayer";
 
 /**
  * Registry entry for rendering an ImageLayer in 2D: the brick-pool

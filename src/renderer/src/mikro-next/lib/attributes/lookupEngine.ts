@@ -5,6 +5,7 @@ import type {
   ParquetStoreLike,
 } from "./attributeTypes";
 import { planIdentity } from "./attributeTypes";
+import { LruMap } from "./lruMap";
 import type { BindParam, HeldValue } from "./planExec";
 import { buildKeyValues } from "./planExec";
 import { bindSqlLiteral, escapeSqlIdentifier, escapeSqlLiteral } from "./sqlBind";
@@ -18,16 +19,25 @@ import { bindSqlLiteral, escapeSqlIdentifier, escapeSqlLiteral } from "./sqlBind
  *    and DuckDB caches parquet footers per connection, so revisiting a table
  *    is range reads only);
  *  - per-store NAMED + SCOPED secrets (`attr_store_<id>`), so concurrent
- *    consumers and the table UI's global secret never clobber each other;
+ *    consumers and the table UI's global secret never clobber each other.
+ *    Grant/region round-trips run OFF the query chain (network overlaps
+ *    queued DuckDB work); only the `CREATE SECRET` SQL is serialized, and a
+ *    grant is recorded as installed only after that SQL succeeds;
  *  - a prepared-statement LRU keyed by plan identity, with a runtime-probed
  *    fallback to escaped-literal SQL for builds that cannot prepare
- *    `read_parquet(?)`;
+ *    `read_parquet(?)`. A statement that has answered before is PROVEN: its
+ *    later failures are real errors and surface as such — only a first-use
+ *    failure downgrades the build to literal SQL;
  *  - a result LRU keyed `(plan identity, key tuple)` — hovering anywhere
  *    inside one object hits it without touching DuckDB. Parquet contents
  *    changing deliberately does NOT invalidate (per the plan contract; a
  *    version-bumped edge changes the key instead);
- *  - all queries serialized on an internal chain, with a staleness check
- *    before each so a superseded hover never issues SQL.
+ *  - all queries serialized on an internal chain, with staleness checks both
+ *    before and after the connection/secret legs so a superseded hover never
+ *    issues SQL;
+ *  - `warm(plan)` pre-pays a plan's fixed costs (connection, secret,
+ *    prepared statement) without querying, so the first hover pays only the
+ *    row read.
  *
  * Dependency-injected (no imports from React, Apollo, or duckdb-wasm) so unit
  * tests drive it with a fake connection.
@@ -80,6 +90,12 @@ const secretName = (storeId: string) =>
  */
 const grantUrl = (grant: ParquetGrantLike) => `s3://${grant.bucket}/${grant.key}`;
 
+/** Unambiguous result-LRU key: strings are quoted so values never collide. */
+const resultKey = (statementKey: string, keyValues: readonly BindParam[]): string =>
+  `${statementKey}|${keyValues
+    .map((value) => (typeof value === "string" ? JSON.stringify(value) : String(value)))
+    .join(",")}`;
+
 const normalizeValue = (value: unknown): unknown => {
   if (typeof value === "bigint") {
     const asNumber = Number(value);
@@ -110,13 +126,29 @@ const rowToRecord = (row: unknown): AttributeRow => {
   return normalizeValue((row ?? {}) as Record<string, unknown>) as AttributeRow;
 };
 
+type StoredGrant = ParquetGrantLike & { expiresAt: number };
+
+type StatementEntry = {
+  statement: PreparedStatementLike;
+  /** A query has succeeded on it — later failures are real, not capability gaps. */
+  proven: boolean;
+};
+
 export class AttributeLookupEngine {
   private connectionPromise: Promise<DuckConnectionLike> | null = null;
   private chain: Promise<unknown> = Promise.resolve();
-  private grants = new Map<string, ParquetGrantLike & { expiresAt: number }>();
+  private regionPromise: Promise<string> | null = null;
   private region: string | null = null;
-  private statements = new Map<string, PreparedStatementLike>();
-  private results = new Map<string, readonly AttributeRow[]>();
+  /** Store id → freshest settled grant (network result, chain-free). */
+  private grants = new Map<string, StoredGrant>();
+  /** Store id → inflight grant fetch, so concurrent misses share one request. */
+  private grantFetches = new Map<string, Promise<StoredGrant>>();
+  /** Store id → the grant whose scoped secret is INSTALLED on the connection. */
+  private installedSecrets = new Map<string, StoredGrant>();
+  private statements = new LruMap<StatementEntry>(STATEMENT_LRU_SIZE, (entry) => {
+    void entry.statement.close().catch(() => undefined);
+  });
+  private results = new LruMap<readonly AttributeRow[]>(RESULT_LRU_SIZE);
   private inflight = new Map<string, Promise<readonly AttributeRow[] | null>>();
   /** Flipped when this build cannot prepare the plan SQL; probed at runtime. */
   private preferLiteral = false;
@@ -163,13 +195,42 @@ export class AttributeLookupEngine {
   ): readonly AttributeRow[] | null {
     const keyValues = buildKeyValues(plan, held);
     if (keyValues === null) return null;
-    const cacheKey = `${planIdentity(plan)}|${keyValues.map(String).join(",")}`;
-    const cached = this.results.get(cacheKey);
-    if (cached === undefined) return null;
-    // Refresh LRU recency.
-    this.results.delete(cacheKey);
-    this.results.set(cacheKey, cached);
-    return cached;
+    return this.results.get(resultKey(planIdentity(plan), keyValues)) ?? null;
+  }
+
+  /**
+   * Pre-pay a plan's fixed costs — connection, scoped secret, prepared
+   * statement — without running a query, so the first real lookup pays only
+   * the row read. Cheap to call repeatedly: a fully-warm plan returns
+   * synchronously, and failures are silent (the lookup path re-attempts and
+   * surfaces them properly).
+   */
+  warm(plan: AttributePlanLike): void {
+    if (this.disposed) return;
+    const store = plan.lookup.store;
+    const grant = this.grants.get(store.id);
+    const secretFresh =
+      grant !== undefined &&
+      this.installedSecrets.get(store.id) === grant &&
+      grant.expiresAt > Date.now() + GRANT_EXPIRY_SKEW_MS;
+    const statementReady =
+      this.preferLiteral || this.statements.get(planIdentity(plan)) !== undefined;
+    if (secretFresh && statementReady) return;
+
+    const grantReady = this.grantFor(store);
+    grantReady.catch(() => undefined);
+    void this.enqueue(async () => {
+      if (this.disposed) return;
+      const connection = await this.ensureConnection();
+      await this.installSecret(connection, store, await grantReady);
+      if (!this.preferLiteral) {
+        await this.ensureStatement(
+          connection,
+          planIdentity(plan),
+          plan.lookup.sql,
+        ).catch(() => undefined);
+      }
+    }).catch(() => undefined);
   }
 
   /**
@@ -181,42 +242,43 @@ export class AttributeLookupEngine {
     column: AttributeColumnLike,
     value: HeldValue,
   ): Promise<readonly AttributeRow[] | null> {
+    let ref: ReturnType<AttributeLookupEngine["referenceLookup"]>;
+    try {
+      ref = this.referenceLookup(column);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+    return this.cachedQuery(ref.key, ref.sql, [value], ref.store, () => false);
+  }
+
+  /**
+   * Synchronous result-LRU peek of an already-followed reference — re-opening
+   * an expand the session has answered before costs nothing.
+   */
+  peekReference(
+    column: AttributeColumnLike,
+    value: HeldValue,
+  ): readonly AttributeRow[] | null {
     const target = column.references;
-    if (!target) {
-      return Promise.reject(new Error(`column ${column.name} references nothing`));
-    }
-    const keyColumn = target.columns.find(
-      (candidate) =>
-        candidate.role === "COORDINATE" && candidate.axisType === "INDEX",
-    );
-    if (!keyColumn) {
-      return Promise.reject(
-        new Error(`referenced table ${target.name} has no INDEX key column`),
-      );
-    }
-    const attributes = target.columns.filter(
-      (candidate) => candidate.role !== "COORDINATE",
-    );
-    const selectList = attributes.length
-      ? attributes.map((attr) => escapeSqlIdentifier(attr.name)).join(", ")
-      : "*";
-    const sql = `SELECT ${selectList} FROM read_parquet(?) WHERE ${escapeSqlIdentifier(keyColumn.name)} = ?`;
-    return this.cachedQuery(`ref:${target.id}`, sql, [value], target.store, () => false);
+    if (!target) return null;
+    return this.results.get(resultKey(`ref:${target.id}`, [value])) ?? null;
   }
 
   dispose(): void {
     this.disposed = true;
-    const statements = [...this.statements.values()];
-    this.statements.clear();
-    this.results.clear();
+    const statements = this.statements.drain();
+    this.results.drain();
     this.inflight.clear();
+    this.grants.clear();
+    this.grantFetches.clear();
+    this.installedSecrets.clear();
     const connection = this.connectionPromise;
     this.connectionPromise = null;
     void this.chain
       .catch(() => undefined)
       .then(async () => {
-        for (const statement of statements) {
-          await statement.close().catch(() => undefined);
+        for (const entry of statements) {
+          await entry.statement.close().catch(() => undefined);
         }
         if (connection) {
           await connection.then((c) => c.close()).catch(() => undefined);
@@ -233,26 +295,30 @@ export class AttributeLookupEngine {
     store: ParquetStoreLike,
     isStale: () => boolean,
   ): Promise<readonly AttributeRow[] | null> {
-    const cacheKey = `${statementKey}|${keyValues.map(String).join(",")}`;
+    const cacheKey = resultKey(statementKey, keyValues);
     const cached = this.results.get(cacheKey);
-    if (cached !== undefined) {
-      // Refresh LRU recency.
-      this.results.delete(cacheKey);
-      this.results.set(cacheKey, cached);
-      return Promise.resolve(cached);
-    }
+    if (cached !== undefined) return Promise.resolve(cached);
     const running = this.inflight.get(cacheKey);
     if (running !== undefined) return running;
+
+    // Kick the grant fetch NOW, off the chain: the token round-trip overlaps
+    // whatever queued DuckDB work precedes this query instead of stalling it.
+    const grantReady = this.grantFor(store);
+    grantReady.catch(() => undefined); // observed again inside the task
 
     const task = this.enqueue(async () => {
       if (this.disposed || isStale()) return null;
       const again = this.results.get(cacheKey);
       if (again !== undefined) return again;
       const connection = await this.ensureConnection();
-      const grant = await this.ensureSecret(connection, store);
+      const grant = await grantReady;
+      await this.installSecret(connection, store, grant);
+      // The connection/secret legs can await network; a request superseded
+      // meanwhile must still never issue SQL.
+      if (this.disposed || isStale()) return null;
       const params: BindParam[] = [grantUrl(grant), ...keyValues];
       const rows = await this.runQuery(connection, statementKey, sql, params);
-      this.rememberResult(cacheKey, rows);
+      this.results.set(cacheKey, rows);
       return rows;
     }).finally(() => {
       this.inflight.delete(cacheKey);
@@ -281,22 +347,59 @@ export class AttributeLookupEngine {
     return this.connectionPromise;
   }
 
-  private async ensureSecret(
-    connection: DuckConnectionLike,
-    store: ParquetStoreLike,
-  ): Promise<ParquetGrantLike> {
+  /**
+   * The store's access grant — network only, deduped, never on the query
+   * chain. Region and grant are requested in PARALLEL (the region is the
+   * same for every store and memoized after the first resolve). A grant
+   * within the expiry skew of running out is refetched.
+   */
+  private grantFor(store: ParquetStoreLike): Promise<StoredGrant> {
     const cached = this.grants.get(store.id);
     if (cached && cached.expiresAt > Date.now() + GRANT_EXPIRY_SKEW_MS) {
-      return cached; // Secret for this grant already exists and is fresh.
+      return Promise.resolve(cached);
     }
-    if (this.region === null) this.region = await this.deps.requestRegion();
-    const grant = {
-      ...(await this.deps.requestGrant(store.id)),
-      expiresAt: 0,
-    };
-    grant.expiresAt = Date.now() + grant.expiresIn * 1000;
-    this.grants.set(store.id, grant);
+    let fetching = this.grantFetches.get(store.id);
+    if (!fetching) {
+      this.regionPromise ??= this.deps
+        .requestRegion()
+        .then((region) => {
+          this.region = region;
+          return region;
+        })
+        .catch((error) => {
+          this.regionPromise = null; // do not cache failures
+          throw error;
+        });
+      fetching = Promise.all([this.deps.requestGrant(store.id), this.regionPromise])
+        .then(([grant]) => {
+          const stored: StoredGrant = {
+            ...grant,
+            expiresAt: Date.now() + grant.expiresIn * 1000,
+          };
+          this.grants.set(store.id, stored);
+          return stored;
+        })
+        .finally(() => {
+          this.grantFetches.delete(store.id);
+        });
+      this.grantFetches.set(store.id, fetching);
+    }
+    return fetching;
+  }
 
+  /**
+   * Install the store's scoped secret for `grant` unless that exact grant is
+   * already the one on the connection. SQL only — runs inside the chain; the
+   * network half happened in `grantFor`. Recorded as installed only AFTER
+   * the CREATE succeeds, so a failed CREATE never leaves an hour-long
+   * "secret exists" illusion behind.
+   */
+  private async installSecret(
+    connection: DuckConnectionLike,
+    store: ParquetStoreLike,
+    grant: StoredGrant,
+  ): Promise<void> {
+    if (this.installedSecrets.get(store.id) === grant) return;
     const options = [
       "TYPE s3",
       "PROVIDER config",
@@ -315,7 +418,7 @@ export class AttributeLookupEngine {
     await connection.query(
       `CREATE OR REPLACE SECRET "${secretName(store.id)}" (${options.join(", ")})`,
     );
-    return grant;
+    this.installedSecrets.set(store.id, grant);
   }
 
   private async runQuery(
@@ -325,14 +428,26 @@ export class AttributeLookupEngine {
     params: readonly BindParam[],
   ): Promise<readonly AttributeRow[]> {
     if (!this.preferLiteral) {
+      let entry: StatementEntry | null = null;
       try {
-        const statement = await this.ensureStatement(connection, statementKey, sql);
-        const result = await statement.query(...params);
-        return result.toArray().map((row) => rowToRecord(row));
+        entry = await this.ensureStatement(connection, statementKey, sql);
       } catch {
-        // Prepared `read_parquet(?)` (or bigint binding) unsupported on this
-        // build — fall through to literal SQL; if THAT succeeds, remember.
-        this.dropStatement(statementKey);
+        // This build cannot prepare the SQL (`read_parquet(?)` unsupported):
+        // a capability gap, fall through to literal.
+      }
+      if (entry) {
+        try {
+          const result = await entry.statement.query(...params);
+          entry.proven = true;
+          return result.toArray().map((row) => rowToRecord(row));
+        } catch (error) {
+          this.statements.take(statementKey);
+          // A statement that has answered before failing now is a REAL error
+          // (network, credentials) and must surface — only a first-use
+          // failure (bigint binding, placeholder support) means the build
+          // cannot prepare, which the literal fallback below probes.
+          if (entry.proven) throw error;
+        }
       }
     }
     const result = await connection.query(bindSqlLiteral(sql, params));
@@ -344,35 +459,44 @@ export class AttributeLookupEngine {
     connection: DuckConnectionLike,
     statementKey: string,
     sql: string,
-  ): Promise<PreparedStatementLike> {
+  ): Promise<StatementEntry> {
     const cached = this.statements.get(statementKey);
-    if (cached) {
-      // Refresh LRU recency.
-      this.statements.delete(statementKey);
-      this.statements.set(statementKey, cached);
-      return cached;
-    }
-    const statement = await connection.prepare(sql);
-    this.statements.set(statementKey, statement);
-    if (this.statements.size > STATEMENT_LRU_SIZE) {
-      const oldest = this.statements.keys().next().value;
-      if (oldest !== undefined) this.dropStatement(oldest);
-    }
-    return statement;
+    if (cached) return cached;
+    const entry: StatementEntry = {
+      statement: await connection.prepare(sql),
+      proven: false,
+    };
+    this.statements.set(statementKey, entry);
+    return entry;
   }
 
-  private dropStatement(statementKey: string): void {
-    const statement = this.statements.get(statementKey);
-    if (!statement) return;
-    this.statements.delete(statementKey);
-    void statement.close().catch(() => undefined);
-  }
-
-  private rememberResult(cacheKey: string, rows: readonly AttributeRow[]): void {
-    this.results.set(cacheKey, rows);
-    if (this.results.size > RESULT_LRU_SIZE) {
-      const oldest = this.results.keys().next().value;
-      if (oldest !== undefined) this.results.delete(oldest);
+  /** The SQL, statement key, and store for a column's declared reference. */
+  private referenceLookup(column: AttributeColumnLike): {
+    key: string;
+    sql: string;
+    store: ParquetStoreLike;
+  } {
+    const target = column.references;
+    if (!target) {
+      throw new Error(`column ${column.name} references nothing`);
     }
+    const keyColumn = target.columns.find(
+      (candidate) =>
+        candidate.role === "COORDINATE" && candidate.axisType === "INDEX",
+    );
+    if (!keyColumn) {
+      throw new Error(`referenced table ${target.name} has no INDEX key column`);
+    }
+    const attributes = target.columns.filter(
+      (candidate) => candidate.role !== "COORDINATE",
+    );
+    const selectList = attributes.length
+      ? attributes.map((attr) => escapeSqlIdentifier(attr.name)).join(", ")
+      : "*";
+    return {
+      key: `ref:${target.id}`,
+      sql: `SELECT ${selectList} FROM read_parquet(?) WHERE ${escapeSqlIdentifier(keyColumn.name)} = ?`,
+      store: target.store,
+    };
   }
 }

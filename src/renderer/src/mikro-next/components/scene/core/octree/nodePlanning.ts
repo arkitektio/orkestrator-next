@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { DataType } from "zarrita";
-import { mapDTypeToTextureBytes } from "../../stores/utils";
+import { mapDTypeToTextureBytes } from "@/lib/zarr/indexing/dtype";
 import { buildSliceSignature } from "../sliceSignature";
 import { PREFETCH_MARGIN, expandVoxelRange } from "../viewportPlanning";
 import { affineToMatrix4 } from "../worldTransform";

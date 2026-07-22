@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
-import { createScopedStoreHooks } from "./createScopedStore";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 
 export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META" | "PROBE" | "AUTO_PROBE";
 export type DisplayMode = "2D" | "3D";

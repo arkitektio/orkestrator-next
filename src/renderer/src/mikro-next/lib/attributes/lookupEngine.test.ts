@@ -34,17 +34,36 @@ type FakeLog = {
   prepared: string[];
   statementCalls: unknown[][];
   closedStatements: number;
+  regionRequests: number;
+  grantRequests: string[];
 };
 
 const makeFake = (options?: {
   failPrepare?: boolean;
   rows?: unknown[];
   grant?: { bucket: string; key: string };
+  /** Reject CREATE SECRET queries this many times before succeeding. */
+  failSecretTimes?: number;
+  /** statement.query call indices (0-based, across all statements) that reject. */
+  failStatementCalls?: readonly number[];
 }): { deps: LookupEngineDeps; log: FakeLog } => {
-  const log: FakeLog = { queries: [], prepared: [], statementCalls: [], closedStatements: 0 };
+  const log: FakeLog = {
+    queries: [],
+    prepared: [],
+    statementCalls: [],
+    closedStatements: 0,
+    regionRequests: 0,
+    grantRequests: [],
+  };
   const rows = options?.rows ?? [{ area: 12.5 }];
+  let secretFailuresLeft = options?.failSecretTimes ?? 0;
+  let statementCallIndex = 0;
   const connection: DuckConnectionLike = {
     query: async (sql) => {
+      if (sql.includes("CREATE OR REPLACE SECRET") && secretFailuresLeft > 0) {
+        secretFailuresLeft--;
+        throw new Error("CREATE SECRET failed");
+      }
       log.queries.push(sql);
       return { toArray: () => rows };
     },
@@ -53,6 +72,10 @@ const makeFake = (options?: {
       log.prepared.push(sql);
       const statement: PreparedStatementLike = {
         query: async (...params) => {
+          const index = statementCallIndex++;
+          if (options?.failStatementCalls?.includes(index)) {
+            throw new Error("transient statement failure");
+          }
           log.statementCalls.push(params);
           return { toArray: () => rows };
         },
@@ -66,17 +89,24 @@ const makeFake = (options?: {
   };
   const deps: LookupEngineDeps = {
     connect: async () => connection,
-    requestGrant: async (storeId) => ({
-      accessKey: `ak-${storeId}`,
-      secretKey: "sk",
-      sessionToken: "st",
-      bucket: options?.grant?.bucket ?? "b",
-      // Per-store default so reference lookups (their own store) get their
-      // own grant, as the real backend does.
-      key: options?.grant?.key ?? (storeId === "pq2" ? "tracks.parquet" : "morph.parquet"),
-      expiresIn: 3600,
-    }),
-    requestRegion: async () => "us-east-1",
+    requestGrant: async (storeId) => {
+      log.grantRequests.push(storeId);
+      return {
+        accessKey: `ak-${storeId}`,
+        secretKey: "sk",
+        sessionToken: "st",
+        bucket: options?.grant?.bucket ?? "b",
+        // Per-store default so reference lookups (their own store) get their
+        // own grant, as the real backend does.
+        key:
+          options?.grant?.key ?? (storeId === "pq2" ? "tracks.parquet" : "morph.parquet"),
+        expiresIn: 3600,
+      };
+    },
+    requestRegion: async () => {
+      log.regionRequests++;
+      return "us-east-1";
+    },
     endpoint: { endpoint: "minio.local:9000", useSsl: false },
   };
   return { deps, log };
@@ -219,5 +249,105 @@ describe("AttributeLookupEngine", () => {
     await expect(
       engine.followReference({ name: "area", dtype: "DOUBLE" }, 1),
     ).rejects.toThrow();
+  });
+
+  it("surfaces a proven statement's failure instead of downgrading to literal", async () => {
+    // Call 0 succeeds (statement becomes proven), call 1 fails transiently.
+    const { deps, log } = makeFake({ failStatementCalls: [1] });
+    const engine = new AttributeLookupEngine(deps);
+    await engine.lookup(plan(), { t: 1, i: 7 });
+    await expect(engine.lookup(plan(), { t: 1, i: 8 })).rejects.toThrow(
+      "transient statement failure",
+    );
+    // No literal fallback ran for the failed lookup...
+    expect(log.queries.filter((q) => q.includes("read_parquet('"))).toHaveLength(0);
+    // ...and prepared statements are NOT permanently disabled: the next
+    // lookup re-prepares and succeeds.
+    const rows = await engine.lookup(plan(), { t: 1, i: 9 });
+    expect(rows).toEqual([{ area: 12.5 }]);
+    expect(log.prepared).toHaveLength(2);
+  });
+
+  it("retries CREATE SECRET on the next lookup after it fails", async () => {
+    const { deps, log } = makeFake({ failSecretTimes: 1 });
+    const engine = new AttributeLookupEngine(deps);
+    await expect(engine.lookup(plan(), { t: 1, i: 7 })).rejects.toThrow(
+      "CREATE SECRET failed",
+    );
+    // A failed CREATE must not leave a "secret exists" illusion behind.
+    const rows = await engine.lookup(plan(), { t: 1, i: 7 });
+    expect(rows).toEqual([{ area: 12.5 }]);
+    expect(log.queries.filter((q) => q.includes("CREATE OR REPLACE SECRET"))).toHaveLength(1);
+  });
+
+  it("warm pre-creates secret and statement so the first lookup only queries", async () => {
+    const { deps, log } = makeFake();
+    const engine = new AttributeLookupEngine(deps);
+    engine.warm(plan());
+    // The lookup enqueues behind the warm task, so awaiting it proves warm ran.
+    await engine.lookup(plan(), { t: 1, i: 7 });
+    expect(log.prepared).toHaveLength(1);
+    expect(
+      log.queries.filter((q) => q.includes("CREATE OR REPLACE SECRET")),
+    ).toHaveLength(1);
+    expect(log.statementCalls).toHaveLength(1);
+    // Re-warming a fully warm plan does nothing.
+    engine.warm(plan());
+    await engine.lookup(plan(), { t: 1, i: 8 });
+    expect(log.prepared).toHaveLength(1);
+    expect(
+      log.queries.filter((q) => q.includes("CREATE OR REPLACE SECRET")),
+    ).toHaveLength(1);
+  });
+
+  it("peekReference answers a followed reference synchronously, misses otherwise", async () => {
+    const { deps, log } = makeFake({ rows: [{ duration: 4.2 }] });
+    const engine = new AttributeLookupEngine(deps);
+    const column: AttributeColumnLike = {
+      name: "instance_id",
+      dtype: "BIGINT",
+      references: {
+        id: "tracks",
+        name: "tracks",
+        store: { id: "pq2", bucket: "b", key: "tracks.parquet" },
+        columns: [
+          { name: "instance_id", dtype: "BIGINT", role: "COORDINATE", axisType: "INDEX" },
+          { name: "duration", dtype: "DOUBLE", role: "ATTRIBUTE" },
+        ],
+      },
+    };
+    expect(engine.peekReference(column, 42)).toBeNull();
+    expect(engine.peekReference({ name: "area", dtype: "DOUBLE" }, 42)).toBeNull();
+    await engine.followReference(column, 42);
+    const queriesBefore = log.queries.length;
+    const statementsBefore = log.statementCalls.length;
+    expect(engine.peekReference(column, 42)).toEqual([{ duration: 4.2 }]);
+    expect(engine.peekReference(column, 43)).toBeNull();
+    expect(log.queries.length).toBe(queriesBefore);
+    expect(log.statementCalls.length).toBe(statementsBefore);
+  });
+
+  it("concurrent lookups on different stores share one region request", async () => {
+    const { deps, log } = makeFake();
+    const engine = new AttributeLookupEngine(deps);
+    const column: AttributeColumnLike = {
+      name: "instance_id",
+      dtype: "BIGINT",
+      references: {
+        id: "tracks",
+        name: "tracks",
+        store: { id: "pq2", bucket: "b", key: "tracks.parquet" },
+        columns: [
+          { name: "instance_id", dtype: "BIGINT", role: "COORDINATE", axisType: "INDEX" },
+          { name: "duration", dtype: "DOUBLE", role: "ATTRIBUTE" },
+        ],
+      },
+    };
+    await Promise.all([
+      engine.lookup(plan(), { t: 1, i: 7 }),
+      engine.followReference(column, 42),
+    ]);
+    expect(log.regionRequests).toBe(1);
+    expect([...log.grantRequests].sort()).toEqual(["pq1", "pq2"]);
   });
 });

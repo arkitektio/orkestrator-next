@@ -3,7 +3,7 @@ import {
   getBackend,
   getWebGPUDevice,
   type SceneRenderer,
-} from "../../gpu/sceneRenderer";
+} from "../gpu/sceneRenderer";
 
 /**
  * Partial 3D-texture upload via `device.queue.writeTexture` on the backend's

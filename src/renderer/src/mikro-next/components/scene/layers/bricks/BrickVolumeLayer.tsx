@@ -17,8 +17,8 @@ import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStore } from "../../store/viewStore";
-import { createVolumeNodeMaterial, updateChannelNodes } from "./brickNodeMaterials";
-import { buildChannelUniformData } from "./channelUniforms";
+import { createVolumeNodeMaterial, updateChannelNodes } from "../../render/bricks/brickNodeMaterials";
+import { buildChannelUniformData } from "../../render/bricks/channelUniforms";
 
 /**
  * Brick-pool replacement for the monolithic `VolumeLayer`/`VolumeTextureMesh`

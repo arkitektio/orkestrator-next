@@ -5,7 +5,7 @@ import type {
   AttributeColumnLike,
   AttributeRow,
   PlanRowsState,
-} from "../core/attributes/attributeTypes";
+} from "@/mikro-next/lib/attributes/attributeTypes";
 import { useViewerStore } from "../store/viewerStore";
 
 /**

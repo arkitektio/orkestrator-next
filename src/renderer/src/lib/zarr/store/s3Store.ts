@@ -1,7 +1,7 @@
 import { type AbsolutePath } from "@zarrita/storage";
-import { LRUCache } from "../caches/in_memory_lru";
+import { LRUCache } from "../caches/inMemoryLru";
 import { fetchS3Path, isExpiredS3FetchConfig, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
-import type { ZarrStore } from "./type";
+import type { ZarrStore } from "./types";
 
 
 class AsyncLockManager {

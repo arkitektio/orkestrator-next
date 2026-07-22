@@ -1,11 +1,11 @@
 import { createStore } from "zustand/vanilla";
-import { createScopedStoreHooks } from "./createScopedStore"
-import { MikroClient } from "../zarr/zarr_stores/type";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore"
+import { MikroClient } from "@/lib/zarr/store/types";
 import { RefObject } from "react";
 import * as THREE from 'three';
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { createConfiguredSceneStores } from "../data/sceneStores";
-import { openSceneArrays, type OpenedZarrArray } from "../data/arrayRegistry";
+import { createConfiguredSceneStores } from "../sources/zarrSources";
+import { openSceneArrays, type OpenedZarrArray } from "../sources/arrayRegistry";
 import { fitCameraToObject } from "../core/cameraFit";
 
 /** The subset of the R3F root state we need for camera operations */
@@ -40,7 +40,26 @@ import {
   type AttributeRow,
   type PlanRowsState,
   type ProbedAttributes,
-} from "../core/attributes/attributeTypes";
+} from "@/mikro-next/lib/attributes/attributeTypes";
+
+/**
+ * The scene's concrete attribute key: the generic `(systemId, pointId)`
+ * identity PLUS the probe fields the panels compare against
+ * (`isSameProbeKey`) and the tracker needs to rebuild coordinates.
+ */
+export type SceneAttributeKey = AttributeFetchKey & ProbeFetchKey;
+
+/** Build the scene key for a probed point: `pointId` encodes the probe identity. */
+export const sceneAttributeKey = (
+  probe: ProbeFetchKey,
+  systemId: string,
+): SceneAttributeKey => ({
+  layerId: probe.layerId,
+  voxelIndex: probe.voxelIndex,
+  sliceSignature: probe.sliceSignature,
+  systemId,
+  pointId: `${probe.layerId}:${probe.voxelIndex.join(",")}:${probe.sliceSignature}`,
+});
 
 /** Historical name for the probe result; kept so the markers / probe-orbit
  * consumers (`layerId`/`localPos`/`voxelIndex`) compile untouched. */
@@ -148,12 +167,12 @@ export interface ViewerState {
   /** "What is under this pixel?" — per-table lookup results for the active
    * probe, written by AttributeProbeTracker executing the probed system's
    * attribute plans locally (zarr sample + DuckDB lookup). */
-  probedAttributes: ProbedAttributes | null;
+  probedAttributes: ProbedAttributes<SceneAttributeKey> | null;
   /** A new probed point's plans are known: reset the slice to all-pending. */
-  beginProbedAttributes: (key: AttributeFetchKey, plans: readonly AttributePlanLike[]) => void;
+  beginProbedAttributes: (key: SceneAttributeKey, plans: readonly AttributePlanLike[]) => void;
   /** Async per-plan settlement: no-op set when the key went stale (same
    * late-arrival contract as mergeExactProbeValues). */
-  mergeAttributeRows: (key: AttributeFetchKey, planKey: string, state: PlanRowsState) => void;
+  mergeAttributeRows: (key: SceneAttributeKey, planKey: string, state: PlanRowsState) => void;
   clearProbedAttributes: () => void;
   /** The lazy one-hop FK follow (`references`), registered by the tracker so
    * the HUD can expand a referencing attribute without owning the engine —

@@ -39,7 +39,7 @@ import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
 import { RoiDrawerCanvas } from "./RoiDrawer";
 import { useViewerState, ViewerStateProvider } from "./ViewerStateProvider";
-import { resolveBaseColorRgb } from "../scene/zarr/colormaps";
+import { resolveBaseColorRgb } from "../scene/render/colormaps";
 
 // Grid overlay component with milestone positions
 const GridOverlay = ({

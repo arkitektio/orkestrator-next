@@ -18,39 +18,33 @@ import { attributeKeyId, planIdentity } from "./attributeTypes";
  * cache, `executePlan` to sample+lookup, and `begin`/`deliver` to the store.
  */
 
-export type AttributeResolver = {
-  request(key: AttributeFetchKey): void;
+export type AttributeResolver<K extends AttributeFetchKey = AttributeFetchKey> = {
+  request(key: K): void;
   dispose(): void;
 };
 
-export function createAttributeResolver(deps: {
+export function createAttributeResolver<K extends AttributeFetchKey>(deps: {
   /** Cached plan discovery for the probed system; null = none / unavailable. */
-  resolvePlans: (
-    key: AttributeFetchKey,
-  ) => Promise<readonly AttributePlanLike[] | null>;
+  resolvePlans: (key: K) => Promise<readonly AttributePlanLike[] | null>;
   /**
    * Sample + lookup for one plan. `isStale` becomes true the moment a newer
    * request supersedes this one — check it before expensive work. Resolving
    * null means "dropped, deliver nothing".
    */
   executePlan: (
-    key: AttributeFetchKey,
+    key: K,
     plan: AttributePlanLike,
     isStale: () => boolean,
   ) => Promise<PlanRowsState | null>;
   /** A new point's plans are known: mark them pending in the store. */
-  begin: (key: AttributeFetchKey, plans: readonly AttributePlanLike[]) => void;
-  deliver: (
-    key: AttributeFetchKey,
-    planKey: string,
-    state: PlanRowsState,
-  ) => void;
-}): AttributeResolver {
+  begin: (key: K, plans: readonly AttributePlanLike[]) => void;
+  deliver: (key: K, planKey: string, state: PlanRowsState) => void;
+}): AttributeResolver<K> {
   let disposed = false;
   /** Id of the most recent request — only its work may begin or deliver. */
   let latestId: string | null = null;
 
-  const run = async (key: AttributeFetchKey, id: string) => {
+  const run = async (key: K, id: string) => {
     const isStale = () => disposed || latestId !== id;
     let plans: readonly AttributePlanLike[] | null = null;
     try {
@@ -85,7 +79,7 @@ export function createAttributeResolver(deps: {
   };
 
   return {
-    request(key: AttributeFetchKey) {
+    request(key: K) {
       if (disposed) return;
       const id = attributeKeyId(key);
       if (id === latestId) return; // Dedupe: already newest.

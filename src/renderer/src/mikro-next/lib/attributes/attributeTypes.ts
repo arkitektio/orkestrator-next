@@ -1,5 +1,4 @@
-import type { TransformLike } from "../transformGraph";
-import type { ProbeFetchKey } from "../probe/probeTypes";
+import type { PathStep, PathTransformLike } from "../coords/pathTypes";
 
 /**
  * Attribute-plan data model — the read side of a FIELD edge. A plan is a pair
@@ -30,18 +29,11 @@ export type ZarrStoreLike = {
   chunks?: readonly number[] | null;
 };
 
-/** A path-step transformation: the shared shape plus the cache-key fields. */
-export type AttributePathTransformLike = NonNullable<TransformLike> & {
-  id?: string;
-  version?: number;
-};
+/** A path-step transformation (alias of the shared coords type). */
+export type AttributePathTransformLike = PathTransformLike;
 
 /** One step from the probed system toward the plan's root (pathToWorld contract). */
-export type AttributePathStep = {
-  transformation: AttributePathTransformLike | null;
-  /** Walk the edge output→input: invert it before composing. */
-  inverted: boolean;
-};
+export type AttributePathStep = PathStep;
 
 export type AttributeColumnLike = {
   name: string;
@@ -109,14 +101,23 @@ export const planIdentity = (plan: AttributePlanLike): string =>
     ),
   ].join("|");
 
-/** Identity of the probed point the attributes belong to. */
-export type AttributeFetchKey = ProbeFetchKey & {
+/**
+ * Identity of the probed point the attributes belong to. Deliberately
+ * scene-agnostic: `pointId` is an OPAQUE identity for the queried point —
+ * equal ids mean the same request (latest-wins dedupe), nothing more. Hosts
+ * extend this with whatever they need to rebuild coordinates (the scene adds
+ * `layerId`/`voxelIndex`/`sliceSignature`); the resolver and store merge
+ * logic are generic over that extension.
+ */
+export type AttributeFetchKey = {
   /** The probed system the plans were discovered for. */
   systemId: string;
+  /** Opaque point identity within that system. */
+  pointId: string;
 };
 
 export const attributeKeyId = (key: AttributeFetchKey): string =>
-  `${key.layerId}:${key.voxelIndex.join(",")}:${key.sliceSignature}:${key.systemId}`;
+  `${key.systemId}|${key.pointId}`;
 
 export const isSameAttributeKey = (
   a: AttributeFetchKey,
@@ -147,8 +148,8 @@ export type PlanRowsState = {
 };
 
 /** Everything known about the attributes under one probed point. */
-export type ProbedAttributes = {
-  key: AttributeFetchKey;
+export type ProbedAttributes<K extends AttributeFetchKey = AttributeFetchKey> = {
+  key: K;
   /** Plan identity (`planIdentity`) → its current state. */
   byPlan: Record<string, PlanRowsState>;
   /** Plan identity → display metadata, captured when the fetch began. The
@@ -166,12 +167,12 @@ export type ProbedAttributes = {
  * that as a no-op set (same state object) so late async arrivals never cause
  * renders. Mirrors `applyExactValues`.
  */
-export function applyAttributeRows(
-  current: ProbedAttributes | null,
-  key: AttributeFetchKey,
+export function applyAttributeRows<K extends AttributeFetchKey>(
+  current: ProbedAttributes<K> | null,
+  key: K,
   planKey: string,
   state: PlanRowsState,
-): ProbedAttributes | null {
+): ProbedAttributes<K> | null {
   if (current === null || !isSameAttributeKey(current.key, key)) return null;
   if (!(planKey in current.byPlan)) return null;
   return {

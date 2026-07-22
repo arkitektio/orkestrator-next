@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { RoiKind } from "@/mikro-next/api/graphql";
-import { createScopedStoreHooks } from "./createScopedStore";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 
 export interface SelectedRoi {
   id: string;

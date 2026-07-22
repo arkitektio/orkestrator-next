@@ -14,7 +14,7 @@ same graph).
 
 The backend (OME-NGFF RFC-5 aligned) obeys three rules; the renderer's
 adapter code is shaped by the same three. When editing anything in
-`core/transformGraph.ts` / `core/layerModel.ts` / `core/octree/levelGeometry.ts`,
+`@/mikro-next/lib/coords/transformGraph.ts` / `core/layerModel.ts` / `core/octree/levelGeometry.ts`,
 re-derive from here.
 
 **R1 — Edges are facts; matrices are client work.** The server ships
@@ -26,7 +26,7 @@ layer to ITS world" has a single right answer, resolved from the layer's
 dataset facts plus that scene's membership edges (never another scene's
 registration). What the server still never resolves is a MATRIX: evaluating
 each step, inverting the flagged ones, and folding the chain stays
-client-side, in exactly one module — `core/transformGraph.ts` — attached to
+client-side, in exactly one module — `@/mikro-next/lib/coords/transformGraph.ts` — attached to
 view-model state once per scene load. Do not compose matrices ad-hoc anywhere
 else.
 

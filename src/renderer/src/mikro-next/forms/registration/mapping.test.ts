@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evalTransform } from "../../components/scene/core/transformGraph";
+import { evalTransform } from "@/mikro-next/lib/coords/transformGraph";
 import {
   AxisLike,
   MappingRow,
@@ -24,7 +24,7 @@ import {
  *
  * The second half is the one that matters most: it round-trips what we author
  * back through `evalTransform` — the client-side evaluator in
- * scene/core/transformGraph.ts that actually renders these edges. An edge that
+ * mikro-next/lib/coords/transformGraph.ts that actually renders these edges. An edge that
  * this module emits and that evaluator misreads is invisible in production: it
  * degrades to identity behind a console warning and the layer just draws in the
  * wrong place. Asserting the matrix here is the only place that gap is caught.

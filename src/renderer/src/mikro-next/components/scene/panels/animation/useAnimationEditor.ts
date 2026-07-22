@@ -11,7 +11,7 @@ import type { PreferredView } from "@/mikro-next/api/graphql";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { serializeWaypoint } from "../../core/animation";
 import { captureCameraState } from "../../core/cameraState";
-import { uploadMediaBlob } from "../../data/mediaUpload";
+import { uploadMediaBlob } from "../../sources/mediaUpload";
 import { useAnimationStoreApi } from "../../store/animationStore";
 import { useModeStoreApi } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";

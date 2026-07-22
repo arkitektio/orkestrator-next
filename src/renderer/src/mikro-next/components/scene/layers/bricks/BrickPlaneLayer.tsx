@@ -2,8 +2,8 @@ import { useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { createPlaneNodeMaterial, updateChannelNodes } from "./brickNodeMaterials";
-import { buildChannelUniformData } from "./channelUniforms";
+import { createPlaneNodeMaterial, updateChannelNodes } from "../../render/bricks/brickNodeMaterials";
+import { buildChannelUniformData } from "../../render/bricks/channelUniforms";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import {
   buildSliceMap,

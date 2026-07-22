@@ -17,7 +17,7 @@
  * the invariant is structural rather than remembered, which is why the
  * parameters live on the row rather than in a parallel array.
  *
- * The other pole is `scene/core/transformGraph.ts` `evalTransform` — the
+ * The other pole is `mikro-next/lib/coords/transformGraph.ts` `evalTransform` — the
  * client-side evaluator that reads these edges back and turns them into
  * matrices. It, not the schema, is the tighter constraint on what is worth
  * authoring (see MODES and `renamesAnyAxis`). `mapping.test.ts` round-trips

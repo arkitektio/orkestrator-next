@@ -2,7 +2,7 @@ import { ColorMap } from "@/mikro-next/api/graphql";
 import {
   resolveBaseColorRgb,
   sampleColorMapCSS,
-} from "../../zarr/colormaps";
+} from "../../render/colormaps";
 import { ChannelRenderNode } from "../../core/renderGraph";
 
 /** Where on a colormap ramp we sample a channel's representative color — bright

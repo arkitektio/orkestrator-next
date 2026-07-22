@@ -9,7 +9,7 @@ import {
   type QualityTier,
 } from "../core/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
-import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/gpu/computeRepack";
+import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/computeRepack";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";

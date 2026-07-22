@@ -1,52 +1,46 @@
 import { useEffect } from "react";
-import {
-  RequestGeneralParquetAccessDocument,
-  RequestGeneralParquetAccessMutation,
-  RequestParquetAccessDocument,
-  RequestParquetAccessMutation,
-} from "@/mikro-next/api/graphql";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
-import {
-  ensureHttpfs,
-  getDuckDb,
-  resolveDuckDbEndpoint,
-} from "@/mikro-next/components/tables/useDuckDbTable";
-import { useViewerStoreApi } from "../store/viewerStore";
-import { useSceneStoreApi } from "../store/sceneStore";
-import type { ProbeResult } from "../core/probe/probeTypes";
+import { acquireAttributeService } from "@/mikro-next/lib/attributes/attributeService";
+import { createAttributeResolver } from "@/mikro-next/lib/attributes/attributeResolver";
 import type {
-  AttributeFetchKey,
   AttributePlanLike,
   PlanRowsState,
-} from "../core/attributes/attributeTypes";
-import { planIdentity } from "../core/attributes/attributeTypes";
-import { createAttributeResolver } from "../core/attributes/attributeResolver";
-import { AttributeLookupEngine } from "../core/attributes/lookupEngine";
-import type { AxisCoords } from "../core/attributes/axisPath";
-import { applyPathToCoords } from "../core/attributes/axisPath";
+} from "@/mikro-next/lib/attributes/attributeTypes";
+import { planIdentity } from "@/mikro-next/lib/attributes/attributeTypes";
+import type { AxisCoords } from "@/mikro-next/lib/coords/axisPath";
+import { applyPathToCoords } from "@/mikro-next/lib/coords/axisPath";
 import {
   buildHeld,
   isBackground,
   probeCoordsFor,
   resolveSampleIndex,
-} from "../core/attributes/planExec";
-import { AttributePlanCache } from "./attributePlanCache";
-import { createSampleSourceFactory } from "./attributeSampleSources";
+} from "@/mikro-next/lib/attributes/planExec";
+import {
+  sceneAttributeKey,
+  useViewerStoreApi,
+  type SceneAttributeKey,
+} from "../store/viewerStore";
+import { useSceneStoreApi } from "../store/sceneStore";
+import type { ProbeResult } from "../core/probe/probeTypes";
 import type { LayerState } from "../core/layerModel";
 import { buildSliceMap, resolveFixedDimIndex } from "../core/selection";
+import { createResidentSampler } from "./residentSampling";
 
 /**
  * Headless "what is under this pixel?" executor: whenever the active probe
- * moves, discover the probed system's attribute plans (cached per scene) and
- * run each one locally — map the point along the plan's path, sample the
- * field array, look the value up in its parquet with DuckDB — merging
- * per-table row states into the store as they settle. Transient store
- * subscription (no React re-render per probe move, P17), a debounce so hover
- * sweeps cost nothing until they settle, and a latest-wins resolver (the
- * exactValueResolver pattern).
+ * moves, discover the probed system's attribute plans and run each one
+ * locally through the SHARED attribute service (`acquireAttributeService`) —
+ * the scene contributes only what is genuinely scene-y: assembling the
+ * probed point's level-0 coordinates, the resident atlas fast path, and the
+ * store merges. Hover cards or tables acquiring the same service hit the
+ * caches this tracker warmed, and vice versa.
+ *
+ * Transient store subscription (no React re-render per probe move, P17), a
+ * debounce so hover sweeps cost nothing until they settle, and a latest-wins
+ * resolver (the exactValueResolver pattern).
  *
  * All GraphQL here is imperative (`client.query`/`client.mutate`, the
- * sceneStores.ts pattern): no hooks mount, so the Guard.Mikro obligation
+ * zarrSources.ts pattern): no hooks mount, so the Guard.Mikro obligation
  * stays on the hosts mounting <Scene>.
  */
 export function AttributeProbeTracker() {
@@ -56,44 +50,24 @@ export function AttributeProbeTracker() {
   const datalayer = useDatalayerEndpoint();
 
   useEffect(() => {
-    const planCache = new AttributePlanCache(client);
+    // Scene hosts always resolve a datalayer before mounting; the empty
+    // fallback only makes a foreign-store open fail (caught) rather than TS.
+    const acquired = acquireAttributeService({ client, datalayer: datalayer ?? "" });
+    const service = acquired.service;
 
-    const engine = new AttributeLookupEngine({
-      connect: async () => {
-        const db = await getDuckDb();
-        const connection = await db.connect();
-        await ensureHttpfs(connection);
-        return connection;
-      },
-      requestGrant: async (storeId) => {
-        const response = (await client.mutate({
-          mutation: RequestParquetAccessDocument,
-          variables: { input: { storeId } },
-        })) as { data?: RequestParquetAccessMutation };
-        const grant = response.data?.requestParquetAccess;
-        if (!grant) throw new Error("Failed to request parquet access");
-        return grant;
-      },
-      requestRegion: async () => {
-        const response = (await client.mutate({
-          mutation: RequestGeneralParquetAccessDocument,
-          variables: { input: {} },
-        })) as { data?: RequestGeneralParquetAccessMutation };
-        const grant = response.data?.requestGeneralParquetAccess;
-        if (!grant) throw new Error("Failed to request general parquet access");
-        return grant.region;
-      },
-      endpoint: resolveDuckDbEndpoint(datalayer),
+    // The scene's already-open arrays (hovering a rendered mask costs no new
+    // credentials); unknown stores fall back to the service's foreign open.
+    service.registerArrayProvider((storeId) => {
+      try {
+        return viewerStore.getState().getArrayForStoreId(storeId);
+      } catch {
+        return null;
+      }
     });
 
-    const sampleSourceFor = createSampleSourceFactory({
-      getArrayForStoreId: (storeId) => viewerStore.getState().getArrayForStoreId(storeId),
+    const residentSamplerFor = createResidentSampler({
       getBrickSystem: () => viewerStore.getState().brickSystem,
       getLayers: () => sceneStore.getState().layers,
-      client,
-      // Scene hosts always resolve a datalayer before mounting; the empty
-      // fallback only makes a foreign-store open fail (caught) rather than TS.
-      datalayer: datalayer ?? "",
     });
 
     const level0Of = (layer: LayerState) =>
@@ -118,7 +92,7 @@ export function AttributeProbeTracker() {
      * default) — so a locally-rooted plan reads the same slice the screen
      * shows.
      */
-    const coordsFor = (layer: LayerState, probe: AttributeFetchKey): AxisCoords => {
+    const coordsFor = (layer: LayerState, probe: SceneAttributeKey): AxisCoords => {
       const dims = layer.lens.dataset.axisNames;
       const level0 = level0Of(layer);
       const sliceMap = buildSliceMap(layer.lens.slices);
@@ -149,106 +123,57 @@ export function AttributeProbeTracker() {
     // UI, but a silent one is undebuggable — say WHERE it died, once per
     // (plan, reason).
     const warned = new Set<string>();
-    const unreachable = (
-      planKey: string,
-      reason: string,
-      detail?: unknown,
-    ): PlanRowsState => {
+    const warnUnreachable = (planKey: string, reason: string, detail?: unknown) => {
       const dedupeKey = `${planKey}:${reason}`;
       if (!warned.has(dedupeKey)) {
         warned.add(dedupeKey);
         console.warn(`[attributePlans] plan unreachable: ${reason}`, detail ?? "");
       }
-      return { status: "unreachable", rows: [] };
     };
 
     const executePlan = async (
-      key: AttributeFetchKey,
+      key: SceneAttributeKey,
       plan: AttributePlanLike,
       isStale: () => boolean,
     ): Promise<PlanRowsState | null> => {
-      const planKey = planIdentity(plan);
       const layer = layerById(key.layerId);
       if (!layer) {
-        return unreachable(planKey, "probed layer missing from scene", {
+        warnUnreachable(planIdentity(plan), "probed layer missing from scene", {
           layerId: key.layerId,
         });
+        return { status: "unreachable", rows: [] };
       }
-
-      const startCoords = coordsFor(layer, key);
-      const mapped = plan.path.length
-        ? applyPathToCoords(plan.path, startCoords)
-        : startCoords;
-      if (mapped === null) {
-        return unreachable(planKey, "cannot map the probed point along the plan's path", {
-          table: plan.table.name,
-          startCoords,
-          path: plan.path.map(
-            (step) => `${step.inverted ? "~" : ""}${step.transformation?.__typename}`,
-          ),
-        });
-      }
-      const index = resolveSampleIndex(plan, mapped);
-      if (index === null) {
-        return unreachable(planKey, "mapped point does not index the field array", {
-          table: plan.table.name,
-          mapped,
-          axes: [...plan.sample.system.axes].sort((a, b) => a.order - b.order).map((a) => a.name),
-          shape: plan.sample.store.shape,
-        });
-      }
-
-      const source = sampleSourceFor(plan);
-
-      // Resident-first sampling: the atlas CPU mirror is free and already on
-      // screen. The chunk read is a FALLBACK only (mask not rendered, mirror
-      // stale) — the point is to avoid network reads on the hover path, and
-      // hover does not need exactness.
-      let value = source.sampleSync(index);
-      let sampleSource: "resident" | "exact" = "resident";
-      if (value === null) {
-        value = await source.sampleExact(index);
-        sampleSource = "exact";
-        if (isStale()) return null;
-      }
-      if (value === null) {
-        return { status: "error", rows: [], error: "could not sample the field array" };
-      }
-      if (isBackground(value)) {
-        return { status: "background", rows: [], sampledValue: value, sampleSource };
-      }
-      const held = buildHeld(plan, mapped, value);
-      if (held === null) {
-        return unreachable(planKey, "held values do not cover the plan's key axes", {
-          table: plan.table.name,
-          passthrough: plan.sample.passthrough,
-          produces: plan.sample.produces,
-          mapped,
-        });
-      }
-      const rows = await engine.lookup(plan, held, isStale);
-      if (rows === null) return null;
-      return { status: "rows", rows, sampledValue: value, sampleSource };
+      return service.executePlanAt(plan, coordsFor(layer, key), {
+        isStale,
+        sampleSync: residentSamplerFor(plan),
+        onUnreachable: warnUnreachable,
+      });
     };
 
-    const resolver = createAttributeResolver({
-      resolvePlans: async (key) => planCache.get(key.systemId),
+    // Warm each system's plans once at discovery: secret creation and
+    // statement prepare then run on the engine's chain WHILE the first hover
+    // is still zarr-sampling, instead of serially after it.
+    const warmedSystems = new Set<string>();
+    const resolver = createAttributeResolver<SceneAttributeKey>({
+      resolvePlans: async (key) => {
+        const plans = await service.plansFor(key.systemId);
+        if (!warmedSystems.has(key.systemId)) {
+          warmedSystems.add(key.systemId);
+          for (const plan of plans) service.engine.warm(plan);
+        }
+        return plans;
+      },
       executePlan,
       begin: (key, plans) => viewerStore.getState().beginProbedAttributes(key, plans),
       deliver: (key, planKey, state) =>
         viewerStore.getState().mergeAttributeRows(key, planKey, state),
     });
 
-    const keyOf = (probe: ProbeResult): AttributeFetchKey | null => {
+    const keyOf = (probe: ProbeResult): SceneAttributeKey | null => {
       const layer = layerById(probe.layerId);
       const systemId = layer ? systemIdFor(layer) : null;
       if (!systemId) return null;
-      return {
-        layerId: probe.layerId,
-        voxelIndex: probe.voxelIndex,
-        sliceSignature: probe.sliceSignature,
-        systemId,
-      };
+      return sceneAttributeKey(probe, systemId);
     };
 
     /**
@@ -258,8 +183,8 @@ export function AttributeProbeTracker() {
      * step that would fetch) returns false and the debounced resolver path
      * runs unchanged, so the read-avoidance contract holds.
      */
-    const tryInstant = (key: AttributeFetchKey): boolean => {
-      const plans = planCache.peek(key.systemId);
+    const tryInstant = (key: SceneAttributeKey): boolean => {
+      const plans = service.peekPlans(key.systemId);
       if (plans === null) return false;
       if (plans.length === 0) {
         viewerStore.getState().beginProbedAttributes(key, plans);
@@ -284,7 +209,7 @@ export function AttributeProbeTracker() {
           states.push([planKey, { status: "unreachable", rows: [] }]);
           continue;
         }
-        const value = sampleSourceFor(plan).sampleSync(index);
+        const value = residentSamplerFor(plan)?.(index) ?? null;
         if (value === null) return false; // not resident: needs the async path
         if (isBackground(value)) {
           states.push([
@@ -298,7 +223,7 @@ export function AttributeProbeTracker() {
           states.push([planKey, { status: "unreachable", rows: [] }]);
           continue;
         }
-        const rows = engine.peek(plan, held);
+        const rows = service.peekRows(plan, held);
         if (rows === null) return false; // LRU miss: a real lookup is needed
         states.push([
           planKey,
@@ -342,7 +267,7 @@ export function AttributeProbeTracker() {
     viewerStore
       .getState()
       .registerFollowAttributeReference((column, value) =>
-        engine.followReference(column, value),
+        service.followReference(column, value),
       );
 
     let lastProbe = viewerStore.getState().probedCoordinate;
@@ -360,7 +285,8 @@ export function AttributeProbeTracker() {
       unsubscribe();
       if (debounce !== null) clearTimeout(debounce);
       resolver.dispose();
-      engine.dispose();
+      service.registerArrayProvider(null);
+      acquired.release();
       viewerStore.getState().registerFollowAttributeReference(null);
       viewerStore.getState().clearProbedAttributes();
     };

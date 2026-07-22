@@ -1,8 +1,8 @@
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { S3FetchConfig } from "@/lib/zarr/runner/s3-request";
-import { ConfiguredS3Store } from "@/mikro-next/components/scene/zarr/zarr_stores/s3Store";
-import { createScopedStoreHooks } from "@/mikro-next/components/scene/store/createScopedStore";
-import { ZarrStore } from "@/mikro-next/components/scene/zarr/zarr_stores/type";
+import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
+import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
+import { ZarrStore } from "@/lib/zarr/store/types";
 import { Array as ZarrArray, Chunk, DataType, get, open } from "zarrita";
 import { createStore } from "zustand/vanilla";
 import {

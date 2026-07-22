@@ -1,5 +1,5 @@
 import { getInitialVolumeTextureBudgetBytes } from "../lodPlanning";
-import { atlasKindForDtype } from "../../render/bricks/gpu/brickAtlas";
+import { atlasKindForDtype } from "./atlasFormat";
 import type { LayerState } from "../layerModel";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "./brickSpec";
 import { brickGridForLevel } from "./nodeAddress";

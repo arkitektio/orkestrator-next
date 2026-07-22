@@ -1,5 +1,5 @@
 import { resolveAxisIndices, type AxisIndices, type LayerAxisDims } from "../dims";
-import type { TransformLike } from "../transformGraph";
+import type { TransformLike } from "@/mikro-next/lib/coords/transformGraph";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in

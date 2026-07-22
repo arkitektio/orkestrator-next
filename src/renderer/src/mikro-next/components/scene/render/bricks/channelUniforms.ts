@@ -6,7 +6,7 @@ import { climToUnit } from "../../core/dataRange";
 import type { SlabDesc } from "../../core/octree/levelGeometry";
 import { cursorPaletteColor, resolvePhasorScale, type PhasorScale } from "../../core/phasor";
 import type { PhasorRenderNode } from "../../core/renderGraph";
-import { buildColormapAtlas } from "../../zarr/colormaps";
+import { buildColormapAtlas } from "../colormaps";
 import { toBase } from "@/lib/quantities";
 
 /**

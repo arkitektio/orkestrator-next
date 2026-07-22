@@ -1,5 +1,5 @@
-import type { RepackBrickInput } from "../../../core/octree/brickRepack";
-import type { Vec3 } from "../../../core/octree/levelGeometry";
+import type { RepackBrickInput } from "../../core/octree/brickRepack";
+import type { Vec3 } from "../../core/octree/levelGeometry";
 
 /**
  * The fused GPU brick-repack kernel (compute-shader port of `repackBrick`):

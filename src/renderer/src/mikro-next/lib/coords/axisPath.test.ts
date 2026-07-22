@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { AttributePathStep, AttributePathTransformLike } from "./attributeTypes";
+import type { PathStep, PathTransformLike } from "./pathTypes";
 import { applyPathToCoords, applyStepToCoords } from "./axisPath";
 
 const step = (
-  transformation: AttributePathTransformLike | null,
+  transformation: PathTransformLike | null,
   inverted = false,
-): AttributePathStep => ({ transformation, inverted });
+): PathStep => ({ transformation, inverted });
 
 describe("applyStepToCoords", () => {
   it("identity renames input axes to output axes", () => {
@@ -21,7 +21,7 @@ describe("applyStepToCoords", () => {
   });
 
   it("scale multiplies forward and divides inverted", () => {
-    const scale: AttributePathTransformLike = {
+    const scale: PathTransformLike = {
       __typename: "ScaleTransformation",
       inputAxes: ["y", "x"],
       outputAxes: ["y", "x"],
@@ -32,7 +32,7 @@ describe("applyStepToCoords", () => {
   });
 
   it("translation adds forward and subtracts inverted", () => {
-    const translation: AttributePathTransformLike = {
+    const translation: PathTransformLike = {
       __typename: "TranslationTransformation",
       inputAxes: ["y", "x"],
       outputAxes: ["y", "x"],
@@ -44,7 +44,7 @@ describe("applyStepToCoords", () => {
 
   it("affine applies rows over named axes, and inverts by solving", () => {
     // y' = 2y + 1, x' = 3x - 2
-    const affine: AttributePathTransformLike = {
+    const affine: PathTransformLike = {
       __typename: "AffineTransformation",
       inputAxes: ["y", "x"],
       outputAxes: ["y", "x"],
@@ -66,7 +66,7 @@ describe("applyStepToCoords", () => {
   });
 
   it("singular inverted affine returns null", () => {
-    const singular: AttributePathTransformLike = {
+    const singular: PathTransformLike = {
       __typename: "AffineTransformation",
       inputAxes: ["y", "x"],
       outputAxes: ["y", "x"],
@@ -80,7 +80,7 @@ describe("applyStepToCoords", () => {
 
   it("ByDimension acts on named subsets; unnamed axes pass through", () => {
     // The canonical mask edge: identity on kept axes t/y/x — c untouched.
-    const byDimension: AttributePathTransformLike = {
+    const byDimension: PathTransformLike = {
       __typename: "ByDimensionTransformation",
       inputAxes: ["t", "y", "x"],
       outputAxes: ["t", "y", "x"],
@@ -104,7 +104,7 @@ describe("applyStepToCoords", () => {
   });
 
   it("sequence composes children in order, reversed when inverted", () => {
-    const sequence: AttributePathTransformLike = {
+    const sequence: PathTransformLike = {
       __typename: "SequenceTransformation",
       inputAxes: ["x"],
       outputAxes: ["x"],
@@ -182,7 +182,7 @@ describe("applyPathToCoords", () => {
   });
 
   it("composes steps first to last and fails as a whole", () => {
-    const path: AttributePathStep[] = [
+    const path: PathStep[] = [
       step({
         __typename: "TranslationTransformation",
         inputAxes: ["x"],

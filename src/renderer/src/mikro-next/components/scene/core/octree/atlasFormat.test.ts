@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { atlasKindForDtype } from "./brickAtlas";
+import { atlasKindForDtype } from "./atlasFormat";
 
 /**
  * The atlas format MUST match the codec worker's default-fidelity promotion

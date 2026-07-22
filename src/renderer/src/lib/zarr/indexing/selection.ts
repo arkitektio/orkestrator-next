@@ -1,5 +1,5 @@
 import { Slice } from "zarrita";
-import { BasicIndexer, IndexerProjection } from "../stores/indexer";
+import { BasicIndexer, IndexerProjection } from "./indexer";
 
 export const calculateChunkGrid = (
   selection: (number | Slice | null)[],

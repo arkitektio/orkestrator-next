@@ -2,7 +2,7 @@ import {
   ensureHttpfs,
   getDuckDb,
   resolveDuckDbEndpoint,
-} from "@/mikro-next/components/tables/useDuckDbTable";
+} from "@/mikro-next/lib/duckdb/duckdb";
 import type { MeshGeometryRow } from "./meshDecode";
 import type { MeshCellRecord } from "./meshPlanner";
 
@@ -13,7 +13,7 @@ import type { MeshCellRecord } from "./meshPlanner";
  *
  * Performance shape:
  *  - The DuckDB instance/worker is the app-lifetime singleton shared with the
- *    table UI (`useDuckDbTable.getDuckDb`) — no second WASM instantiation.
+ *    table UI (`lib/duckdb.getDuckDb`) — no second WASM instantiation.
  *  - The CELL INDEX is ONE aggregate query per collection version (projected
  *    columns only, so the geometry BLOBs are never scanned for it), cached on
  *    the instance — collections are immutable per `version`.

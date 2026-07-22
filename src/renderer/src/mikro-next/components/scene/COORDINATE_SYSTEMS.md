@@ -104,7 +104,8 @@ Gone from the wire (and from `ImageLayerFragment`): `Layer.affineMatrix`,
 `ImageLayer.xDim/yDim/zDim/tDim/intensityDim`, `DataArray.scaleFactors`,
 `Scene.spatialUnit/temporalUnit`, `DataRoi.dataset/xDim/yDim/zDim`,
 `ADataset.coordinateSystem` (→ `intrinsicSystem` + `calibrations`),
-`Axis.discrete`, `AxisType.ARRAY`.
+`Axis.discrete`, `AxisType.ARRAY`, and `DataRoi`/`ShapeLayer` themselves
+(→ `Annotation` in an `AnnotationCollection`, drawn by an `AnnotationLayer`).
 
 **Deliberate fragment omissions (perf):**
 - `lens.coordinateSystem` / `dataset.intrinsicSystem` are selected **id+name
@@ -248,15 +249,26 @@ correct.
 `buildSliceSignature` keeps its exact semantics (axis mapping + non-spatial
 slices; `currentZ` deliberately excluded — see OCTREE_RENDERER.md P15).
 
-### 3.4 ROIs
+### 3.4 Annotations (the old ROIs)
 
-`DataRoi` is CS-anchored (`coordinateSystem` + `vectors` + `selectors`), not
-dataset/dim-string-anchored. Creation (`interactions/RoiDrawer.tsx`): the
-drawn world points are inverse-transformed through the clicked layer's
-composed matrix **once, at creation** — the inverse of
-`lens→world` lands them in exactly the lens' CS, which is what the mutation
-anchors to. No mirrored world geometry, no reconciliation at read time.
-`createdWithTransforms` is provenance only — never used for resolution.
+An `Annotation` is **collection**-anchored, not CS-anchored and not
+dataset/dim-string-anchored: the `AnnotationCollection` owns the coordinate
+system its shapes' `vectors` are expressed in, and one collection is drawn by
+one `AnnotationLayer` per scene. Styling (`strokeColor`/`fillColor`/
+`strokeWidth`/`filled`) is per-shape — the layer renders a whole collection, so
+a color on the layer could not tell its shapes apart.
+
+Creation (`interactions/RoiDrawer.tsx`): the mutation takes `scene`, and the
+server finds the scene's collection or mints it on first use together with its
+CS, its registration into the world, and its layer. That registration is an
+identity into the world, so the drawn **world** points are submitted as-is —
+there is no inverse transform at creation any more, and no per-armed-layer copy.
+Arming still gates drawing, but no longer decides where the shape lands.
+
+Reading (`layers/annotation/AnnotationLayer.tsx`): the layer composes its own
+server-resolved `pathToWorld` via `composePlacementPath`, the same way the mesh
+layer does. `createdWithTransforms` is provenance only — never used for
+resolution.
 
 ### 3.5 Axis mapping is structural now
 

@@ -24,10 +24,10 @@
       "Image"
     ],
     "Layer": [
+      "AnnotationLayer",
       "ImageLayer",
       "MeshLayer",
       "PointLayer",
-      "ShapeLayer",
       "TrackLayer"
     ],
     "LayerRenderNode": [
@@ -95,6 +95,9 @@
       "AffineTransformationView",
       "Animation",
       "AnimationWaypoint",
+      "Annotation",
+      "AnnotationCollection",
+      "AnnotationLayer",
       "Axis",
       "BigFileStore",
       "BijectionTransformation",
@@ -107,7 +110,6 @@
       "CoordinateAnchor",
       "CoordinateSystem",
       "DataArray",
-      "DataRoi",
       "Dataset",
       "DerivedView",
       "Era",
@@ -154,7 +156,6 @@
       "Scene",
       "SceneSnapshot",
       "SequenceTransformation",
-      "ShapeLayer",
       "Snapshot",
       "Stage",
       "Table",

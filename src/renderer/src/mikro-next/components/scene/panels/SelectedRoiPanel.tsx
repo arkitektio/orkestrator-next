@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router";
-import { useDeleteDataRoiMutation } from "@/mikro-next/api/graphql";
+import { useDeleteAnnotationMutation } from "@/mikro-next/api/graphql";
 import { useRoiSelectionStore } from "../store/roiSelectionStore";
 
 function formatRoiKind(kind: string) {
@@ -14,8 +14,8 @@ export const SelectedRoiPanel = () => {
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
   const removeSelectedRoi = useRoiSelectionStore((s) => s.removeSelectedRoi);
   const clearSelectedRois = useRoiSelectionStore((s) => s.clearSelectedRois);
-  const [deleteDataRoiMutation, { loading: isDeleting }] = useDeleteDataRoiMutation({
-    refetchQueries: ["GetDataRois"],
+  const [deleteAnnotationMutation, { loading: isDeleting }] = useDeleteAnnotationMutation({
+    refetchQueries: ["GetAnnotations"],
     awaitRefetchQueries: false,
   });
 
@@ -26,7 +26,7 @@ export const SelectedRoiPanel = () => {
 
     const results = await Promise.allSettled(
       roisToDelete.map(async (roi) => {
-        await deleteDataRoiMutation({
+        await deleteAnnotationMutation({
           variables: { input: { id: roi.id } },
         });
 
@@ -39,7 +39,7 @@ export const SelectedRoiPanel = () => {
         removeSelectedRoi(result.value);
       }
     });
-  }, [deleteDataRoiMutation, isDeleting, removeSelectedRoi, selectedRois]);
+  }, [deleteAnnotationMutation, isDeleting, removeSelectedRoi, selectedRois]);
 
   useEffect(() => {
     if (selectedRois.length === 0) return;

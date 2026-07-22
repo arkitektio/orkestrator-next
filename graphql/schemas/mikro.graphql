@@ -65,7 +65,7 @@ type ADataset {
   shape: [Int!]!
 
   """
-  What this dataset structurally is, derived from the axes of its intrinsic coordinate system: the one spatial spec its SPACE axis count denotes, then a modifier per acquisition axis present. A 3D timelapse is [VOLUME, TIMESERIES, MULTICHANNEL]. Presence, not size: a stack with a single plane is still a VOLUME. Empty while the intrinsic system does not exist yet
+  What this dataset structurally is, materialized from the axes of its intrinsic coordinate system at creation: the one spatial spec its SPACE axis count denotes, then a modifier per acquisition axis present. A 3D timelapse is [VOLUME, TIMESERIES, MULTICHANNEL]. Presence, not size: a stack with a single plane is still a VOLUME. Empty while the intrinsic system does not exist yet
   """
   spec: [ADatasetSpec!]!
 }
@@ -146,7 +146,7 @@ input ADatasetFilter {
   search: String
 
   """
-  Filter to datasets satisfying every one of these specs, e.g. [VOLUME, TIMESERIES] for 3D timelapses. Derived from the axes of the intrinsic coordinate system, never stored. A dataset carries one spatial spec (by how many SPACE axes it has) plus a modifier per acquisition axis present, so two spatial specs together match nothing
+  Filter to datasets satisfying every one of these specs, e.g. [VOLUME, TIMESERIES] for 3D timelapses. Materialized from the axes of the intrinsic coordinate system at creation. A dataset carries one spatial spec (by how many SPACE axes it has) plus a modifier per acquisition axis present, so two spatial specs together match nothing
   """
   spec: [ADatasetSpec!]
 }
@@ -158,7 +158,7 @@ input ADatasetOrder @oneOf {
 }
 
 """
-What a dataset structurally is, derived from the axes of its intrinsic coordinate system. Specs stack: a 3D timelapse is VOLUME, TIMESERIES and MULTICHANNEL at once. Exactly one spatial member (SCALAR/PROFILE/IMAGE/VOLUME/HYPERVOLUME) ever holds.
+What a dataset structurally is, materialized from the axes of its intrinsic coordinate system at creation. Specs stack: a 3D timelapse is VOLUME, TIMESERIES and MULTICHANNEL at once. Exactly one spatial member (SCALAR/PROFILE/IMAGE/VOLUME/HYPERVOLUME) ever holds.
 """
 enum ADatasetSpec {
   """Carries a MICROTIME axis: fluorescence-lifetime arrival-time bins."""
@@ -522,6 +522,195 @@ input AnimationWaypointInput {
 
   """What this stop shows"""
   name: String = null
+}
+
+"""
+A human-drawn shape in an annotation collection's coordinate system. It belongs to the collection, not to a scene: delete the scene and the annotation survives
+"""
+type Annotation {
+  """
+  The collection this annotation belongs to; its vectors are expressed in the collection's own coordinate system
+  """
+  collection: AnnotationCollection!
+
+  """
+  The coordinate system this annotation's vectors are expressed in: its collection's own system
+  """
+  coordinateSystem: CoordinateSystem
+
+  """
+  The discrete coordinates this annotation is pinned to. A coordinate the annotation does not pin is one it spans
+  """
+  coordinates: [Coordinate!]!
+  createdWithTransforms: Int!
+  description: String
+
+  """The fill color of the geometry, as RGBA, or null for no fill"""
+  fillColor: [Int!]
+
+  """Whether the geometry is filled with fill_color"""
+  filled: Boolean!
+  id: UUID!
+
+  """
+  The annotation's bounding box in the nearest intrinsic space, derived from every corner of its geometry (an affine-transformed box is not a box: min/max alone gives a strictly too-small answer under rotation or shear). Intrinsic, not world: world is scene-owned, and one collection can sit in two scenes under two registrations
+  """
+  intrinsicBbox: BoundingBox
+  kind: RoiKind!
+  name: String!
+
+  """Provenance entries for this annotation"""
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The stroke (outline) color of the geometry, as RGBA"""
+  strokeColor: [Int!]
+
+  """The stroke width of the geometry, in the drawing space's units"""
+  strokeWidth: Float!
+  vectors: [[Float!]!]!
+}
+
+"""
+A named set of human-drawn annotations, owning the coordinate system they are drawn in. The CRUD counterpart of a table dataset's machine-produced rows: shapes a person draws and edits, sharing one drawing space and one registration story
+"""
+type AnnotationCollection {
+  """The annotations in this collection"""
+  annotations(filters: AnnotationFilter, ordering: [AnnotationOrder!]! = [], pagination: OffsetPaginationInput): [Annotation!]!
+
+  """
+  The coordinate system the annotations' vectors are expressed in. The collection owns it; `derivedFrom` relates it to whatever the shapes are drawn over
+  """
+  coordinateSystem: CoordinateSystem!
+  createdAt: DateTime!
+  creator: User
+
+  """
+  The edge relating this collection's space to the space the shapes are drawn over -- an identity into a scene's world for a scene-minted collection, an identity into a dataset's system for one drawn over an image. Null for a freestanding collection
+  """
+  derivedFrom: Transformation
+  description: String
+  id: ID!
+  name: String!
+
+  """Provenance entries for this annotation collection"""
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  The scene this collection was minted for as its default drawing surface, or null for a freestanding or dataset-derived collection. Bookkeeping, not placement: the registration edge is what places it
+  """
+  scene: Scene
+}
+
+input AnnotationCollectionFilter {
+  AND: AnnotationCollectionFilter
+  DISTINCT: Boolean
+  NOT: AnnotationCollectionFilter
+  OR: AnnotationCollectionFilter
+
+  """
+  Filter by the coordinate system the annotations are drawn in (the collection's own)
+  """
+  coordinateSystem: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the dataset the shapes are drawn over, following the derivation edge
+  """
+  dataset: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """
+  Filter by the scene this collection was minted for as its default drawing surface
+  """
+  scene: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+input AnnotationCollectionOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+input AnnotationFilter {
+  AND: AnnotationFilter
+  DISTINCT: Boolean
+  NOT: AnnotationFilter
+  OR: AnnotationFilter
+
+  """Filter by the collection this annotation belongs to"""
+  collection: ID
+
+  """
+  Filter by the coordinate system this annotation is drawn in (its collection's own)
+  """
+  coordinateSystem: ID
+
+  """
+  Filter by the dataset the annotations are drawn over, following the collection's derivation edge
+  """
+  dataset: ID
+  description: StrFilterLookup
+  id: UUID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  kind: RoiKindChoices
+  name: StrFilterLookup
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+"""
+A layer that renders an annotation collection's drawn shapes (polygons, boxes, ellipses, lines, paths) in a scene. One layer per collection: per-shape styling lives on the annotations themselves.
+"""
+type AnnotationLayer implements Layer {
+  """
+  The annotation collection whose shapes this layer renders. Its own coordinate system is the layer's space
+  """
+  annotationCollection: AnnotationCollection!
+  blending: Blending!
+  id: ID!
+  kind: LayerKind!
+  opacity: Float!
+  order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity: PlacementValidity!
+  scene: Scene!
+  visible: Boolean!
+}
+
+input AnnotationOrder @oneOf {
+  id: Ordering
+  name: Ordering
 }
 
 """The `Any` scalar any type"""
@@ -889,10 +1078,10 @@ input BootstrapSceneInput {
 
 """An axis-aligned bounding box, as a min and a max corner"""
 type BoundingBox {
-  """The upper corner, in the axis order of the coordinate system"""
+  """The upper corner, in the coordinate order of the coordinate system"""
   max: [Float!]!
 
-  """The lower corner, in the axis order of the coordinate system"""
+  """The lower corner, in the coordinate order of the coordinate system"""
   min: [Float!]!
 }
 
@@ -1507,6 +1696,17 @@ input ContinousScanViewInput {
 }
 
 """
+A discrete coordinate an annotation is pinned to, e.g. a timepoint or a channel
+"""
+type Coordinate {
+  """The name of the coordinate, e.g. 't' or 'c'"""
+  name: String!
+
+  """The value along that coordinate"""
+  value: Int!
+}
+
+"""
 The axis-agnostic hub that pins metadata spokes (microscope state, OME metadata, value histograms, channel labels, light paths, phasor distributions and calibrations) to specific coordinates of a dataset
 """
 type CoordinateAnchor {
@@ -1719,6 +1919,46 @@ input CreateAnimationInput {
 }
 
 """
+Input for creating an annotation collection. The collection gets a coordinate system of its own, and an edge relates it to the space the shapes are drawn over
+"""
+input CreateAnnotationCollectionInput {
+  axes: [AxisInput!] = null
+  coordinateSystem: ID = null
+  derivedFrom: DerivationInput = null
+  description: String = null
+  name: String!
+}
+
+"""
+Input for drawing an annotation. Provide exactly one of `collection` (append to it) or `scene` (draw on the scene: its annotation collection is found, or minted on first use together with its coordinate system, its registration into the world, and its layer)
+"""
+input CreateAnnotationInput {
+  collection: ID = null
+  description: String = null
+  fillColor: [Int!] = null
+  filled: Boolean = null
+  kind: RoiKind!
+  name: String = null
+  scene: ID = null
+  selectors: [SelectorInput!] = null
+  strokeColor: [Int!] = null
+  strokeWidth: Float = null
+  vectors: [ThreeDVector!]!
+}
+
+"""
+Create a layer that renders an annotation collection's drawn shapes in a scene. The collection's own coordinate system is the layer's space, so it must already have a path to the scene's world
+"""
+input CreateAnnotationLayerInput {
+  annotationCollection: ID!
+  blending: Blending = null
+  opacity: Float = null
+  order: Int = null
+  scene: ID!
+  visible: Boolean = null
+}
+
+"""
 Input for calibrating a dataset: creates a PHYSICAL coordinate system (axes carrying the units) and the single edge mapping the dataset's intrinsic pixels into it
 """
 input CreateCalibrationInput {
@@ -1740,15 +1980,6 @@ input CreateCoordinateSystemInput {
   epoch: DateTime = null
   name: String!
   registrations: [RegistrationPathInput!]! = []
-}
-
-"""Input for drawing a region of interest in a coordinate system"""
-input CreateDataRoiInput {
-  coordinateSystem: ID!
-  kind: RoiKind!
-  name: String = null
-  selectors: [SelectorInput!] = null
-  vectors: [ThreeDVector!]!
 }
 
 """Input for creating a new dataset to organize images and files"""
@@ -2000,22 +2231,6 @@ input CreateSceneInput {
 }
 
 """
-Create a layer that renders the vector geometry of a data ROI in a scene
-"""
-input CreateShapeLayerInput {
-  blending: Blending = null
-  dataRoi: ID!
-  fillColor: [Int!] = null
-  filled: Boolean = null
-  opacity: Float = null
-  order: Int = null
-  scene: ID!
-  strokeColor: [Int!] = null
-  strokeWidth: Float = null
-  visible: Boolean = null
-}
-
-"""
 Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE)
 """
 input CreateTableDatasetInput {
@@ -2120,62 +2335,6 @@ input DataArrayFilter {
 input DataArrayOrder @oneOf {
   id: Ordering
   level: Ordering
-}
-
-"""
-A region of interest drawn in a coordinate system. It belongs to that system, not to a scene: delete the scene and the ROI survives
-"""
-type DataRoi {
-  coordinateSystem: CoordinateSystem!
-  createdWithTransforms: Int!
-  description: String
-  id: UUID!
-
-  """
-  The ROI's bounding box in its dataset's intrinsic space, derived from every corner of its geometry (an affine-transformed box is not a box: min/max alone gives a strictly too-small answer under rotation or shear). Intrinsic, not world: world is scene-owned, and one dataset can sit in two scenes under two registrations
-  """
-  intrinsicBbox: BoundingBox
-  kind: RoiKind!
-  name: String!
-
-  """Provenance entries for this data ROI"""
-  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-
-  """
-  The discrete coordinates this ROI is pinned to. An axis the ROI does not pin is one it spans
-  """
-  selectors: [RoiSelector!]!
-  vectors: [[Float!]!]!
-}
-
-input DataRoiFilter {
-  AND: DataRoiFilter
-  DISTINCT: Boolean
-  NOT: DataRoiFilter
-  OR: DataRoiFilter
-
-  """Filter by the coordinate system this ROI is drawn in"""
-  coordinateSystem: ID
-
-  """
-  Filter by the dataset this ROI's coordinate system belongs to, whichever way the system hangs off it (intrinsic, calibration, pyramid level or lens)
-  """
-  dataset: ID
-  description: StrFilterLookup
-  id: UUID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  kind: RoiKindChoices
-  name: StrFilterLookup
-
-  """Search by name (case-insensitive substring)"""
-  search: String
-}
-
-input DataRoiOrder @oneOf {
-  id: Ordering
-  name: Ordering
 }
 
 """
@@ -2287,6 +2446,17 @@ input DeleteAnimationInput {
   id: ID!
 }
 
+"""Input for deleting an annotation collection by ID"""
+input DeleteAnnotationCollectionInput {
+  """The ID of the annotation collection to delete"""
+  id: ID!
+}
+
+"""Input for deleting an annotation by ID"""
+input DeleteAnnotationInput {
+  id: ID!
+}
+
 """Input for deleting a calibration (a PHYSICAL coordinate system) by ID"""
 input DeleteCalibrationInput {
   """The ID of the PHYSICAL coordinate system to delete"""
@@ -2308,12 +2478,6 @@ input DeleteCoordinateSystemInput {
 """Input for deleting a data array by ID"""
 input DeleteDataArrayInput {
   """The ID of the data array to delete"""
-  id: ID!
-}
-
-"""Delete a DataRoi by ID"""
-input DeleteDataRoiInput {
-  """The ID of the DataRoi to delete"""
   id: ID!
 }
 
@@ -4103,7 +4267,7 @@ type LaserElement implements OpticalElement {
 }
 
 """
-A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: registration is a scene-level transformation edge, not a property of the view. The concrete kind (ImageLayer, ShapeLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
+A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: registration is a scene-level transformation edge, not a property of the view. The concrete kind (ImageLayer, AnnotationLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
 """
 interface Layer {
   blending: Blending!
@@ -4154,6 +4318,11 @@ The kind of a layer, discriminating which data source it renders and which rende
 """
 enum LayerKind {
   """
+  An annotation layer rendering the drawn vector geometry (polygons, boxes, ellipses, lines, paths) of an annotation collection.
+  """
+  ANNOTATION
+
+  """
   An image layer rendering array (lens) data through a composable render graph.
   """
   IMAGE
@@ -4167,21 +4336,16 @@ enum LayerKind {
   POINT
 
   """
-  A shape layer rendering the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths).
-  """
-  SHAPE
-
-  """
   A track layer rendering trajectories from columns of a table, grouped by a track id.
   """
   TRACK
 }
 
 enum LayerKindChoices {
+  ANNOTATION
   IMAGE
   MESH
   POINT
-  SHAPE
   TRACK
 }
 
@@ -4880,6 +5044,21 @@ type Mutation {
   createAnimation(input: CreateAnimationInput!): Animation!
 
   """
+  Draw an annotation into a collection, or onto a scene (exactly one of the two). Drawing on a scene finds its annotation collection or mints it on first use: a coordinate system mirroring the world's axes, an identity registration into the world, and one annotation layer
+  """
+  createAnnotation(input: CreateAnnotationInput!): Annotation!
+
+  """
+  Create an annotation collection explicitly, in a coordinate system of its own, optionally derived from the system the shapes are drawn over. The common path -- drawing on a scene -- goes through createAnnotation instead, which mints the scene's collection on first use
+  """
+  createAnnotationCollection(input: CreateAnnotationCollectionInput!): AnnotationCollection!
+
+  """
+  Create a layer that renders an annotation collection's drawn shapes in a scene. The explicit path for a second scene: the collection's system must already be registered into that scene's world
+  """
+  createAnnotationLayer(input: CreateAnnotationLayerInput!): AnnotationLayer!
+
+  """
   Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it
   """
   createCalibration(input: CreateCalibrationInput!): CoordinateSystem!
@@ -4897,11 +5076,6 @@ type Mutation {
   Create a hub (ATLAS) coordinate system and, in one call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it
   """
   createCoordinateSystem(input: CreateCoordinateSystemInput!): CoordinateSystem!
-
-  """
-  Create a new data ROI from vector or slice definitions with optional coordinate anchors and OME metadata
-  """
-  createDataRoi(input: CreateDataRoiInput!): DataRoi!
 
   """Create a new dataset to organize data"""
   createDataset(input: CreateDatasetInput!): Dataset!
@@ -5025,11 +5199,6 @@ type Mutation {
   """Adopt an uploaded media file as a pre-rendered picture of a scene"""
   createSceneSnapshot(input: SceneSnapshotInput!): SceneSnapshot!
 
-  """
-  Create a layer that renders the vector geometry of a data ROI in a scene
-  """
-  createShapeLayer(input: CreateShapeLayerInput!): ShapeLayer!
-
   """Create a new state snapshot"""
   createSnapshot(input: SnapshotInput!): Snapshot!
 
@@ -5074,6 +5243,14 @@ type Mutation {
   """Delete an existing camera tour"""
   deleteAnimation(input: DeleteAnimationInput!): ID!
 
+  """Delete an existing annotation"""
+  deleteAnnotation(input: DeleteAnnotationInput!): ID!
+
+  """
+  Delete an annotation collection. Its coordinate system, its annotations and its layers cascade with it
+  """
+  deleteAnnotationCollection(input: DeleteAnnotationCollectionInput!): ID!
+
   """
   Delete a calibration (a PHYSICAL coordinate system). Other system kinds cascade with their owner and cannot be deleted directly
   """
@@ -5086,15 +5263,12 @@ type Mutation {
   deleteChannelView(input: DeleteViewInput!): ID!
 
   """
-  Delete an unused hub coordinate system. Refused while any scene composes over it, any transformation edge touches it, or any ROI is drawn in it -- each of those would otherwise cascade away with it. Other system kinds cascade with their owner and cannot be deleted directly
+  Delete an unused hub coordinate system. Refused while any scene composes over it or any transformation edge touches it -- each of those would otherwise cascade away with it. Other system kinds cascade with their owner and cannot be deleted directly
   """
   deleteCoordinateSystem(input: DeleteCoordinateSystemInput!): ID!
 
   """Delete an existing data array"""
   deleteDataArray(input: DeleteDataArrayInput!): ID!
-
-  """Delete an existing data ROI"""
-  deleteDataRoi(input: DeleteDataRoiInput!): Boolean!
 
   """Delete an existing dataset"""
   deleteDataset(input: DeleteDatasetInput!): ID!
@@ -5316,6 +5490,11 @@ type Mutation {
 
   """Re-author a camera tour: rename it, or replace its stops"""
   updateAnimation(input: UpdateAnimationInput!): Animation!
+
+  """
+  Edit an annotation: name, kind, vectors, pins or styling. New vectors re-derive the bounding box against the current transform chain
+  """
+  updateAnnotation(input: UpdateAnnotationInput!): Annotation!
 
   """
   Rename a hub coordinate system or anchor its clock. Hubs only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space
@@ -7099,6 +7278,22 @@ type Query {
   """List animations (named camera tours through a scene)"""
   animations(filters: AnimationFilter, ordering: [AnimationOrder!]! = [], pagination: OffsetPaginationInput): [Animation!]!
 
+  """Get a single annotation by ID"""
+  annotation(id: ID!): Annotation!
+
+  """Get a single annotation collection by ID"""
+  annotationCollection(id: ID!): AnnotationCollection!
+
+  """
+  List annotation collections (named sets of human-drawn shapes, each owning the coordinate system they are drawn in)
+  """
+  annotationCollections(filters: AnnotationCollectionFilter, ordering: [AnnotationCollectionOrder!]! = [], pagination: OffsetPaginationInput): [AnnotationCollection!]!
+
+  """
+  List annotations (human-drawn shapes, each in its collection's coordinate system)
+  """
+  annotations(filters: AnnotationFilter, ordering: [AnnotationOrder!]! = [], pagination: OffsetPaginationInput): [Annotation!]!
+
   """
   Every attribute plan reachable from one system: one per FIELD edge landing on a table, discovered across the fact component -- probe a source image and the plans of the instance mask derived from it come back, each carrying the `path` of steps from the probed system to its root. Registrations are never crossed (no scene, no world). A plan is instructions, never attributes -- map along the path, sample this array, look the value up in this parquet -- and takes no coordinate, so a client fetches it once and executes it per hover against the chunks it is already rendering. Cache it against the FIELD edge plus every path step (ids and versions); `maxDepth` bounds the discovery. The server reads no store and composes nothing
   """
@@ -7146,12 +7341,6 @@ type Query {
 
   """List data arrays (the multiscale zarr arrays backing array datasets)"""
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
-
-  """Get a single data ROI by ID"""
-  dataRoi(id: ID!): DataRoi!
-
-  """List data ROIs (regions of interest on array datasets)"""
-  dataRois(filters: DataRoiFilter, ordering: [DataRoiOrder!]! = [], pagination: OffsetPaginationInput): [DataRoi!]!
 
   """Get a single dataset by ID"""
   dataset(
@@ -7899,6 +8088,7 @@ A source (dataset, table dataset, mesh collection, or coordinate system) to regi
 """
 input RegistrationPathInput {
   affine: [[Float!]!] = null
+  annotationCollection: ID = null
   coordinateSystem: ID = null
   dataset: ID = null
   field: ID = null
@@ -8150,17 +8340,6 @@ enum RoiKindChoices {
   UNKNOWN
 }
 
-"""
-A discrete coordinate an ROI is pinned to, e.g. a timepoint or a channel
-"""
-type RoiSelector {
-  """The name of the discrete axis, e.g. 't' or 'c'"""
-  axis: String!
-
-  """The coordinate along that axis"""
-  index: Int!
-}
-
 """A rotation, given as an orthonormal matrix"""
 type RotationTransformation implements Transformation {
   """The rotation matrix"""
@@ -8376,6 +8555,16 @@ type Scene {
   """The named camera tours through this composition"""
   animations(filters: AnimationFilter, ordering: [AnimationOrder!]! = [], pagination: OffsetPaginationInput): [Animation!]!
 
+  """
+  The annotation collection minted for this scene as its default drawing surface, or null before the first annotation is drawn on it. Bookkeeping, not placement: what places the collection is its registration edge into this scene's world
+  """
+  annotationCollection: AnnotationCollection
+
+  """
+  The annotations drawn in a space this scene can reach. Reachability, not containment: an annotation belongs to a collection, and survives the scene's deletion
+  """
+  annotations: [Annotation!]!
+
   """The viewer background, as RGBA. Null lets the viewer use its own"""
   backgroundColor: [Float!]
 
@@ -8403,11 +8592,6 @@ type Scene {
   The registrations composing this scene: every top-level edge into its world system. A property of the *space*, not of the scene (one truth per space) -- every scene over the same world shares them, each unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. Composing the matrices stays the client's job
   """
   registrations: [Transformation!]!
-
-  """
-  The ROIs drawn in a coordinate system this scene can reach. Reachability, not containment: an ROI belongs to a coordinate system, and survives the scene's deletion
-  """
-  rois: [DataRoi!]!
 
   """
   The pre-rendered pictures of this composition, for previewing it without compositing the layers
@@ -8559,7 +8743,7 @@ input Selector {
 }
 
 """
-Input for pinning an ROI to a coordinate on a discrete axis, e.g. a timepoint or a channel
+Input for pinning an annotation to a coordinate on a discrete axis, e.g. a timepoint or a channel
 """
 input SelectorInput {
   axis: String!
@@ -8626,39 +8810,6 @@ input SettingInput {
   number: Float = null
   quantity: GenericQuantity = null
   text: String = null
-}
-
-"""
-A layer that renders the vector geometry of a data ROI (polygons, boxes, ellipses, lines, paths), placed and styled in a scene.
-"""
-type ShapeLayer implements Layer {
-  blending: Blending!
-  dataRoi: DataRoi!
-  fillColor: [Int!]
-  filled: Boolean!
-  id: ID!
-  kind: LayerKind!
-  opacity: Float!
-  order: Int!
-
-  """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
-  """
-  pathToWorld: [PlacementStep!]
-
-  """
-  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
-  """
-  placement: PlacementState!
-
-  """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
-  """
-  placementValidity: PlacementValidity!
-  scene: Scene!
-  strokeColor: [Int!]
-  strokeWidth: Float
-  visible: Boolean!
 }
 
 """A slice along a named axis, with optional start, stop and step"""
@@ -9814,6 +9965,22 @@ input UpdateAnimationInput {
 }
 
 """
+Input for editing an annotation. Only the supplied fields change; new vectors re-derive the bounding box against the current transform chain
+"""
+input UpdateAnnotationInput {
+  description: String = null
+  fillColor: [Int!] = null
+  filled: Boolean = null
+  id: ID!
+  kind: RoiKind = null
+  name: String = null
+  selectors: [SelectorInput!] = null
+  strokeColor: [Int!] = null
+  strokeWidth: Float = null
+  vectors: [ThreeDVector!] = null
+}
+
+"""
 Input for renaming a hub coordinate system or anchoring its clock. Hubs only: every other system is named by the container that owns it
 """
 input UpdateCoordinateSystemInput {
@@ -10336,7 +10503,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DataRoi | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | ShapeLayer | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

@@ -6,14 +6,8 @@ import { useRoiDrawingStore, DRAWING_TOOL_TO_ROI_KIND } from "../store/roiDrawin
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { useViewerStore } from "../store/viewerStore";
-import { affineToMatrix4 } from "../core/worldTransform";
-import { useCreateDataRoiMutation } from "@/mikro-next/api/graphql";
+import { useCreateAnnotationMutation } from "@/mikro-next/api/graphql";
 import type { DrawnRoi } from "../store/roiDrawingStore";
-
-/** Convert a world-space point to voxel-space using the inverse affine */
-function worldToVoxel(worldPt: THREE.Vector3, invAffine: THREE.Matrix4) {
-  return worldPt.clone().applyMatrix4(invAffine);
-}
 
 export const RoiDrawer = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
@@ -21,11 +15,23 @@ export const RoiDrawer = () => {
   const addDrawnRoi = useRoiDrawingStore((s) => s.addDrawnRoi);
   const drawnRois = useRoiDrawingStore((s) => s.drawnRois);
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
+  const sceneId = useSceneStore((s) => s.id);
+  const sceneLayers = useSceneStore((s) => s.sceneLayers);
   const layers = useSceneStore((s) => s.layers);
   const armedLayerIds = useSelectionStore((s) => s.armedLayerIds);
   const currentZ = useViewerStore((s) => s.currentZ);
 
-  const [createDataRoi] = useCreateDataRoiMutation();
+  // Drawing on the scene mints its annotation collection, the collection's
+  // registration into the world AND the AnnotationLayer that draws it — but
+  // only on first use. Until that layer exists there is nothing to render the
+  // shape, so the first draw has to refetch the scene itself; later ones only
+  // need the layer's own annotation query.
+  const hasAnnotationLayer = useMemo(
+    () => sceneLayers.some((layer) => layer.__typename === "AnnotationLayer"),
+    [sceneLayers],
+  );
+
+  const [createAnnotation] = useCreateAnnotationMutation();
 
   // Drawing state
   const [startPos, setStartPos] = useState<THREE.Vector3 | null>(null);
@@ -37,89 +43,57 @@ export const RoiDrawer = () => {
     [armedLayerIds, layers],
   );
 
-  const primaryArmedLayer = armedLayers[0];
-
   const pointOnCurrentSlice = useCallback(
     (point: THREE.Vector3) => new THREE.Vector3(point.x, point.y, currentZ),
     [currentZ],
   );
 
-  const previewInvAffine = useMemo(() => {
-    if (!primaryArmedLayer) return new THREE.Matrix4().identity();
-    return affineToMatrix4(primaryArmedLayer.affineMatrix).invert();
-  }, [primaryArmedLayer]);
-
   const submitRoi = useCallback(
     async (roi: DrawnRoi) => {
-      if (armedLayers.length === 0) return;
-
       try {
-        await Promise.all(
-          armedLayers.map(async (layer) => {
-            // An ROI is anchored to the coordinate system it was drawn in —
-            // the clicked layer's lens space. The layer's composed affine maps
-            // lens voxels → world, so its inverse resolves the drawn world
-            // points into exactly that system, once, at creation time.
-            const coordinateSystemId = layer.lens.coordinateSystem?.id;
-            if (!coordinateSystemId) return;
-
-            const invAffine = affineToMatrix4(layer.affineMatrix).invert();
-            const voxelVectors = roi.worldVectors.map((worldVector) => {
-              const vector = worldToVoxel(
-                new THREE.Vector3(worldVector.x, worldVector.y, worldVector.z),
-                invAffine,
-              );
-              return [Math.round(vector.x), Math.round(vector.y), Math.round(vector.z)] as [number, number, number];
-            });
-
-            await createDataRoi({
-              variables: {
-                input: {
-                  coordinateSystem: coordinateSystemId,
-                  kind: roi.kind,
-                  vectors: voxelVectors,
-                },
-              },
-            });
-          }),
-        );
-        console.log(`Data ROI created successfully for ${armedLayers.length} layer(s)`);
+        // One annotation per drawn shape, in the scene's world. An annotation
+        // belongs to a collection, not to a layer, so there is no per-armed-
+        // layer copy any more — and no world→voxel inversion, because the
+        // scene's collection is registered into the world by identity.
+        await createAnnotation({
+          variables: {
+            input: {
+              scene: sceneId,
+              kind: roi.kind,
+              vectors: roi.worldVectors.map((vector) => [vector.x, vector.y, vector.z]),
+            },
+          },
+          refetchQueries: hasAnnotationLayer ? ["GetAnnotations"] : ["GetScene"],
+          awaitRefetchQueries: false,
+        });
         removeDrawnRoi(roi.id);
       } catch (err) {
-        console.error("Failed to create data ROI:", err);
+        console.error("Failed to create annotation:", err);
       }
     },
-    [armedLayers, createDataRoi, removeDrawnRoi],
+    [createAnnotation, hasAnnotationLayer, removeDrawnRoi, sceneId],
   );
 
   const finishShape = useCallback(
     (worldVectors: THREE.Vector3[]) => {
-      if (!activeTool || !primaryArmedLayer) return;
-      const voxelVectors = worldVectors.map((wv) => {
-        const v = worldToVoxel(wv, previewInvAffine);
-        return { x: Math.round(v.x), y: Math.round(v.y), z: Math.round(v.z) };
-      });
-      const worldVecs = worldVectors.map((wv) => ({
-        x: wv.x,
-        y: wv.y,
-        z: wv.z,
-      }));
+      if (!activeTool) return;
 
       const roi: DrawnRoi = {
         id: Math.random().toString(36).substring(2, 9),
-        layerId: primaryArmedLayer.id,
         kind: DRAWING_TOOL_TO_ROI_KIND[activeTool],
-        vectors: voxelVectors,
-        worldVectors: worldVecs,
+        worldVectors: worldVectors.map((wv) => ({ x: wv.x, y: wv.y, z: wv.z })),
       };
 
       addDrawnRoi(roi);
       submitRoi(roi);
     },
-    [activeTool, primaryArmedLayer, previewInvAffine, addDrawnRoi, submitRoi],
+    [activeTool, addDrawnRoi, submitRoi],
   );
 
-  // Only render when in EDIT mode with an active tool and at least one armed layer
+  // Only render when in EDIT mode with an active tool and at least one armed
+  // layer. Arming no longer decides WHERE the shape lands — the scene does —
+  // but it still gates drawing, so a stray click on an empty scene cannot mint
+  // an annotation collection.
   if (interactionMode !== "EDIT" || !activeTool || armedLayers.length === 0) return null;
 
   const isPolygonLike = activeTool === "POLYGON" || activeTool === "PATH";

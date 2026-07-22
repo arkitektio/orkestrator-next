@@ -3,11 +3,8 @@ import { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { ImagePlaneLayer } from "./image/ImagePlaneLayer";
 import { ImageVolumeLayer } from "./image/ImageVolumeLayer";
 import { MeshCollectionLayer } from "./mesh/MeshCollectionLayer";
-import {
-  PointLayerRenderer,
-  ShapeLayerRenderer,
-  TrackLayerRenderer,
-} from "./stubs";
+import { AnnotationLayerRenderer } from "./annotation/AnnotationLayer";
+import { PointLayerRenderer, TrackLayerRenderer } from "./stubs";
 
 export type LayerRendererProps = { layerId: string };
 
@@ -23,7 +20,7 @@ export type LayerRenderers = {
  */
 export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRenderers> = {
   ImageLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
-  ShapeLayer: { Layer2D: ShapeLayerRenderer, Layer3D: ShapeLayerRenderer },
+  AnnotationLayer: { Layer2D: AnnotationLayerRenderer, Layer3D: AnnotationLayerRenderer },
   PointLayer: { Layer2D: PointLayerRenderer, Layer3D: PointLayerRenderer },
   TrackLayer: { Layer2D: TrackLayerRenderer, Layer3D: TrackLayerRenderer },
   MeshLayer: { Layer2D: null, Layer3D: MeshCollectionLayer },

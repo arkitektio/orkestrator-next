@@ -24,13 +24,16 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
   PATH: RoiKind.Path,
 };
 
+/**
+ * A shape the user just drew, held only until the server confirms it. Drawing
+ * targets the SCENE, whose annotation collection is registered into the world,
+ * so world coordinates are both what is rendered and what is submitted — there
+ * is no per-layer voxel copy to keep any more.
+ */
 export interface DrawnRoi {
   id: string;
-  layerId: string;
   kind: RoiKind;
-  /** Voxel-space vectors (image coordinates) */
-  vectors: Array<{ x: number; y: number; z: number }>;
-  /** World-space vectors for rendering */
+  /** World-space vectors, for rendering and for the mutation */
   worldVectors: Array<{ x: number; y: number; z: number }>;
 }
 

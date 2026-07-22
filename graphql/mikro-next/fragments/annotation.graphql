@@ -1,0 +1,66 @@
+# A human-drawn shape. It belongs to its COLLECTION, not to a scene or a
+# dataset: the collection owns the coordinate system the vectors are expressed
+# in, and one collection is rendered by one AnnotationLayer per scene.
+fragment Annotation on Annotation {
+  id
+  name
+  description
+  kind
+  vectors
+  createdWithTransforms
+  # Per-shape styling lives here, not on the layer — an AnnotationLayer draws a
+  # whole collection, so a color on the layer could not tell its shapes apart.
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  collection {
+    id
+    name
+  }
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+  # The discrete coordinates the shape is pinned to; one it does not pin, it
+  # spans. Read back as `coordinates`, written as `selectors` on the inputs.
+  coordinates {
+    name
+    value
+  }
+  intrinsicBbox {
+    min
+    max
+  }
+}
+
+# The renderer's selection: geometry + style, no coordinate system. The layer
+# already resolved the collection's space (its `pathToWorld`), so re-selecting
+# the system per shape would ship the same axes once per annotation.
+fragment ListAnnotation on Annotation {
+  id
+  name
+  kind
+  vectors
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  # The discrete coordinates the shape is pinned to; one it does not pin, it
+  # spans. Read back as `coordinates`, written as `selectors` on the inputs.
+  coordinates {
+    name
+    value
+  }
+}
+
+# The collection is the unit an AnnotationLayer renders, and it owns the space
+# the shapes are drawn in — `axes` is what composePlacementPath needs to order
+# the layer's `pathToWorld` matrices.
+fragment AnnotationCollection on AnnotationCollection {
+  id
+  name
+  description
+  coordinateSystem {
+    ...CoordinateSystem
+  }
+}

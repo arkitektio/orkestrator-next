@@ -1,0 +1,26 @@
+query GetAnnotation($id: ID!) {
+  annotation(id: $id) {
+    ...Annotation
+  }
+}
+
+query GetAnnotations($filters: AnnotationFilter, $pagination: OffsetPaginationInput) {
+  annotations(filters: $filters, pagination: $pagination) {
+    ...ListAnnotation
+  }
+}
+
+query GetAnnotationCollection($id: ID!) {
+  annotationCollection(id: $id) {
+    ...AnnotationCollection
+  }
+}
+
+query GetAnnotationCollections(
+  $filters: AnnotationCollectionFilter
+  $pagination: OffsetPaginationInput
+) {
+  annotationCollections(filters: $filters, pagination: $pagination) {
+    ...AnnotationCollection
+  }
+}

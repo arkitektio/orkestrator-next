@@ -148,14 +148,13 @@ fragment SceneLayer on Layer {
       ...LayerRenderGraph
     }
   }
-  ... on ShapeLayer {
-    dataRoi {
-      ...DataRoi
+  # A whole collection, not one shape: the styling that used to sit on the
+  # layer moved onto each Annotation, so the layer selects only the drawing
+  # surface and the renderer queries the shapes inside it.
+  ... on AnnotationLayer {
+    annotationCollection {
+      ...AnnotationCollection
     }
-    strokeColor
-    fillColor
-    strokeWidth
-    filled
   }
   ... on PointLayer {
     tableDataset {

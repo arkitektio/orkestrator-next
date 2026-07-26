@@ -41,7 +41,7 @@ type ADataset {
   intrinsicSystem: CoordinateSystem
 
   """
-  The most recent picture that shows this dataset and nothing else, for previewing it without loading the array. Snapshots are taken of scenes, not of datasets, so this only answers with a scene whose *only* placed dataset is this one -- a picture blending several datasets is a preview of none of them. Null when every scene it is placed in also holds other data. Two caveats it cannot rule out: the dataset may be placed in that scene without any layer drawing it (the picture can be empty), and a mesh or table collection may be drawn over it as an annotation
+  The most recent picture that shows this dataset and nothing else, for previewing it without loading the array. Snapshots are taken of scenes, not of datasets, so this only answers with a scene whose *only* anchored dataset is this one -- anchored meaning the scene's world is one of the dataset's own systems or a registration into it sets out from one, and a picture blending several datasets is a preview of none of them. Null when every scene it is anchored in also holds other data. Caveats it cannot rule out: the dataset may be anchored in that scene without any layer drawing it (the picture can be empty), a mesh or table collection may be drawn over it as an annotation, and a dataset placed only through a derived parent's registration does not count -- for or against
   """
   latestSnapshot: SceneSnapshot
 
@@ -1816,29 +1816,24 @@ type CoordinateSystem {
   creator: User
 
   """
-  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a scene's world, a shared hub); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
+  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a shared world space); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
   """
   epoch: DateTime
   id: ID!
 
   """
-  Whether a scene may compose over this system as its world, i.e. whether `createSceneFromCoordinateSystem` will accept it. False for an ARRAY system (a pyramid level, a lens crop -- a slice *of* a space, not a space to compose in; its container's intrinsic system is the honest root one hop away) and for another scene's minted world (which cascades with its scene and would be deleted out from under the adopter)
+  Whether a scene may compose over this system as its world, i.e. whether `createSceneFromCoordinateSystem` will accept it. False only for an ARRAY system (a pyramid level, a lens crop -- a slice *of* a space, not a space to compose in; its container's intrinsic system is the honest root one hop away)
   """
   isAdoptableWorld: Boolean!
 
   """
-  Whether this is an ownerless shared space, built to be registered into. The one kind of system created bare (`createCoordinateSystem`), and the only adoptable world that can receive registrations -- a scene's own world is SHARED too, but it is scene-owned and cascades away with its scene
-  """
-  isHub: Boolean!
-
-  """
-  What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for a space sources register into (a scene's world, an ownerless hub)
+  What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for an ownerless space sources register into and scenes adopt as their world
   """
   kind: CoordinateSystemKind!
   name: String!
 
   """
-  The container this system belongs to and cascades with: the dataset whose pixel grid or calibration it is, the pyramid level or lens whose grid it is, the collection or table whose native space it is, or the scene the world was minted for. Null for a hub, which nobody owns -- `kind` tells you *what* a system denotes, this tells you *whose* it is
+  The container this system belongs to and cascades with: the dataset whose pixel grid or calibration it is, the pyramid level or lens whose grid it is, or the collection or table whose native space it is. Null for a SHARED space, which nobody owns -- `kind` tells you *what* a system denotes, this tells you *whose* it is
   """
   owner: CoordinateSystemOwner
 
@@ -1848,7 +1843,7 @@ type CoordinateSystem {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  The scenes that compose over this system as their world. Non-empty only for a SHARED space (a world minted for one scene, or an ownerless hub): a hub lists every scene sharing it, and outlives each of them. The inverse of `Scene.worldCoordinateSystem`
+  The scenes that compose over this system as their world. A SHARED space lists every scene sharing it and outlives each of them: a scene adopts a space, never owns it, and deleting a scene never deletes the space. The inverse of `Scene.worldCoordinateSystem`
   """
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
 }
@@ -1875,12 +1870,7 @@ input CoordinateSystemFilter {
   ids: [ID!]
 
   """
-  Filter to ownerless shared spaces -- the hubs, the only systems that can receive registrations and be shared between scenes. Narrower than `kind: SHARED`, which also matches each scene's own minted world
-  """
-  isHub: Boolean
-
-  """
-  Filter by what the system denotes, derived from its owner: INTRINSIC (a container's own native space), ARRAY (a pyramid level's or lens' grid), PHYSICAL (a calibration), SHARED (a scene's world or an ownerless hub)
+  Filter by what the system denotes, derived from its owner: INTRINSIC (a container's own native space), ARRAY (a pyramid level's or lens' grid), PHYSICAL (a calibration), SHARED (an ownerless space sources register into and scenes adopt as their world)
   """
   kind: CoordinateSystemKind
   name: StrFilterLookup
@@ -1888,9 +1878,7 @@ input CoordinateSystemFilter {
   """Filter by the creator's subject ID"""
   owner: ID
 
-  """
-  Filter by a scene composing over this system -- its minted world or an adopted hub
-  """
+  """Filter by a scene composing over this system as its world"""
   scene: ID
 
   """Search by name (case-insensitive substring)"""
@@ -1917,7 +1905,7 @@ enum CoordinateSystemKind {
   PHYSICAL
 
   """
-  A space sources are registered into rather than owned by any of them: a scene's world (scene-owned, cascades with it) or an ownerless hub such as an anatomical atlas (standing, shared across scenes). The scene link tells the two apart.
+  An ownerless space sources are registered into rather than owned by any of them: a world scenes compose over, an anatomical atlas. Scenes adopt it but never own it -- it is shared across scenes and outlives each of them; deleting it is an explicit act.
   """
   SHARED
 }
@@ -1929,9 +1917,9 @@ input CoordinateSystemOrder @oneOf {
 }
 
 """
-The container that owns a coordinate system and that it cascades with. A hub has none
+The container that owns a coordinate system and that it cascades with. A SHARED space has none: scenes adopt a space as their world but never own it
 """
-union CoordinateSystemOwner = ADataset | DataArray | Lens | MeshCollection | Scene | TableDataset
+union CoordinateSystemOwner = ADataset | DataArray | Lens | MeshCollection | TableDataset
 
 """
 Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive as an optional calibration
@@ -2028,7 +2016,7 @@ input CreateCalibrationInput {
 }
 
 """
-Create a hub coordinate system -- a SHARED reference space with no owner, e.g. an atlas -- and, in the same call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it. Every other system is owned by a container and created with it, so a hub is the only system created directly. createSceneFromCoordinateSystem later mirrors the hub into a scene and materializes those sources as layers
+Create a SHARED coordinate system -- a reference space with no owner, e.g. a world or an atlas -- and, in the same call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it. Every other system is owned by a container and created with it, so a shared space is the only system created directly. createSceneFromCoordinateSystem later builds a scene over it and materializes those sources as layers
 """
 input CreateCoordinateSystemInput {
   axes: [CalibratedAxisInput!]!
@@ -2255,7 +2243,7 @@ input CreateRgbLayerInput {
 }
 
 """
-Bootstrap a renderable scene over an existing coordinate system. Over a hub (an ownerless SHARED space) the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's INTRINSIC pixels, a PHYSICAL calibration, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
+Bootstrap a renderable scene over an existing coordinate system. Over an ownerless SHARED space the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's INTRINSIC pixels, a PHYSICAL calibration, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
 """
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
@@ -2273,7 +2261,7 @@ input CreateSceneFromDatasetInput {
 }
 
 """
-Input type for creating a scene over a world coordinate system: an adopted existing system (a hub, a dataset's intrinsic grid, a calibration), or one minted for the scene
+Input type for creating a scene over a world coordinate system: an adopted existing system (a shared space, a dataset's intrinsic grid, a calibration), or one created for it
 """
 input CreateSceneInput {
   axes: [CalibratedAxisInput!] = null
@@ -2524,9 +2512,9 @@ input DeleteCameraInput {
   id: ID!
 }
 
-"""Input for deleting a hub coordinate system by ID"""
+"""Input for deleting a shared coordinate system by ID"""
 input DeleteCoordinateSystemInput {
-  """The ID of the hub coordinate system to delete"""
+  """The ID of the shared coordinate system to delete"""
   id: ID!
 }
 
@@ -4478,7 +4466,7 @@ type Lens {
   id: ID!
 
   """
-  The most recent picture that shows this lens' dataset and nothing else -- the tile to put on this lens. The same picture the dataset itself reports: snapshots are taken of scenes, and sole occupancy is a fact about the dataset, so every lens over one dataset answers alike. Null when every scene it is placed in also holds other data
+  The most recent picture that shows this lens' dataset and nothing else -- the tile to put on this lens. The same picture the dataset itself reports: snapshots are taken of scenes, and sole occupancy is a fact about the dataset, so every lens over one dataset answers alike. Null when every scene it is anchored in also holds other data
   """
   latestSnapshot: SceneSnapshot
 
@@ -8149,7 +8137,7 @@ input ReferenceViewInput {
 }
 
 """
-A source (dataset, table dataset, mesh collection, or coordinate system) to register into a hub, plus the edge that places it. The edge points from the source's own coordinate system to the hub; the transform is validated exactly as createTransformation validates one
+A source (dataset, table dataset, mesh collection, or coordinate system) to register into a shared space, plus the edge that places it. The edge points from the source's own coordinate system to the shared space; the transform is validated exactly as createTransformation validates one
 """
 input RegistrationPathInput {
   affine: [[Float!]!] = null
@@ -8664,7 +8652,7 @@ type Scene {
   snapshots(filters: SceneSnapshotFilter, ordering: [SceneSnapshotOrder!]! = [], pagination: OffsetPaginationInput): [SceneSnapshot!]!
 
   """
-  The shared space this scene composes its layers over: a world minted for this scene, or an adopted ownerless hub that many scenes can share and that outlives each of them
+  The shared space this scene composes its layers over. Never owned by the scene: many scenes can share it, it outlives each of them, and deleting a scene never deletes it
   """
   worldCoordinateSystem: CoordinateSystem!
 }
@@ -8691,7 +8679,7 @@ input SceneOrder @oneOf {
 }
 
 """
-The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources already registered into the hub, filtered by kind
+The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources already registered into the space, filtered by kind
 """
 input ScenePolicyInput {
   includeMeshes: Boolean! = true
@@ -8700,7 +8688,7 @@ input ScenePolicyInput {
 }
 
 """
-A pre-rendered picture of a composition: every layer of the scene, blended. Clients use snapshots to preview without compositing the layers themselves. A picture of the scene, not of any one dataset in it -- though `ADataset.latestSnapshot` will offer one of these where the scene's only placed dataset is that dataset, since then the picture shows it and nothing else
+A pre-rendered picture of a composition: every layer of the scene, blended. Clients use snapshots to preview without compositing the layers themselves. A picture of the scene, not of any one dataset in it -- though `ADataset.latestSnapshot` will offer one of these where the scene's only anchored dataset is that dataset, since then the picture shows it and nothing else
 """
 type SceneSnapshot {
   createdAt: DateTime!
@@ -10038,7 +10026,7 @@ input UpdateAnnotationInput {
 }
 
 """
-Input for renaming a hub coordinate system or anchoring its clock. Hubs only: every other system is named by the container that owns it
+Input for renaming a shared coordinate system or anchoring its clock. Shared spaces only: every other system is named by the container that owns it
 """
 input UpdateCoordinateSystemInput {
   epoch: DateTime = null

@@ -15,7 +15,6 @@
       "DataArray",
       "Lens",
       "MeshCollection",
-      "Scene",
       "TableDataset"
     ],
     "DatasetImageFile": [

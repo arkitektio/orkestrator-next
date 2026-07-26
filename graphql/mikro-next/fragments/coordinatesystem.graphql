@@ -33,10 +33,6 @@ fragment CoordinateSystemOwner on CoordinateSystemOwner {
     id
     version
   }
-  ... on Scene {
-    id
-    name
-  }
   ... on Lens {
     id
     dataset {
@@ -64,7 +60,7 @@ fragment CoordinateSystem on CoordinateSystem {
   # Both are SHARED, so `kind` alone cannot tell them apart and the distinction
   # is not derivable client-side — a hub receives registrations and outlives
   # every scene over it; a scene's world cascades away with its scene.
-  isHub
+
   # Whether createSceneFromCoordinateSystem will accept this system as a world.
   isAdoptableWorld
   owner {

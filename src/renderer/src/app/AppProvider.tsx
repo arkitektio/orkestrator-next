@@ -97,6 +97,7 @@ import { DownloadProvider } from "@/providers/download/DownloadProvider";
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 import { AgentProvider } from "./agent/AgentProvider";
 import { WardRegistrar } from "@/lib/arkitekt/WardRegistrar";
+import { RefetchOnReactivate } from "@/hooks/use-refetch-on-reactivate";
 import { BuiltinDashboardWidgets } from "@/providers/dashboard/widgets/BuiltinDashboardWidgets";
 import { RekuestDashboardWidgets } from "@/providers/dashboard/widgets/RekuestDashboardWidgets";
 import { MikroDashboardWidgets } from "@/providers/dashboard/widgets/MikroDashboardWidgets";
@@ -125,6 +126,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                 <SelectionProvider>
                                   <AgentProvider disabled={false}>
                                     <WardRegistrar />
+                                    <RefetchOnReactivate />
                                     <BuiltinDashboardWidgets />
                                     <Guard.Rekuest unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <TaskUpdater />

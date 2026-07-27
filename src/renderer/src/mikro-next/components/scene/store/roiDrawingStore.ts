@@ -25,6 +25,25 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
 };
 
 /**
+ * What the pointer does in ANNOTATE mode. "SELECT" is the marquee pointer
+ * (`interactions/RectangleDrawer.tsx`); every other value is a shape the
+ * `RoiDrawer` draws.
+ *
+ * Deliberately a separate union from `DrawingTool`: `DRAWING_TOOL_TO_ROI_KIND`
+ * is a *total* `Record<DrawingTool, RoiKind>` that the drawer indexes unguarded,
+ * so widening `DrawingTool` would force either a lying `RoiKind` entry for
+ * SELECT or a partial map for all six real tools.
+ *
+ * Drawing and marquee are then mutually exclusive by construction: exactly one
+ * of `activeTool === "SELECT"` and `isDrawingTool(activeTool)` can hold.
+ */
+export type AnnotateTool = "SELECT" | DrawingTool;
+
+export const isDrawingTool = (
+  tool: AnnotateTool | null | undefined,
+): tool is DrawingTool => tool != null && tool !== "SELECT";
+
+/**
  * A shape the user just drew, held only until the server confirms it. Drawing
  * targets the SCENE, whose annotation collection is registered into the world,
  * so world coordinates are both what is rendered and what is submitted — there
@@ -33,17 +52,31 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
 export interface DrawnRoi {
   id: string;
   kind: RoiKind;
+  /**
+   * The tool that drew it, kept so the local preview can be re-stroked with the
+   * right outline. `RoiKind` alone is not enough to invert — it has values with
+   * no drawing tool — and this state never leaves the client.
+   */
+  tool: DrawingTool;
   /** World-space vectors, for rendering and for the mutation */
   worldVectors: Array<{ x: number; y: number; z: number }>;
 }
 
 export interface RoiDrawingState {
-  activeTool: DrawingTool | null;
+  activeTool: AnnotateTool | null;
   drawnRois: DrawnRoi[];
-  setActiveTool: (tool: DrawingTool | null) => void;
+  /**
+   * World-space first vertex for the next PATH session — set by "draw path
+   * from probe", consumed (and cleared) by `RoiDrawer` after its reset effect.
+   * Store-held rather than an imperative handle so it survives both the
+   * drawer's tool/mode reset and its remount on a 2D↔3D display flip.
+   */
+  pendingPathSeed: [number, number, number] | null;
+  setActiveTool: (tool: AnnotateTool | null) => void;
   addDrawnRoi: (roi: DrawnRoi) => void;
   removeDrawnRoi: (id: string) => void;
   clearDrawnRois: () => void;
+  setPendingPathSeed: (seed: [number, number, number] | null) => void;
 }
 
 export const createRoiDrawingStore = () =>
@@ -51,9 +84,14 @@ export const createRoiDrawingStore = () =>
     immer((set) => ({
       activeTool: "RECTANGLE",
       drawnRois: [],
+      pendingPathSeed: null,
       setActiveTool: (tool) =>
         set((state) => {
           state.activeTool = tool;
+        }),
+      setPendingPathSeed: (seed) =>
+        set((state) => {
+          state.pendingPathSeed = seed;
         }),
       addDrawnRoi: (roi) =>
         set((state) => {

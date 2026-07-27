@@ -1,19 +1,23 @@
 import { cn } from "@/lib/utils";
 import { MikroCoordinateSystem } from "@/linkers";
-import { CoordinateSystemKind } from "@/mikro-next/api/graphql";
 import { Handle, NodeProps, Position } from "@xyflow/react";
+import { isReferenceFrame, residentLabel } from "./residents";
 import { CoordinateSystemNode as TNode } from "./types";
 
-// The four kinds are the whole vocabulary of the graph, and colour is the
-// fastest way to read a component: which node is the container's native space,
-// which are the calibrated physical spaces hanging off it, and which is the
-// shared space sources register into (a scene's world or an ownerless hub).
-export const KIND_DOT: Record<CoordinateSystemKind, string> = {
-  [CoordinateSystemKind.Intrinsic]: "bg-blue-500",
-  [CoordinateSystemKind.Physical]: "bg-emerald-500",
-  [CoordinateSystemKind.Array]: "bg-slate-400",
-  [CoordinateSystemKind.Shared]: "bg-violet-500",
-};
+// Inhabited vs. uninhabited is the whole vocabulary the graph has left, and
+// colour is the fastest way to read a component: which nodes hold data, and
+// which is the pure frame the rest are registered into.
+export const OCCUPANCY_DOT = {
+  frame: "bg-violet-500",
+  inhabited: "bg-blue-500",
+} as const;
+
+export const OCCUPANCY_LABEL = {
+  frame: "reference frame",
+  inhabited: "inhabited",
+} as const;
+
+export type Occupancy = keyof typeof OCCUPANCY_DOT;
 
 export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
   const { system, isRoot } = data;
@@ -31,9 +35,14 @@ export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
           isRoot && "ring-2 ring-offset-1 ring-primary ring-offset-background",
         )}
       >
-        {/* Kind reads as a colour spine rather than a badge competing with the
-            name for the eye. */}
-        <div className={cn("w-1 shrink-0", KIND_DOT[system.kind])} />
+        {/* Occupancy reads as a colour spine rather than a badge competing
+            with the name for the eye. */}
+        <div
+          className={cn(
+            "w-1 shrink-0",
+            OCCUPANCY_DOT[isReferenceFrame(system) ? "frame" : "inhabited"],
+          )}
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
           <MikroCoordinateSystem.DetailLink
             object={system}
@@ -41,8 +50,8 @@ export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
           >
             {system.name}
           </MikroCoordinateSystem.DetailLink>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {system.kind}
+          <div className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+            {residentLabel(system)}
           </div>
           <div className="flex flex-wrap gap-1">
             {[...system.axes]

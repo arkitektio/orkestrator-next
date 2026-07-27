@@ -6,14 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   MikroADataset,
   MikroCoordinateSystem,
-  MikroScene,
   MikroTableDataset,
 } from "@/linkers";
 import { Ruler, Waypoints } from "lucide-react";
 import { ReactNode } from "react";
 import {
   CoordinateSystemFragment,
-  CoordinateSystemKind,
   useGetCoordinateGraphQuery,
   useGetCoordinateSystemQuery,
 } from "../api/graphql";
@@ -28,59 +26,65 @@ import {
   formatPixelSize,
   pixelSizeEntries,
 } from "../components/coordinates/pixelSize";
+import {
+  isReferenceFrame,
+  residentLabel,
+} from "../components/coordinates/residents";
 import { AnyTransformation } from "../components/coordinates/types";
 import AxesTable from "../components/tables/AxesTable";
 
 /**
  * A coordinate system's page.
  *
- * `kind` makes four genuinely different objects — a dataset's pixel grid, a
- * pyramid level's voxel grid, a calibration, an atlas hub — and the page asks
- * each one the question it actually has:
+ * A system no longer declares what it is — `residents` is the whole vocabulary,
+ * and its emptiness is the only distinction the schema still draws. So the page
+ * asks one of two questions:
  *
- *   SHARED    what is registered into me, and how much do we trust it?
- *   INTRINSIC what has been derived from these pixels?
- *   PHYSICAL  what is the pixel size, and who says so?
- *   ARRAY     what am I a slice of?
+ *   nothing lives here   what is registered into me, how much do we trust it,
+ *                        and which scenes have adopted me as their world?
+ *   something lives here who lives here, what reaches me, and what I map into?
+ *
+ * The old PHYSICAL section survives as a pixel-size readout, gated on the edge
+ * actually encoding per-axis factors rather than on a kind that no longer
+ * exists — which is exactly the set of systems it used to fire for.
  */
 
-/** `kind` says what a system denotes; `owner` says whose it is. */
-const OwnerLink = (props: {
-  owner: NonNullable<CoordinateSystemFragment["owner"]>;
+/** Who lives in this space. Several may, and the frame case has none. */
+const ResidentLink = (props: {
+  resident: CoordinateSystemFragment["residents"][number];
 }) => {
-  const { owner } = props;
-  switch (owner.__typename) {
+  const { resident } = props;
+  switch (resident.__typename) {
     case "ADataset":
       return (
-        <MikroADataset.DetailLink object={owner}>
-          {owner.name}
+        <MikroADataset.DetailLink object={resident}>
+          {resident.name}
         </MikroADataset.DetailLink>
       );
     case "TableDataset":
       return (
-        <MikroTableDataset.DetailLink object={owner}>
-          {owner.name}
+        <MikroTableDataset.DetailLink object={resident}>
+          {resident.name}
         </MikroTableDataset.DetailLink>
       );
-    case "Scene":
-      return (
-        <MikroScene.DetailLink object={owner}>{owner.name}</MikroScene.DetailLink>
-      );
+    case "AnnotationCollection":
+      // No @mikro/annotationcollection linker exists, so it names itself.
+      return <span>{resident.name}</span>;
     case "Lens":
       // A lens has no name of its own, so it borrows its dataset's.
       return (
         <span>
           a lens of{" "}
-          <MikroADataset.DetailLink object={owner.dataset}>
-            {owner.dataset.name}
+          <MikroADataset.DetailLink object={resident.dataset}>
+            {resident.dataset.name}
           </MikroADataset.DetailLink>
         </span>
       );
     case "DataArray":
       // A DataArray has neither a name nor a back-reference to its dataset.
-      return <span>pyramid level {owner.level}</span>;
+      return <span>pyramid level {resident.level}</span>;
     case "MeshCollection":
-      return <span>mesh collection {owner.version}</span>;
+      return <span>mesh collection {resident.version}</span>;
     default:
       return null;
   }
@@ -121,18 +125,23 @@ export const CoordinateSystemPage = asDetailQueryRoute(
     const inbound = edges.filter((edge) => edge?.output?.id === system.id);
     const outbound = edges.filter((edge) => edge?.input?.id === system.id);
 
-    const isShared = system.kind === CoordinateSystemKind.Shared;
-    const isIntrinsic = system.kind === CoordinateSystemKind.Intrinsic;
-    const isPhysical = system.kind === CoordinateSystemKind.Physical;
-    const isArray = system.kind === CoordinateSystemKind.Array;
+    // Nothing lives here: a world, an atlas — a space built to be registered
+    // into rather than to hold anything of its own.
+    const isFrame = isReferenceFrame(system);
 
-    // A calibration is reached from the intrinsic grid by exactly one edge, and
-    // that edge's parameters ARE the pixel size.
-    const calibrationEdge = isPhysical ? inbound[0] : undefined;
+    // A calibration is reached from the space it calibrates by exactly one
+    // edge, and that edge's parameters ARE the pixel size. There is no PHYSICAL
+    // kind left to gate on, so gate on what actually made those systems
+    // different: this space's axes CARRY UNITS, and something scales into it.
+    // Units are the test rather than "has a scale edge" because a pyramid level
+    // maps into its dataset's grid by a scale too — but into unitless pixels,
+    // which is a resolution, not a pixel size.
+    const calibrationEdge = inbound[0];
     const pixelSizes = pixelSizeEntries(
       calibrationEdge as PixelSizeEdge,
       system.axes,
     );
+    const isCalibration = pixelSizes.some((entry) => entry.unit);
     const assumed = assumedCount(inbound);
 
     const registerButton = (
@@ -148,20 +157,20 @@ export const CoordinateSystemPage = asDetailQueryRoute(
       </Button>
     );
 
-    // Calibration is a property of the DATASET, not of its pixel grid — the
-    // mutation takes a dataset id — so this only appears when the owner is one.
-    const calibrateOwner =
-      isIntrinsic && system.owner?.__typename === "ADataset"
-        ? system.owner
-        : undefined;
-    const calibrateButton = calibrateOwner ? (
+    // Calibration is a property of the DATASET, not of the space it lives in —
+    // the form takes a dataset id — so this only appears when a dataset is one
+    // of the residents.
+    const calibrateDataset = system.residents.find(
+      (resident) => resident.__typename === "ADataset",
+    );
+    const calibrateButton = calibrateDataset ? (
       <Button
         variant="outline"
         size="sm"
         onClick={() =>
           openDialog(
             "calibrate",
-            { dataset: calibrateOwner.id },
+            { dataset: calibrateDataset.id },
             { className: "max-w-2xl" },
           )
         }
@@ -176,24 +185,25 @@ export const CoordinateSystemPage = asDetailQueryRoute(
         object={system}
         title={system.name}
         actions={<MikroCoordinateSystem.Actions object={system} />}
-        pageActions={isShared ? registerButton : calibrateButton}
+        pageActions={isFrame ? registerButton : calibrateButton}
       >
         <div className="flex flex-col gap-3 p-3">
           <div className="flex flex-row flex-wrap items-center gap-2">
             <MikroCoordinateSystem.DetailLink object={system} className="text-3xl">
               {system.name}
             </MikroCoordinateSystem.DetailLink>
-            <Badge variant="outline">{system.kind}</Badge>
-            {/* Both a hub and a scene's world are SHARED, so `kind` alone
-                cannot tell them apart — `isHub` is the server's own answer. */}
-            {system.isHub && (
-              <Badge
-                variant="secondary"
-                title="An ownerless shared space, built to be registered into. It outlives every scene composed over it."
-              >
-                hub
-              </Badge>
-            )}
+            {/* What this space is, said the only way the schema still says it:
+                by who lives in it. */}
+            <Badge
+              variant="outline"
+              title={
+                isFrame
+                  ? "Nothing lives in this space. Sources register into it and scenes adopt it as their world; it outlives every scene over it."
+                  : "The data living in this space."
+              }
+            >
+              {residentLabel(system)}
+            </Badge>
           </div>
 
           <div className="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
@@ -203,11 +213,9 @@ export const CoordinateSystemPage = asDetailQueryRoute(
                 .map((axis) => axis.name)
                 .join(" ")}
             </span>
-            {system.owner && (
-              <span>
-                of <OwnerLink owner={system.owner} />
-              </span>
-            )}
+            {/* The residents are not repeated here — the badge above names the
+                one that matters, and the Residents section below links them
+                all. */}
             {/* Only meaningful for a calibrated system with a TIME axis. An
                 unanchored clock is not a defect: the time axis is still a
                 perfectly composable relative coordinate. */}
@@ -223,7 +231,7 @@ export const CoordinateSystemPage = asDetailQueryRoute(
               ))}
           </div>
 
-          {isShared && (
+          {isFrame ? (
             <Section
               title="Registered sources"
               action={
@@ -242,70 +250,68 @@ export const CoordinateSystemPage = asDetailQueryRoute(
               <EdgeTable
                 edges={inbound}
                 direction="in"
-                empty={
-                  system.isHub
-                    ? "Nothing is registered into this hub yet. Register a dataset, table or another space to place it here."
-                    : "Nothing is registered into this world yet."
-                }
+                empty="Nothing is registered into this space yet. Register a dataset, table or another space to place it here."
               />
             </Section>
-          )}
-
-          {isPhysical && (
-            <Section title="Pixel size">
-              {calibrationEdge ? (
-                <div className="flex flex-col gap-2">
-                  {pixelSizes.length > 0 ? (
-                    <div className="flex flex-row flex-wrap items-center gap-3">
-                      {pixelSizes.map((entry) => (
-                        <span key={entry.axis} className="font-mono text-sm">
-                          {formatPixelSize(entry)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      This calibration is a {calibrationEdge.kind} edge, which
-                      states no per-axis pixel size.
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>maps from</span>
-                    {calibrationEdge.input && (
-                      <MikroCoordinateSystem.DetailLink
-                        object={calibrationEdge.input}
-                      >
-                        {calibrationEdge.input.name}
-                      </MikroCoordinateSystem.DetailLink>
-                    )}
-                    {calibrationEdge.validity && (
-                      <ValidityBadge validity={calibrationEdge.validity} />
-                    )}
+          ) : (
+            <Section title="Residents">
+              <div className="flex flex-col gap-1 text-sm">
+                {system.residents.map((resident) => (
+                  <div key={`${resident.__typename}-${resident.id}`}>
+                    <ResidentLink resident={resident} />
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {resident.__typename}
+                    </span>
                   </div>
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  No edge into this calibration was found in the graph walk.
-                </div>
-              )}
+                ))}
+              </div>
             </Section>
           )}
 
-          {(isIntrinsic || isArray) && (
-            <Section
-              title={isArray ? "Maps into" : "Derived from these pixels"}
-              action={isIntrinsic ? calibrateButton : undefined}
-            >
-              <EdgeTable
-                edges={outbound}
-                direction="out"
-                empty={
-                  isArray
-                    ? "This grid maps nowhere yet."
-                    : "Nothing is derived from this pixel grid: it has no calibration and no registration. Its geometry is only expressed in pixels."
-                }
-              />
+          {isCalibration && calibrationEdge && (
+            <Section title="Pixel size">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-row flex-wrap items-center gap-3">
+                  {pixelSizes.map((entry) => (
+                    <span key={entry.axis} className="font-mono text-sm">
+                      {formatPixelSize(entry)}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>maps from</span>
+                  {calibrationEdge.input && (
+                    <MikroCoordinateSystem.DetailLink
+                      object={calibrationEdge.input}
+                    >
+                      {calibrationEdge.input.name}
+                    </MikroCoordinateSystem.DetailLink>
+                  )}
+                  {calibrationEdge.validity && (
+                    <ValidityBadge validity={calibrationEdge.validity} />
+                  )}
+                </div>
+              </div>
             </Section>
+          )}
+
+          {!isFrame && (
+            <>
+              <Section title="Reached from">
+                <EdgeTable
+                  edges={inbound}
+                  direction="in"
+                  empty="Nothing maps into this space."
+                />
+              </Section>
+              <Section title="Maps into" action={calibrateButton}>
+                <EdgeTable
+                  edges={outbound}
+                  direction="out"
+                  empty="Nothing is derived from this space: it has no calibration and no registration. Its geometry is only expressed in its own coordinates."
+                />
+              </Section>
+            </>
           )}
 
           <Card>
@@ -321,7 +327,7 @@ export const CoordinateSystemPage = asDetailQueryRoute(
             <AxesTable axes={system.axes} />
           </Section>
 
-          {isShared && (
+          {isFrame && (
             <Section title="Scenes">
               {system.scenes.length === 0 ? (
                 <div className="text-sm text-muted-foreground">

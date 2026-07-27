@@ -7,14 +7,10 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import {
-  BoxSelect,
   Camera,
   Hand,
-  Move,
   Pin,
-  ScanEye,
   Settings2,
-  Sparkles,
   SquarePen,
   Target,
   type LucideIcon,
@@ -23,18 +19,18 @@ import { MikroCoordinateSystem } from "@/linkers";
 import { InteractionMode, useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
+import {
+  hasProbeableLayer,
+  isInteractionModeAvailable,
+} from "../core/modeCompat";
 import { displayModeToPreferredView } from "../core/preferredView";
 import { useScenePreferencesEditor } from "../panels/animation/useAnimationEditor";
 
 /** Icon per interaction mode for the compact, right-side mode control. */
 const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
-  PAN: Hand,
-  EDIT: SquarePen,
-  SELECT: BoxSelect,
-  MOVE: Move,
-  META: Sparkles,
+  NAVIGATE: Hand,
+  ANNOTATE: SquarePen,
   PROBE: Target,
-  AUTO_PROBE: ScanEye,
 };
 
 const SettingRow = ({
@@ -54,25 +50,36 @@ const SettingRow = ({
 
 export const SceneOverlay = () => {
   const displayMode = useModeStore((s) => s.displayMode);
-  const cameraControllerMode = useModeStore((s) => s.cameraControllerMode);
-  const cameraControllerModeOptions = useModeStore(
-    (s) => s.cameraControllerModeOptions,
-  );
   const interactionModeOptions = useModeStore((s) => s.interactionModeOptions);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const setDisplayMode = useModeStore((s) => s.setDisplayMode);
-  const setCameraControllerMode = useModeStore((s) => s.setCameraControllerMode);
+  const zoomToCursor = useModeStore((s) => s.zoomToCursor);
+  const pivotOnProbe = useModeStore((s) => s.pivotOnProbe);
+  const setZoomToCursor = useModeStore((s) => s.setZoomToCursor);
+  const setPivotOnProbe = useModeStore((s) => s.setPivotOnProbe);
   const isDebug = useViewerStore((state) => state.debug);
   const world = useSceneStore(
     (state) => state.transformContext.worldCoordinateSystem,
   );
+  const layers = useSceneStore((state) => state.layers);
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
+  const showSceneAxis = useViewerStore((state) => state.showSceneAxis);
 
   const setDebug = useViewerStore((state) => state.setDebug);
   const setShowScaleBar = useViewerStore((state) => state.setShowScaleBar);
   const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
+  const setShowSceneAxis = useViewerStore((state) => state.setShowSceneAxis);
+
+  // An option that would be inert is not offered — see `core/modeCompat.ts`.
+  const modeContext = {
+    displayMode,
+    hasProbeableLayer: hasProbeableLayer(layers),
+  };
+  const availableModes = interactionModeOptions.filter((mode) =>
+    isInteractionModeAvailable(mode.value, modeContext),
+  );
 
   const captureScreenshot = useViewerStore((state) => state.captureScreenshot);
 
@@ -171,7 +178,30 @@ export const SceneOverlay = () => {
               checked={showScaleGrid}
               onChange={setShowScaleGrid}
             />
+            <SettingRow
+              label="Origin axis"
+              checked={showSceneAxis}
+              onChange={setShowSceneAxis}
+            />
             <SettingRow label="Debug" checked={isDebug} onChange={setDebug} />
+
+            {/* Camera behaviour. These used to be exclusive camera modes; as
+                switches they compose, so you can orbit around the probe *and*
+                zoom to the cursor. Rotation is 2D-disabled, so both are 3D-only. */}
+            {displayMode === "3D" && (
+              <div className="mt-1 border-t pt-1">
+                <SettingRow
+                  label="Zoom to cursor"
+                  checked={zoomToCursor}
+                  onChange={setZoomToCursor}
+                />
+                <SettingRow
+                  label="Orbit around probe"
+                  checked={pivotOnProbe}
+                  onChange={setPivotOnProbe}
+                />
+              </div>
+            )}
             {world && (
               <div className="mt-1 flex items-center justify-between gap-2 border-t pt-2">
                 <span className="text-xs text-muted-foreground">World</span>
@@ -188,28 +218,9 @@ export const SceneOverlay = () => {
         </Popover>
       </div>
 
-      {/* Camera controller modes — 3D only. */}
-      {displayMode === "3D" && (
-        <ButtonGroup className="w-full">
-          {cameraControllerModeOptions.map((mode) => (
-            <Button
-              variant={"outline"}
-              size={"xs"}
-              className="h-7 flex-1 bg-black"
-              key={mode.value}
-              onClick={() => setCameraControllerMode(mode.value)}
-              disabled={cameraControllerMode === mode.value}
-              title={mode.description}
-            >
-              <span className="text-xs font-bold">{mode.label}</span>
-            </Button>
-          ))}
-        </ButtonGroup>
-      )}
-
       {/* Interaction modes — iconified switches. */}
       <ButtonGroup className="w-full">
-        {interactionModeOptions.map((mode) => {
+        {availableModes.map((mode) => {
           const Icon = INTERACTION_ICONS[mode.value];
           const active = interactionMode === mode.value;
           return (
@@ -219,7 +230,9 @@ export const SceneOverlay = () => {
               size={"xs"}
               className={active ? "h-7 flex-1 p-0" : "h-7 flex-1 bg-black p-0"}
               onClick={() => setInteractionMode(mode.value)}
-              title={mode.label}
+              // The buttons are icon-only, so the tooltip carries the whole
+              // explanation — the descriptions used to go unshown entirely.
+              title={mode.description ? `${mode.label} — ${mode.description}` : mode.label}
             >
               <Icon className="h-3.5 w-3.5" />
             </Button>

@@ -137,6 +137,52 @@ const AttributeRowBlock = ({
   </div>
 );
 
+/**
+ * One attached table's result block — presentational, host-agnostic. The
+ * probe section feeds it from `probedAttributes`; the selected-ROI section
+ * feeds it from `useAttributesAt` results (same `PlanRowsState` contract).
+ */
+export const AttributePlanBlock = ({
+  tableName,
+  attributes,
+  state,
+}: {
+  tableName: string | null;
+  attributes: readonly AttributeColumnLike[];
+  state: PlanRowsState;
+}) => (
+  <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
+    <div className="flex items-center justify-between gap-2">
+      <span className="truncate text-[10px] font-medium text-white/60">
+        {tableName ?? "attributes"}
+      </span>
+      <span className="flex items-center gap-1.5">
+        {state.sampledValue !== undefined && state.sampledValue !== null && (
+          <span className="font-mono text-[10px] text-white/70">
+            #{String(state.sampledValue)}
+          </span>
+        )}
+        <StatusBadge state={state} />
+      </span>
+    </div>
+    {state.status === "background" && (
+      <span className="text-[10px] text-white/40">background</span>
+    )}
+    {state.status === "error" && (
+      <span className="text-[10px] text-red-300/70">{state.error ?? "failed"}</span>
+    )}
+    {state.status === "rows" && state.rows.length === 0 && (
+      <span className="text-[10px] text-white/40">
+        no row for this object (never measured)
+      </span>
+    )}
+    {state.status === "rows" &&
+      state.rows.map((row, index) => (
+        <AttributeRowBlock key={index} row={row} attributes={attributes} />
+      ))}
+  </div>
+);
+
 export const AttributeRowsSection = ({ probe }: { probe: ProbeResult }) => {
   const probedAttributes = useViewerStore((s) => s.probedAttributes);
 
@@ -152,43 +198,12 @@ export const AttributeRowsSection = ({ probe }: { probe: ProbeResult }) => {
         // Unreachable plans are honest absences, not errors — hide them.
         if (state.status === "unreachable") return null;
         return (
-          <div
+          <AttributePlanBlock
             key={planKey}
-            className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-[10px] font-medium text-white/60">
-                {meta?.tableName ?? "attributes"}
-              </span>
-              <span className="flex items-center gap-1.5">
-                {state.sampledValue !== undefined && state.sampledValue !== null && (
-                  <span className="font-mono text-[10px] text-white/70">
-                    #{String(state.sampledValue)}
-                  </span>
-                )}
-                <StatusBadge state={state} />
-              </span>
-            </div>
-            {state.status === "background" && (
-              <span className="text-[10px] text-white/40">background</span>
-            )}
-            {state.status === "error" && (
-              <span className="text-[10px] text-red-300/70">{state.error ?? "failed"}</span>
-            )}
-            {state.status === "rows" && state.rows.length === 0 && (
-              <span className="text-[10px] text-white/40">
-                no row for this object (never measured)
-              </span>
-            )}
-            {state.status === "rows" &&
-              state.rows.map((row, index) => (
-                <AttributeRowBlock
-                  key={index}
-                  row={row}
-                  attributes={meta?.attributes ?? []}
-                />
-              ))}
-          </div>
+            tableName={meta?.tableName ?? null}
+            attributes={meta?.attributes ?? []}
+            state={state}
+          />
         );
       })}
     </div>

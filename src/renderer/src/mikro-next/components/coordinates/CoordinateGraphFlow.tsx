@@ -1,7 +1,4 @@
-import {
-  CoordinateSystemKind,
-  GetCoordinateGraphQuery,
-} from "@/mikro-next/api/graphql";
+import { GetCoordinateGraphQuery } from "@/mikro-next/api/graphql";
 import {
   Background,
   Controls,
@@ -15,7 +12,11 @@ import {
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React from "react";
-import CoordinateSystemNode, { KIND_DOT } from "./CoordinateSystemNode";
+import CoordinateSystemNode, {
+  OCCUPANCY_DOT,
+  OCCUPANCY_LABEL,
+  Occupancy,
+} from "./CoordinateSystemNode";
 import TransformationNode from "./TransformationNode";
 import { GraphEdge, GraphNode } from "./types";
 
@@ -157,10 +158,10 @@ const Legend = ({
   dropped: number;
 }) => (
   <div className="flex max-w-[420px] flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-foreground backdrop-blur">
-    {Object.values(CoordinateSystemKind).map((kind) => (
-      <span key={kind} className="flex items-center gap-1">
-        <span className={`h-2 w-2 rounded-full ${KIND_DOT[kind]}`} />
-        {kind}
+    {(Object.keys(OCCUPANCY_DOT) as Occupancy[]).map((occupancy) => (
+      <span key={occupancy} className="flex items-center gap-1">
+        <span className={`h-2 w-2 rounded-full ${OCCUPANCY_DOT[occupancy]}`} />
+        {OCCUPANCY_LABEL[occupancy]}
       </span>
     ))}
     <span className="flex items-center gap-1">

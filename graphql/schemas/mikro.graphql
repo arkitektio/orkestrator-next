@@ -1,18 +1,13 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
 """
-A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on its calibrations; its pyramid levels are DataArrays, each mapping into the one intrinsic system
+A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the calibrated spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid
 """
 type ADataset {
   """
   The dataset's axis names, in array order. Derived from the axes of its intrinsic coordinate system
   """
   axisNames: [String!]!
-
-  """
-  The dataset's calibrated PHYSICAL spaces (pixel size, stage pose, ...). Each is reached from the intrinsic system by a single transformation edge; refining a calibration bumps that edge's version and moves nothing drawn in pixels
-  """
-  calibrations(filters: CoordinateSystemFilter, ordering: [CoordinateSystemOrder!]! = [], pagination: OffsetPaginationInput): [CoordinateSystem!]!
 
   """The task this dataset was created through, if any"""
   createdThrough: Task
@@ -80,7 +75,7 @@ input ADatasetFilter {
   assignedBy: ID
 
   """
-  Filter by whether the dataset carries at least one PHYSICAL calibration -- a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
+  Filter by whether the dataset has an edge into a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
   """
   calibrated: Boolean
 
@@ -270,6 +265,11 @@ type AffineTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -565,7 +565,9 @@ type Annotation {
   """The stroke (outline) color of the geometry, as RGBA"""
   strokeColor: [Int!]
 
-  """The stroke width of the geometry, in the drawing space's units"""
+  """
+  The stroke width of the geometry, in the drawing space's units. One number for every direction, so it is a well-defined length only where that space's axes share a scale
+  """
   strokeWidth: Float!
   vectors: [[Float!]!]!
 }
@@ -706,7 +708,7 @@ type AnnotationLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -714,6 +716,11 @@ type AnnotationLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -824,6 +831,20 @@ Input type for an axis anchor, which pins one axis to one discrete position
 input AxisAnchorInput {
   axis: String!
   value: Int!
+}
+
+"""
+One axis of a source's extent: the range it occupies along a single named axis of the queried coordinate system
+"""
+type AxisExtent {
+  """The name of the axis, as it is named on the queried coordinate system"""
+  axis: String!
+
+  """The upper bound along this axis, inclusive"""
+  max: Float!
+
+  """The lower bound along this axis, inclusive"""
+  min: Float!
 }
 
 input AxisFilter {
@@ -1008,6 +1029,11 @@ type BijectionTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -1136,6 +1162,11 @@ type ByDimensionTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -1508,6 +1539,22 @@ input ChildrenPaginationInput {
 }
 
 """
+Input for clearing a shared coordinate system: delete every registration INTO it in one call, keeping the space, its scenes, and its own claims into wider spaces
+"""
+input ClearCoordinateSystemInput {
+  """The ID of the shared coordinate system to clear"""
+  id: ID!
+}
+
+"""
+Input for clearing a scene: delete every layer, keep the scene and everything it composes over
+"""
+input ClearSceneInput {
+  """The ID of the scene to clear"""
+  id: ID!
+}
+
+"""
 An OAuth client (application) that can act against the API, e.g. the app a change was made through.
 """
 type Client {
@@ -1822,20 +1869,10 @@ type CoordinateSystem {
   id: ID!
 
   """
-  Whether a scene may compose over this system as its world, i.e. whether `createSceneFromCoordinateSystem` will accept it. False only for an ARRAY system (a pyramid level, a lens crop -- a slice *of* a space, not a space to compose in; its container's intrinsic system is the honest root one hop away)
+  Which registered sources are in view of an axis-aligned region asked in *this* system's coordinates, each with its extent here, the path of edges that places it, and its in-view coordinate anchors. The field hangs off the coordinate system because the system IS the frame the region is written in -- there is no ambient world to be wrong about, and no camera: a region is a box, and projecting a frustum into one is the client's job. `region` names a leading prefix of this system's axes and says nothing about the rest, so a 2D box asked of a 4D space constrains only its first two axes. Sources the server cannot bound (a mesh collection's vertices and a table's rows live in Parquet it never opens) come back with an empty `extent` and an `extentState` saying why, rather than being culled -- refusing to bound something is not the same as knowing it is out of view. Nothing is stored: the extent is composed per request from the shapes and the edges, so refining a registration moves everything that looks through it and no cached box can disagree. Individual annotations are out of scope; selecting those needs the region pulled back into their frame, and this server composes forward only
   """
-  isAdoptableWorld: Boolean!
-
-  """
-  What this system denotes, derived from its owner: INTRINSIC for a container's own native space (a dataset's level-0 pixel grid, a mesh collection's vertex space, a table's coordinate-column space), ARRAY for a derived pixel grid (a pyramid level, a slicing lens), PHYSICAL for a calibration, SHARED for an ownerless space sources register into and scenes adopt as their world
-  """
-  kind: CoordinateSystemKind!
+  inView(region: BoundingBoxInput!): [SourcePlacement!]!
   name: String!
-
-  """
-  The container this system belongs to and cascades with: the dataset whose pixel grid or calibration it is, the pyramid level or lens whose grid it is, or the collection or table whose native space it is. Null for a SHARED space, which nobody owns -- `kind` tells you *what* a system denotes, this tells you *whose* it is
-  """
-  owner: CoordinateSystemOwner
 
   """
   Provenance entries for this coordinate system: who created it, and every subsequent change
@@ -1843,9 +1880,19 @@ type CoordinateSystem {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
+  The data living in this space. Empty for a pure reference frame -- a world, an atlas -- which is what a space with no residents *is*; there is no separate kind to consult. Several residents may share one space: a dataset's own pyramid levels and unsliced lenses live in its grid, and a hundred tiles acquired on one stage can be registered into one stage frame
+  """
+  residents: [Resident!]!
+
+  """
   The scenes that compose over this system as their world. A SHARED space lists every scene sharing it and outlives each of them: a scene adopts a space, never owns it, and deleting a scene never deletes the space. The inverse of `Scene.worldCoordinateSystem`
   """
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
+
+  """
+  The summed version of the transformation chain from this system down to its dataset's intrinsic pixel space, as it stands now. Compare it with an annotation's `createdWithTransforms` to detect staleness: the two agreeing means the geometry was authored against the chain still in force, and them differing means a registration or calibration on the path has been refined since. 0 for a system that IS an intrinsic space, or one with no path down to pixels (a calibrated or shared space -- its coordinates are meaningful on their own). Provenance only: it never takes part in resolving a coordinate
+  """
+  transformVersion: Int!
 }
 
 input CoordinateSystemFilter {
@@ -1861,18 +1908,13 @@ input CoordinateSystemFilter {
   createdBefore: DateTime
 
   """
-  Filter by the dataset this system belongs to directly: its INTRINSIC pixel grid or one of its PHYSICAL calibrations
+  Filter to the spaces this dataset's data lives in: its own grid, and the grids of its pyramid levels and lenses
   """
   dataset: ID
   id: ID
 
   """Filter by list of IDs"""
   ids: [ID!]
-
-  """
-  Filter by what the system denotes, derived from its owner: INTRINSIC (a container's own native space), ARRAY (a pyramid level's or lens' grid), PHYSICAL (a calibration), SHARED (an ownerless space sources register into and scenes adopt as their world)
-  """
-  kind: CoordinateSystemKind
   name: StrFilterLookup
 
   """Filter by the creator's subject ID"""
@@ -1883,31 +1925,11 @@ input CoordinateSystemFilter {
 
   """Search by name (case-insensitive substring)"""
   search: String
-}
-
-"""
-What a coordinate system denotes, derived entirely from which container owns it: a container's own native space, a derived pixel grid, a calibrated interpretation, or a space shared between sources.
-"""
-enum CoordinateSystemKind {
-  """
-  A derived pixel grid: the voxel index space of a non-level-0 pyramid level or of a slicing lens. Its axes are unitless indices, and an edge maps it into the dataset's intrinsic grid.
-  """
-  ARRAY
 
   """
-  The native space of its container: a dataset's level-0 pixel grid, the space a mesh collection's vertices are expressed in, or a table dataset's coordinate-column space. Always defined, never revised — recalibrating never moves it — which is why geometry anchors to it. What the coordinates mean is on the axes (semantic type, unit or unitless), and which container it is, on the owner.
+  Filter to the spaces nothing lives in: pure reference frames, the worlds and atlases sources are registered into. False finds the spaces some data actually occupies
   """
-  INTRINSIC
-
-  """
-  A calibrated physical space derived from metadata (pixel size, stage pose, ...). Its axes carry the units; a single transformation edge maps the dataset's intrinsic pixels into it. A dataset can have zero or many.
-  """
-  PHYSICAL
-
-  """
-  An ownerless space sources are registered into rather than owned by any of them: a world scenes compose over, an anatomical atlas. Scenes adopt it but never own it -- it is shared across scenes and outlives each of them; deleting it is an explicit act.
-  """
-  SHARED
+  uninhabited: Boolean
 }
 
 input CoordinateSystemOrder @oneOf {
@@ -1915,11 +1937,6 @@ input CoordinateSystemOrder @oneOf {
   id: Ordering
   name: Ordering
 }
-
-"""
-The container that owns a coordinate system and that it cascades with. A SHARED space has none: scenes adopt a space as their world but never own it
-"""
-union CoordinateSystemOwner = ADataset | DataArray | Lens | MeshCollection | TableDataset
 
 """
 Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive as an optional calibration
@@ -1999,20 +2016,6 @@ input CreateAnnotationsInput {
   annotations: [AnnotationSpecInput!]!
   collection: ID = null
   scene: ID = null
-}
-
-"""
-Input for calibrating a dataset: creates a PHYSICAL coordinate system (axes carrying the units) and the single edge mapping the dataset's intrinsic pixels into it
-"""
-input CreateCalibrationInput {
-  affine: [[Float!]!] = null
-  axes: [CalibratedAxisInput!]!
-
-  """The ID of the dataset to calibrate"""
-  dataset: ID!
-  name: String! = "physical"
-  scale: [Float!] = null
-  translation: [Float!] = null
 }
 
 """
@@ -2500,12 +2503,6 @@ input DeleteAnnotationInput {
   id: ID!
 }
 
-"""Input for deleting a calibration (a PHYSICAL coordinate system) by ID"""
-input DeleteCalibrationInput {
-  """The ID of the PHYSICAL coordinate system to delete"""
-  id: ID!
-}
-
 """Input for deleting a camera by ID"""
 input DeleteCameraInput {
   """The ID of the camera to delete"""
@@ -2588,6 +2585,20 @@ input DeleteObjectiveInput {
 input DeleteRGBContextInput {
   """The ID of the RGB context to delete"""
   id: ID!
+}
+
+"""
+Input for un-registering a source from a shared space by naming the source and the space, not the edge. Provide exactly one source -- the same selector registering it took
+"""
+input DeleteRegistrationInput {
+  annotationCollection: ID = null
+  coordinateSystem: ID = null
+  dataset: ID = null
+  meshCollection: ID = null
+  tableDataset: ID = null
+
+  """The shared space the registration goes into"""
+  world: ID!
 }
 
 """Input for deleting a render tree by ID"""
@@ -3075,6 +3086,29 @@ input ExperimentOrder @oneOf {
 }
 
 """
+Whether the server can state where a source sits in a space, and if not, why not. Derived, never stored.
+"""
+enum ExtentState {
+  """
+  The path walks an edge against its stored direction, and this server composes forward only. The step *is* invertible -- a placement search offers a backwards step only for a map that has an inverse -- so invert the flagged step and compose `path` yourself.
+  """
+  INVERTED
+
+  """The extent is stated, over the axes it names and only those."""
+  KNOWN
+
+  """
+  A FIELD edge on the path gives the map as the values of an array rather than as a formula, so there is no closed form to push a box through. The path is real and is returned; `invariance` reads DIFFEOMORPHIC.
+  """
+  NON_AFFINE
+
+  """
+  The source's geometry is not something the server holds: a mesh collection's vertices and a table dataset's rows live in Parquet it never opens. `extent` is null because there is no box to push, not because the path failed -- and the source is returned anyway, because refusing to bound something is not the same as knowing it is out of view.
+  """
+  UNREADABLE
+}
+
+"""
 A non-affine map given by the values of an array rather than by a formula. The array is a `field`: a node of this graph, not a payload on this edge, so it keeps its own lineage and its axes say what its numbers mean. It has no closed-form inverse, so a placement path never walks it backwards
 """
 type FieldTransformation implements Transformation {
@@ -3092,6 +3126,11 @@ type FieldTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -3656,6 +3695,11 @@ type IdentityTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -3918,7 +3962,7 @@ type ImageLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -3926,6 +3970,11 @@ type ImageLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -3976,6 +4025,11 @@ type ImageStats {
 enum ImageTimestampField {
   CREATED_AT
 }
+
+"""
+A container registered into a coordinate system: the data that can be in view of a region asked in it. Deliberately narrower than `residents` -- a pyramid level and a lens are systems *of* a dataset rather than separate things in the space, and including them would return the same data several times
+"""
+union InViewSource = ADataset | AnnotationCollection | MeshCollection | TableDataset
 
 """
 A view marking an image region as an instance segmentation mask, where each pixel value identifies an individual object instance. It points to the reference view it was computed from and can carry a per-instance label table.
@@ -4310,7 +4364,7 @@ type LaserElement implements OpticalElement {
 }
 
 """
-A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: registration is a scene-level transformation edge, not a property of the view. The concrete kind (ImageLayer, AnnotationLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
+A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: a spatial fact is a coordinate system or a transformation edge, never a field here, and every spatial question a layer answers -- `pathToWorld`, `placement`, `placementValidity`, `placementInvariance` -- is derived from the graph on read and stored nowhere, so refining one edge updates every layer that looks through it. Which columns hold a point layer's coordinates is likewise the table dataset's declaration, not a per-layer copy. The concrete kind (ImageLayer, AnnotationLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
 """
 interface Layer {
   blending: Blending!
@@ -4320,7 +4374,7 @@ interface Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -4328,6 +4382,11 @@ interface Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -4681,6 +4740,11 @@ type MapAxisTransformation implements Transformation {
 
   """The names of the input axes, positionally matched to `outputAxes`"""
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -4955,7 +5019,7 @@ type MeshLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -4963,6 +5027,11 @@ type MeshLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -5076,6 +5145,16 @@ type Mutation {
   attachUnstructuredMeta(input: UnstructuredMetaInput!): UnstructuredMeta!
 
   """
+  Delete every registration INTO a shared space in one call, returning the deleted edge ids. The space, the scenes over it (their layers drop to UNREGISTERED) and the space's own claims into wider spaces all survive. Guarded by the space's creator: clearing a space is the space-owner's act
+  """
+  clearCoordinateSystem(input: ClearCoordinateSystemInput!): [ID!]!
+
+  """
+  Delete every layer of a scene, keeping the scene itself. A pure view-state reset: no coordinate system, registration or dataset is touched, and other scenes over the same space never notice
+  """
+  clearScene(input: ClearSceneInput!): Scene!
+
+  """
   Create a new dataset from array-like data with optional coordinate anchors and OME metadata
   """
   createADataset(input: CreateADatasetInput!): ADataset!
@@ -5106,11 +5185,6 @@ type Mutation {
   """
   createAnnotations(input: CreateAnnotationsInput!): [Annotation!]!
 
-  """
-  Calibrate a dataset: create a PHYSICAL coordinate system (axes carrying the units) and the single transformation edge mapping the dataset's intrinsic pixels into it
-  """
-  createCalibration(input: CreateCalibrationInput!): CoordinateSystem!
-
   """Create a new camera configuration"""
   createCamera(input: CameraInput!): Camera!
 
@@ -5121,7 +5195,7 @@ type Mutation {
   createContinousScanView(input: ContinousScanViewInput!): ContinousScanView!
 
   """
-  Create a hub (ATLAS) coordinate system and, in one call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it
+  Create a SHARED coordinate system (an ownerless space) and, in one call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it
   """
   createCoordinateSystem(input: CreateCoordinateSystemInput!): CoordinateSystem!
 
@@ -5230,12 +5304,12 @@ type Mutation {
   createRoiView(input: ROIViewInput!): ROIView!
 
   """
-  Create a new scene and the WORLD coordinate system its layers are registered into
+  Create a new scene over a world coordinate system: an adopted existing system, or an ordinary SHARED one created for it (never owned by the scene -- it outlives it)
   """
   createScene(input: CreateSceneInput!): Scene!
 
   """
-  Bootstrap a renderable scene over an existing coordinate system: a hub (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a calibration (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
+  Bootstrap a renderable scene over an existing coordinate system: a shared space (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a calibration (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
   """
   createSceneFromCoordinateSystem(input: CreateSceneFromCoordinateSystemInput!): Scene!
 
@@ -5299,11 +5373,6 @@ type Mutation {
   """
   deleteAnnotationCollection(input: DeleteAnnotationCollectionInput!): ID!
 
-  """
-  Delete a calibration (a PHYSICAL coordinate system). Other system kinds cascade with their owner and cannot be deleted directly
-  """
-  deleteCalibration(input: DeleteCalibrationInput!): ID!
-
   """Delete an existing camera"""
   deleteCamera(input: DeleteCameraInput!): ID!
 
@@ -5311,7 +5380,7 @@ type Mutation {
   deleteChannelView(input: DeleteViewInput!): ID!
 
   """
-  Delete an unused hub coordinate system. Refused while any scene composes over it or any transformation edge touches it -- each of those would otherwise cascade away with it. Other system kinds cascade with their owner and cannot be deleted directly
+  Delete an unused shared coordinate system. Refused while any scene is rooted in it or any transformation edge touches it. This is the only door a shared space leaves through -- deleting a scene never deletes one. Other system kinds cascade with their owner and cannot be deleted directly
   """
   deleteCoordinateSystem(input: DeleteCoordinateSystemInput!): ID!
 
@@ -5353,6 +5422,16 @@ type Mutation {
 
   """Delete an existing optics view"""
   deleteOpticsView(input: DeleteViewInput!): ID!
+
+  """
+  Delete every orphaned shared space in the organization -- no scene rooted in it, no edge touching it -- and return the deleted ids. The cleanup sweep for the no-garbage-collection policy: scene deletion never deletes a space, this call takes the leftovers back. Org admins sweep every orphan; anyone else sweeps only their own
+  """
+  deleteOrphanedCoordinateSystems: [ID!]!
+
+  """
+  Un-register a source from a space by naming the source and the space rather than the edge. Deletes every edge from the source's space into that one -- rivals are allowed, so there is no single edge to mean -- and returns their ids. An UNMAPPABLE declaration is not a placement and is never matched
+  """
+  deleteRegistration(input: DeleteRegistrationInput!): [ID!]!
 
   """Delete an existing render tree"""
   deleteRenderTree(input: DeleteRenderTreeInput!): ID!
@@ -5545,7 +5624,7 @@ type Mutation {
   updateAnnotation(input: UpdateAnnotationInput!): Annotation!
 
   """
-  Rename a hub coordinate system or anchor its clock. Hubs only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space
+  Rename a shared coordinate system or anchor its clock. Shared spaces only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space
   """
   updateCoordinateSystem(input: UpdateCoordinateSystemInput!): CoordinateSystem!
 
@@ -7153,7 +7232,7 @@ type PointLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -7161,6 +7240,11 @@ type PointLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -8297,6 +8381,11 @@ input RequestZarrUploadInput {
   version: String = null
 }
 
+"""
+A piece of data living in a coordinate system. Data belongs to a space; the space belongs to nobody
+"""
+union Resident = ADataset | AnnotationCollection | DataArray | Lens | MeshCollection | TableDataset
+
 """Input for reverting a dataset to a previous history revision"""
 input RevertInput {
   """The ID of the provenance history entry to revert the dataset to"""
@@ -8406,6 +8495,11 @@ type RotationTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -8507,6 +8601,11 @@ type ScaleTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -8806,6 +8905,11 @@ type SequenceTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -8969,6 +9073,51 @@ input SnapshotOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+One source in view of a region: where it sits in the queried coordinate system, how it got there, and which of its coordinate anchors are in view
+"""
+type SourcePlacement {
+  """
+  The source's coordinate anchors whose slab overlaps the region. An anchor pins some axes and is global along every axis it omits, so its slab is one voxel wide where it pins and the container's full extent where it does not. Only an array dataset has anchors; every other source kind reports none, which is not a gap
+  """
+  anchors: [CoordinateAnchor!]!
+
+  """
+  The source's axis-aligned extent in the queried system's coordinates, one entry per axis it constrains -- and only those. Usually a proper subset: a (c,y,x) dataset registered onto the (y,x) of a (t,z,y,x) world is a slab, extended along t and z, and an entry there would be a number nothing measured. Empty when `extentState` is not KNOWN
+  """
+  extent: [AxisExtent!]!
+
+  """
+  Whether the server can state this source's extent, and if not, why not. An empty `extent` alone would conflate a Parquet the server never reads with a warp field on the path
+  """
+  extentState: ExtentState!
+
+  """
+  Which geometric properties survive the walk from this source's data into the queried system: the weakest edge on `path`. The classes nest, so a composition belongs to the weakest group any of its factors belongs to
+  """
+  invariance: TransformInvariance!
+
+  """
+  The ordered edges from `system` into the queried system, in stored direction with the inversions flagged. Empty when the source's own system IS the queried system. The server returns the steps; composing them stays the client's job, exactly as for `Layer.pathToWorld`
+  """
+  path: [PlacementStep!]!
+
+  """
+  The container in view: an array dataset, a mesh collection, a table dataset or an annotation collection
+  """
+  source: InViewSource!
+
+  """
+  The source's own coordinate system that `extent` is anchored at and `path` starts from -- its pixel grid, its lens crop, or its collection's space. Which one it is follows from where the registration into the queried system actually attaches, which is what keeps the walk running forward
+  """
+  system: CoordinateSystem!
+
+  """
+  How much this placement is actually known: the weakest edge on `path`. VALIDATED for a source that already IS the queried system, a placement exact by construction
+  """
+  validity: PlacementValidity!
 }
 
 """Spectral window"""
@@ -9634,7 +9783,7 @@ type TrackLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's WORLD system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus this scene's membership edges, never another scene's registration. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
   """
   pathToWorld: [PlacementStep!]
 
@@ -9642,6 +9791,11 @@ type TrackLayer implements Layer {
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
   """
   placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
 
   """
   How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
@@ -9699,6 +9853,36 @@ input TransferFunctionInput {
   gamma: Float = null
   invert: Boolean = null
   opacity: Float = null
+}
+
+"""
+Which geometric properties survive a coordinate transformation. A nested hierarchy -- each class preserves strictly less than the one above it -- so the class of a composed path is the weakest of its steps. Derived from a transformation's `kind`, never stored: a column could contradict the parameters, and the parameters would be right.
+"""
+enum TransformInvariance {
+  """
+  Parallelism and area *ratios* transfer; angles and distances do not. A square may arrive a parallelogram, so an angle or a length read on one side means nothing on the other. Stated for every AFFINE edge, including one whose matrix happens to be rigid: telling those apart needs an SVD, which is numerics inside a metadata answer -- the same line the graph draws when it declines to catch a singular affine.
+  """
+  AFFINE
+
+  """
+  Topology at best, and only locally: the Jacobian varies with position, so no distance, angle, area or ratio survives anywhere. A ceiling, not a guarantee -- a FIELD is many-to-one on purpose (an object is a set of pixels), and such a map is not a diffeomorphism at all.
+  """
+  DIFFEOMORPHIC
+
+  """
+  Distances, angles and areas all transfer unchanged: a length measured on one side IS that length on the other. An identity, a translation, a rotation, an axis permutation.
+  """
+  ISOMETRY
+
+  """
+  Nothing corresponds. On an edge, an UNMAPPABLE: a declared non-correspondence. On a layer, no path to the world at all -- `placement` says which of the two reasons applies.
+  """
+  NONE
+
+  """
+  Angles and length *ratios* transfer; every absolute length scales by one common factor. A circle is still a circle, just a different size -- so anything dimensionless carries across untouched, and anything measured needs the one factor.
+  """
+  SIMILARITY
 }
 
 """
@@ -9780,6 +9964,11 @@ interface Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -9863,6 +10052,11 @@ type TranslationTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem
@@ -9929,6 +10123,11 @@ type UnmappableTransformation implements Transformation {
   The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
   """
   inputAxes: [String!]!
+
+  """
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  """
+  invariance: TransformInvariance!
   kind: TransformKind!
   name: String
   output: CoordinateSystem

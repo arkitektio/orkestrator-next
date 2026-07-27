@@ -245,6 +245,7 @@ const AnnotationCollectionGroup = ({
 }) => {
   const transformContext = useSceneStore((s) => s.transformContext);
   const displayMode = useModeStore((s) => s.displayMode);
+  const interactionMode = useModeStore((s) => s.interactionMode);
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
   const selectOnlyRoi = useRoiSelectionStore((s) => s.selectOnlyRoi);
   const toggleSelectedRoi = useRoiSelectionStore((s) => s.toggleSelectedRoi);
@@ -262,6 +263,15 @@ const AnnotationCollectionGroup = ({
   );
 
   const annotations = data?.annotations;
+  // Lookup identity for the selection store: attribute lookups start in the
+  // collection's own system with the RAW collection-space vectors — the plan
+  // path (server-resolved) does any frame conversion.
+  const systemId = collection.coordinateSystem.id ?? null;
+  const axisNames = useMemo(
+    () => (collection.coordinateSystem.axes ?? []).map((axis) => axis.name),
+    [collection],
+  );
+
   const visibleRois = useMemo(() => {
     if (!annotations) return [];
 
@@ -275,11 +285,15 @@ const AnnotationCollectionGroup = ({
           layerId,
           name: annotation.name,
           kind: annotation.kind,
+          systemId,
+          axisNames,
+          vectors: annotation.vectors ?? [],
+          coordinates: annotation.coordinates ?? [],
           bounds,
         };
       })
       .filter((roi): roi is NonNullable<typeof roi> => roi !== null);
-  }, [affineMatrix, annotations, layerId]);
+  }, [affineMatrix, annotations, layerId, systemId, axisNames]);
 
   useEffect(() => {
     setVisibleLayerRois(layerId, visibleRois);
@@ -300,12 +314,17 @@ const AnnotationCollectionGroup = ({
           annotation={annotation}
           flattenToPlane={displayMode !== "3D"}
           isActive={selectedRoiIds.has(annotation.id)}
+          selectable={interactionMode !== "PROBE"}
           onSelect={(appendSelection) => {
             const selectedRoi = {
               id: annotation.id,
               layerId,
               name: annotation.name,
               kind: annotation.kind,
+              systemId,
+              axisNames,
+              vectors: annotation.vectors ?? [],
+              coordinates: annotation.coordinates ?? [],
             };
 
             if (appendSelection) {
@@ -326,11 +345,14 @@ const AnnotationShape = ({
   annotation,
   flattenToPlane,
   isActive,
+  selectable,
   onSelect,
 }: {
   annotation: ListAnnotationFragment;
   flattenToPlane: boolean;
   isActive: boolean;
+  /** False in PROBE mode, so a shape can't swallow the click meant for a probe. */
+  selectable: boolean;
   onSelect: (appendSelection: boolean) => void;
 }) => {
   const vectors = annotation.vectors; // Array of [x, y, z]
@@ -339,6 +361,9 @@ const AnnotationShape = ({
   const style = resolveStyle(annotation, isActive);
 
   const handleSelect = (event: ThreeEvent<MouseEvent>) => {
+    // Returning before `stopPropagation` is the point: the event has to reach
+    // the layer underneath.
+    if (!selectable) return;
     event.stopPropagation();
     onSelect(event.nativeEvent.shiftKey);
   };

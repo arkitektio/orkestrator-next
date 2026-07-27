@@ -9,6 +9,8 @@ import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { AnimationPlayer } from "./cameras/AnimationPlayer";
 import { CanvasSync } from "./cameras/CanvasSync";
 import { KeyboardModeController } from "./interactions/KeyboardModeController";
+import { ModeCompatGuard } from "./interactions/ModeCompatGuard";
+import { AttributeServiceProvider } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { SceneAxis } from "./layers/SceneAxis";
 import { SceneOverlay } from "./overlays/SceneOverlay";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";
@@ -51,6 +53,11 @@ import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRoiDrawingStore, RoiDrawingStoreContext } from "./store/roiDrawingStore";
+import {
+  createRoiDrawSessionStore,
+  RoiDrawSessionStoreContext,
+} from "./store/roiDrawSessionStore";
+import { DrawSizeReadout } from "./overlays/DrawSizeReadout";
 import { createRoiSelectionStore, RoiSelectionStoreContext } from "./store/roiSelectionStore";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { TwoDScene } from "./TwoDScene";
@@ -170,6 +177,7 @@ type SceneScope = {
   sceneStore: ReturnType<typeof createSceneStore>;
   animationStore: ReturnType<typeof createAnimationStore>;
   roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
+  roiDrawSessionStore: ReturnType<typeof createRoiDrawSessionStore>;
   roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
 };
 
@@ -255,6 +263,7 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
             frame: resolveSceneCameraFrame(props.scene.worldCoordinateSystem, layers),
           }),
           roiDrawingStore: createRoiDrawingStore(),
+          roiDrawSessionStore: createRoiDrawSessionStore(),
           roiSelectionStore: createRoiSelectionStore(),
         };
 
@@ -308,7 +317,12 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
             <SceneStoreContext.Provider value={scope.sceneStore}>
             <AnimationStoreContext.Provider value={scope.animationStore}>
             <RoiDrawingStoreContext.Provider value={scope.roiDrawingStore}>
+            <RoiDrawSessionStoreContext.Provider value={scope.roiDrawSessionStore}>
             <RoiSelectionStoreContext.Provider value={scope.roiSelectionStore}>
+            {/* Shared (client, datalayer) attribute service: the probe tracker
+                holds the same refcounted instance, so ROI lookups reuse its
+                plan cache and DuckDB engine. */}
+            <AttributeServiceProvider>
 
 
 
@@ -318,6 +332,7 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
         >
           <PanelProvider>
             <KeyboardModeController />
+            <ModeCompatGuard />
             <SceneWrapper>
               <ambientLight intensity={0.7} />
               <pointLight position={[100, 100, 100]} />
@@ -366,11 +381,14 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => {
             <VisibilityManager/>
             <AttributeProbeTracker />
             <ScaleBar />
+            <DrawSizeReadout />
 
             <RoiToolbar />
           </PanelProvider>
         </div>
+            </AttributeServiceProvider>
                 </RoiSelectionStoreContext.Provider>
+                </RoiDrawSessionStoreContext.Provider>
                 </RoiDrawingStoreContext.Provider>
                 </AnimationStoreContext.Provider>
                 </SceneStoreContext.Provider>

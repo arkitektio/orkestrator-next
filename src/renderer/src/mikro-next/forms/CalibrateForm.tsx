@@ -12,7 +12,8 @@ import { AlertTriangle } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   AxisType,
-  useCreateCalibrationMutation,
+  TransformKind,
+  useCreateCoordinateSystemMutation,
   useGetADatasetQuery,
 } from "../api/graphql";
 import {
@@ -25,12 +26,13 @@ import {
 } from "./calibration/calibration";
 
 /**
- * Calibrate a dataset: create the PHYSICAL space its pixels map into.
+ * Calibrate a dataset: create the physical space its pixels map into.
  *
- * One call makes two things — the physical coordinate system (whose axes carry
- * the units) and the single edge from the intrinsic pixel grid into it. All the
- * ordering discipline lives in ./calibration/calibration.ts, which is pure and
- * unit-tested; this file is the table.
+ * One `createCoordinateSystem` call makes two things — the physical coordinate
+ * system (whose axes carry the units) and the single SCALE registration from
+ * the intrinsic pixel grid into it. All the ordering discipline lives in
+ * ./calibration/calibration.ts, which is pure and unit-tested; this file is the
+ * table.
  */
 
 const REFETCH = {
@@ -77,7 +79,7 @@ const CalibrateFormBody = (props: {
   );
   const [name, setName] = useState("physical");
 
-  const [create, { loading }] = useCreateCalibrationMutation();
+  const [create, { loading }] = useCreateCoordinateSystemMutation();
   const submit = useGraphQLDialog(create, {
     successMessage: "Calibrated",
     errorPrefix: "Could not calibrate",
@@ -97,13 +99,18 @@ const CalibrateFormBody = (props: {
 
   const onSubmit = () => {
     // calibration.ts stays free of generated imports so its suite can run in
-    // `node` (see the note at its head), so it types axis kinds as plain
-    // strings. Widen them onto the real enum here — the strings are exactly the
-    // enum's values, and this is the only place the two type worlds meet.
+    // `node` (see the note at its head), so it types axis kinds and the
+    // transform kind as plain strings. Widen them onto the real enums here —
+    // the strings are exactly the enums' values, and this is the only place the
+    // two type worlds meet.
     const built = buildCalibrationInput(draft);
     const input = {
       ...built,
       axes: built.axes.map((axis) => ({ ...axis, type: axis.type as AxisType })),
+      registrations: built.registrations.map((registration) => ({
+        ...registration,
+        kind: registration.kind as TransformKind,
+      })),
     };
     return submit({ variables: { input }, ...REFETCH });
   };

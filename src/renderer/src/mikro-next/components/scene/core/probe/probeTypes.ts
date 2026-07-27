@@ -8,6 +8,13 @@
 /** User-selectable probe mode; "auto" dispatches on the layer's projection. */
 export type ProbeMode = "auto" | "first-hit" | "max" | "gradient";
 
+/**
+ * Where a probe came from. Hover probes update the readout but must never move
+ * the camera — see `core/orbitPivot.ts` (`shouldRepivot`) and the
+ * `ProbeOrbitPivot` effect in `cameras/CameraController.tsx`.
+ */
+export type ProbeOrigin = "click" | "hover";
+
 /** The march strategy actually executed after auto-dispatch. */
 export type ResolvedProbeStrategy =
   | "first-hit"
@@ -43,6 +50,12 @@ export interface ProbeResult {
   worldPos: [number, number, number] | null;
   /** Strategy that produced the hit (after auto dispatch); "plane" for 2D. */
   strategy: ResolvedProbeStrategy | "plane";
+  /**
+   * "hover" = a follow-cursor sweep; "click" = a deliberate pointerDown.
+   * Required, not optional, so both emitters have to declare intent — the
+   * camera pivot only follows clicks.
+   */
+  origin: ProbeOrigin;
   /** One entry per channel slab of the layer. */
   values: ProbeChannelValue[];
   provenance: ProbeProvenance;
@@ -77,37 +90,20 @@ const upgradeToExact = (probe: ProbeResult, values: number[]): ProbeResult => ({
 });
 
 /**
- * Patch the active probe and any matching saved probes with exact values.
- * Returns null when nothing matched — callers must treat that as a no-op set
- * (return the same state object) so late async arrivals never cause renders.
+ * Patch the active probe with exact values. Returns null when nothing matched
+ * — callers must treat that as a no-op set (return the same state object) so
+ * late async arrivals never cause renders.
  */
 export function applyExactValues(
-  state: { probedCoordinate: ProbeResult | null; savedProbes: ProbeResult[] },
+  state: { probedCoordinate: ProbeResult | null },
   key: ProbeFetchKey,
   values: number[],
-): {
-  probedCoordinate: ProbeResult | null;
-  savedProbes: ProbeResult[];
-} | null {
+): { probedCoordinate: ProbeResult | null } | null {
   const activeMatches =
     state.probedCoordinate !== null &&
     state.probedCoordinate.provenance.source !== "exact" &&
     isSameProbeKey(state.probedCoordinate, key);
 
-  let savedChanged = false;
-  const savedProbes = state.savedProbes.map((probe) => {
-    if (probe.provenance.source === "exact" || !isSameProbeKey(probe, key)) {
-      return probe;
-    }
-    savedChanged = true;
-    return upgradeToExact(probe, values);
-  });
-
-  if (!activeMatches && !savedChanged) return null;
-  return {
-    probedCoordinate: activeMatches
-      ? upgradeToExact(state.probedCoordinate!, values)
-      : state.probedCoordinate,
-    savedProbes: savedChanged ? savedProbes : state.savedProbes,
-  };
+  if (!activeMatches) return null;
+  return { probedCoordinate: upgradeToExact(state.probedCoordinate!, values) };
 }

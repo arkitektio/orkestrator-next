@@ -77,7 +77,7 @@ const clampLocal3 = (x: number, y: number, z: number): Vec3 => [
 /**
  * March the ray and pick a hit according to `strategy`:
  * - "first-hit": first sample whose normalized visibility exceeds `threshold`
- *   (early-out — the AUTO_PROBE hot path).
+ *   (early-out — the follow-cursor probe hot path).
  * - "max": argmax of normalized visibility over the full ray (matches what
  *   MIP projection shows; no threshold).
  * - "gradient": strongest |Δnormalized| between consecutive RESIDENT samples

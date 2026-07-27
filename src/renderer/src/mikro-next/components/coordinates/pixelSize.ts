@@ -1,13 +1,13 @@
 /**
  * Reading a calibration's pixel size off the edge that defines it.
  *
- * A PHYSICAL system is reached from its dataset's INTRINSIC grid by exactly one
- * edge, and that edge's parameters ARE the pixel size. Displaying them means
- * pairing three things that are each ordered differently, which is the same
- * trap the schema warns about for authoring:
+ * A calibrated physical space is reached from its dataset's pixel grid by
+ * exactly one edge, and that edge's parameters ARE the pixel size. Displaying
+ * them means pairing three things that are each ordered differently, which is
+ * the same trap the schema warns about for authoring:
  *
- *   - `scale[i]` is ordered by the edge's `inputAxes` (the INTRINSIC axis names)
- *   - `outputAxes[i]` is the PHYSICAL axis that entry lands on
+ *   - `scale[i]` is ordered by the edge's `inputAxes` (the pixel axis names)
+ *   - `outputAxes[i]` is the physical axis that entry lands on
  *   - the UNIT lives on the physical system's axis, i.e. on `outputAxes[i]`
  *
  * So the label comes from the output axis and the number from the input-ordered

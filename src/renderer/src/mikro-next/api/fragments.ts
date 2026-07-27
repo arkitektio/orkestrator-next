@@ -10,17 +10,16 @@
       "ImageAccessor",
       "LabelAccessor"
     ],
-    "CoordinateSystemOwner": [
-      "ADataset",
-      "DataArray",
-      "Lens",
-      "MeshCollection",
-      "TableDataset"
-    ],
     "DatasetImageFile": [
       "Dataset",
       "File",
       "Image"
+    ],
+    "InViewSource": [
+      "ADataset",
+      "AnnotationCollection",
+      "MeshCollection",
+      "TableDataset"
     ],
     "Layer": [
       "AnnotationLayer",
@@ -53,6 +52,14 @@
     "Render": [
       "Snapshot",
       "Video"
+    ],
+    "Resident": [
+      "ADataset",
+      "AnnotationCollection",
+      "DataArray",
+      "Lens",
+      "MeshCollection",
+      "TableDataset"
     ],
     "Transformation": [
       "AffineTransformation",

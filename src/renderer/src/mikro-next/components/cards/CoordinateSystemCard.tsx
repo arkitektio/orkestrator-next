@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { MikroCoordinateSystem } from "@/linkers";
 import { ListCoordinateSystemFragment } from "../../api/graphql";
+import { occupancyLabel } from "../coordinates/residents";
 
 interface Props {
   system: ListCoordinateSystemFragment;
@@ -18,7 +19,7 @@ const TheCard = ({ system }: Props) => {
         </CardTitle>
         <div>
           <Badge variant="outline" className="text-xs">
-            {system.kind}
+            {occupancyLabel(system)}
           </Badge>
         </div>
       </Card>

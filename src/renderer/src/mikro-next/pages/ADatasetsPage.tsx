@@ -14,7 +14,7 @@ const Page: React.FC<IADatasetsScreenProps> = () => {
       <div className="p-3 flex flex-col gap-3">
         <Explainer
           title="Array Datasets"
-          description="N-dimensional arrays with named dimensions. Their structure lives on the axes of their intrinsic coordinate system, their physical units on their calibrations, and their pyramid levels are data arrays."
+          description="N-dimensional arrays with named dimensions. Their structure lives on the axes of their intrinsic coordinate system, their physical units on the calibrated spaces they also live in, and their pyramid levels are data arrays."
         />
         <ADatasetList filters={filters} ordering={ordering} />
       </div>

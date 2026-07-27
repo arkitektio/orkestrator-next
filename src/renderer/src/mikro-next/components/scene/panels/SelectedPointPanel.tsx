@@ -1,9 +1,13 @@
 import { Slider } from "@/components/ui/slider";
+import { ScanEye } from "lucide-react";
 import { AttributeRowsSection } from "./AttributeRowsSection";
 import { resolveProbeStrategy } from "../core/probe/probeModes";
 import type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
 import { formatProbeValue } from "../core/probe/valueFormat";
+import { beginPathFromProbe } from "../interactions/pathFromProbe";
+import { useCreateSceneAnnotation } from "../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../store/modeStore";
+import { useRoiDrawingStore } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 import type { LayerState } from "../core/layerModel";
@@ -11,8 +15,9 @@ import type { LayerState } from "../core/layerModel";
 /**
  * The probe HUD: strategy selector, threshold (only while the effective
  * strategy uses it), the probed coordinate with per-channel raw values and
- * their provenance (exact vs LOD-approximate vs pending), and the saved
- * probes. Composes in the scene column (Scene.Probe).
+ * their provenance (exact vs LOD-approximate vs pending), plus actions that
+ * make the probe durable — mark it as a point annotation or start a path
+ * draw anchored at it. Composes in the scene column (Scene.Probe).
  */
 
 const PROBE_MODES: { mode: ProbeMode; label: string }[] = [
@@ -65,12 +70,14 @@ const smallButton =
 export const SelectedPointPanel = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
+  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  const setProbeFollowsCursor = useModeStore((s) => s.setProbeFollowsCursor);
+  const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
-  const savedProbes = useViewerStore((s) => s.savedProbes);
-  const addSavedProbe = useViewerStore((s) => s.addSavedProbe);
-  const removeSavedProbe = useViewerStore((s) => s.removeSavedProbe);
-  const clearSavedProbes = useViewerStore((s) => s.clearSavedProbes);
+  const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
+  const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
+  const { createPointAnnotation } = useCreateSceneAnnotation();
   const probeThreshold = useViewerStore((s) => s.probeThreshold);
   const setProbeThreshold = useViewerStore((s) => s.setProbeThreshold);
   const probeMode = useViewerStore((s) => s.probeMode);
@@ -81,8 +88,8 @@ export const SelectedPointPanel = () => {
       : null,
   );
 
-  const inProbeMode = interactionMode === "PROBE" || interactionMode === "AUTO_PROBE";
-  if (!inProbeMode && !probedCoordinate && savedProbes.length === 0) return null;
+  const inProbeMode = interactionMode === "PROBE";
+  if (!inProbeMode && !probedCoordinate) return null;
 
   const resolved = resolveProbeStrategy(probeMode, layer?.projection, probeThreshold);
   // The slider matters only where the march actually consumes it: 3D, an
@@ -97,10 +104,48 @@ export const SelectedPointPanel = () => {
       <div className="flex items-center justify-between text-[10px] font-medium text-white/60">
         <span>Probe</span>
         <div className="flex gap-1">
+          {/* What used to be the separate AUTO_PROBE mode. Hover updates the
+              readout only — the camera pivot still follows clicks alone. */}
+          {inProbeMode && (
+            <button
+              className={
+                probeFollowsCursor
+                  ? `${smallButton} bg-white/20 text-white`
+                  : smallButton
+              }
+              onClick={() => setProbeFollowsCursor(!probeFollowsCursor)}
+              title="Update the probe continuously as the cursor moves"
+            >
+              <ScanEye className="h-3 w-3" />
+            </button>
+          )}
           {probedCoordinate && (
             <>
-              <button className={smallButton} onClick={() => addSavedProbe(probedCoordinate)}>
-                Save
+              <button
+                className={`${smallButton} disabled:cursor-not-allowed disabled:opacity-40`}
+                disabled={!probedCoordinate.worldPos}
+                title="Create a point annotation at this probe"
+                onClick={() =>
+                  probedCoordinate.worldPos &&
+                  createPointAnnotation(probedCoordinate.worldPos)
+                }
+              >
+                Mark point
+              </button>
+              <button
+                className={`${smallButton} disabled:cursor-not-allowed disabled:opacity-40`}
+                disabled={!probedCoordinate.worldPos}
+                title="Draw a path starting at this probe (D)"
+                onClick={() =>
+                  probedCoordinate.worldPos &&
+                  beginPathFromProbe(
+                    probedCoordinate.worldPos,
+                    { setPendingPathSeed, setActiveTool },
+                    setInteractionMode,
+                  )
+                }
+              >
+                Draw path
               </button>
               <button className={smallButton} onClick={() => setProbedCoordinate(null)}>
                 Clear
@@ -156,8 +201,8 @@ export const SelectedPointPanel = () => {
 
       {!probedCoordinate && (
         <p className="mt-2 text-[10px] leading-4 text-white/50">
-          Click a layer to probe it{interactionMode === "AUTO_PROBE" ? " (or hover)" : ""}.
-          Hold Shift to save the point.
+          Click a layer to probe it{probeFollowsCursor ? " (or hover)" : ""}.
+          Shift+click to drop a point annotation.
         </p>
       )}
 
@@ -201,41 +246,6 @@ export const SelectedPointPanel = () => {
           {/* Attribute-plan results: what the tables attached to this pixel's
               object know about it (AttributeProbeTracker fills the store). */}
           <AttributeRowsSection probe={probedCoordinate} />
-        </div>
-      )}
-
-      {savedProbes.length > 0 && (
-        <div className="mt-2 space-y-1 border-t border-white/10 pt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium text-white/60">Saved</span>
-            <button className={smallButton} onClick={() => clearSavedProbes()}>
-              Clear all
-            </button>
-          </div>
-          <div className="max-h-40 space-y-1 overflow-y-auto">
-            {savedProbes.map((probe) => (
-              <div
-                key={`${probe.layerId}:${probe.voxelIndex.join(":")}`}
-                className="flex items-center justify-between gap-2 rounded border border-white/10 bg-white/5 px-2 py-1"
-              >
-                <div className="min-w-0">
-                  <div className="font-mono text-[10px] text-white/80">
-                    [{probe.voxelIndex.join(", ")}]
-                  </div>
-                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-white/60">
-                    {formatProbeValue(probe.values[0]?.value ?? null, probe.dtype)}
-                    {probe.values.length > 1 && (
-                      <span className="text-white/40">+{probe.values.length - 1}</span>
-                    )}
-                    <ProvenanceBadge probe={probe} />
-                  </div>
-                </div>
-                <button className={smallButton} onClick={() => removeSavedProbe(probe)}>
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>

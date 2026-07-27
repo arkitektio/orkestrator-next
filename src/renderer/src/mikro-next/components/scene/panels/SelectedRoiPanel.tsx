@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDeleteAnnotationMutation } from "@/mikro-next/api/graphql";
 import { useRoiSelectionStore } from "../store/roiSelectionStore";
+import { isTypingTarget } from "../interactions/keyboardTarget";
+import { RoiAttributeSection } from "./RoiAttributeSection";
 
 function formatRoiKind(kind: string) {
   return kind.charAt(0) + kind.slice(1).toLowerCase();
@@ -49,16 +51,7 @@ export const SelectedRoiPanel = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Backspace") return;
 
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable ||
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT")
-      ) {
-        return;
-      }
+      if (isTypingTarget(event.target as HTMLElement | null)) return;
 
       event.preventDefault();
       void deleteSelectedRois();
@@ -108,7 +101,8 @@ export const SelectedRoiPanel = () => {
                   {roi.name || `ROI ${roi.id}`}
                 </div>
                 <div className="mt-1 text-[10px] uppercase tracking-[0.1em] text-white/45">
-                  {formatRoiKind(roi.kind)} · Layer {roi.layerId}
+                  {formatRoiKind(roi.kind)}
+                  {roi.layerId && ` · Layer ${roi.layerId}`}
                 </div>
                 <div className="mt-1 truncate rounded bg-white/5 px-2 py-1 font-mono text-[10px] text-white/65">
                   {roi.id}
@@ -124,8 +118,15 @@ export const SelectedRoiPanel = () => {
                 Remove
               </Button>
             </div>
+            {/* Bounded lookups only: a single selection shows attributes. */}
+            {selectedRois.length === 1 && <RoiAttributeSection roi={roi} />}
           </div>
         ))}
+        {selectedRois.length > 1 && (
+          <div className="text-[10px] text-white/40">
+            Select a single ROI to see attributes.
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -8,6 +8,16 @@ export interface SelectedRoi {
   layerId: string;
   name: string | null | undefined;
   kind: RoiKind;
+  /** The collection's coordinate system — attribute lookups start here (the
+   * server resolves the path to every reachable table). */
+  systemId: string | null;
+  /** Ordered axis names of that system (spatial = last three, reversed —
+   * the `resolveCollectionMatrix` convention). */
+  axisNames: string[];
+  /** RAW collection-space annotation vectors. */
+  vectors: number[][];
+  /** The annotation's pinned discrete coords. */
+  coordinates: { name: string; value: number }[];
 }
 
 export interface RoiBounds {

@@ -18,6 +18,7 @@ import {
   TransformKind,
   useCreateTransformationMutation,
 } from "../../api/graphql";
+import { residentLabel } from "../../components/coordinates/residents";
 import {
   AxisLike,
   MappedRow,
@@ -197,7 +198,7 @@ export const RegisterEdgeForm = (props: {
               · {props.sourceContext}
             </span>
           )}
-          <Badge variant="outline">{source.kind}</Badge>
+          <Badge variant="outline">{residentLabel(source)}</Badge>
           <span className="font-mono text-xs text-muted-foreground">
             {axisSignature(source)}
           </span>
@@ -216,7 +217,7 @@ export const RegisterEdgeForm = (props: {
         <div className="mt-1 flex items-center gap-2">
           <span className="w-20 shrink-0 text-muted-foreground">into</span>
           <span className="font-medium">{target.name}</span>
-          <Badge variant="outline">{target.kind}</Badge>
+          <Badge variant="outline">{residentLabel(target)}</Badge>
           <span className="font-mono text-xs text-muted-foreground">
             {axisSignature(target)}
           </span>

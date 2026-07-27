@@ -1,5 +1,5 @@
 import { EXCLUDE_FROM_CAPTURE } from "../core/captureVisibility";
-import { useModeStore } from "../store/modeStore";
+import { useViewerStore } from "../store/viewerStore";
 import { Line } from "../primitives/Line";
 
 /**
@@ -9,9 +9,11 @@ import { Line } from "../primitives/Line";
  * an exported animation it reads as data that isn't there.
  */
 export const SceneAxis = () => {
-  const interactionMode = useModeStore((s) => s.interactionMode);
+  // Toggled from the scene's view-settings popover, alongside the scale bar and
+  // grid — it used to be a side effect of an interaction mode.
+  const showSceneAxis = useViewerStore((s) => s.showSceneAxis);
 
-  if (interactionMode === "META") return null;
+  if (!showSceneAxis) return null;
 
 
   const stageRangeX = 400;

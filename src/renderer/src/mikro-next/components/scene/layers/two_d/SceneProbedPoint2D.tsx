@@ -17,25 +17,18 @@ const MARKER_MAX_FRACTION = 0.04;
 
 export const SceneProbedPoint2D = () => {
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
-  const savedProbes = useViewerStore((s) => s.savedProbes);
   const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
   const layers = useSceneStore((s) => s.layers);
 
   // Camera-independent geometry only (shared with the 3D marker and the
   // probe-orbit pivot via core/probeWorld). The camera-dependent radius is
-  // applied in useFrame — no per-frame store subscription (P17).
+  // applied in useFrame — no per-frame store subscription (P17). At most one
+  // marker: the active probe. Saved points are persisted annotations now,
+  // rendered by the AnnotationLayer.
   const markerStates = useMemo(() => {
-    const probes: Array<{ probe: ProbedCoordinate; kind: 'active' | 'saved' }> = [];
+    const probes: ProbedCoordinate[] = probedCoordinate ? [probedCoordinate] : [];
 
-    if (probedCoordinate) {
-      probes.push({ probe: probedCoordinate, kind: 'active' });
-    }
-
-    savedProbes.forEach((probe) => {
-      probes.push({ probe, kind: 'saved' });
-    });
-
-    return probes.flatMap(({ probe, kind }) => {
+    return probes.flatMap((probe) => {
       const layer = layers.find((candidate) => candidate.id === probe.layerId);
       if (!layer || layer.visible === false) {
         return [];
@@ -48,11 +41,10 @@ export const SceneProbedPoint2D = () => {
 
       return [{
         ...markerState,
-        key: `${kind}:${probe.layerId}:${probe.voxelIndex.join(':')}`,
-        kind,
+        key: `${probe.layerId}:${probe.voxelIndex.join(':')}`,
       }];
     });
-  }, [getArrayForStoreId, layers, probedCoordinate, savedProbes]);
+  }, [getArrayForStoreId, layers, probedCoordinate]);
 
   const scaledGroups = useRef(
     new Map<string, { group: THREE.Group; minAxis: number; baseZ: number }>(),
@@ -103,7 +95,7 @@ export const SceneProbedPoint2D = () => {
             <mesh>
               <ringGeometry args={[0.72, 1, 36]} />
               <meshBasicMaterial
-                color={markerState.kind === 'active' ? '#f97316' : '#14b8a6'}
+                color="#f97316"
                 transparent
                 opacity={0.95}
                 depthWrite={false}
@@ -111,17 +103,11 @@ export const SceneProbedPoint2D = () => {
             </mesh>
             <mesh>
               <boxGeometry args={[2.1, 0.18, 0.04]} />
-              <meshBasicMaterial
-                color={markerState.kind === 'active' ? '#fb923c' : '#2dd4bf'}
-                depthWrite={false}
-              />
+              <meshBasicMaterial color="#fb923c" depthWrite={false} />
             </mesh>
             <mesh>
               <boxGeometry args={[0.18, 2.1, 0.04]} />
-              <meshBasicMaterial
-                color={markerState.kind === 'active' ? '#fb923c' : '#2dd4bf'}
-                depthWrite={false}
-              />
+              <meshBasicMaterial color="#fb923c" depthWrite={false} />
             </mesh>
           </group>
         </group>

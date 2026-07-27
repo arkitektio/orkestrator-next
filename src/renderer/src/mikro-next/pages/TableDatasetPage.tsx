@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroCoordinateSystem, MikroTableDataset } from "@/linkers";
 import { useGetTableDatasetQuery } from "../api/graphql";
 import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
+import { residentLabel } from "../components/coordinates/residents";
 import AxesTable from "../components/tables/AxesTable";
 import { TableDatasetTable } from "../components/tables/TableDatasetTable";
 
@@ -59,7 +60,9 @@ export const TableDatasetPage = asDetailQueryRoute(
                 >
                   {dataset.coordinateSystem.name}
                 </MikroCoordinateSystem.DetailLink>
-                <Badge variant="outline">{dataset.coordinateSystem.kind}</Badge>
+                <Badge variant="outline">
+                  {residentLabel(dataset.coordinateSystem)}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>

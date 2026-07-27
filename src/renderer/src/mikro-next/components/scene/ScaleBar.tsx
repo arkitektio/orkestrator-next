@@ -1,13 +1,6 @@
 import { useViewerStore } from "./store/viewerStore";
 import { useSceneStore } from "./store/sceneStore";
-
-const UNIT_LABELS: Record<string, string> = {
-  MICROMETERS: "µm",
-  NANOMETERS: "nm",
-  ANGSTROMS: "Å",
-  PIXELS: "px",
-  UNKNOWN: "units",
-};
+import { unitLabel as resolveUnitLabel } from "./core/sceneUnits";
 
 function getNiceNumber(value: number): number {
   if (value <= 0) return 1;
@@ -28,7 +21,7 @@ export const ScaleBar = () => {
 
   if (!show) return null;
 
-  const unitLabel = UNIT_LABELS[spatialUnit] ?? spatialUnit;
+  const unitLabel = resolveUnitLabel(spatialUnit);
   const targetPx = 120;
   const rawWorldUnits = targetPx * worldUnitsPerPixel;
   const niceUnits = getNiceNumber(rawWorldUnits);

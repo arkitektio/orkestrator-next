@@ -90,26 +90,6 @@ const DatasetPanel = ({
         )}
 
         <div className="flex flex-col gap-0.5">
-          <div className="text-xs font-semibold">Calibrations</div>
-          {dataset.calibrations.length == 0 ? (
-            <div className="text-xs text-muted-foreground">
-              No calibrated physical space — geometry is only in pixels.
-            </div>
-          ) : (
-            dataset.calibrations.map((calibration) => (
-              <MikroCoordinateSystem.Smart key={calibration.id} object={calibration}>
-                <MikroCoordinateSystem.DetailLink object={calibration} className="truncate text-xs">
-                  {calibration.name}
-                </MikroCoordinateSystem.DetailLink>
-                <div className="font-mono text-[0.625rem] text-muted-foreground">
-                  {calibration.axes.map((axis) => `${axis.name}: ${axis.unit ?? '—'}`).join(', ')}
-                </div>
-              </MikroCoordinateSystem.Smart>
-            ))
-          )}
-        </div>
-
-        <div className="flex flex-col gap-0.5">
           <div className="text-xs font-semibold">Data arrays</div>
           {[...dataset.dataArrays]
             .sort((a, b) => a.level - b.level)

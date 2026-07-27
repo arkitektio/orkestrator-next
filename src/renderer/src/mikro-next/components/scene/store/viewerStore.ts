@@ -89,6 +89,8 @@ export interface ViewerState {
   debug: boolean;
   showScaleBar: boolean;
   showScaleGrid: boolean;
+  /** The red-X/green-Y origin crosshair (`layers/SceneAxis.tsx`). */
+  showSceneAxis: boolean;
   worldUnitsPerPixel: number;
   getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   currentZ: number;
@@ -113,7 +115,6 @@ export interface ViewerState {
   // Visible image-coordinate ranges per layer
   layerViewRanges: Record<string, LayerViewRange>
   probedCoordinate: ProbedCoordinate | null;
-  savedProbes: ProbedCoordinate[];
   probeThreshold: number;
   /** User-selected probe strategy; "auto" follows the layer's projection. */
   probeMode: ProbeMode;
@@ -152,16 +153,13 @@ export interface ViewerState {
   setVisible: (visibleSet: Set<string>) => void
   setLayerViewRanges: (ranges: Record<string, LayerViewRange>) => void
   setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
-  addSavedProbe: (coordinate: ProbedCoordinate) => void
-  removeSavedProbe: (coordinate: ProbedCoordinate) => void
-  clearSavedProbes: () => void
   setProbeThreshold: (threshold: number) => void
   setProbeMode: (mode: ProbeMode) => void
-  /** Async exact-value upgrade: patches the active probe / matching saved
-   * probes when the fetched key still matches (no-op set otherwise, so late
-   * arrivals never cause renders). Currently unwired on the hover path — the
-   * hover readout deliberately stays at resident-LOD values (no per-hover
-   * chunk reads); retained for a future save-time upgrade. */
+  /** Async exact-value upgrade: patches the active probe when the fetched key
+   * still matches (no-op set otherwise, so late arrivals never cause
+   * renders). Currently unwired on the hover path — the hover readout
+   * deliberately stays at resident-LOD values (no per-hover chunk reads);
+   * retained for a future save-time upgrade. */
   mergeExactProbeValues: (key: ProbeFetchKey, values: number[]) => void
 
   /** "What is under this pixel?" — per-table lookup results for the active
@@ -189,6 +187,7 @@ export interface ViewerState {
   setDebug: (debug: boolean) => void;
   setShowScaleBar: (show: boolean) => void;
   setShowScaleGrid: (show: boolean) => void;
+  setShowSceneAxis: (show: boolean) => void;
   setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
@@ -211,7 +210,6 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     visibleLayers: [],
     layerViewRanges: {},
     probedCoordinate: null,
-    savedProbes: [],
     probeThreshold: 0.01,
     lodBias: 1,
     setLodBias: (bias) => set({ lodBias: bias }),
@@ -238,16 +236,6 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
     setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
     setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
-    addSavedProbe: (coordinate) => set((state) => {
-      if (state.savedProbes.some((probe) => isSameProbe(probe, coordinate))) {
-        return state;
-      }
-      return { savedProbes: [...state.savedProbes, coordinate] };
-    }),
-    removeSavedProbe: (coordinate) => set((state) => ({
-      savedProbes: state.savedProbes.filter((probe) => !isSameProbe(probe, coordinate)),
-    })),
-    clearSavedProbes: () => set({ savedProbes: [] }),
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     probeMode: "auto",
     setProbeMode: (mode) => set({ probeMode: mode }),
@@ -286,6 +274,7 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     debug: false,
     showScaleBar: true,
     showScaleGrid: false,
+    showSceneAxis: true,
     worldUnitsPerPixel: 1,
     frustumNear: 0.1,
     frustumFar: 100000,
@@ -326,6 +315,7 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setDebug: (debug) => set({ debug }),
     setShowScaleBar: (show) => set({ showScaleBar: show }),
     setShowScaleGrid: (show) => set({ showScaleGrid: show }),
+    setShowSceneAxis: (show) => set({ showSceneAxis: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
 }
@@ -338,15 +328,6 @@ export async function createViewerStore(
   const storesById = await createConfiguredSceneStores(scene, client, datalayer);
   const arraysByStoreId = await openSceneArrays(storesById);
   return createViewerStoreInternal(arraysByStoreId);
-}
-
-function isSameProbe(left: ProbedCoordinate, right: ProbedCoordinate): boolean {
-  return (
-    left.layerId === right.layerId &&
-    left.voxelIndex[0] === right.voxelIndex[0] &&
-    left.voxelIndex[1] === right.voxelIndex[1] &&
-    left.voxelIndex[2] === right.voxelIndex[2]
-  );
 }
 
 const {

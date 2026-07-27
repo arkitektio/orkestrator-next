@@ -12,7 +12,8 @@ import {
   type AxisSelection,
 } from "../../core/selection";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
-import type { ProbeResult } from "../../core/probe/probeTypes";
+import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
+import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
@@ -62,6 +63,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
   const interactionMode = useModeStore((s) => s.interactionMode);
+  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  const { createPointAnnotation } = useCreateSceneAnnotation();
 
   useEffect(() => {
     const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
@@ -274,8 +277,9 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const updateProbe = useCallback(
     (
       points: { local: THREE.Vector3; world: THREE.Vector3 } | null,
-      save: boolean,
+      opts: { save: boolean; origin: ProbeOrigin },
     ) => {
+      const { save, origin } = opts;
       const currentProbe = viewerStoreApi.getState().probedCoordinate;
 
       if (!points || !layer || !pool) {
@@ -340,6 +344,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         voxelIndex,
         worldPos: [points.world.x, points.world.y, points.world.z],
         strategy: "plane",
+        origin,
         values: resident
           ? resident.values.map((value, channel) => ({ channel, value }))
           : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
@@ -350,7 +355,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         sliceSignature: pool.sliceSignature,
       };
 
+      // Only hover dedupes — a click must reach the store even when the hover
+      // probe already sits on that voxel (it always does while follow-cursor is
+      // on), because a click may re-pivot the camera or save the point.
       if (
+        origin === "hover" &&
         !save &&
         currentProbe?.layerId === nextProbe.layerId &&
         currentProbe.voxelIndex.every((v, i) => v === nextProbe.voxelIndex[i])
@@ -359,9 +368,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       }
 
       viewerStoreApi.getState().setProbedCoordinate(nextProbe);
-      if (save) viewerStoreApi.getState().addSavedProbe(nextProbe);
+      // Shift+click persists the point as a scene annotation (fire-and-forget;
+      // it renders via the AnnotationLayer once the refetch lands).
+      if (save && nextProbe.worldPos) createPointAnnotation(nextProbe.worldPos);
     },
-    [layer, pool, brickSystem, planTargetLevel, resolveProbeGeometryContext, viewerStoreApi],
+    [layer, pool, brickSystem, planTargetLevel, resolveProbeGeometryContext, viewerStoreApi, createPointAnnotation],
   );
 
   // Pointermove storms coalesce to ≤1 probe per frame (see BrickVolumeLayer):
@@ -382,26 +393,31 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       matrixAutoUpdate={false}
       ref={groupRef}
       onPointerMove={(event) => {
-        if (interactionMode !== "AUTO_PROBE" || event.buttons !== 0) return;
+        if (interactionMode !== "PROBE" || !probeFollowsCursor || event.buttons !== 0) return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();
         const world = event.point.clone();
         const local = group.worldToLocal(world.clone());
-        probeCoalescer.schedule(() => updateProbe({ local, world }, false));
+        probeCoalescer.schedule(() =>
+          updateProbe({ local, world }, { save: false, origin: "hover" }),
+        );
       }}
       onPointerOut={() => {
-        if (interactionMode !== "AUTO_PROBE") return;
+        if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
         probeCoalescer.cancel();
-        updateProbe(null, false);
+        updateProbe(null, { save: false, origin: "hover" });
       }}
       onPointerDown={(event) => {
-        if (interactionMode !== "PROBE" && interactionMode !== "AUTO_PROBE") return;
+        if (interactionMode !== "PROBE") return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();
         const world = event.point.clone();
-        updateProbe({ local: group.worldToLocal(world.clone()), world }, event.shiftKey);
+        updateProbe(
+          { local: group.worldToLocal(world.clone()), world },
+          { save: event.shiftKey, origin: "click" },
+        );
       }}
     >
       <mesh key={pool.structureSignature} scale={[totalX, totalY, 1]} renderOrder={1}>

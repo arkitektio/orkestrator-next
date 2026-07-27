@@ -1,12 +1,17 @@
 /**
- * Authoring a calibration: a dataset's intrinsic pixels -> a PHYSICAL space.
+ * Authoring a calibration: a dataset's intrinsic pixels -> a physical space.
  *
- * `createCalibration` creates two things in one call — the physical coordinate
- * system (whose axes carry the units) and the single edge mapping the pixels
- * into it. `axes` order defines `scale` order: entry i of `scale` is the pixel
- * size of axis i of `axes`. That is the same single-ordered-list discipline
- * ../registration/mapping.ts exists for, and for the same reason: the arrays
- * must not be able to disagree.
+ * There is no dedicated calibrate mutation any more. A calibration was never
+ * more than two things — the physical coordinate system (whose axes carry the
+ * units) and the single edge mapping the pixels into it — so it is now said
+ * with `createCoordinateSystem`, the same call that mints a world, carrying one
+ * SCALE entry in `registrations`.
+ *
+ * `axes` order defines `scale` order: entry i of `scale` is the pixel size of
+ * axis i of `axes`, and `inputAxes`/`outputAxes` name that same order back to
+ * the server explicitly. All four arrays come from one pass over one ordered
+ * list — the same single-ordered-list discipline ../registration/mapping.ts
+ * exists for, and for the same reason: they must not be able to disagree.
  *
  * Kept free of generated imports so its suite runs in `node` — see the note at
  * the top of ../registration/mapping.ts.
@@ -98,31 +103,57 @@ export type CalibrationDraft = {
   rows: readonly CalibrationRow[];
 };
 
+/**
+ * Structural mirror of the generated `CreateCoordinateSystemInput` — the
+ * calibration case of it, where `registrations` holds exactly one SCALE edge
+ * from the dataset being calibrated.
+ */
 export type CreateCalibrationVariables = {
-  dataset: string;
   name: string;
   axes: { name: string; type: string; unit: string; longName?: string | null }[];
-  scale: number[];
+  registrations: {
+    dataset: string;
+    kind: string;
+    scale: number[];
+    inputAxes: string[];
+    outputAxes: string[];
+  }[];
 };
 
 /**
- * The draft -> `CreateCalibrationInput`. `axes` and `scale` are built from one
- * pass over one ordered list, so entry i of each is the same axis by
- * construction.
+ * The draft -> `CreateCoordinateSystemInput`. `axes`, `scale`, `inputAxes` and
+ * `outputAxes` are built from one pass over one ordered list, so entry i of
+ * each is the same axis by construction.
+ *
+ * The calibration does not rename anything — the physical space keeps the
+ * intrinsic axis names — so `inputAxes` and `outputAxes` are the same list.
+ * Both are still stated: the edge is self-describing, and a later rename must
+ * break loudly rather than silently reindex `scale`.
  */
 export const buildCalibrationInput = (
   draft: CalibrationDraft,
-): CreateCalibrationVariables => ({
-  dataset: draft.dataset,
-  name: draft.name.trim() || "physical",
-  axes: draft.rows.map((row) => ({
-    name: row.axis.name,
-    type: row.axis.type,
-    unit: row.unit.trim(),
-    longName: row.axis.longName ?? null,
-  })),
-  scale: draft.rows.map((row) => num(row.scale)),
-});
+): CreateCalibrationVariables => {
+  const axisNames = draft.rows.map((row) => row.axis.name);
+
+  return {
+    name: draft.name.trim() || "physical",
+    axes: draft.rows.map((row) => ({
+      name: row.axis.name,
+      type: row.axis.type,
+      unit: row.unit.trim(),
+      longName: row.axis.longName ?? null,
+    })),
+    registrations: [
+      {
+        dataset: draft.dataset,
+        kind: "SCALE",
+        scale: draft.rows.map((row) => num(row.scale)),
+        inputAxes: axisNames,
+        outputAxes: axisNames,
+      },
+    ],
+  };
+};
 
 export type CalibrationIssue = {
   level: "error" | "warning";

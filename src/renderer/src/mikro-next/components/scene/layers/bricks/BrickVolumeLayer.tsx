@@ -10,8 +10,9 @@ import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
-import type { ProbeResult } from "../../core/probe/probeTypes";
+import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
+import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
@@ -57,6 +58,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const skipSelectionClickRef = useRef(false);
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
+  const { createPointAnnotation } = useCreateSceneAnnotation();
 
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
@@ -96,6 +98,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
   const interactionMode = useModeStore((s) => s.interactionMode);
+  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
@@ -204,7 +207,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
-  const probeFromRay = (ray: THREE.Ray): ProbeResult | null => {
+  const probeFromRay = (ray: THREE.Ray, origin: ProbeOrigin): ProbeResult | null => {
     const mesh = meshRef.current;
     // Event-time read of the full plan — no render subscription needed for it.
     const state = viewerStoreApi.getState();
@@ -267,6 +270,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       voxelIndex,
       worldPos: [world.x, world.y, world.z],
       strategy,
+      origin,
       values: resident
         ? resident.values.map((value, channel) => ({ channel, value }))
         : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
@@ -285,11 +289,17 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       return;
     }
 
-    // AUTO_PROBE fires per frame; only voxel-crossings (or strategy flips)
-    // reach the store. Values are the resident-LOD read — good enough for
-    // hover by design (no per-hover chunk fetches).
+    // Hover fires per frame; only voxel-crossings (or strategy flips) reach the
+    // store. Values are the resident-LOD read — good enough for hover by design
+    // (no per-hover chunk fetches).
+    //
+    // Only hover dedupes. A click is a deliberate act — it may re-pivot the
+    // camera or save the point — so it must reach the store even when the hover
+    // probe is already sitting on that exact voxel, which it always is while
+    // follow-cursor is on.
     const cur = state.probedCoordinate;
     if (
+      probe.origin === "hover" &&
       !save &&
       cur?.layerId === probe.layerId &&
       cur.strategy === probe.strategy &&
@@ -298,7 +308,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       return;
     }
     state.setProbedCoordinate(probe);
-    if (save) state.addSavedProbe(probe);
+    // Shift+click persists the point as a scene annotation (fire-and-forget;
+    // it renders via the AnnotationLayer once the refetch lands).
+    if (save && probe.worldPos) createPointAnnotation(probe.worldPos);
   };
 
   // Pointermove storms coalesce to ≤1 march per frame: the handler schedules
@@ -323,31 +335,31 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onPointerMove={(e) => {
-        if (interactionMode !== "AUTO_PROBE" || e.buttons !== 0) return;
+        if (interactionMode !== "PROBE" || !probeFollowsCursor || e.buttons !== 0) return;
         // The event already raycast this volume's box, so the front-most
         // volume claims the hover; the march itself is deferred to the frame.
         e.stopPropagation();
         const ray = e.ray.clone();
-        probeCoalescer.schedule(() => updateProbe(probeFromRay(ray), false));
+        probeCoalescer.schedule(() => updateProbe(probeFromRay(ray, "hover"), false));
       }}
       onPointerOut={() => {
-        if (interactionMode !== "AUTO_PROBE") return;
+        if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
         probeCoalescer.cancel();
         updateProbe(null, false);
       }}
       onPointerDown={(e) => {
-        if (!["PROBE", "AUTO_PROBE"].includes(interactionMode)) return;
+        if (interactionMode !== "PROBE") return;
         e.stopPropagation();
         skipSelectionClickRef.current = true;
         // Synchronous: click latency matters, click storms don't.
-        updateProbe(probeFromRay(e.ray), e.shiftKey);
+        updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
       }}
       onClick={(e) => {
         if (skipSelectionClickRef.current) {
           skipSelectionClickRef.current = false;
           return;
         }
-        if (["PROBE", "AUTO_PROBE"].includes(interactionMode) || e.altKey) return;
+        if (interactionMode === "PROBE" || e.altKey) return;
         e.stopPropagation();
         setSelectedLayerId(isSelected ? null : layerId);
       }}

@@ -47,10 +47,6 @@ fragment ADataset on ADataset {
   intrinsicSystem {
     ...CoordinateSystem
   }
-  # The calibrated physical spaces derived from it — zero or many.
-  calibrations {
-    ...CoordinateSystem
-  }
   dataArrays {
     ...DataArray
   }

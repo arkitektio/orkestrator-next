@@ -10,22 +10,34 @@ fragment Axis on Axis {
 fragment ListCoordinateSystem on CoordinateSystem {
   id
   name
-  kind
+  # Only the discriminator: enough for a card or a graph node to say whether
+  # this is a pure reference frame or a space something occupies, without
+  # paying for each resident's own fields.
+  residents {
+    __typename
+  }
 }
 
-# What a system is a space OF — `kind` says what a system DENOTES, this says
-# whose it is. Null for a hub, which nobody owns.
+# The data LIVING IN a space. A system no longer declares what it is — an empty
+# `residents` is what a pure reference frame (a world, an atlas) *is*, and there
+# is no separate kind to consult. Several residents may share one space: a
+# dataset's own pyramid levels and unsliced lenses live in its grid, and a
+# hundred tiles acquired on one stage sit in one stage frame.
 #
 # Each member selects only what the breadcrumb renders. A Lens has no name of
 # its own so it borrows its dataset's; a DataArray has neither a name nor a
 # back-reference to its dataset, so a pyramid level can name only its level.
-fragment CoordinateSystemOwner on CoordinateSystemOwner {
+fragment Resident on Resident {
   __typename
   ... on ADataset {
     id
     name
   }
   ... on TableDataset {
+    id
+    name
+  }
+  ... on AnnotationCollection {
     id
     name
   }
@@ -49,22 +61,18 @@ fragment CoordinateSystemOwner on CoordinateSystemOwner {
 fragment CoordinateSystem on CoordinateSystem {
   id
   name
-  kind
   # The wall-clock instant the time axis has its origin at
   # (`wall_clock = epoch + t * unit`). A property of the space itself, and only
   # meaningful for a calibrated system with a TIME axis — null means the clock
   # is unanchored, NOT that the time axis is unusable: it is still a perfectly
   # composable relative coordinate.
   epoch
-  # A hub (ownerless, built to be registered into) vs. a scene's minted world.
-  # Both are SHARED, so `kind` alone cannot tell them apart and the distinction
-  # is not derivable client-side — a hub receives registrations and outlives
-  # every scene over it; a scene's world cascades away with its scene.
-
-  # Whether createSceneFromCoordinateSystem will accept this system as a world.
-  isAdoptableWorld
-  owner {
-    ...CoordinateSystemOwner
+  # Who lives here — and, by its emptiness, whether anybody does. This is the
+  # whole vocabulary now: an uninhabited space is a reference frame sources
+  # register into and scenes adopt as their world; an inhabited one is the
+  # grid, calibration or native space of the containers listed here.
+  residents {
+    ...Resident
   }
   axes {
     ...Axis

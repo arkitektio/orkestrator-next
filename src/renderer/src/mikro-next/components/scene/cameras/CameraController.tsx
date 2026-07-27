@@ -1,69 +1,122 @@
 import * as THREE from "three";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
 import { useSceneStoreApi } from "../store/sceneStore";
+import { useAnimationStore } from "../store/animationStore";
 import { computeProbeWorldPosition } from "../core/probeWorld";
+import { repivotPreservingView, shouldRepivot } from "../core/orbitPivot";
 
 import {
-  ArcballControls,
   OrbitControls,
   OrthographicCamera,
   PerspectiveCamera,
 } from "@react-three/drei";
 
-// Left-drag pans (default OrbitControls maps LEFT to rotate). Rotate moves to
-// the right button so 3D pan mode can still orbit; in 2D rotate is disabled.
-const PAN_MOUSE_BUTTONS = {
+/**
+ * Button maps per (display mode × interaction mode).
+ *
+ * These must be module-level constants: R3F diffs object props by *reference*,
+ * so an inline literal would re-apply on every commit. And every branch must
+ * pass an explicit map — `mouseButtons={undefined}` is a latch, not a reset
+ * (R3F's `applyProps` skips undefined values), so once a map is applied it
+ * sticks for the life of the controls instance.
+ *
+ * In NAVIGATE, left-drag pans (OrbitControls' own default maps LEFT to rotate).
+ * In the tool modes the left button belongs to the tool, so the controls must
+ * not claim it — the maps simply omit LEFT, which three-stdlib's button switch
+ * treats as no action at all (`STATE.NONE`). Right/middle-drag and the wheel
+ * still navigate, which is what keeps a 2D probe session from being stuck in
+ * place. Omitting LEFT is also the only assignment where shift-click (save
+ * probe) and shift-drag (merge selection) can't be hijacked: three-stdlib swaps
+ * PAN↔ROTATE when shift is held.
+ */
+const NAVIGATE_BUTTONS_3D = {
   LEFT: THREE.MOUSE.PAN,
   MIDDLE: THREE.MOUSE.DOLLY,
   RIGHT: THREE.MOUSE.ROTATE,
 } as const;
 
+const NAVIGATE_BUTTONS_2D = {
+  LEFT: THREE.MOUSE.PAN,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+} as const;
+
+const TOOL_BUTTONS_3D = {
+  MIDDLE: THREE.MOUSE.PAN,
+  RIGHT: THREE.MOUSE.ROTATE,
+} as const;
+
+const TOOL_BUTTONS_2D = {
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+} as const;
+
 /**
- * Keeps the OrbitControls pivot on the currently probed point while the
- * "Probe Orbit" camera mode is active. Uses a preserve-offset re-pivot: the
- * orbit target moves to the probe and the camera shifts by the same delta, so the
- * view doesn't jump — only the rotation center changes. Mounted inside the Canvas
- * (needs `useThree`) and only in 3D.
+ * Keeps the OrbitControls pivot on the probed point while "Orbit around probe"
+ * is on. The geometry and the when-do-we-move rule live in `core/orbitPivot.ts`;
+ * this is the store glue. Mounted inside the Canvas (needs `useThree`) and only
+ * in 3D.
  */
 const ProbeOrbitPivot = () => {
   const controls = useThree((s) => s.controls);
   const camera = useThree((s) => s.camera);
   const invalidate = useThree((s) => s.invalidate);
-  const cameraControllerMode = useModeStore((s) => s.cameraControllerMode);
+  const pivotOnProbe = useModeStore((s) => s.pivotOnProbe);
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
+  const playingId = useAnimationStore((s) => s.playingId);
   const viewerApi = useViewerStoreApi();
   const sceneApi = useSceneStoreApi();
+  const wasEnabledRef = useRef(false);
 
   useEffect(() => {
-    if (cameraControllerMode !== "PROBE_ORBIT" || !probedCoordinate) return;
-    // ArcballControls (and any controls without a `.target`) are skipped.
+    // Turning the setting on pivots to whatever probe is current, even a
+    // hover-origin one, so the switch has an immediate visible effect.
+    const justEnabled = pivotOnProbe && !wasEnabledRef.current;
+    wasEnabledRef.current = pivotOnProbe;
+
+    if (
+      !shouldRepivot({
+        pivotOnProbe,
+        probe: probedCoordinate,
+        isAnimationPlaying: playingId !== null,
+        justEnabled,
+      })
+    ) {
+      return;
+    }
+    // `probedCoordinate` is non-null here — `shouldRepivot` returned true.
+    const probe = probedCoordinate!;
+
+    // Any controls without a `.target` are skipped.
     const ctrl =
       controls && "target" in controls
         ? (controls as unknown as { target: THREE.Vector3; update: () => void })
         : null;
-    if (!ctrl) return;
 
     const { getArrayForStoreId } = viewerApi.getState();
-    const layer = sceneApi
-      .getState()
-      .layers.find((l) => l.id === probedCoordinate.layerId);
+    const layer = sceneApi.getState().layers.find((l) => l.id === probe.layerId);
     if (!layer) return;
 
-    const world = computeProbeWorldPosition(layer, probedCoordinate, getArrayForStoreId);
+    const world = computeProbeWorldPosition(layer, probe, getArrayForStoreId);
     if (!world) return;
 
-    const offset = camera.position.clone().sub(ctrl.target);
-    ctrl.target.copy(world);
-    camera.position.copy(world.clone().add(offset));
-    ctrl.update();
-    invalidate();
-    // `controls` is a dependency because switching to PROBE_ORBIT remounts
-    // OrbitControls (its key includes the mode), yielding a fresh controls object
-    // with the target reset to the origin — we must re-apply the probe pivot then.
-  }, [cameraControllerMode, probedCoordinate, controls, camera, invalidate, viewerApi, sceneApi]);
+    if (repivotPreservingView({ camera, controls: ctrl }, world)) invalidate();
+    // `controls` is a dependency because a 2D↔3D switch remounts OrbitControls,
+    // yielding a fresh object with the target back at the origin — the pivot has
+    // to be re-applied then. Camera-setting changes no longer remount it.
+  }, [
+    pivotOnProbe,
+    probedCoordinate,
+    playingId,
+    controls,
+    camera,
+    invalidate,
+    viewerApi,
+    sceneApi,
+  ]);
 
   return null;
 };
@@ -71,11 +124,14 @@ const ProbeOrbitPivot = () => {
 export const CameraController = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
-  const cameraControllerMode = useModeStore((s) => s.cameraControllerMode);
+  const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const frustumNear = useViewerStore((s) => s.frustumNear);
   const frustumFar = useViewerStore((s) => s.frustumFar);
 
-  const enablePan = interactionMode === "PAN";
+  // Pan and rotate stay *enabled* in every mode; the button map alone decides
+  // what a drag does. Disabling them was only ever a blunt way of neutering the
+  // left button, and it left tool modes with no way to move the view at all.
+  const isNavigate = interactionMode === "NAVIGATE";
 
   return (
     <>
@@ -102,38 +158,29 @@ export const CameraController = () => {
         />
       )}
 
-      {/* Orbit Controls
-            Disable panning/rotating while another interaction mode is active so the scene doesn't drag while selecting.
-            */}
+      {/* Orbit Controls. The key deliberately carries only the display mode:
+            camera settings are live props now, so toggling one no longer
+            remounts the controls (which used to reset the orbit target to the
+            origin, breaking the probe pivot the moment you enabled it). */}
       {displayMode === "3D" ? (
-        cameraControllerMode === "ARCBALL" ? (
-          <ArcballControls
-            key="arcball-controls-3d"
-            makeDefault
-          />
-        ) : (
-          <OrbitControls
-            key={`orbit-controls-3d:${cameraControllerMode}`}
-            makeDefault
-            enableRotate={true}
-            enablePan={enablePan}
-            enableZoom={true}
-            zoomToCursor={
-              cameraControllerMode === "CURSOR_ORBIT" ||
-              cameraControllerMode === "PROBE_ORBIT"
-            }
-            mouseButtons={enablePan ? PAN_MOUSE_BUTTONS : undefined}
-          />
-        )
+        <OrbitControls
+          key="orbit-controls-3d"
+          makeDefault
+          enableRotate={true}
+          enablePan={true}
+          enableZoom={true}
+          zoomToCursor={zoomToCursor}
+          mouseButtons={isNavigate ? NAVIGATE_BUTTONS_3D : TOOL_BUTTONS_3D}
+        />
       ) : (
         <OrbitControls
           key="orbit-controls-2d"
           makeDefault
           enableRotate={false}
-          enablePan={interactionMode === "PAN"}
+          enablePan={true}
           enableZoom={true}
           screenSpacePanning={true}
-          mouseButtons={PAN_MOUSE_BUTTONS}
+          mouseButtons={isNavigate ? NAVIGATE_BUTTONS_2D : TOOL_BUTTONS_2D}
         />
       )}
 

@@ -45,16 +45,25 @@ const axis = (
   unit?: string | null,
 ) => ({ __typename: "Axis" as const, id: name, name, order, type, unit, longName: null });
 
-const system = (id: string, name: string, kind: string, axes: unknown[]) =>
-  ({ __typename: "CoordinateSystem", id, name, kind, epoch: null, isHub: false, isAdoptableWorld: true, owner: null, axes }) as never;
+// `residents` is the whole vocabulary a system has left: an inhabited space
+// carries its containers, an empty one IS a pure reference frame.
+const system = (
+  id: string,
+  name: string,
+  residents: unknown[],
+  axes: unknown[],
+) =>
+  ({ __typename: "CoordinateSystem", id, name, epoch: null, residents, axes }) as never;
+
+const DATASET_RESIDENT = { __typename: "ADataset", id: "ds-1", name: "stack" };
 
 // (c, y, x) pixels -> (t, z, y, x) micrometre world: the rank-changing case.
-const SOURCE = system("cs-1", "intrinsic pixels", "INTRINSIC", [
+const SOURCE = system("cs-1", "intrinsic pixels", [DATASET_RESIDENT], [
   axis("c", 0, "CHANNEL"),
   axis("y", 1, "SPACE", "px"),
   axis("x", 2, "SPACE", "px"),
 ]);
-const TARGET = system("cs-2", "Scene 12 world", "SHARED", [
+const TARGET = system("cs-2", "Scene 12 world", [], [
   axis("t", 0, "TIME", "s"),
   axis("z", 1, "SPACE", "µm"),
   axis("y", 2, "SPACE", "µm"),
@@ -62,11 +71,11 @@ const TARGET = system("cs-2", "Scene 12 world", "SHARED", [
 ]);
 
 // (y, x) -> (row, col): every mapping renames, so the rename rule must bite.
-const RENAMING_SOURCE = system("cs-3", "pixels", "INTRINSIC", [
+const RENAMING_SOURCE = system("cs-3", "pixels", [DATASET_RESIDENT], [
   axis("y", 0, "SPACE", "px"),
   axis("x", 1, "SPACE", "px"),
 ]);
-const RENAMING_TARGET = system("cs-4", "atlas", "SHARED", [
+const RENAMING_TARGET = system("cs-4", "atlas", [], [
   axis("row", 0, "SPACE", "µm"),
   axis("col", 1, "SPACE", "µm"),
 ]);

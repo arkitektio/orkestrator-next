@@ -16,6 +16,7 @@ import {
   useGetTableDatasetSystemQuery,
   useRegisterSourceCandidatesQuery,
 } from "../api/graphql";
+import { residentLabel } from "../components/coordinates/residents";
 import { RegisterEdgeForm } from "./registration/RegisterEdgeForm";
 
 /**
@@ -168,7 +169,7 @@ const DatasetSystemStep = (props: {
         <PickerRow
           key={system.id}
           name={system.name}
-          badge={system.kind}
+          badge={residentLabel(system)}
           secondary={[...system.axes]
             .sort((a, b) => a.order - b.order)
             .map((axis) => `${axis.name}${axis.unit ? `: ${axis.unit}` : ""}`)

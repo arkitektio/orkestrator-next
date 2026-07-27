@@ -16,6 +16,13 @@ export interface LineProps {
   dashed?: boolean;
   dashSize?: number;
   gapSize?: number;
+  /**
+   * Draw regardless of depth. Applied once at mount: `depthTest` is baked into
+   * the WebGPU pipeline's depth-stencil state, so flipping it later needs a
+   * `needsUpdate` to force a pipeline rebuild.
+   */
+  depthTest?: boolean;
+  renderOrder?: number;
   onClick?: (event: ThreeEvent<MouseEvent>) => void;
 }
 
@@ -36,6 +43,8 @@ export const Line = ({
   dashed = false,
   dashSize = 3,
   gapSize = 1,
+  depthTest = true,
+  renderOrder,
   onClick,
 }: LineProps) => {
   const geometry = useMemo(() => new LineGeometry(), []);
@@ -72,19 +81,34 @@ export const Line = ({
   }, [points, geometry, line]);
 
   // Sync material appearance.
+  //
+  // Deliberately NOT setting `material.transparent`. On a Line2NodeMaterial that
+  // is not a blend flag: the material hard-codes `blending = NoBlending`
+  // ("transparency is not supported, yet") and `transparent` instead makes its
+  // setup composite the output against `viewportOpaqueMipTexture()` — a
+  // singleton viewport texture with `generateMipmaps: true` and an update type
+  // of RENDER. That copies the whole drawing buffer and rebuilds its full mip
+  // chain *every frame a dashed line is on screen*. We never set
+  // `material.opacity`, so the composite is `rgb*1 + viewport*0` — algebraically
+  // a no-op. Antialiasing is unaffected; it comes from alphaToCoverage.
   useEffect(() => {
     material.color = new THREE.Color(color);
     material.linewidth = lineWidth;
     material.dashed = dashed;
     material.dashSize = dashSize;
     material.gapSize = gapSize;
-    material.transparent = dashed; // let discarded gap fragments blend cleanly
+    // Set here rather than in a mount-only effect so it rides along with the
+    // `needsUpdate` below: `depthTest` is baked into the WebGPU pipeline's
+    // depth-stencil state, so changing it needs a pipeline rebuild to take.
+    material.depthTest = depthTest;
     material.needsUpdate = true;
-  }, [material, color, lineWidth, dashed, dashSize, gapSize]);
+  }, [material, color, lineWidth, dashed, dashSize, gapSize, depthTest]);
 
   // Never mount a Line2 whose geometry has no segments: the shader would be
   // built against a geometry without instanceStart/instanceEnd attributes.
   if (points.length < 2) return null;
 
-  return <primitive object={line} onClick={onClick} />;
+  // `renderOrder` rides on the primitive so R3F applies it — no need to reach
+  // into the object ourselves.
+  return <primitive object={line} renderOrder={renderOrder} onClick={onClick} />;
 };

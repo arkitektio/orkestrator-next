@@ -14,9 +14,9 @@ import { AnyTransformation, describeTransformation } from "./types";
 /**
  * The edges touching one coordinate system, as a table.
  *
- * The page renders this twice with different framing: over a SHARED system's
- * inbound edges it is "what is registered into this space", over an INTRINSIC
- * system's outbound edges it is "what has been derived from these pixels".
+ * The page renders this with different framing depending on the direction: over
+ * inbound edges it is "what is registered into this space" or "what reaches
+ * me", over outbound edges "what has been derived from these coordinates".
  * Same data, different question — which is why `direction` exists.
  */
 

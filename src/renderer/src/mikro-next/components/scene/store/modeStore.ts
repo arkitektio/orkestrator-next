@@ -2,9 +2,15 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 
-export type InteractionMode = "PAN" | "EDIT" | "SELECT" | "MOVE" | "META" | "PROBE" | "AUTO_PROBE";
+/**
+ * Three modes, not seven. What used to be MOVE (no behaviour at all) and META
+ * (hid the origin axis) are gone; SELECT folded into ANNOTATE as a pointer tool
+ * alongside the shapes, and AUTO_PROBE became the `probeFollowsCursor` modifier
+ * of PROBE. Camera behaviour that used to be an exclusive mode is now composable
+ * booleans below.
+ */
+export type InteractionMode = "NAVIGATE" | "ANNOTATE" | "PROBE";
 export type DisplayMode = "2D" | "3D";
-export type CameraControllerMode = "ORBIT" | "CURSOR_ORBIT" | "ARCBALL" | "PROBE_ORBIT";
 
 export type DisplayModeOption = {
   label: string;
@@ -18,47 +24,25 @@ export type InteractionModeOption = {
   description?: string;
 };
 
-export type CameraControllerModeOption = {
-  label: string;
-  value: CameraControllerMode;
-  description?: string;
-};
-
+/**
+ * Canonical order and copy. Which of these are actually *offered* is decided by
+ * `core/modeCompat.ts` — an option that would be inert is not shown.
+ */
 export const interactionModeOptions: InteractionModeOption[] = [
   {
-    label: "Pan Mode",
-    value: "PAN",
-    description: "Default mode for navigating the scene",
+    label: "Navigate",
+    value: "NAVIGATE",
+    description: "Pan, orbit and zoom the scene",
   },
   {
-    label: "Edit Mode",
-    value: "EDIT",
-    description: "Mode for selecting and modifying objects",
+    label: "Annotate",
+    value: "ANNOTATE",
+    description: "Draw annotations, or drag-select existing ones (hold A)",
   },
   {
-    label: "Select Mode",
-    value: "SELECT",
-    description: "Mode for selecting ROIs directly or with a drag box",
-  },
-  {
-    label: "Move Mode",
-    value: "MOVE",
-    description: "Mode for moving selected objects",
-  },
-  {
-    label: "Meta Mode",
-    value: "META",
-    description: "Mode for accessing meta-level controls and settings",
-  },
-  {
-    label: "Probe Mode",
+    label: "Probe",
     value: "PROBE",
-    description: "Click volumes to place or update the active probe",
-  },
-  {
-    label: "Auto Probe Mode",
-    value: "AUTO_PROBE",
-    description: "Hover volumes to update the active probe continuously",
+    description: "Click a layer to read its voxel values (hold P)",
   },
 ];
 
@@ -67,39 +51,34 @@ export const displayModeOptions: DisplayModeOption[] = [
   { label: "3D View", value: "3D", description: "Display in 3D mode" },
 ];
 
-export const cameraControllerModeOptions: CameraControllerModeOption[] = [
-  {
-    label: "Orbit",
-    value: "ORBIT",
-    description: "Classic orbit camera around the current target",
-  },
-  {
-    label: "Cursor Orbit",
-    value: "CURSOR_ORBIT",
-    description: "Orbit camera with cursor-focused zoom behavior",
-  },
-  {
-    label: "Arcball",
-    value: "ARCBALL",
-    description: "Arcball controller for pointer-centered 3D rotation",
-  },
-  {
-    label: "Probe Orbit",
-    value: "PROBE_ORBIT",
-    description: "Cursor orbit that pivots around the last probed point",
-  },
-];
-
 export interface ModeState {
   interactionMode: InteractionMode;
   displayMode: DisplayMode;
-  cameraControllerMode: CameraControllerMode;
+  /**
+   * Zoom towards the pointer instead of the orbit target (3D). Was the
+   * CURSOR_ORBIT camera mode — a boolean now, because it composes with the
+   * pivot setting rather than excluding it.
+   */
+  zoomToCursor: boolean;
+  /**
+   * Re-center the orbit pivot on the last *click*-probed point (3D). Was the
+   * PROBE_ORBIT camera mode. See `core/orbitPivot.ts`.
+   */
+  pivotOnProbe: boolean;
+  /**
+   * Hover-to-probe. Was the AUTO_PROBE interaction mode, now a modifier of
+   * PROBE. Lives here rather than on `viewerStore` so the brick layers keep a
+   * single reactive subscription for pointer behaviour — they write probes
+   * through the non-reactive store api precisely to avoid re-renders.
+   */
+  probeFollowsCursor: boolean;
   interactionModeOptions: InteractionModeOption[];
   displayModeOptions: DisplayModeOption[];
-  cameraControllerModeOptions: CameraControllerModeOption[];
   setInteractionMode: (mode: InteractionMode) => void;
   setDisplayMode: (mode: DisplayMode) => void;
-  setCameraControllerMode: (mode: CameraControllerMode) => void;
+  setZoomToCursor: (on: boolean) => void;
+  setPivotOnProbe: (on: boolean) => void;
+  setProbeFollowsCursor: (on: boolean) => void;
 }
 
 
@@ -119,12 +98,13 @@ export const createModeStore = ({
 }: { displayMode?: DisplayMode } = {}) =>
   createStore<ModeState>()(
     immer((set) => ({
-    interactionMode: "PAN", // Default starting mode
+    interactionMode: "NAVIGATE", // Default starting mode
     displayMode,
-    cameraControllerMode: "ORBIT",
+    zoomToCursor: false,
+    pivotOnProbe: false,
+    probeFollowsCursor: false,
     interactionModeOptions,
     displayModeOptions,
-    cameraControllerModeOptions,
     setInteractionMode: (mode) =>
       set((state) => {
         state.interactionMode = mode;
@@ -133,9 +113,17 @@ export const createModeStore = ({
       set((state) => {
         state.displayMode = mode;
       }),
-    setCameraControllerMode: (mode) =>
+    setZoomToCursor: (on) =>
       set((state) => {
-        state.cameraControllerMode = mode;
+        state.zoomToCursor = on;
+      }),
+    setPivotOnProbe: (on) =>
+      set((state) => {
+        state.pivotOnProbe = on;
+      }),
+    setProbeFollowsCursor: (on) =>
+      set((state) => {
+        state.probeFollowsCursor = on;
       }),
     })),
   );

@@ -17,7 +17,6 @@ const MARKER_MAX_FRACTION = 0.03;
 
 export const SceneProbedPoint = () => {
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
-  const savedProbes = useViewerStore((s) => s.savedProbes);
   const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
   const layers = useSceneStore((s) => s.layers);
 
@@ -25,19 +24,12 @@ export const SceneProbedPoint = () => {
   // The camera-dependent radius (constant screen size) is applied imperatively
   // in useFrame below — NOT via a worldUnitsPerPixel store subscription, which
   // re-rendered this component (and re-ran this memo) every frame during any
-  // camera motion (P17).
+  // camera motion (P17). At most one marker: the active probe. Saved points
+  // are persisted annotations now, rendered by the AnnotationLayer.
   const markerStates = useMemo(() => {
-    const probes: Array<{ probe: ProbedCoordinate; kind: 'active' | 'saved' }> = [];
+    const probes: ProbedCoordinate[] = probedCoordinate ? [probedCoordinate] : [];
 
-    if (probedCoordinate) {
-      probes.push({ probe: probedCoordinate, kind: 'active' });
-    }
-
-    savedProbes.forEach((probe) => {
-      probes.push({ probe, kind: 'saved' });
-    });
-
-    return probes.flatMap(({ probe, kind }) => {
+    return probes.flatMap((probe) => {
       const layer = layers.find((candidate) => candidate.id === probe.layerId);
       if (!layer || layer.visible === false) {
         return [];
@@ -50,11 +42,10 @@ export const SceneProbedPoint = () => {
 
       return [{
         ...markerState,
-        key: `${kind}:${probe.layerId}:${probe.voxelIndex.join(':')}`,
-        kind,
+        key: `${probe.layerId}:${probe.voxelIndex.join(':')}`,
       }];
     });
-  }, [getArrayForStoreId, layers, probedCoordinate, savedProbes]);
+  }, [getArrayForStoreId, layers, probedCoordinate]);
 
   const scaledGroups = useRef(new Map<string, { group: THREE.Group; minAxis: number }>());
 
@@ -93,15 +84,12 @@ export const SceneProbedPoint = () => {
           >
             <mesh>
               <sphereGeometry args={[1, 24, 16]} />
-              <meshBasicMaterial
-                color={markerState.kind === 'active' ? '#f97316' : '#14b8a6'}
-                depthWrite={false}
-              />
+              <meshBasicMaterial color="#f97316" depthWrite={false} />
             </mesh>
             <mesh scale={1.65}>
               <sphereGeometry args={[1, 24, 16]} />
               <meshBasicMaterial
-                color={markerState.kind === 'active' ? '#fb923c' : '#2dd4bf'}
+                color="#fb923c"
                 transparent
                 opacity={0.2}
                 depthWrite={false}

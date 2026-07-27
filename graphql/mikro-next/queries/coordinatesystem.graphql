@@ -1,8 +1,9 @@
 query GetCoordinateSystem($id: ID!) {
   coordinateSystem(id: $id) {
     ...CoordinateSystem
-    # The scenes worlded on this system (inverse of Scene.worldCoordinateSystem);
-    # non-empty only for a SHARED space (a scene's world or an ownerless hub).
+    # The scenes worlded on this system (inverse of Scene.worldCoordinateSystem).
+    # A space is adopted, never owned: several scenes may share one, and it
+    # outlives each of them.
     scenes {
       ...ListScene
     }
@@ -53,8 +54,9 @@ query GetRegistrationSystems($input: ID!, $output: ID!) {
   }
 }
 
-# The systems an ADataset owns: "its INTRINSIC pixel grid or one of its PHYSICAL
-# calibrations" (the filter's own words).
+# The spaces an ADataset's data lives in: "its own grid, and the grids of its
+# pyramid levels and lenses" (the filter's own words) — the systems it is a
+# resident of.
 #
 # Registering the pixel grid and registering a calibration are DIFFERENT edges
 # with different correct matrices — into a µm world the former's scale is the

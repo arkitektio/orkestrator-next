@@ -956,9 +956,10 @@ export class BrickResidencyManager {
     });
     const pageTable = createPageTableTexture(layout);
 
-    if (gpuRepacker && atlas.kind === "r32f") {
-      // Create the backend GPUTexture (with STORAGE_BINDING) now, so compute
-      // dispatches never race the first draw's lazy texture creation.
+    if (gpuRepacker && !hasPhasorSlabs(geometry)) {
+      // Create the backend GPUTexture now, so compute dispatches (r32f:
+      // textureStore; r8: copyBufferToTexture) never race the first draw's
+      // lazy texture creation.
       (
         this.deps.renderer as unknown as { initTexture?: (texture: unknown) => void }
       ).initTexture?.(atlas.texture);
@@ -1166,7 +1167,7 @@ export class BrickResidencyManager {
           coords: node.coords,
           data: null,
           uniformValue: null,
-          bytes: elementCount * 4, // r32f stored brick
+          bytes: elementCount * (pool.atlas.kind === "r8" ? 1 : 4),
           gpu: { chunks },
         };
       } else {

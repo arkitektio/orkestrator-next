@@ -40,7 +40,8 @@ export function createBrickAtlas(opts: {
    * Native-WebGPU-backend only: let the GPU repack kernel `textureStore`
    * into the atlas. Applied only for r32f — `r8unorm` is not a core
    * storage-texture format, so an r8 atlas with this usage would fail
-   * `createTexture` validation (r8 goes through a staging buffer in Phase B).
+   * `createTexture` validation (the r8 repack kernel instead packs into a
+   * storage buffer that is `copyBufferToTexture`d into the atlas).
    */
   computeStorage?: boolean;
   /**

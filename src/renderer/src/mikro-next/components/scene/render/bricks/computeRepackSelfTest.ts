@@ -2,15 +2,16 @@ import { repackBrick, type RepackChunk } from "../../core/octree/brickRepack";
 import type { BrickSpec } from "../../core/octree/brickSpec";
 import type { LevelGeometry } from "../../core/octree/levelGeometry";
 import { getWebGPUDevice, type SceneRenderer } from "../gpu/sceneRenderer";
-import { createBrickAtlas, disposeBrickAtlas } from "./brickAtlas";
-import { createGpuRepacker } from "./computeRepack";
+import { createBrickAtlas, disposeBrickAtlas, type BrickAtlas } from "./brickAtlas";
+import { createGpuRepacker, type GpuRepacker } from "./computeRepack";
 import type { RepackDispatchInput } from "./repackKernel";
 
 /**
  * Dev-only GPU↔CPU repack parity check, run from the DebugPanel on the LIVE
- * renderer: repacks one synthetic multi-chunk brick both ways, reads the
- * atlas slot back (`copyTextureToBuffer`), and compares voxel-for-voxel plus
- * min/max/uniform. The vitest suite pins the dispatch math against
+ * renderer: repacks one synthetic multi-chunk brick both ways — once per
+ * atlas kind (f32 storage-texture kernel, r8 packed-buffer kernel) — reads
+ * the atlas slot back (`copyTextureToBuffer`), and compares voxel-for-voxel
+ * plus min/max/uniform. The vitest suite pins the dispatch math against
  * `repackBrick`; this pins the WGSL + binding model against the dispatch
  * math — together they cover the whole GPU path, including any behavior
  * change from a future three upgrade (e.g. the `isStorageTexture` usage bit).
@@ -44,10 +45,16 @@ type ReadbackDevice = {
 
 const BYTES_PER_ROW_ALIGN = 256;
 
-/** Synthetic brick: 4³ payload + border, 2 channels, 2×2 spatial chunks of
- * 8×8×4 — every interesting case at once (chunk straddling, border
+type Fixture = {
+  input: RepackDispatchInput;
+  elementCount: number;
+  dtype: "float32" | "uint8";
+};
+
+/** Synthetic f32 brick: 4³ payload + border, 2 channels, 2×2 spatial chunks
+ * of 8×8×4 — every interesting case at once (chunk straddling, border
  * replication at the volume edge, channel slabs). */
-function makeFixture(): { input: RepackDispatchInput; elementCount: number } {
+function makeF32Fixture(): Fixture {
   const spec: BrickSpec = {
     payload: [4, 4, 4],
     border: 1,
@@ -109,6 +116,75 @@ function makeFixture(): { input: RepackDispatchInput; elementCount: number } {
       chunks,
     },
     elementCount: 6 * 6 * 6 * 2,
+    dtype: "float32",
+  };
+}
+
+/** Synthetic uint8 brick for the r8 packed-buffer kernel. Chunks are 9×9×3 —
+ * 243 bytes, deliberately NOT a multiple of 4, to exercise the padded
+ * writeBuffer scratch path — and rows are 6 texels wide, so every row pads
+ * to the 256-byte copyBufferToTexture alignment. */
+function makeU8Fixture(): Fixture {
+  const spec: BrickSpec = {
+    payload: [4, 4, 3],
+    border: 1,
+    stored: [6, 6, 5],
+    channelCount: 2,
+  };
+  const level: LevelGeometry = {
+    spatialShape: [12, 12, 3],
+    spatialChunks: [9, 9, 3],
+    // zarr dim order [c, z, y, x]:
+    shape: [2, 3, 12, 12],
+    chunks: [1, 3, 9, 9],
+    scale: [1, 1, 1],
+    dtype: "uint8",
+    storeId: "gpu-selftest-r8",
+  } as unknown as LevelGeometry;
+
+  const chunks: RepackChunk[] = [];
+  for (let channel = 0; channel < 2; channel++) {
+    for (const cy of [0, 1]) {
+      for (const cx of [0, 1]) {
+        const data = new Uint8Array(3 * 9 * 9);
+        for (let z = 0; z < 3; z++)
+          for (let y = 0; y < 9; y++)
+            for (let x = 0; x < 9; x++) {
+              const gx = cx * 9 + x;
+              const gy = cy * 9 + y;
+              data[(z * 9 + y) * 9 + x] =
+                gx < 12 && gy < 12 ? (channel * 90 + z * 25 + gy * 7 + gx * 3) % 256 : 255;
+            }
+        chunks.push({
+          coords: [cx, cy, 0],
+          channelChunk: channel,
+          data: data as unknown as RepackChunk["data"],
+          shape: [1, 3, 9, 9],
+          stride: [243, 81, 9, 1],
+        });
+      }
+    }
+  }
+
+  return {
+    input: {
+      spec,
+      level,
+      axes: { xPos: 3, yPos: 2, zPos: 1, intensityPos: 0, phasorPos: -1 },
+      slabs: [
+        { kind: "channel", channel: 0 },
+        { kind: "channel", channel: 1 },
+      ],
+      phasorBins: 0,
+      // Brick [1,1,0]: payload x,y ∈ [4,8) straddles all four chunks; the
+      // z border leaves the volume on both sides (replication).
+      brickBox: { min: [4, 4, 0], max: [8, 8, 3] },
+      fetchBox: { min: [3, 3, 0], max: [9, 9, 3] },
+      fixedOffsets: [0, 0, 0, 0],
+      chunks,
+    },
+    elementCount: 6 * 6 * 5 * 2,
+    dtype: "uint8",
   };
 }
 
@@ -123,10 +199,26 @@ export async function runGpuRepackSelfTest(
     return { supported: false, pass: false, detail: "gpu repacker unavailable" };
   }
 
-  const { input, elementCount } = makeFixture();
+  try {
+    const f32 = await runFixture(renderer, repacker, makeF32Fixture());
+    if (!f32.pass) return { ...f32, detail: `f32: ${f32.detail}` };
+    const r8 = await runFixture(renderer, repacker, makeU8Fixture());
+    if (!r8.pass) return { ...r8, detail: `r8: ${r8.detail}` };
+    return { supported: true, pass: true, detail: `f32: ${f32.detail}; r8: ${r8.detail}` };
+  } finally {
+    repacker.dispose();
+  }
+}
+
+async function runFixture(
+  renderer: SceneRenderer,
+  repacker: GpuRepacker<string>,
+  fixture: Fixture,
+): Promise<GpuRepackSelfTestResult> {
+  const { input, elementCount, dtype } = fixture;
   const atlas = createBrickAtlas({
     spec: input.spec,
-    dtype: "float32",
+    dtype,
     desiredSlots: 1,
     maxExtent: 64,
     filter: "nearest",
@@ -136,19 +228,24 @@ export async function runGpuRepackSelfTest(
   try {
     (renderer as unknown as { initTexture?: (t: unknown) => void }).initTexture?.(atlas.texture);
 
-    // Pipeline creation is async; give it a moment.
-    for (let waited = 0; !repacker.ready(); waited += 50) {
-      if (waited > 3000) return { supported: true, pass: false, detail: "pipeline never became ready" };
+    // Pipeline creation is async; give this fixture's variant a moment.
+    for (let waited = 0; !(repacker.ready() && repacker.supports(atlas, input.chunks)); waited += 50) {
+      if (waited > 3000) {
+        return {
+          supported: true,
+          pass: false,
+          detail: repacker.ready()
+            ? "supports() rejected the fixture"
+            : "pipeline never became ready",
+        };
+      }
       await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-    if (!repacker.supports(atlas, input.chunks)) {
-      return { supported: true, pass: false, detail: "supports() rejected the fixture" };
     }
 
     repacker.dispatch({
       atlas,
       input,
-      chunkKeys: input.chunks.map((_, i) => `selftest:${i}`),
+      chunkKeys: input.chunks.map((_, i) => `selftest-${atlas.kind}:${i}`),
       slotCoords: [0, 0, 0],
       token: "selftest",
     });
@@ -158,11 +255,16 @@ export async function runGpuRepackSelfTest(
     }
 
     // CPU truth.
-    const cpuOut = new Float32Array(elementCount);
+    const cpuOut =
+      dtype === "uint8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
     const cpuResult = repackBrick({ ...input, output: cpuOut });
 
-    // Read the slot back (atlas is exactly one slot: 6×6×12 texels).
-    const gpuOut = await readAtlasSlot(renderer, atlas.texture, [6, 6, 12]);
+    // Read the slot back (the atlas is exactly one slot).
+    const gpuOut = await readAtlasSlot(renderer, atlas, [
+      atlas.slotSize[0],
+      atlas.slotSize[1],
+      atlas.slotSize[2],
+    ]);
 
     let mismatches = 0;
     let firstMismatch = "";
@@ -192,24 +294,24 @@ export async function runGpuRepackSelfTest(
   } catch (error) {
     return { supported: true, pass: false, detail: String(error) };
   } finally {
-    repacker.dispose();
     disposeBrickAtlas(atlas);
   }
 }
 
 async function readAtlasSlot(
   renderer: SceneRenderer,
-  texture: object,
+  atlas: BrickAtlas,
   size: [number, number, number],
-): Promise<Float32Array> {
+): Promise<Float32Array | Uint8Array> {
   const device = getWebGPUDevice(renderer) as unknown as ReadbackDevice;
   const backend = (renderer as unknown as { backend: { get(o: object): { texture?: unknown } } })
     .backend;
-  const gpuTexture = backend.get(texture)?.texture;
+  const gpuTexture = backend.get(atlas.texture)?.texture;
   if (!gpuTexture) throw new Error("atlas GPUTexture missing after initTexture");
 
+  const bytesPerTexel = atlas.kind === "r8" ? 1 : 4;
   const bytesPerRow =
-    Math.ceil((size[0] * 4) / BYTES_PER_ROW_ALIGN) * BYTES_PER_ROW_ALIGN;
+    Math.ceil((size[0] * bytesPerTexel) / BYTES_PER_ROW_ALIGN) * BYTES_PER_ROW_ALIGN;
   const buffer = device.createBuffer({
     label: "gpu-repack selftest readback",
     size: bytesPerRow * size[1] * size[2],
@@ -225,11 +327,18 @@ async function readAtlasSlot(
     device.queue.submit([encoder.finish()]);
     await buffer.mapAsync(0x0001); // MAP_MODE_READ
     const mapped = buffer.getMappedRange();
-    const out = new Float32Array(size[0] * size[1] * size[2]);
+    const out =
+      atlas.kind === "r8"
+        ? new Uint8Array(size[0] * size[1] * size[2])
+        : new Float32Array(size[0] * size[1] * size[2]);
     for (let z = 0; z < size[2]; z++) {
       for (let y = 0; y < size[1]; y++) {
-        const row = new Float32Array(mapped, (z * size[1] + y) * bytesPerRow, size[0]);
-        out.set(row, (z * size[1] + y) * size[0]);
+        const offset = (z * size[1] + y) * bytesPerRow;
+        const row =
+          atlas.kind === "r8"
+            ? new Uint8Array(mapped, offset, size[0])
+            : new Float32Array(mapped, offset, size[0]);
+        out.set(row as never, (z * size[1] + y) * size[0]);
       }
     }
     buffer.unmap();

@@ -3,11 +3,17 @@ import type { Vec3 } from "../../core/octree/levelGeometry";
 
 /**
  * The fused GPU brick-repack kernel (compute-shader port of `repackBrick`):
- * chunk→brick gather, border edge-replication, and min/max scan in one pass,
- * writing straight into the r32float brick atlas. This module is the PURE
- * half — the WGSL source and the CPU-side dispatch math — so the parameter
- * packing is unit-testable against `repackBrick` without a GPU;
- * `computeRepack.ts` owns all GPUDevice state.
+ * chunk→brick gather, border edge-replication, and min/max scan in one pass.
+ * Two variants share the Params struct and all clamp/ownership math:
+ * - **f32** writes straight into the r32float brick atlas (storage texture);
+ * - **r8** packs uint8 texels 4-per-u32 into a storage BUFFER arena
+ *   (`r8unorm` is not a core storage-texture format), which the device half
+ *   then `copyBufferToTexture`s into the r8unorm atlas — rows padded to the
+ *   256-byte `bytesPerRow` alignment, addressed via `out_base_word` /
+ *   `row_words` (see `r8JobLayout`).
+ * This module is the PURE half — the WGSL source and the CPU-side dispatch
+ * math — so the parameter packing is unit-testable against `repackBrick`
+ * without a GPU; `computeRepack.ts` owns all GPUDevice state.
  *
  * ## Kernel shape: one dispatch per (brick, chunk)
  *
@@ -48,7 +54,9 @@ export const MINMAX_ENTRY_BYTES = 8;
 export const MINMAX_INIT_MIN = 0xffffffff;
 export const MINMAX_INIT_MAX = 0;
 
-export const REPACK_KERNEL_WGSL = /* wgsl */ `
+/** Shared by both kernel variants; the r8-only addressing scalars ride in
+ * what used to be tail padding, so the struct stays 144 bytes. */
+const PARAMS_STRUCT_WGSL = /* wgsl */ `
 struct Params {
   dest_origin: vec3<i32>,
   stored_z: u32,
@@ -68,8 +76,13 @@ struct Params {
   slot_origin: vec3<u32>,
   stride_y: u32,
   stride_z: u32,
+  out_base_word: u32,
+  row_words: u32,
 }
+`;
 
+export const REPACK_KERNEL_WGSL = /* wgsl */ `
+${PARAMS_STRUCT_WGSL}
 @group(0) @binding(0) var<uniform> P: Params;
 @group(0) @binding(1) var<storage, read_write> minmax: array<atomic<u32>>;
 @group(0) @binding(2) var out_atlas: texture_storage_3d<r32float, write>;
@@ -132,6 +145,81 @@ fn main(
     let e = encode_order(value);
     atomicMin(&wg_min, e);
     atomicMax(&wg_max, e);
+  }
+  workgroupBarrier();
+
+  if (lidx == 0u) {
+    // Flushing the untouched sentinels is a global no-op — no branch needed.
+    atomicMin(&minmax[P.brick_index * 2u], atomicLoad(&wg_min));
+    atomicMax(&minmax[P.brick_index * 2u + 1u], atomicLoad(&wg_max));
+  }
+}
+`;
+
+export const REPACK_KERNEL_R8_WGSL = /* wgsl */ `
+${PARAMS_STRUCT_WGSL}
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage, read_write> minmax: array<atomic<u32>>;
+// Output rides in a zero-cleared u32 arena, 4 uint8 texels per word, rows
+// padded to P.row_words. atomicOr makes the multi-dispatch-per-brick
+// partitioning race-free by construction: each texel is owned by exactly one
+// dispatch (same invariant as the f32 kernel) and non-owned bytes contribute
+// nothing to the OR.
+@group(0) @binding(2) var<storage, read_write> out_words: array<atomic<u32>>;
+// The decoded uint8 chunk, reinterpreted as packed u32 words — the strided
+// element index below is a BYTE index into this array.
+@group(1) @binding(0) var<storage, read> chunk_data: array<u32>;
+
+var<workgroup> wg_min: atomic<u32>;
+var<workgroup> wg_max: atomic<u32>;
+
+@compute @workgroup_size(${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE})
+fn main(
+  @builtin(global_invocation_id) gid: vec3<u32>,
+  @builtin(local_invocation_index) lidx: u32,
+) {
+  if (lidx == 0u) {
+    atomicStore(&wg_min, ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max, ${MINMAX_INIT_MAX}u);
+  }
+  workgroupBarrier();
+
+  let sz = P.stored_z;
+  var contributes = false;
+  var value = 0u;
+
+  // No early returns before the barriers (uniform control flow); out-of-range
+  // and non-owned invocations just skip the work.
+  if (gid.x < P.stored_xy.x && gid.y < P.stored_xy.y && gid.z < sz * P.channel_count) {
+    let c = gid.z / sz;
+    let z = gid.z % sz;
+    // Clamp into the fetch box: interior texels are unchanged, border texels
+    // land on their nearest valid voxel (edge replication).
+    let g = clamp(
+      P.dest_origin + vec3<i32>(i32(gid.x), i32(gid.y), i32(z)),
+      P.fetch_min,
+      P.fetch_max - vec3<i32>(1),
+    );
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start && c < P.chan_end) {
+      let local = vec3<u32>(g - P.chunk_origin);
+      let src = P.fixed_base
+        + (c - P.chan_start) * P.stride_c
+        + local.z * P.stride_z
+        + local.y * P.stride_y
+        + local.x * P.stride_x;
+      value = extractBits(chunk_data[src >> 2u], 8u * (src & 3u), 8u);
+      let word = P.out_base_word
+        + ((c * sz + z) * P.stored_xy.y + gid.y) * P.row_words
+        + (gid.x >> 2u);
+      atomicOr(&out_words[word], value << (8u * (gid.x & 3u)));
+      contributes = true; // u8 has no NaN — every owned texel contributes
+    }
+  }
+
+  if (contributes) {
+    // Raw u8 values are already order-preserving as u32 — no bit trick.
+    atomicMin(&wg_min, value);
+    atomicMax(&wg_max, value);
   }
   workgroupBarrier();
 
@@ -261,9 +349,15 @@ export function dispatchWorkgroups(d: KernelDispatch): Vec3 {
  * Pack one dispatch into its 36-word uniform slice. Word layout mirrors the
  * WGSL `Params` struct field-for-field (vec3 aligned to 16 bytes, the scalar
  * riding in the 4th word); i32 values rely on typed-array modulo-2^32 wrap to
- * store their bit pattern.
+ * store their bit pattern. `r8Out` carries the r8 kernel's arena addressing
+ * (words 33/34); the f32 kernel ignores those words.
  */
-export function packKernelParams(d: KernelDispatch, out: Uint32Array, wordOffset: number): void {
+export function packKernelParams(
+  d: KernelDispatch,
+  out: Uint32Array,
+  wordOffset: number,
+  r8Out?: { outBaseWord: number; rowWords: number },
+): void {
   const w = out.subarray(wordOffset, wordOffset + REPACK_PARAMS_BYTES / 4);
   w[0] = d.destOrigin[0];
   w[1] = d.destOrigin[1];
@@ -298,9 +392,42 @@ export function packKernelParams(d: KernelDispatch, out: Uint32Array, wordOffset
   w[30] = d.slotOrigin[2];
   w[31] = d.strideY;
   w[32] = d.strideZ;
-  w[33] = 0;
-  w[34] = 0;
+  w[33] = r8Out?.outBaseWord ?? 0;
+  w[34] = r8Out?.rowWords ?? 0;
   w[35] = 0;
+}
+
+/**
+ * Arena layout for one r8 job (all of a brick's dispatches share it): rows
+ * padded to the 256-byte `copyBufferToTexture` bytesPerRow alignment, one
+ * image per output z texel (channel slabs stacked on z, like the atlas slot).
+ * `jobBytes` is a multiple of 256 by construction, so consecutive job base
+ * offsets stay aligned for both the storage binding and the copy.
+ */
+export function r8JobLayout(
+  stored: Vec3,
+  channelCount: number,
+): { rowBytes: number; imageRows: number; images: number; jobBytes: number } {
+  const rowBytes = Math.ceil(stored[0] / 256) * 256;
+  const imageRows = stored[1];
+  const images = stored[2] * channelCount;
+  return { rowBytes, imageRows, images, jobBytes: rowBytes * imageRows * images };
+}
+
+/**
+ * r8 counterpart of `decodeMinMax`: the kernel reduces RAW u8 values (no
+ * order-encoding, no NaN), so the words decode as-is. Untouched sentinels
+ * (possible only when no dispatch owned any texel) map to the same `{0, 0,
+ * uniform 0}` outcome as the f32 path.
+ */
+export function decodeMinMaxU8(
+  minWord: number,
+  maxWord: number,
+): { min: number; max: number; uniformValue: number | null } {
+  if (minWord === MINMAX_INIT_MIN && maxWord === MINMAX_INIT_MAX) {
+    return { min: 0, max: 0, uniformValue: 0 };
+  }
+  return { min: minWord, max: maxWord, uniformValue: minWord === maxWord ? minWord : null };
 }
 
 const orderScratch = new DataView(new ArrayBuffer(4));

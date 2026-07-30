@@ -163,10 +163,11 @@ export type LayerBrickPool = {
   /** True once a non-degenerate brick has seeded the real auto-range, so the
    * first update replaces the provisional `[0,1]` seed instead of unioning. */
   autoRangeInitialized: boolean;
-  /** True once any slot was written by the GPU repack kernel: the CPU atlas
-   * mirror no longer reflects atlas contents, so `sampleResident` must not
-   * read it (probes degrade to null until the Phase D chunk-cache probe). */
-  atlasMirrorStale: boolean;
+  /** Keys whose slot was written by the GPU repack kernel: the CPU atlas
+   * mirror never sees those writes, so `sampleResident` must read THESE bricks
+   * from the decoded chunk cache instead (`sampleChunkCacheSync`). Scoped
+   * per brick — CPU-uploaded bricks keep the fast mirror read. */
+  gpuStaleKeys: Set<string>;
   /** Which repack path the LAST fetched brick took, with the reason when it
    * fell back to the CPU (debug report only): "gpu", "cpu:phasor",
    * "cpu:no-repacker", "cpu:pending"/"cpu:broken", "cpu:unsupported:<kind>". */
@@ -423,12 +424,13 @@ export class BrickResidencyManager {
    * desiredLevel to coarsest, resolve the finest resident brick and return
    * either its (page-table-quantized) uniform value or the atlas backing
    * index of the voxel at channel slab 0 plus the per-slab index stride.
-   * When the CPU mirror is stale (GPU repack path — reading it would return
-   * stale zeros, which is worse than not reading), a resident brick resolves
-   * to `kind: "gpu"`: the caller reads the voxel from the DECODED CHUNK CACHE
-   * instead (`sampleChunkCacheSync` — the "Phase D" probe), which holds the
-   * CPU copy of exactly what the GPU repacked. Null only when nothing is
-   * resident at any level.
+   * A brick whose slot was written by the GPU repack kernel has no CPU mirror
+   * (reading it would return stale zeros, which is worse than not reading) and
+   * resolves to `kind: "gpu"`: the caller reads the voxel from the DECODED
+   * CHUNK CACHE instead (`sampleChunkCacheSync` — the "Phase D" probe), which
+   * holds the CPU copy of exactly what the GPU repacked. Staleness is tracked
+   * per brick (`gpuStaleKeys`), so CPU-uploaded bricks keep the fast mirror
+   * read. Null only when nothing is resident at any level.
    */
   private resolveResidentRead(
     pool: LayerBrickPool,
@@ -469,7 +471,7 @@ export class BrickResidencyManager {
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
-      if (pool.atlasMirrorStale) return { kind: "gpu", level };
+      if (pool.gpuStaleKeys.has(key)) return { kind: "gpu", level };
 
       const texel: Vec3 = [
         slot.coords[0] * atlas.slotSize[0] +
@@ -989,7 +991,7 @@ export class BrickResidencyManager {
       maxValue,
       autoRange,
       autoRangeInitialized: false,
-      atlasMirrorStale: false,
+      gpuStaleKeys: new Set(),
       lastRepackPath: null,
     };
     this.pools.set(layer.id, pool);
@@ -1257,6 +1259,7 @@ export class BrickResidencyManager {
         if (acquired.evictedKey) {
           const evicted = parseNodeKey(acquired.evictedKey);
           setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
+          pool.gpuStaleKeys.delete(acquired.evictedKey);
           this.stats.evictions += 1;
         }
 
@@ -1285,9 +1288,11 @@ export class BrickResidencyManager {
             token: { layerId: pool.layerId, key: pending.key, slotIndex: acquired.slot.index },
           });
           this.stats.gpuBricks += 1;
-          pool.atlasMirrorStale = true;
+          pool.gpuStaleKeys.add(pending.key);
         } else {
           writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
+          // A CPU re-upload of a formerly GPU-repacked key refreshes the mirror.
+          pool.gpuStaleKeys.delete(pending.key);
         }
         setPageEntry(
           pool.pageTable,
@@ -1427,6 +1432,7 @@ export class BrickResidencyManager {
       const encoded = encodeEmptyValue(result.uniformValue, pool);
       setPageEntry(pool.pageTable, level, coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
       pool.pool.release(result.token.key);
+      pool.gpuStaleKeys.delete(result.token.key);
       pool.emptyValues.set(result.token.key, result.uniformValue);
       this.stats.emptyBricks += 1;
       touchedPools.add(pool);
@@ -1441,6 +1447,7 @@ export class BrickResidencyManager {
       // the CPU path.
       setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
       pool.pool.release(token.key);
+      pool.gpuStaleKeys.delete(token.key);
       this.stats.fetchErrors += 1;
       if (pool.protectedKeys.has(token.key)) {
         pool.pendingFetch.unshift({ key: token.key, level, coords, role: "target", priority: 0 });
@@ -1603,6 +1610,7 @@ export class BrickResidencyManager {
     pool.queuedKeys.clear();
     pool.emptyValues.clear();
     pool.pool.clear();
+    pool.gpuStaleKeys.clear();
     clearPageTable(pool.pageTable);
     pool.sliceSignature = nextSliceSignature;
     // The signature changed because the SELECTION changed (slices or a dim

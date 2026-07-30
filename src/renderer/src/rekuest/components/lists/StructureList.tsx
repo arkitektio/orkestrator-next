@@ -1,20 +1,15 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { RekuestStructure } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  StructurePackageFilter,
-  useListStructuresQuery,
-} from "@/rekuest/api/graphql";
+import { useListStructuresQuery } from "@/rekuest/api/graphql";
 import StructureCard from "../cards/StructureCard";
 
 export type Props = {
-  filters?: StructurePackageFilter;
-  pagination?: OffsetPaginationInput;
+  search?: string;
 };
 
-const List = ({ filters, pagination }: Props) => {
+const List = ({ search }: Props) => {
   const { data, refetch } = useListStructuresQuery({
-    variables: { filters, pagination },
+    variables: { search },
   });
 
   return (
@@ -25,7 +20,7 @@ const List = ({ filters, pagination }: Props) => {
           Structures
         </RekuestStructure.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
       {(ex, _index) => <StructureCard key={ex.id} item={ex} />}
     </ListRender>

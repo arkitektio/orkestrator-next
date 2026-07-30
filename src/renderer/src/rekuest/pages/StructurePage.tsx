@@ -28,7 +28,7 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data })
             {data?.structure?.key}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-            {data.structure.description}
+            {data.structure.identifier}
           </p>
         </div>
       </div>

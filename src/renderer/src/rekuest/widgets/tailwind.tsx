@@ -1,5 +1,6 @@
 import { cn, notEmpty } from "@/lib/utils";
 import { AssignWidgetFragment } from "../api/graphql";
+import PortConstraintBadges from "../components/displays/PortConstraintBadges";
 import { EffectWrapper } from "./EffectWrapper";
 import { ArgPort, ReturnPort, PortGroup , PortOptions, WidgetRegistryType } from "./types";
 
@@ -86,6 +87,7 @@ export const ReturnsContainer =  ({
                 {port.description}
               </div>
             )}
+            <PortConstraintBadges items={port.provides} className="mt-1" />
           </div>
         );
       })}
@@ -143,6 +145,7 @@ export const WrappedReturnsContainer = ({
                 {port.description}
               </div>
             )}
+            <PortConstraintBadges items={port.provides} className="mt-1" />
           </div>
         );
       })}
@@ -207,6 +210,7 @@ export const ArgsContainer = ({
                 {port.description}
               </div>
             )}
+            <PortConstraintBadges items={port.requires} className="mt-1" />
           </div>
         );
       })}

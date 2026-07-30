@@ -227,9 +227,8 @@ export const TPage = asDetailQueryRoute(
       >
         <div className="flex h-full w-full relative">
           <ChildTaskUpdater taskId={data.task.id} />
-          {data?.task?.implementation?.higherOrderFor?.action?.interfaces?.includes(
-            "run_flow",
-          ) ? (
+          {data?.task?.implementation?.higherOrderFor?.action?.key ===
+          "run_flow" ? (
             <>
               <Tabs className="flex-grow flex flex-col " defaultValue="flow">
                 <TabsList className="h-8 flex-initial">

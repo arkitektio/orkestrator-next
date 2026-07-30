@@ -22,6 +22,7 @@ import MinimalImplementationCard from "../components/cards/MinimalImplementation
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
+import PortConstraintBadges from "../components/displays/PortConstraintBadges";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
@@ -124,6 +125,7 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
                         <div className="text-xs text-muted-foreground">
                           {portToLabel(p)}
                         </div>
+                        <PortConstraintBadges items={p.provides} className="mt-1" />
                       </div>
                     ))}
                   </div>

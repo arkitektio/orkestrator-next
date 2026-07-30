@@ -113,7 +113,6 @@ fragment HoverImplementation on Implementation {
     description
     kind
     stateful
-    logo
     app {
       identifier
     }

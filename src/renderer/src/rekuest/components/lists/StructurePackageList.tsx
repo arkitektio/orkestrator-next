@@ -1,22 +1,16 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { RekuestAction } from "@/linkers";
-import {
-  OffsetPaginationInput,
-  StructurePackageFilter,
-  useListStructurePackageQuery,
-} from "@/rekuest/api/graphql";
+import { useListStructurePackageQuery } from "@/rekuest/api/graphql";
 import StructurePackageCard from "../cards/StructurePackageCard";
 
 export type Props = {
-  filters?: StructurePackageFilter;
-  pagination?: OffsetPaginationInput;
+  search?: string;
 };
 
-const List = ({ filters, pagination }: Props) => {
-  const { data, refetch } =
-    useListStructurePackageQuery({
-      variables: { filters, pagination },
-    });
+const List = ({ search }: Props) => {
+  const { data, refetch } = useListStructurePackageQuery({
+    variables: { search },
+  });
 
   return (
     <ListRender
@@ -26,7 +20,7 @@ const List = ({ filters, pagination }: Props) => {
           Toolboxes
         </RekuestAction.ListLink>
       }
-      refetch={refetch}
+      refetch={() => refetch()}
     >
       {(ex, index) => <StructurePackageCard key={index} item={ex} />}
     </ListRender>

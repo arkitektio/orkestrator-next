@@ -128,8 +128,8 @@ export const RekuestInputInterfaceUsage = buildSmart(
 );
 
 export const RekuestOutputInterfaceUsage = buildSmart(
-  "@rekuest/inputstructureusage",
-  "rekuest/inputstructureusages",
+  "@rekuest/outputinterfaceusage",
+  "rekuest/outputinterfaceusages",
   { name: "Output Interface Usage" },
 );
 

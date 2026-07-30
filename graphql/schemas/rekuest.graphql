@@ -35,9 +35,6 @@ type Action {
   """List of implementations for this action."""
   implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
-  """Interfaces implemented by the action."""
-  interfaces: [String!]!
-
   """Marks whether the action is in development."""
   isDev: Boolean!
 
@@ -52,11 +49,6 @@ type Action {
 
   """Get the latest completed task for this action."""
   latestTask: Task
-
-  """
-  An optional icon identifier to represent this Action in the UI (e.g. 'fa-solid fa-dog')
-  """
-  logo: String
 
   """Name of the action."""
   name: String!
@@ -1635,19 +1627,14 @@ input DefinitionInput {
   idempotent: Boolean! = false
 
   """
-  The interfaces of the definition. This is used to group definitions together in the UI
-  """
-  interfaces: [String!]! = []
-
-  """
   Whether the definition is a dev definition or not. If the definition is a dev definition, it can be used to create a dev action. If the definition is not a dev definition, it cannot be used to create a dev action
   """
   isDev: Boolean! = false
 
   """
-  The tests for the definition. This is used to group definitions together in the UI
+  The actions this definition is a test for, each identified by hash or by (app, key, version).
   """
-  isTestFor: [String!]! = []
+  isTestFor: [TestTargetInput!]! = []
 
   """
   The key of the definition. This is used to uniquely identify the definition
@@ -1659,18 +1646,10 @@ input DefinitionInput {
   """
   kind: ActionKind!
 
-  """The logo of the definition. This is used to display the logo in the UI"""
-  logo: String = null
-
   """
   The name of the actions. This is used to uniquely identify the definition
   """
   name: String!
-
-  """
-  The package of the function. Will default to the currents agent's app if not specified. This is used to group definitions together in the UI and provide a better user experience
-  """
-  package: String = null
 
   """
   The port groups of the definition. This is used to group ports together in the UI
@@ -1691,7 +1670,6 @@ input DefinitionInput {
   Whether the definition is stateful or not. If the definition is stateful, it can be used to create a stateful action. If the definition is not stateful, it cannot be used to create a stateful action
   """
   stateful: Boolean! = false
-  tests: ActionDependencyInput = null
 
   """
   The version of the definition. This is used to differentiate if the underyling algorithm has changed, i.e we would expect different results for the same input
@@ -2097,7 +2075,9 @@ type Implementation {
   """The resolved dependencies"""
   resolutions(filters: ResolutionFilter, pagination: OffsetPaginationInput): [Resolution!]!
 
-  """Tests"""
+  """
+  Implementations on this agent whose action is a test for this implementation's action.
+  """
   tests: [Implementation!]!
 
   """List of action demands"""
@@ -2158,11 +2138,6 @@ input ImplementationInput {
   dependencies: [AgentDependencyInput!]! = []
 
   """
-  Whether the implementation is dynamic or not. If the implementation is dynamic, it can be used to create a dynamic action. If the implementation is not dynamic, it cannot be used to create a dynamic action
-  """
-  dynamic: Boolean! = false
-
-  """
   The effect class of this implementation. NONE work is freely retryable/reclaimable; PHYSICAL work touches the real world and an ambiguous failure is terminal (never retried). Declared by the implementation here — never by the caller.
   """
   effect: EffectClass! = NONE
@@ -2179,11 +2154,6 @@ input ImplementationInput {
   The locks of the implementation. This is used to specify which resources the implementation needs to run
   """
   locks: [String!] = null
-
-  """
-  The logo of the implementation. This is used to display the logo in the UI either it should be 'custom:svg-paths' or a lucide icon name like 'lucide:activity' urls are not supported at the moment
-  """
-  logo: String = null
 
   """
   The states that the implementation manipulates. This is used to identify which states are manipulated by the implementation, and can be use to enhance state safety in the system
@@ -2241,34 +2211,28 @@ type ImplementationUpdate {
   update: Implementation!
 }
 
-"""If this structure is the default in its package."""
+"""
+An interface referenced by an action's port, derived from the relational port rows.
+"""
 type Interface {
-  description: String
-  id: ID!
-
-  """Implementations that implement this interface."""
-  implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
+  """The full identifier, e.g. '@rekuest/taskevent'."""
+  identifier: ID!
 
   """
   Usages of this interface as an input in actions (derived from the relational arg ports).
   """
   inputUsages: [PortUsage!]!
+
+  """The local key (the part after '/')."""
   key: String!
 
   """
   Usages of this interface as an output in actions (derived from the relational return ports).
   """
   outputUsages: [PortUsage!]!
-  package: StructurePackage!
-}
 
-input InterfaceFilter {
-  AND: InterfaceFilter
-  DISTINCT: Boolean
-  NOT: InterfaceFilter
-  OR: InterfaceFilter
-  ids: [ID!]
-  search: String
+  """The package this interface belongs to."""
+  package: StructurePackage!
 }
 
 """The input for interrupting a task."""
@@ -3110,11 +3074,15 @@ type Query {
   """All registered implementations."""
   implementations(filters: ImplementationFilter, ordering: [ImplementationOrder!]! = [], pagination: OffsetPaginationInput): [Implementation!]!
 
-  """Fetch an interface by ID."""
-  interface(id: ID!): Interface!
+  """
+  Fetch an interface by its '@package/key' identifier (derived from port identifiers).
+  """
+  interface(identifier: ID!): Interface!
 
-  """All registered interfaces."""
-  interfaces(filters: InterfaceFilter, pagination: OffsetPaginationInput): [Interface!]!
+  """
+  All interfaces referenced by the org's action ports (derived, not registered).
+  """
+  interfaces(search: String = null): [Interface!]!
 
   """Get a materialized blok by ID."""
   materializedBlok(id: ID!): MaterializedBlok!
@@ -3211,17 +3179,23 @@ type Query {
   """All states from agents."""
   states: [State!]!
 
-  """Fetch a structure by ID."""
-  structure(id: ID!): Structure!
+  """
+  Fetch a structure by its '@package/key' identifier (derived from port identifiers).
+  """
+  structure(identifier: ID!): Structure!
 
-  """Fetch a client by ID."""
-  structurePackage(id: ID!): StructurePackage!
+  """Fetch a structure package by its key (derived from port identifiers)."""
+  structurePackage(key: ID!): StructurePackage!
 
-  """All registered structure packages."""
-  structurePackages(filters: StructurePackageFilter, pagination: OffsetPaginationInput): [StructurePackage!]!
+  """
+  All structure packages referenced by the org's action ports (derived, not registered).
+  """
+  structurePackages(search: String = null): [StructurePackage!]!
 
-  """All registered structures."""
-  structures(filters: StructureFilter, pagination: OffsetPaginationInput): [Structure!]!
+  """
+  All structures referenced by the org's action ports (derived, not registered).
+  """
+  structures(search: String = null): [Structure!]!
 
   """Fetch task by ID."""
   task(id: ID!): Task!
@@ -4008,64 +3982,42 @@ type StringAssignWidget implements AssignWidget {
   placeholder: String!
 }
 
-"""A strucssture representing a data schema or type."""
+"""
+A structure (data type) referenced by an action's port, derived from the relational port rows.
+"""
 type Structure {
-  """Get the query to describe the schema of this structure."""
-  describeQuery: String
-  description: String
-
-  """Get the query to retrieve data for this structure."""
-  getQuery: String
-  id: ID!
-
-  """The object ID that this structure represents."""
+  """The full identifier, e.g. '@mikro/image'."""
   identifier: ID!
-
-  """Interfaces that this structure implements."""
-  implements(filters: InterfaceFilter, pagination: OffsetPaginationInput): [Interface!]!
 
   """
   Usages of this structure as an input in actions (derived from the relational arg ports).
   """
   inputUsages: [PortUsage!]!
-  key: ID!
+
+  """The local key (the part after '/')."""
+  key: String!
 
   """
   Usages of this structure as an output in actions (derived from the relational return ports).
   """
   outputUsages: [PortUsage!]!
+
+  """The package this structure belongs to."""
   package: StructurePackage!
 }
 
-input StructureFilter {
-  AND: StructureFilter
-  DISTINCT: Boolean
-  NOT: StructureFilter
-  OR: StructureFilter
-  ids: [ID!]
-  search: String
-}
-
-"""A package of structures."""
+"""
+A package of structures/interfaces, derived from the '@package/' prefix of port identifiers.
+"""
 type StructurePackage {
-  description: String
-  id: ID!
+  """Interfaces of this package referenced by the org's ports."""
+  interfaces: [Interface!]!
 
-  """Interfaces that are part of this package."""
-  interfaces(filters: InterfaceFilter, pagination: OffsetPaginationInput): [Interface!]!
-  key: String!
+  """The package key (the part between '@' and '/')."""
+  key: ID!
 
-  """Structures that are part of this package."""
-  structures(filters: StructureFilter, pagination: OffsetPaginationInput): [Structure!]!
-}
-
-input StructurePackageFilter {
-  AND: StructurePackageFilter
-  DISTINCT: Boolean
-  NOT: StructurePackageFilter
-  OR: StructurePackageFilter
-  ids: [ID!]
-  search: String
+  """Structures of this package referenced by the org's ports."""
+  structures: [Structure!]!
 }
 
 """Root subscription type for real-time event streams from the system."""
@@ -4464,6 +4416,27 @@ input TestResultFilter {
   OR: TestResultFilter
   ids: [ID!]
   name: StrFilterLookup
+}
+
+"""
+A test target: the action a test action tests, identified by exact hash or by an (app, key, version) coordinate. app defaults to the registering agent's app; omitting version matches every version.
+"""
+input TestTargetInput {
+  """
+  The app identifier owning the target action. Defaults to the registering agent's app.
+  """
+  app: String = null
+
+  """The exact hash of the target action."""
+  hash: String = null
+
+  """
+  The key of the target action. Matches every version unless version is given.
+  """
+  key: String = null
+
+  """Restrict a key target to one specific version."""
+  version: String = null
 }
 
 """A 3D model file."""

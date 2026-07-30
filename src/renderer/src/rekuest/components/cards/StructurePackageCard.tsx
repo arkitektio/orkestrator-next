@@ -18,9 +18,6 @@ const TheCard = ({ item }: Props) => {
             <RekuestStructurePackage.DetailLink object={item}>
               {" "}
               <h1>{item.key}</h1>
-              <span className="text-muted-foreground font-light">
-                {item.description}
-              </span>
             </RekuestStructurePackage.DetailLink>
           </CardTitle>
         </CardHeader>

@@ -24,7 +24,7 @@ export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data })
             {data?.interface?.key}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-            {data.interface.description}
+            {data.interface.identifier}
           </p>
         </div>
       </div>

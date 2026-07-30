@@ -152,6 +152,7 @@ export const argPortToInput = (port: ArgPortFragment): ArgPortInput => {
     children: children && children.map((c) => argCleanChild(c)),
     widget: widget ? assignWidgetToInput(widget) : undefined,
     validators: rest.validators?.map(validatorToInput) || [],
+    requires: rest.requires?.map(({ __typename, ...r }) => r),
     choices: rest.choices?.map((c) => ({
       ...c,
       __typename: undefined,

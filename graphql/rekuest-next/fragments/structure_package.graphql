@@ -27,11 +27,11 @@ fragment ListOutputInterfaceUsage on PortUsage {
 }
 
 fragment Structure on Structure {
-  id
+  id: identifier
+  identifier
   key
-  description
-  implements {
-    ...Interface
+  package {
+    key
   }
   outputUsages {
     ...ListOutputStructureUsage
@@ -42,24 +42,30 @@ fragment Structure on Structure {
 }
 
 fragment ListStructure on Structure {
-  id
+  id: identifier
+  identifier
   key
-  description
-  implements {
-    ...Interface
+  package {
+    key
   }
 }
 
 fragment ListInterface on Interface {
-  id
+  id: identifier
+  identifier
   key
-  description
+  package {
+    key
+  }
 }
 
 fragment Interface on Interface {
-  id
+  id: identifier
+  identifier
   key
-  description
+  package {
+    key
+  }
   outputUsages {
     ...ListOutputInterfaceUsage
   }
@@ -69,7 +75,7 @@ fragment Interface on Interface {
 }
 
 fragment StructurePackage on StructurePackage {
-  id
+  id: key
   key
   structures {
     ...ListStructure
@@ -80,7 +86,6 @@ fragment StructurePackage on StructurePackage {
 }
 
 fragment ListStructurePackage on StructurePackage {
-  id
+  id: key
   key
-  description
 }

@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import React from "react";
-import * as LucideIcons from "lucide-react";
 import {
   ActionDemandInput,
   TaskEventFragment,
@@ -28,44 +27,6 @@ import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Boxes, PlayCircle } from "lucide-react";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps, SmartContextProps } from "../types";
-
-const toPascalCase = (value: string) =>
-  value
-    .split(/[^a-zA-Z0-9]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("");
-
-const resolveActionLogo = (logo?: string | null) => {
-  if (!logo || logo.startsWith("custom:")) {
-    return null;
-  }
-
-  const candidates = [logo, toPascalCase(logo)];
-
-  for (const candidate of candidates) {
-    const icon = LucideIcons[candidate as keyof typeof LucideIcons];
-    if (typeof icon === "function") {
-      return icon as React.ComponentType<{ className?: string }>;
-    }
-  }
-
-  return null;
-};
-
-const getActionVisual = (
-  logo?: string | null,
-  fallback?: React.ComponentType<{ className?: string }>,
-) => {
-  if (logo?.startsWith("custom:")) {
-    return { svg: logo.slice("custom:".length), icon: undefined };
-  }
-
-  return {
-    svg: undefined,
-    icon: resolveActionLogo(logo) ?? fallback ?? PlayCircle,
-  };
-};
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unknown error";
@@ -509,7 +470,7 @@ export const ImplementationAssignButton = (
           ) : null}
         </span>
       }
-      {...getActionVisual(props.implementation.action.logo, PlayCircle)}
+      icon={PlayCircle}
     />
   );
 };
@@ -601,7 +562,7 @@ export const BatchImplementationAssignButton = (
           ) : null}
         </span>
       }
-      {...getActionVisual(props.implementation.action.logo, Boxes)}
+      icon={Boxes}
     />
   );
 };
@@ -688,7 +649,7 @@ export const AssignButton = (
               ) : null}
             </span>
           }
-          {...getActionVisual(props.action.logo, PlayCircle)}
+          icon={PlayCircle}
         />
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
@@ -812,7 +773,7 @@ export const BatchAssignButton = (
               ) : null}
             </span>
           }
-          {...getActionVisual(props.action.logo, Boxes)}
+          icon={Boxes}
         />
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">

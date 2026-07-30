@@ -1,14 +1,11 @@
 query GetStructurePackage($id: ID!) {
-  structurePackage(id: $id) {
+  structurePackage(key: $id) {
     ...StructurePackage
   }
 }
 
-query ListStructurePackage(
-  $filters: StructurePackageFilter
-  $pagination: OffsetPaginationInput
-) {
-  structurePackages(filters: $filters, pagination: $pagination) {
+query ListStructurePackage($search: String) {
+  structurePackages(search: $search) {
     ...ListStructurePackage
   }
 }

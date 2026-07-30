@@ -54,7 +54,7 @@ export const SmartLink = ({
   return (
     <NavLink
       {...props}
-      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+      to={`/${model.path}/${encodeURIComponent(object)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
       title="Open"
       className={props.className}
     >
@@ -74,7 +74,7 @@ export const buildModelLink = <T extends Object>(to: string) => {
     return (
       <NavLink
         {...props}
-        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${encodeURIComponent(props.object.id)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
         title="Open"
         className={cn("hover:text-primary transition-colors", props.className)}
       >
@@ -96,7 +96,7 @@ export const buildPaneLink = <T extends Object>(to: string) => {
     return (
       <PaneLink
         {...props}
-        to={`/${to}/${props.object.id}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
+        to={`/${to}/${encodeURIComponent(props.object.id)}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
 
       >
         {children}
@@ -110,7 +110,7 @@ export const linkBuilder = (to: string) => (objectId: string | undefined) => {
     return `/error`;
   }
 
-  return `/${to}/${objectId}`;
+  return `/${to}/${encodeURIComponent(objectId)}`;
 };
 
 export const listLinkBuilder = (to: string) => () => {

@@ -161,6 +161,9 @@ export type GpuFlushOutcome<Token> = {
 export interface GpuRepacker<Token = unknown> {
   /** Pipeline compiled and no batch has failed. False → use the CPU path. */
   ready(): boolean;
+  /** Distinguishes the two `ready() === false` states for the debug report:
+   * still compiling vs permanently reverted to the CPU path. */
+  status(): "pending" | "ready" | "broken";
   supports(atlas: BrickAtlas, chunks: readonly RepackChunk[]): boolean;
   /** Queue one brick (slot already acquired). Commands record at `flush`. */
   dispatch(job: GpuRepackJob<Token>): void;
@@ -258,6 +261,11 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
 
   ready(): boolean {
     return this.pipeline !== null && !this.broken && !this.disposed;
+  }
+
+  status(): "pending" | "ready" | "broken" {
+    if (this.broken || this.disposed) return "broken";
+    return this.pipeline === null ? "pending" : "ready";
   }
 
   supports(atlas: BrickAtlas, chunks: readonly RepackChunk[]): boolean {

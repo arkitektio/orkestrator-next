@@ -167,6 +167,10 @@ export type LayerBrickPool = {
    * mirror no longer reflects atlas contents, so `sampleResident` must not
    * read it (probes degrade to null until the Phase D chunk-cache probe). */
   atlasMirrorStale: boolean;
+  /** Which repack path the LAST fetched brick took, with the reason when it
+   * fell back to the CPU (debug report only): "gpu", "cpu:phasor",
+   * "cpu:no-repacker", "cpu:pending"/"cpu:broken", "cpu:unsupported:<kind>". */
+  lastRepackPath: string | null;
 };
 
 type Deps = {
@@ -208,6 +212,11 @@ export type BrickSystemStats = {
   emptyBricks: number;
   evictions: number;
   staleDrops: number;
+  /** Fetched bricks that left the plan before upload AND found no free slot —
+   * pure waste (the work was paid for, nothing became resident). */
+  planDrops: number;
+  /** Planned bricks that found every slot protected at drain time. */
+  acquireFailures: number;
   fetchErrors: number;
 };
 
@@ -254,6 +263,8 @@ export class BrickResidencyManager {
     emptyBricks: 0,
     evictions: 0,
     staleDrops: 0,
+    planDrops: 0,
+    acquireFailures: 0,
     fetchErrors: 0,
   };
   /** Chunk keys already counted toward bytesDecoded. */
@@ -317,9 +328,7 @@ export class BrickResidencyManager {
           ? "not-attempted"
           : this.gpuRepacker === null
             ? "unavailable"
-            : this.gpuRepacker.ready()
-              ? "ready"
-              : "pending-or-broken",
+            : this.gpuRepacker.status(),
       pools: [...this.pools.values()].map((pool) => {
         const residentByLevel: Record<number, number> = {};
         for (const key of pool.pool.keys()) {
@@ -359,6 +368,10 @@ export class BrickResidencyManager {
           protectedKeys: pool.protectedKeys.size,
           dataRange: [pool.minValue, pool.maxValue],
           sliceSignature: pool.sliceSignature,
+          // Why bricks did (not) take the GPU repack path — "ready" above only
+          // means the pipeline compiled; per-brick `supports()` can still
+          // reject every job (e.g. "cpu:unsupported:r8" for uint8 layers).
+          gpuPath: pool.lastRepackPath,
           // Raw atlas values per channel slab at two fixed voxels (CPU mirror
           // of the shader's channel tap). Identical values across channels of
           // a multi-channel layer at both probes = the slabs hold the same
@@ -977,6 +990,7 @@ export class BrickResidencyManager {
       autoRange,
       autoRangeInitialized: false,
       atlasMirrorStale: false,
+      lastRepackPath: null,
     };
     this.pools.set(layer.id, pool);
     // Pool LIFECYCLE event (not streaming progress): this is what layer
@@ -1125,7 +1139,18 @@ export class BrickResidencyManager {
       // axis. A layer with a phasor node therefore always takes the CPU worker
       // path (a follow-up can teach the compute kernel the DFT).
       const reducesPhasor = hasPhasorSlabs(pool.geometry);
-      if (!reducesPhasor && gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks)) {
+      const useGpu =
+        !reducesPhasor && !!gpuRepacker?.ready() && gpuRepacker.supports(pool.atlas, chunks);
+      pool.lastRepackPath = useGpu
+        ? "gpu"
+        : reducesPhasor
+          ? "cpu:phasor"
+          : gpuRepacker === null
+            ? "cpu:no-repacker"
+            : !gpuRepacker.ready()
+              ? `cpu:${gpuRepacker.status()}`
+              : `cpu:unsupported:${pool.atlas.kind}`;
+      if (useGpu) {
         // GPU path: the repack IS the upload (a compute dispatch straight
         // into the atlas slot at drain time) — only chunk handles queue here.
         pending = {

@@ -1,11 +1,11 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import {
   RoiKind,
   useCreateAnnotationMutation,
   type CreateAnnotationMutation,
 } from "@/mikro-next/api/graphql";
 import { useRoiSelectionStoreApi } from "../store/roiSelectionStore";
-import { useSceneStore, useSceneStoreApi } from "../store/sceneStore";
+import { useSceneStoreApi } from "../store/sceneStore";
 
 export type CreatedSceneAnnotation = CreateAnnotationMutation["createAnnotation"];
 
@@ -18,23 +18,15 @@ export type CreatedSceneAnnotation = CreateAnnotationMutation["createAnnotation"
  *
  * A confirmed annotation is auto-selected (single selection), so the selected
  * ROI panel starts its attribute lookups the moment the server answers.
+ *
+ * This hook is mounted by the hot brick layer components, which otherwise
+ * avoid reactive store subscriptions — so it must not subscribe either. All
+ * scene state is read lazily via the store API at call time.
  */
 export const useCreateSceneAnnotation = () => {
-  const sceneId = useSceneStore((s) => s.id);
-  const sceneLayers = useSceneStore((s) => s.sceneLayers);
   const sceneStoreApi = useSceneStoreApi();
   const roiSelectionApi = useRoiSelectionStoreApi();
   const [createAnnotation] = useCreateAnnotationMutation();
-
-  // Annotating the scene mints its annotation collection, the collection's
-  // registration into the world AND the AnnotationLayer that draws it — but
-  // only on first use. Until that layer exists there is nothing to render the
-  // shape, so the first annotation has to refetch the scene itself; later ones
-  // only need the layer's own annotation query.
-  const hasAnnotationLayer = useMemo(
-    () => sceneLayers.some((layer) => layer.__typename === "AnnotationLayer"),
-    [sceneLayers],
-  );
 
   const createSceneAnnotation = useCallback(
     async (
@@ -42,6 +34,16 @@ export const useCreateSceneAnnotation = () => {
       worldVectors: [number, number, number][],
     ): Promise<CreatedSceneAnnotation | null> => {
       try {
+        const { id: sceneId, sceneLayers } = sceneStoreApi.getState();
+        // Annotating the scene mints its annotation collection, the
+        // collection's registration into the world AND the AnnotationLayer
+        // that draws it — but only on first use. Until that layer exists there
+        // is nothing to render the shape, so the first annotation has to
+        // refetch the scene itself; later ones only need the layer's own
+        // annotation query.
+        const hasAnnotationLayer = sceneLayers.some(
+          (layer) => layer.__typename === "AnnotationLayer",
+        );
         const result = await createAnnotation({
           variables: { input: { scene: sceneId, kind, vectors: worldVectors } },
           refetchQueries: hasAnnotationLayer ? ["GetAnnotations"] : ["GetScene"],
@@ -84,7 +86,7 @@ export const useCreateSceneAnnotation = () => {
         return null;
       }
     },
-    [createAnnotation, hasAnnotationLayer, sceneId, sceneStoreApi, roiSelectionApi],
+    [createAnnotation, sceneStoreApi, roiSelectionApi],
   );
 
   const createPointAnnotation = useCallback(

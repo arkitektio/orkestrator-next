@@ -56,6 +56,16 @@ describe("BrickPoolState", () => {
     expect(pool.has("pinned")).toBe(true);
   });
 
+  it("an all-protected sentinel acquires free slots but never evicts", () => {
+    const pool = new BrickPoolState([2, 1, 1]);
+    const freeOnly = { has: () => true };
+    pool.acquire("a", NONE);
+    expect(pool.acquire("b", freeOnly)).not.toBeNull(); // free slot available
+    expect(pool.acquire("c", freeOnly)).toBeNull(); // full: no eviction allowed
+    expect(pool.has("a")).toBe(true);
+    expect(pool.has("b")).toBe(true);
+  });
+
   it("release returns the slot to the free list", () => {
     const pool = new BrickPoolState([1, 1, 1]);
     const slot = pool.acquire("a", NONE)!.slot.index;

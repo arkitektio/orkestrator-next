@@ -252,7 +252,8 @@ app is crossOriginIsolated and `getChunkWorker` forwards
 `useSharedArrayBuffer`) while STAYING in the main-side chunk cache; the output
 brick returns as a transferable. `stats.repackMs` is therefore wall time
 (queue + worker), not main-thread time. No cancellation: jobs are a few ms and
-stale results are absorbed by the existing `protectedKeys`/`staleDrops` gate.
+out-of-plan results are landed into free slots by `drainUploads` (or counted
+as `planDrops` when none is free).
 
 Related main-thread costs, assessed: the per-upload CPU backing-mirror copy in
 `writeBrickToAtlas` (§2.5) is KEPT — `sampleResident` (probes) and

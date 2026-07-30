@@ -15,7 +15,7 @@ import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
 import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache";
-import { BrickPoolState } from "../core/octree/brickPoolState";
+import { BrickPoolState, type ProtectedKeys } from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
@@ -129,6 +129,11 @@ type PendingBrick = {
  * field is re-validated against the CURRENT mapping when the readback lands. */
 type GpuBrickToken = { layerId: string; key: string; slotIndex: number };
 
+/** `acquire()` sentinel treating every occupant as protected: the acquisition
+ * succeeds only into a FREE slot, never by eviction — how out-of-plan bricks
+ * are allowed to land without displacing planned ones. */
+const FREE_SLOTS_ONLY: ProtectedKeys = { has: () => true };
+
 export type LayerBrickPool = {
   layerId: string;
   mode: "2D" | "3D";
@@ -212,7 +217,6 @@ export type BrickSystemStats = {
   bytesUploaded: number;
   emptyBricks: number;
   evictions: number;
-  staleDrops: number;
   /** Fetched bricks that left the plan before upload AND found no free slot —
    * pure waste (the work was paid for, nothing became resident). */
   planDrops: number;
@@ -263,7 +267,6 @@ export class BrickResidencyManager {
     bytesUploaded: 0,
     emptyBricks: 0,
     evictions: 0,
-    staleDrops: 0,
     planDrops: 0,
     acquireFailures: 0,
     fetchErrors: 0,
@@ -791,15 +794,17 @@ export class BrickResidencyManager {
     pool.protectedKeys = protectedKeys;
     pool.pool.touch(planKeys);
 
-    // Cancel fetches that fell out of the plan.
-    for (const [key, controller] of [...pool.inFlight]) {
-      if (!planKeys.has(key)) {
-        controller.abort();
-        pool.inFlight.delete(key);
-      }
-    }
-    pool.queue = pool.queue.filter((pending) => planKeys.has(pending.key));
-    pool.queuedKeys = new Set(pool.queue.map((pending) => pending.key));
+    // In-flight and queued bricks that fell out of the plan are deliberately
+    // KEPT: the chunk fetch ignores per-brick aborts anyway (fetchChunkShared),
+    // so the network+decode is already paid for — aborting only threw away
+    // finished work, and plan oscillation during camera motion then refetched
+    // the same bricks over and over (observed 13× amplification). They drain
+    // into FREE slots as shader fallback data (see drainUploads); content is
+    // keyed by (level, coords) under an unchanged sliceSignature, so it is
+    // never wrong — only possibly unneeded. Aborts remain in flushPool /
+    // disposePool, where content genuinely invalidates. Tradeoff: up to
+    // maxInflightBricks fetch slots may briefly serve out-of-plan bricks,
+    // delaying new-plan fetches by at most one round.
 
     // Fetch every planned node that isn't resident yet — coarse levels first
     // (they are the fallback), then plan priority (near-first). Only
@@ -1237,14 +1242,12 @@ export class BrickResidencyManager {
       ) {
         const pending = pool.queue.shift()!;
         pool.queuedKeys.delete(pending.key);
-        // Stale bricks (plan moved on before upload) are dropped, not mapped.
-        if (!pool.protectedKeys.has(pending.key)) {
-          this.stats.staleDrops += 1;
-          continue;
-        }
+        const planned = pool.protectedKeys.has(pending.key);
 
         if (pending.uniformValue !== null) {
           // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
+          // Mapped even when the plan moved on: EMPTY costs no slot and is
+          // valid fallback data.
           const encoded = encodeEmptyValue(pending.uniformValue, pool);
           setPageEntry(pool.pageTable, pending.level, pending.coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
           pool.emptyValues.set(pending.key, pending.uniformValue);
@@ -1253,8 +1256,20 @@ export class BrickResidencyManager {
           continue;
         }
 
-        const acquired = pool.pool.acquire(pending.key, pool.protectedKeys);
-        if (!acquired) continue; // every slot protected: keep coarse, drop fine
+        // Planned bricks may evict unprotected occupants. A brick the plan
+        // moved on from is still uploaded when a FREE slot exists — its fetch
+        // and repack are already paid for, and as shader fallback data it
+        // beats dropping (the plan often flips back within a few replans) —
+        // but it never evicts anyone.
+        const acquired = pool.pool.acquire(
+          pending.key,
+          planned ? pool.protectedKeys : FREE_SLOTS_ONLY,
+        );
+        if (!acquired) {
+          if (planned) this.stats.acquireFailures += 1;
+          else this.stats.planDrops += 1;
+          continue;
+        }
 
         if (acquired.evictedKey) {
           const evicted = parseNodeKey(acquired.evictedKey);

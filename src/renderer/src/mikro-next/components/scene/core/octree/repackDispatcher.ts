@@ -14,8 +14,8 @@ import type { RepackWorkerRequest, RepackWorkerResponse } from "./repack-worker"
  *   construction-failure safety net; behaviorally identical because both call
  *   the same pure, golden-buffer-tested `repackBrick`.
  *
- * No cancellation: jobs are a few ms; stale results are dropped by the
- * existing `protectedKeys`/`staleDrops` gate in `drainUploads`.
+ * No cancellation: jobs are a few ms; out-of-plan results are landed into
+ * free slots (or counted as `planDrops`) by `drainUploads`.
  */
 
 export type RepackJob = {

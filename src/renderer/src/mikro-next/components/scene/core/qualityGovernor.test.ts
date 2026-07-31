@@ -58,6 +58,27 @@ describe("QualityGovernor tier learning", () => {
     expect(g.getEmaMs()).toBe(0);
   });
 
+  it("counts long ACTIVE frames as weighted slow votes", () => {
+    const g = new QualityGovernor();
+    // A single 443 ms spike mid-gesture must not demote on its own.
+    g.recordFrame(443, 0, true);
+    expect(g.getTier()).toBe(TIER_HIGH);
+
+    // But a run of ≥250 ms active frames demotes without needing 15 distinct
+    // frames (5 votes each → 3 frames cross the threshold).
+    g.recordFrame(400, 500, true);
+    g.recordFrame(400, 1000, true);
+    expect(g.getTier()).toBe(TIER_MEDIUM);
+    expect(g.getEmaMs()).toBeGreaterThan(0);
+  });
+
+  it("still ignores long frames while INACTIVE", () => {
+    const g = new QualityGovernor();
+    for (let i = 0; i < 100; i++) g.recordFrame(400, i * 400, false);
+    expect(g.getTier()).toBe(TIER_HIGH);
+    expect(g.getEmaMs()).toBe(0);
+  });
+
   it("promotes only after sustained fast frames AND the post-demote cooldown", () => {
     const g = new QualityGovernor();
     const afterDemote = feed(g, 40, 18, 0);

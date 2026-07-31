@@ -102,9 +102,14 @@ const DEMOTE_FRAME_MS = 24;
 /** Frame delta below this counts toward promotion (≈ comfortably >80 fps). */
 const PROMOTE_FRAME_MS = 12;
 const EMA_WINDOW = 20;
-/** Deltas above this are demand-frameloop idle gaps, not frame cost. */
+/** Deltas above this are demand-frameloop idle gaps when the scene is idle —
+ * but during camera motion or streaming they are REAL long frames (the exact
+ * ones users report as jank), counted below with weighted votes. */
 const MAX_CONTINUOUS_DELTA_MS = 250;
 const DEMOTE_AFTER_SLOW_FRAMES = 15;
+/** Max demotion votes a single long active frame contributes: a demote needs
+ * ≥3 consecutive ≥250 ms frames, preserving single-spike immunity. */
+const SLOW_VOTE_CAP = 5;
 const PROMOTE_AFTER_FAST_FRAMES = 120;
 const PROMOTE_COOLDOWN_MS = 30_000;
 
@@ -216,31 +221,40 @@ export class QualityGovernor {
 
   // --- learning -------------------------------------------------------------
   /**
-   * Feed one frame delta (ms). `nowMs` is injectable for tests.
+   * Feed one frame delta (ms). `nowMs` is injectable for tests; `active`
+   * (camera moving or streaming) disambiguates deltas ≥ 250 ms — while idle
+   * they are demand-frameloop gaps and are discarded, but during real work
+   * they are the worst frames the user sees and count as WEIGHTED slow votes
+   * (capped at `SLOW_VOTE_CAP`, so a single spike still can't demote).
    *
    * Streaks are counted on the DELTAS themselves (consecutive slow / fast
    * frames), not on the EMA: after a demote the EMA still reflects the OLD
    * tier's cost and would cascade further demotes before the cheaper tier had
    * a chance to prove itself. One in-band or opposite frame resets a streak —
-   * demotion needs 15 genuinely consecutive slow frames, promotion 120
-   * consecutive fast ones plus the post-demote cooldown. The EMA remains for
-   * display/telemetry.
+   * demotion needs 15 genuinely consecutive slow-frame votes, promotion 120
+   * consecutive fast frames plus the post-demote cooldown. The EMA remains
+   * for display/telemetry (fed with the clamped delta for long frames).
    */
-  recordFrame(deltaMs: number, nowMs: number = performance.now()): void {
-    if (deltaMs <= 0 || deltaMs >= MAX_CONTINUOUS_DELTA_MS) return;
+  recordFrame(deltaMs: number, nowMs: number = performance.now(), active = false): void {
+    if (deltaMs <= 0) return;
+    if (deltaMs >= MAX_CONTINUOUS_DELTA_MS) {
+      if (!active) return; // idle demand-frameloop gap, not frame cost
+      this.emaMs =
+        this.emaMs === 0
+          ? MAX_CONTINUOUS_DELTA_MS
+          : this.emaMs + (MAX_CONTINUOUS_DELTA_MS - this.emaMs) / EMA_WINDOW;
+      this.slowFrames += Math.min(SLOW_VOTE_CAP, Math.ceil(deltaMs / DEMOTE_FRAME_MS));
+      this.fastFrames = 0;
+      this.maybeDemote(nowMs);
+      return;
+    }
     this.emaMs =
       this.emaMs === 0 ? deltaMs : this.emaMs + (deltaMs - this.emaMs) / EMA_WINDOW;
 
     if (deltaMs > DEMOTE_FRAME_MS) {
       this.slowFrames += 1;
       this.fastFrames = 0;
-      if (this.slowFrames >= DEMOTE_AFTER_SLOW_FRAMES && this.autoTier < TIER_LOW) {
-        this.autoTier = clampTier(this.autoTier + 1);
-        this.slowFrames = 0;
-        this.lastDemoteAt = nowMs;
-        this.persist();
-        if (this.override === null) this.emit();
-      }
+      this.maybeDemote(nowMs);
     } else if (deltaMs < PROMOTE_FRAME_MS) {
       this.fastFrames += 1;
       this.slowFrames = 0;
@@ -257,6 +271,16 @@ export class QualityGovernor {
     } else {
       this.slowFrames = 0;
       this.fastFrames = 0;
+    }
+  }
+
+  private maybeDemote(nowMs: number): void {
+    if (this.slowFrames >= DEMOTE_AFTER_SLOW_FRAMES && this.autoTier < TIER_LOW) {
+      this.autoTier = clampTier(this.autoTier + 1);
+      this.slowFrames = 0;
+      this.lastDemoteAt = nowMs;
+      this.persist();
+      if (this.override === null) this.emit();
     }
   }
 }

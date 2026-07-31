@@ -59,11 +59,15 @@ export const QualityAdapter = () => {
     const now = performance.now();
     const last = lastFrameAtRef.current;
     lastFrameAtRef.current = now;
-    if (last !== null) qualityGovernor.recordFrame(now - last);
+    // `active` lets the governor tell a ≥250ms frame during a gesture (real
+    // jank, counted with weighted votes) from an idle demand-frameloop gap
+    // (discarded). cameraMoving's trailing debounce means a long frame ending
+    // just after a gesture still reads as active.
+    const active = cameraMoving || qualityGovernor.isStreaming();
+    if (last !== null) qualityGovernor.recordFrame(now - last, now, active);
 
     // Apply the profile DPR every frame (cheap compare; setDpr only on change).
     // Doing it here rather than only in an effect catches mid-gesture demotes.
-    const active = cameraMoving || qualityGovernor.isStreaming();
     if (active) {
       settledAtRef.current = null;
       const dpr = resolveDpr(qualityGovernor.getProfile(), initialDpr, true);

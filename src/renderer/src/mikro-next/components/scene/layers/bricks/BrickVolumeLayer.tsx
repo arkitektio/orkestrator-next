@@ -201,6 +201,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       cameraMoving || qualityGovernor.isStreaming()
         ? profile.activeStepScale
         : profile.settledStepScale;
+    n.uMaxSteps.value = profile.maxRaySteps;
     n.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps

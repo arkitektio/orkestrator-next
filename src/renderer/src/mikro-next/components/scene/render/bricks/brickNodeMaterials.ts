@@ -802,6 +802,7 @@ export type VolumeMaterialNodes = TraversalNodesPublic &
     uPxPerVoxelAtUnitDist: UniformNodeLike<number>;
     uMinDelta: UniformNodeLike<number>;
     uStepScale: UniformNodeLike<number>;
+    uMaxSteps: UniformNodeLike<number>;
     uBaseShape: UniformNodeLike<THREE.Vector3>;
     projectionMode: UniformNodeLike<number>;
     isoThreshold: UniformNodeLike<number>;
@@ -829,6 +830,10 @@ export function createVolumeNodeMaterial(
   const uPxPerVoxelAtUnitDist = uniform(0, "float");
   const uMinDelta = uniform(1, "float");
   const uStepScale = uniform(1, "float");
+  // Per-tier hard iteration ceiling (quality profile `maxRaySteps`). Capping
+  // steps LENGTHENS the stride (see floorDelta) rather than cutting the far
+  // volume; MAX_RAY_STEPS stays the compile-time loop bound.
+  const uMaxSteps = uniform(MAX_RAY_STEPS, "float");
   const uBaseShape = uniform(new THREE.Vector3(1, 1, 1), "vec3");
   const projectionMode = uniform(0, "int"); // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
   const isoThreshold = uniform(0.5, "float");
@@ -925,9 +930,10 @@ export function createVolumeNodeMaterial(
     boundsX.assign(max(boundsX, 0.0));
 
     const rayLen = max(boundsY.sub(boundsX), 0.00001);
-    // Termination guarantee: MAX_STEPS steps of at least this size always
-    // cross the ray, whatever the per-sample LOD picks.
-    const floorDelta = rayLen.div(float(MAX_RAY_STEPS));
+    // Termination guarantee: uMaxSteps steps of at least this size always
+    // cross the ray, whatever the per-sample LOD picks — a lower tier cap
+    // trades step density for the same full-ray coverage.
+    const floorDelta = rayLen.div(max(float(uMaxSteps), 1.0));
 
     // Reference step for VOLUME opacity correction (see
     // core/opacityCorrection.ts — keep in lockstep).
@@ -948,7 +954,13 @@ export function createVolumeNodeMaterial(
     const isoHit = bool(false).toVar(); // ISOSURFACE
     const isoColor = vec3(0.0).toVar();
 
-    Loop({ start: int(0), end: int(MAX_RAY_STEPS), type: "int", condition: "<" }, () => {
+    Loop({ start: int(0), end: int(MAX_RAY_STEPS), type: "int", condition: "<" }, ({ i }: any) => {
+      // Tier cap: the uniform can't feed the compile-constant loop bound, so
+      // it breaks here. floorDelta above guarantees full-ray coverage in
+      // uMaxSteps iterations.
+      If(float(i).greaterThanEqual(float(uMaxSteps)), () => {
+        Break();
+      });
       If(rayT.greaterThan(boundsY), () => {
         Break();
       });
@@ -1048,6 +1060,14 @@ export function createVolumeNodeMaterial(
             bestNorm.assign(sampleNorm);
             bestColor.assign(sampleColor);
           });
+          // Early ray termination: the normalize clamps to [0, 0.999] before
+          // gamma (invert can reach exactly 1.0), so a max ≥ 0.995 is within
+          // sub-colormap-step distance of the reachable ceiling — nothing
+          // later on the ray can visibly beat it. Deterministic per pixel
+          // (P14-safe). ATTENUATED_MIP has no saturation bound: not applied.
+          If(bestNorm.greaterThanEqual(0.995), () => {
+            Break();
+          });
         });
 
       rayT.addAssign(stepLen);
@@ -1093,6 +1113,7 @@ export function createVolumeNodeMaterial(
       uPxPerVoxelAtUnitDist,
       uMinDelta,
       uStepScale,
+      uMaxSteps,
       uBaseShape,
       projectionMode,
       isoThreshold,

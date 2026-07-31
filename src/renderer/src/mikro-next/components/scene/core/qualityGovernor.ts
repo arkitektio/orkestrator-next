@@ -39,6 +39,9 @@ export type QualityProfile = {
   /** 3D raymarch step multipliers (shader `uStepScale`). */
   settledStepScale: number;
   activeStepScale: number;
+  /** Hard per-fragment iteration ceiling (shader `uMaxSteps`); the stride
+   * floor scales so the ray still covers the whole volume. */
+  maxRaySteps: number;
   /** drainUploads wall-clock budget per frame. */
   uploadBudgetMs: number;
   /** Concurrent brick fetches per layer. */
@@ -54,6 +57,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     activeDprCap: Number.POSITIVE_INFINITY,
     settledStepScale: 1,
     activeStepScale: 2,
+    maxRaySteps: 512,
     uploadBudgetMs: 4,
     // 16 (was 12): the decode pool scales to hardwareConcurrency (4–24) and
     // each brick fans out to ≥1 chunk task — 12 under-subscribed it on fast
@@ -68,6 +72,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     activeDprCap: Number.POSITIVE_INFINITY,
     settledStepScale: 1,
     activeStepScale: 2.5,
+    maxRaySteps: 384,
     uploadBudgetMs: 3,
     maxInflightBricks: 12,
     residencyBumpMs: 150,
@@ -78,6 +83,7 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
     activeDprCap: 1,
     settledStepScale: 1.5,
     activeStepScale: 3,
+    maxRaySteps: 256,
     uploadBudgetMs: 2,
     maxInflightBricks: 6,
     residencyBumpMs: 300,

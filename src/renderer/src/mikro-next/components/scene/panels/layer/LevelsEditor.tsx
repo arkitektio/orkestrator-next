@@ -105,6 +105,38 @@ export const LevelsEditor = ({
     [histogram, colormap, baseColor],
   );
 
+  // The bar rects — one per histogram bin, often 256 per channel — are the
+  // heaviest part of this subtree, and the layer panel re-renders during
+  // camera motion (view-range churn). Memoizing the ELEMENT ARRAY lets React
+  // bail out on identical element references instead of re-creating and
+  // re-diffing every bin on renders where nothing histogram-related changed.
+  const bars = useMemo(
+    () =>
+      histogram.map((_, i) => {
+        const v = binValues[i] ?? domainMin;
+        const h = barHeights[i];
+        if (h <= 0) return null;
+        const inWindow = v >= black && v <= white;
+        // Position bars by value (not index) so they bunch correctly when the
+        // domain is wider than the data. Width spans to the next bin; the last
+        // bin mirrors its predecessor's gap.
+        const nextV = binValues[i + 1] ?? v + (v - (binValues[i - 1] ?? v));
+        const x = ((v - domainMin) / domainSpan) * 100;
+        const w = Math.max(((nextV - domainMin) / domainSpan) * 100 - x, 0.15);
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={PLOT_HEIGHT - h}
+            width={w + 0.15}
+            height={h}
+            fill={inWindow ? barColors[i] : "rgba(255,255,255,0.10)"}
+          />
+        );
+      }),
+    [histogram, binValues, barHeights, barColors, black, white, domainMin, domainSpan],
+  );
+
   // Transfer curve over the full domain, in plot coordinates.
   const curvePoints = useMemo(() => {
     const windowSpan = Math.max(white - black, Number.EPSILON);
@@ -227,29 +259,7 @@ export const LevelsEditor = ({
           style={{ height: PLOT_HEIGHT }}
         >
           <rect x={0} y={0} width={100} height={PLOT_HEIGHT} fill="rgba(0,0,0,0.3)" />
-          {histogram.map((_, i) => {
-            const v = binValues[i] ?? domainMin;
-            const h = barHeights[i];
-            if (h <= 0) return null;
-            const inWindow = v >= black && v <= white;
-            // Position bars by value (not index) so they bunch correctly when the
-            // domain is wider than the data. Width spans to the next bin; the last
-            // bin mirrors its predecessor's gap.
-            const nextV =
-              binValues[i + 1] ?? v + (v - (binValues[i - 1] ?? v));
-            const x = xOf(v);
-            const w = Math.max(xOf(nextV) - x, 0.15);
-            return (
-              <rect
-                key={i}
-                x={x}
-                y={PLOT_HEIGHT - h}
-                width={w + 0.15}
-                height={h}
-                fill={inWindow ? barColors[i] : "rgba(255,255,255,0.10)"}
-              />
-            );
-          })}
+          {bars}
           {/* Transfer curve + its window edges. */}
           {[black, white].map((v, i) => (
             <line

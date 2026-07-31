@@ -81,7 +81,13 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
         gl={async (props) => {
           const renderer = new WebGPURenderer({
             ...(props as Record<string, unknown>),
-            antialias: true,
+            // No MSAA: the dominant pixel cost is the full-screen volume
+            // raymarch, which has zero geometric edges (the proxy box is
+            // invisible and the shader Discards, defeating early-Z) — MSAA
+            // there is pure color/depth bandwidth, plus 4× the realloc cost
+            // on every DPR switch. Line furniture (Line2 fat lines, gizmo)
+            // is screen-space quads, the least MSAA-sensitive geometry.
+            antialias: false,
             // GPU frame timing for the perf monitor. Constructing with the
             // flag on is required so init() can validate feature support
             // (three self-clears it when the adapter lacks timestamp-query);

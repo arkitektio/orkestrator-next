@@ -82,6 +82,12 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
           const renderer = new WebGPURenderer({
             ...(props as Record<string, unknown>),
             antialias: true,
+            // GPU frame timing for the perf monitor. Read once by the Backend
+            // constructor (cannot be toggled later); three self-clears it when
+            // the adapter lacks timestamp-query. Idle cost is two timestamp
+            // writes per pass — the resolve/readback only happens while a perf
+            // recording is armed (PerfFrameProbe).
+            trackTimestamp: true,
           });
 
           // three 0.184 has no forceWebGPU, and WebGPURenderer's constructor

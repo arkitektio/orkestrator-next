@@ -275,6 +275,8 @@ export class BrickResidencyManager {
   private readonly countedChunkKeys = new Set<string>();
   /** Layers already warned about a non-viable pool (one warning per layer). */
   private readonly warnedUnviable = new Set<string>();
+  /** Stores whose chunk-key metadata read failed at least once (one warning). */
+  private readonly warnedEncoderStores = new Set<string>();
   /** undefined = not yet attempted; null = unavailable (pipeline failed, or
    * disabled via the localStorage kill switch) — the CPU worker path then
    * handles every brick. */
@@ -564,6 +566,31 @@ export class BrickResidencyManager {
    * chunk was evicted or the store's chunk-key encoder is still resolving
    * (kicked off here; the next probe move finds it cached).
    */
+  /**
+   * Resolve a store's zarr chunk-key encoder for the SYNC chunk-cache probe.
+   * `sampleChunkCacheSync` cannot await, so the encoder must be resolved ahead
+   * of the first probe — `ensurePool` warms every level eagerly (the metadata
+   * is already in `readArrayMetadataCached`'s cache from the brick fetches, so
+   * this is a microtask, not a network read). Failure schedules a retry on the
+   * next call and warns once per store.
+   */
+  private warmChunkKeyEncoder(
+    storeId: string,
+    arr: Parameters<typeof getChunkWorker>[0],
+  ): void {
+    if (this.chunkKeyEncoders.has(storeId)) return;
+    this.chunkKeyEncoders.set(storeId, null); // resolving
+    void readArrayMetadataCached(arr)
+      .then((meta) => this.chunkKeyEncoders.set(storeId, meta.encodeChunkKey))
+      .catch((error) => {
+        this.chunkKeyEncoders.delete(storeId); // retry on the next probe
+        if (!this.warnedEncoderStores.has(storeId)) {
+          this.warnedEncoderStores.add(storeId);
+          console.warn(`[bricks] chunk-key metadata read failed for store ${storeId}`, error);
+        }
+      });
+  }
+
   private sampleChunkCacheSync(
     pool: LayerBrickPool,
     levelIndex: number,
@@ -631,10 +658,10 @@ export class BrickResidencyManager {
       }
       const encoder = this.chunkKeyEncoders.get(level.storeId);
       if (encoder === undefined) {
-        this.chunkKeyEncoders.set(level.storeId, null); // resolving
-        void readArrayMetadataCached(arr)
-          .then((meta) => this.chunkKeyEncoders.set(level.storeId, meta.encodeChunkKey))
-          .catch(() => this.chunkKeyEncoders.delete(level.storeId));
+        // Fallback only — ensurePool warms every level's encoder eagerly, so
+        // this fires just for pools created before the warm-up (or after a
+        // metadata failure scheduled a retry).
+        this.warmChunkKeyEncoder(level.storeId, arr);
         return null;
       }
       if (encoder === null) return null; // metadata still resolving
@@ -1001,6 +1028,16 @@ export class BrickResidencyManager {
       lastRepackPath: null,
     };
     this.pools.set(layer.id, pool);
+    // Warm the sync-probe chunk-key encoders for every level now — the debug
+    // report's channel-slab probe runs synchronously and cannot await the
+    // metadata (see warmChunkKeyEncoder).
+    for (const level of geometry.levels) {
+      try {
+        this.warmChunkKeyEncoder(level.storeId, viewerState.getArrayForStoreId(level.storeId));
+      } catch {
+        // Store not resolvable yet — the sampleChunkCacheSync fallback retries.
+      }
+    }
     // Pool LIFECYCLE event (not streaming progress): this is what layer
     // components re-render on — see viewerStore.poolsVersion.
     this.deps.viewerStore.getState().bumpPoolsVersion();

@@ -655,12 +655,13 @@ Consequences and contracts:
   → `rgba8uint`; the TSL walk uses `textureLoad` (texelFetch equivalent). The
   R32F atlas's LinearFilter relies on the `float32-filterable` device feature,
   which three requests automatically when the adapter supports it.
-- **GPU frame timing** (`PerfFrameProbe`): `gpuMs` is always null. It came from
-  `EXT_disjoint_timer_query_webgl2`, which needed the WebGL2 backend; the
-  WebGPU replacement is timestamp-queries, still a follow-up. CPU timing is
-  unaffected.
+- **GPU frame timing** (`PerfFrameProbe`): `gpuMs` comes from WebGPU timestamp
+  queries — the renderer is constructed with `trackTimestamp: true` (Scene.tsx)
+  and the probe calls `resolveTimestampsAsync(TimestampQuery.RENDER)` per
+  recorded frame, reading the previous frame's pass time. Null on adapters
+  without `timestamp-query` (three self-clears the flag).
 - Deferred WebGPU-era upgrades: storage-buffer page table (obsoletes the P2
-  packed-texture workaround), timestamp queries.
+  packed-texture workaround).
 
 ## 6. Status & what's deliberately deferred
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { shouldContinueDrain, type DrainBudget } from "./uploadBudget";
+import {
+  partitionUploadQueue,
+  shouldContinueDrain,
+  shouldContinueStaleDrain,
+  type DrainBudget,
+} from "./uploadBudget";
 
 const BUDGET: DrainBudget = { maxBytes: 1000, maxBricks: 4, maxMs: 4 };
 
@@ -24,5 +29,65 @@ describe("shouldContinueDrain", () => {
     expect(
       shouldContinueDrain({ bytes: 100, bricks: 1, elapsedMs: 17 }, BUDGET),
     ).toBe(false);
+  });
+});
+
+describe("shouldContinueStaleDrain", () => {
+  it("gives stale bricks NO first-brick free pass", () => {
+    // A planned drain would allow this; a stale brick must never cause the
+    // over-budget hitch the free pass permits.
+    expect(
+      shouldContinueStaleDrain({ bytes: 0, bricks: 0, elapsedMs: 999 }, BUDGET),
+    ).toBe(false);
+  });
+
+  it("each cap binds independently", () => {
+    const ok = { bytes: 500, bricks: 2, elapsedMs: 2 };
+    expect(shouldContinueStaleDrain(ok, BUDGET)).toBe(true);
+    expect(shouldContinueStaleDrain({ ...ok, bytes: 1000 }, BUDGET)).toBe(false);
+    expect(shouldContinueStaleDrain({ ...ok, bricks: 4 }, BUDGET)).toBe(false);
+    expect(shouldContinueStaleDrain({ ...ok, elapsedMs: 4 }, BUDGET)).toBe(false);
+  });
+
+  it("allows stale uploads on genuinely leftover budget", () => {
+    expect(
+      shouldContinueStaleDrain({ bytes: 100, bricks: 1, elapsedMs: 1 }, BUDGET),
+    ).toBe(true);
+  });
+});
+
+describe("partitionUploadQueue", () => {
+  const entry = (key: string, uniformValue: number | null = null) => ({ key, uniformValue });
+  const protecting = (...keys: string[]) => new Set(keys);
+
+  it("splits planned-first by protectedKeys, preserving FIFO order per partition", () => {
+    const queue = [entry("a"), entry("b"), entry("c"), entry("d")];
+    const { planned, stale, dropped } = partitionUploadQueue(queue, protecting("b", "d"), 10);
+    expect(planned.map((e) => e.key)).toEqual(["b", "d"]);
+    expect(stale.map((e) => e.key)).toEqual(["a", "c"]);
+    expect(dropped).toEqual([]);
+  });
+
+  it("uniform (EMPTY) entries always count as planned, even unprotected", () => {
+    const queue = [entry("a", 7), entry("b")];
+    const { planned, stale } = partitionUploadQueue(queue, protecting(), 10);
+    expect(planned.map((e) => e.key)).toEqual(["a"]);
+    expect(stale.map((e) => e.key)).toEqual(["b"]);
+  });
+
+  it("caps the stale partition, dropping the OLDEST entries first", () => {
+    const queue = [entry("s1"), entry("p"), entry("s2"), entry("s3")];
+    const { planned, stale, dropped } = partitionUploadQueue(queue, protecting("p"), 2);
+    expect(planned.map((e) => e.key)).toEqual(["p"]);
+    expect(stale.map((e) => e.key)).toEqual(["s2", "s3"]);
+    expect(dropped.map((e) => e.key)).toEqual(["s1"]);
+  });
+
+  it("maxStale of 0 drops every stale entry", () => {
+    const queue = [entry("s1"), entry("s2")];
+    const { planned, stale, dropped } = partitionUploadQueue(queue, protecting(), 0);
+    expect(planned).toEqual([]);
+    expect(stale).toEqual([]);
+    expect(dropped.map((e) => e.key)).toEqual(["s1", "s2"]);
   });
 });

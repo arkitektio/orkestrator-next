@@ -45,3 +45,48 @@ export function shouldContinueDrain(
     progress.elapsedMs < budget.maxMs
   );
 }
+
+/**
+ * Strict leftover-budget predicate for STALE (out-of-plan) uploads: no
+ * first-brick free pass — the free pass exists so visible data always makes
+ * progress, and a stale brick must never be the one that causes the >maxMs
+ * hitch it permits. Every budget dimension binds.
+ */
+export function shouldContinueStaleDrain(
+  progress: DrainProgress,
+  budget: DrainBudget = FRAME_UPLOAD_BUDGET,
+): boolean {
+  return (
+    progress.bytes < budget.maxBytes &&
+    progress.bricks < budget.maxBricks &&
+    progress.elapsedMs < budget.maxMs
+  );
+}
+
+/** Stale entries kept queued per pool awaiting leftover budget; beyond this
+ * the oldest are dropped (their decoded chunks stay cached, so a flip-back
+ * refetches cheaply — holding many ~MB repacked payloads is the real cost). */
+export const MAX_STALE_QUEUE = 24;
+
+export type QueueEntry = { key: string; uniformValue: number | null };
+
+/**
+ * Planned-first partition of an upload queue. Uniform (EMPTY) entries always
+ * count as planned: they cost no slot and are valid fallback data regardless
+ * of the current plan. FIFO order is preserved within each partition; stale
+ * entries beyond `maxStale` (oldest first) are returned as `dropped`.
+ */
+export function partitionUploadQueue<T extends QueueEntry>(
+  queue: readonly T[],
+  protectedKeys: { has(key: string): boolean },
+  maxStale: number,
+): { planned: T[]; stale: T[]; dropped: T[] } {
+  const planned: T[] = [];
+  const stale: T[] = [];
+  for (const entry of queue) {
+    if (entry.uniformValue !== null || protectedKeys.has(entry.key)) planned.push(entry);
+    else stale.push(entry);
+  }
+  const excess = Math.max(0, stale.length - Math.max(0, maxStale));
+  return { planned, stale: stale.slice(excess), dropped: stale.slice(0, excess) };
+}

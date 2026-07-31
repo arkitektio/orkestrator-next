@@ -1,7 +1,13 @@
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
-import { FRAME_UPLOAD_BUDGET, shouldContinueDrain } from "./uploadBudget";
+import {
+  FRAME_UPLOAD_BUDGET,
+  MAX_STALE_QUEUE,
+  partitionUploadQueue,
+  shouldContinueDrain,
+  shouldContinueStaleDrain,
+} from "./uploadBudget";
 import { qualityGovernor } from "../core/qualityGovernor";
 import { getMax3DTextureSize, type SceneRenderer } from "../render/gpu/sceneRenderer";
 import {
@@ -134,6 +140,11 @@ type GpuBrickToken = { layerId: string; key: string; slotIndex: number };
  * are allowed to land without displacing planned ones. */
 const FREE_SLOTS_ONLY: ProtectedKeys = { has: () => true };
 
+/** Rate limit for auto-range `poolsVersion` bumps: during early float-layer
+ * streaming, range moves can land several times per frame and each bump
+ * re-renders the layer components + levels editor. */
+const AUTO_RANGE_BUMP_MS = 150;
+
 export type LayerBrickPool = {
   layerId: string;
   mode: "2D" | "3D";
@@ -195,6 +206,8 @@ export type ResidentBrickInfo = {
 };
 
 export type BrickSystemStats = {
+  /** Bricks whose fetch completed AND entered the upload queue (bricks
+   * discarded by the staleness checkpoint count as `staleFetches` instead). */
   bricksFetched: number;
   chunkRequests: number;
   /** Bytes of FIRST-SEEN chunks only — approximates unique decode volume
@@ -217,11 +230,17 @@ export type BrickSystemStats = {
   bytesUploaded: number;
   emptyBricks: number;
   evictions: number;
-  /** Fetched bricks that left the plan before upload AND found no free slot —
-   * pure waste (the work was paid for, nothing became resident). */
+  /** Queued out-of-plan bricks dropped: no free slot at drain time, or
+   * stale-queue cap overflow. The repack was paid for; nothing landed. */
   planDrops: number;
   /** Planned bricks that found every slot protected at drain time. */
   acquireFailures: number;
+  /** Bricks whose fetch completed after the plan moved on: repack and upload
+   * skipped, decoded chunks retained in the cache (flip-back stays cheap). */
+  staleFetches: number;
+  /** Out-of-plan bricks uploaded into FREE slots on leftover budget —
+   * fallback data, never under the first-brick free pass. */
+  staleUploads: number;
   fetchErrors: number;
 };
 
@@ -253,6 +272,10 @@ export class BrickResidencyManager {
   private readonly fetchAbort = new AbortController();
   private disposed = false;
   private lastResidencyBumpAt = 0;
+  /** Auto-range bump throttle (see AUTO_RANGE_BUMP_MS); the trailing timer
+   * guarantees the LAST range move of a burst always publishes. */
+  private lastPoolsBumpAt = 0;
+  private poolsBumpTimer: ReturnType<typeof setTimeout> | null = null;
   /** False once a drain observed the whole pipeline idle: `drainUploads` then
    * returns immediately (no per-frame allocations/pool walks on idle rendered
    * frames) until new work arrives via `wakeDrain`. */
@@ -273,6 +296,8 @@ export class BrickResidencyManager {
     evictions: 0,
     planDrops: 0,
     acquireFailures: 0,
+    staleFetches: 0,
+    staleUploads: 0,
     fetchErrors: 0,
   };
   /** Chunk keys already counted toward bytesDecoded. */
@@ -832,17 +857,17 @@ export class BrickResidencyManager {
     pool.protectedKeys = protectedKeys;
     pool.pool.touch(planKeys);
 
-    // In-flight and queued bricks that fell out of the plan are deliberately
-    // KEPT: the chunk fetch ignores per-brick aborts anyway (fetchChunkShared),
-    // so the network+decode is already paid for — aborting only threw away
-    // finished work, and plan oscillation during camera motion then refetched
-    // the same bricks over and over (observed 13× amplification). They drain
-    // into FREE slots as shader fallback data (see drainUploads); content is
-    // keyed by (level, coords) under an unchanged sliceSignature, so it is
-    // never wrong — only possibly unneeded. Aborts remain in flushPool /
-    // disposePool, where content genuinely invalidates. Tradeoff: up to
-    // maxInflightBricks fetch slots may briefly serve out-of-plan bricks,
-    // delaying new-plan fetches by at most one round.
+    // In-flight and queued bricks that fell out of the plan are NOT aborted
+    // here — the chunk fetch ignores per-brick aborts anyway (fetchChunkShared)
+    // and aborting used to refetch the same bricks over and over under plan
+    // oscillation (observed 13× amplification). Their lifecycle instead:
+    // fetchBrick's staleness checkpoint drops out-of-plan bricks right after
+    // the chunk await (decode stays in the shared cache; no repack, inFlight
+    // slot released immediately), and drainUploads uploads already-repacked
+    // stale bricks only on leftover budget into FREE slots. Content is keyed
+    // by (level, coords) under an unchanged sliceSignature, so a kept brick
+    // is never wrong — only possibly unneeded. Aborts remain in flushPool /
+    // disposePool, where content genuinely invalidates.
 
     // Fetch every planned node that isn't resident yet — coarse levels first
     // (they are the fallback), then plan priority (near-first). Only
@@ -1186,6 +1211,21 @@ export class BrickResidencyManager {
       this.stats.chunkRequests += fetches.length;
       this.stats.fetchMs += performance.now() - fetchStartedAt;
 
+      // Staleness checkpoint: the plan moved on while fetching (2D pan — the
+      // node set turns over as bricks scroll). The decoded chunks stay in the
+      // shared cache, so a flip-back refetches at cache-hit cost plus one
+      // repack; spending a repack worker + queue slot on an out-of-plan brick
+      // here would delay newly visible bricks instead. Coarsest-level bricks
+      // are exempt — protectedKeys only pins coarsest bricks already RESIDENT,
+      // and an in-flight one is the shader's fallback of last resort.
+      if (
+        node.level !== pool.geometry.levels.length - 1 &&
+        !pool.protectedKeys.has(node.key)
+      ) {
+        this.stats.staleFetches += 1;
+        return; // finally: inFlight release + startNextFetches
+      }
+
       const stored = pool.spec.stored;
       const elementCount = stored[0] * stored[1] * stored[2] * pool.spec.channelCount;
 
@@ -1268,6 +1308,92 @@ export class BrickResidencyManager {
     }
   }
 
+  /**
+   * Upload/map one queued brick. `planned` decides eviction rights (planned
+   * bricks may evict unprotected occupants; stale ones take FREE slots only)
+   * and the failure counter; `progress` accumulates the frame budget.
+   */
+  private drainEntry(
+    pool: LayerBrickPool,
+    pending: PendingBrick,
+    planned: boolean,
+    progress: { bytes: number; bricks: number; uploadedAny: boolean },
+  ): void {
+    if (pending.uniformValue !== null) {
+      // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
+      // Mapped even when the plan moved on: EMPTY costs no slot and is
+      // valid fallback data.
+      const encoded = encodeEmptyValue(pending.uniformValue, pool);
+      setPageEntry(pool.pageTable, pending.level, pending.coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
+      pool.emptyValues.set(pending.key, pending.uniformValue);
+      this.stats.emptyBricks += 1;
+      progress.uploadedAny = true;
+      return;
+    }
+
+    const acquired = pool.pool.acquire(
+      pending.key,
+      planned ? pool.protectedKeys : FREE_SLOTS_ONLY,
+    );
+    if (!acquired) {
+      if (planned) this.stats.acquireFailures += 1;
+      else this.stats.planDrops += 1;
+      return;
+    }
+
+    if (acquired.evictedKey) {
+      const evicted = parseNodeKey(acquired.evictedKey);
+      setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
+      pool.gpuStaleKeys.delete(acquired.evictedKey);
+      this.stats.evictions += 1;
+    }
+
+    if (pending.gpu) {
+      // Compute repack straight into the slot. The page entry goes
+      // RESIDENT optimistically — content is correct either way; the
+      // min/max readback demotes uniform bricks to EMPTY a few frames
+      // later (applyGpuOutcome).
+      this.gpuRepacker!.dispatch({
+        atlas: pool.atlas,
+        input: {
+          spec: pool.spec,
+          level: pool.geometry.levels[pending.level],
+          axes: pool.geometry.axes,
+          // Always plain channel slabs here: a phasor layer never reaches
+          // the GPU kernel (it cannot reduce — see fetchBrick).
+          slabs: pool.geometry.slabs,
+          phasorBins: pool.geometry.phasorBins,
+          brickBox: nodeVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
+          fetchBox: fetchVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
+          fixedOffsets: pool.fixedOffsets,
+          chunks: pending.gpu.chunks,
+        },
+        chunkKeys: pending.gpu.chunks.map((chunk) => chunk.cacheKey),
+        slotCoords: acquired.slot.coords,
+        token: { layerId: pool.layerId, key: pending.key, slotIndex: acquired.slot.index },
+      });
+      this.stats.gpuBricks += 1;
+      pool.gpuStaleKeys.add(pending.key);
+    } else {
+      writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
+      // A CPU re-upload of a formerly GPU-repacked key refreshes the mirror.
+      pool.gpuStaleKeys.delete(pending.key);
+    }
+    setPageEntry(
+      pool.pageTable,
+      pending.level,
+      pending.coords,
+      acquired.slot.coords,
+      PAGE_FLAG_RESIDENT,
+    );
+    progress.bytes += pending.bytes;
+    progress.bricks += 1;
+    this.stats.bricksUploaded += 1;
+    this.stats.bytesUploaded += pending.bytes;
+    if (!planned) this.stats.staleUploads += 1;
+    progress.uploadedAny = true;
+  }
+
   /** Called from the provider's useFrame: bounded texture uploads per frame. */
   drainUploads(): void {
     if (this.disposed) return;
@@ -1278,105 +1404,59 @@ export class BrickResidencyManager {
     const drainStartedAt = performance.now();
     const profile = qualityGovernor.getProfile();
     const budget = { ...FRAME_UPLOAD_BUDGET, maxMs: profile.uploadBudgetMs };
-    let bytes = 0;
-    let bricks = 0;
-    let uploadedAny = false;
+    const progress = { bytes: 0, bricks: 0, uploadedAny: false };
+    const progressOf = () => ({
+      bytes: progress.bytes,
+      bricks: progress.bricks,
+      elapsedMs: performance.now() - drainStartedAt,
+    });
 
+    // Planned-first two-pass drain, ordered GLOBALLY across pools: visible
+    // (planned) bricks from every pool spend the budget first — with the
+    // first-brick free pass so streaming always makes progress (P19: on
+    // integrated GPUs a single texSubImage3D can cost >15 ms; the ms cap is
+    // tier-scaled). Stale (out-of-plan) bricks upload only on genuinely
+    // leftover budget, into FREE slots, and never under the free pass — a
+    // stale brick must never be the one causing the >maxMs hitch it permits.
+    // The partition re-evaluates protectedKeys each drain, so a stale entry
+    // whose plan flips back is automatically promoted to planned.
+    const partitions = new Map<
+      LayerBrickPool,
+      { planned: PendingBrick[]; stale: PendingBrick[] }
+    >();
     for (const pool of this.pools.values()) {
-      while (
-        pool.queue.length > 0 &&
-        // Time-capped alongside bytes/bricks (P19): on integrated GPUs a
-        // single texSubImage3D can cost >15 ms — without the wall-clock cap a
-        // full batch stalls the frame for hundreds of ms. The ms cap is
-        // tier-scaled (slower GPUs get a smaller slice of the frame).
-        shouldContinueDrain(
-          { bytes, bricks, elapsedMs: performance.now() - drainStartedAt },
-          budget,
-        )
-      ) {
-        const pending = pool.queue.shift()!;
-        pool.queuedKeys.delete(pending.key);
-        const planned = pool.protectedKeys.has(pending.key);
-
-        if (pending.uniformValue !== null) {
-          // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
-          // Mapped even when the plan moved on: EMPTY costs no slot and is
-          // valid fallback data.
-          const encoded = encodeEmptyValue(pending.uniformValue, pool);
-          setPageEntry(pool.pageTable, pending.level, pending.coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
-          pool.emptyValues.set(pending.key, pending.uniformValue);
-          this.stats.emptyBricks += 1;
-          uploadedAny = true;
-          continue;
-        }
-
-        // Planned bricks may evict unprotected occupants. A brick the plan
-        // moved on from is still uploaded when a FREE slot exists — its fetch
-        // and repack are already paid for, and as shader fallback data it
-        // beats dropping (the plan often flips back within a few replans) —
-        // but it never evicts anyone.
-        const acquired = pool.pool.acquire(
-          pending.key,
-          planned ? pool.protectedKeys : FREE_SLOTS_ONLY,
-        );
-        if (!acquired) {
-          if (planned) this.stats.acquireFailures += 1;
-          else this.stats.planDrops += 1;
-          continue;
-        }
-
-        if (acquired.evictedKey) {
-          const evicted = parseNodeKey(acquired.evictedKey);
-          setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
-          pool.gpuStaleKeys.delete(acquired.evictedKey);
-          this.stats.evictions += 1;
-        }
-
-        if (pending.gpu) {
-          // Compute repack straight into the slot. The page entry goes
-          // RESIDENT optimistically — content is correct either way; the
-          // min/max readback demotes uniform bricks to EMPTY a few frames
-          // later (applyGpuOutcome).
-          this.gpuRepacker!.dispatch({
-            atlas: pool.atlas,
-            input: {
-              spec: pool.spec,
-              level: pool.geometry.levels[pending.level],
-              axes: pool.geometry.axes,
-              // Always plain channel slabs here: a phasor layer never reaches
-              // the GPU kernel (it cannot reduce — see fetchBrick).
-              slabs: pool.geometry.slabs,
-              phasorBins: pool.geometry.phasorBins,
-              brickBox: nodeVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
-              fetchBox: fetchVoxelBox(pool.geometry, pool.spec, pending.level, pending.coords),
-              fixedOffsets: pool.fixedOffsets,
-              chunks: pending.gpu.chunks,
-            },
-            chunkKeys: pending.gpu.chunks.map((chunk) => chunk.cacheKey),
-            slotCoords: acquired.slot.coords,
-            token: { layerId: pool.layerId, key: pending.key, slotIndex: acquired.slot.index },
-          });
-          this.stats.gpuBricks += 1;
-          pool.gpuStaleKeys.add(pending.key);
-        } else {
-          writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
-          // A CPU re-upload of a formerly GPU-repacked key refreshes the mirror.
-          pool.gpuStaleKeys.delete(pending.key);
-        }
-        setPageEntry(
-          pool.pageTable,
-          pending.level,
-          pending.coords,
-          acquired.slot.coords,
-          PAGE_FLAG_RESIDENT,
-        );
-        bytes += pending.bytes;
-        bricks += 1;
-        this.stats.bricksUploaded += 1;
-        this.stats.bytesUploaded += pending.bytes;
-        uploadedAny = true;
+      const { planned, stale, dropped } = partitionUploadQueue(
+        pool.queue,
+        pool.protectedKeys,
+        MAX_STALE_QUEUE,
+      );
+      for (const entry of dropped) {
+        pool.queuedKeys.delete(entry.key);
+        this.stats.planDrops += 1;
       }
+      partitions.set(pool, { planned, stale });
+    }
 
+    for (const [pool, part] of partitions) {
+      while (part.planned.length > 0 && shouldContinueDrain(progressOf(), budget)) {
+        const pending = part.planned.shift()!;
+        pool.queuedKeys.delete(pending.key);
+        this.drainEntry(pool, pending, pool.protectedKeys.has(pending.key), progress);
+      }
+    }
+    for (const [pool, part] of partitions) {
+      while (part.stale.length > 0 && shouldContinueStaleDrain(progressOf(), budget)) {
+        const pending = part.stale.shift()!;
+        pool.queuedKeys.delete(pending.key);
+        this.drainEntry(pool, pending, false, progress);
+      }
+    }
+
+    // Write the undrained remainder back (feeds the streaming predicate and
+    // the budget-exhausted invalidate below) and flush dirty page tables.
+    for (const pool of this.pools.values()) {
+      const part = partitions.get(pool);
+      if (part) pool.queue = [...part.planned, ...part.stale];
       flushPageTable(this.deps.renderer, pool.pageTable);
     }
 
@@ -1392,8 +1472,8 @@ export class BrickResidencyManager {
       });
     }
 
-    if (uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
-    if (bricks > 0) perfMonitor.markUpload(bricks, bytes); // no-op unless recording
+    if (progress.uploadedAny) this.stats.uploadMs += performance.now() - drainStartedAt;
+    if (progress.bricks > 0) perfMonitor.markUpload(progress.bricks, progress.bytes); // no-op unless recording
 
     // "Streaming" (work anywhere in the pipeline) counts as ACTIVITY for the
     // quality governor: frames rendered while bricks load use the tier's
@@ -1413,7 +1493,7 @@ export class BrickResidencyManager {
       this.prefetchAdjacentSlabs();
     }
 
-    if (uploadedAny) {
+    if (progress.uploadedAny) {
       // Throttle version bumps while streaming — every bump re-renders the
       // React consumers (layer components, overlay, DebugPanel). The final
       // batch always bumps so consumers settle on the complete state.
@@ -1433,7 +1513,7 @@ export class BrickResidencyManager {
     // this method, so gpuFlush === null proves none are in flight; the
     // min/max readback continuation does its own page-table flush and bumps).
     // The streaming→idle edge above already ran in this same pass.
-    if (!streaming && !uploadedAny && gpuFlush === null) this.drainNeeded = false;
+    if (!streaming && !progress.uploadedAny && gpuFlush === null) this.drainNeeded = false;
   }
 
   /**
@@ -1482,8 +1562,28 @@ export class BrickResidencyManager {
       flushPageTable(this.deps.renderer, pool.pageTable);
     }
 
-    this.deps.viewerStore.getState().bumpPoolsVersion();
-    this.deps.invalidate();
+    // The page-table re-encode above is correctness and stays unthrottled;
+    // the React-facing bump is rate-limited with a trailing timer so the
+    // LAST range move of a burst always publishes (the drain's idle edge is
+    // not a safe trailing site — applyGpuOutcome can fold ranges in after
+    // the pipeline already went idle).
+    const now = performance.now();
+    if (now - this.lastPoolsBumpAt > AUTO_RANGE_BUMP_MS) {
+      this.lastPoolsBumpAt = now;
+      this.deps.viewerStore.getState().bumpPoolsVersion();
+      this.deps.invalidate();
+    } else if (this.poolsBumpTimer === null) {
+      this.poolsBumpTimer = setTimeout(
+        () => {
+          this.poolsBumpTimer = null;
+          if (this.disposed) return;
+          this.lastPoolsBumpAt = performance.now();
+          this.deps.viewerStore.getState().bumpPoolsVersion();
+          this.deps.invalidate();
+        },
+        Math.max(0, AUTO_RANGE_BUMP_MS - (now - this.lastPoolsBumpAt)),
+      );
+    }
   }
 
   /**
@@ -1717,6 +1817,10 @@ export class BrickResidencyManager {
     this.fetchAbort.abort();
     this.inFlightChunks.clear();
     this.lastChunkRead = null;
+    if (this.poolsBumpTimer !== null) {
+      clearTimeout(this.poolsBumpTimer);
+      this.poolsBumpTimer = null;
+    }
     this.gpuRepacker?.dispose();
     this.gpuRepacker = null;
     for (const pool of this.pools.values()) this.disposePool(pool);

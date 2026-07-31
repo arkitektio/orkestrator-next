@@ -253,6 +253,10 @@ export class BrickResidencyManager {
   private readonly fetchAbort = new AbortController();
   private disposed = false;
   private lastResidencyBumpAt = 0;
+  /** False once a drain observed the whole pipeline idle: `drainUploads` then
+   * returns immediately (no per-frame allocations/pool walks on idle rendered
+   * frames) until new work arrives via `wakeDrain`. */
+  private drainNeeded = true;
   readonly stats: BrickSystemStats = {
     bricksFetched: 0,
     chunkRequests: 0,
@@ -768,8 +772,15 @@ export class BrickResidencyManager {
     return { values, sliceSignature };
   }
 
+  /** New work may exist (plan change, fetch completion, GPU requeue): the next
+   * `drainUploads` must run its full pass. */
+  private wakeDrain(): void {
+    this.drainNeeded = true;
+  }
+
   private reconcileAll(plans: Record<string, LayerNodePlan>): void {
     if (this.disposed) return;
+    this.wakeDrain();
     const layers = this.deps.sceneStore.getState().layers;
 
     // Dispose pools whose layer or plan vanished.
@@ -1242,6 +1253,7 @@ export class BrickResidencyManager {
       }
       this.stats.bricksFetched += 1;
 
+      this.wakeDrain();
       pool.queue.push(pending);
       pool.queuedKeys.add(node.key);
       this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
@@ -1259,6 +1271,10 @@ export class BrickResidencyManager {
   /** Called from the provider's useFrame: bounded texture uploads per frame. */
   drainUploads(): void {
     if (this.disposed) return;
+    // Idle fast path: a previous drain saw the whole pipeline empty and no
+    // GPU flush in flight — skip the pool walks and per-frame allocations
+    // until wakeDrain() signals new work.
+    if (!this.drainNeeded) return;
     const drainStartedAt = performance.now();
     const profile = qualityGovernor.getProfile();
     const budget = { ...FRAME_UPLOAD_BUDGET, maxMs: profile.uploadBudgetMs };
@@ -1411,6 +1427,13 @@ export class BrickResidencyManager {
       // Budget exhausted with work left: keep the demand frameloop running.
       this.deps.invalidate();
     }
+
+    // Fully idle: nothing queued/in-flight/pending anywhere, nothing uploaded
+    // this pass, and no GPU flush submitted (dispatches only happen inside
+    // this method, so gpuFlush === null proves none are in flight; the
+    // min/max readback continuation does its own page-table flush and bumps).
+    // The streaming→idle edge above already ran in this same pass.
+    if (!streaming && !uploadedAny && gpuFlush === null) this.drainNeeded = false;
   }
 
   /**
@@ -1503,6 +1526,7 @@ export class BrickResidencyManager {
       pool.gpuStaleKeys.delete(token.key);
       this.stats.fetchErrors += 1;
       if (pool.protectedKeys.has(token.key)) {
+        this.wakeDrain();
         pool.pendingFetch.unshift({ key: token.key, level, coords, role: "target", priority: 0 });
         this.startNextFetches(pool);
       }

@@ -82,11 +82,10 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
           const renderer = new WebGPURenderer({
             ...(props as Record<string, unknown>),
             antialias: true,
-            // GPU frame timing for the perf monitor. Read once by the Backend
-            // constructor (cannot be toggled later); three self-clears it when
-            // the adapter lacks timestamp-query. Idle cost is two timestamp
-            // writes per pass — the resolve/readback only happens while a perf
-            // recording is armed (PerfFrameProbe).
+            // GPU frame timing for the perf monitor. Constructing with the
+            // flag on is required so init() can validate feature support
+            // (three self-clears it when the adapter lacks timestamp-query);
+            // it is switched OFF again right after init — see below.
             trackTimestamp: true,
           });
 
@@ -101,6 +100,24 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
           (renderer as unknown as { _getFallback: unknown })._getFallback = null;
 
           await renderer.init();
+
+          // Timestamp writes land in a 2048-slot query pool that ONLY a
+          // resolveTimestampsAsync call drains — and nobody resolves outside a
+          // perf recording, so leaving the flag on floods the pool (three
+          // warns "Maximum number of queries exceeded"). Park it off and
+          // remember whether the device actually supports it; PerfFrameProbe
+          // flips it on for a recording's lifetime and drains on stop. The
+          // per-pass check in three reads the backend property live, so this
+          // runtime toggle is safe.
+          const tsBackend = (
+            renderer as unknown as {
+              backend?: { trackTimestamp?: boolean; __timestampQuerySupported?: boolean };
+            }
+          ).backend;
+          if (tsBackend) {
+            tsBackend.__timestampQuerySupported = tsBackend.trackTimestamp === true;
+            tsBackend.trackTimestamp = false;
+          }
 
           const anyRenderer = renderer as unknown as {
             backend?: { isWebGPUBackend?: boolean };

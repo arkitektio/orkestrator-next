@@ -656,10 +656,13 @@ Consequences and contracts:
   R32F atlas's LinearFilter relies on the `float32-filterable` device feature,
   which three requests automatically when the adapter supports it.
 - **GPU frame timing** (`PerfFrameProbe`): `gpuMs` comes from WebGPU timestamp
-  queries — the renderer is constructed with `trackTimestamp: true` (Scene.tsx)
-  and the probe calls `resolveTimestampsAsync(TimestampQuery.RENDER)` per
-  recorded frame, reading the previous frame's pass time. Null on adapters
-  without `timestamp-query` (three self-clears the flag).
+  queries. The renderer is constructed with `trackTimestamp: true` so init()
+  validates feature support, then Scene.tsx parks the backend flag OFF —
+  timestamp writes flood the 2048-slot query pool unless resolved every frame,
+  and only a recording does that. `PerfFrameProbe` flips the flag on for the
+  recording's lifetime, calls `resolveTimestampsAsync(TimestampQuery.RENDER)`
+  per recorded frame (reads the previous frame's pass time), and drains on
+  stop. Null on adapters without `timestamp-query`.
 - Deferred WebGPU-era upgrades: storage-buffer page table (obsoletes the P2
   packed-texture workaround).
 

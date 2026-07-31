@@ -32,12 +32,31 @@ const RecordingProbe = () => {
   useEffect(() => {
     // A recording needs a frame every tick to sample; take over the render loop.
     setFrameloop("always");
+    // GPU timing is scoped to the recording: timestamp writes flood the query
+    // pool unless someone resolves them every frame (which only this probe
+    // does), so Scene.tsx parks trackTimestamp off and we flip it here.
+    const backend = (
+      gl as unknown as {
+        backend?: { trackTimestamp?: boolean; __timestampQuerySupported?: boolean };
+      }
+    ).backend;
+    if (backend?.__timestampQuerySupported) backend.trackTimestamp = true;
     return () => {
       setFrameloop("demand");
+      if (backend?.__timestampQuerySupported) {
+        // Drain the queries this session wrote, THEN stop tracking (the
+        // resolve itself is gated on the flag).
+        void (gl as unknown as WebGPURenderer)
+          .resolveTimestampsAsync(TimestampQuery.RENDER)
+          .catch(() => undefined)
+          .finally(() => {
+            backend.trackTimestamp = false;
+          });
+      }
       lastRef.current = null;
       gpuMsRef.current = null;
     };
-  }, [setFrameloop]);
+  }, [setFrameloop, gl]);
 
   // Priority 1: this callback owns the render. Runs after the priority-0
   // useFrames (camera sync, upload drain).

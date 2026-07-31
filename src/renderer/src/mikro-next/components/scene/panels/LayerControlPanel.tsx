@@ -6,6 +6,7 @@ import {
 import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { isLayerOutOfPlane } from "../core/worldTransform";
 import { perfMonitor } from "../managers/perfMonitor";
@@ -68,11 +69,12 @@ const UnplannableNotice = ({
  * survives collapsing) and shares it between the header — which hosts the tiny
  * Save button — and the unfolded editor body.
  *
- * Memoized: the panel re-renders whenever `layerViewRanges` changes (which can
- * still happen when a layer's integer view range or LOD scale changes), but the
- * card owns the heavy `useRenderGraphEditor` hook and subtree, so it must only
- * re-render when ITS props change. All callbacks are passed in already-stable
- * (id-parameterized) so the shallow prop compare actually skips.
+ * Memoized: the panel re-renders only when a layer's coarse view summary
+ * changes (5-point coverage bucket / expansion verdict — see
+ * `layerViewSummaries`), but the card owns the heavy `useRenderGraphEditor`
+ * hook and subtree, so it must only re-render when ITS props change. All
+ * callbacks are passed in already-stable (id-parameterized) so the shallow
+ * prop compare actually skips.
  */
 const LayerCard = memo(function LayerCard({
   layer,
@@ -153,7 +155,24 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
-  const layerViewRanges = useViewerStore((s) => s.layerViewRanges);
+  // Coarse per-layer view summary instead of the raw `layerViewRanges`: the
+  // tracker rewrites the ranges on essentially every camera tick during a 2D
+  // pan (integer voxel ranges, no dead-band), which used to re-render this
+  // whole panel ~16×/s and defeat the LayerCard memo via viewportPercent
+  // churn. Encoded as `${percentBucket}:${expandedByCoverage}` primitives so
+  // useShallow only re-renders when a 5-point bucket or the expansion verdict
+  // actually flips. The expansion threshold is evaluated on the RAW fraction
+  // here, so behavior is identical — only re-render frequency changes.
+  const layerViewSummaries = useViewerStore(
+    useShallow((s) => {
+      const out: Record<string, string> = {};
+      for (const [id, range] of Object.entries(s.layerViewRanges)) {
+        const bucket = Math.round(range.viewportFraction * 20) * 5; // 0..100 step 5
+        out[id] = `${bucket}:${range.viewportFraction > 0.45 ? 1 : 0}`;
+      }
+      return out;
+    }),
+  );
   // Rarely changes (only when the viability verdict flips) — P17-clean.
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const currentZ = useViewerStore((s) => s.currentZ);
@@ -206,9 +225,17 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
     // but their warning must not hide behind the off-view toggle.
     unplannableLayers[l.id] !== undefined;
 
-  // Rough share of the viewport each layer covers (see LayerViewRange
-  // viewportFraction); missing = off-view, which sorts to the bottom.
-  const coverageOf = (id: string) => layerViewRanges[id]?.viewportFraction ?? -1;
+  // Rough share of the viewport each layer covers, decoded from the coarse
+  // summary (percent buckets of 5); missing = off-view, sorts to the bottom.
+  // Array.prototype.sort is stable, so ties within a bucket keep layer order —
+  // the list can only reorder when a bucket boundary is crossed.
+  const summaryOf = (id: string) => {
+    const encoded = layerViewSummaries[id];
+    if (encoded === undefined) return null;
+    const [bucket, expanded] = encoded.split(":");
+    return { percent: Number(bucket), expandedByCoverage: expanded === "1" };
+  };
+  const coverageOf = (id: string) => summaryOf(id)?.percent ?? -1;
   const byCoverageDesc = (a: LayerState, b: LayerState) =>
     coverageOf(b.id) - coverageOf(a.id);
 
@@ -222,26 +249,27 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
     : inViewLayers;
 
   // A layer's editor is unfolded when the user explicitly selected it, when it
-  // is the only layer in view, or when it covers more than 60% of the viewport.
-  // The last case is per-layer, so several overlapping layers can be unfolded at
-  // the same time (no single "selected" fallback).
+  // is the only layer in view, or when it covers enough of the viewport (the
+  // >0.45 raw-fraction verdict computed inside the selector). The coverage
+  // case is per-layer, so several overlapping layers can be unfolded at the
+  // same time (no single "selected" fallback).
   const isExpanded = (layer: LayerState) =>
     layer.id === selectedLayerId ||
     inViewLayers.length === 1 ||
-    coverageOf(layer.id) > 0.45;
+    (summaryOf(layer.id)?.expandedByCoverage ?? false);
 
   // The row IS the button: selecting it unfolds the editor inline within the
   // same card (one border around header + body), rather than popping a
   // separate flyout window.
   const renderRow = (layer: LayerState) => {
-    const fraction = layerViewRanges[layer.id]?.viewportFraction;
+    const summary = summaryOf(layer.id);
     return (
       <LayerCard
         key={layer.id}
         layer={layer}
         expanded={isExpanded(layer)}
         originalLayer={originalLayers.find((o) => o.id === layer.id)}
-        viewportPercent={fraction != null ? Math.round(fraction * 100) : undefined}
+        viewportPercent={summary?.percent}
         unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
         onUpdate={updateLayer}

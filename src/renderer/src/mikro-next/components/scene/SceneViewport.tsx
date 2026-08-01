@@ -27,11 +27,11 @@ import { AttributeProbeTracker } from "./managers/AttributeProbeTracker";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
+import { SceneModeControls } from "./overlays/SceneModeControls";
 import { DrawSizeReadout } from "./overlays/DrawSizeReadout";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { SceneOverlay } from "./overlays/SceneOverlay";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";
-import { AnimationPanel } from "./panels/AnimationPanel";
 import { DebugPanel } from "./panels/DebugPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
@@ -175,8 +175,8 @@ const WhenDebug = ({ children }: { children: ReactNode }) => {
  * The panel stack a viewport gets when its host composes nothing: everything on
  * the left, foldable. Exported as Scene.DefaultPanels so a host that only wants
  * to *add* a panel can render it alongside its own instead of restating it.
- * The layer list is NOT here — it lives in the page's right-rail sidebar
- * (`SceneLayersSidebar`), outside the viewport.
+ * The layer list and animations are NOT here — they live in the page's
+ * right-rail sidebar (`sceneSidebarTabs.tsx`), outside the viewport.
  */
 export const DefaultScenePanels = () => (
   <>
@@ -185,7 +185,6 @@ export const DefaultScenePanels = () => (
       <SceneColumnPanels>
         <SceneOverlay />
         <SelectedPointPanel />
-        <AnimationPanel />
       </SceneColumnPanels>
     </SceneColumn>
     {/* Z docks right, opposite the panel column: both defaulting left would
@@ -291,6 +290,7 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <AttributeProbeTracker />
         <ScaleBar />
         <DrawSizeReadout />
+        <SceneModeControls />
 
         <RoiToolbar />
       </div>

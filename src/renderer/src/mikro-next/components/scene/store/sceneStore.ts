@@ -57,7 +57,11 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
         set((state) => {
           state.preferredView = view;
         }),
-      spatialUnit: spaceAxis?.unit ? String(spaceAxis.unit) : "px",
+      // A pixel-grid world has NO unit on its axes (`Axis.unit` is null there
+      // by contract), so everything downstream (scale bar, draw readouts)
+      // shows "px" rather than claiming a physical unit that was never
+      // measured.
+      spatialUnit: String(spaceAxis?.unit ?? "").trim() || "px",
       // No `coordinateSystems` or `registrations`: edges self-describe their
       // axis order (inputAxes/outputAxes) and placement comes from each
       // layer's pathToWorld, so the fragment ships neither global list.

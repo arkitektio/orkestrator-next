@@ -143,6 +143,12 @@ fragment LeafTransformation on Transformation {
 fragment PlacementStep on PlacementStep {
   transformation {
     ...Transformation
+    # A refinement rewrites the edge in place and bumps `version` — added on
+    # top of the shared Transformation fragment (the attributeplan path does
+    # the same) so (id, version) identifies the edge's STATE: the scene
+    # provider's structural signature uses it to rebuild on registration
+    # changes while ignoring content-only cache churn.
+    version
   }
   inverted
 }

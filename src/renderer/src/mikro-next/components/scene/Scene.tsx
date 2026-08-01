@@ -11,7 +11,10 @@ import { DefaultScenePanels, SceneViewport } from "./SceneViewport";
 import { SceneOverlay } from "./overlays/SceneOverlay";
 import { AnimationPanel } from "./panels/AnimationPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
-import { SceneLayersSidebar } from "./panels/SceneLayersSidebar";
+import {
+  SceneAnimationsSidebar,
+  SceneLayersSidebar,
+} from "./panels/sceneSidebarTabs";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 
@@ -73,4 +76,5 @@ export const Scene = Object.assign(SceneRoot, {
   ZSlider: ZSliderPanel,
   DimSliders: DimSliderPanel,
   LayersSidebar: SceneLayersSidebar,
+  AnimationsSidebar: SceneAnimationsSidebar,
 });

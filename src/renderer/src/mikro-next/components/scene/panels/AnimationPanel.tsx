@@ -174,7 +174,16 @@ const DraftRow = ({ index }: { index: number }) => {
  * the view it was taken in (`captureCameraState` fills only that view's
  * orientation/scale pair), which is why the capture button names the mode.
  */
-export const AnimationPanel = () => {
+export const AnimationPanel = ({
+  variant = "floating",
+}: {
+  /**
+   * Where the panel is hosted. "floating" is the in-viewport card (fixed
+   * width, own chrome); "sidebar" fills a page-rail tab, which hands the
+   * panel a plain full-height flex box and expects it to own its scroll.
+   */
+  variant?: "floating" | "sidebar";
+} = {}) => {
   const displayMode = useModeStore((s) => s.displayMode);
   const draft = useAnimationStore((s) => s.draft);
   const editingId = useAnimationStore((s) => s.editingId);
@@ -205,7 +214,13 @@ export const AnimationPanel = () => {
   };
 
   return (
-    <div className="pointer-events-auto flex max-h-[60vh] w-60 flex-col gap-2 overflow-y-auto rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
+    <div
+      className={
+        variant === "sidebar"
+          ? "flex h-full min-h-0 flex-col gap-2 overflow-y-auto p-2"
+          : "pointer-events-auto flex max-h-[60vh] w-60 flex-col gap-2 overflow-y-auto rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md"
+      }
+    >
       <div className="flex items-center gap-1 text-[10px] font-medium text-white/60">
         <Clapperboard className="h-3 w-3" />
         <span>Animations</span>

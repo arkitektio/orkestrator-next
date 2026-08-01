@@ -22,7 +22,12 @@ const Page = asDetailQueryRoute(
           actions={<MikroScene.Actions object={id} />}
           object={data.scene}
           title={data?.scene?.name}
-          additionalSidebars={<Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>}
+          additionalSidebars={
+            <>
+              <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>
+              <Sidebars.Tab label="Animations"><Scene.AnimationsSidebar /></Sidebars.Tab>
+            </>
+          }
           defaultSidebar="Layers"
           sidebarKey="SceneDetail"
         >

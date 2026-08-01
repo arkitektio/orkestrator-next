@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
+import {
+  FLAVOR_BADGE_CLASSES,
+  layerDisplayLabel,
+  layerFlavor,
+} from "./layerIdentity";
 import { layerSwatchBackground } from "./renderGraphSwatch";
 
 /**
@@ -47,9 +52,8 @@ export const LayerRow = ({
   /** Persist the unsaved render-graph edits. */
   onSaveGraph?: () => void;
 }) => {
-  const label =
-    layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel
-      ?.label ?? "Untitled Layer";
+  const label = layerDisplayLabel(layer);
+  const flavor = layerFlavor(layer);
   const hidden = layer.visible === false;
 
   return (
@@ -71,6 +75,12 @@ export const LayerRow = ({
       />
       <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
         {label}
+      </span>
+      <span
+        className={`shrink-0 rounded-full border px-1.5 text-[9px] leading-4 ${FLAVOR_BADGE_CLASSES[flavor]}`}
+        title="What kind of data this layer paints"
+      >
+        {flavor}
       </span>
       {graphDirty && onSaveGraph && (
         <button

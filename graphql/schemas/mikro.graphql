@@ -130,7 +130,7 @@ input ADatasetFilter {
   owner: ID
 
   """
-  Filter to datasets placeable into this scene: those with a lens whose space has a traversable path to the scene's world, walking the transformation edges. What could be staged there -- for what already is, use `scene`
+  Filter to datasets placeable into this coordinate system: those with a lens whose space has a traversable path into it, walking the transformation edges. Takes a *space*, not a scene, because that is all the answer depends on -- every scene over one world offers the same candidates. Pass `scene.worldCoordinateSystem.id` to ask it of a scene. What could be staged there -- for what already is, use `scene`
   """
   placeableIn: ID
 
@@ -1854,6 +1854,11 @@ A named coordinate space: a node in the transformation graph. Its axes are order
 """
 type CoordinateSystem {
   """
+  The annotations drawn in a space that can reach this one. Reachability, not containment: an annotation belongs to a collection, and outlives every scene composing over this space. A property of the space rather than of any scene over it, which is why it hangs off the system -- ask it of a scene as `worldCoordinateSystem { annotations }`
+  """
+  annotations: [Annotation!]!
+
+  """
   The system's axes, in array order (slowest-varying first). RFC-5 requires them ordered by type: time, then channel and custom types, then space
   """
   axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
@@ -1873,9 +1878,19 @@ type CoordinateSystem {
   name: String!
 
   """
+  Every space whose data can be composed here: those with a traversable path into this one, walking the transformation edges. The same set the `placeableIn` filters answer from, so a picker and a layer mutation cannot disagree. Distinct from `coordinateGraph`, which walks the undirected *neighbourhood* -- this is directed, and asks who can get in
+  """
+  placedSystems: [CoordinateSystem!]!
+
+  """
   Provenance entries for this coordinate system: who created it, and every subsequent change
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Every top-level edge landing in this space -- the claims that place something here. They belong to the space, so every scene composing over this system sees the same list, each entry unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. On a shared world these are the registrations a client authored; on a container's own grid they are the lens crops and derived children that land in it. Composing the matrices stays the client's job
+  """
+  registrations: [Transformation!]!
 
   """
   The data living in this space. Empty for a pure reference frame -- a world, an atlas -- which is what a space with no residents *is*; there is no separate kind to consult. Several residents may share one space: a dataset's own pyramid levels and unsliced lenses live in its grid, and a hundred tiles acquired on one stage can be registered into one stage frame
@@ -4617,7 +4632,7 @@ input LensFilter {
   ids: [ID!]
 
   """
-  Filter to lenses placeable into this scene: those whose space has a traversable path to the scene's world, walking the transformation edges under the scene's membership
+  Filter to lenses placeable into this coordinate system: those whose space has a traversable path into it, walking the transformation edges. Takes a *space*, not a scene -- pass `scene.worldCoordinateSystem.id` to ask it of a scene
   """
   placeableIn: ID
 }
@@ -8771,18 +8786,8 @@ type Scene {
   """
   annotationCollection: AnnotationCollection
 
-  """
-  The annotations drawn in a space this scene can reach. Reachability, not containment: an annotation belongs to a collection, and survives the scene's deletion
-  """
-  annotations: [Annotation!]!
-
   """The viewer background, as RGBA. Null lets the viewer use its own"""
   backgroundColor: [Float!]
-
-  """
-  Every coordinate system reachable in this scene: its world system plus those its transformation edges touch
-  """
-  coordinateSystems: [CoordinateSystem!]!
   id: ID!
 
   """
@@ -8798,11 +8803,6 @@ type Scene {
   How a viewer should open this scene: flat, volumetric, or its own choice. A preference, not a constraint -- nothing server-side reads it, and a viewer that cannot render volumes is not wrong to show the slice view
   """
   preferredView: PreferredView!
-
-  """
-  The registrations composing this scene: every top-level edge into its world system. A property of the *space*, not of the scene (one truth per space) -- every scene over the same world shares them, each unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. Composing the matrices stays the client's job
-  """
-  registrations: [Transformation!]!
 
   """
   The pre-rendered pictures of this composition, for previewing it without compositing the layers
@@ -9532,7 +9532,7 @@ input TableDatasetFilter {
   owner: ID
 
   """
-  Filter to table datasets placeable into this scene: those whose coordinate system has a traversable path to the scene's world, walking the transformation edges under the scene's membership
+  Filter to table datasets placeable into this coordinate system: those whose own coordinate system has a traversable path into it, walking the transformation edges. Takes a *space*, not a scene -- pass `scene.worldCoordinateSystem.id` to ask it of a scene
   """
   placeableIn: ID
 
@@ -10119,9 +10119,6 @@ input TransformationFilter {
   Show only top-level edges, excluding the children of SEQUENCE / BY_DIMENSION wrappers
   """
   rootsOnly: Boolean
-
-  """Filter by the scene this transformation is a member of"""
-  scene: ID
 
   """
   Filter by how much the edge's map is actually known, e.g. UNKNOWN to list every placement that is still an assumption

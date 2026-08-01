@@ -1,6 +1,6 @@
 import { useViewerStore } from "./store/viewerStore";
 import { useSceneStore } from "./store/sceneStore";
-import { unitLabel as resolveUnitLabel } from "./core/sceneUnits";
+import { isPhysicalUnit, unitLabel as resolveUnitLabel } from "./core/sceneUnits";
 
 function getNiceNumber(value: number): number {
   if (value <= 0) return 1;
@@ -20,6 +20,9 @@ export const ScaleBar = () => {
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
 
   if (!show) return null;
+  // A pixel-grid world measures nothing physical — a ruler would just restate
+  // indices, so the bar only exists where the world carries a real unit.
+  if (!isPhysicalUnit(spatialUnit)) return null;
 
   const unitLabel = resolveUnitLabel(spatialUnit);
   const targetPx = 120;

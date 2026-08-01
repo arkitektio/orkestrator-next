@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
+import { layerDisplayLabel } from "./layerIdentity";
 import { PlacementChain } from "./PlacementChain";
 import {
   RenderGraphEditor,
@@ -32,9 +33,7 @@ export const LayerGraphFlyout = ({
    */
   inline?: boolean;
 }) => {
-  const label =
-    layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel
-      ?.label ?? "Untitled Layer";
+  const label = layerDisplayLabel(layer);
 
   const body = (
     <div

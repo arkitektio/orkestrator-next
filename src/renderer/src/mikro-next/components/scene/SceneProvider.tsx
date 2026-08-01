@@ -6,11 +6,14 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { resolveSceneCameraFrame } from "./core/cameraState";
 import { resolvePreferredDisplayMode } from "./core/preferredView";
+import { sceneStructureSignature } from "./core/sceneStructure";
 import { assertWebGPUSupported } from "./render/gpu/webgpuSupport";
 import {
   AnimationStoreContext,
@@ -67,6 +70,7 @@ export type SceneScopeStatus =
 const SceneScopeStatusContext = createContext<SceneScopeStatus | null>(null);
 SceneScopeStatusContext.displayName = "SceneScopeStatusContext";
 
+
 export const useSceneScopeStatus = (): SceneScopeStatus => {
   const status = useContext(SceneScopeStatusContext);
   if (!status) {
@@ -110,6 +114,12 @@ export const SceneGuard = (props: {
  *
  * `scene` may be null ("no scene selected" — e.g. a dataset without scenes);
  * the scope build is skipped and the status says so.
+ *
+ * Rebuild contract: the scope is rebuilt only when `sceneStructureSignature`
+ * changes (scene switch, layer add/remove/reorder, world change, registration
+ * refinement). Content mutations fold their results into the stores at their
+ * call sites and MUST keep doing so — the provider deliberately ignores the
+ * fragment-identity churn they cause.
  */
 export const SceneProvider = (props: {
   scene: SceneFragment | null | undefined;
@@ -119,16 +129,31 @@ export const SceneProvider = (props: {
   const datalayer = useDatalayerEndpoint();
   const scene = props.scene ?? null;
 
-  // Both results remember WHICH scene they were built for: between a scene
-  // prop change and the rebuild effect firing there is one commit where the
-  // old scope still exists — matching on identity keeps the status honest
+  // The rebuild key. Content-only cache re-emissions (a saved render graph, a
+  // pinned view, a new animation) change the fragment's identity but not this
+  // string, so they no longer tear the scope down — see
+  // `sceneStructureSignature`.
+  const signature = useMemo(
+    () => (scene ? sceneStructureSignature(scene) : null),
+    [scene],
+  );
+
+  // The effect keys on the signature, not the fragment, so it must read the
+  // CURRENT fragment through a ref — the build uses whatever data is live
+  // when the structure changes.
+  const sceneRef = useRef(scene);
+  sceneRef.current = scene;
+
+  // Both results remember WHICH structure they were built for: between a
+  // structural change and the rebuild effect firing there is one commit where
+  // the old scope still exists — matching signatures keeps the status honest
   // ("initializing", never "ready with the wrong stores") through that window.
   const [built, setBuilt] = useState<{
-    scene: SceneFragment;
+    signature: string;
     scope: SceneScope;
   } | null>(null);
   const [failure, setFailure] = useState<{
-    scene: SceneFragment;
+    signature: string;
     error: Error;
   } | null>(null);
 
@@ -138,7 +163,8 @@ export const SceneProvider = (props: {
     const initializeSceneScope = async () => {
       setBuilt(null);
       setFailure(null);
-      if (!scene) return;
+      const scene = sceneRef.current;
+      if (!scene || !signature) return;
 
       try {
         // Gate before anything expensive: a scene without WebGPU cannot render
@@ -174,12 +200,12 @@ export const SceneProvider = (props: {
         };
 
         if (!cancelled) {
-          setBuilt({ scene, scope });
+          setBuilt({ signature, scope });
         }
       } catch (error) {
         if (!cancelled) {
           setFailure({
-            scene,
+            signature,
             error: error instanceof Error ? error : new Error(String(error)),
           });
         }
@@ -191,13 +217,15 @@ export const SceneProvider = (props: {
     return () => {
       cancelled = true;
     };
-  }, [scene, client, datalayer]);
+  }, [signature, client, datalayer]);
 
+  // `status.scene` is always the LIVE fragment: content the viewport reads
+  // reactively (backgroundColor, …) keeps updating without a rebuild.
   const status: SceneScopeStatus = !scene
     ? { phase: "no-scene", scene: null, error: null }
-    : failure && failure.scene === scene
+    : failure && failure.signature === signature
       ? { phase: "error", scene, error: failure.error }
-      : built && built.scene === scene
+      : built && built.signature === signature
         ? { phase: "ready", scene, error: null }
         : { phase: "initializing", scene, error: null };
 

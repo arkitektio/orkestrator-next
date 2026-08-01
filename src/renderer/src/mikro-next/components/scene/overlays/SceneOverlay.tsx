@@ -1,37 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import {
-  Camera,
-  Hand,
-  Pin,
-  Settings2,
-  SquarePen,
-  Target,
-  type LucideIcon,
-} from "lucide-react";
+import { Camera, Settings2 } from "lucide-react";
 import { MikroCoordinateSystem } from "@/linkers";
-import { InteractionMode, useModeStore } from "../store/modeStore";
+import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
-import {
-  hasProbeableLayer,
-  isInteractionModeAvailable,
-} from "../core/modeCompat";
-import { displayModeToPreferredView } from "../core/preferredView";
-import { useScenePreferencesEditor } from "../panels/animation/useAnimationEditor";
-
-/** Icon per interaction mode for the compact, right-side mode control. */
-const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
-  NAVIGATE: Hand,
-  ANNOTATE: SquarePen,
-  PROBE: Target,
-};
 
 const SettingRow = ({
   label,
@@ -50,10 +28,6 @@ const SettingRow = ({
 
 export const SceneOverlay = () => {
   const displayMode = useModeStore((s) => s.displayMode);
-  const interactionModeOptions = useModeStore((s) => s.interactionModeOptions);
-  const interactionMode = useModeStore((s) => s.interactionMode);
-  const setInteractionMode = useModeStore((s) => s.setInteractionMode);
-  const setDisplayMode = useModeStore((s) => s.setDisplayMode);
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const pivotOnProbe = useModeStore((s) => s.pivotOnProbe);
   const setZoomToCursor = useModeStore((s) => s.setZoomToCursor);
@@ -62,7 +36,6 @@ export const SceneOverlay = () => {
   const world = useSceneStore(
     (state) => state.transformContext.worldCoordinateSystem,
   );
-  const layers = useSceneStore((state) => state.layers);
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
   const showSceneAxis = useViewerStore((state) => state.showSceneAxis);
@@ -72,23 +45,7 @@ export const SceneOverlay = () => {
   const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
   const setShowSceneAxis = useViewerStore((state) => state.setShowSceneAxis);
 
-  // An option that would be inert is not offered — see `core/modeCompat.ts`.
-  const modeContext = {
-    displayMode,
-    hasProbeableLayer: hasProbeableLayer(layers),
-  };
-  const availableModes = interactionModeOptions.filter((mode) =>
-    isInteractionModeAvailable(mode.value, modeContext),
-  );
-
   const captureScreenshot = useViewerStore((state) => state.captureScreenshot);
-
-  const preferredView = useSceneStore((state) => state.preferredView);
-  const { savePreferredView, saving: savingPreferences } = useScenePreferencesEditor();
-  const isDefaultView = preferredView === displayModeToPreferredView(displayMode);
-  const onPinView = () => savePreferredView(displayModeToPreferredView(displayMode));
-
-  const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
 
   // Capture the current 3D scene (layers + in-scene axis/grid, not HTML overlays
   // or the gizmo) and save it as a PNG via the standard <a download> pattern.
@@ -106,45 +63,14 @@ export const SceneOverlay = () => {
     URL.revokeObjectURL(url);
   };
 
-  // One control card, styled like the layer cards below it. Holds the display
-  // (2D/3D) toggle, the view-settings/debug popover, the camera-controller modes
-  // (3D only) and the interaction-mode switches, so every scene control lives in
-  // a single top-right card that stacks above the layer list.
+  // One control card, styled like the panel cards below it. Holds the
+  // screenshot button and the view-settings/debug popover (with the 3D-only
+  // camera behaviours). The display toggle and the interaction-mode switches
+  // live in `SceneModeControls`, docked bottom-right by the gizmo.
   return (
     <div className="pointer-events-auto flex flex-col gap-2 rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
-      {/* Display toggle + view settings/debug. */}
+      {/* Screenshot + view settings/debug. */}
       <div className="flex items-center gap-2">
-        <Button
-          variant={"outline"}
-          size={"xs"}
-          className="h-7 w-11 bg-black tabular-nums"
-          onClick={() => setDisplayMode(nextDisplayMode)}
-          title={`Switch to ${nextDisplayMode} view`}
-        >
-          <span className="text-xs font-bold">{displayMode}</span>
-        </Button>
-
-        {/* Sits next to the display toggle because it is about exactly that:
-            which view the scene opens in for everyone. A preference, not a
-            lock — anyone can still switch once the scene is up. Saving also
-            refreshes the scene's tile from the current canvas. */}
-        <Button
-          variant={"outline"}
-          size={"xs"}
-          className={
-            isDefaultView ? "h-7 bg-black text-sky-400" : "h-7 bg-black text-white/60"
-          }
-          onClick={onPinView}
-          disabled={savingPreferences}
-          title={
-            isDefaultView
-              ? `This scene opens in ${displayMode}`
-              : `Open this scene in ${displayMode} by default (and snapshot the current view)`
-          }
-        >
-          <Pin className="h-3.5 w-3.5" />
-        </Button>
-
         <Button
           variant={"outline"}
           size={"xs"}
@@ -217,28 +143,6 @@ export const SceneOverlay = () => {
           </PopoverContent>
         </Popover>
       </div>
-
-      {/* Interaction modes — iconified switches. */}
-      <ButtonGroup className="w-full">
-        {availableModes.map((mode) => {
-          const Icon = INTERACTION_ICONS[mode.value];
-          const active = interactionMode === mode.value;
-          return (
-            <Button
-              key={mode.value}
-              variant={active ? "default" : "outline"}
-              size={"xs"}
-              className={active ? "h-7 flex-1 p-0" : "h-7 flex-1 bg-black p-0"}
-              onClick={() => setInteractionMode(mode.value)}
-              // The buttons are icon-only, so the tooltip carries the whole
-              // explanation — the descriptions used to go unshown entirely.
-              title={mode.description ? `${mode.label} — ${mode.description}` : mode.label}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </Button>
-          );
-        })}
-      </ButtonGroup>
     </div>
   );
 };

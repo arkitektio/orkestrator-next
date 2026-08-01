@@ -10,8 +10,10 @@ import {
   useRoiDrawingStore,
   DRAWING_TOOL_TO_ROI_KIND,
   isDrawingTool,
+  isPrimitiveTool,
   type DrawingTool,
 } from "../store/roiDrawingStore";
+import { planarRadius, primitiveCornerVectors } from "../core/primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "../store/roiDrawSessionStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
@@ -82,6 +84,9 @@ export const RoiDrawer = () => {
   const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
   const pendingPathSeed = useRoiDrawingStore((s) => s.pendingPathSeed);
   const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
+  const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
+  const setPendingPrimitiveAnchor = useRoiDrawingStore((s) => s.setPendingPrimitiveAnchor);
+  const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
   const invalidate = useThree((s) => s.invalidate);
@@ -104,6 +109,7 @@ export const RoiDrawer = () => {
 
   const tool: DrawingTool | null = isDrawingTool(activeTool) ? activeTool : null;
   const isPolygonLike = tool === "POLYGON" || tool === "PATH";
+  const isPrimitive = isPrimitiveTool(tool);
   const unit = unitLabel(spatialUnit);
 
   const paint = useCallback(() => {
@@ -111,9 +117,30 @@ export const RoiDrawer = () => {
     if (!tool) return;
 
     const z = session.planeZ + PREVIEW_Z_LIFT;
-    const points = session.cursor
+    let points = session.cursor
       ? [...session.vertices, session.cursor]
       : session.vertices;
+
+    // Volumetric tools rubber-band a RADIUS around the probe-seeded center,
+    // but outline/measure speak the corner-pair convention — translate here so
+    // both stay single-sourced (`core/primitiveDraw.ts`).
+    if (isPrimitiveTool(tool) && session.vertices.length === 1) {
+      const anchor = session.vertices[0];
+      const radius = session.cursor
+        ? planarRadius(
+            [anchor.x, anchor.y, anchor.z],
+            [session.cursor.x, session.cursor.y, session.cursor.z],
+          )
+        : 0;
+      const [low, high] = primitiveCornerVectors(
+        [anchor.x, anchor.y, anchor.z],
+        radius,
+      );
+      points = [
+        new THREE.Vector3(...low),
+        new THREE.Vector3(...high),
+      ];
+    }
 
     // `closePolygon: false` — the closing edge is the separate faint line below,
     // so the user can see the finished shape before committing to it.
@@ -160,8 +187,11 @@ export const RoiDrawer = () => {
     mainRef.current?.clear();
     closingRef.current?.clear();
     readoutApi.getState().setReadout(null);
+    // Whatever ends the session — commit, Escape, tool/mode change — the
+    // volume may seed the next primitive anchor again.
+    setPrimitiveSessionActive(false);
     invalidate();
-  }, [paintCoalescer, readoutApi, invalidate]);
+  }, [paintCoalescer, readoutApi, setPrimitiveSessionActive, invalidate]);
 
   const submitRoi = useCallback(
     async (roi: DrawnRoi) => {
@@ -226,6 +256,35 @@ export const RoiDrawer = () => {
     setPendingPathSeed(null);
   }, [pendingPathSeed, interactionMode, tool, paint, paintCoalescer, setPendingPathSeed]);
 
+  // Probe-derived volumetric anchor: a click on the volume seeded the center
+  // (see BrickVolumeLayer). Same declaration-order invariant as the path seed
+  // above. From "anchored", pointer moves rubber-band the radius on the world
+  // XY plane through the anchor, and a click commits. Raising
+  // `primitiveSessionActive` here is what lets the commit click's same-event
+  // hit on the volume be ignored instead of re-anchoring.
+  useEffect(() => {
+    if (!pendingPrimitiveAnchor) return;
+    if (interactionMode !== "ANNOTATE" || !isPrimitiveTool(tool)) return;
+    const session = sessionRef.current;
+    session.planeZ = pendingPrimitiveAnchor[2];
+    session.vertices = [new THREE.Vector3(...pendingPrimitiveAnchor)];
+    session.phase = "anchored";
+    session.cursor = null;
+    session.lastClickPx = null;
+    setPlacedVertices([...session.vertices]);
+    setPrimitiveSessionActive(true);
+    paintCoalescer.schedule(paint);
+    setPendingPrimitiveAnchor(null);
+  }, [
+    pendingPrimitiveAnchor,
+    interactionMode,
+    tool,
+    paint,
+    paintCoalescer,
+    setPendingPrimitiveAnchor,
+    setPrimitiveSessionActive,
+  ]);
+
   // Escape abandons the shape. Without it a half-placed polygon has no exit —
   // you have to finish a shape you don't want and then delete it server-side.
   // `pointercancel` has to be a window listener: R3F handles it at the canvas
@@ -277,8 +336,9 @@ export const RoiDrawer = () => {
         position={[0, 0, 0.01]}
         onPointerDown={(e) => {
           // Click tools opt out entirely, so R3F's post-drag click can't
-          // interfere with them.
-          if (isPolygonLike || tool === "POINT") return;
+          // interfere with them. Primitives are click tools too — and their
+          // anchor never comes from this plane (the volume seeds it).
+          if (isPolygonLike || tool === "POINT" || isPrimitive) return;
           const hit = pointOnPlane(e);
           if (!hit) return;
 
@@ -305,9 +365,13 @@ export const RoiDrawer = () => {
         }}
         onPointerMove={(e) => {
           const session = sessionRef.current;
-          // Unconditional: this plane sits in front of the image planes, so
-          // stopping propagation is what keeps a probe from firing while you
-          // draw.
+          // A primitive tool with no anchor yet: the VOLUME owns the pointer
+          // (hover probing, the anchoring click) — the plane must neither
+          // consume the ray nor block propagation to it.
+          if (isPrimitive && session.vertices.length === 0) return;
+          // Otherwise unconditional: this plane sits in front of the image
+          // planes, so stopping propagation is what keeps a probe from firing
+          // while you draw.
           e.stopPropagation();
 
           const hit = pointOnPlane(e);
@@ -328,7 +392,7 @@ export const RoiDrawer = () => {
           paintCoalescer.schedule(paint);
         }}
         onPointerUp={(e) => {
-          if (isPolygonLike || tool === "POINT") return;
+          if (isPolygonLike || tool === "POINT" || isPrimitive) return;
 
           const session = sessionRef.current;
           e.stopPropagation();
@@ -353,6 +417,33 @@ export const RoiDrawer = () => {
           session.downPx = null;
         }}
         onClick={(e) => {
+          if (isPrimitive) {
+            const session = sessionRef.current;
+            // Only a probe-anchored session sizes and commits here. Early
+            // returns deliberately do NOT stop propagation: an un-anchored
+            // click must reach the volume so it can seed the anchor.
+            if (session.phase !== "anchored" || session.vertices.length !== 1) return;
+            const hit = pointOnPlane(e);
+            if (!hit) return;
+            const anchor = session.vertices[0];
+            const radius = planarRadius(
+              [anchor.x, anchor.y, anchor.z],
+              [hit.x, hit.y, hit.z],
+            );
+            if (radius <= 0) return;
+            // Suppress this click on the volume behind the plane. Combined
+            // with the volume's `primitiveSessionActive` guard this is
+            // order-independent: volume-first sees the flag still raised,
+            // plane-first stops the event here.
+            e.stopPropagation();
+            const [low, high] = primitiveCornerVectors(
+              [anchor.x, anchor.y, anchor.z],
+              radius,
+            );
+            finishShape([new THREE.Vector3(...low), new THREE.Vector3(...high)]);
+            return;
+          }
+
           if (!isPolygonLike && tool !== "POINT") return;
           e.stopPropagation();
 
@@ -364,6 +455,10 @@ export const RoiDrawer = () => {
           if (tool === "POINT") {
             // A stray drag shouldn't drop a point.
             if (e.delta > DRAG_THRESHOLD_PX) return;
+            // In 3D the point is probe-derived: the volume places it at the
+            // probed coordinate, so a plane point at `currentZ` would be a
+            // duplicate on an arbitrary slab.
+            if (displayMode === "3D") return;
             session.planeZ = currentZ;
             finishShape([hit.clone().setZ(currentZ)]);
             return;
@@ -436,7 +531,12 @@ const RoiShape = ({ roi }: { roi: DrawnRoi }) => {
   const vectors = roi.worldVectors;
   if (vectors.length === 0) return null;
 
-  const z = (vectors[0].z ?? 0) + PREVIEW_Z_LIFT;
+  // Primitives carry BOUNDING corners; their committed footprint belongs on
+  // the equator (the plane the user sized in), not the bottom face.
+  const z =
+    (isPrimitiveTool(roi.tool) && vectors.length >= 2
+      ? ((vectors[0].z ?? 0) + (vectors[1].z ?? 0)) / 2
+      : vectors[0].z ?? 0) + PREVIEW_Z_LIFT;
 
   if (roi.tool === "POINT") {
     return (

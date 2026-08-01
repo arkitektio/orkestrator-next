@@ -61,29 +61,35 @@ describe("availableInteractionModes", () => {
 });
 
 describe("availableAnnotateTools", () => {
-  it("leads with Select in 2D and offers all seven", () => {
+  it("leads with Select in 2D and offers the flat tools plus the shared ones", () => {
     const tools = availableAnnotateTools(ctx2D);
     expect(tools[0]).toBe("SELECT");
-    expect(tools).toHaveLength(7);
-  });
-
-  it("hides Select in 3D but keeps every shape", () => {
-    const tools = availableAnnotateTools(ctx3D);
-    expect(tools).not.toContain("SELECT");
     expect(tools).toEqual([
+      "SELECT",
       "RECTANGLE",
       "ELLIPSIS",
+      "POLYGON",
       "POINT",
       "LINE",
-      "POLYGON",
       "PATH",
     ]);
+  });
+
+  it("offers the volumetric tools plus the shared ones in 3D", () => {
+    const tools = availableAnnotateTools(ctx3D);
+    expect(tools).toEqual(["SPHERE", "CUBE", "POINT", "LINE", "PATH"]);
   });
 
   it("agrees with the single-tool predicate", () => {
     expect(isAnnotateToolAvailable("SELECT", ctx3D)).toBe(false);
     expect(isAnnotateToolAvailable("SELECT", ctx2D)).toBe(true);
-    expect(isAnnotateToolAvailable("POLYGON", ctx3D)).toBe(true);
+    // The planar shapes are flat-only: in 3D they would land on an arbitrary
+    // z slab; the volumetric tools are the 3D marking gesture.
+    expect(isAnnotateToolAvailable("POLYGON", ctx3D)).toBe(false);
+    expect(isAnnotateToolAvailable("SPHERE", ctx2D)).toBe(false);
+    expect(isAnnotateToolAvailable("SPHERE", ctx3D)).toBe(true);
+    expect(isAnnotateToolAvailable("CUBE", ctx3D)).toBe(true);
+    expect(isAnnotateToolAvailable("PATH", ctx3D)).toBe(true);
   });
 });
 
@@ -106,12 +112,20 @@ describe("coerceModeState", () => {
     expect(next.activeTool).toBe("RECTANGLE");
   });
 
-  it("keeps ANNOTATE but swaps the marquee for a shape when moving to 3D", () => {
+  it("keeps ANNOTATE but swaps the marquee for the sphere when moving to 3D", () => {
     const next = coerceModeState(
       { interactionMode: "ANNOTATE", activeTool: "SELECT" },
       ctx3D,
     );
     expect(next.interactionMode).toBe("ANNOTATE");
+    expect(next.activeTool).toBe("SPHERE");
+  });
+
+  it("swaps a volumetric tool for the rectangle when moving to 2D", () => {
+    const next = coerceModeState(
+      { interactionMode: "ANNOTATE", activeTool: "SPHERE" },
+      ctx2D,
+    );
     expect(next.activeTool).toBe("RECTANGLE");
   });
 
@@ -122,7 +136,7 @@ describe("coerceModeState", () => {
       { interactionMode: "NAVIGATE", activeTool: "SELECT" },
       ctx3D,
     );
-    expect(next.activeTool).toBe("RECTANGLE");
+    expect(next.activeTool).toBe("SPHERE");
   });
 
   it("leaves a null tool null", () => {

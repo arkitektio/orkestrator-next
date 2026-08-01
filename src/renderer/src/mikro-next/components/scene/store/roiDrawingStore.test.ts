@@ -19,3 +19,26 @@ describe("pendingPathSeed", () => {
     expect(store.getState().pendingPathSeed).toBeNull();
   });
 });
+
+// Same contract for the volumetric anchor: a probe click seeds it, RoiDrawer
+// consumes+clears it and raises `primitiveSessionActive` while sizing — the
+// flag is what stops the commit click (which may also hit the volume mesh)
+// from re-anchoring.
+describe("pendingPrimitiveAnchor / primitiveSessionActive", () => {
+  it("round-trips the anchor and the session flag", () => {
+    const store = createRoiDrawingStore();
+    expect(store.getState().pendingPrimitiveAnchor).toBeNull();
+    expect(store.getState().primitiveSessionActive).toBe(false);
+
+    store.getState().setPendingPrimitiveAnchor([4, 5, 6]);
+    expect(store.getState().pendingPrimitiveAnchor).toEqual([4, 5, 6]);
+
+    store.getState().setPrimitiveSessionActive(true);
+    store.getState().setPendingPrimitiveAnchor(null);
+    expect(store.getState().primitiveSessionActive).toBe(true);
+    expect(store.getState().pendingPrimitiveAnchor).toBeNull();
+
+    store.getState().setPrimitiveSessionActive(false);
+    expect(store.getState().primitiveSessionActive).toBe(false);
+  });
+});

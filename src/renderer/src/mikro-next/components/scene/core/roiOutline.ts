@@ -95,6 +95,14 @@ export function roiOutline(
       return rectangleOutline(points[0], points[1], z);
     case "ELLIPSIS":
       return ellipseOutline(points[0], points[1], z, options.segments);
+    // The volumetric tools' points are the two BOUNDING CORNERS
+    // (`core/primitiveDraw.ts` — center ± r on every axis); the outline is
+    // their equatorial footprint. The volumetric body itself is the
+    // AnnotationLayer's job once the annotation lands.
+    case "SPHERE":
+      return ellipseOutline(points[0], points[1], z, options.segments);
+    case "CUBE":
+      return rectangleOutline(points[0], points[1], z);
     case "LINE":
       return polylineOutline(points.slice(0, 2), z);
     case "POLYGON":

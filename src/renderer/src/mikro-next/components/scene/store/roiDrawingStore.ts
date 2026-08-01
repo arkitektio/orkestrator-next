@@ -2,10 +2,13 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import { RoiKind } from "@/mikro-next/api/graphql";
+import { SPHERE_KIND } from "../core/primitiveDraw";
 
 /**
- * The drawing tool types that make sense for interactive 2D drawing.
- * Each maps to a RoiKind for the mutation.
+ * The drawing tool types the drawer implements. Each maps to a RoiKind for
+ * the mutation. SPHERE and CUBE are the volumetric (3D-only) tools: a probe
+ * click anchors their center, a second click sets the radius
+ * (`core/primitiveDraw.ts`).
  */
 export type DrawingTool =
   | "RECTANGLE"
@@ -13,7 +16,24 @@ export type DrawingTool =
   | "POINT"
   | "LINE"
   | "POLYGON"
-  | "PATH";
+  | "PATH"
+  | "SPHERE"
+  | "CUBE";
+
+/** The volumetric tools, anchored by a probe click rather than the draw plane. */
+export const isPrimitiveTool = (
+  tool: AnnotateTool | null | undefined,
+): tool is "SPHERE" | "CUBE" => tool === "SPHERE" || tool === "CUBE";
+
+/**
+ * The tools whose 3D placement comes from the probe: the volume hover-probes
+ * for them in ANNOTATE mode, and its click either places (POINT) or anchors
+ * (SPHERE/CUBE) at the probed coordinate.
+ */
+export const isProbeDerivedTool = (
+  tool: AnnotateTool | null | undefined,
+): tool is "POINT" | "SPHERE" | "CUBE" =>
+  tool === "POINT" || isPrimitiveTool(tool);
 
 export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
   RECTANGLE: RoiKind.Rectangle,
@@ -22,6 +42,8 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
   LINE: RoiKind.Line,
   POLYGON: RoiKind.Polygon,
   PATH: RoiKind.Path,
+  SPHERE: SPHERE_KIND,
+  CUBE: RoiKind.Cube,
 };
 
 /**
@@ -72,11 +94,28 @@ export interface RoiDrawingState {
    * drawer's tool/mode reset and its remount on a 2D↔3D display flip.
    */
   pendingPathSeed: [number, number, number] | null;
+  /**
+   * World-space center for the next SPHERE/CUBE session — seeded by a probe
+   * click on the volume, consumed (and cleared) by `RoiDrawer` the same way
+   * `pendingPathSeed` is.
+   */
+  pendingPrimitiveAnchor: [number, number, number] | null;
+  /**
+   * True while the drawer is sizing an anchored SPHERE/CUBE. The volume's
+   * click handler checks it (plus a null `pendingPrimitiveAnchor`) before
+   * seeding, so the COMMIT click — which may also hit the volume mesh — can
+   * never re-anchor. A store flag rather than R3F stopPropagation because
+   * raycast ordering between the draw plane and the volume is
+   * camera-dependent.
+   */
+  primitiveSessionActive: boolean;
   setActiveTool: (tool: AnnotateTool | null) => void;
   addDrawnRoi: (roi: DrawnRoi) => void;
   removeDrawnRoi: (id: string) => void;
   clearDrawnRois: () => void;
   setPendingPathSeed: (seed: [number, number, number] | null) => void;
+  setPendingPrimitiveAnchor: (anchor: [number, number, number] | null) => void;
+  setPrimitiveSessionActive: (active: boolean) => void;
 }
 
 export const createRoiDrawingStore = () =>
@@ -85,6 +124,8 @@ export const createRoiDrawingStore = () =>
       activeTool: "RECTANGLE",
       drawnRois: [],
       pendingPathSeed: null,
+      pendingPrimitiveAnchor: null,
+      primitiveSessionActive: false,
       setActiveTool: (tool) =>
         set((state) => {
           state.activeTool = tool;
@@ -92,6 +133,14 @@ export const createRoiDrawingStore = () =>
       setPendingPathSeed: (seed) =>
         set((state) => {
           state.pendingPathSeed = seed;
+        }),
+      setPendingPrimitiveAnchor: (anchor) =>
+        set((state) => {
+          state.pendingPrimitiveAnchor = anchor;
+        }),
+      setPrimitiveSessionActive: (active) =>
+        set((state) => {
+          state.primitiveSessionActive = active;
         }),
       addDrawnRoi: (roi) =>
         set((state) => {

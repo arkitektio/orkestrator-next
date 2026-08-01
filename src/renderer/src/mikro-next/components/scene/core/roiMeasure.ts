@@ -29,6 +29,13 @@ export function measureDraw(
     };
   }
 
+  if (tool === "SPHERE" || tool === "CUBE") {
+    // Corner-pair convention (`core/primitiveDraw.ts`): the extent is 2r on
+    // every axis, so half the x span IS the radius — the number the sizing
+    // gesture is choosing.
+    return { kind: "length", length: Math.abs(points[1].x - points[0].x) / 2 };
+  }
+
   if (tool === "LINE") {
     return { kind: "length", length: distance(points[0], points[1]) };
   }

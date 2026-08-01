@@ -12,8 +12,13 @@ import { resolveProbeStrategy } from "../../core/probe/probeModes";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
+import { DRAG_THRESHOLD_PX } from "../../core/drawGesture";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
+import {
+  isProbeDerivedTool,
+  useRoiDrawingStoreApi,
+} from "../../store/roiDrawingStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
@@ -58,6 +63,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const skipSelectionClickRef = useRef(false);
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
+  const roiDrawingApi = useRoiDrawingStoreApi();
   const { createPointAnnotation } = useCreateSceneAnnotation();
 
   const register = useViewerStore((s) => s.register);
@@ -336,7 +342,16 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onPointerMove={(e) => {
-        if (interactionMode !== "PROBE" || !probeFollowsCursor || e.buttons !== 0) return;
+        // 3D ANNOTATE with a probe-derived tool hover-probes unconditionally —
+        // that IS probe-derived placement. Cheap by construction either way:
+        // the march reads only RESIDENT bricks (GPU-lockstep data, no array
+        // fetches), and the precise attribute tier sits behind its own
+        // debounce in AttributeProbeTracker.
+        const hoverProbing =
+          (interactionMode === "PROBE" && probeFollowsCursor) ||
+          (interactionMode === "ANNOTATE" &&
+            isProbeDerivedTool(roiDrawingApi.getState().activeTool));
+        if (!hoverProbing || e.buttons !== 0) return;
         // The event already raycast this volume's box, so the front-most
         // volume claims the hover; the march itself is deferred to the frame.
         e.stopPropagation();
@@ -344,18 +359,58 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         probeCoalescer.schedule(() => updateProbe(probeFromRay(ray, "hover"), false));
       }}
       onPointerOut={() => {
-        if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
+        const hoverProbing =
+          (interactionMode === "PROBE" && probeFollowsCursor) ||
+          (interactionMode === "ANNOTATE" &&
+            isProbeDerivedTool(roiDrawingApi.getState().activeTool));
+        if (!hoverProbing) return;
         probeCoalescer.cancel();
         updateProbe(null, false);
       }}
       onPointerDown={(e) => {
-        if (interactionMode !== "PROBE") return;
-        e.stopPropagation();
-        skipSelectionClickRef.current = true;
-        // Synchronous: click latency matters, click storms don't.
-        updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
+        if (interactionMode === "PROBE") {
+          e.stopPropagation();
+          skipSelectionClickRef.current = true;
+          // Synchronous: click latency matters, click storms don't.
+          updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
+          return;
+        }
+        if (
+          interactionMode === "ANNOTATE" &&
+          isProbeDerivedTool(roiDrawingApi.getState().activeTool)
+        ) {
+          // Feedback only: the marker and axis guides land on the point before
+          // the click event arrives. The annotation itself is created in
+          // onClick, which R3F drag-guards via e.delta.
+          updateProbe(probeFromRay(e.ray, "click"), false);
+        }
       }}
       onClick={(e) => {
+        if (interactionMode === "ANNOTATE") {
+          // An orbit-drag release is not an anchor.
+          if (e.delta > DRAG_THRESHOLD_PX) return;
+          const drawing = roiDrawingApi.getState();
+          if (!isProbeDerivedTool(drawing.activeTool)) return;
+          const probe = probeFromRay(e.ray, "click");
+          if (!probe?.worldPos) return;
+          if (drawing.activeTool === "POINT") {
+            e.stopPropagation();
+            createPointAnnotation(probe.worldPos);
+            return;
+          }
+          // Seed the primitive center — unless a session is already sizing:
+          // the commit click may hit this mesh too, and this guard (plus the
+          // plane's stopPropagation on commit) makes the outcome independent
+          // of which mesh the event reaches first.
+          if (
+            !drawing.primitiveSessionActive &&
+            drawing.pendingPrimitiveAnchor === null
+          ) {
+            e.stopPropagation();
+            drawing.setPendingPrimitiveAnchor(probe.worldPos);
+          }
+          return; // never layer-select while annotating
+        }
         if (skipSelectionClickRef.current) {
           skipSelectionClickRef.current = false;
           return;

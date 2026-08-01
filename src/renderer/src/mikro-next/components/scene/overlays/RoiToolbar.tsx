@@ -6,6 +6,8 @@ import { isAnnotateToolAvailable } from "../core/modeCompat";
 import {
   Square,
   Circle,
+  CircleDot,
+  Box,
   Crosshair,
   Minus,
   MousePointer2,
@@ -26,9 +28,13 @@ const TOOLS: {
   { tool: "SELECT", label: "Select", icon: MousePointer2 },
   { tool: "RECTANGLE", label: "Rect", icon: Square },
   { tool: "ELLIPSIS", label: "Ellipse", icon: Circle },
+  { tool: "POLYGON", label: "Polygon", icon: Pentagon },
+  // Volumetric (3D-only): a probe click anchors the center, a second click
+  // sets the radius.
+  { tool: "SPHERE", label: "Sphere", icon: CircleDot },
+  { tool: "CUBE", label: "Cube", icon: Box },
   { tool: "POINT", label: "Point", icon: Crosshair },
   { tool: "LINE", label: "Line", icon: Minus },
-  { tool: "POLYGON", label: "Polygon", icon: Pentagon },
   { tool: "PATH", label: "Path", icon: Pencil },
 ];
 

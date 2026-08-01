@@ -11,6 +11,7 @@ import {
 import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { Line } from "../../primitives/Line";
+import { SPHERE_KIND } from "../../core/primitiveDraw";
 import { affineToMatrix4 } from "../../core/worldTransform";
 import { useModeStore } from "../../store/modeStore";
 import { type RoiBounds, useRoiSelectionStore } from "../../store/roiSelectionStore";
@@ -394,7 +395,13 @@ const AnnotationShape = ({
     );
   }
 
-  if (annotation.kind === RoiKind.Rectangle && vectors.length >= 2) {
+  // CUBE shares the rectangle branch: same corner-pair vectors, and the branch
+  // already extrudes to a box whenever the corners span depth (which a cube's
+  // always do) and falls back to the rectangle footprint when flattened.
+  if (
+    (annotation.kind === RoiKind.Rectangle || annotation.kind === RoiKind.Cube) &&
+    vectors.length >= 2
+  ) {
     const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
       getVectorPoint(vector, flattenToPlane),
     );
@@ -461,7 +468,13 @@ const AnnotationShape = ({
     );
   }
 
-  if (annotation.kind === RoiKind.Ellipsis && vectors.length >= 2) {
+  // SPHERE shares the ellipsis branch: its corner-pair vectors are symmetric
+  // (center ± r), so the scaled-unit-sphere path renders a true sphere in 3D
+  // and the flattened path draws its equatorial circle in 2D.
+  if (
+    (annotation.kind === RoiKind.Ellipsis || annotation.kind === SPHERE_KIND) &&
+    vectors.length >= 2
+  ) {
     const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
       getVectorPoint(vector, flattenToPlane),
     );

@@ -23,15 +23,39 @@ const ALL_TOOLS: AnnotateTool[] = [
   "SELECT",
   "RECTANGLE",
   "ELLIPSIS",
+  "POLYGON",
+  "SPHERE",
+  "CUBE",
   "POINT",
   "LINE",
-  "POLYGON",
   "PATH",
 ];
 
+/**
+ * Tools that only make sense on the flat draw plane: the marquee has nothing
+ * to drag against in 3D, and the planar shapes would silently land on an
+ * arbitrary z slab there — 3D marking is the volumetric tools' job.
+ */
+const FLAT_ONLY_TOOLS = new Set<AnnotateTool>([
+  "SELECT",
+  "RECTANGLE",
+  "ELLIPSIS",
+  "POLYGON",
+]);
+
+/** The volumetric tools: anchored by a probe click on the volume — 3D only. */
+const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
+
 /** Where a coercion lands. Never null: a null tool leaves ANNOTATE inert. */
 export const FALLBACK_MODE: InteractionMode = "NAVIGATE";
-export const FALLBACK_TOOL: AnnotateTool = "RECTANGLE";
+
+/**
+ * The default tool per view: the volumetric sphere in 3D (marking around a
+ * probed point IS the 3D gesture), the rectangle on the flat plane.
+ */
+export const fallbackToolFor = (
+  ctx: Pick<ModeContext, "displayMode">,
+): AnnotateTool => (ctx.displayMode === "3D" ? "SPHERE" : "RECTANGLE");
 
 /**
  * Only the brick layers emit probes, and `sceneStore.layers` is *already*
@@ -58,12 +82,17 @@ export function availableInteractionModes(ctx: ModeContext): InteractionMode[] {
   return ALL_MODES.filter((mode) => isInteractionModeAvailable(mode, ctx));
 }
 
-/** The marquee (`interactions/RectangleDrawer.tsx`) is 2D-only. */
+/**
+ * Flat tools (marquee, planar shapes) are 2D-only; volumetric tools are
+ * 3D-only. POINT/LINE/PATH work in both.
+ */
 export function isAnnotateToolAvailable(
   tool: AnnotateTool,
   ctx: Pick<ModeContext, "displayMode">,
 ): boolean {
-  return tool === "SELECT" ? ctx.displayMode === "2D" : true;
+  if (FLAT_ONLY_TOOLS.has(tool)) return ctx.displayMode === "2D";
+  if (VOLUMETRIC_TOOLS.has(tool)) return ctx.displayMode === "3D";
+  return true;
 }
 
 export function availableAnnotateTools(
@@ -97,7 +126,7 @@ export function coerceModeState(
     requested.activeTool === null ||
     isAnnotateToolAvailable(requested.activeTool, ctx)
       ? requested.activeTool
-      : FALLBACK_TOOL;
+      : fallbackToolFor(ctx);
 
   return { interactionMode, activeTool };
 }

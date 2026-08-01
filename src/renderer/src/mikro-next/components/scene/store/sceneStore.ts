@@ -60,12 +60,11 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
           state.preferredView = view;
         }),
       spatialUnit: spaceAxis?.unit ? String(spaceAxis.unit) : "px",
-      // No `coordinateSystems`: edges self-describe their axis order
-      // (inputAxes/outputAxes), so the axis index degenerates to the world
-      // system — the fragment no longer ships the global CS list.
+      // No `coordinateSystems` or `registrations`: edges self-describe their
+      // axis order (inputAxes/outputAxes) and placement comes from each
+      // layer's pathToWorld, so the fragment ships neither global list.
       transformContext: {
         worldCoordinateSystem: scene.worldCoordinateSystem,
-        registrations: scene.registrations,
       },
       sceneLayers: scene.layers,
       layers: imageLayers.map((layer) => normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)),

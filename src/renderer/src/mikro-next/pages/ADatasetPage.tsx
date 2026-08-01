@@ -116,9 +116,9 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
   const activeSceneId = selectedSceneId ?? dataset.scenes.at(0)?.id
 
   // The dataset only carries ListScene (id + name) for the switcher — the
-  // renderer needs layers, registrations and the world, so the active scene
-  // is fetched in full the same way ScenePage does. Apollo caches it, so
-  // switching back is free.
+  // renderer needs layers and the world, so the active scene is fetched in
+  // full the same way ScenePage does. Apollo caches it, so switching back
+  // is free.
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: activeSceneId as string },
     skip: !activeSceneId

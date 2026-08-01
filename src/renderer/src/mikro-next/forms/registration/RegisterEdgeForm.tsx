@@ -14,8 +14,8 @@ import { AlertTriangle } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   CoordinateSystemFragment,
+  CreatableTransformKind,
   PlacementValidity,
-  TransformKind,
   useCreateTransformationMutation,
 } from "../../api/graphql";
 import { residentLabel } from "../../components/coordinates/residents";
@@ -503,15 +503,19 @@ export const RegisterEdgeForm = (props: {
 
 /**
  * mapping.ts stays free of generated imports so its suite can run in `node`
- * (see the note at the top of that file), so it types `kind`/`validity` as
- * literals. Widen them onto the real enums here — the literals are exactly the
- * enums' values, and this is the only place the two type worlds meet.
+ * (see the note at the top of that file), so it types `transform.kind` and
+ * `validity` as literals. Widen them onto the real enums here — the literals
+ * are exactly the enums' values, and this is the only place the two type
+ * worlds meet.
  */
 const buildInputForMutation = (draft: RegistrationDraft) => {
   const built = buildRegistrationInput(draft);
   return {
     ...built,
-    kind: built.kind as TransformKind,
     validity: built.validity as PlacementValidity,
+    transform: {
+      ...built.transform,
+      kind: built.transform.kind as CreatableTransformKind,
+    },
   };
 };

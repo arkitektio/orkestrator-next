@@ -142,8 +142,8 @@ describe("buildRegistrationInput", () => {
     const input = buildRegistrationInput(draftOf({ rows, mode: "IDENTITY" }));
 
     // `c` is unmapped, so it is absent — but y still precedes x.
-    expect(input.inputAxes).toEqual(["y", "x"]);
-    expect(input.outputAxes).toEqual(["y", "x"]);
+    expect(input.transform.inputAxes).toEqual(["y", "x"]);
+    expect(input.transform.outputAxes).toEqual(["y", "x"]);
   });
 
   it("orders scale by inputAxes, not by the target system's axis order", () => {
@@ -156,8 +156,8 @@ describe("buildRegistrationInput", () => {
 
     const input = buildRegistrationInput(draftOf({ rows, mode: "SCALE" }));
 
-    expect(input.inputAxes).toEqual(["y", "x"]);
-    expect(input.scale).toEqual([0.5, 0.25]);
+    expect(input.transform.inputAxes).toEqual(["y", "x"]);
+    expect(input.transform.scale).toEqual([0.5, 0.25]);
   });
 
   it("marks the edge MANUAL and leaves valueRelation unset", () => {
@@ -167,6 +167,7 @@ describe("buildRegistrationInput", () => {
 
     expect(input.validity).toBe("MANUAL");
     expect(input).not.toHaveProperty("valueRelation");
+    expect(input.transform.kind).toBe("BY_DIMENSION");
   });
 
   it("coerces the strings FloatField hands back into real numbers", () => {
@@ -179,7 +180,7 @@ describe("buildRegistrationInput", () => {
 
     const input = buildRegistrationInput(draftOf({ rows, mode: "SCALE" }));
 
-    expect(input.scale).toEqual([0.325, 0.325]);
+    expect(input.transform.scale).toEqual([0.325, 0.325]);
   });
 
   it("builds an M x (N+1) affine with the translation in the last column", () => {
@@ -194,11 +195,11 @@ describe("buildRegistrationInput", () => {
     );
 
     // 2 mapped axes -> 2 rows x 3 columns, diagonal, translation at index N=2.
-    expect(input.affine).toEqual([
+    expect(input.transform.affine).toEqual([
       [0.5, 0, 10],
       [0, 0.25, -4],
     ]);
-    expect(input.kind).toBe("AFFINE");
+    expect(input.transform.kind).toBe("BY_DIMENSION");
   });
 
   it("keeps buildAffineDiagonal square in the mapped rank, not the system rank", () => {
@@ -275,6 +276,21 @@ describe("the rename rule", () => {
 });
 
 describe("round-trip: what we author is what evalTransform renders", () => {
+  /**
+   * The server materializes an authored BY_DIMENSION edge as a
+   * `ByDimensionTransformation` whose children carry the payload and
+   * self-describe the axis subset they act on — so that is the shape the
+   * round-trip feeds back to the evaluator. The composite's own axes are the
+   * FULL system orders, exactly what `composePlacementPath` passes.
+   */
+  const materialized = (
+    childTypename: string,
+    transform: Record<string, unknown>,
+  ) => ({
+    __typename: "ByDimensionTransformation",
+    transformations: [{ __typename: childTypename, ...transform }],
+  });
+
   it("renders a SCALE edge with each axis's factor on its own diagonal entry", () => {
     const rows = prefillMapping(CYX, TZYX);
     rowFor(rows, "y").scale = 0.5;
@@ -283,9 +299,9 @@ describe("round-trip: what we author is what evalTransform renders", () => {
     const input = buildRegistrationInput(draftOf({ rows, mode: "SCALE" }));
 
     const matrix = evalTransform(
-      { __typename: "ScaleTransformation", ...input },
-      input.inputAxes,
-      input.outputAxes,
+      materialized("ScaleTransformation", input.transform),
+      ["c", "y", "x"],
+      ["t", "z", "y", "x"],
       // evalTransform's spatial slots are (x, y, z) — the renderer's row order.
       ["x", "y", null],
     );
@@ -307,9 +323,9 @@ describe("round-trip: what we author is what evalTransform renders", () => {
     );
 
     const matrix = evalTransform(
-      { __typename: "AffineTransformation", ...input },
-      input.inputAxes,
-      input.outputAxes,
+      materialized("AffineTransformation", input.transform),
+      ["c", "y", "x"],
+      ["t", "z", "y", "x"],
       ["x", "y", null],
     );
 
@@ -332,9 +348,9 @@ describe("round-trip: what we author is what evalTransform renders", () => {
     const input = buildRegistrationInput(draftOf({ rows, mode: "SCALE" }));
 
     const matrix = evalTransform(
-      { __typename: "ScaleTransformation", ...input },
-      input.inputAxes,
-      input.outputAxes,
+      materialized("ScaleTransformation", input.transform),
+      ["c", "y", "x"],
+      ["t", "z", "y", "x"],
       ["x", "y", "z"],
     );
 
@@ -348,9 +364,9 @@ describe("round-trip: what we author is what evalTransform renders", () => {
     );
 
     const matrix = evalTransform(
-      { __typename: "IdentityTransformation", ...input },
-      input.inputAxes,
-      input.outputAxes,
+      materialized("IdentityTransformation", input.transform),
+      ["t", "z", "y", "x"],
+      ["t", "z", "y", "x"],
       ["x", "y", "z"],
     );
 

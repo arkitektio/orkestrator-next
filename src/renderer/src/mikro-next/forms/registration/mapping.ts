@@ -25,16 +25,13 @@
  */
 
 /**
- * The `TransformKind` values this module emits, as literals mirroring the
- * generated enum.
- *
  * This module deliberately imports nothing generated: `api/graphql.ts`
  * transitively pulls in Arkitekt -> constants.tsx -> `window`, which would drag
  * this pure suite into jsdom for no benefit (vitest.config.ts: "Pure-logic
  * suites run in `node` for speed"). transformGraph.ts keeps itself pure the
- * same way. The form maps these onto the real enum at the mutation boundary.
+ * same way. The form widens the literals onto the real enums at the mutation
+ * boundary.
  */
-export type EmittableKind = "IDENTITY" | "SCALE" | "TRANSLATION" | "AFFINE";
 
 /**
  * Structural subset of a generated `Axis` fragment — the same approach
@@ -63,18 +60,24 @@ export type MappingRow = {
 export type MappedRow = MappingRow & { target: AxisLike };
 
 /**
- * The five modes the form offers over four kinds. `SCALE_TRANSLATE` emits an
- * AFFINE rather than a SEQUENCE[Scale, Translation] because
- * `CreateTransformationInput` has no child-transformation field — a SEQUENCE is
- * not authorable in one call at all — and one affine with the scale on the
+ * The five modes the form offers. Every one is emitted as a BY_DIMENSION
+ * edge — the one authorable `TransformInput` kind that carries
+ * `inputAxes`/`outputAxes` — because the mapping may cover only a subset of the
+ * source's axes and place them into a larger space, which the whole-space kinds
+ * (SCALE takes only `scale`, in the FULL input system's axis order; IDENTITY
+ * takes nothing) cannot say. The mode decides which parameter the edge carries.
+ *
+ * `SCALE_TRANSLATE` emits an `affine` rather than `scale` + `translation`
+ * together: the schema's BY_DIMENSION member allows either payload but states
+ * no composition order for a combined one, and one affine with the scale on the
  * diagonal and the translation in the last column is exactly the same map.
  *
- * Deliberately absent: ROTATION (AFFINE covers it; there is no authoring UI for
- * "orthonormal matrix" that isn't just typing an affine), MAP_AXIS /
- * BIJECTION / DISPLACEMENTS (`evalTransform`'s `default:` returns null for
- * these — authoring one produces an edge our own renderer silently ignores),
- * SEQUENCE / BY_DIMENSION (no child authoring), COORDINATES (needs a Zarr
- * store), and UNMAPPABLE (a declared NON-correspondence, not a registration).
+ * Deliberately absent: ROTATION (an affine covers it; there is no authoring UI
+ * for "orthonormal matrix" that isn't just typing an affine), MAP_AXIS
+ * (`evalTransform`'s `default:` returns null for it — authoring one produces an
+ * edge our own renderer silently ignores), FIELD (needs an array whose values
+ * are the map), and UNMAPPABLE (a declared NON-correspondence, not a
+ * registration).
  */
 export type RegistrationMode =
   | "IDENTITY"
@@ -82,15 +85,6 @@ export type RegistrationMode =
   | "TRANSLATION"
   | "SCALE_TRANSLATE"
   | "AFFINE";
-
-/** The kind each mode is stored as. Shown to the user: they are authoring a graph. */
-export const MODE_KIND: Record<RegistrationMode, EmittableKind> = {
-  IDENTITY: "IDENTITY",
-  SCALE: "SCALE",
-  TRANSLATION: "TRANSLATION",
-  SCALE_TRANSLATE: "AFFINE",
-  AFFINE: "AFFINE",
-};
 
 /** Axis types for which "this axis is not mapped" is unremarkable rather than a warning. */
 const NON_SPATIAL_TYPES = new Set(["CHANNEL", "INDEX"]);
@@ -220,8 +214,8 @@ export const isModeAvailable = (
  * input axis in `inputAxes` order, translation in the final column at index N.
  * That is the exact shape `evalTransform`'s Affine case reads
  * (`rows[outPos][inPos]`, translation at `rows[r][axesIn.length]`), and M and N
- * are independent — which is why a rank-changing registration needs no
- * BY_DIMENSION wrapper.
+ * are independent — the BY_DIMENSION edge's named axes are exactly the mapped
+ * rows, so a rank-changing registration is just a non-square matrix.
  *
  * Because both orders are `mapped`'s order, row i and column i are the same
  * axis pairing and the matrix is diagonal by construction.
@@ -248,20 +242,29 @@ export type RegistrationDraft = {
 };
 
 /**
+ * Structurally the `TransformInput` this module emits: always BY_DIMENSION —
+ * see the note on `RegistrationMode` — with the mode's parameter arrays
+ * ordered by the named axes.
+ */
+export type ByDimensionTransformVariables = {
+  kind: "BY_DIMENSION";
+  inputAxes: string[];
+  outputAxes: string[];
+  scale?: number[];
+  translation?: number[];
+  affine?: number[][];
+};
+
+/**
  * Structurally a `CreateTransformationInput`, minus the generated enum types.
- * The form widens `kind`/`validity` onto the real enums when it builds the
- * mutation variables.
+ * The form widens `transform.kind`/`validity` onto the real enums when it
+ * builds the mutation variables.
  */
 export type CreateTransformationVariables = {
   input: string;
   output: string;
-  kind: EmittableKind;
-  inputAxes: string[];
-  outputAxes: string[];
   name?: string | null;
-  scale?: number[];
-  translation?: number[];
-  affine?: number[][];
+  transform: ByDimensionTransformVariables;
   validity: "MANUAL";
 };
 
@@ -280,15 +283,18 @@ export const buildRegistrationInput = (
   // this one list, so they cannot disagree with each other.
   const mapped = mappedRows(draft.rows);
 
-  const base = {
-    input: draft.sourceSystemId,
-    output: draft.targetSystemId,
-    kind: MODE_KIND[draft.mode],
+  const axes = {
+    kind: "BY_DIMENSION" as const,
     inputAxes: mapped.map((row) => row.source.name),
     // Paired positionally with inputAxes: inputAxes[i] -> outputAxes[i]. The
     // rename rule forces these two equal for every non-affine mode, so the
     // pairing only bites AFFINE, where it decides row order.
     outputAxes: mapped.map((row) => row.target.name),
+  };
+
+  const base = {
+    input: draft.sourceSystemId,
+    output: draft.targetSystemId,
     name: draft.name?.trim() ? draft.name.trim() : null,
     // "Someone authored this map -- a registration pipeline, a human with a
     // matrix. It exists on purpose, but nothing has checked it against the
@@ -300,17 +306,31 @@ export const buildRegistrationInput = (
 
   switch (draft.mode) {
     case "IDENTITY":
-      return base;
+      // A bare BY_DIMENSION: the named axes correspond one-to-one and the
+      // unnamed ones are untouched.
+      return { ...base, transform: axes };
     case "SCALE":
-      return { ...base, scale: mapped.map((row) => num(row.scale)) };
+      return {
+        ...base,
+        transform: { ...axes, scale: mapped.map((row) => num(row.scale)) },
+      };
     case "TRANSLATION":
-      return { ...base, translation: mapped.map((row) => num(row.translation)) };
+      return {
+        ...base,
+        transform: {
+          ...axes,
+          translation: mapped.map((row) => num(row.translation)),
+        },
+      };
     case "SCALE_TRANSLATE":
-      return { ...base, affine: buildAffineDiagonal(mapped) };
+      return { ...base, transform: { ...axes, affine: buildAffineDiagonal(mapped) } };
     case "AFFINE":
       return {
         ...base,
-        affine: (draft.matrix ?? []).map((row) => row.map(num)),
+        transform: {
+          ...axes,
+          affine: (draft.matrix ?? []).map((row) => row.map(num)),
+        },
       };
   }
 };

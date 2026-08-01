@@ -5,7 +5,8 @@
  * more than two things — the physical coordinate system (whose axes carry the
  * units) and the single edge mapping the pixels into it — so it is now said
  * with `createCoordinateSystem`, the same call that mints a world, carrying one
- * SCALE entry in `registrations`.
+ * `registrations` entry whose transform is a BY_DIMENSION scale edge (the one
+ * authorable kind that lets the edge name the axes its `scale` is ordered by).
  *
  * `axes` order defines `scale` order: entry i of `scale` is the pixel size of
  * axis i of `axes`, and `inputAxes`/`outputAxes` name that same order back to
@@ -38,7 +39,7 @@ export type CalibrationRow = {
  * retypes whatever the acquisition actually used.
  *
  * CHANNEL and INDEX get "dimensionless" because the schema requires a unit on
- * every axis of a calibrated system (`CalibratedAxisInput.unit: Unit!`) while
+ * every axis of a unit-carrying system (`PhysicalAxisInput.unit: Unit!`) while
  * these two have nothing to measure — an INDEX axis's own docstring says "there
  * is nothing to measure — the distance between object 3 and object 4 means
  * nothing". "dimensionless" is the pint spelling of exactly that.
@@ -105,7 +106,7 @@ export type CalibrationDraft = {
 
 /**
  * Structural mirror of the generated `CreateCoordinateSystemInput` — the
- * calibration case of it, where `registrations` holds exactly one SCALE edge
+ * calibration case of it, where `registrations` holds exactly one scale edge
  * from the dataset being calibrated.
  */
 export type CreateCalibrationVariables = {
@@ -113,10 +114,12 @@ export type CreateCalibrationVariables = {
   axes: { name: string; type: string; unit: string; longName?: string | null }[];
   registrations: {
     dataset: string;
-    kind: string;
-    scale: number[];
-    inputAxes: string[];
-    outputAxes: string[];
+    transform: {
+      kind: "BY_DIMENSION";
+      scale: number[];
+      inputAxes: string[];
+      outputAxes: string[];
+    };
   }[];
 };
 
@@ -146,10 +149,12 @@ export const buildCalibrationInput = (
     registrations: [
       {
         dataset: draft.dataset,
-        kind: "SCALE",
-        scale: draft.rows.map((row) => num(row.scale)),
-        inputAxes: axisNames,
-        outputAxes: axisNames,
+        transform: {
+          kind: "BY_DIMENSION",
+          scale: draft.rows.map((row) => num(row.scale)),
+          inputAxes: axisNames,
+          outputAxes: axisNames,
+        },
       },
     ],
   };

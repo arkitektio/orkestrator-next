@@ -45,7 +45,6 @@ export type CoordinateSystemLike = {
 export type SceneTransformContext = {
   worldCoordinateSystem?: CoordinateSystemLike;
   coordinateSystems?: readonly NonNullable<CoordinateSystemLike>[] | null;
-  registrations?: readonly NonNullable<TransformLike>[] | null;
 };
 
 /** One step of a server-resolved placement path. */

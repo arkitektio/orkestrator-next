@@ -66,18 +66,19 @@ describe("buildCalibrationInput", () => {
 
     expect(input.axes.map((a) => a.name)).toEqual(["c", "y", "x"]);
     // scale[i] is the pixel size of axes[i] — the pairing is positional.
-    expect(input.registrations[0].scale).toEqual([1, 0.5, 0.25]);
+    expect(input.registrations[0].transform.scale).toEqual([1, 0.5, 0.25]);
   });
 
-  it("states one SCALE registration from the dataset being calibrated", () => {
+  it("states one scale registration from the dataset being calibrated", () => {
     // A calibration is a system plus its one edge, and `createCoordinateSystem`
     // is now where both are said. Anything else here — no registration, an
-    // IDENTITY, a second edge — is a different object entirely.
+    // identity, a second edge — is a different object entirely. BY_DIMENSION is
+    // the one authorable kind that lets the edge name its axes.
     const input = buildCalibrationInput(draftOf(prefillCalibration(CYX)));
 
     expect(input.registrations).toHaveLength(1);
     expect(input.registrations[0].dataset).toBe("ds-1");
-    expect(input.registrations[0].kind).toBe("SCALE");
+    expect(input.registrations[0].transform.kind).toBe("BY_DIMENSION");
   });
 
   it("names the scale order on both ends of the edge", () => {
@@ -85,9 +86,9 @@ describe("buildCalibrationInput", () => {
     // renames nothing, so outputAxes is the same list.
     const input = buildCalibrationInput(draftOf(prefillCalibration(CYX)));
 
-    expect(input.registrations[0].inputAxes).toEqual(["c", "y", "x"]);
-    expect(input.registrations[0].outputAxes).toEqual(["c", "y", "x"]);
-    expect(input.registrations[0].inputAxes).toEqual(
+    expect(input.registrations[0].transform.inputAxes).toEqual(["c", "y", "x"]);
+    expect(input.registrations[0].transform.outputAxes).toEqual(["c", "y", "x"]);
+    expect(input.registrations[0].transform.inputAxes).toEqual(
       input.axes.map((a) => a.name),
     );
   });
@@ -100,17 +101,17 @@ describe("buildCalibrationInput", () => {
     const input = buildCalibrationInput(draftOf(rows));
 
     expect(input.axes.map((a) => a.name)).toEqual(["c", "y", "x"]);
-    expect(input.registrations[0].scale).toEqual([1, 0.5, 0.25]);
-    expect(input.registrations[0].inputAxes).toEqual(["c", "y", "x"]);
+    expect(input.registrations[0].transform.scale).toEqual([1, 0.5, 0.25]);
+    expect(input.registrations[0].transform.inputAxes).toEqual(["c", "y", "x"]);
   });
 
   it("coerces the strings the inputs hand back", () => {
     const rows = prefillCalibration([axis("y", 0, "SPACE")]);
     rows[0].scale = "0.325";
 
-    expect(buildCalibrationInput(draftOf(rows)).registrations[0].scale).toEqual(
-      [0.325],
-    );
+    expect(
+      buildCalibrationInput(draftOf(rows)).registrations[0].transform.scale,
+    ).toEqual([0.325]);
   });
 
   it("defaults an empty name to `physical`", () => {

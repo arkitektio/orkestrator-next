@@ -19,13 +19,11 @@ fragment Scene on Scene {
   worldCoordinateSystem {
     ...CoordinateSystem
   }
-  # scene.coordinateSystems is deliberately NOT selected: every edge now
-  # self-describes its parameter order (Transformation.inputAxes/outputAxes),
-  # which was the global list's only client-side job — everything else was
-  # duplication of systems already delivered inline where they're used.
-  registrations {
-    ...Transformation
-  }
+  # scene.coordinateSystems and scene.registrations are deliberately NOT
+  # selected: every edge self-describes its parameter order
+  # (Transformation.inputAxes/outputAxes), and placement resolves entirely from
+  # each layer's server-resolved pathToWorld plus the lens/dataArray toParent
+  # edges — the raw space-wide edge set was payload with no client reader.
   layers {
     ...SceneLayer
   }

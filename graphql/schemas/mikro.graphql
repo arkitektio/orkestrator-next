@@ -1,7 +1,9 @@
 directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
+directive @unionElementOf(discriminator: String!, key: String!, union: String!) repeatable on INPUT_OBJECT
+
 """
-A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the calibrated spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid
+A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the physical spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid
 """
 type ADataset {
   """
@@ -31,7 +33,7 @@ type ADataset {
   id: ID!
 
   """
-  The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and calibration-independent
+  The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and unit-independent
   """
   intrinsicSystem: CoordinateSystem
 
@@ -74,11 +76,6 @@ input ADatasetFilter {
   """Filter by the sub of the user that assigned the creating task"""
   assignedBy: ID
 
-  """
-  Filter by whether the dataset has an edge into a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
-  """
-  calibrated: Boolean
-
   """Filter for items created after this datetime"""
   createdAfter: DateTime
 
@@ -108,6 +105,11 @@ input ADatasetFilter {
   Filter to datasets whose intrinsic coordinate system carries every one of these axis types, e.g. [TIME, CHANNEL]. The raw form of `spec`, for the types no spec names: COORDINATE, DISPLACEMENT, INDEX
   """
   hasAxisTypes: [AxisType!]
+
+  """
+  Filter by whether the dataset has an edge into a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
+  """
+  hasPhysicalSpace: Boolean
   id: ID
 
   """Filter by list of IDs"""
@@ -248,6 +250,13 @@ type AcquisitionView implements View {
   yMin: Int
   zMax: Int
   zMin: Int
+}
+
+"""
+The fields an AFFINE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input AffineTransformInput {
+  affine: [[Float!]!]!
 }
 
 """A general affine map, given as an M x (N+1) matrix with rows outermost"""
@@ -799,7 +808,7 @@ type AttributePlan {
   lookup: LookupStep!
 
   """
-  The steps from the PROBED system to this plan's root (the FIELD edge's input system -- equal to `sample.system` when the mask's own pixels are the map). Empty when the plan is rooted where you probed. Compose in order, inverting the flagged steps, to map a probed-space point into the space `consumes` and `passthrough` are stated in -- the same contract as `pathToWorld`. The path crosses derivations, levels, lenses and calibrations, never a registration
+  The steps from the PROBED system to this plan's root (the FIELD edge's input system -- equal to `sample.system` when the mask's own pixels are the map). Empty when the plan is rooted where you probed. Compose in order, inverting the flagged steps, to map a probed-space point into the space `consumes` and `passthrough` are stated in -- the same contract as `pathToWorld`. The path crosses derivations, levels, lenses and physical spaces, never a registration
   """
   path: [PlacementStep!]!
 
@@ -864,7 +873,7 @@ input AxisFilter {
 }
 
 """
-Input type for one structural axis of a dataset's pixel grid: its name and its semantic kind. Units and spacings do not belong here -- they are a calibration, a separate coordinate system plus one edge
+Input type for one structural axis of a dataset's pixel grid: its name and its semantic kind. Units and spacings do not belong here -- they belong to a physical space, a separate coordinate system plus one edge
 """
 input AxisInput {
   description: String = null
@@ -903,7 +912,7 @@ enum AxisType {
   MICROTIME
 
   """
-  A spatial axis. Unitless pixel indices in an INTRINSIC/ARRAY system; carries a physical length unit in a calibrated system.
+  A spatial axis. Unitless pixel indices in a pixel-grid system; carries a physical length unit in a unit-carrying system.
   """
   SPACE
 
@@ -913,7 +922,7 @@ enum AxisType {
   SPECTRUM
 
   """
-  A time axis. Frame indices in an INTRINSIC/ARRAY system; carries a physical duration unit in a calibrated system.
+  A time axis. Frame indices in a pixel-grid system; carries a physical duration unit in a unit-carrying system.
   """
   TIME
 }
@@ -1125,7 +1134,7 @@ enum BootstrapLayerKind {
 }
 
 """
-Ask ingest to bootstrap a renderable scene for the new dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar for a separate createSceneFromDataset call
+Ask ingest to bootstrap a renderable scene for the new dataset: a world mirroring its pixel axes under default units, a full lens, and one default image layer. Sugar for a separate createSceneFromDataset call; for a physically scaled scene, register the dataset into a unit-carrying space via createCoordinateSystem first and call createSceneFromDataset after
 """
 input BootstrapSceneInput {
   kind: BootstrapLayerKind = null
@@ -1147,6 +1156,17 @@ An axis-aligned box as a min and a max corner, in the coordinate order of the fr
 input BoundingBoxInput {
   max: [Float!]!
   min: [Float!]!
+}
+
+"""
+The fields a BY_DIMENSION member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input ByDimensionTransformInput {
+  affine: [[Float!]!] = null
+  inputAxes: [String!]!
+  outputAxes: [String!]!
+  scale: [Float!] = null
+  translation: [Float!] = null
 }
 
 """
@@ -1218,28 +1238,6 @@ type CCDElement implements OpticalElement {
   pose: Pose3D
   resolution: [Int!]
   serialNumber: String
-}
-
-"""
-Input type for one axis of a calibrated coordinate system: its name, its semantic kind and its physical unit
-"""
-input CalibratedAxisInput {
-  description: String = null
-  longName: String = null
-  name: String!
-  type: AxisType!
-  unit: Unit!
-}
-
-"""
-A calibration: a PHYSICAL coordinate system (axes carrying the units) plus the single edge mapping the dataset's intrinsic pixels into it. Supply per-axis scale (the pixel size) and optionally a translation (e.g. a stage offset), or a full affine matrix
-"""
-input CalibrationSpecInput {
-  affine: [[Float!]!] = null
-  axes: [CalibratedAxisInput!]!
-  name: String! = "physical"
-  scale: [Float!] = null
-  translation: [Float!] = null
 }
 
 """
@@ -1826,7 +1824,7 @@ input CoordinateAnchorInput {
 }
 
 """
-The connected component of the coordinate graph around one system: every coordinate system it relates to, and every top-level edge between them. Reachability is undirected -- an edge pointing *into* the system you started from (a calibration, say) relates to it just as much as one pointing out -- but every edge is returned in its true stored direction, so composing a path is still the client's job and still needs the inversions flagged
+The connected component of the coordinate graph around one system: every coordinate system it relates to, and every top-level edge between them. Reachability is undirected -- an edge pointing *into* the system you started from (the edge into a physical space, say) relates to it just as much as one pointing out -- but every edge is returned in its true stored direction, so composing a path is still the client's job and still needs the inversions flagged
 """
 type CoordinateGraph {
   """The coordinate system the walk started from"""
@@ -1863,7 +1861,7 @@ type CoordinateSystem {
   creator: User
 
   """
-  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a calibrated system with a TIME axis (a shared world space); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
+  The wall-clock instant this system's time axis has its origin at: `wall_clock = epoch + t * unit`. A property of the space, not of any composition over it. Meaningful only for a unit-carrying system with a TIME axis (a shared world space); null when the clock is unanchored -- the time axis is still a perfectly composable relative coordinate
   """
   epoch: DateTime
   id: ID!
@@ -1890,7 +1888,7 @@ type CoordinateSystem {
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
 
   """
-  The summed version of the transformation chain from this system down to its dataset's intrinsic pixel space, as it stands now. Compare it with an annotation's `createdWithTransforms` to detect staleness: the two agreeing means the geometry was authored against the chain still in force, and them differing means a registration or calibration on the path has been refined since. 0 for a system that IS an intrinsic space, or one with no path down to pixels (a calibrated or shared space -- its coordinates are meaningful on their own). Provenance only: it never takes part in resolving a coordinate
+  The summed version of the transformation chain from this system down to its dataset's intrinsic pixel space, as it stands now. Compare it with an annotation's `createdWithTransforms` to detect staleness: the two agreeing means the geometry was authored against the chain still in force, and them differing means a registration or physical-space edge on the path has been refined since. 0 for a system that IS an intrinsic space, or one with no path down to pixels (a unit-carrying or shared space -- its coordinates are meaningful on their own). Provenance only: it never takes part in resolving a coordinate
   """
   transformVersion: Int!
 }
@@ -1939,13 +1937,58 @@ input CoordinateSystemOrder @oneOf {
 }
 
 """
-Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive as an optional calibration
+The kind of a transformation a client can author directly: the discriminator of `TransformInput`. SEQUENCE and BIJECTION are absent on purpose -- they are wrappers the ingest builds together with their children (pyramid levels, stepped lenses), never authored empty.
+"""
+enum CreatableTransformKind {
+  """
+  A general affine map. Takes `affine`, an M x (N+1) matrix with rows outermost.
+  """
+  AFFINE
+
+  """
+  A map acting on a named subset of the axes and saying nothing about the rest. Takes `inputAxes` and `outputAxes`, and optionally `scale`, `translation` or `affine` acting on the named axes.
+  """
+  BY_DIMENSION
+
+  """
+  A non-affine map given by the values of an array rather than by a formula. Takes `field` (the array's coordinate system), `inputAxes` and `outputAxes`.
+  """
+  FIELD
+
+  """
+  The identity map. Input and output coordinates are the same, so it takes no parameters.
+  """
+  IDENTITY
+
+  """
+  A permutation of axes, mapping each input axis to an output axis by name. Takes `inputAxes` and `outputAxes`; the matrix is synthesized from them.
+  """
+  MAP_AXIS
+
+  """
+  A rotation. Takes `affine`: the orthonormal matrix, in the same layout an AFFINE uses.
+  """
+  ROTATION
+
+  """A per-axis multiplication. Takes `scale`, one entry per input axis."""
+  SCALE
+
+  """A per-axis offset. Takes `translation`, one entry per input axis."""
+  TRANSLATION
+
+  """
+  A declared NON-correspondence: no point of either space maps to a point of the other. Takes only an optional `reason`.
+  """
+  UNMAPPABLE
+}
+
+"""
+Input type for creating an array dataset. Its axes are structural (name and kind); physical units, if known, arrive afterwards through createCoordinateSystem with a registrations entry naming the dataset
 """
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
   axes: [AxisInput!]!
   bootstrapScene: BootstrapSceneInput = null
-  calibration: CalibrationSpecInput = null
   data: ArrayLike!
   derivedFrom: [DerivedFromInput!] = null
   name: String!
@@ -2022,7 +2065,7 @@ input CreateAnnotationsInput {
 Create a SHARED coordinate system -- a reference space with no owner, e.g. a world or an atlas -- and, in the same call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it. Every other system is owned by a container and created with it, so a shared space is the only system created directly. createSceneFromCoordinateSystem later builds a scene over it and materializes those sources as layers
 """
 input CreateCoordinateSystemInput {
-  axes: [CalibratedAxisInput!]!
+  axes: [PhysicalAxisInput!]!
   epoch: DateTime = null
   name: String!
   registrations: [RegistrationPathInput!]! = []
@@ -2246,7 +2289,7 @@ input CreateRgbLayerInput {
 }
 
 """
-Bootstrap a renderable scene over an existing coordinate system. Over an ownerless SHARED space the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's INTRINSIC pixels, a PHYSICAL calibration, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
+Bootstrap a renderable scene over an existing coordinate system. Over an ownerless SHARED space the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's intrinsic pixels, a physical space, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
 """
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
@@ -2255,7 +2298,7 @@ input CreateSceneFromCoordinateSystemInput {
 }
 
 """
-Input for bootstrapping a renderable scene for a dataset: a world mirroring its calibration, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
+Input for bootstrapping a renderable scene for a dataset: a world mirroring its physical space, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
 """
 input CreateSceneFromDatasetInput {
   dataset: ID!
@@ -2264,10 +2307,10 @@ input CreateSceneFromDatasetInput {
 }
 
 """
-Input type for creating a scene over a world coordinate system: an adopted existing system (a shared space, a dataset's intrinsic grid, a calibration), or one created for it
+Input type for creating a scene over a world coordinate system: an adopted existing system (a shared space, a dataset's intrinsic grid, a physical space), or one created for it
 """
 input CreateSceneInput {
-  axes: [CalibratedAxisInput!] = null
+  axes: [PhysicalAxisInput!] = null
   backgroundColor: [Float!] = null
   blending: Blending = null
   coordinateSystem: ID = null
@@ -2308,17 +2351,10 @@ input CreateTrackLayerInput {
 Input for creating one edge of the coordinate graph, mapping an input coordinate system to an output one
 """
 input CreateTransformationInput {
-  affine: [[Float!]!] = null
-  field: ID = null
   input: ID!
-  inputAxes: [String!] = null
-  kind: TransformKind!
   name: String = null
   output: ID!
-  outputAxes: [String!] = null
-  reason: String = null
-  scale: [Float!] = null
-  translation: [Float!] = null
+  transform: TransformInput!
   validity: PlacementValidity = null
   valueRelation: ValueRelation = null
 }
@@ -2662,30 +2698,18 @@ input DeleteViewInput {
 }
 
 """
-How a collection's own coordinate system relates to the space it was derived from. The same edge, and the same rank check, that a derived dataset's `derivedFrom` writes
+How a collection's own coordinate system relates to the space it was derived from. The same edge, the same kinds, and the same rank check, that a derived dataset's `derivedFrom` writes
 """
 input DerivationInput {
-  affine: [[Float!]!] = null
-  inputAxes: [String!] = null
-  kind: TransformKind! = IDENTITY
-  outputAxes: [String!] = null
-  reason: String = null
-  scale: [Float!] = null
-  translation: [Float!] = null
+  transform: TransformInput = null
 }
 
 """
 Input for stating where a new dataset's pixels came from: the lens it was computed from, and the map from its pixel grid back into that lens' space
 """
 input DerivedFromInput {
-  affine: [[Float!]!] = null
-  inputAxes: [String!] = null
-  kind: TransformKind! = IDENTITY
   lens: ID!
-  outputAxes: [String!] = null
-  reason: String = null
-  scale: [Float!] = null
-  translation: [Float!] = null
+  transform: TransformInput = null
   valueRelation: ValueRelation = null
 }
 
@@ -3106,6 +3130,15 @@ enum ExtentState {
   The source's geometry is not something the server holds: a mesh collection's vertices and a table dataset's rows live in Parquet it never opens. `extent` is null because there is no box to push, not because the path failed -- and the source is returned anyway, because refusing to bound something is not the same as knowing it is out of view.
   """
   UNREADABLE
+}
+
+"""
+The fields a FIELD member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input FieldTransformInput {
+  field: ID!
+  inputAxes: [String!]!
+  outputAxes: [String!]!
 }
 
 """
@@ -4730,6 +4763,14 @@ type LookupStep {
 }
 
 """
+The fields a MAP_AXIS member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input MapAxisTransformInput {
+  inputAxes: [String!]!
+  outputAxes: [String!]!
+}
+
+"""
 A permutation of axes, mapping each input axis to an output axis by name
 """
 type MapAxisTransformation implements Transformation {
@@ -5309,12 +5350,12 @@ type Mutation {
   createScene(input: CreateSceneInput!): Scene!
 
   """
-  Bootstrap a renderable scene over an existing coordinate system: a shared space (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a calibration (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
+  Bootstrap a renderable scene over an existing coordinate system: a shared space (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a physical space (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
   """
   createSceneFromCoordinateSystem(input: CreateSceneFromCoordinateSystemInput!): Scene!
 
   """
-  Bootstrap a renderable scene for a dataset in one call: a world mirroring its calibration, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
+  Bootstrap a renderable scene for a dataset in one call: a world mirroring its physical space, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
   """
   createSceneFromDataset(input: CreateSceneFromDatasetInput!): Scene!
 
@@ -6826,7 +6867,7 @@ enum PhasorColorMode {
 }
 
 """
-Everything needed to reduce one axis of a lens to a phasor, at one harmonic. Derived from the dataset's calibration, its lightpath and its phasor spokes; nothing here is stored on the lens. A phasor render node states *which* axis and harmonic to reduce, and reads the rest from here -- the instrument is an acquisition fact, so two layers over one dataset cannot disagree about it
+Everything needed to reduce one axis of a lens to a phasor, at one harmonic. Derived from the dataset's physical space, its lightpath and its phasor spokes; nothing here is stored on the lens. A phasor render node states *which* axis and harmonic to reduce, and reads the rest from here -- the instrument is an acquisition fact, so two layers over one dataset cannot disagree about it
 """
 type PhasorContext {
   """The axis the phasor is taken over"""
@@ -6838,7 +6879,7 @@ type PhasorContext {
   axisType: AxisType!
 
   """
-  The physical width of one bin, from the axis' PHYSICAL calibration: a duration ('0.098 ns') for a microtime axis, a wavelength step ('5 nm') for a spectrum axis. Null when the dataset has no calibration -- the phasor is then computable only in bin units
+  The physical width of one bin, from the physical space that scales the axis: a duration ('0.098 ns') for a microtime axis, a wavelength step ('5 nm') for a spectrum axis. Null when the dataset has no physical space -- the phasor is then computable only in bin units
   """
   binWidth: GenericQuantity
 
@@ -6868,7 +6909,7 @@ type PhasorContext {
   phasorHistogram: PhasorHistogram
 
   """
-  The period the transform actually runs over on THIS lens: bin_width x bins. It is the frequency to transform at, and the only one available over a spectrum axis. For an uncropped FLIM axis it should agree with laserFrequency -- but a lens that slices its phasor axis narrows it, and then it deliberately does not: the window follows the data, while the laser does not. Null when there is no calibration
+  The period the transform actually runs over on THIS lens: bin_width x bins. It is the frequency to transform at, and the only one available over a spectrum axis. For an uncropped FLIM axis it should agree with laserFrequency -- but a lens that slices its phasor axis narrows it, and then it deliberately does not: the window follows the data, while the laser does not. Null when there is no physical space
   """
   window: GenericQuantity
 }
@@ -6998,6 +7039,17 @@ input PhasorTransferInput {
   min: GenericQuantity = null
   mode: PhasorColorMode = null
   weightByIntensity: Boolean = null
+}
+
+"""
+Input type for one axis of a unit-carrying coordinate system: its name, its semantic kind and its physical unit
+"""
+input PhysicalAxisInput {
+  description: String = null
+  longName: String = null
+  name: String!
+  type: AxisType!
+  unit: Unit!
 }
 
 """Input for pinning or unpinning a camera for quick access"""
@@ -7186,7 +7238,7 @@ enum PlacementValidity {
   MANUAL
 
   """
-  This map was assumed, never measured -- badge it. The one writer left is the scene bootstrap mirroring an uncalibrated dataset's pixels into a world under default units; it also remains on historical auto-registered edges.
+  This map was assumed, never measured -- badge it. The one writer left is the scene bootstrap mirroring the pixels of a dataset without a physical space into a world under default units; it also remains on historical auto-registered edges.
   """
   UNKNOWN
 
@@ -8224,20 +8276,13 @@ input ReferenceViewInput {
 A source (dataset, table dataset, mesh collection, or coordinate system) to register into a shared space, plus the edge that places it. The edge points from the source's own coordinate system to the shared space; the transform is validated exactly as createTransformation validates one
 """
 input RegistrationPathInput {
-  affine: [[Float!]!] = null
   annotationCollection: ID = null
   coordinateSystem: ID = null
   dataset: ID = null
-  field: ID = null
-  inputAxes: [String!] = null
-  kind: TransformKind! = IDENTITY
   meshCollection: ID = null
   name: String = null
-  outputAxes: [String!] = null
-  reason: String = null
-  scale: [Float!] = null
   tableDataset: ID = null
-  translation: [Float!] = null
+  transform: TransformInput = null
   validity: PlacementValidity = null
 }
 
@@ -8482,6 +8527,13 @@ enum RoiKindChoices {
   UNKNOWN
 }
 
+"""
+The fields a ROTATION member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input RotationTransformInput {
+  affine: [[Float!]!]!
+}
+
 """A rotation, given as an orthonormal matrix"""
 type RotationTransformation implements Transformation {
   """The rotation matrix"""
@@ -8588,6 +8640,13 @@ input ScaleInput {
   The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic'. Recorded as provenance on the level's transformation
   """
   scaleMethod: String = null
+}
+
+"""
+The fields a SCALE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input ScaleTransformInput {
+  scale: [Float!]!
 }
 
 """A per-axis multiplication, with one entry per input axis"""
@@ -9856,6 +9915,41 @@ input TransferFunctionInput {
 }
 
 """
+One edge of the coordinate graph, as a discriminated union: `kind` selects a member, and only that member's fields are read -- any other supplied field is rejected, never dropped. The member inputs annotated `@unionElementOf(union: "TransformInput")` say which fields each kind reads. Direction is always forward, input -> output
+"""
+input TransformInput {
+  """(AFFINE, ROTATION, BY_DIMENSION) The matrix, M x (N+1), rows outermost"""
+  affine: [[Float!]!] = null
+
+  """(FIELD) The coordinate system of the array whose values are the map"""
+  field: ID = null
+
+  """
+  (MAP_AXIS, BY_DIMENSION, FIELD) The names of the input axes the edge acts on
+  """
+  inputAxes: [String!] = null
+
+  """
+  The kind of transformation, which fixes which of the fields below are read. Any field outside the chosen kind's member is rejected
+  """
+  kind: CreatableTransformKind!
+
+  """
+  (MAP_AXIS, BY_DIMENSION, FIELD) The names of the output axes they map onto
+  """
+  outputAxes: [String!] = null
+
+  """(UNMAPPABLE) Why nothing corresponds. Purely descriptive"""
+  reason: String = null
+
+  """(SCALE, BY_DIMENSION) The per-axis scale factors"""
+  scale: [Float!] = null
+
+  """(TRANSLATION, BY_DIMENSION) The per-axis offsets"""
+  translation: [Float!] = null
+}
+
+"""
 Which geometric properties survive a coordinate transformation. A nested hierarchy -- each class preserves strictly less than the one above it -- so the class of a composed path is the weakest of its steps. Derived from a transformation's `kind`, never stored: a column could contradict the parameters, and the parameters would be right.
 """
 enum TransformInvariance {
@@ -10041,6 +10135,13 @@ input TransformationOrder @oneOf {
   order: Ordering
 }
 
+"""
+The fields a TRANSLATION member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input TranslationTransformInput {
+  translation: [Float!]!
+}
+
 """A per-axis offset, with one entry per input axis"""
 type TranslationTransformation implements Transformation {
   createdAt: DateTime!
@@ -10109,6 +10210,13 @@ a bare quantity (``"5 mV"``), or a dimension is rejected. Compact exponent
 spelling (``"cm2"``) is accepted and the given spelling is preserved.
 """
 scalar Unit
+
+"""
+The fields an UNMAPPABLE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
+"""
+input UnmappableTransformInput {
+  reason: String = null
+}
 
 """
 A declared NON-correspondence: the two systems are related -- one was computed from the other -- and no point of either maps to a point of the other. It has no parameters, no rank and no matrix, and no placement search will walk it, in either direction. This is what a per-object measurement table's relation to the image it was measured from looks like

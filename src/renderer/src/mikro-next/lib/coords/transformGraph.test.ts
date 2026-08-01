@@ -131,7 +131,6 @@ const SCENE = {
     { id: "cs:intrinsic", axes: [{ name: "t" }, { name: "c" }, { name: "z" }, { name: "y" }, { name: "x" }] },
     { id: "cs:phys", axes: [{ name: "z" }, { name: "y" }, { name: "x" }] },
   ],
-  registrations: [],
 };
 
 // intrinsic pixels → calibrated µm (the calibration edge)…

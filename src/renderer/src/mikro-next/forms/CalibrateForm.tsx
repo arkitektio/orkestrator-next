@@ -12,7 +12,7 @@ import { AlertTriangle } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   AxisType,
-  TransformKind,
+  CreatableTransformKind,
   useCreateCoordinateSystemMutation,
   useGetADatasetQuery,
 } from "../api/graphql";
@@ -109,7 +109,10 @@ const CalibrateFormBody = (props: {
       axes: built.axes.map((axis) => ({ ...axis, type: axis.type as AxisType })),
       registrations: built.registrations.map((registration) => ({
         ...registration,
-        kind: registration.kind as TransformKind,
+        transform: {
+          ...registration.transform,
+          kind: registration.transform.kind as CreatableTransformKind,
+        },
       })),
     };
     return submit({ variables: { input }, ...REFETCH });

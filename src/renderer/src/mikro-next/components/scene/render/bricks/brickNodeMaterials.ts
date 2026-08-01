@@ -306,6 +306,16 @@ type ResolvedResidency = {
    * the channel-slab z offset. Per-channel taps must add the slab offset to a
    * COPY — mutating this shared var would leak offsets across channels. */
   texelBase: any;
+  /**
+   * Level whose brick cell the empty-space skip may hop over: the level the
+   * walk STOPPED at (an EMPTY entry declares its entire cell uniform), or the
+   * coarsest level when NOTHING is mapped anywhere along the chain. Hopping by
+   * the fine desired level instead crossed a fully-unmapped volume — the
+   * first-load / slice-flush frames — in fine-pitch steps, each paying the
+   * full level walk above (up to numLevels page-table loads × MAX_RAY_STEPS
+   * per fragment).
+   */
+  hopLevel: any;
 };
 
 /**
@@ -344,6 +354,9 @@ function emitResolveBrickResidency(
   const status = float(0.0).toVar("resStatus");
   const emptyValue = float(0.0).toVar("resEmptyValue");
   const texelBase = vec3(0.0).toVar("resTexelBase");
+  // Defaults to the coarsest level: only overwritten when the walk stops at
+  // an EMPTY entry, so a fully-unmapped chain hops a coarsest-sized cell.
+  const hopLevel = int(t.uNumLevels).sub(1).toVar("resHopLevel");
 
   Loop(
     { start: int(0), end: t.uNumLevels, type: "int", condition: "<", name: "sbLvl" },
@@ -373,10 +386,13 @@ function emitResolveBrickResidency(
       ).toVar();
       const flag = int(entry.a.mul(255.0).add(0.5)).toVar();
 
-      // EMPTY: uniform-fill brick, value 8-bit-encoded in R (P11).
+      // EMPTY: uniform-fill brick, value 8-bit-encoded in R (P11). The hop
+      // level is the level the EMPTY entry lives at — its whole cell is
+      // uniform, so a non-contributing sample may skip the entire cell.
       If(flag.equal(int(2)), () => {
         status.assign(2.0);
         emptyValue.assign(float(t.uEmptyDecodeMin).add(entry.r.mul(t.uEmptyDecodeRange)));
+        hopLevel.assign(int(sbLvl));
         Break();
       });
 
@@ -394,7 +410,7 @@ function emitResolveBrickResidency(
     },
   );
 
-  return { status, emptyValue, texelBase };
+  return { status, emptyValue, texelBase, hopLevel };
 }
 
 /**
@@ -1017,14 +1033,19 @@ export function createVolumeNodeMaterial(
 
       // Empty-space skipping: nothing resident anywhere (status 0), or a
       // known-uniform EMPTY brick (status 2) contributing nothing — jump to
-      // the brick's exit. Status 1 (resident) never skips, same as the old
-      // per-channel bestStatus/anyResident bookkeeping this replaces.
+      // the exit of the RESOLVED level's cell (hopLevel: the EMPTY brick's
+      // own level, or the coarsest cell when the whole chain is unmapped),
+      // not the fine desired level's. Status 1 (resident) never skips, same
+      // as the old per-channel bestStatus/anyResident bookkeeping this
+      // replaces.
       If(
         resolved.status
           .lessThan(0.5)
           .or(resolved.status.greaterThan(1.5).and(sampleNorm.lessThanEqual(0.001))),
         () => {
-          rayT.addAssign(max(stepLen, float(brickExitRel(pB, invD, lvl)).add(0.01)));
+          rayT.addAssign(
+            max(stepLen, float(brickExitRel(pB, invD, resolved.hopLevel)).add(0.01)),
+          );
           Continue();
         },
       );

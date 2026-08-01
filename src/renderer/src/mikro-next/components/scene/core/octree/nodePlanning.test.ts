@@ -6,10 +6,12 @@ import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
 import {
   adjacentSlabBrickZ,
+  compareFetchOrder,
   planLayerNodes,
   sameNodePlan,
   slabLevelZ,
   type NodeCamera,
+  type PlannedNode,
 } from "./nodePlanning";
 
 const makeLayer = (
@@ -483,5 +485,117 @@ describe("sameNodePlan", () => {
     expect(sameNodePlan(a, b)).toBe(true);
     const mutated = { ...b, nodes: b.nodes.map((n, i) => (i === 0 ? { ...n, role: "target" as const } : n)) };
     expect(sameNodePlan(a, mutated)).toBe(false);
+  });
+});
+
+describe("compareFetchOrder", () => {
+  const node = (
+    role: PlannedNode["role"],
+    priority: number,
+    level = 0,
+  ): PlannedNode => ({ key: `${level}:${priority}`, level, coords: [0, 0, 0], role, priority });
+
+  it("dispatches the keep fallback chain before any target", () => {
+    const sorted = [
+      node("target", 1, 0),
+      node("keep", 5, 2),
+      node("target", 3, 0),
+      node("keep", 0, 3),
+    ].sort(compareFetchOrder);
+    expect(sorted.map((n) => `${n.role}:${n.priority}`)).toEqual([
+      "keep:0",
+      "keep:5",
+      "target:1",
+      "target:3",
+    ]);
+  });
+
+  it("orders targets near-first (plan priority), NOT coarse-first", () => {
+    // A far coarse target (level 2, emitted late) must not preempt a near
+    // fine target (level 0, emitted early) — the old `b.level - a.level`
+    // sort did exactly that, starving newly visible fine bricks on zoom-in.
+    const nearFine = node("target", 2, 0);
+    const farCoarse = node("target", 40, 2);
+    expect([farCoarse, nearFine].sort(compareFetchOrder)[0]).toBe(nearFine);
+  });
+});
+
+describe("planLayerNodes coarsest-slot reservation", () => {
+  // 3-slab z stack: the coarsest GRID spans all 3 slabs (1×1×3 bricks) even
+  // though a 2D plan only ever contains ONE slab — the residency manager pins
+  // every resident coarsest brick across scrub history, so the planner must
+  // budget refinement against (maxPlanBytes − full coarsest grid).
+  const zLevels: LevelSource[] = [
+    { shape: [3, 512, 512, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "s0" },
+    { shape: [3, 256, 256, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "s1", scaleFactors: [1, 2, 2, 1] },
+  ];
+  const layer = makeLayer({ zAxis: "z" });
+  const geo = buildLayerLevelGeometry(["z", "y", "x", "c"], layer, zLevels)!;
+  const spec = resolveBrickSpec(geo, "2D");
+  // 256²-slab slots at 1 B/voxel: 64 KiB each. Coarsest grid = 3 slabs →
+  // 196 608 B reserved; refining one slab needs 4 L0 bricks = 262 144 B.
+  const planWith = (maxPlanBytes: number) =>
+    planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "2D",
+      viewRange: FULL_VIEW,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes,
+    });
+
+  it("refines when the budget covers reservation + refinement", () => {
+    const p = planWith(500_000); // 500 000 − 196 608 = 303 392 ≥ 262 144
+    expect(p.targetLevel).toBe(0);
+  });
+
+  it("stays coarse when the reservation leaves too little for refinement", () => {
+    // Pre-reservation accounting would refine here (65 536 + 262 144 ≤
+    // 400 000) and the resulting bricks would then lose the acquire race
+    // against pinned coarsest slots every 200 ms (the refetch treadmill).
+    const p = planWith(400_000); // 400 000 − 196 608 = 203 392 < 262 144
+    expect(p.targetLevel).toBe(1);
+    expect(p.nodes.every((n) => n.level === 1)).toBe(true);
+  });
+
+  it("skips the reservation when the whole pyramid fits the budget", () => {
+    // Total = (12 + 3) × 65 536 = 983 040 — no slot scarcity at 1 MiB.
+    const p = planWith(1_000_000);
+    expect(p.targetLevel).toBe(0);
+  });
+});
+
+describe("planLayerNodes budget-floor hysteresis", () => {
+  // Whole-image L0 chunk (512²) so the decoded-bytes floor (262 144 B for any
+  // L0 touch) decouples from the slot need of a small view (one 64 KiB brick).
+  const levels: LevelSource[] = [
+    { shape: [512, 512, 1], chunks: [512, 512, 1], dtype: "uint8", storeId: "s0" },
+    { shape: [256, 256, 1], chunks: [256, 256, 1], dtype: "uint8", storeId: "s1", scaleFactors: [2, 2, 1] },
+  ];
+  const layer = makeLayer();
+  const geo = buildLayerLevelGeometry(["y", "x", "c"], layer, levels)!;
+  const spec = resolveBrickSpec(geo, "2D");
+  const smallView: LayerViewRange = { xRange: [0, 100], yRange: [0, 100], zRange: null, scale: 2 };
+  const planWith = (previousTargetLevel: number | undefined) =>
+    planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "2D",
+      viewRange: smallView,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      // Below the 262 144 B decoded floor for L0, but within its 15% slack.
+      maxPlanBytes: 240_000,
+      previousTargetLevel,
+    });
+
+  it("keeps a previously-unlocked finer level within the slack", () => {
+    expect(planWith(undefined).targetLevel).toBe(1); // floor binds afresh
+    expect(planWith(0).targetLevel).toBe(0); // hysteresis holds the unlock
   });
 });

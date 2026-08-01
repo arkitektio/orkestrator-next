@@ -35,6 +35,13 @@ export function uploadTexSubImage3D(
   dest: readonly [number, number, number],
   size: readonly [number, number, number],
   data: ArrayBufferView,
+  /**
+   * Source layout when `data` is NOT tightly packed at `size` — lets a caller
+   * upload a sub-box straight out of a larger mirror without a staging copy
+   * (`writeTexture` reads strided source data natively; no alignment
+   * constraints apply on this path, unlike buffer→texture copies).
+   */
+  layout?: { offsetBytes: number; bytesPerRow: number; rowsPerImage: number },
 ): boolean {
   const backend = getBackend(renderer);
   if (!backend) return false;
@@ -55,9 +62,9 @@ export function uploadTexSubImage3D(
     { texture: gpuTexture, origin: [dest[0], dest[1], dest[2]] },
     data,
     {
-      offset: 0,
-      bytesPerRow: size[0] * BYTES_PER_TEXEL[kind],
-      rowsPerImage: size[1],
+      offset: layout?.offsetBytes ?? 0,
+      bytesPerRow: layout?.bytesPerRow ?? size[0] * BYTES_PER_TEXEL[kind],
+      rowsPerImage: layout?.rowsPerImage ?? size[1],
     },
     [size[0], size[1], size[2]],
   );

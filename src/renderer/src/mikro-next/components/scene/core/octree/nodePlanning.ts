@@ -1,11 +1,10 @@
 import * as THREE from "three";
-import type { DataType } from "zarrita";
-import { mapDTypeToTextureBytes } from "@/lib/zarr/indexing/dtype";
 import { buildSliceSignature } from "../sliceSignature";
 import { PREFETCH_MARGIN, expandVoxelRange } from "../viewportPlanning";
 import { affineToMatrix4 } from "../worldTransform";
 import type { LayerState } from "../layerModel";
 import type { LayerViewRange } from "../visibility";
+import { atlasBytesPerVoxel, atlasKindForGeometry } from "./atlasFormat";
 import { brickSlotBytes, type BrickSpec } from "./brickSpec";
 import type { LayerLevelGeometry, Vec3 } from "./levelGeometry";
 import {
@@ -13,6 +12,7 @@ import {
   childrenOf,
   nodeBaseBox,
   nodeKey,
+  totalBrickCount,
   type VoxelBox,
 } from "./nodeAddress";
 
@@ -110,7 +110,13 @@ export type PlanLayerNodesInput = {
   /** Scene-wide dim-slider selections (t, tau, …) — signature input only. */
   dimSelections?: Record<string, number>;
   maxPlanBytes?: number;
+  /** The previous plan's targetLevel (budget-floor hysteresis input). */
+  previousTargetLevel?: number;
 };
+
+/** Slack factor the budget floor tolerates to KEEP an already-unlocked finer
+ * level (see budgetMinLevel hysteresis below). */
+const BUDGET_FLOOR_HYSTERESIS = 1.15;
 
 // Scratch objects (single-threaded, one plan at a time).
 const scratchBox = new THREE.Box3();
@@ -146,6 +152,7 @@ export function planLayerNodes({
   currentZ,
   dimSelections,
   maxPlanBytes = Number.POSITIVE_INFINITY,
+  previousTargetLevel,
 }: PlanLayerNodesInput): LayerNodePlan {
   const sliceSignature = buildSliceSignature(layer, dimSelections);
   const levels = geometry.levels;
@@ -168,9 +175,11 @@ export function planLayerNodes({
       ? layer.fixedLOD
       : null;
 
-  const slotBytesByLevel = levels.map((level) =>
-    brickSlotBytes(spec, mapDTypeToTextureBytes(level.dtype as DataType)),
-  );
+  // ONE uniform slot size for every level: the pool allocates all slots at
+  // the atlas kind's width (r32f for phasor layers regardless of source
+  // dtype — see atlasKindForGeometry). Sizing plan bytes per-level by source
+  // dtype made the plan and the pool disagree on capacity.
+  const slotBytes = brickSlotBytes(spec, atlasBytesPerVoxel(atlasKindForGeometry(geometry)));
 
   // --- 2D slab selection (uncentered z mapping, parity with chunkPlanning) --
   const layerAffineInverse = affineToMatrix4(layer.affineMatrix).invert();
@@ -307,6 +316,19 @@ export function planLayerNodes({
       break;
     }
   }
+  // Hysteresis on the budget floor: a zoom hovering right at a level's byte
+  // threshold otherwise flips budgetMinLevel back and forth every few
+  // replans, and each flip replaces (fetches + evicts) the ENTIRE finest
+  // level set. A finer level the previous plan already unlocked stays
+  // unlocked while its visible bytes remain within the slack factor; real
+  // zoom-outs blow past the slack and re-coarsen normally.
+  if (
+    previousTargetLevel !== undefined &&
+    previousTargetLevel === budgetMinLevel - 1 &&
+    visibleBytesAtLevel(previousTargetLevel) <= maxPlanBytes * BUDGET_FLOOR_HYSTERESIS
+  ) {
+    budgetMinLevel = previousTargetLevel;
+  }
   const minLevel = fixedLOD ?? budgetMinLevel;
 
   // --- Per-node screen footprint --------------------------------------------
@@ -340,14 +362,35 @@ export function planLayerNodes({
         ]
       : [baseShape[0] / 2, baseShape[1] / 2, baseShape[2] / 2]);
 
+  // --- Coarsest-level reservation -------------------------------------------
+  // The residency manager pins EVERY resident coarsest brick in addition to
+  // the plan (the shader's fallback of last resort), so the slots a plan can
+  // actually win = budget − the full coarsest grid. Without the reservation a
+  // fully refined plan requests essentially the whole pool: repacked bricks
+  // find every slot protected at acquire time, are dropped, and are refetched
+  // every replan (the acquire-failure treadmill) — worst at deep zoom, when
+  // the plan is largest. When the whole pyramid fits the budget there is no
+  // slot scarcity at all; skip the reservation so small datasets refine
+  // freely.
+  const coarsestGrid = brickGridForLevel(geometry, spec, coarsest);
+  const coarsestReserveBytes =
+    coarsestGrid[0] * coarsestGrid[1] * coarsestGrid[2] * slotBytes;
+  const refineBudgetBytes =
+    totalBrickCount(geometry, spec) * slotBytes <= maxPlanBytes
+      ? maxPlanBytes
+      : Math.max(0, maxPlanBytes - coarsestReserveBytes);
+
   // --- Closest-first refinement ---------------------------------------------
   const nodes: PlannedNode[] = [];
   let planBytes = 0;
+  /** Bytes of sub-coarsest nodes only — what competes for unreserved slots. */
+  let refineBytes = 0;
   let targetLevel = coarsest;
 
   const emit = (level: number, coords: Vec3, role: PlannedNode["role"]) => {
     nodes.push({ key: nodeKey(level, coords), level, coords, role, priority: nodes.length });
-    planBytes += slotBytesByLevel[level];
+    planBytes += slotBytes;
+    if (level < coarsest) refineBytes += slotBytes;
     if (role === "target" && level < targetLevel) targetLevel = level;
   };
 
@@ -379,10 +422,11 @@ export function planLayerNodes({
             if (mode === "2D" && childSlab !== null && child[2] !== childSlab) return false;
             return nodeVisible(nodeBaseBox(geometry, spec, level - 1, child));
           });
-      const childBytes = children.length * slotBytesByLevel[level - 1];
+      const childBytes = children.length * slotBytes;
+      const pendingSelfBytes = level < coarsest ? slotBytes : 0;
       if (
         children.length === 0 ||
-        planBytes + slotBytesByLevel[level] + childBytes > maxPlanBytes
+        refineBytes + pendingSelfBytes + childBytes > refineBudgetBytes
       ) {
         children = [];
       }
@@ -439,6 +483,18 @@ export function planLayerNodes({
 
   return { mode, sliceSignature, targetLevel, slabZ: slabZOut, nodes, planBytes };
 }
+
+/**
+ * Fetch dispatch order for a plan's missing nodes: the "keep" fallback chain
+ * first (few, coarse — the shader's safety net across the whole view), then
+ * targets in plan priority order. Emission is a near-first DFS that emits
+ * every ancestor before its children, so `priority` alone already orders each
+ * target behind its own fallbacks; a global coarse-first sort would instead
+ * let far coarse targets preempt near fine ones — exactly backwards while
+ * zooming in.
+ */
+export const compareFetchOrder = (a: PlannedNode, b: PlannedNode): number =>
+  a.role === b.role ? a.priority - b.priority : a.role === "keep" ? -1 : 1;
 
 /** Value equality between two plans (skip store writes / preserve identity). */
 export function sameNodePlan(a: LayerNodePlan, b: LayerNodePlan): boolean {

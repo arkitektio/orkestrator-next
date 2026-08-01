@@ -1,5 +1,6 @@
 import { open, type Array as ZarrArray, type DataType } from "zarrita";
 import { getChunkWorker } from "@/lib/zarr/runner";
+import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
 import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
 import type { MikroClient, ZarrStore } from "@/lib/zarr/store/types";
 import { workerPool } from "@/mikro-next/workers/pool";
@@ -98,9 +99,12 @@ export function createExactSampler(options: ExactSamplerOptions): ExactSampler {
       if (index.length !== arr.shape.length) return null;
       const chunkShape = arr.chunks;
       const chunkCoords = index.map((v, d) => Math.floor(v / chunkShape[d]));
+      // Interactive tier: attribute probes race streaming brick decodes
+      // (whose priorities scale with the residency plan generation) and must
+      // always be served first.
       const chunk = await getChunkWorker(arr, chunkCoords, {
         pool: workerPool,
-        priority: 0,
+        priority: INTERACTIVE_FETCH_PRIORITY,
         useSharedArrayBuffer: true,
       });
       const flat = index.reduce(

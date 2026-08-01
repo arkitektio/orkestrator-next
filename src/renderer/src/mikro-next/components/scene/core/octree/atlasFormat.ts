@@ -1,3 +1,5 @@
+import { hasPhasorSlabs, type LayerLevelGeometry } from "./levelGeometry";
+
 /**
  * Atlas storage format for a layer's dtype — pure planning knowledge, shared
  * by pool viability math (core) and the GPU atlas itself (render). Lives in
@@ -27,3 +29,21 @@ export const atlasKindForDtype = (dtype: string): AtlasKind => {
   const isUnsigned8 = d === "uint8" || d === "uint8clamped" || d.includes("u1");
   return isUnsigned8 ? "r8" : "r32f";
 };
+
+/**
+ * Atlas kind for a whole layer geometry: a phasor layer's slabs are derived
+ * (g, s ∈ [-1, 1] and a mean photon count), so its atlas is float regardless
+ * of the source dtype; everything else keys off the base level's dtype.
+ *
+ * This is the SINGLE source of truth for slot sizing — the planner's byte
+ * accounting (`planLayerNodes`) and the pool's atlas allocation
+ * (`ensurePool`) must both use it. When they disagreed (planner sized a
+ * uint8 phasor layer at 1 B/voxel, pool allocated r32f), the plan requested
+ * ~4× the slots that existed — guaranteed acquire failures at full
+ * refinement.
+ */
+export const atlasKindForGeometry = (geometry: LayerLevelGeometry): AtlasKind =>
+  hasPhasorSlabs(geometry) ? "r32f" : atlasKindForDtype(geometry.levels[0].dtype);
+
+/** Bytes per stored voxel for an atlas kind. */
+export const atlasBytesPerVoxel = (kind: AtlasKind): number => (kind === "r8" ? 1 : 4);

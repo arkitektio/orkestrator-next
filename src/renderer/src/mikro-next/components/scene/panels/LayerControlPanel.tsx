@@ -13,7 +13,11 @@ import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { LayerState, useSceneStore } from "../store/sceneStore";
-import { useViewerStore, type UnplannableLayerInfo } from "../store/viewerStore";
+import {
+  useViewerStore,
+  type UnplannableLayerInfo,
+  type ViewerState,
+} from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
 import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
@@ -22,6 +26,35 @@ const formatBytes = (bytes: number): string =>
   bytes >= 1024 ** 3
     ? `${(bytes / 1024 ** 3).toFixed(1)} GB`
     : `${Math.round(bytes / 1024 ** 2)} MB`;
+
+/**
+ * Coarse per-layer view summary, cached by `layerViewRanges` IDENTITY: a
+ * zustand selector runs on EVERY store notification (residencyVersion,
+ * poolsVersion, worldUnitsPerPixel, …), and the previous inline selector
+ * rebuilt Object.entries + a fresh Record each time — ~16×/s during a zoom
+ * for writes that had nothing to do with view ranges. The WeakMap returns a
+ * STABLE object for an unchanged ranges map, so unrelated writes cost one
+ * lookup and the useShallow compare short-circuits on identity.
+ *
+ * Buckets are 10 percentage points wide (`${bucket}:${expandedByCoverage}`):
+ * zooming is precisely what sweeps viewportFraction, and 5-point buckets
+ * crossed a boundary every few camera ticks — each flip re-rendering the
+ * whole panel. The expansion threshold stays on the RAW fraction (>0.45), so
+ * unfold behavior is identical; only re-render frequency changes.
+ */
+const layerViewSummaryCache = new WeakMap<object, Record<string, string>>();
+const selectLayerViewSummaries = (s: ViewerState): Record<string, string> => {
+  const ranges = s.layerViewRanges;
+  const cached = layerViewSummaryCache.get(ranges);
+  if (cached) return cached;
+  const out: Record<string, string> = {};
+  for (const [id, range] of Object.entries(ranges)) {
+    const bucket = Math.round(range.viewportFraction * 10) * 10; // 0..100 step 10
+    out[id] = `${bucket}:${range.viewportFraction > 0.45 ? 1 : 0}`;
+  }
+  layerViewSummaryCache.set(ranges, out);
+  return out;
+};
 
 /**
  * Warning strip for a layer refused by the pool-viability guard (P18): its
@@ -163,24 +196,10 @@ export const LayerControlPanel = ({
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   const visibleLayers = useViewerStore((s) => s.visibleLayers);
-  // Coarse per-layer view summary instead of the raw `layerViewRanges`: the
-  // tracker rewrites the ranges on essentially every camera tick during a 2D
-  // pan (integer voxel ranges, no dead-band), which used to re-render this
-  // whole panel ~16×/s and defeat the LayerCard memo via viewportPercent
-  // churn. Encoded as `${percentBucket}:${expandedByCoverage}` primitives so
-  // useShallow only re-renders when a 5-point bucket or the expansion verdict
-  // actually flips. The expansion threshold is evaluated on the RAW fraction
-  // here, so behavior is identical — only re-render frequency changes.
-  const layerViewSummaries = useViewerStore(
-    useShallow((s) => {
-      const out: Record<string, string> = {};
-      for (const [id, range] of Object.entries(s.layerViewRanges)) {
-        const bucket = Math.round(range.viewportFraction * 20) * 5; // 0..100 step 5
-        out[id] = `${bucket}:${range.viewportFraction > 0.45 ? 1 : 0}`;
-      }
-      return out;
-    }),
-  );
+  // Coarse per-layer view summary instead of the raw `layerViewRanges` (the
+  // tracker rewrites the ranges on essentially every camera tick) — see
+  // selectLayerViewSummaries for the identity-cache + bucket-width rationale.
+  const layerViewSummaries = useViewerStore(useShallow(selectLayerViewSummaries));
   // Rarely changes (only when the viability verdict flips) — P17-clean.
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const currentZ = useViewerStore((s) => s.currentZ);
@@ -234,7 +253,7 @@ export const LayerControlPanel = ({
     unplannableLayers[l.id] !== undefined;
 
   // Rough share of the viewport each layer covers, decoded from the coarse
-  // summary (percent buckets of 5); missing = off-view, sorts to the bottom.
+  // summary (percent buckets of 10); missing = off-view, sorts to the bottom.
   // Array.prototype.sort is stable, so ties within a bucket keep layer order —
   // the list can only reorder when a bucket boundary is crossed.
   const summaryOf = (id: string) => {

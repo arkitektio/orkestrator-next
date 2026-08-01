@@ -166,6 +166,10 @@ export function startNodePlanTracking({
         currentZ: viewerState.currentZ,
         dimSelections: viewerState.dimSelections,
         maxPlanBytes,
+        // Budget-floor hysteresis input — only meaningful while the slice
+        // stays the same (a signature change means different data entirely).
+        previousTargetLevel:
+          prev && prev.mode === mode ? prev.targetLevel : undefined,
       });
 
       if (prev && sameNodePlan(prev, next)) {

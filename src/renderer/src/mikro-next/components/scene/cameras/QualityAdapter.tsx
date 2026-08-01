@@ -29,6 +29,18 @@ import { useViewStore, useViewStoreApi } from "../store/viewStore";
 /** How long activity must stay quiet before the crisp settled DPR returns. */
 const SETTLE_RESTORE_MS = 500;
 
+/**
+ * How long activity must be SUSTAINED before the cheaper active DPR applies.
+ * Every DPR change reallocates the render targets (a multi-hundred-ms spike
+ * on its own), so a lone wheel notch — whose activity window is just the
+ * motion frames plus the 150 ms camera settle — must never pay the
+ * drop+restore realloc pair. Real gestures and streaming bursts run well past
+ * this and still get the cheap DPR for their duration. Only tiers whose
+ * active DPR differs from the settled one are affected at all (HIGH resolves
+ * both to the same value and never reallocates).
+ */
+const ACTIVE_DPR_DELAY_MS = 250;
+
 export const QualityAdapter = () => {
   const gl = useThree((s) => s.gl);
   const setDpr = useThree((s) => s.setDpr);
@@ -43,6 +55,8 @@ export const QualityAdapter = () => {
   const appliedDprRef = useRef<number | null>(null);
   /** Wall-clock stamp of when activity last went quiet (null while active). */
   const settledAtRef = useRef<number | null>(null);
+  /** Wall-clock stamp of when the current activity burst began (null while quiet). */
+  const activeSinceRef = useRef<number | null>(null);
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Persistence: the learned tier is a property of the GPU, keyed so a
@@ -70,13 +84,20 @@ export const QualityAdapter = () => {
     // Doing it here rather than only in an effect catches mid-gesture demotes.
     if (active) {
       settledAtRef.current = null;
+      if (activeSinceRef.current === null) activeSinceRef.current = now;
       const dpr = resolveDpr(qualityGovernor.getProfile(), initialDpr, true);
-      if (dpr !== appliedDprRef.current) {
+      // Entry hysteresis (ACTIVE_DPR_DELAY_MS): only sustained activity pays
+      // the drop realloc — a lone wheel notch stays at the crisp DPR.
+      if (
+        dpr !== appliedDprRef.current &&
+        now - activeSinceRef.current >= ACTIVE_DPR_DELAY_MS
+      ) {
         appliedDprRef.current = dpr;
         setDpr(dpr);
       }
       return;
     }
+    activeSinceRef.current = null;
     // Quiet: restore the settled DPR only after SETTLE_RESTORE_MS of
     // continuous quiet (covers the continuous-rendering case; the effect's
     // timer covers the demand-idle case where no frames flow).

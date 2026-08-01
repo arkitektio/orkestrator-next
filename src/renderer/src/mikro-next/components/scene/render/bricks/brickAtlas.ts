@@ -114,28 +114,44 @@ export function createBrickAtlas(opts: {
   };
 }
 
-/** Upload one repacked brick into a slot (GPU + context-restore mirror). */
+/**
+ * Upload one repacked brick into a slot. The CPU backing mirror is NOT
+ * written here (see `mirrorBrickToBacking`): the row-by-row copy costs a
+ * sizable share of the drain's wall-clock budget (thousands of `set` calls
+ * per 3D brick), which throttled real uploads exactly when a zoom multiplied
+ * the queue — the residency manager defers it to idle time instead.
+ */
 export function writeBrickToAtlas(
   renderer: SceneRenderer,
   atlas: BrickAtlas,
   slotCoords: Vec3,
   brick: BrickArray,
 ): boolean {
+  return uploadTexSubImage3D(
+    renderer,
+    atlas.texture,
+    atlas.kind,
+    [
+      slotCoords[0] * atlas.slotSize[0],
+      slotCoords[1] * atlas.slotSize[1],
+      slotCoords[2] * atlas.slotSize[2],
+    ],
+    [atlas.slotSize[0], atlas.slotSize[1], atlas.slotSize[2]],
+    brick,
+  );
+}
+
+/** Row-by-row copy of a brick into the context-restore / probe mirror. */
+export function mirrorBrickToBacking(
+  atlas: BrickAtlas,
+  slotCoords: Vec3,
+  brick: BrickArray,
+): void {
   const origin: [number, number, number] = [
     slotCoords[0] * atlas.slotSize[0],
     slotCoords[1] * atlas.slotSize[1],
     slotCoords[2] * atlas.slotSize[2],
   ];
-  const ok = uploadTexSubImage3D(
-    renderer,
-    atlas.texture,
-    atlas.kind,
-    origin,
-    [atlas.slotSize[0], atlas.slotSize[1], atlas.slotSize[2]],
-    brick,
-  );
-
-  // Mirror into the backing store row by row.
   const [w, h] = [atlas.size[0], atlas.size[1]];
   const [bw, bh, bd] = atlas.slotSize;
   for (let z = 0; z < bd; z++) {
@@ -145,7 +161,6 @@ export function writeBrickToAtlas(
       atlas.backing.set(brick.subarray(src, src + bw), dest);
     }
   }
-  return ok;
 }
 
 export function disposeBrickAtlas(atlas: BrickAtlas): void {

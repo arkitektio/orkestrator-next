@@ -44,10 +44,20 @@ export type SceneVisibilityResult = {
 };
 
 // Preallocated scratch objects (single-threaded, one computation at a time).
+// This runs once per camera write (~16/s during a zoom, where the 1% scale
+// dead-band never saves the recompute), so it must not allocate per call.
 const frustum = new THREE.Frustum();
 const box = new THREE.Box3();
 const corner = new THREE.Vector3();
 const ndcCorner = new THREE.Vector3();
+const invPV = new THREE.Matrix4();
+const frustumBox = new THREE.Box3();
+const visibleBox = new THREE.Box3();
+const invAffine = new THREE.Matrix4();
+const localBox = new THREE.Box3();
+const localCorner = new THREE.Vector3();
+const scaleP0 = new THREE.Vector3();
+const scaleP1 = new THREE.Vector3();
 
 export function computeSceneVisibility({
   projScreenMatrix,
@@ -58,8 +68,8 @@ export function computeSceneVisibility({
   frustum.setFromProjectionMatrix(projScreenMatrix);
 
   // Frustum AABB in world space (for intersecting layer boxes).
-  const invPV = projScreenMatrix.clone().invert();
-  const frustumBox = new THREE.Box3();
+  invPV.copy(projScreenMatrix).invert();
+  frustumBox.makeEmpty();
   for (let x = -1; x <= 1; x += 2) {
     for (let y = -1; y <= 1; y += 2) {
       for (let z = -1; z <= 1; z += 2) {
@@ -68,6 +78,11 @@ export function computeSceneVisibility({
       }
     }
   }
+
+  // O(1) layer lookup — `layers.find` inside the trackable loop was
+  // O(trackables × layers) per camera tick.
+  const layerById = new Map<string, LayerState>();
+  for (const layer of layers) layerById.set(layer.id, layer);
 
   const visibleIds = new Set<string>();
   const ranges: Record<string, LayerViewRange> = {};
@@ -82,10 +97,10 @@ export function computeSceneVisibility({
     visibleIds.add(trackable.id);
     if (trackable.kind !== "layer") continue;
 
-    const layer = layers.find((l) => l.id === trackable.id);
+    const layer = layerById.get(trackable.id);
     if (!layer) continue;
 
-    const visibleBox = box.clone().intersect(frustumBox);
+    visibleBox.copy(box).intersect(frustumBox);
     if (visibleBox.isEmpty()) continue;
 
     const range = computeLayerViewRange(layer, visibleBox, projScreenMatrix, viewportSize);
@@ -102,11 +117,11 @@ function computeLayerViewRange(
   viewportSize: { width: number; height: number },
 ): LayerViewRange | null {
   const affine = affineToMatrix4(layer.affineMatrix);
-  const invAffine = affine.clone().invert();
+  invAffine.copy(affine).invert();
 
   // Visible box corners into layer-local space.
-  const localBox = new THREE.Box3();
-  const c = new THREE.Vector3();
+  localBox.makeEmpty();
+  const c = localCorner;
   for (let ix = 0; ix <= 1; ix++) {
     for (let iy = 0; iy <= 1; iy++) {
       for (let iz = 0; iz <= 1; iz++) {
@@ -145,8 +160,8 @@ function computeLayerViewRange(
 
   // Screen-pixels-per-image-pixel: transform two points 1 voxel apart
   // through affine + projection into screen space.
-  const p0 = new THREE.Vector3(0, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
-  const p1 = new THREE.Vector3(1, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
+  const p0 = scaleP0.set(0, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
+  const p1 = scaleP1.set(1, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
   const hw = viewportSize.width / 2;
   const hh = viewportSize.height / 2;
   const dx = (p1.x - p0.x) * hw;

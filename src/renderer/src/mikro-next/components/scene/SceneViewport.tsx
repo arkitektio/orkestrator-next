@@ -1,5 +1,5 @@
 import { GizmoHelper, GizmoViewport } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, events as createPointerEvents } from "@react-three/fiber";
 import { type ReactNode } from "react";
 import { WebGPURenderer } from "three/webgpu";
 import { CameraMatrixSync } from "./CameraMatrixSync";
@@ -41,6 +41,22 @@ import { WebGPUUnavailableError } from "./render/gpu/webgpuSupport";
 import { useModeStore } from "./store/modeStore";
 import { useViewerStore } from "./store/viewerStore";
 
+/**
+ * R3F's default event manager raycasts the ENTIRE interaction set for every
+ * DOM event it handles — including plain `wheel`, which nothing in this scene
+ * subscribes to (no R3F `onWheel` props in the scene tree). Trackpad zoom
+ * fires 60–120 wheel events/s, and with annotations mounted each raycast
+ * walks every Line2 outline segment-by-segment — pure per-tick main-thread
+ * waste, concurrent with the zoom itself. Dropping the handler here removes
+ * the DOM wheel listener entirely; OrbitControls zooms through its own
+ * listener and is unaffected.
+ */
+const sceneEvents: typeof createPointerEvents = (store) => {
+  const manager = createPointerEvents(store);
+  delete (manager.handlers as Partial<Record<"onWheel", unknown>> | undefined)?.onWheel;
+  return manager;
+};
+
 const SceneWrapper = ({ children }: { children: ReactNode }) => {
   // `select-none` on the canvas surface stops a drag (pan / ROI draw / probe)
   // from ever turning into a text selection. Overlays keep normal selection.
@@ -52,6 +68,7 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
   return <Canvas
         className="select-none [-webkit-user-select:none]"
         frameloop="demand"
+        events={sceneEvents}
         gl={async (props) => {
           const renderer = new WebGPURenderer({
             ...(props as Record<string, unknown>),

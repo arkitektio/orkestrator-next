@@ -1,5 +1,5 @@
 import { getInitialVolumeTextureBudgetBytes } from "../lodPlanning";
-import { atlasKindForDtype } from "./atlasFormat";
+import { atlasBytesPerVoxel, atlasKindForGeometry } from "./atlasFormat";
 import type { LayerState } from "../layerModel";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "./brickSpec";
 import { brickGridForLevel } from "./nodeAddress";
@@ -44,8 +44,7 @@ export function assessPoolViability(
 ): PoolViability {
   const coarsest = geometry.levels.length - 1;
   const grid = brickGridForLevel(geometry, spec, coarsest);
-  const bytesPerVoxel =
-    atlasKindForDtype(geometry.levels[0].dtype) === "r8" ? 1 : 4;
+  const bytesPerVoxel = atlasBytesPerVoxel(atlasKindForGeometry(geometry));
   const floorBytes =
     (grid[0] * grid[1] * grid[2] + HEADROOM_SLOTS) *
     brickSlotBytes(spec, bytesPerVoxel);

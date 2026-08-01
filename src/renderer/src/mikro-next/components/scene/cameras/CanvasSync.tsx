@@ -29,6 +29,7 @@ export const CanvasSync = () => {
   const storeApi = useViewerStoreApi();
   const lastPublishRef = useRef(0);
   const trailingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingWuppRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -63,16 +64,26 @@ export const CanvasSync = () => {
     const now = performance.now();
     if (now - lastPublishRef.current >= WUPP_PUBLISH_INTERVAL_MS) {
       lastPublishRef.current = now;
+      pendingWuppRef.current = null;
       storeApi.getState().setWorldUnitsPerPixel(wupp);
       return;
     }
     // Trailing write so the settled value always lands after motion stops.
-    if (trailingRef.current) clearTimeout(trailingRef.current);
-    trailingRef.current = setTimeout(() => {
-      trailingRef.current = null;
-      lastPublishRef.current = performance.now();
-      storeApi.getState().setWorldUnitsPerPixel(wupp);
-    }, WUPP_PUBLISH_INTERVAL_MS);
+    // The timer is armed ONCE per throttle window and reads the freshest
+    // value from the ref when it fires — the previous clearTimeout +
+    // setTimeout on every in-window frame (~54×/s during a smooth zoom) was
+    // pure allocation and timer-heap churn.
+    pendingWuppRef.current = wupp;
+    if (trailingRef.current === null) {
+      trailingRef.current = setTimeout(() => {
+        trailingRef.current = null;
+        const pending = pendingWuppRef.current;
+        pendingWuppRef.current = null;
+        if (pending === null) return;
+        lastPublishRef.current = performance.now();
+        storeApi.getState().setWorldUnitsPerPixel(pending);
+      }, WUPP_PUBLISH_INTERVAL_MS);
+    }
   });
 
   return null;

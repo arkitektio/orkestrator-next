@@ -22,6 +22,10 @@ export const ScaleGrid = () => {
   const lastCellRef = useRef(10);
 
   useFrame(({ camera, size }) => {
+    // The grid is OFF by default: skip the per-frame math (and the setState
+    // below, which re-rendered on every 1/2/5 zoom-boundary crossing) while
+    // nothing renders it. The hook itself must stay mounted (rules of hooks).
+    if (!show) return;
     let worldUnitsPerPixel: number;
     if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
       worldUnitsPerPixel = 1 / (camera as THREE.OrthographicCamera).zoom;

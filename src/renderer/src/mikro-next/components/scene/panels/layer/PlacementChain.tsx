@@ -1,6 +1,11 @@
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { MikroCoordinateSystem } from "@/linkers";
 import { describeTransformation } from "@/mikro-next/components/coordinates/types";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Waypoints } from "lucide-react";
 import { LayerState, useSceneStore } from "../../store/sceneStore";
 
 type SystemRef = { id: string; name?: string | null };
@@ -29,7 +34,7 @@ const Header = () => (
 );
 
 const Section = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col gap-1 border-t border-white/10 px-1 py-2">
+  <div className="flex flex-col gap-1 px-1 py-1">
     <Header />
     <div className="flex flex-wrap items-center gap-1">{children}</div>
   </div>
@@ -100,5 +105,33 @@ export const PlacementChain = ({ layer }: { layer: LayerState }) => {
     </Section>
   );
 };
+
+/**
+ * The placement chain on demand. Which coordinate systems a layer travels
+ * through is reference material — worth reaching in one click when a layer
+ * lands somewhere unexpected, not worth the vertical space it took in every
+ * unfolded card. The popover carries its own dark surface because the chain is
+ * scene chrome (white-on-black pills), not themed form UI.
+ */
+export const PlacementPopover = ({ layer }: { layer: LayerState }) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button
+        className="flex items-center gap-1 self-start rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50 transition-colors hover:border-white/25 hover:text-white/90"
+        title="Which coordinate systems this layer passes through on its way into the scene's world"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Waypoints className="h-3 w-3" />
+        Placement
+      </button>
+    </PopoverTrigger>
+    <PopoverContent
+      align="start"
+      className="w-72 border-white/10 bg-black/90 p-2 text-white/85 backdrop-blur-md"
+    >
+      <PlacementChain layer={layer} />
+    </PopoverContent>
+  </Popover>
+);
 
 export default PlacementChain;

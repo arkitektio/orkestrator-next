@@ -201,7 +201,6 @@ export const DefaultScenePanels = () => (
       <SceneColumnTrigger />
       <SceneColumnPanels>
         <SceneOverlay />
-        <SelectedPointPanel />
       </SceneColumnPanels>
     </SceneColumn>
     {/* Z docks right, opposite the panel column: both defaulting left would
@@ -307,6 +306,9 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <AttributeProbeTracker />
         <ScaleBar />
         <DrawSizeReadout />
+        {/* Both dock bottom-right: the probe readout sits directly above the
+            mode controls that turn probing on. */}
+        <SelectedPointPanel />
         <SceneModeControls />
 
         <RoiToolbar />

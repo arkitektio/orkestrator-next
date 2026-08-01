@@ -67,9 +67,11 @@ export interface ModeState {
   pivotOnProbe: boolean;
   /**
    * Hover-to-probe. Was the AUTO_PROBE interaction mode, now a modifier of
-   * PROBE. Lives here rather than on `viewerStore` so the brick layers keep a
-   * single reactive subscription for pointer behaviour — they write probes
-   * through the non-reactive store api precisely to avoid re-renders.
+   * PROBE — on by default, since entering PROBE is already the statement that
+   * you want to read values. Lives here rather than on `viewerStore` so the
+   * brick layers keep a single reactive subscription for pointer behaviour —
+   * they write probes through the non-reactive store api precisely to avoid
+   * re-renders.
    */
   probeFollowsCursor: boolean;
   interactionModeOptions: InteractionModeOption[];
@@ -102,7 +104,7 @@ export const createModeStore = ({
     displayMode,
     zoomToCursor: false,
     pivotOnProbe: false,
-    probeFollowsCursor: false,
+    probeFollowsCursor: true,
     interactionModeOptions,
     displayModeOptions,
     setInteractionMode: (mode) =>

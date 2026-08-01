@@ -173,7 +173,6 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
               <Scene.Panels>
                 {datasetPanel}
                 <Scene.Controls />
-                <Scene.Probe />
               </Scene.Panels>
             </Scene.Column>
             <Scene.Dock side="right">

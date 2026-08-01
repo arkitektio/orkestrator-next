@@ -2,17 +2,19 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
 import { layerDisplayLabel } from "./layerIdentity";
-import { PlacementChain } from "./PlacementChain";
+import { PlacementPopover } from "./PlacementChain";
 import {
   RenderGraphEditor,
   RenderGraphSection,
 } from "./rendergraph/RenderNodeEditor";
 
 /**
- * The editing surface for a single layer, shown as a flyout to the left of the
- * Layers panel. Holds the render graph (channels, contrast, colormap,
- * projection — the single rendering truth) and an Advanced section for
- * dimension mapping and level-of-detail.
+ * The editing surface for a single layer: the render graph (channels, contrast,
+ * colormap, projection — the single rendering truth). Rendered inline inside
+ * the layer card, or as a standalone flyout beside the Layers panel.
+ *
+ * The layer's placement chain is reference material, not editing, so it hangs
+ * off a popover (`PlacementPopover`) instead of the body flow.
  */
 export const LayerGraphFlyout = ({
   layer,
@@ -35,18 +37,21 @@ export const LayerGraphFlyout = ({
 }) => {
   const label = layerDisplayLabel(layer);
 
+  // The render graph is the whole body; placement is one click away rather than
+  // occupying the bottom of every unfolded card. `min-w-0` so a long colormap
+  // or dimension name truncates instead of widening the card.
   const body = (
     <div
       className={
         inline
-          ? "flex flex-col overflow-y-auto px-2 py-2 text-[10px] text-white/85"
-          : "flex flex-col overflow-y-auto px-3 py-2 text-[10px] text-white/85"
+          ? "flex min-w-0 flex-col gap-2 overflow-y-auto px-2 py-2 text-[10px] text-white/85"
+          : "flex min-w-0 flex-col gap-2 overflow-y-auto px-3 py-2 text-[10px] text-white/85"
       }
     >
       <RenderGraphSection editor={editor} layer={layer} />
 
-      <PlacementChain layer={layer} />
-      </div>
+      <PlacementPopover layer={layer} />
+    </div>
   );
 
   // Inline mode: just the editing body, so the LayerRow can expand to reveal it.

@@ -10,6 +10,7 @@ import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
+import { layerAnswersProbe } from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import { DRAG_THRESHOLD_PX } from "../../core/drawGesture";
@@ -352,6 +353,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           (interactionMode === "ANNOTATE" &&
             isProbeDerivedTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing || e.buttons !== 0) return;
+        // Declined BEFORE stopPropagation, so the event falls through to the
+        // pinned layer behind this one instead of being swallowed here.
+        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         // The event already raycast this volume's box, so the front-most
         // volume claims the hover; the march itself is deferred to the frame.
         e.stopPropagation();
@@ -364,10 +368,17 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           (interactionMode === "ANNOTATE" &&
             isProbeDerivedTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing) return;
+        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         probeCoalescer.cancel();
         updateProbe(null, false);
       }}
       onPointerDown={(e) => {
+        if (
+          interactionMode === "PROBE" &&
+          !layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)
+        ) {
+          return;
+        }
         if (interactionMode === "PROBE") {
           e.stopPropagation();
           skipSelectionClickRef.current = true;

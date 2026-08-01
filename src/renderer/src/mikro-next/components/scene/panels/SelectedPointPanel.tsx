@@ -1,6 +1,8 @@
 import { Slider } from "@/components/ui/slider";
-import { ScanEye } from "lucide-react";
+import { Crosshair } from "lucide-react";
+import { useEffect } from "react";
 import { AttributeRowsSection } from "./AttributeRowsSection";
+import { layerDisplayLabel } from "./layer/layerIdentity";
 import { resolveProbeStrategy } from "../core/probe/probeModes";
 import type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
 import { formatProbeValue } from "../core/probe/valueFormat";
@@ -17,7 +19,13 @@ import type { LayerState } from "../core/layerModel";
  * strategy uses it), the probed coordinate with per-channel raw values and
  * their provenance (exact vs LOD-approximate vs pending), plus actions that
  * make the probe durable — mark it as a point annotation or start a path
- * draw anchored at it. Composes in the scene column (Scene.Probe).
+ * draw anchored at it. Also shows which layer the probe is pinned to, if any;
+ * the pin itself is set from each layer card's probe toggle.
+ *
+ * Renderer-owned and self-positioning: it docks bottom-right, directly above
+ * `SceneModeControls`, because it is the readout for the mode those controls
+ * put you in. Not part of the composable column — nothing about where it sits
+ * is a host's layout choice.
  */
 
 const PROBE_MODES: { mode: ProbeMode; label: string }[] = [
@@ -35,9 +43,6 @@ const STRATEGY_LABELS: Record<string, string> = {
   plane: "plane",
 };
 
-const layerLabel = (layer: LayerState | null | undefined, fallback: string): string =>
-  layer?.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel?.label ??
-  fallback;
 
 const channelLabel = (layer: LayerState | null | undefined, channel: number): string =>
   layer?.channels.find((node) => node.intensityIndex === channel)?.label ??
@@ -71,7 +76,6 @@ export const SelectedPointPanel = () => {
   const interactionMode = useModeStore((s) => s.interactionMode);
   const displayMode = useModeStore((s) => s.displayMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
-  const setProbeFollowsCursor = useModeStore((s) => s.setProbeFollowsCursor);
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
   const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
@@ -82,11 +86,30 @@ export const SelectedPointPanel = () => {
   const setProbeThreshold = useViewerStore((s) => s.setProbeThreshold);
   const probeMode = useViewerStore((s) => s.probeMode);
   const setProbeMode = useViewerStore((s) => s.setProbeMode);
-  const layer = useSceneStore((s) =>
-    probedCoordinate
-      ? s.layers.find((candidate) => candidate.id === probedCoordinate.layerId)
-      : null,
-  );
+  const probeLayerId = useViewerStore((s) => s.probeLayerId);
+  const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
+  const layers = useSceneStore((s) => s.layers);
+  const layer = probedCoordinate
+    ? layers.find((candidate) => candidate.id === probedCoordinate.layerId)
+    : null;
+
+  // Both brick layers bail on `visible === false`, so a hidden layer cannot
+  // answer a probe (`core/modeCompat.ts`) — a pin naming one is as dead as a
+  // pin naming a deleted layer.
+  const pinnedLayer =
+    probeLayerId !== null
+      ? layers.find(
+          (candidate) => candidate.id === probeLayerId && candidate.visible !== false,
+        )
+      : undefined;
+
+  // A pin that names a layer which is gone or hidden makes EVERY layer decline
+  // the pointer (see `layerAnswersProbe`) — probing would just go dead with no
+  // visible cause. Drop it back to front-most instead.
+  const pinnedIsGone = probeLayerId !== null && !pinnedLayer;
+  useEffect(() => {
+    if (pinnedIsGone) setProbeLayerId(null);
+  }, [pinnedIsGone, setProbeLayerId]);
 
   const inProbeMode = interactionMode === "PROBE";
   if (!inProbeMode && !probedCoordinate) return null;
@@ -100,25 +123,12 @@ export const SelectedPointPanel = () => {
     resolved.threshold === probeThreshold;
 
   return (
-    <div className="pointer-events-auto rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
+    <div className="pointer-events-auto absolute bottom-12 right-2 z-30 max-h-[60vh] w-72 overflow-y-auto rounded-lg border border-black/10 bg-black/40 p-2 backdrop-blur-md">
       <div className="flex items-center justify-between text-[10px] font-medium text-white/60">
         <span>Probe</span>
         <div className="flex gap-1">
-          {/* What used to be the separate AUTO_PROBE mode. Hover updates the
-              readout only — the camera pivot still follows clicks alone. */}
-          {inProbeMode && (
-            <button
-              className={
-                probeFollowsCursor
-                  ? `${smallButton} bg-white/20 text-white`
-                  : smallButton
-              }
-              onClick={() => setProbeFollowsCursor(!probeFollowsCursor)}
-              title="Update the probe continuously as the cursor moves"
-            >
-              <ScanEye className="h-3 w-3" />
-            </button>
-          )}
+          {/* The hover-to-probe toggle lives in `SceneModeControls`, next to
+              the interaction modes it modifies. */}
           {probedCoordinate && (
             <>
               <button
@@ -154,6 +164,23 @@ export const SelectedPointPanel = () => {
           )}
         </div>
       </div>
+
+      {/* The pin itself is set per layer, from the layer card's probe toggle.
+          Surfaced here because it is otherwise invisible state: without it, a
+          probe that refuses to read the layer under the cursor looks broken. */}
+      {pinnedLayer && (
+        <button
+          className="mt-2 flex w-full items-center gap-1.5 rounded border border-sky-400/30 bg-sky-400/10 px-1.5 py-1 text-left text-[10px] text-sky-200 transition-colors hover:border-sky-400/60"
+          title="Only this layer answers the probe — click to read the front-most layer again"
+          onClick={() => setProbeLayerId(null)}
+        >
+          <Crosshair className="h-3 w-3 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">
+            Pinned to {layerDisplayLabel(pinnedLayer)}
+          </span>
+          <span className="shrink-0 text-sky-200/60">unpin</span>
+        </button>
+      )}
 
       {displayMode === "3D" && (
         <div className="mt-2">
@@ -211,7 +238,7 @@ export const SelectedPointPanel = () => {
           <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
             <span className="text-white/50">Layer</span>
             <span className="truncate font-medium text-white/90">
-              {layerLabel(layer, probedCoordinate.layerId)}
+              {layer ? layerDisplayLabel(layer) : probedCoordinate.layerId}
             </span>
             <span className="text-white/50">Voxel</span>
             <span className="font-mono text-white/90">

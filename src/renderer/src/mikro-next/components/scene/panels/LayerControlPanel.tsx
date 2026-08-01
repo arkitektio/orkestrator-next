@@ -4,11 +4,11 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { fitsExpanded } from "../core/layerListLayout";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
-import { isLayerOutOfPlane } from "../core/worldTransform";
 import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
 import { useSelectionStore } from "../store/selectionStore";
@@ -28,7 +28,7 @@ const formatBytes = (bytes: number): string =>
     : `${Math.round(bytes / 1024 ** 2)} MB`;
 
 /**
- * Coarse per-layer view summary, cached by `layerViewRanges` IDENTITY: a
+ * Coarse per-layer viewport coverage, cached by `layerViewRanges` IDENTITY: a
  * zustand selector runs on EVERY store notification (residencyVersion,
  * poolsVersion, worldUnitsPerPixel, …), and the previous inline selector
  * rebuilt Object.entries + a fresh Record each time — ~16×/s during a zoom
@@ -36,24 +36,53 @@ const formatBytes = (bytes: number): string =>
  * STABLE object for an unchanged ranges map, so unrelated writes cost one
  * lookup and the useShallow compare short-circuits on identity.
  *
- * Buckets are 10 percentage points wide (`${bucket}:${expandedByCoverage}`):
- * zooming is precisely what sweeps viewportFraction, and 5-point buckets
- * crossed a boundary every few camera ticks — each flip re-rendering the
- * whole panel. The expansion threshold stays on the RAW fraction (>0.45), so
- * unfold behavior is identical; only re-render frequency changes.
+ * Buckets are 10 percentage points wide: zooming is precisely what sweeps
+ * viewportFraction, and 5-point buckets crossed a boundary every few camera
+ * ticks — each flip re-rendering the whole panel. Coverage now only feeds the
+ * row badge and the list order; it no longer decides what is unfolded.
  */
-const layerViewSummaryCache = new WeakMap<object, Record<string, string>>();
-const selectLayerViewSummaries = (s: ViewerState): Record<string, string> => {
+const layerCoverageCache = new WeakMap<object, Record<string, number>>();
+const selectLayerCoverage = (s: ViewerState): Record<string, number> => {
   const ranges = s.layerViewRanges;
-  const cached = layerViewSummaryCache.get(ranges);
+  const cached = layerCoverageCache.get(ranges);
   if (cached) return cached;
-  const out: Record<string, string> = {};
+  const out: Record<string, number> = {};
   for (const [id, range] of Object.entries(ranges)) {
-    const bucket = Math.round(range.viewportFraction * 10) * 10; // 0..100 step 10
-    out[id] = `${bucket}:${range.viewportFraction > 0.45 ? 1 : 0}`;
+    out[id] = Math.round(range.viewportFraction * 10) * 10; // 0..100 step 10
   }
-  layerViewSummaryCache.set(ranges, out);
+  layerCoverageCache.set(ranges, out);
   return out;
+};
+
+/**
+ * The panel's own box, for the auto-expand decision. Bucketed to 32px and
+ * compared before commit so dragging the rail's resize handle doesn't re-render
+ * the whole layer list on every observer tick — only when a bucket boundary is
+ * crossed, which is also the only granularity `fitsExpanded` can act on.
+ *
+ * `{0, 0}` means "not measured yet" and reads as no space, so the first paint
+ * is collapsed rather than briefly unfolding everything.
+ */
+const useBucketedSize = () => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const width = Math.round(entry.contentRect.width / 32) * 32;
+      const height = Math.round(entry.contentRect.height / 32) * 32;
+      setSize((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height },
+      );
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, size] as const;
 };
 
 /**
@@ -102,9 +131,9 @@ const UnplannableNotice = ({
  * survives collapsing) and shares it between the header — which hosts the tiny
  * Save button — and the unfolded editor body.
  *
- * Memoized: the panel re-renders only when a layer's coarse view summary
- * changes (5-point coverage bucket / expansion verdict — see
- * `layerViewSummaries`), but the card owns the heavy `useRenderGraphEditor`
+ * Memoized: the panel re-renders only when a layer's coarse coverage bucket
+ * changes (see `layerCoverage`), but the card owns the heavy
+ * `useRenderGraphEditor`
  * hook and subtree, so it must only re-render when ITS props change. All
  * callbacks are passed in already-stable (id-parameterized) so the shallow
  * prop compare actually skips.
@@ -124,7 +153,12 @@ const LayerCard = memo(function LayerCard({
   expanded: boolean;
   viewportPercent?: number;
   unplannable?: UnplannableLayerInfo;
-  onSelect: (id: string) => void;
+  /**
+   * Toggle this card. Takes the CURRENT expanded state so the panel's handler
+   * can stay stable — the card already knows whether it is open, so the panel
+   * never has to read that back out of a ref during render.
+   */
+  onSelect: (id: string, currentlyExpanded: boolean) => void;
   onUpdate: (updated: LayerState) => void;
   onFocus: (layerId: string) => void;
   onRemove: (id: string) => void;
@@ -135,12 +169,15 @@ const LayerCard = memo(function LayerCard({
   // Adapt the stable id-parameterized panel handlers to the zero-arg forms the
   // children expect. Created inside the memoized card, so they only churn when
   // the card actually re-renders.
-  const handleSelect = () => onSelect(layer.id);
+  const handleSelect = () => onSelect(layer.id, expanded);
   const handleRemove = () => onRemove(layer.id);
   return (
     <Collapsible
       open={expanded}
-      className={`overflow-hidden rounded-lg border backdrop-blur-md bg-black transition-colors ${
+      // `@container/card`: the card is its own query context, so a row and its
+      // editor adapt to the width the CARD got — which in a multi-column list
+      // is not the panel's width. See the panel's container note below.
+      className={`@container/card overflow-hidden rounded-lg border backdrop-blur-md bg-black transition-colors ${
         expanded
           ? "border-black/10 bg-black/60"
           : "border-black/10 bg-black/40 hover:border-black/20 hover:bg-black/70"
@@ -195,16 +232,17 @@ export const LayerControlPanel = ({
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
-  const visibleLayers = useViewerStore((s) => s.visibleLayers);
-  // Coarse per-layer view summary instead of the raw `layerViewRanges` (the
-  // tracker rewrites the ranges on essentially every camera tick) — see
-  // selectLayerViewSummaries for the identity-cache + bucket-width rationale.
-  const layerViewSummaries = useViewerStore(useShallow(selectLayerViewSummaries));
+  // Coarse per-layer coverage instead of the raw `layerViewRanges` (the tracker
+  // rewrites the ranges on essentially every camera tick) — see
+  // selectLayerCoverage for the identity-cache + bucket-width rationale.
+  const layerCoverage = useViewerStore(useShallow(selectLayerCoverage));
   // Rarely changes (only when the viability verdict flips) — P17-clean.
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
-  const currentZ = useViewerStore((s) => s.currentZ);
-  const displayMode = useModeStore((s) => s.displayMode);
-  const [showOffscreen, setShowOffscreen] = useState(false);
+  const [panelRef, panelSize] = useBucketedSize();
+  // Per-layer explicit open/closed, keyed by id. Absent = follow the
+  // space-derived default; present = the user has said otherwise for that card
+  // and resizing the rail must not overrule them.
+  const [expandOverrides, setExpandOverrides] = useState<Record<string, boolean>>({});
 
   // Deleting refetches GetScene, which reinitializes the scene stores so the
   // removed layer drops out — the same store-free path layer creation uses.
@@ -220,8 +258,14 @@ export const LayerControlPanel = ({
   const selectedRef = useRef(selectedLayerId);
   selectedRef.current = selectedLayerId;
 
+  // Toggling records an explicit choice for that card and moves the selection
+  // with it (the 3D layer reads `selectedLayerId` for its highlight). Stable:
+  // the card supplies its own current state, so nothing per-render is captured.
   const handleSelect = useCallback(
-    (id: string) => setSelectedLayerId(selectedRef.current === id ? null : id),
+    (id: string, currentlyExpanded: boolean) => {
+      setExpandOverrides((prev) => ({ ...prev, [id]: !currentlyExpanded }));
+      setSelectedLayerId(currentlyExpanded ? null : id);
+    },
     [setSelectedLayerId],
   );
   const handleClose = useCallback(
@@ -240,62 +284,41 @@ export const LayerControlPanel = ({
     [deleteLayer, setSelectedLayerId],
   );
 
-  // A layer is "in view" when it is inside the camera frustum
-  // (viewerStore.visibleLayers) AND — in 2D — its data intersects the current Z
-  // plane. Out-of-plane layers (from scrubbing the Z slider) are treated like
-  // off-screen ones. Not the per-layer on/off `visible` flag.
-  const inViewSet = new Set(visibleLayers);
-  const isInView = (l: LayerState) =>
-    (inViewSet.has(l.id) &&
-      !(displayMode === "2D" && isLayerOutOfPlane(l, currentZ))) ||
-    // Unplannable layers never mount a mesh, so they are never "visible" —
-    // but their warning must not hide behind the off-view toggle.
-    unplannableLayers[l.id] !== undefined;
-
-  // Rough share of the viewport each layer covers, decoded from the coarse
-  // summary (percent buckets of 10); missing = off-view, sorts to the bottom.
-  // Array.prototype.sort is stable, so ties within a bucket keep layer order —
-  // the list can only reorder when a bucket boundary is crossed.
-  const summaryOf = (id: string) => {
-    const encoded = layerViewSummaries[id];
-    if (encoded === undefined) return null;
-    const [bucket, expanded] = encoded.split(":");
-    return { percent: Number(bucket), expandedByCoverage: expanded === "1" };
-  };
-  const coverageOf = (id: string) => summaryOf(id)?.percent ?? -1;
+  // Rough share of the viewport each layer covers (percent buckets of 10);
+  // missing = off-view, sorts to the bottom. Array.prototype.sort is stable, so
+  // ties within a bucket keep layer order — the list can only reorder when a
+  // bucket boundary is crossed.
+  const coverageOf = (id: string) => layerCoverage[id] ?? -1;
   const byCoverageDesc = (a: LayerState, b: LayerState) =>
     coverageOf(b.id) - coverageOf(a.id);
 
-  // Layers are listed most-covering first, so the dominant layer is on top.
-  const inViewLayers = layers.filter(isInView).sort(byCoverageDesc);
-  const offscreenLayers = layers.filter((l) => !isInView(l));
-  // Only layers currently in view are shown by default; the rest stay collapsed
-  // behind the "+N off-view" toggle.
-  const shownLayers = showOffscreen
-    ? [...layers].sort(byCoverageDesc)
-    : inViewLayers;
+  // EVERY layer is listed, most-covering first. The list used to hide off-view
+  // layers behind a "+N off-view" toggle, which meant the panel's contents
+  // changed as you panned — the layer you wanted to reach kept disappearing.
+  const shownLayers = [...layers].sort(byCoverageDesc);
 
-  // A layer's editor is unfolded when the user explicitly selected it, when it
-  // is the only layer in view, or when it covers enough of the viewport (the
-  // >0.45 raw-fraction verdict computed inside the selector). The coverage
-  // case is per-layer, so several overlapping layers can be unfolded at the
-  // same time (no single "selected" fallback).
+  // Unfold everything when the panel can actually seat it (see
+  // `core/layerListLayout.ts`): a wide rail showing three layers has no reason
+  // to make you click each one open. What this is NOT is a visibility rule —
+  // coverage and frustum no longer open or close anything, so nothing pops open
+  // mid-zoom or shuts on the layer you are editing.
+  const autoExpand = fitsExpanded(panelSize, layers.length);
+
+  // Explicit choice first, then the space-derived default, then the selection —
+  // so a click still unfolds a card in a rail too small to auto-expand.
   const isExpanded = (layer: LayerState) =>
-    layer.id === selectedLayerId ||
-    inViewLayers.length === 1 ||
-    (summaryOf(layer.id)?.expandedByCoverage ?? false);
+    expandOverrides[layer.id] ?? (autoExpand || layer.id === selectedLayerId);
 
   // The row IS the button: selecting it unfolds the editor inline within the
   // same card (one border around header + body), rather than popping a
   // separate flyout window.
   const renderRow = (layer: LayerState) => {
-    const summary = summaryOf(layer.id);
     return (
       <LayerCard
         key={layer.id}
         layer={layer}
         expanded={isExpanded(layer)}
-        viewportPercent={summary?.percent}
+        viewportPercent={layerCoverage[layer.id]}
         unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
         onUpdate={updateLayer}
@@ -307,35 +330,36 @@ export const LayerControlPanel = ({
   };
 
   return (
+    // `@container/layers`: the panel sizes itself to whatever hosts it — the
+    // page rail is user-resizable from 10% to 80% of the window — and the list
+    // answers to THAT width, not the viewport's. No media queries: the same
+    // component in the narrow in-viewport column and in a dragged-open sidebar
+    // lays itself out from its own box.
     <div
+      ref={panelRef}
       className={
         variant === "sidebar"
-          ? "flex h-full min-h-0 flex-col p-2"
-          : "pointer-events-none flex min-h-0 flex-1 flex-col items-stretch"
+          ? "@container/layers flex h-full min-h-0 flex-col p-2"
+          : "@container/layers pointer-events-none flex min-h-0 flex-1 flex-col items-stretch"
       }
     >
       <div
         className={
           variant === "sidebar"
-            ? "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
-            : "pointer-events-auto flex max-h-full flex-col gap-1 overflow-y-auto"
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto"
+            : "pointer-events-auto flex max-h-full flex-col overflow-y-auto"
         }
       >
-        {shownLayers.map(renderRow)}
-
-        {offscreenLayers.length > 0 && (
-          <button
-            className="self-end rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] text-white/60 backdrop-blur-md transition-colors hover:border-white/20 hover:text-white/90"
-            onClick={() => setShowOffscreen((v) => !v)}
-          >
-            {showOffscreen
-              ? "Hide off-view"
-              : `+${offscreenLayers.length} off-view`}
-          </button>
-        )}
+        {/* One column while narrow; a wide rail unfolds into two and then three
+            so the cards stay readable instead of stretching to a full page
+            width. `items-start` keeps an unfolded card from dragging its row
+            mates taller. */}
+        <div className="grid grid-cols-1 items-start gap-1 @2xl/layers:grid-cols-2 @5xl/layers:grid-cols-3">
+          {shownLayers.map(renderRow)}
+        </div>
 
         <button
-          className="self-end rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] text-white/60 backdrop-blur-md transition-colors hover:border-white/20 hover:text-white/90"
+          className="mt-1 self-end rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] text-white/60 backdrop-blur-md transition-colors hover:border-white/20 hover:text-white/90"
           onClick={() =>
             openDialog("addlayer", { scene: sceneId }, { className: "max-w-3xl" })
           }

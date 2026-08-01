@@ -30,6 +30,7 @@ import type { LayerViewRange } from "../core/visibility";
 import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
 
+import { probeAfterPinChange } from "../core/probe/probeTargeting";
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
 import {
   applyAttributeRows,
@@ -118,6 +119,13 @@ export interface ViewerState {
   probeThreshold: number;
   /** User-selected probe strategy; "auto" follows the layer's projection. */
   probeMode: ProbeMode;
+  /**
+   * Which layer the probe reads, or null for "whatever is in front". Every
+   * layer raycasts its own mesh, so with layers stacked the front-most one
+   * claims the pointer — pinning an id here makes the others decline the event
+   * (without stopping propagation) so it falls through to the pinned layer.
+   */
+  probeLayerId: string | null;
 
   lodBias: number;
   setLodBias: (bias: number) => void;
@@ -155,6 +163,10 @@ export interface ViewerState {
   setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
   setProbeThreshold: (threshold: number) => void
   setProbeMode: (mode: ProbeMode) => void
+  /** Pin the probe to one layer, or null to read whatever is in front. Clears
+   * a probe belonging to a different layer, so the readout never keeps showing
+   * values from a layer the probe no longer reads. */
+  setProbeLayerId: (layerId: string | null) => void
   /** Async exact-value upgrade: patches the active probe when the fetched key
    * still matches (no-op set otherwise, so late arrivals never cause
    * renders). Currently unwired on the hover path — the hover readout
@@ -239,6 +251,12 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     probeMode: "auto",
     setProbeMode: (mode) => set({ probeMode: mode }),
+    probeLayerId: null,
+    setProbeLayerId: (layerId) =>
+      set((state) => ({
+        probeLayerId: layerId,
+        probedCoordinate: probeAfterPinChange(state.probedCoordinate, layerId),
+      })),
     mergeExactProbeValues: (key, values) =>
       set((state) => applyExactValues(state, key, values) ?? state),
     probedAttributes: null,

@@ -12,6 +12,7 @@ import {
   type AxisSelection,
 } from "../../core/selection";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
+import { layerAnswersProbe } from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
@@ -394,6 +395,9 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       ref={groupRef}
       onPointerMove={(event) => {
         if (interactionMode !== "PROBE" || !probeFollowsCursor || event.buttons !== 0) return;
+        // Before stopPropagation: declining silently lets the event fall
+        // through to the pinned layer behind this one.
+        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();
@@ -405,11 +409,13 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       }}
       onPointerOut={() => {
         if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
+        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         probeCoalescer.cancel();
         updateProbe(null, { save: false, origin: "hover" });
       }}
       onPointerDown={(event) => {
         if (interactionMode !== "PROBE") return;
+        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();

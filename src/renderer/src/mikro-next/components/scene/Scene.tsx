@@ -15,7 +15,6 @@ import {
   SceneAnimationsSidebar,
   SceneLayersSidebar,
 } from "./panels/sceneSidebarTabs";
-import { SelectedPointPanel } from "./panels/SelectedPointPanel";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 
 /**
@@ -49,7 +48,6 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => (
  *       <Scene.Panels>
  *         <MyOwnCard />
  *         <Scene.Controls />
- *         <Scene.Probe />
  *       </Scene.Panels>
  *     </Scene.Column>
  *     <Scene.Dock side="bottom">
@@ -70,7 +68,8 @@ export const Scene = Object.assign(SceneRoot, {
   Panels: SceneColumnPanels,
   DefaultPanels: DefaultScenePanels,
   Controls: SceneOverlay,
-  Probe: SelectedPointPanel,
+  // No `Probe`: the probe readout docks bottom-right with the mode controls
+  // and is rendered by the viewport itself, not composed into a column.
   Animations: AnimationPanel,
   Dock: SceneDock,
   ZSlider: ZSliderPanel,

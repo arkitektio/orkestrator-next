@@ -3,6 +3,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Hand,
   Pin,
+  ScanEye,
   SquarePen,
   Target,
   type LucideIcon,
@@ -27,8 +28,9 @@ const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
  * The mode controls, docked bottom-right — under the gizmo, which answers the
  * question these controls change: what kind of view you are in and what a
  * pointer gesture does. Renderer-owned HUD, so every host gets them in the
- * same place. Left to right: interaction modes, the 2D/3D display toggle, and
- * the pin.
+ * same place. Left to right: interaction modes, the hover-probe toggle (only
+ * while in PROBE, since it modifies nothing else), the 2D/3D display toggle,
+ * and the pin.
  *
  * The pin travels with the display toggle because it is about exactly that:
  * which view the scene opens in for everyone. A preference, not a lock —
@@ -41,6 +43,8 @@ export const SceneModeControls = () => {
   const interactionModeOptions = useModeStore((s) => s.interactionModeOptions);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
+  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  const setProbeFollowsCursor = useModeStore((s) => s.setProbeFollowsCursor);
   const layers = useSceneStore((state) => state.layers);
 
   const preferredView = useSceneStore((state) => state.preferredView);
@@ -82,6 +86,20 @@ export const SceneModeControls = () => {
           );
         })}
       </ButtonGroup>
+
+      {/* Hover-to-probe — what used to be the separate AUTO_PROBE mode. Hover
+          updates the readout only; the camera pivot still follows clicks. */}
+      {interactionMode === "PROBE" && (
+        <Button
+          variant={probeFollowsCursor ? "default" : "outline"}
+          size={"xs"}
+          className={probeFollowsCursor ? "h-7 w-8 p-0" : "h-7 w-8 bg-black p-0"}
+          onClick={() => setProbeFollowsCursor(!probeFollowsCursor)}
+          title="Update the probe continuously as the cursor moves"
+        >
+          <ScanEye className="h-3.5 w-3.5" />
+        </Button>
+      )}
 
       <Button
         variant={"outline"}

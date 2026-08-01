@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
@@ -103,14 +103,14 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         </div>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <MikroFile.Komments object={file} />,
-            Provenance: (
-              <ProvenanceSidebar items={file.provenanceEntries} />
-            ),
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <MikroFile.Komments object={file} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Provenance">
+            <ProvenanceSidebar items={file.provenanceEntries} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       {/* Enhanced File Header / Title Area */}

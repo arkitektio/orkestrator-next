@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import {
@@ -106,7 +107,7 @@ export const TPage = asDetailQueryRoute(
             </p>
           </div>
         }
-        additionalSidebars={{ "Stats": <TaskStatsSidebar task={data.task} /> }}
+        additionalSidebars={<Sidebars.Tab label="Stats"><TaskStatsSidebar task={data.task} /></Sidebars.Tab>}
         object={data.task}
         pageActions={
           <div className="flex gap-2">

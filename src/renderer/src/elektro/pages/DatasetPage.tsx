@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { ElektroDataset } from "@/linkers";
 import { FileIcon, FolderIcon, LineChartIcon } from "lucide-react";
@@ -24,11 +24,11 @@ export const DatasetPage = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => 
         </div>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <ElektroDataset.Komments object={dataset} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <ElektroDataset.Komments object={dataset} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="mb-6">

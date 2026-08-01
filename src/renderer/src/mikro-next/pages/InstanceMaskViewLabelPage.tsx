@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroInstanceMaskViewLabel } from "@/linkers";
 import { useGetInstanceMaskViewLabelQuery } from "../api/graphql";
 
@@ -15,15 +15,13 @@ export const InstanceMaskViewLabelPage = asDetailQueryRoute(
         title={data?.instanceMaskViewLabel?.id}
         object={data?.instanceMaskViewLabel}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <MikroInstanceMaskViewLabel.Komments
-                  object={data?.instanceMaskViewLabel}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <MikroInstanceMaskViewLabel.Komments
+                object={data?.instanceMaskViewLabel}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <>

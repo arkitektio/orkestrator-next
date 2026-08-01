@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { RekuestStructurePackage, RekuestToolbox } from "@/linkers";
 import {
   useGetStructurePackageQuery
@@ -15,13 +15,11 @@ export const TPage = asDetailQueryRoute(
         title={data.structurePackage.id}
         object={data.structurePackage}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <RekuestToolbox.Komments object={data?.structurePackage} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <RekuestToolbox.Komments object={data?.structurePackage} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className=" p-6">

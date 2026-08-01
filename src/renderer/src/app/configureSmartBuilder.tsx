@@ -18,7 +18,6 @@ import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { ComponentType, ReactNode } from "react";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
 import ImageHoverCard from "@/mikro-next/components/hovers/ImageHoverCard";
 import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
 import DatasetHoverCard from "@/mikro-next/components/hovers/DatasetHoverCard";
@@ -94,19 +93,13 @@ configureSmartBuilder({
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {
-    const roomsSidebar = (
-      <StructureRoomsSidebar identifier={identifier} object={props.object} />
-    );
-
+    // No Rooms injection here any more: ModelPageLayout renders the identical
+    // Guard.Alpaka-wrapped StructureRoomsSidebar as a default tab itself.
     return (
       <ModelPageLayout
         identifier={identifier}
         {...props}
         variant={asPageVariant(props.variant)}
-        additionalSidebars={{
-          ...props.additionalSidebars,
-          Rooms: <Guard.Alpaka>{roomsSidebar}</Guard.Alpaka>,
-        }}
       >
         {children}
       </ModelPageLayout>

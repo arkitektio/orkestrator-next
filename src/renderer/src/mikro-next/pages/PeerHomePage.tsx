@@ -3,7 +3,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,10 +68,10 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
 
 
       </>}
-      sidebars={<MultiSidebar map={{
-        Statistics: <PeerStatisticsSidebar sub={id} />,
-        Help: <HelpSidebar />,
-      }} />}
+      sidebars={<Sidebars>
+        <Sidebars.Tab label="Statistics"><PeerStatisticsSidebar sub={id} /></Sidebars.Tab>
+        <Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab>
+      </Sidebars>}
       title={
         <>
           <JustUsername sub={id} />

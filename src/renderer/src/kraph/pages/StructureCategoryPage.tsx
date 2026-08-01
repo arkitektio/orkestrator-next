@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
@@ -56,15 +56,13 @@ const Page =  asDetailQueryRoute(
         object={{ id: data.structureCategory.id }}
         title={data?.structureCategory.identifier}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphStructureCategory.Komments
-                  object={{ id: data.structureCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KraphStructureCategory.Komments
+                object={{ id: data.structureCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">

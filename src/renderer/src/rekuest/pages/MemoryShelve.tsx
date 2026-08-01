@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { RekuestMemoryShelve } from "@/linkers";
 import {
@@ -17,11 +17,11 @@ export const MemoryShelvePage = asDetailQueryRoute(
         title={data.memoryShelve.name}
         object={data.memoryShelve}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <RekuestMemoryShelve.Komments object={data?.memoryShelve} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <RekuestMemoryShelve.Komments object={data?.memoryShelve} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
 

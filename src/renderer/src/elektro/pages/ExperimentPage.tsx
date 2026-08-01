@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import {
   ElektroExperiment,
@@ -99,13 +99,11 @@ export const ExperimentPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroExperiment.Komments object={data.experiment} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroExperiment.Komments object={data.experiment} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex-initial grid grid-cols-12 gap-2 h-32 w-full">

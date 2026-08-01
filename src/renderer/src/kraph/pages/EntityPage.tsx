@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -53,9 +53,11 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
         </div>
       </>}
       sidebars={
-        <MultiSidebar
-          map={{ Comments: <KraphEntity.Komments object={{ id: data.entity.id }} /> }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KraphEntity.Komments object={{ id: data.entity.id }} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-2">

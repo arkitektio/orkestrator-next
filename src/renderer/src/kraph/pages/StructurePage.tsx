@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { DisplayWidget } from "@/command/Menu";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
@@ -13,11 +13,11 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
       object={{ id: data.structure.id }}
       title={data?.structure.identifier}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KraphStructure.Komments object={{ id: data.structure.id }} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KraphStructure.Komments object={{ id: data.structure.id }} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-2">

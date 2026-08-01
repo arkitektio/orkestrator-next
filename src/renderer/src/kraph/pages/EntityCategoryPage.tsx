@@ -1,7 +1,7 @@
 import { EnhanceButton } from "@/alpaka/components/EnhanceButton";
 import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { DialogButton } from "@/components/ui/dialogbutton";
 import { DragZone } from "@/components/upload/drag";
@@ -71,15 +71,14 @@ export const Page = asDetailQueryRoute(
         object={data.entityCategory}
         title={data?.entityCategory.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Stats: <EntityCategorySidebar category={data.entityCategory.id} />,
-              Comments: (
-                <KraphEntityCategory.Komments object={data.entityCategory} />
-              ),
-
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Stats">
+              <EntityCategorySidebar category={data.entityCategory.id} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Comments">
+              <KraphEntityCategory.Komments object={data.entityCategory} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <>

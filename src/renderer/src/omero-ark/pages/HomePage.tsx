@@ -1,5 +1,5 @@
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { DialogButton } from "@/components/ui/dialog-button";
@@ -41,10 +41,14 @@ const Page = () => {
       </DialogButton>
 
     </>} sidebars={
-      <MultiSidebar map={{
-        Statistics: <HomePageStatisticsSidebar />,
-        Help: <HelpSidebar />
-      }} />
+      <Sidebars>
+        <Sidebars.Tab label="Statistics">
+          <HomePageStatisticsSidebar />
+        </Sidebars.Tab>
+        <Sidebars.Tab label="Help">
+          <HelpSidebar />
+        </Sidebars.Tab>
+      </Sidebars>
     }>
       <CommandMenu />
       <ProjectList />

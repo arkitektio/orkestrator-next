@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
-import { isLayerDirty } from "./colormap-utils";
 import { layerSwatchBackground } from "./renderGraphSwatch";
 
 /**
@@ -12,7 +11,6 @@ import { layerSwatchBackground } from "./renderGraphSwatch";
  */
 export const LayerRow = ({
   layer,
-  originalLayer,
   isSelected,
   onSelect,
   onUpdate,
@@ -25,7 +23,6 @@ export const LayerRow = ({
   onSaveGraph,
 }: {
   layer: LayerState;
-  originalLayer: LayerState | undefined;
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (updated: LayerState) => void;
@@ -50,7 +47,6 @@ export const LayerRow = ({
   /** Persist the unsaved render-graph edits. */
   onSaveGraph?: () => void;
 }) => {
-  const dirty = isLayerDirty(layer, originalLayer);
   const label =
     layer.lens.activeAnchors.filter((a) => a.channelLabel)?.[0]?.channelLabel
       ?.label ?? "Untitled Layer";
@@ -96,12 +92,6 @@ export const LayerRow = ({
         >
           {viewportPercent > 0 ? `${viewportPercent}%` : "<1%"}
         </span>
-      )}
-      {dirty && (
-        <span
-          className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-400"
-          title="Unsaved changes"
-        />
       )}
       <div className="flex shrink-0 items-center opacity-60 transition-opacity group-hover:opacity-100">
         <Button

@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { buildAssignInput } from "@/rekuest/assign";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -618,9 +619,11 @@ const TPage = asDetailQueryRoute(
           </>
         }
         object={data.implementation}
-        additionalSidebars={{
-          "Stats": <ImplementationStatsSidebar implementation={data.implementation.id} />,
-        }}
+        additionalSidebars={
+          <Sidebars.Tab label="Stats">
+            <ImplementationStatsSidebar implementation={data.implementation.id} />
+          </Sidebars.Tab>
+        }
         pageActions={
           <>
             <>

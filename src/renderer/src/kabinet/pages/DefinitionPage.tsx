@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
@@ -53,13 +53,11 @@ export const DefinitionPage = asDetailQueryRoute(
         title={data?.definition?.name}
         object={data?.definition}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KabinetDefinition.Komments object={data?.definition} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KabinetDefinition.Komments object={data?.definition} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={<></>}
       >

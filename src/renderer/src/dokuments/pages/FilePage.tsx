@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Icons } from "@/components/icons";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -71,11 +71,11 @@ export const FilePage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <LovekitStream.Komments object={file} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <LovekitStream.Komments object={file} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {/* Enhanced File Header / Title Area */}

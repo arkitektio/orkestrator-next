@@ -5,7 +5,7 @@ import { useCreateFile } from "@/lib/mikro/hooks";
 
 import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -217,10 +217,10 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
         </>
       }
       sidebars={
-        <MultiSidebar map={{
-          Statistics: <StatisticsSidebar />,
-          Help: <HelpSidebar />
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Statistics"><StatisticsSidebar /></Sidebars.Tab>
+          <Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab>
+        </Sidebars>
       }
       title="Home"
     >

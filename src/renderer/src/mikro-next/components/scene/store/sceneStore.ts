@@ -38,9 +38,7 @@ export interface SceneState {
   sceneLayers: SceneLayerFragment[];
   /** Normalized image layers only (carry zarr + transfer/render-graph state). */
   layers: LayerState[];
-  originalLayers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
-  markLayerClean: (layerId: string) => void;
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
@@ -68,7 +66,6 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
       },
       sceneLayers: scene.layers,
       layers: imageLayers.map((layer) => normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)),
-      originalLayers: imageLayers.map((layer) => normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)),
       // The render graph is the single rendering truth: transfer edits flow
       // graph → store (RenderGraphSection derives the flat clim/colormap
       // fields from the primary channel). No caller writes flat fields
@@ -78,14 +75,6 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
           const index = state.layers.findIndex((layer) => layer.id === updatedLayer.id);
           if (index !== -1) {
             state.layers[index] = updatedLayer;
-          }
-        }),
-      markLayerClean: (layerId) =>
-        set((state) => {
-          const layer = state.layers.find((l) => l.id === layerId);
-          const origIndex = state.originalLayers.findIndex((l) => l.id === layerId);
-          if (layer && origIndex !== -1) {
-            state.originalLayers[origIndex] = { ...layer };
           }
         }),
     })),

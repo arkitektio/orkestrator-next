@@ -1,4 +1,4 @@
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
@@ -156,7 +156,7 @@ const Page = () => {
 
 
   return (
-    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<MultiSidebar map={{ Statistics: <HomePageStatisticsSidebar />, Help: <HelpSidebar /> }} />}>
+    <PageLayout title={"Dashboard"} pageActions={<><AppFilterButton onSelect={setAppIdentifier} /><UserFitlerButton onSelect={setUserSub} /><DeviceFilterButton onSelect={setDeviceId} /></>} sidebars={<Sidebars><Sidebars.Tab label="Statistics"><HomePageStatisticsSidebar /></Sidebars.Tab><Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab></Sidebars>}>
       <div className="space-y-8 p-3">
       <CardHeader>
 

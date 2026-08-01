@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { RekuestTask } from "@/linkers";
 import {
@@ -67,13 +67,11 @@ export const TPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <RekuestTask.Komments object={data?.task} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <RekuestTask.Komments object={data?.task} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <pre className="rounded rounded-md p-3 bg-gray-900 border border-gray-800 text-sm mb-4 overflow-x-auto">

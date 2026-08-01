@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import {
   ElektroAnalogSignal,
   ElektroAnalogSignalChannel
@@ -27,15 +27,13 @@ export const AnalogSignalChannelPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroAnalogSignalChannel.Komments
-                  object={data.analogSignalChannel}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroAnalogSignalChannel.Komments
+                object={data.analogSignalChannel}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex-initial grid grid-cols-12 gap-2">

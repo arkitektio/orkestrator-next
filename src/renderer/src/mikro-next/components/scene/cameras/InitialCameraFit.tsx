@@ -39,11 +39,12 @@ export const InitialCameraFit = () => {
   const invalidate = useThree((s) => s.invalidate);
   const sceneApi = useSceneStoreApi();
 
-  // Metadata-only union box of the as-loaded scene. Non-reactive read: layer
-  // edits (clim, dims, affine…) must never re-trigger the initial fit (P17 —
-  // a camera jump on every layer edit).
+  // Metadata-only union box of the as-loaded scene, read ONCE per store scope
+  // (the memo keys on the store api, and `layers` is still as-loaded when this
+  // mounts). Non-reactive read: layer edits (clim, dims, affine…) must never
+  // re-trigger the initial fit (P17 — a camera jump on every layer edit).
   const box = useMemo(
-    () => computeSceneWorldBox(sceneApi.getState().originalLayers),
+    () => computeSceneWorldBox(sceneApi.getState().layers),
     [sceneApi],
   );
 

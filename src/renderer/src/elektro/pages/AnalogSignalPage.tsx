@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { ElektroAnalogSignal, ElektroAnalogSignalChannel } from "@/linkers";
 import { cn } from "@udecode/cn";
@@ -27,13 +27,11 @@ export const AnalogSignalPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroAnalogSignal.Komments object={data.analogSignal} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroAnalogSignal.Komments object={data.analogSignal} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex h-full w-full flex flex-col gap-2">

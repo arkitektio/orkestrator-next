@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { VerticalListRender } from "@/components/layout/VerticalListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -156,10 +156,12 @@ export const AgentPage = asDetailQueryRoute(
         object={data.agent}
         variant={"black"}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <RekuestAgent.Komments object={data?.agent} />,
-              States: <>
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <RekuestAgent.Komments object={data?.agent} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="States">
+              <>
                 {/* States Section */}
                 {data.agent.states.length > 0 && (
                   <div className="space-y-4 pt-4 border-t">
@@ -177,10 +179,12 @@ export const AgentPage = asDetailQueryRoute(
                     </div>
                   </div>
                 )}
-              </>,
-              Tasks: <AgentTasksSidebar agent={data.agent.id} />,
-            }}
-          />
+              </>
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Tasks">
+              <AgentTasksSidebar agent={data.agent.id} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <>

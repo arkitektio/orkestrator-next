@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { RekuestSpace } from "@/linkers";
 import { useSpaceQuery } from "@/rekuest/api/graphql";
 import { SpaceViewScene, SpaceViewSceneProvider } from "../space-scene";
@@ -18,11 +18,11 @@ export const SpacePage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
         </div>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestSpace.Komments object={data?.space} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <RekuestSpace.Komments object={data?.space} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="flex h-full flex-col p-6">

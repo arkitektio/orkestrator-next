@@ -41,7 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroDataset, MikroFile, MikroImage } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import {
@@ -284,16 +284,14 @@ export const DatasetTableExplorer = (props: {
       title={props.dataset.name}
       actions={<MikroDataset.Actions object={props.dataset} />}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: (
-              <Komments identifier="@mikro/dataset" object={props.dataset} />
-            ),
-            Provenance: (
-              <ProvenanceSidebar items={props?.dataset.provenanceEntries} />
-            ),
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <Komments identifier="@mikro/dataset" object={props.dataset} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Provenance">
+            <ProvenanceSidebar items={props?.dataset.provenanceEntries} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <>

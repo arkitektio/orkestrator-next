@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useElektroBigFileDownload } from "@/datalayer/hooks/useElektroBigFileDownload";
@@ -53,11 +53,11 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         </div>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <ElektroFile.Komments object={file} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <ElektroFile.Komments object={file} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       {/* File Header */}

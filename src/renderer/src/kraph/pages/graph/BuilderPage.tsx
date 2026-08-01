@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { KraphGraphQuery } from "@/linkers";
 import {
   useGetGraphQuery,
@@ -32,11 +32,11 @@ const Page = asDetailQueryRoute(useGetGraphTableQueryQuery, ({ data }) => {
         </div>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KraphGraphQuery.Komments object={{ id: data.graphTableQuery.id }} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KraphGraphQuery.Komments object={{ id: data.graphTableQuery.id }} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="grid grid-cols-12 gap-4 mb-4 h-full w-full">

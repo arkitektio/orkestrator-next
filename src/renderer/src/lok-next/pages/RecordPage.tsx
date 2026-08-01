@@ -1,5 +1,5 @@
 import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { LokUser } from "@/linkers";
 import { useMeQuery } from "../api/graphql";
 import { MorseCodeRecorder } from "../components/MorseCodeRecorder";
@@ -20,9 +20,11 @@ const Page = () => {
       pageActions={<LokUser.ObjectButton object={data.me} />}
       title={data?.me?.username}
       sidebars={
-        <MultiSidebar map={{
-          "Komments": <LokUser.Komments object={data.me} />,
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Komments">
+            <LokUser.Komments object={data.me} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       {/* Profile Hero Section */}

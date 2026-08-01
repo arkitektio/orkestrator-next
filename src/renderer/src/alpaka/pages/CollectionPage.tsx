@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { StringField } from "@/components/fields/StringField";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Form } from "@/components/ui/form";
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { AlpakaCollection } from "@/linkers";
@@ -97,13 +97,11 @@ const TPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <AlpakaCollection.Komments object={data.chromaCollection} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <AlpakaCollection.Komments object={data.chromaCollection} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {data.chromaCollection.id}

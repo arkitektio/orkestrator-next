@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { ElektroStimulus } from "@/linkers";
 import { useDetailStimulusQuery } from "../api/graphql";
 import { SimulationRender } from "../components/SimulationRender";
@@ -19,11 +19,11 @@ export const StimulusPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <ElektroStimulus.Komments object={data.stimulus} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroStimulus.Komments object={data.stimulus} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex flex-row gap-2 h-full w-full">

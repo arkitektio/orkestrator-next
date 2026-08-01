@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { RekuestInterface, RekuestToolbox } from "@/linkers";
 import {
   useGetInterfaceQuery
@@ -11,11 +11,11 @@ export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data })
       title={data.interface.key}
       object={data.interface}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestToolbox.Komments object={data?.interface} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <RekuestToolbox.Komments object={data?.interface} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className=" p-6">

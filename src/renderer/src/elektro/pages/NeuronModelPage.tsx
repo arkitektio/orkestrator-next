@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ElektroEnvironment, ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
@@ -19,11 +20,11 @@ export const NeuronModelPage = asDetailQueryRoute(
         variant="black"
         title={data?.neuronModel?.name}
         object={data.neuronModel}
-        additionalSidebars={{
-          Provenance: (
+        additionalSidebars={
+          <Sidebars.Tab label="Provenance">
             <ProvenanceSidebar items={data.neuronModel.provenanceEntries} />
-          ),
-        }}
+          </Sidebars.Tab>
+        }
         pageActions={
           <div className="flex flex-row gap-2">
             <ElektroNeuronModel.DetailLink object={data.neuronModel} subroute="edit" className={buttonVariants({ variant: "outline" })}>Edit</ElektroNeuronModel.DetailLink>

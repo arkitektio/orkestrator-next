@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { LocalActionButton, type LocalActionButtonProps } from "@/components/ui/localactionbutton";
 import { RekuestDashboard } from "@/linkers";
 import { useGetDashboardQuery } from "../api/graphql";
@@ -26,11 +26,11 @@ export const DashboardPage = asDetailQueryRoute(useGetDashboardQuery, ({ data, r
         />
       )}
       sidebars={
-        <MultiSidebar
-          map={{
-            Bloks: <DashboardBlokSidebar />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Bloks">
+            <DashboardBlokSidebar />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <DashboardSceneProvider dashboard={data.dashboard} refetch={refetch}>

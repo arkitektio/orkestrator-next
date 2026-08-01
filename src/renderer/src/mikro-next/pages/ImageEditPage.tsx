@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import {
@@ -134,32 +134,32 @@ export const ImageEditPage = asDetailQueryRoute(
         title={data?.image?.name}
         object={data?.image}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <MikroImage.Komments object={data?.image} />,
-              Provenance: (
-                <ProvenanceSidebar items={data?.image.provenanceEntries} />
-              ),
-              Renders: (
-                <div className="p-3 flex flex-col gap-2">
-                  {data.image.renders.map((render, index) => (
-                    <Card className="p-2 truncate flex flex-row items-center gap-2" key={index}>
-                      {render.__typename == "Snapshot" && (
-                        <Image
-                          src={resolve(render.store.key)}
-                          className="w-full"
-                        />
-                      )}
-                      <a href={resolve(render.store.key)} download>
-                        <Download size={24} />
-                        {render.__typename}
-                      </a>
-                    </Card>
-                  ))}
-                </div>
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <MikroImage.Komments object={data?.image} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Provenance">
+              <ProvenanceSidebar items={data?.image.provenanceEntries} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Renders">
+              <div className="p-3 flex flex-col gap-2">
+                {data.image.renders.map((render, index) => (
+                  <Card className="p-2 truncate flex flex-row items-center gap-2" key={index}>
+                    {render.__typename == "Snapshot" && (
+                      <Image
+                        src={resolve(render.store.key)}
+                        className="w-full"
+                      />
+                    )}
+                    <a href={resolve(render.store.key)} download>
+                      <Download size={24} />
+                      {render.__typename}
+                    </a>
+                  </Card>
+                ))}
+              </div>
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <>

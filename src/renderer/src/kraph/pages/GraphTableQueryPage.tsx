@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
 import {
@@ -63,11 +63,15 @@ const Page = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <KraphGraphView.Komments object={{ id: data.graphTableQuery.id }} />,
-              Cypher: <CypherSidebar cypher={data.graphTableQuery.query || ""} />,
-              Plots: <div className="px-6 py-4">
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KraphGraphView.Komments object={{ id: data.graphTableQuery.id }} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Cypher">
+              <CypherSidebar cypher={data.graphTableQuery.query || ""} />
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Plots">
+              <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold">Visualizations</h2>
 
@@ -85,9 +89,9 @@ const Page = asDetailQueryRoute(
                     No scatter plots yet. Create one to visualize your data.
                   </Card>
                 )}
-              </div>,
-            }}
-          />
+              </div>
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">

@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import {
   DetailPane,
@@ -97,11 +98,11 @@ export const ImagePage =  asDetailQueryRoute(
       <MikroImage.ModelPage
         title={data?.image?.name}
         object={data?.image}
-        additionalSidebars={{
-          Provenance: (
+        additionalSidebars={
+          <Sidebars.Tab label="Provenance">
             <ProvenanceSidebar items={data?.image?.provenanceEntries} />
-          ),
-        }}
+          </Sidebars.Tab>
+        }
         pageActions={
           <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image} />

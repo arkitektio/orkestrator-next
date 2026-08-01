@@ -1,6 +1,6 @@
 import { useDialog } from "@/app/dialog";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,11 +46,11 @@ export const TPage =  asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <AlpakaLLMModel.Komments object={model} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <AlpakaLLMModel.Komments object={model} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="space-y-6">

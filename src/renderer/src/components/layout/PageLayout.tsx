@@ -31,6 +31,13 @@ export type PageLayoutProps = {
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: "black" | "default";
+  /**
+   * Seamless sidebar: the rail paints the page's own surface instead of
+   * `bg-sidebar` and the resize divider goes invisible (still draggable), so
+   * content and rail read as one surface. Meant for the black, canvas-style
+   * pages whose sidebar hosts scene chrome (the Layers tab).
+   */
+  overlay?: boolean;
 };
 
 export const PageLayout = ({
@@ -39,6 +46,7 @@ export const PageLayout = ({
   actions,
   pageActions,
   variant = "default",
+  overlay = false,
 }: PageLayoutProps) => {
   const [params, setParams] = useSearchParams({
     pageSidebar: "true",
@@ -176,7 +184,7 @@ export const PageLayout = ({
 
 
               <ButtonGroup className="flex-initial">
-                <Button variant="ghost" onClick={togglePageSidebar} className="!pl-2 !pr-2"><PanelRight /></Button>
+                <Button variant="ghost" onClick={togglePageSidebar} className="!pl-2 !pr-2 my-auto"><PanelRight /></Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <Button variant="ghost" className="!pl-2 !pr-2">
@@ -228,15 +236,24 @@ export const PageLayout = ({
       </ResizablePanel>
       {params.get("pageSidebar") == "true" && (
         <>
-          <ResizableHandle />
+          {/* Overlay: the handle root's `bg-border w-px` IS the divider line;
+              its `after:` hit area has no background, so making the root
+              transparent hides the line without losing the drag target. */}
+          <ResizableHandle className={overlay ? "bg-transparent" : undefined} />
           <ResizablePanel
             minSize={10}
             maxSize={80}
             defaultSize={20}
             order={2}
             className={cn(
-              "bg-sidebar l",
-              variant == "default" ? "" : "border-0 bg-sidebar bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
+              overlay
+                ? variant == "default"
+                  ? "bg-radial-[at_100%_100%] from-background to-backgroundpaired"
+                  : "bg-black text-gray-300"
+                : cn(
+                    "bg-sidebar",
+                    variant == "default" ? "" : "border-0 bg-sidebar bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
+                  ),
             )}
             id="sidebar"
 

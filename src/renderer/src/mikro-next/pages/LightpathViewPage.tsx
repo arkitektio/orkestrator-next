@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroLightpathView } from "@/linkers";
 import { useGetLightpathViewQuery } from "../api/graphql";
 import LightPathGraph from "../components/lightpath/LightPathGraph";
@@ -12,13 +12,11 @@ export const LightpathViewPage = asDetailQueryRoute(
         title={data?.lightpathView?.__typename}
         object={data?.lightpathView}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <MikroLightpathView.Komments object={data?.lightpathView} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <MikroLightpathView.Komments object={data?.lightpathView} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <LightPathGraph graph={data?.lightpathView?.graph} showButtons={true} />

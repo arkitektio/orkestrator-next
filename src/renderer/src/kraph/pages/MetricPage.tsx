@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import {
   KraphEntity,
@@ -15,9 +15,11 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
       object={{ id: data.metric.id }}
       title={data?.metric.category.label}
       sidebars={
-        <MultiSidebar
-          map={{ Comments: <KraphMetric.Komments object={{ id: data.metric.id }} /> }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KraphMetric.Komments object={{ id: data.metric.id }} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-2">

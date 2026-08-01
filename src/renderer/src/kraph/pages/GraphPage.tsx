@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { KraphGraph } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import {
@@ -66,16 +66,18 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
         </>
       }
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KraphGraph.Komments object={data.graph} />,
-            Plots: (
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KraphGraph.Komments object={data.graph} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Plots">
+            {(
               <>
                 <ScatterPlotList />
               </>
-            ),
-          }}
-        />
+            )}
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">

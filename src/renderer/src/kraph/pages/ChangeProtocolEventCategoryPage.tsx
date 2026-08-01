@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { StringField } from "@/components/fields/StringField";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -249,15 +249,13 @@ export default asDetailQueryRoute(
           />
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphProtocolStepTemplate.Komments
-                  object={{ id: data.protocolEventCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KraphProtocolStepTemplate.Komments
+                object={{ id: data.protocolEventCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

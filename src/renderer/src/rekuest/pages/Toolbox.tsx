@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { RekuestToolbox } from "@/linkers";
 import { useToolboxQuery } from "@/rekuest/api/graphql";
 import ShortcutList from "../components/lists/ShortcutList";
@@ -10,11 +10,11 @@ export const ToolboxPage = asDetailQueryRoute(useToolboxQuery, ({ data }) => {
       title={data.toolbox.name}
       object={data.toolbox}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestToolbox.Komments object={data?.toolbox} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <RekuestToolbox.Komments object={data?.toolbox} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className=" p-6">

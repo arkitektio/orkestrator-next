@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AlpakaLLMModel, AlpakaProvider } from "@/linkers";
 import { useEffect, useMemo, useState } from "react";
@@ -44,11 +44,11 @@ export const TPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <AlpakaProvider.Komments object={provider} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <AlpakaProvider.Komments object={provider} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="space-y-6">

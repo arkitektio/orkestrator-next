@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -41,13 +41,11 @@ export const RecordingPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <ElektroSimulation.Komments object={data.recording} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroSimulation.Komments object={data.recording} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="flex h-full w-full flex flex-col gap-2">

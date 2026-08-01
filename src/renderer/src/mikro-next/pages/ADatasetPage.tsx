@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -139,11 +140,19 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
   )
 
   return (
+    // The provider wraps the WHOLE ModelPage so the Layers sidebar tab (a
+    // sibling panel of the content area) reaches the scene stores. Null scene
+    // = "no scene selected"; the tab says so instead of listing layers.
+    <Scene.Provider scene={sceneData?.scene ?? null}>
     <MikroADataset.ModelPage
       object={dataset}
       title={dataset.name}
       variant="black"
+      overlay
       actions={<MikroADataset.Actions object={dataset} />}
+      additionalSidebars={<Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>}
+      defaultSidebar="Layers"
+      sidebarKey="SceneDetail"
       pageActions={
         <Button variant="outline" size="sm" disabled={loading} onClick={() => createScene()}>
           <Clapperboard className="mr-2 h-4 w-4" />
@@ -152,20 +161,19 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       }
     >
       <div className="relative h-full w-full">
-        {/* Keyed on the scene id: the renderer builds its stores on mount, so
+        {/* Keyed on the scene id: the renderer builds its stores per scene, so
               switching scenes must remount rather than feed a new scene into
-              stores primed for the old one. */}
+              components primed for the old one. */}
         {sceneData?.scene ? (
           // The default stack plus one panel of our own — the whole reason
-          // Scene takes children rather than a slot per caller.
-          <Scene key={sceneData.scene.id} scene={sceneData.scene}>
+          // the viewport takes children rather than a slot per caller.
+          <Scene.Viewport key={sceneData.scene.id}>
             <Scene.Column>
               <Scene.Trigger />
               <Scene.Panels>
                 {datasetPanel}
                 <Scene.Controls />
                 <Scene.Probe />
-                <Scene.Layers />
               </Scene.Panels>
             </Scene.Column>
             <Scene.Dock side="right">
@@ -174,7 +182,7 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
             <Scene.Dock side="bottom">
               <Scene.DimSliders />
             </Scene.Dock>
-          </Scene>
+          </Scene.Viewport>
         ) : (
           // With no scene there is no renderer to host the column, so the
           // panel is placed here instead — same geometry as Scene.Column's.
@@ -193,6 +201,7 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
         )}
       </div>
     </MikroADataset.ModelPage>
+    </Scene.Provider>
   )
 })
 

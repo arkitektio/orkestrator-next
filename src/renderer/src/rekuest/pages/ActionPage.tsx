@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { buildAssignInput } from "@/rekuest/assign";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -177,11 +177,11 @@ export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data }) =>
       title={data.action.name}
       object={data.action}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <RekuestAction.Komments object={data?.action} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <RekuestAction.Komments object={data?.action} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className=" p-6">

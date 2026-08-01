@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { RekuestTask } from "@/linkers";
 import {
@@ -73,13 +73,11 @@ export const TaskTimelinePage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <RekuestTask.Komments object={data?.task} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <RekuestTask.Komments object={data?.task} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <ChildTaskUpdater taskId={id} />

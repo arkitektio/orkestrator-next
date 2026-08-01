@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { asParamlessRoute, HookFunction } from "@/app/routes/ParamlessRoute";
 import { OperationVariables } from "@apollo/client";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { HelpSidebar } from "@/components/sidebars/help";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,10 +45,14 @@ const Page = asParamlessRoute(useHomePageQueryAsHookFunction, ({ data }: { data:
   return (
     <PageLayout
       sidebars={
-        <MultiSidebar map={{
-          Statistics: <HomePageStatisticsSidebar />,
-          Help: <HelpSidebar />
-        }} />
+        <Sidebars>
+          <Sidebars.Tab label="Statistics">
+            <HomePageStatisticsSidebar />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Help">
+            <HelpSidebar />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-1">

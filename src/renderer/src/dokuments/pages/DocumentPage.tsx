@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
@@ -47,11 +47,11 @@ export const DocumentPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <LovekitStream.Komments object={document} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <LovekitStream.Komments object={document} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {/* Full-Screen Two-Column Layout */}

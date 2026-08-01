@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import {
   KraphEntity,
   KraphProtocolEvent,
@@ -22,13 +22,11 @@ const Page = asDetailQueryRoute(
         object={{ id: data.protocolEvent.id }}
         title={data?.protocolEvent.label}
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphProtocolEvent.Komments object={{ id: data.protocolEvent.id }} />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KraphProtocolEvent.Komments object={{ id: data.protocolEvent.id }} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">

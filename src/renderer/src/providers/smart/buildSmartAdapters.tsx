@@ -11,10 +11,17 @@ export type SmartModelPage<T extends Object = Object> = {
   object: T;
   title?: React.ReactNode;
   sidebars?: React.ReactNode;
-  additionalSidebars?: { [key: string]: React.ReactNode };
+  /** Extra `<Sidebars.Tab>` elements appended after the default rail tabs. */
+  additionalSidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: unknown;
+  /** Seamless sidebar rail — see PageLayout's `overlay` prop. */
+  overlay?: boolean;
+  /** The rail tab to open when nothing valid is remembered. */
+  defaultSidebar?: string;
+  /** Own persistence key for the remembered rail tab (default "DetailModel"). */
+  sidebarKey?: string;
   callback?: (object: T) => void;
 };
 

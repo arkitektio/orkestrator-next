@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
@@ -17,11 +17,11 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
       title={data?.image?.name || "Image"}
       pageActions={<MikroDataset.Actions object={data?.image} />}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: data?.image ? <Komments identifier="@omero-ark/image" object={data.image} /> : null,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            {data?.image ? <Komments identifier="@omero-ark/image" object={data.image} /> : null}
+          </Sidebars.Tab>
+        </Sidebars>
       }
     >
       <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2 w-full">

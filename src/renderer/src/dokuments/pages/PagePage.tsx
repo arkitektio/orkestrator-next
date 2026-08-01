@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { DokumentsPage } from "@/linkers";
@@ -22,11 +22,11 @@ export const PagePage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <DokumentsPage.Komments object={data.page} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <DokumentsPage.Komments object={data.page} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {data.page.id}

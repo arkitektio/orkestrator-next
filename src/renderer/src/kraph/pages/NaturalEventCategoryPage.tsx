@@ -3,7 +3,7 @@ import { Plate } from "@udecode/plate-common/react";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { StringField } from "@/components/fields/StringField";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
 import { Editor } from "@/components/plate-ui/editor";
 import { TooltipProvider } from "@/components/plate-ui/tooltip";
@@ -277,15 +277,13 @@ export default asDetailQueryRoute(
           />
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <KraphNaturalEventCategory.Komments
-                  object={{ id: data.naturalEventCategory.id }}
-                />
-              ),
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <KraphNaturalEventCategory.Komments
+                object={{ id: data.naturalEventCategory.id }}
+              />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

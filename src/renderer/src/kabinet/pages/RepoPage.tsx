@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,11 @@ const RepoPage = asDetailQueryRoute(useGetRepoQuery, ({ data, refetch }) => {
       title={repo.name}
       object={repo}
       sidebars={
-        <MultiSidebar
-          map={{
-            Comments: <KabinetRepo.Komments object={repo} />,
-          }}
-        />
+        <Sidebars>
+          <Sidebars.Tab label="Comments">
+            <KabinetRepo.Komments object={repo} />
+          </Sidebars.Tab>
+        </Sidebars>
       }
       pageActions={
         <div className="flex flex-row gap-2">

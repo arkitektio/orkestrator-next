@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { ElektroModelCollection, ElektroNeuronModel } from "@/linkers";
 import { useDetailModelCollectionQuery, useDetailNeuronModelQuery } from "../api/graphql";
@@ -37,11 +37,11 @@ export const ModelCollectionPage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <ElektroModelCollection.Komments object={data.modelCollection} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroModelCollection.Komments object={data.modelCollection} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         {/* Header */}

@@ -4,7 +4,7 @@ import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
 import { Identifier, Object } from "@/types";
 import { useMemo } from "react";
-import { MultiSidebar } from "./MultiSidebar";
+import { Sidebars } from "./Sidebars";
 import { PageLayout, PageVariant } from "./PageLayout";
 import { useNavigate } from "react-router-dom";
 import { useCreateRoomMutation } from "@/alpaka/api/graphql";
@@ -23,10 +23,25 @@ export type ModelPageLayoutProps = {
   object: Object;
   title?: React.ReactNode;
   sidebars?: React.ReactNode;
-  additionalSidebars?: { [key: string]: React.ReactNode };
+  /**
+   * Extra `<Sidebars.Tab>` elements appended after the default tabs. A tab
+   * whose label matches a default replaces that default's content in place.
+   */
+  additionalSidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
   variant?: PageVariant;
+  /** Seamless sidebar rail — see PageLayout's `overlay` prop. */
+  overlay?: boolean;
+  /** The rail tab to open when nothing valid is remembered. */
+  defaultSidebar?: string;
+  /**
+   * localStorage key for the remembered rail tab. Defaults to the key shared
+   * by all model pages; pages with their own tab set (the scene pages and
+   * their Layers tab) pass their own so their preference doesn't fight the
+   * rest of the app's.
+   */
+  sidebarKey?: string;
   callback?: (object: Object) => void;
 };
 
@@ -38,6 +53,9 @@ export const ModelPageLayout = ({
   identifier,
   object,
   variant,
+  overlay,
+  defaultSidebar,
+  sidebarKey,
   actions,
   pageActions,
 }: ModelPageLayoutProps) => {
@@ -55,14 +73,27 @@ export const ModelPageLayout = ({
   return (
     <PageLayout
       title={title}
-      sidebars={sidebars ? <>{sidebars}</> : <MultiSidebar map={{
-        "Comments": kommentsSidebar,
-        "Knowledge": <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>,
-        "Rooms": <Guard.Alpaka>{alpakaRoomsSidebar}</Guard.Alpaka>,
-        "Tasks": <RunsSidebar identifier={identifier} object={object} />,
-        ...additionalSidebars,
-      }} sidebarKey="DetailModel" />}
+      sidebars={sidebars ? <>{sidebars}</> : (
+        <Sidebars
+          sidebarKey={sidebarKey ?? "DetailModel"}
+          defaultTab={defaultSidebar}
+          variant={overlay ? "overlay" : "default"}
+        >
+          <Sidebars.Tab label="Comments">{kommentsSidebar}</Sidebars.Tab>
+          <Sidebars.Tab label="Knowledge">
+            <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Rooms">
+            <Guard.Alpaka>{alpakaRoomsSidebar}</Guard.Alpaka>
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Tasks">
+            <RunsSidebar identifier={identifier} object={object} />
+          </Sidebars.Tab>
+          {additionalSidebars}
+        </Sidebars>
+      )}
       variant={variant}
+      overlay={overlay}
       actions={actions}
       pageActions={
         <div className="flex flex-row gap-1.5 items-center">

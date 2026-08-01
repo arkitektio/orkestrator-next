@@ -1,7 +1,7 @@
 import { Identifier } from "@/types";
 import { PageLayout, PageVariant } from "./PageLayout";
 import { CommandMenu } from "@/command/Menu";
-import { MultiSidebar } from "./MultiSidebar";
+import { Sidebars } from "./Sidebars";
 import { HelpSidebar } from "../sidebars/help";
 
 export type ListPageLayoutProps = {
@@ -28,7 +28,11 @@ export const ListPageLayout = ({
     <div className="h-full w-full">
       <PageLayout
         title={title}
-        sidebars={sidebars || <MultiSidebar map={{ Help: <HelpSidebar /> }} />}
+        sidebars={sidebars || (
+          <Sidebars>
+            <Sidebars.Tab label="Help"><HelpSidebar /></Sidebars.Tab>
+          </Sidebars>
+        )}
 
         variant={variant}
         pageActions={pageActions}

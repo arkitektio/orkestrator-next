@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { ElektroTrace } from "@/linkers";
 import { useDetailTraceQuery } from "../api/graphql";
 import { TraceRender } from "../components/TraceRender";
@@ -19,11 +19,11 @@ export const TracePage = asDetailQueryRoute(
           </div>
         }
         sidebars={
-          <MultiSidebar
-            map={{
-              Comments: <ElektroTrace.Komments object={data.trace} />,
-            }}
-          />
+          <Sidebars>
+            <Sidebars.Tab label="Comments">
+              <ElektroTrace.Komments object={data.trace} />
+            </Sidebars.Tab>
+          </Sidebars>
         }
       >
         <TraceRender trace={data.trace} />

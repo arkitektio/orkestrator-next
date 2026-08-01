@@ -79,7 +79,6 @@ const UnplannableNotice = ({
 const LayerCard = memo(function LayerCard({
   layer,
   expanded,
-  originalLayer,
   viewportPercent,
   unplannable,
   onSelect,
@@ -90,7 +89,6 @@ const LayerCard = memo(function LayerCard({
 }: {
   layer: LayerState;
   expanded: boolean;
-  originalLayer: LayerState | undefined;
   viewportPercent?: number;
   unplannable?: UnplannableLayerInfo;
   onSelect: (id: string) => void;
@@ -118,7 +116,6 @@ const LayerCard = memo(function LayerCard({
       <LayerRow
         embedded
         layer={layer}
-        originalLayer={originalLayer}
         isSelected={expanded}
         viewportPercent={viewportPercent}
         graphDirty={editor.dirty}
@@ -145,11 +142,22 @@ const LayerCard = memo(function LayerCard({
   );
 });
 
-export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
+export const LayerControlPanel = ({
+  sceneId,
+  variant = "floating",
+}: {
+  sceneId: string;
+  /**
+   * Where the panel is hosted. "floating" is the in-viewport overlay stack
+   * (pointer events opt back in per card, height bounded by the column);
+   * "sidebar" fills a page-rail tab, which hands the panel a plain full-height
+   * flex box and expects it to own its scroll.
+   */
+  variant?: "floating" | "sidebar";
+}) => {
   perfMonitor.countRender("LayerControlPanel"); // no-op unless a perf recording is armed
   const { openDialog } = useDialog();
   const layers = useSceneStore((s) => s.layers);
-  const originalLayers = useSceneStore((s) => s.originalLayers);
   const updateLayer = useSceneStore((s) => s.updateLayer);
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -268,7 +276,6 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
         key={layer.id}
         layer={layer}
         expanded={isExpanded(layer)}
-        originalLayer={originalLayers.find((o) => o.id === layer.id)}
         viewportPercent={summary?.percent}
         unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
@@ -281,8 +288,20 @@ export const LayerControlPanel = ({ sceneId }: { sceneId: string }) => {
   };
 
   return (
-    <div className="pointer-events-none flex min-h-0 flex-1 flex-col items-stretch">
-      <div className="pointer-events-auto flex max-h-full flex-col gap-1 overflow-y-auto">
+    <div
+      className={
+        variant === "sidebar"
+          ? "flex h-full min-h-0 flex-col p-2"
+          : "pointer-events-none flex min-h-0 flex-1 flex-col items-stretch"
+      }
+    >
+      <div
+        className={
+          variant === "sidebar"
+            ? "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+            : "pointer-events-auto flex max-h-full flex-col gap-1 overflow-y-auto"
+        }
+      >
         {shownLayers.map(renderRow)}
 
         {offscreenLayers.length > 0 && (

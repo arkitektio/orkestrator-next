@@ -12,10 +12,18 @@ import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { Line } from "../../primitives/Line";
 import { SPHERE_KIND } from "../../core/primitiveDraw";
-import { affineToMatrix4 } from "../../core/worldTransform";
+import { affineToMatrix4, sceneZExtent } from "../../core/worldTransform";
+import {
+  isAnnotationInView,
+  sceneCoverages,
+  zSpanOf,
+  type ScenePlane,
+  type ZSpan,
+} from "../../core/annotationVisibility";
 import { useModeStore } from "../../store/modeStore";
 import { type RoiBounds, useRoiSelectionStore } from "../../store/roiSelectionStore";
 import { useSceneStore } from "../../store/sceneStore";
+import { useViewerStore } from "../../store/viewerStore";
 import type { SceneTransformContext } from "../../core/layerModel";
 
 /**
@@ -172,10 +180,16 @@ function getAnnotationSelectionPoints(
   return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
 }
 
-function getWorldBounds(
+/**
+ * The shape in WORLD µm: the x/y box the rubber band selects against, and the
+ * z extent the flat view's plane test reads. Both come from the same pass over
+ * the (unflattened) geometry — the whole point of the z span is the depth
+ * `flattenToPlane` would throw away.
+ */
+function getWorldExtent(
   annotation: ListAnnotationFragment,
   affineMatrix: THREE.Matrix4,
-): RoiBounds | null {
+): { bounds: RoiBounds; zSpan: ZSpan } | null {
   const points = getAnnotationSelectionPoints(annotation, false);
   if (points.length === 0) return null;
 
@@ -183,6 +197,7 @@ function getWorldBounds(
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
+  const worldPoints: [number, number, number][] = [];
 
   points.forEach(([x, y, z]) => {
     const world = new THREE.Vector3(x, y, z).applyMatrix4(affineMatrix);
@@ -190,9 +205,13 @@ function getWorldBounds(
     maxX = Math.max(maxX, world.x);
     minY = Math.min(minY, world.y);
     maxY = Math.max(maxY, world.y);
+    worldPoints.push([world.x, world.y, world.z]);
   });
 
-  return { minX, maxX, minY, maxY };
+  return {
+    bounds: { minX, maxX, minY, maxY },
+    zSpan: zSpanOf(worldPoints) ?? { min: 0, max: 0 },
+  };
 }
 
 /**
@@ -245,6 +264,9 @@ const AnnotationCollectionGroup = ({
   layerId: string;
 }) => {
   const transformContext = useSceneStore((s) => s.transformContext);
+  const imageLayers = useSceneStore((s) => s.layers);
+  const dimSelections = useViewerStore((s) => s.dimSelections);
+  const currentZ = useViewerStore((s) => s.currentZ);
   const displayMode = useModeStore((s) => s.displayMode);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
@@ -273,28 +295,80 @@ const AnnotationCollectionGroup = ({
     [collection],
   );
 
-  const visibleRois = useMemo(() => {
+  const flattenToPlane = displayMode !== "3D";
+
+  /**
+   * What the scene is showing, in the terms an annotation is pinned in. The
+   * flat view resolves z pins against the plane it draws; the volume shows
+   * every slice, so there z spans (`planeZ` null).
+   */
+  const coverages = useMemo(
+    () => sceneCoverages(imageLayers, dimSelections, flattenToPlane ? currentZ : null),
+    [imageLayers, dimSelections, flattenToPlane, currentZ],
+  );
+
+  /**
+   * The slab the flat view draws. Null in 3D and in a scene whose layers have
+   * no z axis — neither has a plane a shape can be off.
+   */
+  const plane = useMemo((): ScenePlane | null => {
+    if (!flattenToPlane) return null;
+    const extent = sceneZExtent(imageLayers);
+    return extent ? { z: currentZ, slabThickness: extent.step } : null;
+  }, [flattenToPlane, imageLayers, currentZ]);
+
+  /**
+   * Every shape placed in the world once — the matrix pass, keyed only on the
+   * data and the placement. Scrubbing z must not redo it: the plane moves at
+   * pointer cadence and the geometry does not move with it.
+   */
+  const placed = useMemo(() => {
     if (!annotations) return [];
 
     return annotations
       .map((annotation) => {
-        const bounds = getWorldBounds(annotation, affineMatrix);
-        if (!bounds) return null;
+        const extent = getWorldExtent(annotation, affineMatrix);
+        if (!extent) return null;
 
         return {
-          id: annotation.id,
-          layerId,
-          name: annotation.name,
-          kind: annotation.kind,
-          systemId,
-          axisNames,
-          vectors: annotation.vectors ?? [],
-          coordinates: annotation.coordinates ?? [],
-          bounds,
+          annotation,
+          bounds: extent.bounds,
+          zSpan: extent.zSpan,
+          roi: {
+            id: annotation.id,
+            layerId,
+            name: annotation.name,
+            kind: annotation.kind,
+            systemId,
+            axisNames,
+            vectors: annotation.vectors ?? [],
+            coordinates: annotation.coordinates ?? [],
+          },
         };
       })
-      .filter((roi): roi is NonNullable<typeof roi> => roi !== null);
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
   }, [affineMatrix, annotations, layerId, systemId, axisNames]);
+
+  /**
+   * The shapes that are actually on screen. One list for both consumers: what
+   * is drawn and what the rubber band can select have to agree, or a drag
+   * picks up shapes from a slice that is not being shown.
+   */
+  const shown = useMemo(
+    () =>
+      placed.filter((entry) =>
+        isAnnotationInView(
+          { coordinates: entry.annotation.coordinates, zSpan: entry.zSpan },
+          { coverages, plane },
+        ),
+      ),
+    [placed, coverages, plane],
+  );
+
+  const visibleRois = useMemo(
+    () => shown.map((entry) => ({ ...entry.roi, bounds: entry.bounds })),
+    [shown],
+  );
 
   useEffect(() => {
     setVisibleLayerRois(layerId, visibleRois);
@@ -304,36 +378,25 @@ const AnnotationCollectionGroup = ({
     };
   }, [clearVisibleLayerRois, layerId, setVisibleLayerRois, visibleRois]);
 
-  if (!annotations || annotations.length === 0) return null;
+  if (shown.length === 0) return null;
   const selectedRoiIds = new Set(selectedRois.map((roi) => roi.id));
 
   return (
     <group matrix={affineMatrix} matrixAutoUpdate={false}>
-      {annotations.map((annotation) => (
+      {shown.map(({ annotation, roi }) => (
         <AnnotationShape
           key={annotation.id}
           annotation={annotation}
-          flattenToPlane={displayMode !== "3D"}
+          flattenToPlane={flattenToPlane}
           isActive={selectedRoiIds.has(annotation.id)}
           selectable={interactionMode !== "PROBE"}
           onSelect={(appendSelection) => {
-            const selectedRoi = {
-              id: annotation.id,
-              layerId,
-              name: annotation.name,
-              kind: annotation.kind,
-              systemId,
-              axisNames,
-              vectors: annotation.vectors ?? [],
-              coordinates: annotation.coordinates ?? [],
-            };
-
             if (appendSelection) {
-              toggleSelectedRoi(selectedRoi);
+              toggleSelectedRoi(roi);
               return;
             }
 
-            selectOnlyRoi(selectedRoi);
+            selectOnlyRoi(roi);
           }}
         />
       ))}

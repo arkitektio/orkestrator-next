@@ -35,6 +35,7 @@
       "ProjectionNode"
     ],
     "OpticalElement": [
+      "ApertureElement",
       "BeamSplitterElement",
       "CCDElement",
       "DetectorElement",
@@ -47,7 +48,10 @@
       "OtherElement",
       "OtherSourceElement",
       "PinholeElement",
-      "SampleElement"
+      "PolarizerElement",
+      "SampleElement",
+      "ShutterElement",
+      "WaveplateElement"
     ],
     "Render": [
       "Snapshot",

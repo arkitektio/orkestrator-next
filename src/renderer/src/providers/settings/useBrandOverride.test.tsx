@@ -101,6 +101,32 @@ describe("useBrandOverride", () => {
     expect(isAnimating()).toBe(false);
   });
 
+  it("applies an achromatic target's chroma, keeping the current hue", () => {
+    // A grey colormap is a grey theme: the app desaturates, it does not fall
+    // back to the user's brand color.
+    renderHook(() => useBrandOverride({ hue: null, chroma: 0 }));
+
+    expect(Number(chroma())).toBe(0);
+    expect(renderedHue()).toBeCloseTo(BASE_HUE, 5);
+    expect(isAnimating()).toBe(true);
+  });
+
+  it("desaturates in place rather than spinning the hue", () => {
+    const { rerender } = renderHook(
+      ({ target }: { target: { hue: number | null; chroma: number } }) =>
+        useBrandOverride(target),
+      { initialProps: { target: { hue: 30, chroma: 0.2 } } },
+    );
+
+    const tinted = Number(hue());
+
+    // Selecting a grey layer next: chroma drops, hue must not move.
+    rerender({ target: { hue: null, chroma: 0 } });
+
+    expect(Number(hue())).toBe(tinted);
+    expect(Number(chroma())).toBe(0);
+  });
+
   it("writes an unwrapped hue so a wrap-around change eases the short way", () => {
     const { rerender, unmount } = renderHook(
       ({ h }: { h: number }) => useBrandOverride({ hue: h, chroma: 0.2 }),

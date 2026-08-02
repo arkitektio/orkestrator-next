@@ -28,6 +28,7 @@ import {
   useCreateVolumeLayerMutation,
   useGetSceneQuery,
 } from "../api/graphql";
+import { lensLabel } from "../lenses";
 
 type LensCandidate = AddLayerLensCandidatesQuery["lenses"][number];
 type TableCandidate =
@@ -74,17 +75,6 @@ const SourceRow = (props: {
     </div>
   </button>
 );
-
-// A one-line descriptor that distinguishes lenses of the same dataset: whether
-// the lens is the full array (slices: []) or a slice, plus its axes and shape.
-const lensLabel = (lens: LensCandidate) => {
-  const dims = `${lens.axisNames.join(" × ")} · ${lens.shape.join(" × ")}`;
-  if (lens.slices.length === 0) return `full — ${dims}`;
-  const slices = lens.slices
-    .map((s) => `${s.axis}[${s.start ?? ""}:${s.stop ?? ""}]`)
-    .join(", ");
-  return `${slices} — ${dims}`;
-};
 
 /**
  * Step 2a: a lens becomes an image layer. Image layers hang off a lens, and the

@@ -9,7 +9,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { MikroADataset, MikroCoordinateSystem } from '@/linkers'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   GetADatasetQuery,
   useGetADatasetQuery,
@@ -20,6 +20,7 @@ import {
   DatasetBackdrop
 } from '../components/adataset/DatasetBackdrop'
 import { Scene } from '../components/scene/Scene'
+import { DerivedDatasetsSidebar } from '../components/sidebars/DerivedDatasetsSidebar'
 
 type PageDataset = GetADatasetQuery['adataset']
 
@@ -111,6 +112,15 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
   const dataset = data.adataset
   const [selectedSceneId, setSelectedSceneId] = useState<string>()
 
+  // Creating a scene here does NOT leave the page: this page already renders
+  // scenes, so the new one is simply the one now selected — the switcher lists
+  // it (the mutation awaits a GetADataset refetch) and the viewport remounts on
+  // its id.
+  const handleSceneCreated = useCallback(
+    (sceneId: string) => setSelectedSceneId(sceneId),
+    []
+  )
+
   // The first scene is the one to land in: a bootstrapped dataset has exactly
   // one, so the common case needs no choice at all.
   const activeSceneId = selectedSceneId ?? dataset.scenes.at(0)?.id
@@ -144,7 +154,14 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       variant="black"
       overlay
       actions={<MikroADataset.Actions object={dataset} />}
-      additionalSidebars={<Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>}
+      additionalSidebars={
+        <>
+          <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>
+          <Sidebars.Tab label="Derived">
+            <DerivedDatasetsSidebar dataset={dataset} />
+          </Sidebars.Tab>
+        </>
+      }
       defaultSidebar="Layers"
       sidebarKey="SceneDetail"
       // Only while a scene is on screen: with none, the create action is the
@@ -152,7 +169,12 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       // buttons for one decision.
       pageActions={
         sceneData?.scene ? (
-          <CreateSceneControl dataset={dataset} size="sm" variant="outline" />
+          <CreateSceneControl
+            dataset={dataset}
+            size="sm"
+            variant="outline"
+            onCreated={handleSceneCreated}
+          />
         ) : undefined
       }
     >
@@ -187,7 +209,7 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
                 <div className="text-sm text-muted-foreground">Loading scene…</div>
               </div>
             ) : (
-              <DatasetBackdrop dataset={dataset} />
+              <DatasetBackdrop dataset={dataset} onSceneCreated={handleSceneCreated} />
             )}
             <div className="pointer-events-none absolute left-3 top-3 z-30 flex w-72 flex-col gap-2">
               {datasetPanel}

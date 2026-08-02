@@ -20,6 +20,51 @@ query GetADatasets(
   }
 }
 
+# What this dataset produced: every child that named one of its spaces as a parent —
+# its intrinsic grid, or the space a slicing lens cuts out. `derivedDatasets` already
+# unions both (a lens' space IS a space of the dataset), so the lenses here only LABEL
+# the groups, they do not widen the set. A derivation edge maps the child's own grid
+# BACK INTO the space it was computed from, so `derivedFrom[].output` is the parent
+# space — and `derivedFrom[0]` is the primary parent, the one that places the child.
+query GetADatasetDerived($id: ID!) {
+  adataset(id: $id) {
+    id
+    # An unsliced lens resolves to this same system, which is why "the dataset itself"
+    # and "its full-array lenses" come out as one group rather than two.
+    intrinsicSystem {
+      id
+      name
+    }
+    derivedDatasets {
+      ...ListADataset
+      derivedFrom {
+        id
+        kind
+        valueRelation
+        output {
+          id
+          name
+        }
+        ... on UnmappableTransformation {
+          reason
+        }
+      }
+    }
+  }
+  lenses(filters: { dataset: $id }) {
+    id
+    axisNames
+    shape
+    slices {
+      ...DimSlice
+    }
+    coordinateSystem {
+      id
+      name
+    }
+  }
+}
+
 # Just the space a scene would be built over. `createSceneFromDataset` is gone —
 # staging a dataset means calling createSceneFromCoordinateSystem with its
 # intrinsic grid — so an entry point holding only a dataset id needs this one

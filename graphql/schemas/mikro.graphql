@@ -257,6 +257,7 @@ The fields an AFFINE member of TransformInput reads. Published for codegen; the 
 """
 input AffineTransformInput {
   affine: [[Float!]!]!
+  kind: CreatableTransformKind! = AFFINE
 }
 
 """A general affine map, given as an M x (N+1) matrix with rows outermost"""
@@ -763,6 +764,44 @@ input AnnotationSpecInput {
 scalar Any
 
 """
+A stop: a hole of some diameter. A pinhole with no confocal claim attached
+"""
+type ApertureElement implements OpticalElement {
+  diameter: Length
+  id: ID!
+
+  """Element kind"""
+  kind: ElementKind!
+
+  """Element label"""
+  label: String!
+  manufacturer: String
+  model: String
+
+  """List of ports on the element"""
+  ports: [LightPort!]!
+
+  """3D pose of the element"""
+  pose: Pose3D
+  serialNumber: String
+}
+
+"""
+The fields an APERTURE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input ApertureElementInput {
+  diameter: Length = null
+  id: ID = null
+  kind: ElementKind! = APERTURE
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
+"""
 The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer
 """
 scalar ArrayLike
@@ -961,6 +1000,24 @@ type BeamSplitterElement implements OpticalElement {
   tFraction: Float!
 }
 
+"""
+The fields a BEAM_SPLITTER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input BeamSplitterElementInput {
+  bandMax: Length = null
+  bandMin: Length = null
+  id: ID = null
+  kind: ElementKind! = BEAM_SPLITTER
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  rFraction: Float = null
+  serialNumber: String = null
+  tFraction: Float = null
+}
+
 """Beam properties carried on a light edge"""
 type BeamState {
   modeHint: String
@@ -1156,6 +1213,7 @@ The fields a BY_DIMENSION member of TransformInput reads. Published for codegen;
 input ByDimensionTransformInput {
   affine: [[Float!]!] = null
   inputAxes: [String!]!
+  kind: CreatableTransformKind! = BY_DIMENSION
   outputAxes: [String!]!
   scale: [Float!] = null
   translation: [Float!] = null
@@ -1230,6 +1288,22 @@ type CCDElement implements OpticalElement {
   pose: Pose3D
   resolution: [Int!]
   serialNumber: String
+}
+
+"""
+The fields a CCD element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input CCDElementInput {
+  id: ID = null
+  kind: ElementKind! = CCD
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  pixelSize: Length = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  resolution: [Int!] = null
+  serialNumber: String = null
 }
 
 """
@@ -2762,10 +2836,7 @@ input DesociateInput {
 
 """Detector"""
 type DetectorElement implements OpticalElement {
-  """Amplifier gain (dB)"""
   amplifierGainDb: Float
-
-  """Overall gain (unitless)"""
   gain: Float
   id: ID!
 
@@ -2784,6 +2855,23 @@ type DetectorElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+"""
+The fields a DETECTOR element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input DetectorElementInput {
+  amplifierGainDb: Float = null
+  gain: Float = null
+  id: ID = null
+  kind: ElementKind! = DETECTOR
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  nepdWPerSqrtHz: Float = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
 }
 
 """One hardware device's recorded state"""
@@ -3135,6 +3223,7 @@ The fields a FIELD member of TransformInput reads. Published for codegen; the wi
 input FieldTransformInput {
   field: ID!
   inputAxes: [String!]!
+  kind: CreatableTransformKind! = FIELD
   outputAxes: [String!]!
 }
 
@@ -3410,6 +3499,34 @@ type FilterElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+"""
+The fields a FILTER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input FilterElementInput {
+  description: String = null
+  filterKind: FilterKind = null
+  id: ID = null
+  kind: ElementKind! = FILTER
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+  transmittance: Float = null
+}
+
+enum FilterKind {
+  BAND_PASS
+  DICHROIC
+  LONG_PASS
+  MULTI_PASS
+  NEUTRAL_DENSITY
+  OTHER
+  SHORT_PASS
+  TUNEABLE
 }
 
 input FinishBigFileUploadInput {
@@ -4365,6 +4482,22 @@ type LampElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+The fields a LAMP element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input LampElementInput {
+  channel: ChannelKind = null
+  id: ID = null
+  kind: ElementKind! = LAMP
+  label: String!
+  lampType: String = null
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
 """Light source"""
 type LaserElement implements OpticalElement {
   channel: ChannelKind
@@ -4391,6 +4524,28 @@ type LaserElement implements OpticalElement {
   pulseKind: PulseKind
   repetitionRate: Frequency
   serialNumber: String
+}
+
+"""
+The fields a LASER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input LaserElementInput {
+  channel: ChannelKind = null
+  hasPockelsCell: Boolean = null
+  hasQSwitch: Boolean = null
+  id: ID = null
+  kind: ElementKind! = LASER
+  label: String!
+  laserMedium: String = null
+  manufacturer: String = null
+  model: String = null
+  nominalWavelength: Length!
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  power: Power = null
+  pulseKind: PulseKind = null
+  repetitionRate: Frequency = null
+  serialNumber: String = null
 }
 
 """
@@ -4600,6 +4755,21 @@ type LensElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+The fields a LENS element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input LensElementInput {
+  focalLength: Length = null
+  id: ID = null
+  kind: ElementKind! = LENS
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
 input LensFilter {
   AND: LensFilter
   DISTINCT: Boolean
@@ -4764,6 +4934,7 @@ The fields a MAP_AXIS member of TransformInput reads. Published for codegen; the
 """
 input MapAxisTransformInput {
   inputAxes: [String!]!
+  kind: CreatableTransformKind! = MAP_AXIS
   outputAxes: [String!]!
 }
 
@@ -5110,6 +5281,23 @@ type MirrorElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+"""
+The fields a MIRROR element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input MirrorElementInput {
+  angleDeg: Float = null
+  bandMax: Length = null
+  bandMin: Length = null
+  id: ID = null
+  kind: ElementKind! = MIRROR
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
 }
 
 """A change made to a model."""
@@ -5727,12 +5915,11 @@ enum ObjectiveCorrectionKind {
 
 """Microscope objective"""
 type ObjectiveElement implements OpticalElement {
+  brand: String
   correctionKind: ObjectiveCorrectionKind
   id: ID!
   immersionMedium: ObjectiveImmersion
-
-  """Has iris (aperture stop)"""
-  iris: Boolean!
+  iris: Boolean
 
   """Element kind"""
   kind: ElementKind!
@@ -5751,6 +5938,26 @@ type ObjectiveElement implements OpticalElement {
   pose: Pose3D
   serialNumber: String
   workingDistance: Length
+}
+
+"""
+The fields an OBJECTIVE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input ObjectiveElementInput {
+  brand: String = null
+  id: ID = null
+  immersionMedium: ObjectiveImmersion = null
+  iris: Boolean = null
+  kind: ElementKind! = OBJECTIVE
+  label: String!
+  magnification: Float = null
+  manufacturer: String = null
+  model: String = null
+  numericalAperture: Float = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+  workingDistance: Length = null
 }
 
 input ObjectiveFilter {
@@ -5839,42 +6046,148 @@ interface OpticalElement {
 }
 
 """
-Input for creating or updating any optical element. Fill only fields relevant to the chosen `kind`.
+One optical element, as a discriminated union: `kind` selects a member, and only that member's fields are read -- any other supplied field is rejected, never carried. The member inputs annotated `@unionElementOf(union: "OpticalElementInput")` say which fields each kind reads
 """
 input OpticalElementInput {
+  """(DETECTOR) Amplifier gain (dB)."""
   amplifierGainDb: Float = null
+
+  """(MIRROR, POLARIZER, WAVEPLATE) The relevant angle, in degrees."""
   angleDeg: Float = null
+
+  """
+  (MIRROR, BEAM_SPLITTER) Maximum wavelength of the coating band (e.g. '700 nm').
+  """
   bandMax: Length = null
+
+  """
+  (MIRROR, BEAM_SPLITTER) Minimum wavelength of the coating band (e.g. '400 nm').
+  """
   bandMin: Length = null
+
+  """(OBJECTIVE) Brand of the objective."""
   brand: String = null
+
+  """(LASER, LAMP, OTHER_SOURCE) Propagation channel of the output."""
   channel: ChannelKind = null
+
+  """(SAMPLE, OTHER, FILTER) A free-form description of the element."""
+  description: String = null
+
+  """
+  (WAVEPLATE) The wavelength the retardance is specified at (e.g. '532 nm').
+  """
+  designWavelength: Length = null
+
+  """(PINHOLE, APERTURE) Diameter of the hole (e.g. '50 µm')."""
   diameter: Length = null
+
+  """(POLARIZER) Ratio of transmitted to blocked polarization."""
+  extinctionRatio: Float = null
+
+  """(FILTER) The kind of filter, e.g. 'Dichroic', 'BandPass'."""
+  filterKind: FilterKind = null
+
+  """(LENS) Focal length (e.g. '200 mm')."""
   focalLength: Length = null
+
+  """
+  (DETECTOR, SHUTTER) Overall gain, unitless -- the drive gain for an AOTF or EOM used as a gate.
+  """
   gain: Float = null
+
+  """(LASER) Has a Pockels cell."""
   hasPockelsCell: Boolean = null
+
+  """(LASER) Has a Q-switch."""
   hasQSwitch: Boolean = null
-  id: ID!
+
+  """Optional UUID of the element (provide for updates)."""
+  id: ID = null
+
+  """(OBJECTIVE) Immersion medium, e.g. 'Oil', 'Water'."""
   immersionMedium: ObjectiveImmersion = null
+
+  """(OBJECTIVE) Has an iris (aperture stop)."""
   iris: Boolean = null
+
+  """(SHUTTER) Whether the shutter was open at this coordinate."""
+  isOpen: Boolean = null
+
+  """
+  Kind of optical element. It fixes which of the fields below are read; any field outside the chosen kind's member is rejected.
+  """
   kind: ElementKind!
+
+  """Human-readable label for the optical element."""
   label: String!
+
+  """
+  (LAMP, OTHER_SOURCE) Lamp type, e.g. 'LED', 'Halogen', 'Xenon', 'Mercury'.
+  """
+  lampType: String = null
+
+  """(LASER) Laser medium, e.g. 'Ti:Sapphire', 'Nd:YAG'."""
   laserMedium: String = null
+
+  """(OBJECTIVE) Magnification factor, e.g. 20 for 20x."""
   magnification: Float = null
+
+  """Manufacturer of the optical element."""
   manufacturer: String = null
+
+  """Model name or number of the optical element."""
   model: String = null
+
+  """(DETECTOR) Noise-equivalent power density (W/√Hz)."""
   nepdWPerSqrtHz: Float = null
+
+  """(LASER) Nominal output wavelength (e.g. '488 nm')."""
   nominalWavelength: Length = null
+
+  """(OBJECTIVE) Numerical aperture."""
   numericalAperture: Float = null
+
+  """(CCD) Pixel size (e.g. '6.5 µm')."""
   pixelSize: Length = null
-  ports: [LightPortInput!]!
+
+  """List of optical ports belonging to the element."""
+  ports: [LightPortInput!] = null
+
+  """Optional spatial pose of the element."""
   pose: Pose3DInput = null
+
+  """(LASER) Output power (e.g. '20 mW')."""
   power: Power = null
+
+  """(LASER) Pulse type, e.g. 'CW', 'ModeLocked'."""
   pulseKind: PulseKind = null
+
+  """(BEAM_SPLITTER) Reflectance fraction (0-1)."""
   rFraction: Float = null
+
+  """(LASER) Repetition rate (e.g. '80 MHz')."""
   repetitionRate: Frequency = null
+
+  """(CCD) Sensor resolution (width, height) in pixels."""
   resolution: [Int!] = null
+
+  """(WAVEPLATE) Retardance in waves, e.g. 0.5 for a half-wave plate."""
+  retardance: Float = null
+
+  """Serial number of the optical element."""
   serialNumber: String = null
+
+  """(SHUTTER) How it switches, e.g. 'mechanical', 'AOTF', 'EOM'."""
+  shutterType: String = null
+
+  """(BEAM_SPLITTER) Transmittance fraction (0-1)."""
   tFraction: Float = null
+
+  """(FILTER) Peak transmittance (0-1)."""
+  transmittance: Float = null
+
+  """(OBJECTIVE) Working distance (e.g. '2 mm')."""
   workingDistance: Length = null
 }
 
@@ -6046,6 +6359,21 @@ type OtherElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+The fields an OTHER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input OtherElementInput {
+  description: String = null
+  id: ID = null
+  kind: ElementKind! = OTHER
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
 """Light source"""
 type OtherSourceElement implements OpticalElement {
   channel: ChannelKind
@@ -6066,6 +6394,22 @@ type OtherSourceElement implements OpticalElement {
   """3D pose of the element"""
   pose: Pose3D
   serialNumber: String
+}
+
+"""
+The fields an OTHER_SOURCE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input OtherSourceElementInput {
+  channel: ChannelKind = null
+  id: ID = null
+  kind: ElementKind! = OTHER_SOURCE
+  label: String!
+  lampType: String = null
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
 }
 
 """Temporary S3 credentials for reading a parquet object."""
@@ -7173,6 +7517,21 @@ type PinholeElement implements OpticalElement {
   serialNumber: String
 }
 
+"""
+The fields a PINHOLE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input PinholeElementInput {
+  diameter: Length = null
+  id: ID = null
+  kind: ElementKind! = PINHOLE
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
 """Input for pinning or unpinning a multi-well plate for quick access"""
 input PintMultiWellPlateInput {
   """The ID of the multi-well plate to pin or unpin"""
@@ -7317,6 +7676,44 @@ type PointLayer implements Layer {
 
   """The coordinate column whose axis is named 'z', if any"""
   zColumn: String
+}
+
+"""A polarization filter, at an angle"""
+type PolarizerElement implements OpticalElement {
+  angleDeg: Float
+  extinctionRatio: Float
+  id: ID!
+
+  """Element kind"""
+  kind: ElementKind!
+
+  """Element label"""
+  label: String!
+  manufacturer: String
+  model: String
+
+  """List of ports on the element"""
+  ports: [LightPort!]!
+
+  """3D pose of the element"""
+  pose: Pose3D
+  serialNumber: String
+}
+
+"""
+The fields a POLARIZER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input PolarizerElementInput {
+  angleDeg: Float = null
+  extinctionRatio: Float = null
+  id: ID = null
+  kind: ElementKind! = POLARIZER
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
 }
 
 enum PortRole {
@@ -8550,6 +8947,7 @@ The fields a ROTATION member of TransformInput reads. Published for codegen; the
 """
 input RotationTransformInput {
   affine: [[Float!]!]!
+  kind: CreatableTransformKind! = ROTATION
 }
 
 """A rotation, given as an orthonormal matrix"""
@@ -8617,6 +9015,21 @@ type SampleElement implements OpticalElement {
 }
 
 """
+The fields a SAMPLE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input SampleElementInput {
+  description: String = null
+  id: ID = null
+  kind: ElementKind! = SAMPLE
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+}
+
+"""
 The zarr half of a plan: sample this array at the point's coordinates. The client that is already rendering the array reads the value from the chunk it already has; a headless worker fetches it through the store's access grant. Either way the plan never says what is in the array -- the client owns pixels
 """
 type SampleStep {
@@ -8664,6 +9077,7 @@ input ScaleInput {
 The fields a SCALE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input ScaleTransformInput {
+  kind: CreatableTransformKind! = SCALE
   scale: [Float!]!
 }
 
@@ -9022,6 +9436,48 @@ input SettingInput {
   number: Float = null
   quantity: GenericQuantity = null
   text: String = null
+}
+
+"""
+A blocker: open or closed. An AOTF or EOM used purely as a gate is one of these
+"""
+type ShutterElement implements OpticalElement {
+  gain: Float
+  id: ID!
+  isOpen: Boolean
+
+  """Element kind"""
+  kind: ElementKind!
+
+  """Element label"""
+  label: String!
+  manufacturer: String
+  model: String
+
+  """List of ports on the element"""
+  ports: [LightPort!]!
+
+  """3D pose of the element"""
+  pose: Pose3D
+  serialNumber: String
+  shutterType: String
+}
+
+"""
+The fields a SHUTTER element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input ShutterElementInput {
+  gain: Float = null
+  id: ID = null
+  isOpen: Boolean = null
+  kind: ElementKind! = SHUTTER
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  serialNumber: String = null
+  shutterType: String = null
 }
 
 """A slice along a named axis, with optional start, stop and step"""
@@ -10140,6 +10596,7 @@ input TransformationOrder @oneOf {
 The fields a TRANSLATION member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input TranslationTransformInput {
+  kind: CreatableTransformKind! = TRANSLATION
   translation: [Float!]!
 }
 
@@ -10216,6 +10673,7 @@ scalar Unit
 The fields an UNMAPPABLE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input UnmappableTransformInput {
+  kind: CreatableTransformKind! = UNMAPPABLE
   reason: String = null
 }
 
@@ -10687,6 +11145,46 @@ enum ViewKind {
   SCALE
   TIMEPOINT
   WELL_POSITION
+}
+
+"""A retarder: a fraction of a wave, at an angle"""
+type WaveplateElement implements OpticalElement {
+  angleDeg: Float
+  designWavelength: Length
+  id: ID!
+
+  """Element kind"""
+  kind: ElementKind!
+
+  """Element label"""
+  label: String!
+  manufacturer: String
+  model: String
+
+  """List of ports on the element"""
+  ports: [LightPort!]!
+
+  """3D pose of the element"""
+  pose: Pose3D
+  retardance: Float
+  serialNumber: String
+}
+
+"""
+The fields a WAVEPLATE element reads. Published for codegen; the wire type is the flat OpticalElementInput
+"""
+input WaveplateElementInput {
+  angleDeg: Float = null
+  designWavelength: Length = null
+  id: ID = null
+  kind: ElementKind! = WAVEPLATE
+  label: String!
+  manufacturer: String = null
+  model: String = null
+  ports: [LightPortInput!] = []
+  pose: Pose3DInput = null
+  retardance: Float = null
+  serialNumber: String = null
 }
 
 """

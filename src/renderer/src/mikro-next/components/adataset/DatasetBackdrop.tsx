@@ -8,9 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MikroScene } from "@/linkers";
 import { Clapperboard, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
   GetADatasetQuery,
   useCreateSceneFromCoordinateSystemMutation,
@@ -56,23 +54,38 @@ const useDatasetWorlds = (dataset: PageDataset) => {
  *
  * So the menu appears only when there is a choice to make: with nothing but its
  * own grid, this is one button and one click.
+ *
+ * Where the new scene goes is the caller's decision, not this control's — the
+ * dataset page renders scenes itself, so it selects the new one in place rather
+ * than being navigated away from the dataset it just staged.
  */
 export const CreateSceneControl = ({
   dataset,
   size = "default",
   variant = "default",
+  onCreated,
 }: {
   dataset: PageDataset;
   size?: "default" | "sm";
   /** "outline" for the header, where this is a secondary way to add a scene. */
   variant?: "default" | "outline";
+  /**
+   * Called with the new scene's id once it exists AND the dataset query has
+   * been refetched — so a caller that shows the dataset's scenes can select it
+   * knowing the list already holds it.
+   */
+  onCreated: (sceneId: string) => void;
 }) => {
-  const navigate = useNavigate();
   const worlds = useDatasetWorlds(dataset);
   const grid = dataset.intrinsicSystem;
 
   const [createScene, { loading }] = useCreateSceneFromCoordinateSystemMutation({
-    onCompleted: (result) => navigate(MikroScene.linkBuilder(result.createSceneFromCoordinateSystem.id)),
+    // The new scene is one of the dataset's own `scenes` now, and that list is
+    // what the switcher reads; awaited so `onCreated` never names a scene the
+    // caller cannot find yet.
+    refetchQueries: ["GetADataset"],
+    awaitRefetchQueries: true,
+    onCompleted: (result) => onCreated(result.createSceneFromCoordinateSystem.id),
   });
   const stage = (coordinateSystem: string) =>
     createScene({ variables: { input: { coordinateSystem } } });
@@ -132,7 +145,13 @@ export const CreateSceneControl = ({
  * here would bury the sentence that actually matters, which is that there is
  * nothing to render until someone composes a scene.
  */
-export const DatasetBackdrop = ({ dataset }: { dataset: PageDataset }) => {
+export const DatasetBackdrop = ({
+  dataset,
+  onSceneCreated,
+}: {
+  dataset: PageDataset;
+  onSceneCreated: (sceneId: string) => void;
+}) => {
   const worlds = useDatasetWorlds(dataset);
   const axes = dataset.intrinsicSystem?.axes ?? [];
 
@@ -173,7 +192,7 @@ export const DatasetBackdrop = ({ dataset }: { dataset: PageDataset }) => {
           is what the viewer draws.
         </p>
 
-        <CreateSceneControl dataset={dataset} />
+        <CreateSceneControl dataset={dataset} onCreated={onSceneCreated} />
       </div>
     </div>
   );

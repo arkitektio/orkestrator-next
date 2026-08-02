@@ -90,6 +90,47 @@ export function isLayerOutOfPlane(
   return currentZ < min - tol || currentZ > max + tol;
 }
 
+/** The flat view's z axis: world µm extent plus the size of one z step. */
+export type SceneZExtent = {
+  min: number;
+  max: number;
+  /** Physical thickness of one slice — the ZSlider's step, i.e. one slab. */
+  step: number;
+};
+
+/**
+ * The physical z axis the flat view scrubs, pooled across every layer that has
+ * a z dimension. Null when no layer does: such a scene has one plane, so there
+ * is no slice to be on the wrong side of.
+ *
+ * `step` is the ZSlider's step by construction — the pooled range divided by
+ * the finest layer's slice count — so it is also the natural slab thickness for
+ * "is this z on the plane the viewer is looking at". Hidden layers count, for
+ * the same reason they count towards the slider's range: hiding a layer must
+ * not move the plane the scrubber is sitting on.
+ */
+export function sceneZExtent(layers: readonly LayerState[]): SceneZExtent | null {
+  let min = Infinity;
+  let max = -Infinity;
+  let maxVoxelSpan = 0;
+
+  for (const layer of layers) {
+    const zSize = getLayerZSize(layer);
+    if (zSize === null || zSize <= 1) continue;
+    const affine = buildAffineMatrix(layer);
+    const z0 = voxelToPhysicalZ(affine, 0);
+    const zEnd = voxelToPhysicalZ(affine, zSize - 1);
+    min = Math.min(min, z0, zEnd);
+    max = Math.max(max, z0, zEnd);
+    maxVoxelSpan = Math.max(maxVoxelSpan, zSize - 1);
+  }
+
+  if (maxVoxelSpan === 0) return null;
+
+  const range = max - min;
+  return { min, max, step: range > 0 ? range / maxVoxelSpan : 1 };
+}
+
 /** Convert a physical Z coordinate to the closest voxel Z index, clamped to [0, maxZ] */
 export function physicalToVoxelZ(
   affine: THREE.Matrix4,

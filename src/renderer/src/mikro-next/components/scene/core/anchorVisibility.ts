@@ -131,7 +131,12 @@ export type AnchorMatch = {
   pins: AnchorPin[];
 };
 
-const evaluate = (
+/**
+ * One pin against one layer's coverage. Exported because annotations pin the
+ * same way anchors do (`Coordinate` = axis + index) but answer a different
+ * question with the verdict — see `annotationVisibility.ts`.
+ */
+export const evaluatePin = (
   axis: string,
   value: number,
   coverage: LayerCoverage,
@@ -195,7 +200,7 @@ export function matchAnchor(
       continue;
     }
 
-    pins.push({ axis, value, ...evaluate(axis, value, coverage) });
+    pins.push({ axis, value, ...evaluatePin(axis, value, coverage) });
   }
 
   return { satisfied: pins.every((pin) => pin.met), pins };

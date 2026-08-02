@@ -4,7 +4,7 @@ import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
 import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
 import type { MikroClient, ZarrStore } from "@/lib/zarr/store/types";
 import { workerPool } from "@/mikro-next/workers/pool";
-import { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
+import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
 import type { ZarrStoreLike } from "./attributeTypes";
 import { LruMap } from "./lruMap";
 import type { HeldValue } from "./planExec";
@@ -64,18 +64,24 @@ export function createExactSampler(options: ExactSamplerOptions): ExactSampler {
     let opened = foreignArrays.get(store.id);
     if (!opened) {
       opened = (async () => {
-        const credentials = await requestGeneralAccess(options.client);
+        const descriptor = { key: store.key, storeId: store.id };
         const s3Store = new ConfiguredS3Store(
+          buildS3FetchConfig(
+            await getGeneralAccess(options.client),
+            descriptor,
+            options.datalayer,
+          ),
           {
-            accessKey: credentials.accessKey,
-            baseUrl: `${options.datalayer.replace(/\/$/, "")}/${credentials.bucket}/${store.key}`,
-            expiresAt: Date.now() + credentials.expiresIn * 1000,
-            region: credentials.region,
-            secretKey: credentials.secretKey,
-            sessionToken: credentials.sessionToken,
-            storeId: store.id,
+            preloadMetadata: true,
+            // Foreign arrays are held in an LRU for the service's lifetime, so
+            // they outlive their credentials just as scene stores do.
+            refreshConfig: async (refreshOptions) =>
+              buildS3FetchConfig(
+                await getGeneralAccess(options.client, refreshOptions),
+                descriptor,
+                options.datalayer,
+              ),
           },
-          { preloadMetadata: true },
         );
         await s3Store.ready();
         return (await open.v3(s3Store, { kind: "array" })) as OpenedZarrArray;

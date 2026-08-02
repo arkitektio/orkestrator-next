@@ -54,7 +54,7 @@ type ADataset {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. The scene createADataset's bootstrapScene creates is found here
+  The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. A scene shows this dataset once a layer over one of its lenses is composed there -- typically by staging one of its spaces with createSceneFromCoordinateSystem
   """
   scenes: [Scene!]!
 
@@ -294,7 +294,7 @@ type AffineTransformation implements Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -732,7 +732,7 @@ type AnnotationLayer implements Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
   scene: Scene!
@@ -1061,7 +1061,7 @@ type BijectionTransformation implements Transformation {
   transformations: [Transformation!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -1109,7 +1109,7 @@ enum BlendingChoices {
 }
 
 """
-The render recipe a bootstrapped scene stages over its dataset: which default image layer createSceneFromDataset builds.
+The render recipe an image layer carries: which default graph createSceneFromCoordinateSystem builds, via `ScenePolicyInput.kind`.
 """
 enum BootstrapLayerKind {
   """
@@ -1118,7 +1118,7 @@ enum BootstrapLayerKind {
   INTENSITY
 
   """
-  A single categorical source mapping discrete integer labels to distinct colors. Never inferred -- nothing structural distinguishes a label map from an image, so it is override-only.
+  A single categorical source mapping discrete integer labels to distinct colors. Never inferred from structure -- nothing about an array distinguishes a label map from an image -- so it comes either from a derivation declared CATEGORIZED or from stating it outright.
   """
   LABEL
 
@@ -1131,14 +1131,6 @@ enum BootstrapLayerKind {
   The channel sources under a maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane.
   """
   VOLUME
-}
-
-"""
-Ask ingest to bootstrap a renderable scene for the new dataset: a world mirroring its pixel axes under default units, a full lens, and one default image layer. Sugar for a separate createSceneFromDataset call; for a physically scaled scene, register the dataset into a unit-carrying space via createCoordinateSystem first and call createSceneFromDataset after
-"""
-input BootstrapSceneInput {
-  kind: BootstrapLayerKind = null
-  name: String = null
 }
 
 """An axis-aligned bounding box, as a min and a max corner"""
@@ -1207,7 +1199,7 @@ type ByDimensionTransformation implements Transformation {
   transformations: [Transformation!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -2003,7 +1995,6 @@ Input type for creating an array dataset. Its axes are structural (name and kind
 input CreateADatasetInput {
   anchors: [CoordinateAnchorInput!] = null
   axes: [AxisInput!]!
-  bootstrapScene: BootstrapSceneInput = null
   data: ArrayLike!
   derivedFrom: [DerivedFromInput!] = null
   name: String!
@@ -2309,16 +2300,7 @@ Bootstrap a renderable scene over an existing coordinate system. Over an ownerle
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
   name: String = null
-  policy: ScenePolicyInput! = {includeMeshes: true, nchildren: 8, transformTables: false}
-}
-
-"""
-Input for bootstrapping a renderable scene for a dataset: a world mirroring its physical space, a full lens, and one default image layer. Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
-"""
-input CreateSceneFromDatasetInput {
-  dataset: ID!
-  kind: BootstrapLayerKind = null
-  name: String = null
+  policy: ScenePolicyInput! = {includeMeshes: true, kind: null, nchildren: 8, transformTables: false}
 }
 
 """
@@ -3194,7 +3176,7 @@ type FieldTransformation implements Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -3763,7 +3745,7 @@ type IdentityTransformation implements Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -4025,7 +4007,7 @@ type ImageLayer implements Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
 
@@ -4437,7 +4419,7 @@ interface Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
   scene: Scene!
@@ -4814,7 +4796,7 @@ type MapAxisTransformation implements Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -5090,7 +5072,7 @@ type MeshLayer implements Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
   scene: Scene!
@@ -5222,7 +5204,7 @@ type Mutation {
   createAnimation(input: CreateAnimationInput!): Animation!
 
   """
-  Draw an annotation into a collection, or onto a scene (exactly one of the two). Drawing on a scene finds its annotation collection or mints it on first use: a coordinate system mirroring the world's axes, an identity registration into the world, and one annotation layer
+  Draw an annotation into a collection, or onto a scene (exactly one of the two). Drawing on a scene finds its annotation collection or mints it on first use: a coordinate system copying the world's axes, an identity registration into the world, and one annotation layer
   """
   createAnnotation(input: CreateAnnotationInput!): Annotation!
 
@@ -5365,14 +5347,9 @@ type Mutation {
   createScene(input: CreateSceneInput!): Scene!
 
   """
-  Bootstrap a renderable scene over an existing coordinate system: a shared space (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a physical space (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored
+  Bootstrap a renderable scene over an existing coordinate system: a shared space (its registered sources become layers, up to the policy's nchildren) or an owned system such as a dataset's intrinsic grid or a physical space (the container's own data becomes the layer). The scene adopts the system as its world; no edges are authored. This is how a dataset is staged -- pass `intrinsicSystem` to render in pixels, or a physical space it is registered into to render at physical scale
   """
   createSceneFromCoordinateSystem(input: CreateSceneFromCoordinateSystemInput!): Scene!
-
-  """
-  Bootstrap a renderable scene for a dataset in one call: a world mirroring its physical space, a full lens, and one default image layer inferred from its axes (or chosen via kind). Sugar over createScene + createLens + a layer mutation -- everything it creates is ordinary and separately editable
-  """
-  createSceneFromDataset(input: CreateSceneFromDatasetInput!): Scene!
 
   """Adopt an uploaded media file as a pre-rendered picture of a scene"""
   createSceneSnapshot(input: SceneSnapshotInput!): SceneSnapshot!
@@ -7239,7 +7216,7 @@ type PlacementStep {
 }
 
 """
-How much a transformation edge's map is actually known: assumed by the server, inferred from metadata, authored by someone, or validated against the data. A layer's validity is derived from it, never stored: the weakest edge on its path to world.
+How much a transformation edge's map is actually known: guessed, inferred from metadata, authored by someone, or validated against the data. A layer's validity is derived from it, never stored: the weakest edge on its path to world.
 """
 enum PlacementValidity {
   """
@@ -7253,7 +7230,7 @@ enum PlacementValidity {
   MANUAL
 
   """
-  This map was assumed, never measured -- badge it. The one writer left is the scene bootstrap mirroring the pixels of a dataset without a physical space into a world under default units; it also remains on historical auto-registered edges.
+  This map was assumed, never measured -- badge it. The server writes it nowhere: nothing fabricates a placement any more, so an edge wears UNKNOWN only because a client said so on `createTransformation`, or because it is a historical auto-registered edge.
   """
   UNKNOWN
 
@@ -7314,7 +7291,7 @@ type PointLayer implements Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
   pointSize: Float
@@ -8477,11 +8454,23 @@ input RoiInput {
 The geometric kind of a region of interest (ROI), defining how its vectors are interpreted.
 """
 enum RoiKind {
+  """
+  A circle in the XY plane. Vectors are the two opposite corners of its bounding square; the radius is half the (uniform by construction) extent.
+  """
+  CIRCLE
+
   """A three-dimensional cuboid spanning the spatial axes (XYZ)."""
   CUBE
 
-  """An elliptical region in the XY plane."""
+  """
+  An ellipse in the XY plane, with a radius per axis. Vectors are the two opposite corners of its bounding rectangle; each semi-axis is half that axis' extent.
+  """
   ELLIPSIS
+
+  """
+  An ellipsoid spanning the spatial axes (XYZ), with a radius per axis. Vectors are the two opposite corners of its bounding cuboid; each semi-axis is half that axis' extent.
+  """
+  ELLIPSOID
 
   """A single frame of the image, e.g. one timepoint."""
   FRAME
@@ -8491,6 +8480,11 @@ enum RoiKind {
 
   """A straight line between two points."""
   LINE
+
+  """
+  A set of unconnected points drawn as one region, e.g. a counting click set. Vectors are the points themselves, in no particular order and with no connectivity implied.
+  """
+  MULTI_POINT
 
   """An open path defined by a sequence of connected points."""
   PATH
@@ -8516,6 +8510,11 @@ enum RoiKind {
   """A rectangle extended along the channel axis (XYC)."""
   SPECTRAL_RECTANGLE
 
+  """
+  A sphere spanning the spatial axes (XYZ). Vectors are the two opposite corners of its bounding cube; the radius is half the (uniform by construction) extent.
+  """
+  SPHERE
+
   """A cuboid extended along the time axis (XYZT)."""
   TEMPORAL_CUBE
 
@@ -8524,11 +8523,14 @@ enum RoiKind {
 }
 
 enum RoiKindChoices {
+  CIRCLE
   CUBE
   ELLIPSIS
+  ELLIPSOID
   FRAME
   HYPERCUBE
   LINE
+  MULTI_POINT
   PATH
   POINT
   POLYGON
@@ -8537,6 +8539,7 @@ enum RoiKindChoices {
   SPECTRAL_CUBE
   SPECTRAL_HYPERCUBE
   SPECTRAL_RECTANGLE
+  SPHERE
   TEMPORAL_CUBE
   TEMPORAL_RECTANGLE
   UNKNOWN
@@ -8582,7 +8585,7 @@ type RotationTransformation implements Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -8700,7 +8703,7 @@ type ScaleTransformation implements Transformation {
   scale: [Float!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -8837,10 +8840,11 @@ input SceneOrder @oneOf {
 }
 
 """
-The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources already registered into the space, filtered by kind
+The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources living in or registered into the space, filtered by source kind and drawn by the recipe in `kind`
 """
 input ScenePolicyInput {
   includeMeshes: Boolean! = true
+  kind: BootstrapLayerKind = null
   nchildren: Int! = 8
   transformTables: Boolean! = false
 }
@@ -8989,7 +8993,7 @@ type SequenceTransformation implements Transformation {
   transformations: [Transformation!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -9857,7 +9861,7 @@ type TrackLayer implements Layer {
   placementInvariance: TransformInvariance!
 
   """
-  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an assumed edge (an uncalibrated bootstrap mirror, or none at all); MANUAL once someone authored the registration; VALIDATED once it was checked. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
   """
   placementValidity: PlacementValidity!
   scene: Scene!
@@ -10078,7 +10082,7 @@ interface Transformation {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -10173,7 +10177,7 @@ type TranslationTransformation implements Transformation {
   translation: [Float!]!
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 
@@ -10253,7 +10257,7 @@ type UnmappableTransformation implements Transformation {
   reason: String
 
   """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one the server assumed. A layer's validity is the weakest edge on its path to world
+  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
   """
   validity: PlacementValidity!
 

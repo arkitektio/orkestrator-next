@@ -1,7 +1,6 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -9,16 +8,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { MikroADataset, MikroCoordinateSystem, MikroScene } from '@/linkers'
-import { Clapperboard } from 'lucide-react'
+import { MikroADataset, MikroCoordinateSystem } from '@/linkers'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   GetADatasetQuery,
-  useCreateSceneFromDatasetMutation,
   useGetADatasetQuery,
   useGetSceneQuery
 } from '../api/graphql'
+import {
+  CreateSceneControl,
+  DatasetBackdrop
+} from '../components/adataset/DatasetBackdrop'
 import { Scene } from '../components/scene/Scene'
 
 type PageDataset = GetADatasetQuery['adataset']
@@ -109,7 +109,6 @@ const DatasetPanel = ({
 
 export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) => {
   const dataset = data.adataset
-  const navigate = useNavigate()
   const [selectedSceneId, setSelectedSceneId] = useState<string>()
 
   // The first scene is the one to land in: a bootstrapped dataset has exactly
@@ -123,11 +122,6 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: activeSceneId as string },
     skip: !activeSceneId
-  })
-
-  const [createScene, { loading }] = useCreateSceneFromDatasetMutation({
-    variables: { dataset: dataset.id },
-    onCompleted: (result) => navigate(MikroScene.linkBuilder(result.createSceneFromDataset.id))
   })
 
   const datasetPanel = (
@@ -153,11 +147,13 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       additionalSidebars={<Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>}
       defaultSidebar="Layers"
       sidebarKey="SceneDetail"
+      // Only while a scene is on screen: with none, the create action is the
+      // centered call in the backdrop, and a second copy up here would be two
+      // buttons for one decision.
       pageActions={
-        <Button variant="outline" size="sm" disabled={loading} onClick={() => createScene()}>
-          <Clapperboard className="mr-2 h-4 w-4" />
-          {loading ? 'Creating scene…' : 'Create scene'}
-        </Button>
+        sceneData?.scene ? (
+          <CreateSceneControl dataset={dataset} size="sm" variant="outline" />
+        ) : undefined
       }
     >
       <div className="relative h-full w-full">
@@ -186,13 +182,13 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
           // With no scene there is no renderer to host the column, so the
           // panel is placed here instead — same geometry as Scene.Column's.
           <>
-            <div className="flex h-full w-full items-center justify-center">
-              <div className="max-w-sm text-center text-sm text-muted-foreground">
-                {activeSceneId
-                  ? 'Loading scene…'
-                  : 'This dataset is not rendered in any scene yet. Create one to see it composed.'}
+            {activeSceneId ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="text-sm text-muted-foreground">Loading scene…</div>
               </div>
-            </div>
+            ) : (
+              <DatasetBackdrop dataset={dataset} />
+            )}
             <div className="pointer-events-none absolute left-3 top-3 z-30 flex w-72 flex-col gap-2">
               {datasetPanel}
             </div>

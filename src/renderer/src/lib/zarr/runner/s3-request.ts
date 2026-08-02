@@ -289,3 +289,24 @@ export function deserializeRequestInit(
 export function isExpiredS3FetchConfig(config: S3FetchConfig): boolean {
   return Date.now() >= config.expiresAt
 }
+
+/**
+ * Rotate credentials this far BEFORE they actually expire. A request signed at
+ * `expiresAt - 1ms` still has to cross the network, and one that dies in flight
+ * surfaces as an S3 403 from inside a decode worker — a confusing failure a
+ * long way from its cause. The margin buys every in-flight request time to land
+ * under the credentials it was signed with.
+ */
+export const S3_CREDENTIAL_REFRESH_SKEW_MS = 60_000
+
+/**
+ * Due for rotation — `isExpiredS3FetchConfig` plus the skew. This is the check
+ * on the request hot path, so it stays a single `Date.now()` compare: no
+ * allocation, and no await unless it actually returns true.
+ */
+export function isStaleS3FetchConfig(
+  config: S3FetchConfig,
+  now: number = Date.now(),
+): boolean {
+  return now >= config.expiresAt - S3_CREDENTIAL_REFRESH_SKEW_MS
+}

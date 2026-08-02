@@ -19,3 +19,19 @@ query GetADatasets(
     ...ListADataset
   }
 }
+
+# Just the space a scene would be built over. `createSceneFromDataset` is gone —
+# staging a dataset means calling createSceneFromCoordinateSystem with its
+# intrinsic grid — so an entry point holding only a dataset id needs this one
+# hop first. Deliberately not the full ADataset: the action wants an id, not
+# every pyramid level and its store.
+query GetADatasetIntrinsicSystem($id: ID!) {
+  adataset(id: $id) {
+    id
+    name
+    intrinsicSystem {
+      id
+      name
+    }
+  }
+}

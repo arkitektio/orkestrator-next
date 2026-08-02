@@ -6,7 +6,7 @@ import {
 import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
 import { SceneFragment } from "@/mikro-next/api/graphql";
 import { isImageLayer } from "../core/layerGuards";
-import { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
+import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
 
 export { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
 
@@ -40,23 +40,18 @@ export async function createConfiguredSceneStores(
   datalayer: string,
 ): Promise<Map<string, ZarrStore>> {
   const descriptors = collectSceneStoreDescriptors(scene);
-  const credentials = await requestGeneralAccess(client);
-  const expiresAt = Date.now() + credentials.expiresIn * 1000; //TODO: make that set corctly in credentials
+  const initial = await getGeneralAccess(client);
 
   const stores = await Promise.all(
     Array.from(descriptors.values()).map(async (descriptor) => {
-      const store = new ConfiguredS3Store(
-        {
-          accessKey: credentials.accessKey,
-          baseUrl: `${datalayer.replace(/\/$/, "")}/${credentials.bucket}/${descriptor.key}`,
-          expiresAt,
-          region: credentials.region,
-          secretKey: credentials.secretKey,
-          sessionToken: credentials.sessionToken,
-          storeId: descriptor.storeId,
-        },
-        { preloadMetadata: true },
-      );
+      const store = new ConfiguredS3Store(buildS3FetchConfig(initial, descriptor, datalayer), {
+        preloadMetadata: true,
+        // Scenes outlive their credentials — a viewer left open streams bricks
+        // for hours. Re-credentialing goes through the shared provider, so all
+        // of a scene's stores rotate on ONE mutation.
+        refreshConfig: async (options) =>
+          buildS3FetchConfig(await getGeneralAccess(client, options), descriptor, datalayer),
+      });
       await store.ready();
       return [descriptor.storeId, store] as const;
     }),

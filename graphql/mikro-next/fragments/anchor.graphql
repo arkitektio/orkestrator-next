@@ -1,0 +1,80 @@
+# The full metadata payload hanging off one coordinate anchor — the acquisition
+# truth pinned to a coordinate of a dataset: which channel this is, how its
+# values are distributed, what light reached it, and what the hardware was doing.
+#
+# `SceneLens.activeAnchors` carries a THIN projection of the same anchors: only
+# what the renderer itself needs (the histogram for clim, the label for the layer
+# row). This is the reference view, so it is fetched on demand (`GetLensAnchors`)
+# rather than riding along with every scene load — microscope state on every
+# layer of every scene is a lot of bytes nobody asked for.
+#
+# `coordinates` is the whole point: level-0 pixel indices of the dataset's
+# INTRINSIC system, e.g. {"c": 0, "t": 5}. An anchor that omits an axis is
+# global along it. See core/anchorVisibility.ts for the matching rules.
+fragment FullCoordinateAnchor on CoordinateAnchor {
+  id
+  coordinates
+  channelLabel {
+    id
+    label
+  }
+  valueHistogram {
+    id
+    bins
+    histogram
+    min
+    max
+    p1
+    p99
+  }
+  lightGraph {
+    id
+    graph {
+      ...LightpathGraph
+    }
+  }
+  microscope {
+    id
+    state {
+      stage {
+        x
+        y
+        z
+      }
+      temperature
+      devices {
+        kind
+        label
+        settings {
+          name
+          text
+          number
+          flag
+          quantity
+        }
+      }
+    }
+  }
+  phasorCalibrations {
+    id
+    axis
+    harmonic
+    phaseOffset
+    modulationFactor
+    reference
+  }
+  # Summary only: the panel shows one row per distribution, not a density plot,
+  # and `counts` (bins x bins) plus `profile` would dwarf everything else here.
+  phasorHistograms {
+    id
+    axis
+    harmonic
+    bins
+    calibrated
+    total
+    gMin
+    gMax
+    sMin
+    sMax
+  }
+}

@@ -37,22 +37,16 @@ mutation UpdateScene(
 
 # Bootstraps a whole renderable scene for an array dataset in one call: a world
 # mirroring the dataset's calibration, a full lens, and one default image layer.
-# `kind` is optional — the server infers the layer recipe from the dataset's
-# axes (RGB for a 3-channel 2D image, VOLUME when there is a z axis, …), and
-# only LABEL has to be asked for, since nothing structural marks a label map.
-mutation CreateSceneFromDataset(
-  $dataset: ID!
-  $name: String
-  $kind: BootstrapLayerKind
-) {
-  createSceneFromDataset(input: { dataset: $dataset, name: $name, kind: $kind }) {
-    ...ListScene
-  }
-}
-
-# Mirrors a coordinate system (usually a SHARED hub) into a new scene and
-# materializes the sources already registered into it as layers, filtered by the
-# policy (nchildren cap, meshes, table transforms — server defaults apply).
+# The ONE scene bootstrap. `createSceneFromDataset` is gone: a dataset was never
+# the thing a scene is built over — a coordinate system is, and a dataset's own
+# pixel grid is simply one of those. Staging a dataset therefore means passing
+# its `intrinsicSystem`, over which "the container's own data becomes the layer".
+#
+# Over a SHARED space instead, the sources registered into it become the layers,
+# capped by the policy. `policy.kind` is the layer recipe and is optional: the
+# server infers it from the axes (RGB for a 3-channel 2D image, VOLUME when
+# there is a z axis, …) and only LABEL has to be asked for, since nothing
+# structural marks a label map.
 mutation CreateSceneFromCoordinateSystem(
   $input: CreateSceneFromCoordinateSystemInput!
 ) {

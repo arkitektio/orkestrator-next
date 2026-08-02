@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { LayerState } from "../../store/sceneStore";
+import { MetadataSection } from "./AnchorMetadata";
 import { layerDisplayLabel } from "./layerIdentity";
 import { PlacementPopover } from "./PlacementChain";
 import {
@@ -13,8 +14,11 @@ import {
  * colormap, projection — the single rendering truth). Rendered inline inside
  * the layer card, or as a standalone flyout beside the Layers panel.
  *
- * The layer's placement chain is reference material, not editing, so it hangs
- * off a popover (`PlacementPopover`) instead of the body flow.
+ * Below it, the acquisition metadata anchored to what the layer is currently
+ * showing (`MetadataSection`) — reference rather than editing, but the first
+ * thing you want when a layer looks wrong, so it unfolds with the card. The
+ * placement chain stays behind a popover: which coordinate systems a layer
+ * passes through only matters when it lands somewhere unexpected.
  */
 export const LayerGraphFlyout = ({
   layer,
@@ -37,9 +41,9 @@ export const LayerGraphFlyout = ({
 }) => {
   const label = layerDisplayLabel(layer);
 
-  // The render graph is the whole body; placement is one click away rather than
-  // occupying the bottom of every unfolded card. `min-w-0` so a long colormap
-  // or dimension name truncates instead of widening the card.
+  // The render graph, then the anchored metadata; placement is one click away
+  // rather than occupying the bottom of every unfolded card. `min-w-0` so a
+  // long colormap or dimension name truncates instead of widening the card.
   const body = (
     <div
       className={
@@ -49,6 +53,8 @@ export const LayerGraphFlyout = ({
       }
     >
       <RenderGraphSection editor={editor} layer={layer} />
+
+      <MetadataSection layer={layer} />
 
       <PlacementPopover layer={layer} />
     </div>

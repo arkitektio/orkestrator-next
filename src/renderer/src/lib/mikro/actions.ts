@@ -4,14 +4,14 @@ import {
   CreateSceneFromCoordinateSystemDocument,
   CreateSceneFromCoordinateSystemMutation,
   CreateSceneFromCoordinateSystemMutationVariables,
-  CreateSceneFromDatasetDocument,
-  CreateSceneFromDatasetMutation,
-  CreateSceneFromDatasetMutationVariables,
   DeleteDatasetDocument,
   DeleteFileDocument,
   DeleteImageDocument,
   DeleteRoiDocument,
   DeleteSceneDocument,
+  GetADatasetIntrinsicSystemDocument,
+  GetADatasetIntrinsicSystemQuery,
+  GetADatasetIntrinsicSystemQueryVariables,
   GetCoordinateSystemDocument,
   GetDatasetDocument,
   GetScenesDocument,
@@ -47,7 +47,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   'create-scene-from-adataset': {
     title: 'Create Scene',
     description:
-      'Bootstrap a renderable scene for this array dataset: a world mirroring its calibration, a full lens, and a default image layer',
+      "Bootstrap a renderable scene over this array dataset's own pixel grid: a full lens and a default image layer",
     icon: Clapperboard,
     pinned: true,
     conditions: [
@@ -69,18 +69,39 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
         throw new Error('Mikro service is not available');
       }
 
-      const { data } = await mikro.client.mutate<
-        CreateSceneFromDatasetMutation,
-        CreateSceneFromDatasetMutationVariables
+      // A scene is built over a coordinate SYSTEM — `createSceneFromDataset` is
+      // gone, and a dataset's own grid is simply one of those systems ("the
+      // container's own data becomes the layer"). The action holds only an id,
+      // so it asks which grid that is before it can stage anything. To render
+      // at physical scale instead, build over a space the dataset is registered
+      // into; the dataset page offers those.
+      const { data: datasetData } = await mikro.client.query<
+        GetADatasetIntrinsicSystemQuery,
+        GetADatasetIntrinsicSystemQueryVariables
       >({
-        mutation: CreateSceneFromDatasetDocument,
-        // `kind` is deliberately unset: the server infers the layer recipe from
-        // the dataset's axes. Only LABEL would need an explicit override.
-        variables: { dataset: selected.object.id },
+        query: GetADatasetIntrinsicSystemDocument,
+        variables: { id: selected.object.id },
+      });
+
+      const system = datasetData?.adataset.intrinsicSystem;
+      if (!system) {
+        throw new Error(
+          'This dataset has no intrinsic coordinate system yet, so there is no space to build a scene over',
+        );
+      }
+
+      const { data } = await mikro.client.mutate<
+        CreateSceneFromCoordinateSystemMutation,
+        CreateSceneFromCoordinateSystemMutationVariables
+      >({
+        mutation: CreateSceneFromCoordinateSystemDocument,
+        // `policy` is left to the server default; its `kind` (the layer recipe)
+        // is inferred from the dataset's axes, and only LABEL needs asking for.
+        variables: { input: { coordinateSystem: system.id } },
         refetchQueries: [GetScenesDocument],
       });
 
-      const scene = data?.createSceneFromDataset;
+      const scene = data?.createSceneFromCoordinateSystem;
       if (!scene) {
         throw new Error('Scene creation returned no scene');
       }

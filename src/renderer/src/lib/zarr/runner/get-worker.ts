@@ -32,7 +32,7 @@ import {
 } from "./internals/util"
 import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
 import { disposeWorker, getMetaId, workerFetchDecode, workerFetchExists, workerFetchProbeDecompressedSize } from "./worker-rpc"
-import { isWorkerFetchCapableStore } from "@/lib/zarr/store/types"
+import { isWorkerFetchCapableStore, workerFetchConfigFor } from "@/lib/zarr/store/types"
 import { serializeRequestInit } from "./s3-request"
 
 /**
@@ -720,7 +720,7 @@ async function validateCandidateChunkShape<
 
   try {
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
-      const storeConfig = arr.store.getWorkerFetchConfig()
+      const storeConfig = await workerFetchConfigFor(arr.store)
       const handle = enqueueWorkerTask(
         workerOpts.pool,
         workerOpts.workerUrl,
@@ -791,7 +791,7 @@ export async function probeActualChunkShape<
     let decompressedBytes: number | null
 
     if (isWorkerFetchCapableStore(arr.store) && workerOpts) {
-      const storeConfig = arr.store.getWorkerFetchConfig()
+      const storeConfig = await workerFetchConfigFor(arr.store)
       const metaId = getMetaId(codecMeta)
       const handle = enqueueWorkerTask(
         workerOpts.pool,
@@ -925,7 +925,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
     throw new Error("Worker chunk loading requires a worker-fetch-capable store")
   }
 
-  const workerStore = arr.store.getWorkerFetchConfig()
+  const workerStore = await workerFetchConfigFor(arr.store)
   const chunkKey = encodeChunkKey(chunkCoords)
   const chunkPath = arr.resolve(chunkKey).path
   const edgeChunkShape = chunkCoords.map((coord, dim) =>
@@ -1155,7 +1155,7 @@ export async function getWorker<
   if (!isWorkerFetchCapableStore(arr.store)) {
     throw new Error("Worker chunk loading requires a worker-fetch-capable store")
   }
-  const workerStore = arr.store.getWorkerFetchConfig()
+  const workerStore = await workerFetchConfigFor(arr.store)
 
   // Build tasks — one per chunk
   const tasks: Array<WorkerPoolTaskHandle<void>> = []

@@ -1,4 +1,5 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
+import { setBrandBase } from "./brandTheme";
 import { defaultSettings, type Settings, settingsValidator } from "./validator";
 
 export type SettingsStoreState = {
@@ -61,21 +62,9 @@ function applyThemeSettings(settings: Settings) {
 }
 
 function applyBrandSettings(settings: Settings) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  if (settings.brandHue !== undefined) {
-    document.documentElement.style.setProperty("--brand-hue", settings.brandHue.toString());
-  } else {
-    document.documentElement.style.removeProperty("--brand-hue");
-  }
-
-  if (settings.brandChroma !== undefined) {
-    document.documentElement.style.setProperty("--brand-chroma", settings.brandChroma.toString());
-  } else {
-    document.documentElement.style.removeProperty("--brand-chroma");
-  }
+  // The variables are shared with the scene tint, so they are written through
+  // `brandTheme` rather than set here directly — see that module.
+  setBrandBase({ hue: settings.brandHue, chroma: settings.brandChroma });
 }
 
 function applyZoomLevel(zoomLevel: number) {

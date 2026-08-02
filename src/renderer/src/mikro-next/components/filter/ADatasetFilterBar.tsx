@@ -19,6 +19,7 @@ import {
   ArrowUpWideNarrow,
   RotateCcw,
   Shapes,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   parseAsArrayOf,
@@ -48,6 +49,79 @@ const SPEC_SLUGS = ADATASET_SPECS.map((entry) => entry.slug) as [
   ...string[],
 ];
 
+/**
+ * The tri-state boolean filters, as radio groups rather than checkboxes: the
+ * server field is a nullable boolean, so "unset" is a third state a checkbox
+ * cannot express — a ticked-then-unticked box would have to mean "false", which
+ * is a different query from "don't care".
+ *
+ * `value` is what goes to the server; `undefined` leaves the field off.
+ */
+const ORIGIN_OPTIONS = [
+  { key: "acquired", label: "Acquired only", value: true },
+  { key: "derived", label: "Derived only", value: false },
+  { key: "all", label: "All", value: undefined },
+] as const;
+
+const PYRAMID_OPTIONS = [
+  { key: "any", label: "Any", value: undefined },
+  { key: "multiscale", label: "Multiscale", value: true },
+  { key: "single", label: "Single level", value: false },
+] as const;
+
+const UNITS_OPTIONS = [
+  { key: "any", label: "Any", value: undefined },
+  { key: "physical", label: "Physically calibrated", value: true },
+  { key: "pixels", label: "Pixels only", value: false },
+] as const;
+
+const ORIGIN_KEYS = ORIGIN_OPTIONS.map((o) => o.key) as ["acquired", ...string[]];
+const PYRAMID_KEYS = PYRAMID_OPTIONS.map((o) => o.key) as ["any", ...string[]];
+const UNITS_KEYS = UNITS_OPTIONS.map((o) => o.key) as ["any", ...string[]];
+
+const valueOf = <T extends { key: string; value: boolean | undefined }>(
+  options: readonly T[],
+  key: string,
+): boolean | undefined => options.find((option) => option.key === key)?.value;
+
+const labelOf = <T extends { key: string; label: string }>(
+  options: readonly T[],
+  key: string,
+): string => options.find((option) => option.key === key)?.label ?? key;
+
+/**
+ * Derived datasets — the deconvolutions, segmentations and projections computed
+ * from other datasets — are hidden by default. A processing run can multiply one
+ * acquisition into dozens of children, which buries the data someone actually
+ * went to the microscope for. The trigger always carries a badge naming the
+ * active origin, so the rows this hides never go unexplained.
+ */
+export const DEFAULT_ORIGIN = "acquired";
+
+/**
+ * The three data-property choices as server filter fields. A field is OMITTED
+ * for "don't care" — the server reads a present `false` as a real constraint, so
+ * sending `notDerived: null` would be a different query from not asking.
+ *
+ * Exported for its test: the origin mapping is the one place a sign flip would
+ * silently invert the page's default from "acquired only" to "derived only".
+ */
+export const adatasetPropertyFilters = (
+  origin: string,
+  pyramid: string,
+  units: string,
+): Pick<ADatasetFilter, "notDerived" | "multiscale" | "hasPhysicalSpace"> => {
+  const notDerived = valueOf(ORIGIN_OPTIONS, origin);
+  const multiscale = valueOf(PYRAMID_OPTIONS, pyramid);
+  const hasPhysicalSpace = valueOf(UNITS_OPTIONS, units);
+
+  return {
+    ...(notDerived === undefined ? {} : { notDerived }),
+    ...(multiscale === undefined ? {} : { multiscale }),
+    ...(hasPhysicalSpace === undefined ? {} : { hasPhysicalSpace }),
+  };
+};
+
 export type UseADatasetFilterBarOptions = {
   /**
    * A spec the page itself is about — the one behind /adatasets/spec/:spec. It
@@ -58,14 +132,21 @@ export type UseADatasetFilterBarOptions = {
 };
 
 /**
- * The filter set shared by every array-dataset list: search, sort, created-range
- * and spec. Returns the assembled query variables together with the controls to
- * drop into a ListPage's `pageActions`, so a page wires it in three lines rather
- * than restating ~90 lines of dropdowns (which is how the Sort block already
- * ended up copied across three pages).
+ * The filter set shared by every array-dataset list: search, sort, created-range,
+ * spec, and the three data properties under "Data" — origin (acquired vs
+ * derived), resolution (multiscale vs single level) and units (physically
+ * calibrated vs bare pixels). Returns the assembled query variables together
+ * with the controls to drop into a ListPage's `pageActions`, so a page wires it
+ * in three lines rather than restating ~90 lines of dropdowns (which is how the
+ * Sort block already ended up copied across three pages).
+ *
+ * Every one of them filters SERVER-side: they are `ADatasetFilter` fields, so a
+ * narrowed list pages through matching rows instead of paging through everything
+ * and dropping most of it.
  *
  * State lives in the URL (nuqs), so a filtered list is shareable — same idiom as
- * elektro's SimulationsPage.
+ * elektro's SimulationsPage. Only non-default choices are written, so the
+ * default view has a clean URL.
  *
  * No user filter: ADatasetFilter.owner takes the creator's *sub*, while lok's
  * UserOptions yields user ids, so the shared UserFilter would filter on the
@@ -98,6 +179,18 @@ export const useADatasetFilterBar = ({
     "spec",
     parseAsArrayOf(parseAsStringLiteral(SPEC_SLUGS)).withDefault([]),
   );
+  const [origin, setOrigin] = useQueryState(
+    "origin",
+    parseAsStringLiteral(ORIGIN_KEYS).withDefault(DEFAULT_ORIGIN),
+  );
+  const [pyramid, setPyramid] = useQueryState(
+    "pyramid",
+    parseAsStringLiteral(PYRAMID_KEYS).withDefault("any"),
+  );
+  const [units, setUnits] = useQueryState(
+    "units",
+    parseAsStringLiteral(UNITS_KEYS).withDefault("any"),
+  );
 
   // Debounced so a keystroke does not refetch: the list refetches whenever
   // `filters` changes identity.
@@ -128,8 +221,18 @@ export const useADatasetFilterBar = ({
       ...(createdAfter ? { createdAfter: createdAfter.toISOString() } : {}),
       ...(createdBefore ? { createdBefore: createdBefore.toISOString() } : {}),
       ...(specs.length ? { spec: specs } : {}),
+      ...adatasetPropertyFilters(origin, pyramid, units),
     };
-  }, [debouncedSearch, createdAfter, createdBefore, picked, lockedSpec]);
+  }, [
+    debouncedSearch,
+    createdAfter,
+    createdBefore,
+    picked,
+    lockedSpec,
+    origin,
+    pyramid,
+    units,
+  ]);
 
   const ordering: ADatasetOrder[] = useMemo(() => {
     if (sortField === "name") return [{ name: dir }];
@@ -167,6 +270,39 @@ export const useADatasetFilterBar = ({
     );
   };
 
+  // Everything the Data dropdown holds that is not on its default setting. The
+  // origin counts as narrowing whenever it filters at all — including on its
+  // hides-derived default, which is exactly the state that needs announcing.
+  const narrowedCount = [
+    valueOf(ORIGIN_OPTIONS, origin) !== undefined,
+    pyramid !== "any",
+    units !== "any",
+  ].filter(Boolean).length;
+
+  const radioGroup = (
+    label: string,
+    options: readonly { key: string; label: string }[],
+    value: string,
+    // Back to the default is signalled as `null`, which drops the key from the
+    // URL entirely — a shared link carries only what was actually changed.
+    onChange: (next: string | null) => void,
+    defaultKey: string,
+  ) => (
+    <>
+      <DropdownMenuLabel>{label}</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={value}
+        onValueChange={(next) => onChange(next === defaultKey ? null : next)}
+      >
+        {options.map((option) => (
+          <DropdownMenuRadioItem key={option.key} value={option.key}>
+            {option.label}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </>
+  );
+
   const actions = (
     <>
       <CollapsibleSearch
@@ -174,6 +310,68 @@ export const useADatasetFilterBar = ({
         onChange={(value) => setSearch(value || null)}
         placeholder="Search array datasets…"
       />
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="gap-2">
+            <SlidersHorizontal className="h-4 w-4" />
+            Data
+            {narrowedCount > 0 && (
+              <Badge variant="secondary">
+                {/* Name the origin rather than count it: "Acquired only" is on
+                    by default, and a bare number would leave a user wondering
+                    why their derived datasets are missing. */}
+                {labelOf(ORIGIN_OPTIONS, origin)}
+                {narrowedCount > 1 ? ` +${narrowedCount - 1}` : ""}
+              </Badge>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {radioGroup(
+            "Origin",
+            ORIGIN_OPTIONS,
+            origin,
+            (next) => setOrigin(next as typeof origin | null),
+            DEFAULT_ORIGIN,
+          )}
+          <DropdownMenuSeparator />
+          {radioGroup(
+            "Resolution",
+            PYRAMID_OPTIONS,
+            pyramid,
+            (next) => setPyramid(next as typeof pyramid | null),
+            "any",
+          )}
+          <DropdownMenuSeparator />
+          {radioGroup(
+            "Units",
+            UNITS_OPTIONS,
+            units,
+            (next) => setUnits(next as typeof units | null),
+            "any",
+          )}
+          {(origin !== DEFAULT_ORIGIN || pyramid !== "any" || units !== "any") && (
+            <>
+              <DropdownMenuSeparator />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  setOrigin(null);
+                  setPyramid(null);
+                  setUnits(null);
+                }}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset
+              </Button>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

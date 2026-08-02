@@ -11,6 +11,19 @@ query GetLensPhasor($id: ID!, $axis: String, $harmonic: Int!) {
   }
 }
 
+# Every anchor on a lens with its full metadata payload, for the layer card's
+# Metadata panel. SceneLens already carries a thin projection of these (the
+# histogram the clim comes from, the label the row shows); this is the reference
+# view, fetched only when someone opens the panel.
+query GetLensAnchors($id: ID!) {
+  lens(id: $id) {
+    id
+    activeAnchors {
+      ...FullCoordinateAnchor
+    }
+  }
+}
+
 # Existing lenses over a dataset, so adding a layer can reuse a full lens
 # (slices: []) instead of minting a new one per layer.
 query ListLensesForDataset($dataset: ID!) {

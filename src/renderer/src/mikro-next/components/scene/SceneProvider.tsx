@@ -39,6 +39,7 @@ import {
 } from "./store/selectionStore";
 import { ViewStoreContext, createViewStore } from "./store/viewStore";
 import { ViewerStoreContext, createViewerStore } from "./store/viewerStore";
+import { SceneBrandTheme } from "./theme/SceneBrandTheme";
 
 /**
  * The scene's store scope: one vanilla zustand store per concern, all created
@@ -242,6 +243,11 @@ export const SceneProvider = (props: {
                   <RoiDrawingStoreContext.Provider value={scope?.roiDrawingStore ?? null}>
                     <RoiDrawSessionStoreContext.Provider value={scope?.roiDrawSessionStore ?? null}>
                       <RoiSelectionStoreContext.Provider value={scope?.roiSelectionStore ?? null}>
+                        {/* Reads the scene stores, so it can only mount once
+                            the scope exists — and unmounting it when the scope
+                            goes is exactly what eases the app back to the
+                            user's own brand color. */}
+                        {scope && <SceneBrandTheme />}
                         {/* Shared (client, datalayer) attribute service: the
                             probe tracker holds the same refcounted instance, so
                             ROI lookups reuse its plan cache and DuckDB engine.

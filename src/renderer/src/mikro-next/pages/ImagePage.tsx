@@ -29,6 +29,7 @@ import {
 } from "../api/graphql";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import { FinalRender } from "../components/render/FInalRender";
+import { RgbViewBrandTheme } from "../components/scene/theme/RgbViewBrandTheme";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
@@ -111,6 +112,7 @@ export const ImagePage =  asDetailQueryRoute(
         }
         variant="black"
       >
+        <RgbViewBrandTheme views={defautContext?.views} />
         <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
           <div className="grid grid-cols-12 grid-reverse flex-col rounded-md  h-full flex relative">
             <div className="absolute w-full h-full overflow-hidden border-0">

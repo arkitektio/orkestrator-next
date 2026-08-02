@@ -1,5 +1,5 @@
 # A lens with no slices views the whole dataset — the same "full lens"
-# createSceneFromDataset bootstraps.
+# createSceneFromCoordinateSystem bootstraps over a dataset's own grid.
 mutation CreateLens($input: CreateLensInput!) {
   createLens(input: $input) {
     ...SceneLens

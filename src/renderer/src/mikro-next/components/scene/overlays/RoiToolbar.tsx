@@ -13,7 +13,9 @@ import {
   MousePointer2,
   Pentagon,
   Pencil,
+  Waypoints,
 } from "lucide-react";
+import { TraceWeightsPanel } from "./TraceWeightsPanel";
 
 /**
  * Select sits first because it is the non-destructive tool — and because it is
@@ -36,6 +38,9 @@ const TOOLS: {
   { tool: "POINT", label: "Point", icon: Crosshair },
   { tool: "LINE", label: "Line", icon: Minus },
   { tool: "PATH", label: "Path", icon: Pencil },
+  // The only tool that decides its own vertices: clicks are waypoints, and the
+  // route between them is searched for through the data (`core/trace/`).
+  { tool: "TRACE", label: "Trace", icon: Waypoints },
 ];
 
 export const RoiToolbar = () => {
@@ -43,6 +48,7 @@ export const RoiToolbar = () => {
   const displayMode = useModeStore((s) => s.displayMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
+  const traceMessage = useRoiDrawingStore((s) => s.traceMessage);
 
   if (interactionMode !== "ANNOTATE") return null;
 
@@ -54,15 +60,23 @@ export const RoiToolbar = () => {
     <div className="absolute bottom-12 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1">
       {/* Shapes land in the scene's own coordinate system, so there is nothing
           to arm and no per-layer constraint to describe. */}
+      {activeTool === "TRACE" && <TraceWeightsPanel />}
       {/* The 3D line is not decoration: the gesture genuinely differs — each
           click places the point the volume probed, so a click off the data
-          places nothing. */}
+          places nothing. A failed trace hop speaks here too: a refused click
+          has to say why, or the tool reads as broken. */}
       <span className="text-[10px] text-white/50">
-        {activeTool === "SELECT"
-          ? "Drag to select annotations"
-          : displayMode === "3D"
-            ? "Click the volume to place each point — probed onto the data"
-            : "Drawing annotations on the scene"}
+        {traceMessage && activeTool === "TRACE" ? (
+          <span className="text-amber-300/90">{traceMessage}</span>
+        ) : activeTool === "TRACE" ? (
+          "Click waypoints — the path between them follows the data. Double-click to finish"
+        ) : activeTool === "SELECT" ? (
+          "Drag to select annotations"
+        ) : displayMode === "3D" ? (
+          "Click the volume to place each point — probed onto the data"
+        ) : (
+          "Drawing annotations on the scene"
+        )}
       </span>
       <ButtonGroup>
         {tools.map(({ tool, label, icon: Icon }) => (

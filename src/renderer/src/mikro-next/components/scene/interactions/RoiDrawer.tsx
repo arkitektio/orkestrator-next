@@ -11,8 +11,15 @@ import {
   DRAWING_TOOL_TO_ROI_KIND,
   isDrawingTool,
   isPrimitiveTool,
+  isTraceTool,
   type DrawingTool,
 } from "../store/roiDrawingStore";
+import {
+  traceFailureMessage,
+  useTraceHop,
+  useTraceWaypoints,
+  type TraceWaypoint,
+} from "./useTraceHop";
 import { planarRadius, primitiveCornerVectors } from "../core/primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "../store/roiDrawSessionStore";
 import { useSceneStore } from "../store/sceneStore";
@@ -57,6 +64,12 @@ interface DrawSession {
   vertices: THREE.Vector3[];
   cursor: THREE.Vector3 | null;
   lastClickPx: ScreenPoint | null;
+  /**
+   * TRACE only: the waypoints the user actually clicked. `vertices` holds the
+   * FOUND path, which is far denser — the handles, and the next hop's start,
+   * belong to the clicks rather than to what the search returned.
+   */
+  waypoints: TraceWaypoint[];
 }
 
 const freshSession = (): DrawSession => ({
@@ -68,6 +81,7 @@ const freshSession = (): DrawSession => ({
   vertices: [],
   cursor: null,
   lastClickPx: null,
+  waypoints: [],
 });
 
 const eventPx = (event: ThreeEvent<PointerEvent | MouseEvent>): ScreenPoint => ({
@@ -87,6 +101,7 @@ export const RoiDrawer = () => {
   const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
   const setPendingPrimitiveAnchor = useRoiDrawingStore((s) => s.setPendingPrimitiveAnchor);
   const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
+  const setTraceMessage = useRoiDrawingStore((s) => s.setTraceMessage);
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
   const viewerStoreApi = useViewerStoreApi();
@@ -95,6 +110,8 @@ export const RoiDrawer = () => {
   const readoutApi = useRoiDrawSessionStoreApi();
 
   const { createSceneAnnotation } = useCreateSceneAnnotation();
+  const runTraceHop = useTraceHop();
+  const traceWaypoints = useTraceWaypoints();
 
   /**
    * The only React state the gesture owns, and it moves at CLICK cadence — it
@@ -112,6 +129,8 @@ export const RoiDrawer = () => {
   const tool: DrawingTool | null = isDrawingTool(activeTool) ? activeTool : null;
   const isPolygonLike = tool === "POLYGON" || tool === "PATH";
   const isPrimitive = isPrimitiveTool(tool);
+  /** Click-per-waypoint in BOTH views: the shape between them is searched for. */
+  const isTrace = isTraceTool(tool);
   const unit = unitLabel(spatialUnit);
   /**
    * In 3D there is no slice to draw on, so every vertex comes from the volume
@@ -225,8 +244,9 @@ export const RoiDrawer = () => {
     // Whatever ends the session — commit, Escape, tool/mode change — the
     // volume may seed the next primitive anchor again.
     setPrimitiveSessionActive(false);
+    setTraceMessage(null);
     invalidate();
-  }, [paintCoalescer, readoutApi, setPrimitiveSessionActive, invalidate]);
+  }, [paintCoalescer, readoutApi, setPrimitiveSessionActive, setTraceMessage, invalidate]);
 
   const submitRoi = useCallback(
     async (roi: DrawnRoi) => {
@@ -427,7 +447,9 @@ export const RoiDrawer = () => {
           // anchor never comes from this plane (the volume seeds it). In 3D
           // EVERY tool is a click tool: there is no drag-a-plane gesture when
           // the points come from the probe.
-          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) return;
+          if (probePlaced || isPolygonLike || isTrace || tool === "POINT" || isPrimitive) {
+            return;
+          }
           const hit = pointOnPlane(e);
           if (!hit) return;
 
@@ -485,7 +507,9 @@ export const RoiDrawer = () => {
           paintCoalescer.schedule(paint);
         }}
         onPointerUp={(e) => {
-          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) return;
+          if (probePlaced || isPolygonLike || isTrace || tool === "POINT" || isPrimitive) {
+            return;
+          }
 
           const session = sessionRef.current;
           e.stopPropagation();
@@ -534,6 +558,69 @@ export const RoiDrawer = () => {
               radius,
             );
             finishShape([new THREE.Vector3(...low), new THREE.Vector3(...high)]);
+            return;
+          }
+
+          // TRACE: one click, one WAYPOINT — the vertices between them are
+          // found, not placed. Handled ahead of the 3D branch because the
+          // gesture is the same in both views; only where the waypoint comes
+          // from differs (the probe in 3D, the drawn slice in 2D).
+          if (isTrace) {
+            // An orbit-drag release is not a waypoint.
+            if (e.delta > DRAG_THRESHOLD_PX) return;
+            const planeHit = probePlaced ? null : pointOnPlane(e);
+            const waypoint = probePlaced
+              ? traceWaypoints.fromProbe()
+              : planeHit
+                ? traceWaypoints.fromWorld(planeHit)
+                : null;
+            if (!waypoint) {
+              setTraceMessage("Click on a layer's data to place a waypoint");
+              return;
+            }
+            e.stopPropagation();
+
+            const px = eventPx(e);
+            const session = sessionRef.current;
+
+            // Finish on a double-click, once there is a traced span to keep.
+            if (
+              e.detail >= 2 &&
+              session.waypoints.length >= 2 &&
+              (!session.lastClickPx || withinSlop(px, session.lastClickPx))
+            ) {
+              finishShape([...session.vertices]);
+              return;
+            }
+
+            const previous = session.waypoints[session.waypoints.length - 1];
+            if (previous) {
+              // The flat view draws one slice; the box must not reach past it.
+              const hop = runTraceHop(previous, waypoint, { flatten: !probePlaced });
+              if (!hop.ok) {
+                // The chain survives a failed hop — the user re-places this
+                // waypoint rather than starting the trace again.
+                setTraceMessage(traceFailureMessage(hop.reason));
+                return;
+              }
+              // `slice(1)`: the hop starts at the waypoint already committed.
+              session.vertices = [...session.vertices, ...hop.points.slice(1)];
+            } else {
+              session.planeZ = waypoint.world[2];
+              session.vertices = [new THREE.Vector3(...waypoint.world)];
+            }
+
+            setTraceMessage(null);
+            session.waypoints = [...session.waypoints, waypoint];
+            session.lastClickPx = px;
+            session.phase = "anchored";
+            session.cursor = new THREE.Vector3(...waypoint.world);
+            cursorPxRef.current = px;
+            // Handles mark the CLICKS, not the hundreds of found points.
+            setPlacedVertices(
+              session.waypoints.map((point) => new THREE.Vector3(...point.world)),
+            );
+            paintCoalescer.schedule(paint);
             return;
           }
 

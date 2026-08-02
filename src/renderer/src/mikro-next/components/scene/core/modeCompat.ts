@@ -29,6 +29,7 @@ const ALL_TOOLS: AnnotateTool[] = [
   "POINT",
   "LINE",
   "PATH",
+  "TRACE",
 ];
 
 /**
@@ -83,7 +84,9 @@ export function availableInteractionModes(ctx: ModeContext): InteractionMode[] {
 
 /**
  * The marquee is 2D-only; the volumetric tools are 3D-only. Every shape tool
- * works in both — flat on the drawn slice, probe-placed in the volume.
+ * works in both — flat on the drawn slice, probe-placed in the volume. TRACE is
+ * in both too: it searches the box its waypoints span, which is a flat one when
+ * the flat view drew them.
  */
 export function isAnnotateToolAvailable(
   tool: AnnotateTool,

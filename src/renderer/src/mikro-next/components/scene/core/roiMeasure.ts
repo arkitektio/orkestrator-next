@@ -47,8 +47,14 @@ export function measureDraw(
   return { kind: "path", length, vertexCount: points.length };
 }
 
+/**
+ * Includes depth when the points carry it. Flat gestures leave every point on
+ * one z, where this is exactly the old planar distance; a gesture through the
+ * volume (every 3D tool, and TRACE especially) genuinely travels in z, and
+ * reporting only its xy shadow would under-report the length.
+ */
 const distance = (a: OutlinePlanar, b: OutlinePlanar): number =>
-  Math.hypot(b.x - a.x, b.y - a.y);
+  Math.hypot(b.x - a.x, b.y - a.y, (b.z ?? 0) - (a.z ?? 0));
 
 /**
  * A fixed magnitude→decimals ladder, so the readout doesn't jitter between

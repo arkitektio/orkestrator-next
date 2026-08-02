@@ -3,6 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import { RoiKind } from "@/mikro-next/api/graphql";
 import { SPHERE_KIND } from "../core/primitiveDraw";
+import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "../core/trace/traceCost";
 
 /**
  * The drawing tool types the drawer implements. Each maps to a RoiKind for
@@ -18,7 +19,8 @@ export type DrawingTool =
   | "POLYGON"
   | "PATH"
   | "SPHERE"
-  | "CUBE";
+  | "CUBE"
+  | "TRACE";
 
 /** The volumetric tools, anchored by a probe click rather than the draw plane. */
 export const isPrimitiveTool = (
@@ -35,6 +37,16 @@ export const isProbeDerivedTool = (
 ): tool is "POINT" | "SPHERE" | "CUBE" =>
   tool === "POINT" || isPrimitiveTool(tool);
 
+/**
+ * The TRACE tool: waypoints are clicked, and the shape BETWEEN them is found by
+ * an A* search through the data (`core/trace/`). Every other tool draws exactly
+ * where the user pointed; this one only takes the endpoints and asks the image
+ * where the path goes.
+ */
+export const isTraceTool = (
+  tool: AnnotateTool | null | undefined,
+): tool is "TRACE" => tool === "TRACE";
+
 export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
   RECTANGLE: RoiKind.Rectangle,
   ELLIPSIS: RoiKind.Ellipsis,
@@ -44,6 +56,10 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
   PATH: RoiKind.Path,
   SPHERE: SPHERE_KIND,
   CUBE: RoiKind.Cube,
+  // A trace is an open polyline through the data — the same kind a hand-drawn
+  // path commits as. Nothing about the annotation says it was found rather than
+  // drawn, which is why the tool needs no schema of its own.
+  TRACE: RoiKind.Path,
 };
 
 /**
@@ -109,6 +125,20 @@ export interface RoiDrawingState {
    * camera-dependent.
    */
   primitiveSessionActive: boolean;
+  /**
+   * What the TRACE tool's A* considers cheap to travel through. Held here (not
+   * in a component) because the panel edits them while a chain is half-drawn,
+   * and the drawer reads them at click time — the next hop should answer to the
+   * slider the user just moved.
+   */
+  traceWeights: TraceWeights;
+  setTraceWeights: (weights: Partial<TraceWeights>) => void;
+  /**
+   * Why the last trace hop found nothing, or null. The toolbar shows it: a
+   * refused click has to say something, or the tool just looks broken.
+   */
+  traceMessage: string | null;
+  setTraceMessage: (message: string | null) => void;
   setActiveTool: (tool: AnnotateTool | null) => void;
   addDrawnRoi: (roi: DrawnRoi) => void;
   removeDrawnRoi: (id: string) => void;
@@ -126,6 +156,16 @@ export const createRoiDrawingStore = () =>
       pendingPathSeed: null,
       pendingPrimitiveAnchor: null,
       primitiveSessionActive: false,
+      traceWeights: DEFAULT_TRACE_WEIGHTS,
+      setTraceWeights: (weights) =>
+        set((state) => {
+          state.traceWeights = { ...state.traceWeights, ...weights };
+        }),
+      traceMessage: null,
+      setTraceMessage: (message) =>
+        set((state) => {
+          state.traceMessage = message;
+        }),
       setActiveTool: (tool) =>
         set((state) => {
           state.activeTool = tool;

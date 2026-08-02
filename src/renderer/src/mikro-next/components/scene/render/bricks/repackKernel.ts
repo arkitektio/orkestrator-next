@@ -18,12 +18,17 @@ import type { Vec3 } from "../../core/octree/levelGeometry";
  * ## Kernel shape: one dispatch per (brick, chunk)
  *
  * Instead of binding all of a brick's chunks at once (descriptor arrays,
- * per-stage storage-buffer limits), each source chunk gets its own dispatch
- * over the FULL stored brick. An invocation owns its output texel iff the
- * texel's clamped source voxel falls inside this chunk's overlap box and its
- * channel inside this chunk's channel range — ownership therefore partitions
- * every output texel across the brick's dispatches exactly once (the fetched
- * chunks tile the fetch box, and channel-chunks tile [0, channelCount)).
+ * per-stage storage-buffer limits), each source chunk gets its own dispatch.
+ * An invocation owns its output texel iff the texel's clamped source voxel
+ * falls inside this chunk's overlap box and its channel inside this chunk's
+ * channel range — ownership therefore partitions every output texel across the
+ * brick's dispatches exactly once (the fetched chunks tile the fetch box, and
+ * channel-chunks tile [0, channelCount)).
+ *
+ * The grid covers the OWNED sub-box, not the whole stored brick: see
+ * `ownedGridBox` for why that set is a box and how its bounds are derived. The
+ * per-invocation ownership test remains, both for the workgroup-rounding tail
+ * and so that correctness never rests on the grid arithmetic alone.
  *
  * ## Border replication is a clamp
  *
@@ -45,8 +50,8 @@ import type { Vec3 } from "../../core/octree/levelGeometry";
 
 export const REPACK_WORKGROUP_SIZE = 4;
 
-/** Bytes of one packed `Params` struct (36 words, see PARAM layout below). */
-export const REPACK_PARAMS_BYTES = 144;
+/** Bytes of one packed `Params` struct (40 words, see PARAM layout below). */
+export const REPACK_PARAMS_BYTES = 160;
 /** Uniform slices need 256-byte alignment for dynamic offsets. */
 export const REPACK_PARAMS_STRIDE = 256;
 
@@ -55,7 +60,9 @@ export const MINMAX_INIT_MIN = 0xffffffff;
 export const MINMAX_INIT_MAX = 0;
 
 /** Shared by both kernel variants; the r8-only addressing scalars ride in
- * what used to be tail padding, so the struct stays 144 bytes. */
+ * what used to be tail padding. `grid_origin`/`z_span` place the dispatch grid
+ * on the OWNED sub-box (see `ownedGridBox`) — word 35 is the vec3 alignment
+ * pad, so the struct is 160 bytes. */
 const PARAMS_STRUCT_WGSL = /* wgsl */ `
 struct Params {
   dest_origin: vec3<i32>,
@@ -78,6 +85,11 @@ struct Params {
   stride_z: u32,
   out_base_word: u32,
   row_words: u32,
+  // Origin of the dispatch grid inside the stored brick, and the number of z
+  // texels this chunk owns. gid is relative to these, so the grid covers only
+  // the box this dispatch can actually write.
+  grid_origin: vec3<u32>,
+  z_span: u32,
 }
 `;
 
@@ -114,17 +126,23 @@ fn main(
 
   // No early returns before the barriers (uniform control flow); out-of-range
   // and non-owned invocations just skip the work.
-  if (gid.x < P.stored_xy.x && gid.y < P.stored_xy.y && gid.z < sz * P.channel_count) {
-    let c = gid.z / sz;
-    let z = gid.z % sz;
+  // gid is relative to the OWNED sub-box: the grid covers only the texels this
+  // dispatch can write, instead of the whole stored brick once per chunk. The
+  // guards below still matter for the workgroup-rounding tail.
+  let span = max(1u, P.z_span);
+  let px = P.grid_origin.x + gid.x;
+  let py = P.grid_origin.y + gid.y;
+  let c = P.chan_start + gid.z / span;
+  let z = P.grid_origin.z + gid.z % span;
+  if (px < P.stored_xy.x && py < P.stored_xy.y && z < sz && c < P.chan_end) {
     // Clamp into the fetch box: interior texels are unchanged, border texels
     // land on their nearest valid voxel (edge replication).
     let g = clamp(
-      P.dest_origin + vec3<i32>(i32(gid.x), i32(gid.y), i32(z)),
+      P.dest_origin + vec3<i32>(i32(px), i32(py), i32(z)),
       P.fetch_min,
       P.fetch_max - vec3<i32>(1),
     );
-    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start && c < P.chan_end) {
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start) {
       let local = vec3<u32>(g - P.chunk_origin);
       let src = P.fixed_base
         + (c - P.chan_start) * P.stride_c
@@ -134,7 +152,7 @@ fn main(
       value = chunk_data[src];
       textureStore(
         out_atlas,
-        P.slot_origin + vec3<u32>(gid.x, gid.y, c * sz + z),
+        P.slot_origin + vec3<u32>(px, py, c * sz + z),
         vec4<f32>(value, 0.0, 0.0, 0.0),
       );
       contributes = value == value; // NaN never enters min/max (CPU parity)
@@ -190,17 +208,23 @@ fn main(
 
   // No early returns before the barriers (uniform control flow); out-of-range
   // and non-owned invocations just skip the work.
-  if (gid.x < P.stored_xy.x && gid.y < P.stored_xy.y && gid.z < sz * P.channel_count) {
-    let c = gid.z / sz;
-    let z = gid.z % sz;
+  // gid is relative to the OWNED sub-box: the grid covers only the texels this
+  // dispatch can write, instead of the whole stored brick once per chunk. The
+  // guards below still matter for the workgroup-rounding tail.
+  let span = max(1u, P.z_span);
+  let px = P.grid_origin.x + gid.x;
+  let py = P.grid_origin.y + gid.y;
+  let c = P.chan_start + gid.z / span;
+  let z = P.grid_origin.z + gid.z % span;
+  if (px < P.stored_xy.x && py < P.stored_xy.y && z < sz && c < P.chan_end) {
     // Clamp into the fetch box: interior texels are unchanged, border texels
     // land on their nearest valid voxel (edge replication).
     let g = clamp(
-      P.dest_origin + vec3<i32>(i32(gid.x), i32(gid.y), i32(z)),
+      P.dest_origin + vec3<i32>(i32(px), i32(py), i32(z)),
       P.fetch_min,
       P.fetch_max - vec3<i32>(1),
     );
-    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start && c < P.chan_end) {
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start) {
       let local = vec3<u32>(g - P.chunk_origin);
       let src = P.fixed_base
         + (c - P.chan_start) * P.stride_c
@@ -209,9 +233,9 @@ fn main(
         + local.x * P.stride_x;
       value = extractBits(chunk_data[src >> 2u], 8u * (src & 3u), 8u);
       let word = P.out_base_word
-        + ((c * sz + z) * P.stored_xy.y + gid.y) * P.row_words
-        + (gid.x >> 2u);
-      atomicOr(&out_words[word], value << (8u * (gid.x & 3u)));
+        + ((c * sz + z) * P.stored_xy.y + py) * P.row_words
+        + (px >> 2u);
+      atomicOr(&out_words[word], value << (8u * (px & 3u)));
       contributes = true; // u8 has no NaN — every owned texel contributes
     }
   }
@@ -255,7 +279,69 @@ export type KernelDispatch = {
   strideC: number;
   chunkOrigin: Vec3;
   slotOrigin: Vec3;
+  /** Origin of the owned sub-box inside the stored brick (see `ownedGridBox`). */
+  gridOrigin: Vec3;
+  /** Extents of that sub-box. `gridSize[2]` is the per-channel z span. */
+  gridSize: Vec3;
 };
+
+/**
+ * The sub-box of the stored brick that ONE (brick, chunk) dispatch can write.
+ *
+ * The kernel used to dispatch over the full stored brick for every chunk and
+ * let each invocation discard itself if it did not own its texel. With a
+ * 66×66×38 brick over 4 channels that is 702,848 invocations per dispatch, of
+ * which roughly 1/8 do work — each chunk owns one channel-chunk and about half
+ * the z range. Narrowing the grid to the owned box removes the rest.
+ *
+ * Why the owned set IS a box: the kernel's source position along each axis is
+ * `f(p) = clamp(destOrigin + p, fetchMin, fetchMax - 1)`, which is monotone
+ * non-decreasing in `p`. Ownership is `lo <= f(p) < hi`, and the preimage of an
+ * interval under a monotone function is an interval — so per axis it is a
+ * contiguous `[p0, p1)`, with closed forms:
+ *
+ *  - `p0 = 0` when `lo === fetchMin`, because the border texels below `fetchMin`
+ *    clamp UP to `fetchMin` and are therefore owned by exactly the chunk whose
+ *    `lo` sits at `fetchMin`. Otherwise `p0 = lo - destOrigin`.
+ *  - `p1 = stored` when `hi === fetchMax` (symmetrically: the trailing border
+ *    clamps DOWN to `fetchMax - 1`). Otherwise `p1 = hi - destOrigin`.
+ *
+ * Both are clamped into `[0, stored]`. An empty span means this chunk owns
+ * nothing of the brick and the dispatch is skipped entirely.
+ *
+ * The per-texel ownership test stays in the kernel: the workgroup rounding tail
+ * can still overshoot the box, and correctness must not depend on this
+ * arithmetic being exactly right.
+ */
+export function ownedGridBox(d: {
+  destOrigin: Vec3;
+  stored: Vec3;
+  fetchMin: Vec3;
+  fetchMax: Vec3;
+  lo: Vec3;
+  hi: Vec3;
+}): { gridOrigin: Vec3; gridSize: Vec3 } | null {
+  const origin: number[] = [];
+  const size: number[] = [];
+  for (const axis of [0, 1, 2] as const) {
+    const stored = d.stored[axis];
+    const p0 =
+      d.lo[axis] === d.fetchMin[axis]
+        ? 0
+        : Math.min(stored, Math.max(0, d.lo[axis] - d.destOrigin[axis]));
+    const p1 =
+      d.hi[axis] === d.fetchMax[axis]
+        ? stored
+        : Math.min(stored, Math.max(0, d.hi[axis] - d.destOrigin[axis]));
+    if (p1 <= p0) return null;
+    origin.push(p0);
+    size.push(p1 - p0);
+  }
+  return {
+    gridOrigin: [origin[0], origin[1], origin[2]],
+    gridSize: [size[0], size[1], size[2]],
+  };
+}
 
 /**
  * Build the per-chunk dispatch list for one brick — the same overlap /
@@ -311,14 +397,29 @@ export function buildKernelDispatches(
       if (fixedOffsets[d] !== 0) fixedBase += fixedOffsets[d] * (chunk.stride[d] ?? 0);
     }
 
+    const stored: Vec3 = [spec.stored[0], spec.stored[1], spec.stored[2]];
+    const fetchMin: Vec3 = [fetchBox.min[0], fetchBox.min[1], fetchBox.min[2]];
+    const fetchMax: Vec3 = [fetchBox.max[0], fetchBox.max[1], fetchBox.max[2]];
+    const box = ownedGridBox({
+      destOrigin,
+      stored,
+      fetchMin,
+      fetchMax,
+      lo: [lo[0], lo[1], lo[2]],
+      hi: [hi[0], hi[1], hi[2]],
+    });
+    // Overlaps in level voxels but owns no brick texel (the whole overlap sits
+    // in a region another chunk's clamp already covers) — nothing to dispatch.
+    if (!box) continue;
+
     dispatches.push({
       chunkIndex,
       destOrigin,
-      stored: [spec.stored[0], spec.stored[1], spec.stored[2]],
+      stored,
       channelCount,
       brickIndex,
-      fetchMin: [fetchBox.min[0], fetchBox.min[1], fetchBox.min[2]],
-      fetchMax: [fetchBox.max[0], fetchBox.max[1], fetchBox.max[2]],
+      fetchMin,
+      fetchMax,
       chanStart,
       chanEnd,
       lo: [lo[0], lo[1], lo[2]],
@@ -330,23 +431,31 @@ export function buildKernelDispatches(
       strideC: strideOf(intensityPos),
       chunkOrigin,
       slotOrigin,
+      gridOrigin: box.gridOrigin,
+      gridSize: box.gridSize,
     });
   }
   return dispatches;
 }
 
-/** Workgroup counts covering the stored brick (z carries the channel slabs). */
+/**
+ * Workgroup counts covering the OWNED sub-box (z carries this chunk's channel
+ * range). Previously this covered the whole stored brick times the whole
+ * channel count for every chunk, so ~7/8 of the invocations existed only to
+ * fail the ownership test.
+ */
 export function dispatchWorkgroups(d: KernelDispatch): Vec3 {
   const wg = REPACK_WORKGROUP_SIZE;
+  const channels = Math.max(0, d.chanEnd - d.chanStart);
   return [
-    Math.ceil(d.stored[0] / wg),
-    Math.ceil(d.stored[1] / wg),
-    Math.ceil((d.stored[2] * d.channelCount) / wg),
+    Math.ceil(d.gridSize[0] / wg),
+    Math.ceil(d.gridSize[1] / wg),
+    Math.ceil((d.gridSize[2] * channels) / wg),
   ];
 }
 
 /**
- * Pack one dispatch into its 36-word uniform slice. Word layout mirrors the
+ * Pack one dispatch into its 40-word uniform slice. Word layout mirrors the
  * WGSL `Params` struct field-for-field (vec3 aligned to 16 bytes, the scalar
  * riding in the 4th word); i32 values rely on typed-array modulo-2^32 wrap to
  * store their bit pattern. `r8Out` carries the r8 kernel's arena addressing
@@ -394,7 +503,11 @@ export function packKernelParams(
   w[32] = d.strideZ;
   w[33] = r8Out?.outBaseWord ?? 0;
   w[34] = r8Out?.rowWords ?? 0;
-  w[35] = 0;
+  w[35] = 0; // vec3 alignment pad before grid_origin
+  w[36] = d.gridOrigin[0];
+  w[37] = d.gridOrigin[1];
+  w[38] = d.gridOrigin[2];
+  w[39] = d.gridSize[2];
 }
 
 /**
@@ -403,6 +516,16 @@ export function packKernelParams(
  * image per output z texel (channel slabs stacked on z, like the atlas slot).
  * `jobBytes` is a multiple of 256 by construction, so consecutive job base
  * offsets stay aligned for both the storage binding and the copy.
+ *
+ * KNOWN COST, measured and left alone: for a typical 66×66×38 brick over 4
+ * channels the row padding is 256 bytes carrying 66 bytes of data, so the arena
+ * is 256×66×152 = 2,568,192 B for 662,112 B of texels — 3.88×, all of it
+ * cleared, atomicOr'd and strided-copied. Packing rows tighter is not as simple
+ * as it looks: `atomicOr` operates at u32 granularity while texels are bytes,
+ * so four adjacent x texels share a word and can belong to DIFFERENT dispatches
+ * at a chunk boundary. That is what makes the OR (and hence the zero-clear)
+ * load-bearing, and why a plain packed write would race. Any change here must
+ * first establish word-exclusive ownership.
  */
 export function r8JobLayout(
   stored: Vec3,

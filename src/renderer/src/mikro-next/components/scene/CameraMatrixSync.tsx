@@ -34,7 +34,7 @@ export const CameraMatrixSync = ({
     };
   }, []);
 
-  useFrame(({ camera, size, clock }) => {
+  useFrame(({ camera, size }) => {
     // 1. CRITICAL: keep the projection matrix in sync with Zoom/FOV changes —
     // but only RECOMPUTE it when a projection input actually changed. During
     // multi-second streaming bursts the demand loop renders at full cadence
@@ -109,7 +109,14 @@ export const CameraMatrixSync = ({
         ? THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
         : 0,
     };
-    const nowMs = clock.getElapsedTime() * 1000;
+    // Wall clock, NOT r3f's `clock`: setFrameloop() resets clock.elapsedTime to
+    // 0 (PerfFrameProbe flips the loop to "always" when a recording is armed),
+    // while lastEmitRef keeps the pre-reset value. On any canvas that has been
+    // open more than a moment that leaves nowMs far behind lastEmitRef, and the
+    // leading emission below is suppressed for the whole recording — which is
+    // exactly how a report of continuous panning came back with almost no
+    // replans. The trailing settle already uses wall time (setTimeout).
+    const nowMs = performance.now();
 
     // 6a. Trailing settle: guarantees a final, crisp update once the camera
     // comes to rest (the last motion frame may fall inside the throttle gap).

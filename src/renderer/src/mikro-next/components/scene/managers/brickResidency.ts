@@ -22,9 +22,14 @@ import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
 import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache";
-import { BrickPoolState, type ProtectedKeys } from "../core/octree/brickPoolState";
+import {
+  BrickPoolState,
+  selectTrimCandidates,
+  type ProtectedKeys,
+} from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
+import { buildPoolKey, buildStructureSignature } from "../core/octree/poolKey";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
@@ -145,7 +150,7 @@ const MAX_ACQUIRE_RETRIES = 30;
 
 /** Identifies a dispatched brick across the async min/max readback; every
  * field is re-validated against the CURRENT mapping when the readback lands. */
-type GpuBrickToken = { layerId: string; key: string; slotIndex: number };
+type GpuBrickToken = { poolKey: string; key: string; slotIndex: number };
 
 /** `acquire()` sentinel treating every occupant as protected: the acquisition
  * succeeds only into a FREE slot, never by eviction — how out-of-plan bricks
@@ -157,11 +162,36 @@ const FREE_SLOTS_ONLY: ProtectedKeys = { has: () => true };
  * re-renders the layer components + levels editor. */
 const AUTO_RANGE_BUMP_MS = 150;
 
+/** Per-layer derivation feeding `ensurePool` — side-effect free, so layers can
+ * be grouped by `poolKey` before anything is allocated. */
+type PoolDerivation = {
+  /** The layer this was derived from. Any member of the group works for the
+   * pool-wide fields (they are equal by construction — that is what the key
+   * asserts); it is kept for `computeFixedIndices` and warnings. */
+  layer: LayerState;
+  mode: "2D" | "3D";
+  levels: readonly LevelSource[];
+  geometry: LayerLevelGeometry;
+  spec: BrickSpec;
+  structureSignature: string;
+  sliceSignature: string;
+  dataRange: readonly [number, number];
+  poolKey: string;
+};
+
 export type LayerBrickPool = {
-  layerId: string;
+  /** Content address (see `buildPoolKey`) — the map key. NOT a layer id: every
+   * layer whose data, slicing and value range match shares this one pool. */
+  poolKey: string;
+  /** Layer ids currently backed by this pool. Refcount: the pool is disposed
+   * when the last member leaves. Never empty for a live pool. */
+  members: Set<string>;
   mode: "2D" | "3D";
   sliceSignature: string;
-  /** Structural identity: levels + spec + mode; a change rebuilds the pool. */
+  /** Structural identity: levels + spec + slabs + mode. Distinct from
+   * `poolKey`, which additionally pins the slice and the value range — a pool
+   * whose structure still matches can be FLUSHED in place (atlas reused)
+   * instead of rebuilt. */
   structureSignature: string;
   geometry: LayerLevelGeometry;
   spec: BrickSpec;
@@ -206,6 +236,11 @@ export type LayerBrickPool = {
    * from the decoded chunk cache instead (`sampleChunkCacheSync`). Scoped
    * per brick — CPU-uploaded bricks keep the fast mirror read. */
   gpuStaleKeys: Set<string>;
+  /** Min target level across the member plans, from the last reconcile. Bricks
+   * FINER than this are unreachable by the shader (its residency walk starts at
+   * the desired level and moves coarser), so they are trimmed from the pool and
+   * refused entry by the stale drain. */
+  minTargetLevel: number;
   /** Which repack path the LAST fetched brick took, with the reason when it
    * fell back to the CPU (debug report only): "gpu", "cpu:phasor",
    * "cpu:no-repacker", "cpu:pending"/"cpu:broken", "cpu:unsupported:<kind>". */
@@ -239,9 +274,23 @@ export type BrickSystemStats = {
   repackMs: number;
   /** GPU-repacked bricks (compute dispatch instead of worker + upload). */
   gpuBricks: number;
-  /** Wall time from batch submit to min/max readback (overlaps rendering —
-   * not main-thread time; compare against repackMs+uploadMs per brick). */
-  gpuRepackMs: number;
+  /** NOT A COST. Sum over flushes of submit→min/max-readback LATENCY. One flush
+   * is submitted per drainUploads (i.e. per frame) and flushes OVERLAP, so this
+   * double-counts wall time and is not additive with anything. It also excludes
+   * every synchronous part of the submit path — the chunk writeBuffer, params
+   * packing, encoder recording and queue.submit all run before the first await
+   * inside flush(), so they land in `uploadMs`. Do NOT divide it by gpuBricks:
+   * a batch of one brick bills a full submit→map round trip (~1.5 vsync) and
+   * reads as "24 ms per brick" when the real main-thread cost is `uploadMs`.
+   * For the honest per-brick cost use uploadMs; for pipeline health use
+   * timeToSharpMs; for the worst single round trip use gpuRepackLatencyMaxMs. */
+  gpuRepackLatencyMsSum: number;
+  /** Longest single submit→readback round trip. A real regression moves THIS. */
+  gpuRepackLatencyMaxMs: number;
+  /** Batch sizes seen by the GPU repacker: total dispatched bricks / flushes.
+   * A mean near 1 means the 32 s-style latency sums are pure pipeline latency
+   * with no batching to amortize them. */
+  gpuRepackFlushes: number;
   uploadMs: number;
   /** WALL-CLOCK ms from "plan enqueued work while idle" to "pipeline drained"
    * (queue+inFlight+pendingFetch empty) — the honest time-to-sharp number.
@@ -257,6 +306,9 @@ export type BrickSystemStats = {
   planDrops: number;
   /** Planned bricks that found every slot protected at drain time. */
   acquireFailures: number;
+  /** Residents released because they were finer than every plan's target level
+   * — slots the shader could never read, reclaimed as cache headroom. */
+  trimmed: number;
   /** Bricks whose fetch completed after the plan moved on: repack and upload
    * skipped, decoded chunks retained in the cache (flip-back stays cheap). */
   staleFetches: number;
@@ -267,7 +319,11 @@ export type BrickSystemStats = {
 };
 
 export class BrickResidencyManager {
+  /** Keyed by POOL KEY (content address), not layer id — see `buildPoolKey`. */
   private readonly pools = new Map<string, LayerBrickPool>();
+  /** layer id → pool key, so the public per-layer accessors (`getLayerPool`,
+   * `sampleResident`, …) keep their signatures and every consumer is unchanged. */
+  private readonly layerToPoolKey = new Map<string, string>();
   private readonly chunkCache = new ByteBudgetChunkCache(DECODED_CHUNK_CACHE_BYTES);
   /** Per-store zarr chunk-key encoders for the sync chunk-cache probe read
    * (`sampleChunkCacheSync`). null = metadata resolution in flight. */
@@ -352,7 +408,9 @@ export class BrickResidencyManager {
     fetchMs: 0,
     repackMs: 0,
     gpuBricks: 0,
-    gpuRepackMs: 0,
+    gpuRepackLatencyMsSum: 0,
+    gpuRepackLatencyMaxMs: 0,
+    gpuRepackFlushes: 0,
     uploadMs: 0,
     timeToSharpMs: 0,
     bricksUploaded: 0,
@@ -361,6 +419,7 @@ export class BrickResidencyManager {
     evictions: 0,
     planDrops: 0,
     acquireFailures: 0,
+    trimmed: 0,
     staleFetches: 0,
     staleUploads: 0,
     fetchErrors: 0,
@@ -410,18 +469,32 @@ export class BrickResidencyManager {
       [Math.floor(sx / 2), Math.floor(sy / 2), Math.floor(sz / 2)],
       [Math.floor(sx / 4), Math.floor(sy / 4), Math.floor(sz / 4)],
     ];
+    // Any member resolves to this same pool, so the probe reads the shared
+    // atlas regardless of which id it goes through.
+    const anyMember = pool.members.values().next().value;
+    if (anyMember === undefined) return [];
     return voxels.map((voxel) => ({
       voxel,
       values: Array.from({ length: pool.spec.channelCount }, (_, channel) =>
-        this.sampleResident(pool.layerId, voxel, 0, channel),
+        this.sampleResident(anyMember, voxel, 0, channel),
       ),
     }));
   }
 
   /** Structured snapshot for the DebugPanel's copyable report. */
   buildDebugReport(): Record<string, unknown> {
+    let atlasBytesTotal = 0;
+    for (const pool of this.pools.values()) atlasBytesTotal += pool.atlas.backing.byteLength;
     return {
       stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
+      /** Pools, NOT layers. Fewer pools than layers means sharing is working;
+       * one pool per layer over the same image means the key is splitting on
+       * something it should not (compare the `poolKey`s). */
+      poolCount: this.pools.size,
+      layerCount: this.layerToPoolKey.size,
+      /** Summed atlas backing across pools. The GPU texture costs the same
+       * again, so the real footprint is roughly twice this. */
+      atlasBytesTotal,
       timeToSharpRing: this.timeToSharpRing.map((ms) => Math.round(ms)),
       gpuRepack:
         this.gpuRepacker === undefined
@@ -436,7 +509,10 @@ export class BrickResidencyManager {
           residentByLevel[level] = (residentByLevel[level] ?? 0) + 1;
         }
         return {
-          layerId: pool.layerId,
+          poolKey: pool.poolKey,
+          /** Every layer this pool backs. Four ids here = four layers sharing
+           * one atlas (the one-layer-per-channel case). */
+          members: [...pool.members],
           mode: pool.mode,
           spec: {
             payload: pool.spec.payload,
@@ -498,12 +574,23 @@ export class BrickResidencyManager {
   }
 
   getLayerPool(layerId: string): LayerBrickPool | null {
-    return this.pools.get(layerId) ?? null;
+    return this.poolFor(layerId);
+  }
+
+  /** The pool backing a layer. Layers sharing a content address share the pool,
+   * so several ids can resolve to the same object — by design. */
+  private poolFor(layerId: string): LayerBrickPool | null {
+    const poolKey = this.layerToPoolKey.get(layerId);
+    if (poolKey === undefined) return null;
+    return this.pools.get(poolKey) ?? null;
   }
 
   snapshotResidency(): Record<string, ResidentBrickInfo[]> {
     const result: Record<string, ResidentBrickInfo[]> = {};
-    for (const [layerId, pool] of this.pools) {
+    // Still keyed by LAYER id (the overlay indexes by layer). Members of one
+    // shared pool report the same residency because they literally have it.
+    const byPool = new Map<string, ResidentBrickInfo[]>();
+    for (const [poolKey, pool] of this.pools) {
       const entries: ResidentBrickInfo[] = [];
       for (const key of pool.pool.keys()) {
         const { level, coords } = parseNodeKey(key);
@@ -513,7 +600,11 @@ export class BrickResidencyManager {
         const { level, coords } = parseNodeKey(key);
         entries.push({ level, coords, empty: true });
       }
-      result[layerId] = entries;
+      byPool.set(poolKey, entries);
+    }
+    for (const [layerId, poolKey] of this.layerToPoolKey) {
+      const entries = byPool.get(poolKey);
+      if (entries) result[layerId] = entries;
     }
     return result;
   }
@@ -604,7 +695,7 @@ export class BrickResidencyManager {
     desiredLevel: number,
     channel: number,
   ): number | null {
-    const pool = this.pools.get(layerId);
+    const pool = this.poolFor(layerId);
     if (!pool) return null;
     const read = this.resolveResidentRead(pool, baseVoxel, desiredLevel);
     if (!read) return null;
@@ -627,7 +718,7 @@ export class BrickResidencyManager {
     baseVoxel: Vec3,
     desiredLevel: number,
   ): { values: number[]; level: number } | null {
-    const pool = this.pools.get(layerId);
+    const pool = this.poolFor(layerId);
     if (!pool) return null;
     const read = this.resolveResidentRead(pool, baseVoxel, desiredLevel);
     if (!read) return null;
@@ -795,7 +886,7 @@ export class BrickResidencyManager {
     layerId: string,
     baseVoxel: Vec3,
   ): Promise<{ values: number[]; sliceSignature: string } | null> {
-    const pool = this.pools.get(layerId);
+    const pool = this.poolFor(layerId);
     if (!pool || hasPhasorSlabs(pool.geometry)) return null;
     const sliceSignature = pool.sliceSignature;
     const { geometry } = pool;
@@ -864,7 +955,7 @@ export class BrickResidencyManager {
     );
 
     if (this.disposed) return null;
-    const current = this.pools.get(layerId);
+    const current = this.poolFor(layerId);
     if (!current || current.sliceSignature !== sliceSignature) return null;
     return { values, sliceSignature };
   }
@@ -875,6 +966,22 @@ export class BrickResidencyManager {
     this.drainNeeded = true;
   }
 
+  /**
+   * Three passes, because pools are shared across layers:
+   *
+   *  1. DERIVE — per layer, resolve geometry/spec/viability and its pool key.
+   *     Nothing is created; layers that group onto one key are collected.
+   *  2. MATERIALIZE — get-or-create one pool per distinct key (the byte budget
+   *     divides by the DISTINCT POOL count, not the layer count), reconcile
+   *     membership, dispose pools nobody claims.
+   *  3. RECONCILE — once per pool, against the UNION of its members' plans.
+   *
+   * The union matters: members' plans are not identical (each layer has its own
+   * view range and voxel→world transform), so reconciling per layer against one
+   * shared pool would have each member clobber the previous one's protected set
+   * and pending fetches. A union is a superset of every member plan, so no
+   * member is ever starved of a brick it planned.
+   */
   private reconcileAll(plans: Record<string, LayerNodePlan>): void {
     if (this.disposed) return;
     this.wakeDrain();
@@ -883,25 +990,90 @@ export class BrickResidencyManager {
     this.fetchGeneration += 1;
     const layers = this.deps.sceneStore.getState().layers;
 
-    // Dispose pools whose layer or plan vanished.
-    for (const [layerId, pool] of [...this.pools]) {
-      if (!plans[layerId] || !layers.find((l) => l.id === layerId)) {
-        this.disposePool(pool);
-        this.pools.delete(layerId);
-        this.layerDerivationCache.delete(layerId);
-      }
-    }
-
-    const planCount = Math.max(1, Object.keys(plans).length);
+    // --- Pass 1: derive ---------------------------------------------------
+    type Group = {
+      derivation: PoolDerivation;
+      layers: LayerState[];
+      plans: LayerNodePlan[];
+      /** Every member's own derivation, for the dev-only join assertion. */
+      derivations: PoolDerivation[];
+    };
+    const groups = new Map<string, Group>();
     for (const [layerId, plan] of Object.entries(plans)) {
       const layer = layers.find((l) => l.id === layerId);
       if (!layer) continue;
       try {
-        this.reconcileLayer(layer, plan, planCount);
+        const derivation = this.derivePool(layer, plan);
+        if (!derivation) continue;
+        const group = groups.get(derivation.poolKey);
+        if (group) {
+          group.layers.push(layer);
+          group.plans.push(plan);
+          group.derivations.push(derivation);
+        } else {
+          groups.set(derivation.poolKey, {
+            derivation,
+            layers: [layer],
+            plans: [plan],
+            derivations: [derivation],
+          });
+        }
       } catch (error) {
-        // Contain per-layer failures (e.g. an atlas allocation error): one bad
-        // layer must not abort reconciliation of the remaining layers.
-        console.warn(`[bricks] reconcile failed for ${layerId}`, error);
+        // Contain per-layer failures: one bad layer must not abort the rest.
+        console.warn(`[bricks] derivation failed for ${layerId}`, error);
+      }
+    }
+
+    // Derivation caches for layers that vanished entirely.
+    for (const layerId of [...this.layerDerivationCache.keys()]) {
+      if (!plans[layerId] || !layers.find((l) => l.id === layerId)) {
+        this.layerDerivationCache.delete(layerId);
+      }
+    }
+    // --- Pass 2: materialize ---------------------------------------------
+    const planCount = Math.max(1, groups.size);
+    const live = new Set<string>();
+    for (const [poolKey, group] of groups) {
+      try {
+        const pool = this.ensurePool(group.derivation, group.layers, planCount);
+        if (!pool) continue;
+        live.add(pool.poolKey);
+        pool.members = new Set(group.layers.map((l) => l.id));
+        if (import.meta.env?.DEV) {
+          for (const derivation of group.derivations) {
+            this.assertFixedIndicesMatch(pool, derivation);
+          }
+        }
+      } catch (error) {
+        console.warn(`[bricks] pool creation failed for ${poolKey}`, error);
+      }
+    }
+
+    // Pools nobody claims any more (layer removed, or its key moved and the
+    // pool could not be flushed in place).
+    for (const [poolKey, pool] of [...this.pools]) {
+      if (live.has(poolKey)) continue;
+      this.disposePool(pool);
+      this.pools.delete(poolKey);
+    }
+
+    // Rebuild the layer→pool index from what actually exists, rather than
+    // patching it per group: a layer whose pool failed to materialize (store
+    // not open yet, unviable geometry) must resolve to null, not to whatever
+    // pool it had last reconcile.
+    this.layerToPoolKey.clear();
+    for (const pool of this.pools.values()) {
+      for (const layerId of pool.members) this.layerToPoolKey.set(layerId, pool.poolKey);
+    }
+
+    // --- Pass 3: reconcile each pool once --------------------------------
+    for (const group of groups.values()) {
+      const pool = this.pools.get(group.derivation.poolKey);
+      if (!pool) continue;
+      try {
+        this.reconcilePool(pool, group.plans);
+      } catch (error) {
+        console.warn(`[bricks] reconcile failed for pool ${pool.poolKey}`, error);
       }
     }
 
@@ -922,11 +1094,45 @@ export class BrickResidencyManager {
     return false;
   }
 
-  private reconcileLayer(layer: LayerState, plan: LayerNodePlan, planCount: number): void {
-    const pool = this.ensurePool(layer, plan, planCount);
-    if (!pool) return;
+  /**
+   * Dev-only invariant: a layer joining an existing pool must agree on the
+   * collapsed non-spatial indices. The key does not carry them directly — it
+   * carries `sliceSignature` plus each level's chunking, which are exactly the
+   * inputs of `computeFixedIndices`, so agreement is implied. This turns that
+   * inference into something that fails loudly if either side ever changes.
+   */
+  private assertFixedIndicesMatch(pool: LayerBrickPool, derivation: PoolDerivation): void {
+    const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(
+      derivation.layer,
+      derivation.geometry,
+      derivation.levels as LevelSource[],
+    );
+    const same =
+      fixedChunkCoords.length === pool.fixedChunkCoords.length &&
+      fixedOffsets.length === pool.fixedOffsets.length &&
+      fixedChunkCoords.every((v, i) => v === pool.fixedChunkCoords[i]) &&
+      fixedOffsets.every((v, i) => v === pool.fixedOffsets[i]);
+    if (!same) {
+      console.error(
+        `[bricks] pool key collision: layer ${derivation.layer.id} joined pool ` +
+          `${pool.poolKey} but resolves different fixed indices ` +
+          `(${JSON.stringify({ fixedChunkCoords, fixedOffsets })} vs ` +
+          `${JSON.stringify({
+            fixedChunkCoords: pool.fixedChunkCoords,
+            fixedOffsets: pool.fixedOffsets,
+          })}). The key is missing a field.`,
+      );
+    }
+  }
 
-    const planKeys = new Set(plan.nodes.map((node) => node.key));
+  /** Reconcile one pool against the union of its members' plans. */
+  private reconcilePool(pool: LayerBrickPool, plans: readonly LayerNodePlan[]): void {
+    // UNION across members: a brick planned by any member must be fetched and
+    // protected, because they all read the same atlas.
+    const planKeys = new Set<string>();
+    for (const plan of plans) {
+      for (const node of plan.nodes) planKeys.add(node.key);
+    }
 
     // Everything in the plan is protected; the coarsest level stays pinned so
     // the shader's fallback of last resort survives any eviction pressure.
@@ -965,17 +1171,77 @@ export class BrickResidencyManager {
     // while zooming in). Only the tier profile's maxInflightBricks run
     // concurrently; the rest wait in pendingFetch.
     // Reversed: startNextFetches pops from the tail.
-    pool.pendingFetch = plan.nodes
-      .filter(
-        (node) =>
-          !pool.pool.has(node.key) &&
-          !pool.emptyValues.has(node.key) &&
-          !pool.inFlight.has(node.key) &&
-          !pool.queuedKeys.has(node.key),
-      )
-      .sort(compareFetchOrder)
-      .reverse();
+    // Deduped by key across members — two layers planning the same brick must
+    // enqueue one fetch, not two (the second would be dropped by the guards in
+    // startNextFetches anyway, but only after occupying a queue slot).
+    const seen = new Set<string>();
+    const pending: PlannedNode[] = [];
+    for (const plan of plans) {
+      for (const node of plan.nodes) {
+        if (seen.has(node.key)) continue;
+        seen.add(node.key);
+        if (
+          pool.pool.has(node.key) ||
+          pool.emptyValues.has(node.key) ||
+          pool.inFlight.has(node.key) ||
+          pool.queuedKeys.has(node.key)
+        ) {
+          continue;
+        }
+        pending.push(node);
+      }
+    }
+    pool.pendingFetch = pending.sort(compareFetchOrder).reverse();
+
+    // Reclaim headroom BEFORE dispatching, so this reconcile's fetches land in
+    // free slots instead of evicting each other.
+    this.trimUnreachableResidents(pool, plans);
+
     this.startNextFetches(pool);
+  }
+
+  /**
+   * Release residents the shader provably cannot sample — bricks finer than
+   * every member plan's target level (see `selectTrimCandidates`).
+   *
+   * Headroom-triggered, not unconditional: trimming costs a refetch if the plan
+   * zooms back in, so it only fires once the pool's deliberate cache headroom
+   * is actually gone. The 512 MB decoded-chunk cache means a flip-back is a
+   * repack rather than a network round trip, which bounds the downside.
+   */
+  private trimUnreachableResidents(
+    pool: LayerBrickPool,
+    plans: readonly LayerNodePlan[],
+  ): void {
+    let minTargetLevel = Number.POSITIVE_INFINITY;
+    for (const plan of plans) minTargetLevel = Math.min(minTargetLevel, plan.targetLevel);
+    if (!Number.isFinite(minTargetLevel)) minTargetLevel = 0;
+    // Also gates the stale drain (partitionUploadQueue), so it is recorded even
+    // when no trimming is needed this pass.
+    pool.minTargetLevel = minTargetLevel;
+    if (minTargetLevel <= 0) return;
+
+    const free = pool.pool.capacity - pool.pool.size;
+    if (free >= MIN_POOL_HEADROOM_SLOTS) return;
+
+    const victims = selectTrimCandidates({
+      keys: pool.pool.keys(),
+      protectedKeys: pool.protectedKeys,
+      levelOf: (key) => parseNodeKey(key).level,
+      minTargetLevel,
+      needed: MIN_POOL_HEADROOM_SLOTS - free,
+    });
+
+    for (const key of victims) {
+      const { level, coords } = parseNodeKey(key);
+      pool.pool.release(key);
+      setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
+      pool.gpuStaleKeys.delete(key);
+      pool.coarsestResident.delete(key);
+      this.stats.trimmed += 1;
+    }
+    // The page writes land in the dirty region; drainUploads flushes every
+    // pool's page table and reconcileAll has already called wakeDrain().
   }
 
   private startNextFetches(pool: LayerBrickPool): void {
@@ -995,11 +1261,12 @@ export class BrickResidencyManager {
     }
   }
 
-  private ensurePool(
-    layer: LayerState,
-    plan: LayerNodePlan,
-    planCount: number,
-  ): LayerBrickPool | null {
+  /**
+   * Everything needed to key and build a pool for one layer, with no side
+   * effects beyond the derivation cache. Returns null when the layer cannot
+   * back a pool (store not resolvable yet, no usable geometry, or unviable).
+   */
+  private derivePool(layer: LayerState, plan: LayerNodePlan): PoolDerivation | null {
     const viewerState = this.deps.viewerStore.getState();
 
     let levels: LevelSource[];
@@ -1033,12 +1300,11 @@ export class BrickResidencyManager {
       geometry = built;
       spec = resolveBrickSpec(geometry, plan.mode);
       viability = assessPoolViability(geometry, spec);
-      structureSignature = JSON.stringify({
+      structureSignature = buildStructureSignature({
         mode: plan.mode,
-        payload: spec.payload,
-        border: spec.border,
-        channels: spec.channelCount,
-        levels: levels.map((l) => ({ shape: l.shape, chunks: l.chunks, dtype: l.dtype, storeId: l.storeId })),
+        spec,
+        geometry,
+        levels,
       });
       this.layerDerivationCache.set(layer.id, {
         layer,
@@ -1080,16 +1346,78 @@ export class BrickResidencyManager {
       return null;
     }
 
-    const existing = this.pools.get(layer.id);
-    if (existing && existing.structureSignature === structureSignature) {
-      if (existing.sliceSignature !== plan.sliceSignature) {
-        this.flushPool(existing, plan.sliceSignature, layer, levels);
+    const dtype = geometry.levels[0].dtype;
+    const dataRange = resolveLayerDataRange(layer, dtype);
+    return {
+      layer,
+      mode: plan.mode,
+      levels,
+      geometry,
+      spec,
+      structureSignature,
+      sliceSignature: plan.sliceSignature,
+      dataRange,
+      poolKey: buildPoolKey({
+        mode: plan.mode,
+        spec,
+        geometry,
+        levels,
+        sliceSignature: plan.sliceSignature,
+        dataRange,
+      }),
+    };
+  }
+
+  /**
+   * Get-or-create the pool for one derivation group.
+   *
+   * `planCount` is the number of DISTINCT POOLS, not layers — it divides the
+   * volume-texture budget, and `nodePlanTracker` must count the same way or
+   * plans will request more slots than the atlas holds.
+   */
+  private ensurePool(
+    derivation: PoolDerivation,
+    members: readonly LayerState[],
+    planCount: number,
+  ): LayerBrickPool | null {
+    const viewerState = this.deps.viewerStore.getState();
+    const { levels, geometry, spec, structureSignature, poolKey } = derivation;
+    const layer = derivation.layer;
+
+    const existing = this.pools.get(poolKey);
+    if (existing) return existing;
+
+    // The key moved but the STRUCTURE did not — a slice change (dim slider, new
+    // lens slice) or a value-range change. Reuse the allocation: flushing costs
+    // a refetch, reallocating costs a refetch AND a fresh multi-hundred-MB
+    // atlas. Only valid when the whole membership moves together; a partial
+    // move means some layers still need the old contents, so that pool stays
+    // and this group gets a new one.
+    const movable = [...this.pools.values()].find(
+      (pool) =>
+        pool.structureSignature === structureSignature &&
+        pool.members.size === members.length &&
+        members.every((m) => pool.members.has(m.id)),
+    );
+    if (movable) {
+      this.pools.delete(movable.poolKey);
+      this.prefetchedSlabMarker.delete(movable.poolKey);
+      if (movable.sliceSignature !== derivation.sliceSignature) {
+        this.flushPool(movable, derivation.sliceSignature, layer, levels as LevelSource[]);
       }
-      return existing;
-    }
-    if (existing) {
-      this.disposePool(existing);
-      this.pools.delete(layer.id);
+      if (
+        movable.minValue !== derivation.dataRange[0] ||
+        movable.maxValue !== derivation.dataRange[1]
+      ) {
+        // EMPTY page entries quantize against the pool range, so a range move
+        // invalidates every one of them (see reencodeEmptyEntries).
+        movable.minValue = derivation.dataRange[0];
+        movable.maxValue = derivation.dataRange[1];
+        movable.autoRangeEncodeDirty = true;
+      }
+      movable.poolKey = poolKey;
+      this.pools.set(poolKey, movable);
+      return movable;
     }
 
     const layout = buildPageTableLayout(geometry, spec.payload, PAGE_TEXTURE_MAX_EXTENT);
@@ -1129,6 +1457,9 @@ export class BrickResidencyManager {
       dtype: geometry.levels[0].dtype,
       kind: atlasKind,
       desiredSlots,
+      // The P16 floor travels with the request so the grid factorization can
+      // tell "under budget" from "cannot hold the coarsest level".
+      minSlots,
       maxExtent: maxTextureExtent,
       filter: spec.border > 0 ? "linear" : "nearest",
       // A phasor layer never repacks on the GPU (the kernel cannot reduce), so
@@ -1146,20 +1477,29 @@ export class BrickResidencyManager {
       ).initTexture?.(atlas.texture);
     }
 
-    const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(layer, geometry, levels);
+    const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(
+      layer,
+      geometry,
+      levels as LevelSource[],
+    );
 
     const dtype = geometry.levels[0].dtype;
-    const [minValue, maxValue] = resolveLayerDataRange(layer, dtype);
+    const [minValue, maxValue] = derivation.dataRange;
     // Float layers without a server histogram normalize against the `[0,1]`
     // dtype fallback, which whites-out any data valued >1. Accumulate the real
     // range from decoded bricks instead (see `accumulateAutoRange`).
+    //
+    // Not a pool-key field: it is implied by dtype (keyed) plus "the range fell
+    // back to the dtype's" (keyed as dataRange), so members always agree — see
+    // the poolKey module doc.
     const autoRange =
       (dtype === "float32" || dtype === "float64") && serverHistogramRange(layer) === null;
 
     const pool: LayerBrickPool = {
-      layerId: layer.id,
-      mode: plan.mode,
-      sliceSignature: plan.sliceSignature,
+      poolKey,
+      members: new Set(members.map((m) => m.id)),
+      mode: derivation.mode,
+      sliceSignature: derivation.sliceSignature,
       structureSignature,
       geometry,
       spec,
@@ -1181,9 +1521,10 @@ export class BrickResidencyManager {
       autoRangeEncodeDirty: false,
       autoRangeInitialized: false,
       gpuStaleKeys: new Set(),
+      minTargetLevel: 0,
       lastRepackPath: null,
     };
-    this.pools.set(layer.id, pool);
+    this.pools.set(poolKey, pool);
     // Warm the sync-probe chunk-key encoders for every level now — the debug
     // report's channel-slab probe runs synchronously and cannot await the
     // metadata (see warmChunkKeyEncoder).
@@ -1439,7 +1780,7 @@ export class BrickResidencyManager {
     } catch (error) {
       if (!controller.signal.aborted) {
         this.stats.fetchErrors += 1;
-        console.warn(`[bricks] fetch failed for ${pool.layerId} ${node.key}`, error);
+        console.warn(`[bricks] fetch failed for pool ${pool.poolKey} ${node.key}`, error);
       }
     } finally {
       pool.inFlight.delete(node.key);
@@ -1521,7 +1862,7 @@ export class BrickResidencyManager {
         },
         chunkKeys: pending.gpu.chunks.map((chunk) => chunk.cacheKey),
         slotCoords: acquired.slot.coords,
-        token: { layerId: pool.layerId, key: pending.key, slotIndex: acquired.slot.index },
+        token: { poolKey: pool.poolKey, key: pending.key, slotIndex: acquired.slot.index },
       });
       this.stats.gpuBricks += 1;
       pool.gpuStaleKeys.add(pending.key);
@@ -1594,6 +1935,7 @@ export class BrickResidencyManager {
         pool.queue,
         pool.protectedKeys,
         MAX_STALE_QUEUE,
+        pool.minTargetLevel,
       );
       for (const entry of dropped) {
         pool.queuedKeys.delete(entry.key);
@@ -1643,9 +1985,17 @@ export class BrickResidencyManager {
     // frame). The min/max readback resolves asynchronously.
     const gpuFlush = this.gpuRepacker ? this.gpuRepacker.flush() : null;
     if (gpuFlush) {
+      // The clock starts AFTER flush() returns, so what follows is post-submit
+      // latency only — see the gpuRepackLatencyMsSum doc on why the sum is not
+      // a cost. The max and the flush count are the numbers worth reading.
       const flushStartedAt = performance.now();
+      this.stats.gpuRepackFlushes += 1;
       void gpuFlush.then((outcome) => {
-        this.stats.gpuRepackMs += performance.now() - flushStartedAt;
+        const latency = performance.now() - flushStartedAt;
+        this.stats.gpuRepackLatencyMsSum += latency;
+        if (latency > this.stats.gpuRepackLatencyMaxMs) {
+          this.stats.gpuRepackLatencyMaxMs = latency;
+        }
         this.applyGpuOutcome(outcome);
       });
     }
@@ -1737,7 +2087,7 @@ export class BrickResidencyManager {
       // The copy is only valid while the brick still owns the slot it was
       // uploaded into — evictions, remaps and flushes may have intervened,
       // and mirroring then would corrupt another brick's mirror slot.
-      if (this.pools.get(pool.layerId) !== pool) continue;
+      if (this.pools.get(pool.poolKey) !== pool) continue;
       const slot = pool.pool.slotOf(key);
       if (!slot || slot.index !== slotIndex) continue;
       mirrorBrickToBacking(pool.atlas, slotCoords, data);
@@ -1914,8 +2264,21 @@ export class BrickResidencyManager {
     }
 
     if (touchedPools.size > 0) {
-      for (const pool of touchedPools) flushPageTable(this.deps.renderer, pool.pageTable);
-      this.deps.viewerStore.getState().bumpResidencyVersion();
+      // The page-table flush and the invalidate are the correctness half and
+      // stay unconditional. The store bump is throttled exactly as the drain
+      // path throttles it (see drainUploads) — this continuation runs once per
+      // GPU flush, i.e. up to once per frame, and every bump re-renders the
+      // residencyVersion consumers. The `!streaming` clause guarantees the
+      // drained edge always lands, so consumers settle on the complete state.
+      const now = performance.now();
+      const streaming = this.anyPipelineWork();
+      if (
+        !streaming ||
+        now - this.lastResidencyBumpAt > qualityGovernor.getProfile().residencyBumpMs
+      ) {
+        this.lastResidencyBumpAt = now;
+        this.deps.viewerStore.getState().bumpResidencyVersion();
+      }
       this.deps.invalidate();
     }
   }
@@ -1923,14 +2286,14 @@ export class BrickResidencyManager {
   /** The pool for a GPU token, iff the brick still occupies the slot it was
    * dispatched into (nothing evicted, remapped, flushed, or disposed since). */
   private resolveGpuToken(token: GpuBrickToken): LayerBrickPool | null {
-    const pool = this.pools.get(token.layerId);
+    const pool = this.pools.get(token.poolKey);
     if (!pool) return null;
     const slot = pool.pool.slotOf(token.key);
     if (!slot || slot.index !== token.slotIndex) return null;
     return pool;
   }
 
-  /** One prefetch marker per layer: `sliceSignature|slabZ` last prefetched. */
+  /** One prefetch marker per POOL (key): `sliceSignature|slabZ` last prefetched. */
   private readonly prefetchedSlabMarker = new Map<string, string>();
 
   /**
@@ -1954,13 +2317,24 @@ export class BrickResidencyManager {
 
     for (const pool of this.pools.values()) {
       if (pool.mode !== "2D" || pool.geometry.axes.zPos === -1) continue;
-      const plan = state.nodePlans[pool.layerId];
+      // Any member's plan will do: members share a slice signature and mode, so
+      // they agree on slabZ (it derives from the scene-wide currentZ). They can
+      // differ in view range, which only affects WHICH nodes are planned — and
+      // the prefetch reads nodes at targetLevel purely to warm the chunk cache.
+      let plan: LayerNodePlan | undefined;
+      for (const layerId of pool.members) {
+        const candidate = state.nodePlans[layerId];
+        if (candidate) {
+          plan = candidate;
+          break;
+        }
+      }
       if (!plan || plan.mode !== "2D" || plan.slabZ === null || plan.slabZ === undefined) {
         continue;
       }
       const marker = `${pool.sliceSignature}|${plan.slabZ}`;
-      if (this.prefetchedSlabMarker.get(pool.layerId) === marker) continue;
-      this.prefetchedSlabMarker.set(pool.layerId, marker);
+      if (this.prefetchedSlabMarker.get(pool.poolKey) === marker) continue;
+      this.prefetchedSlabMarker.set(pool.poolKey, marker);
 
       const baseLevel = pool.geometry.levels[0];
       const issued = new Set<string>();
@@ -2088,7 +2462,7 @@ export class BrickResidencyManager {
   private disposePool(pool: LayerBrickPool): void {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
-    this.prefetchedSlabMarker.delete(pool.layerId);
+    this.prefetchedSlabMarker.delete(pool.poolKey);
     disposeBrickAtlas(pool.atlas);
     disposePageTable(pool.pageTable);
     // Pool lifecycle event — layer components must drop their pool handle.

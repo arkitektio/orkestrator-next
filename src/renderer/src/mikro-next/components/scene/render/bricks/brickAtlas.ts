@@ -30,10 +30,63 @@ export type BrickAtlas = {
   backing: BrickArray;
 };
 
+/**
+ * Factor `desiredSlots` into a slot grid that fits the texture-extent caps and
+ * NEVER exceeds the requested slot count.
+ *
+ * The rectangular grid used to be built by rounding UP (`ceil(wanted / gx)`),
+ * which quietly overshot the byte budget it was derived from: 202 requested
+ * slots became 31×7×1 = 217, i.e. 137 MiB against a 128 MiB cap — 7.4% over,
+ * per pool, unaudited. Since `desiredSlots` is already `floor(budget /
+ * slotBytes)`, the invariant "product ≤ desiredSlots" is exactly the invariant
+ * "capacity × slotBytes ≤ budget".
+ *
+ * `minSlots` is the P16 coarsest-grid floor, which DELIBERATELY overrides the
+ * byte budget — a pool that cannot hold its own coarsest level has no fallback
+ * chain and renders nothing. When no in-budget factorization reaches it, the
+ * floor wins and the overshoot is intentional.
+ */
+export function chooseSlotGrid(
+  desiredSlots: number,
+  maxSlots: Vec3,
+  minSlots = 1,
+): { slotGrid: Vec3; capacity: number } {
+  const wanted = Math.max(1, Math.floor(desiredSlots));
+  let best: Vec3 = [1, 1, 1];
+  let bestCapacity = 1;
+
+  // Search x downward: wide-and-flat grids keep z (the axis the channel slabs
+  // multiply) small, which is the axis most likely to hit the extent cap.
+  for (let gx = Math.min(maxSlots[0], wanted); gx >= 1; gx--) {
+    const gy = Math.min(maxSlots[1], Math.floor(wanted / gx));
+    if (gy < 1) continue;
+    const gz = Math.min(maxSlots[2], Math.floor(wanted / (gx * gy)));
+    if (gz < 1) continue;
+    const capacity = gx * gy * gz;
+    if (capacity > wanted) continue; // never overshoot the budget
+    if (capacity > bestCapacity) {
+      bestCapacity = capacity;
+      best = [gx, gy, gz];
+      if (capacity === wanted) break; // exact factorization; cannot do better
+    }
+  }
+
+  if (bestCapacity >= minSlots) return { slotGrid: best, capacity: bestCapacity };
+
+  // The coarsest-level floor could not be met inside the budget. Fall back to
+  // the round-up grid and accept the overshoot — see the P16 note above.
+  const gx = Math.min(maxSlots[0], Math.max(1, minSlots));
+  const gy = Math.min(maxSlots[1], Math.ceil(minSlots / gx));
+  const gz = Math.min(maxSlots[2], Math.ceil(minSlots / (gx * gy)));
+  return { slotGrid: [gx, gy, gz], capacity: gx * gy * gz };
+}
+
 export function createBrickAtlas(opts: {
   spec: BrickSpec;
   dtype: string;
   desiredSlots: number;
+  /** P16 coarsest-grid floor; overrides the byte budget when they conflict. */
+  minSlots?: number;
   maxExtent: number;
   filter: "linear" | "nearest";
   /**
@@ -65,12 +118,12 @@ export function createBrickAtlas(opts: {
     Math.max(1, Math.floor(maxExtent / slotSize[1])),
     Math.max(1, Math.floor(maxExtent / slotSize[2])),
   ];
-  const wanted = Math.max(1, desiredSlots);
-  const gx = Math.min(maxSlots[0], wanted);
-  const gy = Math.min(maxSlots[1], Math.ceil(wanted / gx));
-  const gz = Math.min(maxSlots[2], Math.ceil(wanted / (gx * gy)));
-  const slotGrid: Vec3 = [gx, gy, gz];
-  const capacity = gx * gy * gz;
+  const { slotGrid, capacity } = chooseSlotGrid(
+    desiredSlots,
+    maxSlots,
+    opts.minSlots ?? 1,
+  );
+  const [gx, gy, gz] = slotGrid;
 
   const size: Vec3 = [gx * slotSize[0], gy * slotSize[1], gz * slotSize[2]];
   const elementCount = size[0] * size[1] * size[2];

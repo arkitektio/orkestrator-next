@@ -12,6 +12,8 @@ import {
   decodeOrderedF32,
   dispatchWorkgroups,
   encodeOrderedF32,
+  ownedGridBox,
+  REPACK_WORKGROUP_SIZE,
   packKernelParams,
   r8JobLayout,
   type KernelDispatch,
@@ -78,9 +80,16 @@ const makeInput = (brickCoords: [number, number, number]): RepackDispatchInput =
 const clampI = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 /**
- * Execute one dispatch exactly as the WGSL kernel does, per invocation.
- * `writes` counts texel coverage so the ownership-partition invariant
- * (every texel written exactly once across a brick's dispatches) is checked.
+ * Execute one dispatch exactly as the WGSL kernel does, per invocation —
+ * INCLUDING the grid geometry, so a wrong `ownedGridBox` shows up here as
+ * dropped or duplicated texels rather than as silent corruption on the GPU.
+ *
+ * The loop bounds mirror `dispatchWorkgroups` (workgroup-rounded, hence the
+ * tail that the in-kernel guards must still reject) and the index decode
+ * mirrors the kernel's `grid_origin`/`z_span` arithmetic.
+ *
+ * `writes` counts texel coverage so the ownership-partition invariant (every
+ * texel written exactly once across a brick's dispatches) is checked.
  */
 function simulateDispatch(
   d: KernelDispatch,
@@ -90,11 +99,25 @@ function simulateDispatch(
   minmax: { min: number; max: number },
 ): void {
   const [sx, sy, sz] = d.stored;
-  for (let gz = 0; gz < sz * d.channelCount; gz++) {
-    const c = Math.floor(gz / sz);
-    const z = gz % sz;
-    for (let y = 0; y < sy; y++) {
-      for (let x = 0; x < sx; x++) {
+  const wg = REPACK_WORKGROUP_SIZE;
+  const groups = dispatchWorkgroups(d);
+  const span = Math.max(1, d.gridSize[2]);
+  const channels = Math.max(0, d.chanEnd - d.chanStart);
+  // Workgroup-rounded extents: the real invocation counts the GPU launches.
+  const nx = groups[0] * wg;
+  const ny = groups[1] * wg;
+  const nz = groups[2] * wg;
+  expect(nz).toBeGreaterThanOrEqual(span * channels);
+
+  for (let gz = 0; gz < nz; gz++) {
+    const c = d.chanStart + Math.floor(gz / span);
+    const z = d.gridOrigin[2] + (gz % span);
+    for (let gy = 0; gy < ny; gy++) {
+      const y = d.gridOrigin[1] + gy;
+      for (let gx = 0; gx < nx; gx++) {
+        const x = d.gridOrigin[0] + gx;
+        // The kernel's range guards (tail of the workgroup rounding).
+        if (x >= sx || y >= sy || z >= sz || c >= d.chanEnd) continue;
         const g = [
           clampI(d.destOrigin[0] + x, d.fetchMin[0], d.fetchMax[0] - 1),
           clampI(d.destOrigin[1] + y, d.fetchMin[1], d.fetchMax[1] - 1),
@@ -104,7 +127,7 @@ function simulateDispatch(
           g[0] >= d.lo[0] && g[0] < d.hi[0] &&
           g[1] >= d.lo[1] && g[1] < d.hi[1] &&
           g[2] >= d.lo[2] && g[2] < d.hi[2] &&
-          c >= d.chanStart && c < d.chanEnd;
+          c >= d.chanStart;
         if (!owned) continue;
         const src =
           d.fixedBase +
@@ -478,10 +501,10 @@ describe("ordered f32 encoding", () => {
 });
 
 describe("packKernelParams", () => {
-  it("packs the 36-word struct layout, i32 fields as wrapped bit patterns", () => {
+  it("packs the 40-word struct layout, i32 fields as wrapped bit patterns", () => {
     const [d] = buildKernelDispatches(makeInput([0, 0, 0]), [12, 18, 24], 3);
     expect(d.destOrigin).toEqual([-1, -1, -1]); // corner brick: border leaves the volume
-    const words = new Uint32Array(40); // deliberately larger: offset write
+    const words = new Uint32Array(44); // deliberately larger: offset write
     packKernelParams(d, words, 4);
     const signed = new Int32Array(words.buffer);
     expect([signed[4], signed[5], signed[6]]).toEqual([-1, -1, -1]); // dest_origin
@@ -491,19 +514,83 @@ describe("packKernelParams", () => {
     expect(words[4 + 7]).toBe(3); // brick_index
     expect([words[4 + 28], words[4 + 29], words[4 + 30]]).toEqual([12, 18, 24]); // slot_origin
     expect([words[4 + 33], words[4 + 34]]).toEqual([0, 0]); // r8 addressing defaults
+    expect(words[4 + 35]).toBe(0); // vec3 alignment pad before grid_origin
+    expect([words[4 + 36], words[4 + 37], words[4 + 38]]).toEqual([...d.gridOrigin]);
+    expect(words[4 + 39]).toBe(d.gridSize[2]); // z_span
     expect(words[0]).toBe(0); // untouched before the offset
   });
 
   it("packs the r8 arena addressing into words 33/34", () => {
     const [d] = buildKernelDispatches(makeInput([0, 0, 0]), [0, 0, 0], 0);
-    const words = new Uint32Array(36);
+    const words = new Uint32Array(40);
     packKernelParams(d, words, 0, { outBaseWord: 123, rowWords: 64 });
     expect(words[33]).toBe(123); // out_base_word
     expect(words[34]).toBe(64); // row_words
   });
 
-  it("covers the stored brick with 4³ workgroups (channel slabs on z)", () => {
+  it("covers only the OWNED sub-box, not the whole stored brick", () => {
     const [d] = buildKernelDispatches(makeInput([0, 0, 0]), [0, 0, 0], 0);
-    expect(dispatchWorkgroups(d)).toEqual([2, 2, 3]); // ceil(6/4), ceil(6/4), ceil(12/4)
+    // Stored brick is 6³ over 2 channels; covering all of it per chunk would be
+    // ceil(6/4), ceil(6/4), ceil(6*2/4) = [2, 2, 3]. This chunk owns one
+    // channel, so z shrinks to ceil(zSpan * 1 / 4).
+    const channels = d.chanEnd - d.chanStart;
+    expect(channels).toBe(1);
+    expect(dispatchWorkgroups(d)).toEqual([
+      Math.ceil(d.gridSize[0] / 4),
+      Math.ceil(d.gridSize[1] / 4),
+      Math.ceil((d.gridSize[2] * channels) / 4),
+    ]);
+    expect(dispatchWorkgroups(d)[2]).toBeLessThan(3);
+  });
+});
+
+describe("ownedGridBox", () => {
+  const box = (over: Partial<Parameters<typeof ownedGridBox>[0]> = {}) =>
+    ownedGridBox({
+      destOrigin: [0, 0, 0],
+      stored: [8, 8, 8],
+      fetchMin: [0, 0, 0],
+      fetchMax: [8, 8, 8],
+      lo: [0, 0, 0],
+      hi: [8, 8, 8],
+      ...over,
+    });
+
+  it("covers the whole brick when one chunk owns all of it", () => {
+    expect(box()).toEqual({ gridOrigin: [0, 0, 0], gridSize: [8, 8, 8] });
+  });
+
+  it("narrows to the overlap when a chunk owns only part of an axis", () => {
+    // Chunk covers z in [0, 4) of a fetch box spanning [0, 8).
+    expect(box({ hi: [8, 8, 4] })).toEqual({
+      gridOrigin: [0, 0, 0],
+      gridSize: [8, 8, 4],
+    });
+    // ...and the complementary chunk owns the other half.
+    expect(box({ lo: [0, 0, 4] })).toEqual({
+      gridOrigin: [0, 0, 4],
+      gridSize: [8, 8, 4],
+    });
+  });
+
+  it("gives leading border texels to the chunk whose lo sits at fetchMin", () => {
+    // destOrigin -1 = the brick's border starts one voxel outside the volume;
+    // those texels clamp UP to fetchMin, so they belong to this chunk alone.
+    const owned = box({ destOrigin: [-1, -1, -1], lo: [0, 0, 0], hi: [4, 4, 4] });
+    expect(owned?.gridOrigin).toEqual([0, 0, 0]);
+    // Owned up to and including the texel mapping to voxel 3 → p = 4, size 5.
+    expect(owned?.gridSize).toEqual([5, 5, 5]);
+  });
+
+  it("gives trailing border texels to the chunk whose hi sits at fetchMax", () => {
+    // fetchMax 4 with an 8-deep brick: texels past p=4 clamp DOWN to voxel 3.
+    const owned = box({ fetchMax: [4, 4, 4], lo: [2, 2, 2], hi: [4, 4, 4] });
+    expect(owned?.gridOrigin).toEqual([2, 2, 2]);
+    expect(owned?.gridSize).toEqual([6, 6, 6]); // through the end of the brick
+  });
+
+  it("returns null when the chunk owns no texel of this brick", () => {
+    // Overlap sits entirely beyond the brick's destination window.
+    expect(box({ lo: [16, 0, 0], hi: [24, 8, 8] })).toBeNull();
   });
 });

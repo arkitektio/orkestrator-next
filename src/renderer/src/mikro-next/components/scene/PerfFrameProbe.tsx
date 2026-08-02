@@ -1,5 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { addAfterEffect, addEffect, useThree } from "@react-three/fiber";
 import { TimestampQuery, type WebGPURenderer } from "three/webgpu";
 import { perfMonitor } from "./managers/perfMonitor";
 import { useViewStoreApi } from "./store/viewStore";
@@ -8,8 +8,23 @@ import { useViewStoreApi } from "./store/viewStore";
  * React binding for the opt-in perf monitor. `PerfFrameProbe` is always mounted
  * but does nothing until a recording is armed (DebugPanel "Start report"). Only
  * then does it mount `RecordingProbe`, which forces continuous rendering and
- * measures each frame's CPU and GPU time. When recording stops it unmounts and
- * the scene returns to its demand frameloop — zero overhead outside a session.
+ * measures each frame's main-thread and GPU time. When recording stops it
+ * unmounts and the scene returns to its demand frameloop — zero overhead outside
+ * a session.
+ *
+ * THE PROBE MUST NOT RENDER. It used to measure from a `useFrame(cb, 1)` that
+ * called `gl.render(scene, camera)` itself. r3f suppresses its own render as
+ * soon as ANY subscriber has priority > 0, so that was correct in isolation —
+ * but `GizmoHelper` (SceneViewport) wraps drei's `Hud`, whose `RenderHud` also
+ * subscribes at priority 1 and, in that branch, renders the full main scene
+ * before its own overlay. Both subscribers ran, so arming a recording rasterized
+ * the whole scene TWICE per frame and the report blamed the resulting ~half
+ * framerate on the scene. Measuring from `addEffect`/`addAfterEffect` brackets
+ * the frame without participating in it: the Hud stays the sole renderer, and
+ * the recording measures the same pipeline the user experiences when idle.
+ *
+ * `renderCalls` is reported per frame so this can never regress silently again —
+ * it must read 2 (main scene + gizmo overlay).
  */
 
 /** React subscription to the monitor's recording flag. */
@@ -22,11 +37,14 @@ export function usePerfRecording(): boolean {
 
 const RecordingProbe = () => {
   const gl = useThree((s) => s.gl);
-  const scene = useThree((s) => s.scene);
-  const camera = useThree((s) => s.camera);
   const setFrameloop = useThree((s) => s.setFrameloop);
   const viewApi = useViewStoreApi();
+  /** Start of the previous frame's before-effect — the period baseline. */
   const lastRef = useRef<number | null>(null);
+  /** Start of THIS frame's before-effect, read back in the after-effect. */
+  const frameStartRef = useRef<number>(0);
+  /** `gl.info.render.calls` at this frame's start; the delta is the count. */
+  const callsAtStartRef = useRef<number>(0);
   const gpuMsRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -58,42 +76,65 @@ const RecordingProbe = () => {
     };
   }, [setFrameloop, gl]);
 
-  // Priority 1: this callback owns the render. Runs after the priority-0
-  // useFrames (camera sync, upload drain).
-  useFrame(() => {
-    const t = performance.now();
-    const cpuMs = lastRef.current == null ? 0 : t - lastRef.current;
-    lastRef.current = t;
+  // Bracket the frame from OUTSIDE the render loop. r3f runs global effects
+  // 'before' → every root's update() (all useFrame subscribers + the render) →
+  // 'after', so this pair spans the whole main-thread frame without adding a
+  // subscriber that would suppress or duplicate the render.
+  useEffect(() => {
+    const info = (gl as unknown as { info?: { render?: { calls?: number } } }).info;
+    // `render.calls` is monotonic in three — Info.reset() zeroes drawCalls and
+    // frameCalls each frame but deliberately not this one, so the delta across
+    // the bracket is exactly the number of renderer.render() invocations.
+    const readCalls = () => info?.render?.calls ?? 0;
 
-    gl.render(scene, camera);
+    const unBefore = addEffect(() => {
+      frameStartRef.current = performance.now();
+      callsAtStartRef.current = readCalls();
+    });
 
-    // Skip the first frame (no previous timestamp to diff against).
-    if (cpuMs > 0) {
-      perfMonitor.recordFrame({
-        frameCpuMs: cpuMs,
-        // WebGPU timestamp-query pass time (Scene.tsx enables trackTimestamp).
-        // The resolve below is async, so this is the PREVIOUS frame's GPU
-        // time — a one-frame skew that doesn't matter for session aggregates.
-        // Stays null on adapters without timestamp-query.
-        gpuMs: gpuMsRef.current,
-        cameraMoving: viewApi.getState().cameraMoving,
-      });
-    }
+    const unAfter = addAfterEffect(() => {
+      const end = performance.now();
+      const start = frameStartRef.current;
+      const periodMs = lastRef.current == null ? 0 : start - lastRef.current;
+      lastRef.current = start;
 
-    // Kick this frame's readback. The backend self-clears trackTimestamp when
-    // the adapter lacks the feature — guard so we never trip three's warnOnce.
-    const backend = (gl as unknown as { backend?: { trackTimestamp?: boolean } }).backend;
-    if (backend?.trackTimestamp === true) {
-      void (gl as unknown as WebGPURenderer)
-        .resolveTimestampsAsync(TimestampQuery.RENDER)
-        .then((ms) => {
-          gpuMsRef.current = typeof ms === "number" ? ms : null;
-        })
-        .catch(() => {
-          gpuMsRef.current = null;
+      // Skip the first frame (no previous frame to diff the period against).
+      if (periodMs > 0) {
+        perfMonitor.recordFrame({
+          framePeriodMs: periodMs,
+          frameMainThreadMs: end - start,
+          renderCalls: readCalls() - callsAtStartRef.current,
+          // WebGPU timestamp-query pass time (Scene.tsx parks trackTimestamp
+          // off; the effect above flips it on for the recording). The resolve
+          // below is async, so this is the PREVIOUS frame's GPU time — a
+          // one-frame skew that doesn't matter for session aggregates. Stays
+          // null on adapters without timestamp-query.
+          gpuMs: gpuMsRef.current,
+          cameraMoving: viewApi.getState().cameraMoving,
         });
-    }
-  }, 1);
+      }
+
+      // Kick this frame's readback. The backend self-clears trackTimestamp when
+      // the adapter lacks the feature — guard so we never trip three's warnOnce.
+      const backend = (gl as unknown as { backend?: { trackTimestamp?: boolean } })
+        .backend;
+      if (backend?.trackTimestamp === true) {
+        void (gl as unknown as WebGPURenderer)
+          .resolveTimestampsAsync(TimestampQuery.RENDER)
+          .then((ms) => {
+            gpuMsRef.current = typeof ms === "number" ? ms : null;
+          })
+          .catch(() => {
+            gpuMsRef.current = null;
+          });
+      }
+    });
+
+    return () => {
+      unBefore();
+      unAfter();
+    };
+  }, [gl, viewApi]);
 
   return null;
 };

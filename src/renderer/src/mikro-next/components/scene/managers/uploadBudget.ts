@@ -68,25 +68,43 @@ export function shouldContinueStaleDrain(
  * refetches cheaply — holding many ~MB repacked payloads is the real cost). */
 export const MAX_STALE_QUEUE = 24;
 
-export type QueueEntry = { key: string; uniformValue: number | null };
+export type QueueEntry = { key: string; uniformValue: number | null; level: number };
 
 /**
  * Planned-first partition of an upload queue. Uniform (EMPTY) entries always
  * count as planned: they cost no slot and are valid fallback data regardless
  * of the current plan. FIFO order is preserved within each partition; stale
  * entries beyond `maxStale` (oldest first) are returned as `dropped`.
+ *
+ * `minUsefulLevel` drops out-of-plan entries the shader could never sample —
+ * bricks FINER than every plan's target level, whose residency walk starts at
+ * the desired level and moves coarser. Without it, the pool trim that reclaims
+ * such slots would be undone on the very next drain: the freed headroom would
+ * refill with the same unreachable bricks. Uniform entries are exempt (no slot
+ * to compete for), as are protected ones (in some plan by definition).
  */
 export function partitionUploadQueue<T extends QueueEntry>(
   queue: readonly T[],
   protectedKeys: { has(key: string): boolean },
   maxStale: number,
+  minUsefulLevel = 0,
 ): { planned: T[]; stale: T[]; dropped: T[] } {
   const planned: T[] = [];
   const stale: T[] = [];
+  const unreachable: T[] = [];
   for (const entry of queue) {
-    if (entry.uniformValue !== null || protectedKeys.has(entry.key)) planned.push(entry);
-    else stale.push(entry);
+    if (entry.uniformValue !== null || protectedKeys.has(entry.key)) {
+      planned.push(entry);
+    } else if (entry.level < minUsefulLevel) {
+      unreachable.push(entry);
+    } else {
+      stale.push(entry);
+    }
   }
   const excess = Math.max(0, stale.length - Math.max(0, maxStale));
-  return { planned, stale: stale.slice(excess), dropped: stale.slice(0, excess) };
+  return {
+    planned,
+    stale: stale.slice(excess),
+    dropped: [...unreachable, ...stale.slice(0, excess)],
+  };
 }

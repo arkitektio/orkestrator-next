@@ -6,17 +6,31 @@
  * first-lines `if (!this.recording) return`, so outside a session the cost is one
  * boolean check — the render hot path is untouched.
  *
- * While recording it captures, per frame, the main-thread (CPU) frame time and
- * the GPU frame time (fed in by `PerfFrameProbe`), plus session counters:
- * per-component React render counts, replans, visibility recomputes, and brick
- * uploads. `buildSessionReport()` aggregates the recorded window into a JSON blob
- * that the DebugPanel folds into "Copy debug report" — a targeted bug report for
- * exactly the seconds the user was panning.
+ * While recording it captures, per frame, the main-thread time, the frame PERIOD,
+ * the render-call count and the GPU frame time (all fed in by `PerfFrameProbe`),
+ * plus session counters: per-component React render counts, replans, visibility
+ * recomputes, and brick uploads. `buildSessionReport()` aggregates the recorded
+ * window into a JSON blob that the DebugPanel folds into "Copy debug report" — a
+ * targeted bug report for exactly the seconds the user was panning.
  *
- * The CPU/GPU split is the key signal: a long `frameCpuMs` with a small `gpuMs`
- * is a main-thread stall (e.g. a React re-render storm), not a GPU bottleneck.
- * `gpuMs` comes from WebGPU timestamp queries (`PerfFrameProbe` resolves them
- * while recording); it stays null on adapters without `timestamp-query`.
+ * THREE TIMES, DELIBERATELY DISTINCT — an earlier version reported only the
+ * rAF-to-rAF period and called it `frameCpuMs`, which made `cpuMs.avg` exactly
+ * `1000/fps` by construction and `jankFrames` a restatement of "slower than
+ * 20 fps". Neither said anything about where the time went.
+ *  - `framePeriodMs`     rAF-to-rAF wall time. fps derives from THIS and only this.
+ *                        On a demand frameloop a long period is often an idle gap.
+ *  - `frameMainThreadMs` before-effects → after-effects: the honest main-thread
+ *                        cost of the frame (every useFrame subscriber, the render
+ *                        call(s), r3f internals). Jank is judged on this.
+ *  - `gpuMs`             WebGPU timestamp-query pass time; null on adapters
+ *                        without `timestamp-query`.
+ * The main-thread/GPU split is the signal: a long `frameMainThreadMs` with a small
+ * `gpuMs` is a main-thread stall (e.g. a React re-render storm), not a GPU bound.
+ *
+ * `renderCalls` is the fourth number and exists to keep the probe honest about
+ * ITSELF: it counts `renderer.render()` invocations per frame, so a probe (or a
+ * drei `Hud`) that quietly rasterizes the scene a second time shows up as a 3
+ * instead of a 2 rather than as a mysterious halving of fps.
  *
  * Kept free of the renderer and React so it is unit-testable; the rAF timing
  * loop lives in `PerfFrameProbe`.
@@ -29,14 +43,23 @@ const now = (): number =>
  * unbounded (~66 s at 60 fps). The captured window is preserved. */
 const MAX_FRAMES = 4000;
 
-/** Frame CPU time (ms) above which a frame is counted as "jank". */
+/** Main-thread frame time (ms) above which a frame is counted as "jank". Judged
+ * on `frameMainThreadMs`, NOT the period: a long period on a demand frameloop is
+ * an idle gap, and counting those as jank was pure noise. */
 const JANK_MS = 50;
 
 export type FrameSample = {
   /** ms since the session started. */
   tMs: number;
-  /** rAF-to-rAF main-thread wall time — includes the React commit phase. */
-  frameCpuMs: number;
+  /** rAF-to-rAF wall time. Includes vsync wait and compositing — fps derives
+   * from this. NOT a cost measure; see `frameMainThreadMs`. */
+  framePeriodMs: number;
+  /** Main-thread time spent inside the frame (all useFrame subscribers + the
+   * render call(s) + r3f internals), from before-effects to after-effects. */
+  frameMainThreadMs: number;
+  /** `renderer.render()` invocations this frame. Expected 2 (main scene + gizmo
+   * hud); a 3 means something is rasterizing the scene twice. */
+  renderCalls: number;
   /** GPU time for the frame, or null when timer queries are unavailable. */
   gpuMs: number | null;
   cameraMoving: boolean;
@@ -49,8 +72,13 @@ export type PerfSessionReport = {
   frameCount: number;
   truncated: boolean;
   fps: number;
+  /** Main-thread cost per frame — the number to compare against `gpuMs`. */
   cpuMs: { min: number; avg: number; max: number; p95: number };
+  /** rAF-to-rAF period. Kept separate so `cpuMs` can no longer be mistaken for
+   * it; `periodMs.avg` ≈ `1000/fps` by definition, `cpuMs.avg` should be lower. */
+  periodMs: { min: number; avg: number; max: number; p95: number };
   gpuMs: { min: number; avg: number; max: number; samples: number } | null;
+  renderCalls: { min: number; avg: number; max: number };
   jankFrames: number;
   movingFrames: number;
   /** React render counts over the session, per component name, highest first. */
@@ -132,14 +160,18 @@ class PerfMonitor {
 
   /** Called once per animation frame by `PerfFrameProbe` while recording. */
   recordFrame(sample: {
-    frameCpuMs: number;
+    framePeriodMs: number;
+    frameMainThreadMs: number;
+    renderCalls: number;
     gpuMs: number | null;
     cameraMoving: boolean;
   }): void {
     if (!this.recording) return;
     this.frames.push({
       tMs: now() - this.startedAt,
-      frameCpuMs: sample.frameCpuMs,
+      framePeriodMs: sample.framePeriodMs,
+      frameMainThreadMs: sample.frameMainThreadMs,
+      renderCalls: sample.renderCalls,
       gpuMs: sample.gpuMs,
       cameraMoving: sample.cameraMoving,
       bricksUploaded: this.pendingBricks,
@@ -164,11 +196,21 @@ class PerfMonitor {
     if (frames.length === 0) return null;
 
     const durationMs =
-      frames[frames.length - 1].tMs - frames[0].tMs || frames[0].frameCpuMs;
+      frames[frames.length - 1].tMs - frames[0].tMs || frames[0].framePeriodMs;
 
-    const cpu = frames.map((f) => f.frameCpuMs).sort((a, b) => a - b);
-    const cpuSum = cpu.reduce((a, b) => a + b, 0);
-    const p95 = cpu[Math.min(cpu.length - 1, Math.floor(cpu.length * 0.95))];
+    const spread = (values: number[]) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      return {
+        min: sorted[0],
+        avg: sorted.reduce((a, b) => a + b, 0) / sorted.length,
+        max: sorted[sorted.length - 1],
+        p95: sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))],
+      };
+    };
+
+    const cpu = spread(frames.map((f) => f.frameMainThreadMs));
+    const period = spread(frames.map((f) => f.framePeriodMs));
+    const calls = spread(frames.map((f) => f.renderCalls));
 
     const gpuVals = frames
       .map((f) => f.gpuMs)
@@ -195,14 +237,11 @@ class PerfMonitor {
       frameCount: frames.length,
       truncated: this.truncated,
       fps: durationMs > 0 ? (frames.length / durationMs) * 1000 : 0,
-      cpuMs: {
-        min: cpu[0],
-        avg: cpuSum / cpu.length,
-        max: cpu[cpu.length - 1],
-        p95,
-      },
+      cpuMs: cpu,
+      periodMs: period,
       gpuMs: gpu,
-      jankFrames: frames.filter((f) => f.frameCpuMs > JANK_MS).length,
+      renderCalls: { min: calls.min, avg: calls.avg, max: calls.max },
+      jankFrames: frames.filter((f) => f.frameMainThreadMs > JANK_MS).length,
       movingFrames: frames.filter((f) => f.cameraMoving).length,
       renderCounts,
       replans: this.replans,

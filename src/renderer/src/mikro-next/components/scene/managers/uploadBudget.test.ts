@@ -57,7 +57,11 @@ describe("shouldContinueStaleDrain", () => {
 });
 
 describe("partitionUploadQueue", () => {
-  const entry = (key: string, uniformValue: number | null = null) => ({ key, uniformValue });
+  const entry = (key: string, uniformValue: number | null = null, level = 0) => ({
+    key,
+    uniformValue,
+    level,
+  });
   const protecting = (...keys: string[]) => new Set(keys);
 
   it("splits planned-first by protectedKeys, preserving FIFO order per partition", () => {
@@ -89,5 +93,54 @@ describe("partitionUploadQueue", () => {
     expect(planned).toEqual([]);
     expect(stale).toEqual([]);
     expect(dropped.map((e) => e.key)).toEqual(["s1", "s2"]);
+  });
+});
+
+describe("partitionUploadQueue — minUsefulLevel", () => {
+  const entry = (key: string, level: number, uniformValue: number | null = null) => ({
+    key,
+    uniformValue,
+    level,
+  });
+  const protecting = (...keys: string[]) => new Set(keys);
+
+  it("drops out-of-plan entries FINER than the plan's target level", () => {
+    // The shader's residency walk starts at the desired level and moves
+    // coarser, so a level-0 brick under a target-level-1 plan can never be
+    // sampled. Without this, the pool trim that frees those slots is undone on
+    // the next drain: the headroom refills with the same unreachable bricks.
+    const queue = [entry("fine", 0), entry("target", 1), entry("coarse", 2)];
+    const { planned, stale, dropped } = partitionUploadQueue(queue, protecting(), 10, 1);
+    expect(planned).toEqual([]);
+    expect(stale.map((e) => e.key)).toEqual(["target", "coarse"]);
+    expect(dropped.map((e) => e.key)).toEqual(["fine"]);
+  });
+
+  it("never drops a PROTECTED entry, however fine", () => {
+    const queue = [entry("fine", 0)];
+    const { planned, dropped } = partitionUploadQueue(queue, protecting("fine"), 10, 3);
+    expect(planned.map((e) => e.key)).toEqual(["fine"]);
+    expect(dropped).toEqual([]);
+  });
+
+  it("never drops a UNIFORM entry — it costs no slot to compete for", () => {
+    const queue = [entry("empty", 0, 42)];
+    const { planned, dropped } = partitionUploadQueue(queue, protecting(), 10, 3);
+    expect(planned.map((e) => e.key)).toEqual(["empty"]);
+    expect(dropped).toEqual([]);
+  });
+
+  it("defaults to dropping nothing, so the level gate is opt-in", () => {
+    const queue = [entry("fine", 0), entry("coarse", 2)];
+    const { stale, dropped } = partitionUploadQueue(queue, protecting(), 10);
+    expect(stale.map((e) => e.key)).toEqual(["fine", "coarse"]);
+    expect(dropped).toEqual([]);
+  });
+
+  it("reports both unreachable and stale-overflow drops together", () => {
+    const queue = [entry("fine", 0), entry("s1", 2), entry("s2", 2), entry("s3", 2)];
+    const { stale, dropped } = partitionUploadQueue(queue, protecting(), 2, 1);
+    expect(dropped.map((e) => e.key)).toEqual(["fine", "s1"]);
+    expect(stale.map((e) => e.key)).toEqual(["s2", "s3"]);
   });
 });

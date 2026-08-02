@@ -24,7 +24,7 @@ import {
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
-import { useViewStore } from "../../store/viewStore";
+import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import { createVolumeNodeMaterial, updateChannelNodes } from "../../render/bricks/brickNodeMaterials";
 import { buildChannelUniformData } from "../../render/bricks/channelUniforms";
 
@@ -96,7 +96,15 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       ? s.viewportSize.height / (2 * Math.tan(s.cameraPose.fovY / 2))
       : 0,
   );
-  const cameraMoving = useViewStore((s) => s.cameraMoving);
+  // `cameraMoving` is deliberately NOT a React subscription. It flips true on
+  // every leading camera emission and false on every settle (~23 flips over a
+  // 10 s orbit), and it feeds exactly ONE uniform — uStepScale. Subscribing
+  // re-rendered every volume layer on each flip and re-ran the uniform effect
+  // below, rebuilding all the pointer-handler closures and re-diffing the
+  // group/mesh tree, for a single float. The dedicated effect further down
+  // writes it imperatively instead. (4df81eea decoupled cameraPose,
+  // viewportSize, the plan object and layerViewRanges; this was the one left.)
+  const viewStoreApi = useViewStoreApi();
   // Quality tier / streaming flips are rare (P17-clean); re-runs the uniform
   // push below so uStepScale tracks the governor's profile.
   const qualityVersion = useSyncExternalStore(
@@ -200,20 +208,45 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     n.uLodBias.value = lodBias;
     n.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     n.uMinDelta.value = marchParams.minDelta;
-    // Coarser ray steps while ACTIVE (camera moving OR bricks streaming —
-    // streaming frames recur for seconds after a gesture and were the residual
-    // jank on slow GPUs, P19); the tier profile decides how coarse. Settle
-    // restores the tier's full quality.
-    const profile = qualityGovernor.getProfile();
-    n.uStepScale.value =
-      cameraMoving || qualityGovernor.isStreaming()
-        ? profile.activeStepScale
-        : profile.settledStepScale;
-    n.uMaxSteps.value = profile.maxRaySteps;
+    n.uMaxSteps.value = qualityGovernor.getProfile().maxRaySteps;
     n.projectionMode.value = projectionModeToInt(layer?.projection);
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, cameraMoving, qualityVersion, marchParams, layer?.projection, invalidate]);
+  }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, qualityVersion, marchParams, layer?.projection, invalidate]);
+
+  // uStepScale, driven IMPERATIVELY off the camera-motion flag.
+  //
+  // Coarser ray steps while ACTIVE (camera moving OR bricks streaming —
+  // streaming frames recur for seconds after a gesture and were the residual
+  // jank on slow GPUs, P19); the tier profile decides how coarse, and settling
+  // restores the tier's full quality. That is a single float, but `cameraMoving`
+  // flips on every leading emission and every settle, so reading it through a
+  // React selector re-rendered this component (and every sibling volume layer)
+  // ~23 times per orbit. A store subscription writes the uniform and invalidates
+  // directly: same visual behaviour, zero renders.
+  useEffect(() => {
+    if (!bundle) return;
+    const nodes = bundle.nodes;
+    let last: number | null = null;
+    const apply = () => {
+      const profile = qualityGovernor.getProfile();
+      const next =
+        viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming()
+          ? profile.activeStepScale
+          : profile.settledStepScale;
+      if (next === last) return; // the flag flips far more often than the value
+      last = next;
+      nodes.uStepScale.value = next;
+      invalidate();
+    };
+    apply();
+    const unsubscribeView = viewStoreApi.subscribe(apply);
+    const unsubscribeQuality = qualityGovernor.subscribe(apply);
+    return () => {
+      unsubscribeView();
+      unsubscribeQuality();
+    };
+  }, [bundle, viewStoreApi, invalidate]);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
   const probeFromRay = (ray: THREE.Ray, origin: ProbeOrigin): ProbeResult | null => {

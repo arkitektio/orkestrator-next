@@ -4,6 +4,9 @@ import { perfMonitor } from "./perfMonitor";
 import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveBrickSpec } from "../core/octree/brickSpec";
 import { assessPoolViability } from "../core/octree/poolViability";
+import { buildPoolKey } from "../core/octree/poolKey";
+import { buildSliceSignature } from "../core/sliceSignature";
+import { resolveLayerDataRange } from "../core/dataRange";
 import {
   buildLayerLevelGeometry,
   buildLevelSources,
@@ -97,10 +100,23 @@ export function startNodePlanTracking({
     const plannableLayers = layers.filter(
       (layer) => layer.visible !== false && (layer.lens.dataset.dataArrays?.length ?? 0) > 0,
     );
-    const maxPlanBytes = Math.min(
-      MAX_LAYER_POOL_BYTES,
-      getInitialVolumeTextureBudgetBytes() / Math.max(1, plannableLayers.length),
-    );
+
+    // PASS 1 — derive geometry and pool identity per layer. This exists so the
+    // byte budget can be divided by the number of DISTINCT POOLS rather than of
+    // layers: `BrickResidencyManager` shares one atlas across every layer with
+    // the same content address (one-layer-per-channel is the common case), and
+    // if the two sides disagree on the divisor the planner asks for more slots
+    // than the atlas holds. `buildPoolKey` is the single source of truth for
+    // that grouping — both callers must use it.
+    type Derived = {
+      layer: (typeof plannableLayers)[number];
+      levels: LevelSource[];
+      geometry: NonNullable<ReturnType<typeof buildLayerLevelGeometry>>;
+      spec: ReturnType<typeof resolveBrickSpec>;
+      poolKey: string;
+    };
+    const derived: Derived[] = [];
+    const poolKeys = new Set<string>();
 
     for (const layer of plannableLayers) {
       let levels: LevelSource[];
@@ -135,6 +151,25 @@ export function startNodePlanTracking({
         continue;
       }
 
+      const poolKey = buildPoolKey({
+        mode,
+        spec,
+        geometry,
+        levels,
+        sliceSignature: buildSliceSignature(layer, viewerState.dimSelections),
+        dataRange: resolveLayerDataRange(layer, geometry.levels[0].dtype),
+      });
+      poolKeys.add(poolKey);
+      derived.push({ layer, levels, geometry, spec, poolKey });
+    }
+
+    const maxPlanBytes = Math.min(
+      MAX_LAYER_POOL_BYTES,
+      getInitialVolumeTextureBudgetBytes() / Math.max(1, poolKeys.size),
+    );
+
+    // PASS 2 — plan each layer against that budget.
+    for (const { layer, geometry, spec } of derived) {
       let camera: NodeCamera | null = null;
       if (mode === "3D" && viewProjectionMatrix) {
         const voxelToWorld = buildVolumeVoxelToWorld(layer);

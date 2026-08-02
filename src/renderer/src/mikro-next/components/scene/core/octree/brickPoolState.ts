@@ -105,3 +105,48 @@ export class BrickPoolState {
     for (let i = this.capacity - 1; i >= 0; i--) this.freeSlots.push(i);
   }
 }
+
+/**
+ * Residents the pool can release because the shader provably cannot sample
+ * them: bricks FINER than the plan's target level.
+ *
+ * Why this is needed at all: eviction here is entirely lazy — it happens only
+ * inside `acquire` when `freeSlots` runs dry, and nothing ever walks the
+ * residents to release them. So a pool that was once zoomed in keeps its
+ * level-0 bricks forever, even after the plan moves to a coarser target. A
+ * reported session showed capacity 217 with 86 protected plan bricks and 131
+ * level-0 leftovers — 86 + 131 = 217 exactly, i.e. every non-plan slot held a
+ * brick that could never be read. The intended cache headroom was fully
+ * consumed, so every newly planned brick cost an eviction and every
+ * out-of-plan drain found no free slot and threw away a completed fetch.
+ *
+ * Safety: the shader's residency walk starts at the desired level and moves
+ * COARSER, so a brick finer than `minTargetLevel` is unreachable. Coarser
+ * bricks — the fallback chain, including the pinned coarsest level — are never
+ * eligible, and `protectedKeys` (plan ∪ coarsest) is excluded outright.
+ *
+ * Returns at most `needed` keys, least-recently-used first, so callers can
+ * reclaim exactly the headroom they want rather than flushing the cache.
+ */
+export function selectTrimCandidates(opts: {
+  /** Resident keys in LRU order (front = oldest) — `BrickPoolState.keys()`. */
+  keys: Iterable<string>;
+  protectedKeys: ProtectedKeys;
+  /** Level of a node key — `parseNodeKey(key).level`. */
+  levelOf: (key: string) => number;
+  /** Minimum target level across every plan sharing this pool. */
+  minTargetLevel: number;
+  /** How many slots to reclaim. */
+  needed: number;
+}): string[] {
+  const { keys, protectedKeys, levelOf, minTargetLevel, needed } = opts;
+  if (needed <= 0) return [];
+  const victims: string[] = [];
+  for (const key of keys) {
+    if (victims.length >= needed) break;
+    if (protectedKeys.has(key)) continue;
+    if (levelOf(key) >= minTargetLevel) continue; // coarser-or-equal: reachable
+    victims.push(key);
+  }
+  return victims;
+}

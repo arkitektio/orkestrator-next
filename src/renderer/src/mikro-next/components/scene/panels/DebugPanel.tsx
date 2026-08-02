@@ -249,10 +249,19 @@ export const DebugPanel = () => {
               <span className="px-1 rounded border border-border/50">
                 repack {brickSystem.stats.repackMs.toFixed(0)} ms
               </span>
+              {/* Bricks, mean batch size, and the WORST submit→readback round
+                  trip. Deliberately not the latency SUM ÷ bricks — flushes
+                  overlap, so that ratio reads as tens of ms per brick while the
+                  real main-thread cost is the "upload" chip below. */}
               {brickSystem.stats.gpuBricks > 0 && (
                 <span className="px-1 rounded border border-border/50">
-                  gpu {brickSystem.stats.gpuBricks} / {brickSystem.stats.gpuRepackMs.toFixed(0)}{" "}
-                  ms
+                  gpu {brickSystem.stats.gpuBricks} /{" "}
+                  {brickSystem.stats.gpuRepackFlushes > 0
+                    ? (
+                        brickSystem.stats.gpuBricks / brickSystem.stats.gpuRepackFlushes
+                      ).toFixed(1)
+                    : "0"}
+                  /batch / {brickSystem.stats.gpuRepackLatencyMaxMs.toFixed(0)} ms peak
                 </span>
               )}
               {/* Per-brick texSubImage3D cost — the P19 signal (≪1 ms on a
@@ -372,11 +381,28 @@ const PerfSessionSummary = ({ report }: { report: PerfSessionReport }) => {
         <span className="rounded border border-border/50 px-1">
           CPU {report.cpuMs.avg.toFixed(1)}/{report.cpuMs.max.toFixed(0)}ms (avg/max)
         </span>
+        {/* The rAF period, kept visibly distinct from CPU: period ≈ 1000/fps by
+            definition, so CPU sitting right on top of it means the frame is
+            being measured, not explained. */}
+        <span className="rounded border border-border/50 px-1">
+          period {report.periodMs.avg.toFixed(1)}ms
+        </span>
         <span className="rounded border border-border/50 px-1">
           GPU{" "}
           {report.gpuMs
             ? `${report.gpuMs.avg.toFixed(1)}/${report.gpuMs.max.toFixed(0)}ms`
             : "n/a"}
+        </span>
+        {/* Expected 2 = main scene + gizmo overlay. A 3 means something is
+            rasterizing the scene twice and the fps below is not the real one. */}
+        <span
+          className={`rounded border px-1 ${
+            report.renderCalls.max > 2
+              ? "border-amber-500/50 text-amber-300"
+              : "border-border/50"
+          }`}
+        >
+          {report.renderCalls.avg.toFixed(1)} render/f
         </span>
         {report.jankFrames > 0 && (
           <span className="rounded border border-red-500/50 px-1 text-red-300">

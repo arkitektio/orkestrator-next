@@ -2,7 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { qualityGovernor, resolveDpr } from "../core/qualityGovernor";
 import { getGpuKey, type SceneRenderer } from "../render/gpu/sceneRenderer";
-import { useViewStore, useViewStoreApi } from "../store/viewStore";
+import { useViewStoreApi } from "../store/viewStore";
 
 /**
  * React binding for the quality governor (P19): feeds frame times in, applies
@@ -46,7 +46,10 @@ export const QualityAdapter = () => {
   const setDpr = useThree((s) => s.setDpr);
   const initialDpr = useThree((s) => s.viewport.initialDpr);
   const invalidate = useThree((s) => s.invalidate);
-  const cameraMoving = useViewStore((s) => s.cameraMoving);
+  // `cameraMoving` is read imperatively, never subscribed: it flips on every
+  // leading camera emission and every settle, and both consumers below already
+  // run outside React (a useFrame and a store subscription). Subscribing only
+  // bought a re-render per flip.
   const viewApi = useViewStoreApi();
   // Rare notifications: tier / override / streaming flips.
   useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
@@ -77,7 +80,7 @@ export const QualityAdapter = () => {
     // jank, counted with weighted votes) from an idle demand-frameloop gap
     // (discarded). cameraMoving's trailing debounce means a long frame ending
     // just after a gesture still reads as active.
-    const active = cameraMoving || qualityGovernor.isStreaming();
+    const active = viewApi.getState().cameraMoving || qualityGovernor.isStreaming();
     if (last !== null) qualityGovernor.recordFrame(now - last, now, active);
 
     // Apply the profile DPR every frame (cheap compare; setDpr only on change).
@@ -136,12 +139,17 @@ export const QualityAdapter = () => {
       }, SETTLE_RESTORE_MS);
     };
     scheduleRestore();
-    const unsubscribe = qualityGovernor.subscribe(scheduleRestore);
+    // Both edges that can end a burst: the governor's streaming flag and the
+    // camera's motion flag. scheduleRestore re-reads both when it fires, so a
+    // resumed gesture cancels the pending restore.
+    const unsubscribeQuality = qualityGovernor.subscribe(scheduleRestore);
+    const unsubscribeView = viewApi.subscribe(scheduleRestore);
     return () => {
-      unsubscribe();
+      unsubscribeQuality();
+      unsubscribeView();
       clearTimer();
     };
-  }, [cameraMoving, initialDpr, setDpr, invalidate, viewApi]);
+  }, [initialDpr, setDpr, invalidate, viewApi]);
 
   return null;
 };

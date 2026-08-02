@@ -39,7 +39,7 @@ const formatBytes = (bytes: number): string =>
  * Buckets are 10 percentage points wide: zooming is precisely what sweeps
  * viewportFraction, and 5-point buckets crossed a boundary every few camera
  * ticks — each flip re-rendering the whole panel. Coverage now only feeds the
- * row badge and the list order; it no longer decides what is unfolded.
+ * row badge; it decides neither the list order nor what is unfolded.
  */
 const layerCoverageCache = new WeakMap<object, Record<string, number>>();
 const selectLayerCoverage = (s: ViewerState): Record<string, number> => {
@@ -284,18 +284,13 @@ export const LayerControlPanel = ({
     [deleteLayer, setSelectedLayerId],
   );
 
-  // Rough share of the viewport each layer covers (percent buckets of 10);
-  // missing = off-view, sorts to the bottom. Array.prototype.sort is stable, so
-  // ties within a bucket keep layer order — the list can only reorder when a
-  // bucket boundary is crossed.
-  const coverageOf = (id: string) => layerCoverage[id] ?? -1;
-  const byCoverageDesc = (a: LayerState, b: LayerState) =>
-    coverageOf(b.id) - coverageOf(a.id);
-
-  // EVERY layer is listed, most-covering first. The list used to hide off-view
-  // layers behind a "+N off-view" toggle, which meant the panel's contents
-  // changed as you panned — the layer you wanted to reach kept disappearing.
-  const shownLayers = [...layers].sort(byCoverageDesc);
+  // EVERY layer is listed, in scene order — the order NEVER changes while you
+  // work. The list used to hide off-view layers behind a "+N off-view" toggle,
+  // and then to sort by viewport coverage; both meant the panel's contents moved
+  // as you panned, so the layer you were reaching for slid out from under the
+  // cursor. Coverage still shows as a per-row badge, it just no longer decides
+  // position.
+  const shownLayers = layers;
 
   // Unfold everything when the panel can actually seat it (see
   // `core/layerListLayout.ts`): a wide rail showing three layers has no reason

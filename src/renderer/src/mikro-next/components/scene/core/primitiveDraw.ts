@@ -39,3 +39,28 @@ export const primitiveCornerVectors = (
  */
 export const planarRadius = (anchor: Vec3, cursor: Vec3): number =>
   Math.hypot(cursor[0] - anchor[0], cursor[1] - anchor[1]);
+
+/**
+ * How much an axis-aligned ellipsoid has shrunk where a z plane cuts it: the
+ * circle-of-latitude factor `sqrt(1 − ((z − cz)/rz)²)`, to be applied to BOTH
+ * planar radii. 1 at the equator, 0 at the poles.
+ *
+ * This is what the flat view owes a volumetric primitive: a sphere cut near its
+ * top is a small circle, and drawing its equator there would claim it is wider
+ * on this slice than it is.
+ *
+ * Null when the plane is past a pole — it cuts nothing. The caller decides what
+ * that means, because a shape can reach the renderer with the plane just
+ * outside it (the visibility slab is half a slice thicker than the geometry).
+ */
+export const ellipsoidCrossSectionScale = (
+  planeZ: number,
+  centerZ: number,
+  radiusZ: number,
+): number | null => {
+  const rz = Math.abs(radiusZ);
+  if (rz === 0) return null;
+  const offset = (planeZ - centerZ) / rz;
+  if (Math.abs(offset) > 1) return null;
+  return Math.sqrt(1 - offset * offset);
+};

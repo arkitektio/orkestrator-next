@@ -11,7 +11,7 @@ import {
 import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { Line } from "../../primitives/Line";
-import { SPHERE_KIND } from "../../core/primitiveDraw";
+import { SPHERE_KIND, ellipsoidCrossSectionScale } from "../../core/primitiveDraw";
 import { affineToMatrix4, sceneZExtent } from "../../core/worldTransform";
 import {
   isAnnotationInView,
@@ -49,6 +49,8 @@ const DEFAULT_STROKE = "#38bdf8";
 const ACTIVE_STROKE = "#f59e0b";
 /** Fill alpha for a shape that asks to be filled but names no fill color. */
 const IMPLIED_FILL_OPACITY = 0.08;
+/** Smallest cross-section drawn for an ellipsoid the plane barely grazes. */
+const MIN_CROSS_SECTION_SCALE = 0.05;
 
 /** RGBA as four 0-255 ints (the schema's `[Int!]`) → a three-ready color + alpha. */
 function rgbaToStyle(
@@ -125,6 +127,23 @@ function getRectangleCorners(
   ];
 }
 
+/** One closed-able ring of an axis-aligned ellipse at a fixed z. */
+function ellipseRing(
+  cx: number,
+  cy: number,
+  z: number,
+  rx: number,
+  ry: number,
+  segments: number,
+): [number, number, number][] {
+  const points: [number, number, number][] = [];
+  for (let index = 0; index < segments; index += 1) {
+    const theta = (index / segments) * Math.PI * 2;
+    points.push([cx + rx * Math.cos(theta), cy + ry * Math.sin(theta), z]);
+  }
+  return points;
+}
+
 function getEllipsisPoints(
   start: number[],
   end: number[],
@@ -137,18 +156,10 @@ function getEllipsisPoints(
   const cy = (y0 + y1) / 2;
   const rx = Math.abs(x1 - x0) / 2;
   const ry = Math.abs(y1 - y0) / 2;
-  const points: [number, number, number][] = [];
-
-  for (let index = 0; index < segments; index += 1) {
-    const theta = (index / segments) * Math.PI * 2;
-    points.push([cx + rx * Math.cos(theta), cy + ry * Math.sin(theta), z0]);
-  }
+  const points = ellipseRing(cx, cy, z0, rx, ry, segments);
 
   if (!flattenToPlane && Math.abs(z1 - z0) >= MIN_DEPTH) {
-    for (let index = 0; index < segments; index += 1) {
-      const theta = (index / segments) * Math.PI * 2;
-      points.push([cx + rx * Math.cos(theta), cy + ry * Math.sin(theta), z1]);
-    }
+    points.push(...ellipseRing(cx, cy, z1, rx, ry, segments));
   }
 
   return points;
@@ -318,6 +329,21 @@ const AnnotationCollectionGroup = ({
   }, [flattenToPlane, imageLayers, currentZ]);
 
   /**
+   * The drawn slice in the COLLECTION's space — where the shapes' own z values
+   * live, so it is the frame a volumetric shape is sectioned in. Inverting the
+   * placement on `(0, 0, z)` reads the plane back the way `physicalToVoxelZ`
+   * does, which takes the placement to be axis-aligned in z (a rotated one has
+   * no single collection-space z for a world plane).
+   */
+  const planeZLocal = useMemo(() => {
+    if (!plane) return null;
+    const local = new THREE.Vector3(0, 0, plane.z).applyMatrix4(
+      affineMatrix.clone().invert(),
+    );
+    return local.z;
+  }, [affineMatrix, plane]);
+
+  /**
    * Every shape placed in the world once — the matrix pass, keyed only on the
    * data and the placement. Scrubbing z must not redo it: the plane moves at
    * pointer cadence and the geometry does not move with it.
@@ -388,6 +414,7 @@ const AnnotationCollectionGroup = ({
           key={annotation.id}
           annotation={annotation}
           flattenToPlane={flattenToPlane}
+          planeZ={planeZLocal}
           isActive={selectedRoiIds.has(annotation.id)}
           selectable={interactionMode !== "PROBE"}
           onSelect={(appendSelection) => {
@@ -408,12 +435,19 @@ const AnnotationCollectionGroup = ({
 const AnnotationShape = ({
   annotation,
   flattenToPlane,
+  planeZ,
   isActive,
   selectable,
   onSelect,
 }: {
   annotation: ListAnnotationFragment;
   flattenToPlane: boolean;
+  /**
+   * The slice the flat view is drawing, in the COLLECTION's space — what a
+   * volumetric shape is sectioned against. Null in 3D, and in a scene with no
+   * z axis to scrub.
+   */
+  planeZ: number | null;
   isActive: boolean;
   /** False in PROBE mode, so a shape can't swallow the click meant for a probe. */
   selectable: boolean;
@@ -533,7 +567,7 @@ const AnnotationShape = ({
 
   // SPHERE shares the ellipsis branch: its corner-pair vectors are symmetric
   // (center ± r), so the scaled-unit-sphere path renders a true sphere in 3D
-  // and the flattened path draws its equatorial circle in 2D.
+  // and the flattened path draws the ellipse the current plane cuts out of it.
   if (
     (annotation.kind === RoiKind.Ellipsis || annotation.kind === SPHERE_KIND) &&
     vectors.length >= 2
@@ -575,10 +609,25 @@ const AnnotationShape = ({
       );
     }
 
-    const points = getEllipsisPoints(vectors[0], vectors[1], flattenToPlane, 48);
-    if (flattenToPlane || Math.abs(z1 - z0) < MIN_DEPTH) {
-      points.push(points[0]);
-    }
+    // One ring: either a flat ellipse seen face-on, or the cross-section the
+    // flat view's plane cuts out of an ellipsoid. `getVectorPoint` has already
+    // discarded z for drawing, so the depth the section needs comes from the
+    // raw vectors.
+    const depthCenter = ((vectors[0][2] ?? 0) + (vectors[1][2] ?? 0)) / 2;
+    const depthRadius = Math.abs((vectors[1][2] ?? 0) - (vectors[0][2] ?? 0)) / 2;
+    const section =
+      planeZ === null || depthRadius < MIN_DEPTH
+        ? 1
+        : Math.max(
+            ellipsoidCrossSectionScale(planeZ, depthCenter, depthRadius) ?? 0,
+            // The plane is past the pole — it only reached this shape through
+            // the visibility slab's half-slice of slack. Mark where the
+            // ellipsoid ends rather than collapsing to nothing.
+            MIN_CROSS_SECTION_SCALE,
+          );
+
+    const points = ellipseRing(cx, cy, z0, rx * section, ry * section, 48);
+    points.push(points[0]);
 
     return (
       <Line

@@ -54,10 +54,15 @@ export const RoiToolbar = () => {
     <div className="absolute bottom-12 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1">
       {/* Shapes land in the scene's own coordinate system, so there is nothing
           to arm and no per-layer constraint to describe. */}
+      {/* The 3D line is not decoration: the gesture genuinely differs — each
+          click places the point the volume probed, so a click off the data
+          places nothing. */}
       <span className="text-[10px] text-white/50">
         {activeTool === "SELECT"
           ? "Drag to select annotations"
-          : "Drawing annotations on the scene"}
+          : displayMode === "3D"
+            ? "Click the volume to place each point — probed onto the data"
+            : "Drawing annotations on the scene"}
       </span>
       <ButtonGroup>
         {tools.map(({ tool, label, icon: Icon }) => (

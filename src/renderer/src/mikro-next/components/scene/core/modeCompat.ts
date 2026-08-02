@@ -32,16 +32,15 @@ const ALL_TOOLS: AnnotateTool[] = [
 ];
 
 /**
- * Tools that only make sense on the flat draw plane: the marquee has nothing
- * to drag against in 3D, and the planar shapes would silently land on an
- * arbitrary z slab there — 3D marking is the volumetric tools' job.
+ * Tools that only make sense on the flat draw plane. Just the marquee: it has
+ * nothing to drag against in 3D.
+ *
+ * The planar shapes used to be here too, because in 3D they landed on an
+ * arbitrary z slab (`currentZ`, a flat-view concept). They no longer do — in 3D
+ * every vertex is placed by the volume probe, on the data (`RoiDrawer`), so a
+ * rectangle drawn in 3D is a real box between two probed corners.
  */
-const FLAT_ONLY_TOOLS = new Set<AnnotateTool>([
-  "SELECT",
-  "RECTANGLE",
-  "ELLIPSIS",
-  "POLYGON",
-]);
+const FLAT_ONLY_TOOLS = new Set<AnnotateTool>(["SELECT"]);
 
 /** The volumetric tools: anchored by a probe click on the volume — 3D only. */
 const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
@@ -83,8 +82,8 @@ export function availableInteractionModes(ctx: ModeContext): InteractionMode[] {
 }
 
 /**
- * Flat tools (marquee, planar shapes) are 2D-only; volumetric tools are
- * 3D-only. POINT/LINE/PATH work in both.
+ * The marquee is 2D-only; the volumetric tools are 3D-only. Every shape tool
+ * works in both — flat on the drawn slice, probe-placed in the volume.
  */
 export function isAnnotateToolAvailable(
   tool: AnnotateTool,

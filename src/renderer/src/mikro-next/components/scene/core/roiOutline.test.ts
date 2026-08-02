@@ -101,6 +101,26 @@ describe("polylineOutline", () => {
     expect(polylineOutline([a, b], 0, true)).toHaveLength(2);
     expect(polylineOutline([a, b, { x: 5, y: 9 }], 0, true)).toHaveLength(4);
   });
+
+  // Probe-placed vertices each sit at their own depth — a path traced across a
+  // surface in 3D is not a polyline on a plane.
+  it("lets a point keep its own z", () => {
+    expect(polylineOutline([{ ...a, z: 2 }, b, { ...a, z: -3 }], 9)).toEqual([
+      [0, 0, 2],
+      [10, 4, 9],
+      [0, 0, -3],
+    ]);
+  });
+
+  it("closes back onto the first point's own z", () => {
+    const closed = polylineOutline(
+      [{ ...a, z: 2 }, { ...b, z: 5 }, { x: 5, y: 9, z: 8 }],
+      0,
+      true,
+    );
+    expect(closed[0]).toEqual([0, 0, 2]);
+    expect(closed[3]).toEqual([0, 0, 2]);
+  });
 });
 
 describe("roiOutline", () => {
@@ -120,6 +140,16 @@ describe("roiOutline", () => {
         continue;
       }
       expect(outline.length).toBeGreaterThanOrEqual(2);
+      for (const point of outline) expect(point[2]).toBe(7);
+    }
+  });
+
+  it("keeps the corner-pair tools planar even when their corners differ in z", () => {
+    // Two probed corners describe a BOX; its preview is the footprint at the
+    // plane the caller asked for. The AnnotationLayer extrudes the committed
+    // shape — that is where depth is drawn.
+    for (const tool of ["RECTANGLE", "ELLIPSIS", "SPHERE", "CUBE"] as const) {
+      const outline = roiOutline(tool, [{ ...a, z: 1 }, { ...b, z: 40 }], 7);
       for (const point of outline) expect(point[2]).toBe(7);
     }
   });

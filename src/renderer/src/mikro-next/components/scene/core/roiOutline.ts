@@ -4,11 +4,17 @@ import type { DrawingTool } from "../store/roiDrawingStore";
  * Outline geometry for the shapes drawn on the scene — the live border while
  * you drag and the border of a shape already committed.
  *
- * Pure and flat by design: everything here lands on one Z plane (the slice being
- * drawn on). `layers/annotation/AnnotationLayer.tsx` keeps its own 3D-aware
- * variants, which extrude a rectangle into a box and an ellipse into a prism
- * when an annotation spans depth — that is a different job from previewing a
- * shape the user is dragging out right now.
+ * Flat by default: everything lands on the `z` passed in, the slice being drawn
+ * on. A point may override it with its own `z`, which is what the volume's
+ * probe-placed vertices carry — a path traced across a 3D surface is a polyline
+ * whose vertices each sit at their own depth, not a polyline on a plane.
+ *
+ * The corner-pair shapes (rectangle, ellipse, and the volumetric primitives'
+ * footprint) stay planar even then: two probed corners describe a BOX, and its
+ * preview is the footprint at the anchor's depth.
+ * `layers/annotation/AnnotationLayer.tsx` keeps the 3D-aware variants that
+ * extrude the committed annotation — a different job from previewing a shape
+ * the user is dragging out right now.
  */
 
 export type OutlinePoint = [number, number, number];
@@ -16,6 +22,8 @@ export type OutlinePoint = [number, number, number];
 export interface OutlinePlanar {
   x: number;
   y: number;
+  /** Overrides the outline's plane for this point. */
+  z?: number;
 }
 
 /** Enough segments that the border reads as a curve at any sane zoom. */
@@ -65,7 +73,11 @@ export function polylineOutline(
   z: number,
   close = false,
 ): OutlinePoint[] {
-  const outline: OutlinePoint[] = points.map((point) => [point.x, point.y, z]);
+  const outline: OutlinePoint[] = points.map((point) => [
+    point.x,
+    point.y,
+    point.z ?? z,
+  ]);
   if (close && outline.length >= 3) outline.push(outline[0]);
   return outline;
 }

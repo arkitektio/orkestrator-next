@@ -88,6 +88,8 @@ export type ADataset = {
   derivedDatasets: Array<ADataset>;
   /** The edges from this dataset's pixel grid back into the lenses it was computed from, when it is a derived dataset: one for a deconvolution or a resample, several for a fusion of channels or tiles. Empty for a dataset that was acquired rather than derived. The order is the priority its creator declared: the first edge is the primary parent, the one that places the dataset. They are edges, not labels: each carries the map itself, so a client can compose it -- and they are why a derived dataset inherits its sources' placements instead of needing its own registration */
   derivedFrom: Array<Transformation>;
+  /** Everything computed from this dataset, whatever kind of container it is: the derived datasets `derivedDatasets` lists, and also the measurement tables, mesh collections and annotation collections that named this dataset as their source. A separate field rather than a widening of that one, which stays honestly about *datasets*. Same edges, same kind-blindness: an UNMAPPABLE child came from here even though its geometry did not survive */
+  derivedResidents: Array<Resident>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and unit-independent */
@@ -513,8 +515,8 @@ export type AnnotationCollection = {
   coordinateSystem: CoordinateSystem;
   createdAt: Scalars['DateTime']['output'];
   creator?: Maybe<User>;
-  /** The edge relating this collection's space to the space the shapes are drawn over -- an identity into a scene's world for a scene-minted collection, an identity into a dataset's system for one drawn over an image. Null for a freestanding collection */
-  derivedFrom?: Maybe<Transformation>;
+  /** Every edge from this collection's space back into data the shapes are drawn over, in declared order -- the first is the primary parent, the one that places it. An identity into a scene's world for a scene-minted collection, an identity into a dataset's system for one drawn over an image. Empty for a freestanding collection */
+  derivedFrom: Array<Transformation>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -536,6 +538,14 @@ export type AnnotationCollectionAnnotationsArgs = {
 /** A named set of human-drawn annotations, owning the coordinate system they are drawn in. The CRUD counterpart of a table dataset's machine-produced rows: shapes a person draws and edits, sharing one drawing space and one registration story */
 export type AnnotationCollectionProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** The fields an ANNOTATION_COLLECTION derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type AnnotationCollectionDerivedFromInput = {
+  annotationCollection: Scalars['ID']['input'];
+  kind?: DerivationSourceKind;
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
 };
 
 export type AnnotationCollectionFilter = {
@@ -1609,6 +1619,14 @@ export type CoordinateSystemScenesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** The fields a COORDINATE_SYSTEM derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type CoordinateSystemDerivedFromInput = {
+  coordinateSystem: Scalars['ID']['input'];
+  kind?: DerivationSourceKind;
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
 export type CoordinateSystemFilter = {
   AND?: InputMaybe<CoordinateSystemFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1685,9 +1703,8 @@ export type CreateAnimationInput = {
 
 /** Input for creating an annotation collection. The collection gets a coordinate system of its own, and an edge relates it to the space the shapes are drawn over */
 export type CreateAnnotationCollectionInput = {
-  axes?: InputMaybe<Array<AxisInput>>;
-  coordinateSystem?: InputMaybe<Scalars['ID']['input']>;
-  derivedFrom?: InputMaybe<DerivationInput>;
+  axes: Array<AxisInput>;
+  derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
@@ -1786,10 +1803,9 @@ export type CreateLensInput = {
 
 /** Input for registering an immutable, versioned mesh collection. The collection gets a coordinate system of its own, and an edge relates it to the space the meshes were extracted from */
 export type CreateMeshCollectionInput = {
-  axes?: InputMaybe<Array<AxisInput>>;
+  axes: Array<AxisInput>;
   catalog: Scalars['ParquetLike']['input'];
-  coordinateSystem?: InputMaybe<Scalars['ID']['input']>;
-  derivedFrom?: InputMaybe<DerivationInput>;
+  derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   encoding?: InputMaybe<Scalars['Any']['input']>;
   geometry?: InputMaybe<Array<Scalars['ParquetLike']['input']>>;
   grid?: InputMaybe<Scalars['Any']['input']>;
@@ -1934,9 +1950,8 @@ export type CreateSceneInput = {
 /** Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE) */
 export type CreateTableDatasetInput = {
   columns?: Array<TableColumnInput>;
-  coordinateSystem?: InputMaybe<Scalars['ID']['input']>;
   data: Scalars['ParquetLike']['input'];
-  derivedFrom?: InputMaybe<DerivationInput>;
+  derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   validateSchema?: Scalars['Boolean']['input'];
@@ -2069,6 +2084,14 @@ export type DatasetProvenanceEntriesArgs = {
 export type DatasetChildrenFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
   showChildren?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+/** The fields a DATASET derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type DatasetDerivedFromInput = {
+  dataset: Scalars['ID']['input'];
+  kind?: DerivationSourceKind;
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
 };
 
 export type DatasetFilter = {
@@ -2293,15 +2316,41 @@ export type DeleteViewInput = {
   id: Scalars['ID']['input'];
 };
 
-/** How a collection's own coordinate system relates to the space it was derived from. The same edge, the same kinds, and the same rank check, that a derived dataset's `derivedFrom` writes */
-export type DerivationInput = {
-  transform?: InputMaybe<TransformInput>;
-};
+/** Which kind of thing a derivation names as the source its data was computed from: the discriminator of `DerivedFromInput`. The edge itself is the same whichever is chosen -- child space in, source space out -- so a table named as TABLE_DATASET and the same table named as COORDINATE_SYSTEM write the identical row; the read side reports what lives at the far end through `CoordinateSystem.residents`, not which member was used to say it */
+export enum DerivationSourceKind {
+  /** An annotation collection, through the space its shapes are drawn in. */
+  AnnotationCollection = 'ANNOTATION_COLLECTION',
+  /** A coordinate system directly, when the source is a space rather than a container -- a physical space, or a world. */
+  CoordinateSystem = 'COORDINATE_SYSTEM',
+  /** An array dataset as a whole, through its intrinsic pixel grid. Use it when the source is the entire image and there is no lens worth minting. */
+  Dataset = 'DATASET',
+  /** A selection over an array dataset, and the preferred way to name one: a lens' own edge back to its dataset already carries the crop, so pointing at it gets the rest of the chain for free. */
+  Lens = 'LENS',
+  /** A mesh collection, through its vertex coordinate system. */
+  MeshCollection = 'MESH_COLLECTION',
+  /** A table dataset, through the space its coordinate columns declare -- the direction an image reconstructed from a table of SMLM localizations is derived. A table with no coordinate columns enumerates objects rather than places them, and its only honest edge is UNMAPPABLE. */
+  TableDataset = 'TABLE_DATASET'
+}
 
-/** Input for stating where a new dataset's pixels came from: the lens it was computed from, and the map from its pixel grid back into that lens' space */
+/** Where this data came from, as a discriminated union: `kind` selects which sort of source is being named, and only that member's id field is read -- any other is rejected. The member inputs annotated `@unionElementOf(union: "DerivedFromInput")` say which field each kind reads. Direction is always this data -> its source */
 export type DerivedFromInput = {
-  lens: Scalars['ID']['input'];
+  /** (ANNOTATION_COLLECTION) The annotation collection this data was computed from */
+  annotationCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** (COORDINATE_SYSTEM) The space this data was computed from, when the source is a space rather than a container */
+  coordinateSystem?: InputMaybe<Scalars['ID']['input']>;
+  /** (DATASET) The array dataset this data was computed from, through its whole pixel grid */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Which sort of thing the source is. It fixes which id field below is read; any other is rejected */
+  kind: DerivationSourceKind;
+  /** (LENS) The lens this data was computed from */
+  lens?: InputMaybe<Scalars['ID']['input']>;
+  /** (MESH_COLLECTION) The mesh collection this data was computed from */
+  meshCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** (TABLE_DATASET) The table this data was computed from -- an SMLM localization table a reconstruction was rendered from, say */
+  tableDataset?: InputMaybe<Scalars['ID']['input']>;
+  /** How this data's own space maps back into the source's -- any creatable kind; the rank check holds you to it. **Omit it and the edge is UNMAPPABLE**: naming a source records the lineage and claims no geometry, which is the truth for a table of per-object measurements whose rows are not anywhere. State IDENTITY for an in-place operation, TRANSLATION for a crop, SCALE for a resample or for a localization table's nanometres into a reconstruction's pixels, BY_DIMENSION for a projection that drops an axis. Only a mappable edge carries placement: derived data sits where its source sits exactly when it says how */
   transform?: InputMaybe<TransformInput>;
+  /** What the derivation did to the *values* -- orthogonal to the transform's `kind`, which only says where the data sits: IDENTICAL for a crop or reorder (statistics transfer), TRANSFORMED for a deconvolution, a normalization, or a table of measurements read off an image, CATEGORIZED for a threshold or segmentation (values became labels -- a bootstrapped scene then renders as a label map). Omit when unstated; the algorithm itself belongs to task provenance */
   valueRelation?: InputMaybe<ValueRelation>;
 };
 
@@ -3994,6 +4043,14 @@ export type LensPhasorArgs = {
   harmonic?: Scalars['Int']['input'];
 };
 
+/** The fields a LENS derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type LensDerivedFromInput = {
+  kind?: DerivationSourceKind;
+  lens: Scalars['ID']['input'];
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
 /** Thin lens */
 export type LensElement = OpticalElement & {
   __typename?: 'LensElement';
@@ -4374,8 +4431,8 @@ export type MeshCollection = {
   catalog: ParquetStore;
   /** The coordinate system the collection's vertices are expressed in. The collection owns it; `derivedFrom` relates it to the data the meshes were extracted from */
   coordinateSystem: CoordinateSystem;
-  /** The edge relating this collection's space to the space the meshes were extracted from -- an identity when the meshes are in that grid as-is, a scale when they came off a downsampled one. The same relation a derived dataset's `derivedFrom` records. Null for a mesh derived from no data at all */
-  derivedFrom?: Maybe<Transformation>;
+  /** Every edge from this collection's space back into data the meshes were extracted from, in declared order -- the first is the primary parent, the one that places it. An identity when the meshes are in that grid as-is, a scale when they came off a downsampled one, UNMAPPABLE where the lineage is recorded but no geometry is claimed. Empty for a mesh derived from no data at all. The same relation a derived dataset's `derivedFrom` records */
+  derivedFrom: Array<Transformation>;
   /** The geometry encoding: how positions, normals and indices are quantized and compressed */
   encoding: Scalars['Any']['output'];
   /** The Parquet stores holding the geometry shards */
@@ -4385,6 +4442,14 @@ export type MeshCollection = {
   id: Scalars['ID']['output'];
   specVersion: Scalars['String']['output'];
   version: Scalars['String']['output'];
+};
+
+/** The fields a MESH_COLLECTION derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type MeshCollectionDerivedFromInput = {
+  kind?: DerivationSourceKind;
+  meshCollection: Scalars['ID']['input'];
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
 };
 
 export type MeshCollectionFilter = {
@@ -9186,8 +9251,8 @@ export type TableDataset = {
   createdThrough?: Maybe<Task>;
   /** The assigner of the creating task, if any */
   createdThroughBy?: Maybe<User>;
-  /** The edge from this table's space back into the data it was computed from. UNMAPPABLE for a measurement table (its rows are not positions), a real map for a placeable localization table. Null for a freestanding table. It is the same relation a derived dataset's `derivedFrom` records */
-  derivedFrom?: Maybe<Transformation>;
+  /** Every edge from this table's space back into data it was computed from, in declared order -- the first is the primary parent, the one that places it. UNMAPPABLE where the lineage is recorded but no geometry is claimed; empty for a freestanding table. The same relation a derived dataset's `derivedFrom` records */
+  derivedFrom: Array<Transformation>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -9221,6 +9286,14 @@ export type TableDatasetColumn = {
   references?: Maybe<TableDataset>;
   role: TableColumnRole;
   unit?: Maybe<Scalars['String']['output']>;
+};
+
+/** The fields a TABLE_DATASET derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
+export type TableDatasetDerivedFromInput = {
+  kind?: DerivationSourceKind;
+  tableDataset: Scalars['ID']['input'];
+  transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
 };
 
 export type TableDatasetFilter = {

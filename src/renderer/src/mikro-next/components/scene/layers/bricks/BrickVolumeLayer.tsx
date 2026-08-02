@@ -17,6 +17,7 @@ import { DRAG_THRESHOLD_PX } from "../../core/drawGesture";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
 import {
+  isDrawingTool,
   isProbeDerivedTool,
   useRoiDrawingStoreApi,
 } from "../../store/roiDrawingStore";
@@ -343,15 +344,17 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       onPointerMove={(e) => {
-        // 3D ANNOTATE with a probe-derived tool hover-probes unconditionally —
-        // that IS probe-derived placement. Cheap by construction either way:
-        // the march reads only RESIDENT bricks (GPU-lockstep data, no array
-        // fetches), and the precise attribute tier sits behind its own
-        // debounce in AttributeProbeTracker.
+        // ANNOTATE hover-probes unconditionally for EVERY shape tool — in 3D
+        // the probe IS the placement, for a path's next vertex exactly as much
+        // as for a sphere's center, and the drawer's rubber band follows the
+        // published probe. Cheap by construction either way: the march reads
+        // only RESIDENT bricks (GPU-lockstep data, no array fetches), and the
+        // precise attribute tier sits behind its own debounce in
+        // AttributeProbeTracker.
         const hoverProbing =
           (interactionMode === "PROBE" && probeFollowsCursor) ||
           (interactionMode === "ANNOTATE" &&
-            isProbeDerivedTool(roiDrawingApi.getState().activeTool));
+            isDrawingTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing || e.buttons !== 0) return;
         // Declined BEFORE stopPropagation, so the event falls through to the
         // pinned layer behind this one instead of being swallowed here.
@@ -363,10 +366,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         probeCoalescer.schedule(() => updateProbe(probeFromRay(ray, "hover"), false));
       }}
       onPointerOut={() => {
+        // Clearing the probe on the way out is what tells the drawer the
+        // pointer left the data: a click out there marks nothing.
         const hoverProbing =
           (interactionMode === "PROBE" && probeFollowsCursor) ||
           (interactionMode === "ANNOTATE" &&
-            isProbeDerivedTool(roiDrawingApi.getState().activeTool));
+            isDrawingTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing) return;
         if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
         probeCoalescer.cancel();
@@ -388,11 +393,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         }
         if (
           interactionMode === "ANNOTATE" &&
-          isProbeDerivedTool(roiDrawingApi.getState().activeTool)
+          isDrawingTool(roiDrawingApi.getState().activeTool)
         ) {
-          // Feedback only: the marker and axis guides land on the point before
-          // the click event arrives. The annotation itself is created in
-          // onClick, which R3F drag-guards via e.delta.
+          // Feedback only, and the point the drawer will read: the marker and
+          // axis guides land on it before the click event arrives. What gets
+          // created happens in onClick (here, or in the drawer's), which R3F
+          // drag-guards via e.delta.
           updateProbe(probeFromRay(e.ray, "click"), false);
         }
       }}

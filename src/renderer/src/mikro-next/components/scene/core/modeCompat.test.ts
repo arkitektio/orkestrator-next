@@ -75,17 +75,32 @@ describe("availableAnnotateTools", () => {
     ]);
   });
 
-  it("offers the volumetric tools plus the shared ones in 3D", () => {
+  it("offers every shape tool in 3D — only the marquee drops out", () => {
     const tools = availableAnnotateTools(ctx3D);
-    expect(tools).toEqual(["SPHERE", "CUBE", "POINT", "LINE", "PATH"]);
+    expect(tools).toEqual([
+      "RECTANGLE",
+      "ELLIPSIS",
+      "POLYGON",
+      "SPHERE",
+      "CUBE",
+      "POINT",
+      "LINE",
+      "PATH",
+    ]);
+    expect(tools).not.toContain("SELECT");
   });
 
   it("agrees with the single-tool predicate", () => {
+    // The marquee has nothing to drag against in 3D.
     expect(isAnnotateToolAvailable("SELECT", ctx3D)).toBe(false);
     expect(isAnnotateToolAvailable("SELECT", ctx2D)).toBe(true);
-    // The planar shapes are flat-only: in 3D they would land on an arbitrary
-    // z slab; the volumetric tools are the 3D marking gesture.
-    expect(isAnnotateToolAvailable("POLYGON", ctx3D)).toBe(false);
+    // The shapes work in both: flat on the drawn slice, probe-placed in the
+    // volume (they used to land on an arbitrary z slab in 3D, which is what
+    // kept them out).
+    expect(isAnnotateToolAvailable("POLYGON", ctx3D)).toBe(true);
+    expect(isAnnotateToolAvailable("RECTANGLE", ctx3D)).toBe(true);
+    expect(isAnnotateToolAvailable("ELLIPSIS", ctx3D)).toBe(true);
+    // The volumetric tools stay 3D-only — they are anchored by a probe click.
     expect(isAnnotateToolAvailable("SPHERE", ctx2D)).toBe(false);
     expect(isAnnotateToolAvailable("SPHERE", ctx3D)).toBe(true);
     expect(isAnnotateToolAvailable("CUBE", ctx3D)).toBe(true);

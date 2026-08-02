@@ -16,7 +16,7 @@ import {
 import { planarRadius, primitiveCornerVectors } from "../core/primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "../store/roiDrawSessionStore";
 import { useSceneStore } from "../store/sceneStore";
-import { useViewerStore } from "../store/viewerStore";
+import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
 import { useCreateSceneAnnotation } from "./useCreateSceneAnnotation";
 import { createRafCoalescer } from "../core/probe/rafCoalesce";
 import {
@@ -89,6 +89,8 @@ export const RoiDrawer = () => {
   const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
+  const viewerStoreApi = useViewerStoreApi();
+  const canvas = useThree((s) => s.gl.domElement);
   const invalidate = useThree((s) => s.invalidate);
   const readoutApi = useRoiDrawSessionStoreApi();
 
@@ -111,15 +113,30 @@ export const RoiDrawer = () => {
   const isPolygonLike = tool === "POLYGON" || tool === "PATH";
   const isPrimitive = isPrimitiveTool(tool);
   const unit = unitLabel(spatialUnit);
+  /**
+   * In 3D there is no slice to draw on, so every vertex comes from the volume
+   * probe instead of the draw plane — `currentZ` is a flat-view concept and a
+   * plane at it would put the shape wherever that happens to fall. The gesture
+   * becomes click-per-point for every tool (a rectangle is two probed corners),
+   * which is the gesture the volumetric primitives already use.
+   */
+  const probePlaced = displayMode === "3D";
 
   const paint = useCallback(() => {
     const session = sessionRef.current;
     if (!tool) return;
 
-    const z = session.planeZ + PREVIEW_Z_LIFT;
     let points = session.cursor
       ? [...session.vertices, session.cursor]
       : session.vertices;
+
+    /**
+     * The depth the planar preview sits on: the ANCHOR's, read before the
+     * primitive translation below rewrites `points` into bounding corners — a
+     * sphere's footprint belongs on its equator, not on its bottom face.
+     */
+    const anchorZ =
+      session.vertices[0]?.z ?? session.cursor?.z ?? session.planeZ;
 
     // Volumetric tools rubber-band a RADIUS around the probe-seeded center,
     // but outline/measure speak the corner-pair convention — translate here so
@@ -142,12 +159,22 @@ export const RoiDrawer = () => {
       ];
     }
 
+    // Each point keeps its OWN depth, lifted off whatever it sits on: one slice
+    // in 2D, the probed surface in 3D — where consecutive vertices legitimately
+    // differ in z. The flat `z` argument is the fallback the corner-pair shapes
+    // (rectangle, ellipse, primitive footprint) still preview on: two corners
+    // describe a box, and its outline belongs at the anchor's depth.
+    const lifted = points.map((point) => ({
+      x: point.x,
+      y: point.y,
+      z: point.z + PREVIEW_Z_LIFT,
+    }));
+    const z = anchorZ + PREVIEW_Z_LIFT;
+
     // `closePolygon: false` — the closing edge is the separate faint line below,
     // so the user can see the finished shape before committing to it.
-    // `roiOutline` takes planar points and applies z itself — Vector3 satisfies
-    // that, so nothing needs converting here.
     mainRef.current?.setPoints(
-      roiOutline(tool, points, z, { closePolygon: false }),
+      roiOutline(tool, lifted, z, { closePolygon: false }),
     );
 
     const showClosing =
@@ -155,8 +182,16 @@ export const RoiDrawer = () => {
     closingRef.current?.setPoints(
       showClosing
         ? [
-            [session.cursor!.x, session.cursor!.y, z],
-            [session.vertices[0].x, session.vertices[0].y, z],
+            [
+              session.cursor!.x,
+              session.cursor!.y,
+              session.cursor!.z + PREVIEW_Z_LIFT,
+            ],
+            [
+              session.vertices[0].x,
+              session.vertices[0].y,
+              session.vertices[0].z + PREVIEW_Z_LIFT,
+            ],
           ]
         : [],
     );
@@ -235,6 +270,48 @@ export const RoiDrawer = () => {
     () => resetSession,
     [activeTool, interactionMode, displayMode, resetSession],
   );
+
+  /**
+   * In 3D the cursor IS the probe.
+   *
+   * The volume hover-probes for every shape tool in ANNOTATE mode and publishes
+   * the point (`BrickVolumeLayer`), so the rubber band is driven from the store
+   * rather than from this component's own pointermove: the volume legitimately
+   * claims (and stops) that event whenever it is the front-most hit, and the
+   * draw plane below would then never see the move.
+   *
+   * A null probe — pointer off the data — clears the cursor, which is what
+   * makes the preview stop at the edge of what can actually be marked.
+   */
+  useEffect(() => {
+    if (!probePlaced || interactionMode !== "ANNOTATE" || !tool) return;
+    if (isPrimitiveTool(tool)) return; // sized on the plane through its anchor
+
+    return viewerStoreApi.subscribe((state, previous) => {
+      if (state.probedCoordinate === previous.probedCoordinate) return;
+      const session = sessionRef.current;
+      if (session.vertices.length === 0) return; // nothing to rubber-band yet
+      const world = state.probedCoordinate?.worldPos;
+      session.cursor = world ? new THREE.Vector3(...world) : null;
+      paintCoalescer.schedule(paint);
+    });
+  }, [probePlaced, interactionMode, tool, viewerStoreApi, paint, paintCoalescer]);
+
+  /**
+   * Where to hang the measure readout in 3D. The geometry comes from the probe,
+   * but its LABEL follows the pointer — and the draw plane no longer sees
+   * pointermove there, so the position is read off the canvas directly. Stores
+   * two numbers per event and schedules nothing: the paint that consumes them
+   * is already driven by the probe.
+   */
+  useEffect(() => {
+    if (!probePlaced || interactionMode !== "ANNOTATE" || !tool) return;
+    const onMove = (event: PointerEvent) => {
+      cursorPxRef.current = { x: event.offsetX, y: event.offsetY };
+    };
+    canvas.addEventListener("pointermove", onMove);
+    return () => canvas.removeEventListener("pointermove", onMove);
+  }, [probePlaced, interactionMode, tool, canvas]);
 
   // "Draw path from probe": consume the seeded first vertex. Declared AFTER
   // the reset effect above — within one commit React runs cleanups first, then
@@ -328,6 +405,16 @@ export const RoiDrawer = () => {
     return intersectDrawPlane(event.ray, planeZ, scratch.current);
   };
 
+  /**
+   * The point under the cursor in 3D: whatever the volume last probed. Null
+   * when the pointer is off the data — there is nothing there to mark, and a
+   * vertex at the stale point would be a lie.
+   */
+  const pointOnData = (): THREE.Vector3 | null => {
+    const world = viewerStoreApi.getState().probedCoordinate?.worldPos;
+    return world ? new THREE.Vector3(...world) : null;
+  };
+
   return (
     <group>
       {/* Invisible interaction plane. It still raycasts — Mesh.raycast never
@@ -337,8 +424,10 @@ export const RoiDrawer = () => {
         onPointerDown={(e) => {
           // Click tools opt out entirely, so R3F's post-drag click can't
           // interfere with them. Primitives are click tools too — and their
-          // anchor never comes from this plane (the volume seeds it).
-          if (isPolygonLike || tool === "POINT" || isPrimitive) return;
+          // anchor never comes from this plane (the volume seeds it). In 3D
+          // EVERY tool is a click tool: there is no drag-a-plane gesture when
+          // the points come from the probe.
+          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) return;
           const hit = pointOnPlane(e);
           if (!hit) return;
 
@@ -369,6 +458,10 @@ export const RoiDrawer = () => {
           // (hover probing, the anchoring click) — the plane must neither
           // consume the ray nor block propagation to it.
           if (isPrimitive && session.vertices.length === 0) return;
+          // Same in 3D for every other tool, and for the whole gesture: the
+          // cursor arrives through the probe subscription instead, so this
+          // plane must stay out of the way of the volume's hover.
+          if (probePlaced && !isPrimitive) return;
           // Otherwise unconditional: this plane sits in front of the image
           // planes, so stopping propagation is what keeps a probe from firing
           // while you draw.
@@ -392,7 +485,7 @@ export const RoiDrawer = () => {
           paintCoalescer.schedule(paint);
         }}
         onPointerUp={(e) => {
-          if (isPolygonLike || tool === "POINT" || isPrimitive) return;
+          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) return;
 
           const session = sessionRef.current;
           e.stopPropagation();
@@ -444,6 +537,48 @@ export const RoiDrawer = () => {
             return;
           }
 
+          // 3D: one click, one probed vertex. The POINT tool is the volume's
+          // own job (it creates the annotation at the probed coordinate), so it
+          // is the one tool that never reaches this branch.
+          if (probePlaced) {
+            if (tool === "POINT") return;
+            // An orbit-drag release is not a vertex.
+            if (e.delta > DRAG_THRESHOLD_PX) return;
+            const probed = pointOnData();
+            if (!probed) return; // off the data: nothing there to mark
+            e.stopPropagation();
+
+            const px = eventPx(e);
+            const session = sessionRef.current;
+
+            if (isPolygonLike) {
+              // Same double-click finish as the flat gesture, position-checked.
+              if (
+                e.detail >= 2 &&
+                session.vertices.length >= 2 &&
+                (!session.lastClickPx || withinSlop(px, session.lastClickPx))
+              ) {
+                finishShape([...session.vertices]);
+                return;
+              }
+            } else if (session.vertices.length === 1) {
+              // The two-point tools (rectangle, ellipse, line) commit on their
+              // second probed point — the corner pair the annotation carries,
+              // which the renderer extrudes when the two straddle depth.
+              finishShape([session.vertices[0], probed]);
+              return;
+            }
+
+            session.vertices = [...session.vertices, probed];
+            session.lastClickPx = px;
+            session.phase = "anchored";
+            session.cursor = probed.clone();
+            cursorPxRef.current = px;
+            setPlacedVertices(session.vertices);
+            paintCoalescer.schedule(paint);
+            return;
+          }
+
           if (!isPolygonLike && tool !== "POINT") return;
           e.stopPropagation();
 
@@ -455,10 +590,6 @@ export const RoiDrawer = () => {
           if (tool === "POINT") {
             // A stray drag shouldn't drop a point.
             if (e.delta > DRAG_THRESHOLD_PX) return;
-            // In 3D the point is probe-derived: the volume places it at the
-            // probed coordinate, so a plane point at `currentZ` would be a
-            // duplicate on an arbitrary slab.
-            if (displayMode === "3D") return;
             session.planeZ = currentZ;
             finishShape([hit.clone().setZ(currentZ)]);
             return;
@@ -549,7 +680,18 @@ const RoiShape = ({ roi }: { roi: DrawnRoi }) => {
 
   return (
     <Line
-      points={roiOutline(roi.tool, vectors, z)}
+      // Lifted per point, not by the flat `z`: a shape drawn in the volume has
+      // a depth per vertex, and only the corner-pair tools fall back to one
+      // plane (`roiOutline`).
+      points={roiOutline(
+        roi.tool,
+        vectors.map((vector) => ({
+          x: vector.x,
+          y: vector.y,
+          z: (vector.z ?? 0) + PREVIEW_Z_LIFT,
+        })),
+        z,
+      )}
       color={COMMITTED_COLOR}
       lineWidth={2}
       depthTest={false}

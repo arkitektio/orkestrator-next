@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import type { ThreeEvent } from "@react-three/fiber";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 
 import {
   SceneLayerFragment,
@@ -13,6 +13,7 @@ import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 import { Line } from "../../primitives/Line";
 import { SPHERE_KIND, ellipsoidCrossSectionScale } from "../../core/primitiveDraw";
 import { affineToMatrix4, sceneZExtent } from "../../core/worldTransform";
+import { computeWorldUnitsPerPixel } from "../../core/probeWorld";
 import {
   isAnnotationInView,
   sceneCoverages,
@@ -431,6 +432,110 @@ const AnnotationCollectionGroup = ({
   );
 };
 
+/**
+ * The material for a closed shape's interior.
+ *
+ * A filled shape gets its fill. An UNFILLED one still gets a surface, just an
+ * invisible one: it is what makes a click anywhere inside a rectangle or a
+ * polygon select it, instead of forcing the user to hit the outline. An
+ * invisible MATERIAL (not `visible={false}` on the object) is the idiom the
+ * drawer's interaction plane and the marquee already use — `Mesh.raycast` never
+ * reads it, so the surface still picks while the renderer skips drawing it.
+ */
+const InteriorMaterial = ({ style }: { style: ShapeStyle }) =>
+  style.fill ? (
+    <meshBasicMaterial
+      color={style.fill}
+      transparent
+      opacity={style.fillOpacity}
+      side={THREE.DoubleSide}
+    />
+  ) : (
+    <meshBasicMaterial visible={false} side={THREE.DoubleSide} />
+  );
+
+/**
+ * A polygon's interior, as a pickable surface.
+ *
+ * The geometry is memoized on the flattened vertices: rebuilding a `Shape` per
+ * render would hand R3F fresh `args` every time and churn a GPU buffer on every
+ * selection change.
+ */
+const PolygonInterior = ({
+  points,
+  style,
+}: {
+  points: [number, number, number][];
+  style: ShapeStyle;
+}) => {
+  const shape = useMemo(
+    () =>
+      new THREE.Shape(points.map((point) => new THREE.Vector2(point[0], point[1]))),
+    [points],
+  );
+
+  // Triangulation needs three distinct vertices; below that there is no inside.
+  if (points.length < 3) return null;
+
+  // No handler of its own: the shape's group owns selection, and a second
+  // handler on the same hit would just be another thing to keep in step.
+  return (
+    <mesh position={[0, 0, points[0][2]]}>
+      <shapeGeometry args={[shape]} />
+      <InteriorMaterial style={style} />
+    </mesh>
+  );
+};
+
+/**
+ * A point annotation, held at a constant size on screen.
+ *
+ * It used to be a disc of 1.5 COLLECTION units, which on a 512 µm field is
+ * sub-pixel as soon as you zoom out — invisible, and far too small to click. The
+ * scaling is imperative in `useFrame` off the camera rather than through a
+ * `worldUnitsPerPixel` subscription, the same reason `VertexHandles` does it
+ * that way: the store field is throttled, and subscribing would re-render every
+ * annotation in the scene on every camera move (P17).
+ */
+const POINT_RADIUS_PX = 5;
+
+const AnnotationPoint = ({
+  position,
+  color,
+  opacity,
+  onSelect,
+}: {
+  position: [number, number, number];
+  color: string;
+  opacity: number;
+  onSelect: (event: ThreeEvent<MouseEvent>) => void;
+}) => {
+  const group = useRef<THREE.Group>(null);
+
+  useFrame(({ camera, size }) => {
+    if (!group.current) return;
+    group.current.scale.setScalar(
+      computeWorldUnitsPerPixel(camera, size.height) * POINT_RADIUS_PX,
+    );
+  });
+
+  return (
+    // `scale={0}` at mount so nothing draws at the wrong size for a frame; the
+    // first useFrame sets the real radius before the first paint.
+    <group ref={group} position={position} scale={0}>
+      <mesh onClick={onSelect}>
+        <circleGeometry args={[1, 16]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={opacity}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
+  );
+};
+
 /** One shape, in the collection's space (the parent group applies the affine). */
 const AnnotationShape = ({
   annotation,
@@ -467,17 +572,13 @@ const AnnotationShape = ({
   };
 
   if (annotation.kind === RoiKind.Point && vectors.length >= 1) {
-    const [x, y, z] = getVectorPoint(vectors[0], flattenToPlane);
     return (
-      <mesh position={[x, y, z]} onClick={handleSelect}>
-        <circleGeometry args={[1.5, 16]} />
-        <meshBasicMaterial
-          color={style.stroke}
-          transparent
-          opacity={style.strokeOpacity * 0.85}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      <AnnotationPoint
+        position={getVectorPoint(vectors[0], flattenToPlane)}
+        color={style.stroke}
+        opacity={style.strokeOpacity * 0.85}
+        onSelect={handleSelect}
+      />
     );
   }
 
@@ -539,17 +640,12 @@ const AnnotationShape = ({
 
     return (
       <group onClick={handleSelect}>
-        {style.fill && (
-          <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, z0]}>
-            <planeGeometry args={[width, height]} />
-            <meshBasicMaterial
-              color={style.fill}
-              transparent
-              opacity={style.fillOpacity}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        )}
+        {/* Always present, invisible when unfilled: the interior is what makes
+            a rectangle clickable anywhere rather than only on its edge. */}
+        <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, z0]}>
+          <planeGeometry args={[width, height]} />
+          <InteriorMaterial style={style} />
+        </mesh>
         <Line
           points={[
             [x0, y0, z0],
@@ -630,25 +726,31 @@ const AnnotationShape = ({
     points.push(points[0]);
 
     return (
-      <Line
-        points={points}
-        color={style.stroke}
-        lineWidth={style.strokeWidth}
-        onClick={handleSelect}
-      />
+      <group onClick={handleSelect}>
+        {/* Scaled to the SECTIONED radii, so what can be clicked is what is
+            drawn — a sphere cut near its pole is a small target, not its
+            equator's worth. */}
+        <mesh position={[cx, cy, z0]} scale={[rx * section, ry * section, 1]}>
+          <circleGeometry args={[1, 48]} />
+          <InteriorMaterial style={style} />
+        </mesh>
+        <Line points={points} color={style.stroke} lineWidth={style.strokeWidth} />
+      </group>
     );
   }
 
   if ((annotation.kind === RoiKind.Polygon || annotation.kind === RoiKind.Path) && vectors.length >= 2) {
     const pts = vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
-    if (annotation.kind === RoiKind.Polygon) pts.push(pts[0]); // close polygon
+    const isPolygon = annotation.kind === RoiKind.Polygon;
+    // A path is open: it has a stroke to click and no inside to speak of.
+    const interior = isPolygon ? [...pts] : null;
+    if (isPolygon) pts.push(pts[0]); // close polygon
+
     return (
-      <Line
-        points={pts}
-        color={style.stroke}
-        lineWidth={style.strokeWidth}
-        onClick={handleSelect}
-      />
+      <group onClick={handleSelect}>
+        {interior && <PolygonInterior points={interior} style={style} />}
+        <Line points={pts} color={style.stroke} lineWidth={style.strokeWidth} />
+      </group>
     );
   }
 

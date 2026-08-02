@@ -18,6 +18,7 @@ import { TwoDScene } from "./TwoDScene";
 import { AnimationPlayer } from "./cameras/AnimationPlayer";
 import { CameraController } from "./cameras/CameraController";
 import { CanvasSync } from "./cameras/CanvasSync";
+import { LinePickTuning } from "./primitives/LinePickTuning";
 import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { QualityAdapter } from "./cameras/QualityAdapter";
 import { KeyboardModeController } from "./interactions/KeyboardModeController";
@@ -273,6 +274,8 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
           <AnimationPlayer />
           <QualityAdapter />
           <CanvasSync />
+          {/* Annotation outlines are hairline-thin to pick without this. */}
+          <LinePickTuning />
           <SceneScreenshot />
 
           {/* Interaction Layers */}

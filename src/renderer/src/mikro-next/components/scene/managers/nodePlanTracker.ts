@@ -78,6 +78,9 @@ const scratchVoxelVP = new THREE.Matrix4();
 const scratchVoxelInverse = new THREE.Matrix4();
 const scratchFrustum = new THREE.Frustum();
 const scratchCameraPosition = new THREE.Vector3();
+const scratchInverseVP = new THREE.Matrix4();
+const scratchAxisPoint = new THREE.Vector3();
+const scratchViewDirection = new THREE.Vector3();
 
 /**
  * Min interval between replans. During a 3D orbit the camera stream fires
@@ -273,16 +276,39 @@ export function startNodePlanTracking({
         scratchVoxelVP.copy(viewProjectionMatrix).multiply(voxelToWorld);
         scratchFrustum.setFromProjectionMatrix(scratchVoxelVP);
         let voxelPosition: [number, number, number] | null = null;
+        let voxelViewDirection: [number, number, number] | null = null;
         let pxPerVoxelAtUnitDistance = 0;
         if (cameraPose?.isPerspective && cameraPose.fovY > 0) {
+          const inverse = scratchVoxelInverse.copy(voxelToWorld).invert();
           const p = scratchCameraPosition
             .set(cameraPose.position[0], cameraPose.position[1], cameraPose.position[2])
-            .applyMatrix4(scratchVoxelInverse.copy(voxelToWorld).invert());
+            .applyMatrix4(inverse);
           voxelPosition = [p.x, p.y, p.z];
           pxPerVoxelAtUnitDistance =
             viewportSize.height / (2 * Math.tan(cameraPose.fovY / 2));
+          // Foveation axis: `cameraPose` carries no orientation, so unproject
+          // the NDC center through the inverse view-projection to a world
+          // point on the view axis, take the direction from the camera, and
+          // rotate it into voxel space (direction transform — no translation).
+          scratchInverseVP.copy(viewProjectionMatrix).invert();
+          const axisPoint = scratchAxisPoint.set(0, 0, 0.5).applyMatrix4(scratchInverseVP);
+          const direction = scratchViewDirection
+            .set(
+              axisPoint.x - cameraPose.position[0],
+              axisPoint.y - cameraPose.position[1],
+              axisPoint.z - cameraPose.position[2],
+            )
+            .transformDirection(inverse);
+          if (Number.isFinite(direction.x) && direction.lengthSq() > 1e-12) {
+            voxelViewDirection = [direction.x, direction.y, direction.z];
+          }
         }
-        camera = { voxelFrustum: scratchFrustum, voxelPosition, pxPerVoxelAtUnitDistance };
+        camera = {
+          voxelFrustum: scratchFrustum,
+          voxelPosition,
+          pxPerVoxelAtUnitDistance,
+          voxelViewDirection,
+        };
       }
 
       // Budget-floor hysteresis input — only meaningful while the slice stays

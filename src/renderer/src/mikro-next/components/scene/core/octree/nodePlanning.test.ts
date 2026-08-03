@@ -7,6 +7,7 @@ import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
 import {
   adjacentSlabBrickZ,
   compareFetchOrder,
+  foveatedScore,
   planLayerNodes,
   sameNodePlan,
   slabLevelZ,
@@ -597,5 +598,35 @@ describe("planLayerNodes budget-floor hysteresis", () => {
   it("keeps a previously-unlocked finer level within the slack", () => {
     expect(planWith(undefined).targetLevel).toBe(1); // floor binds afresh
     expect(planWith(0).targetLevel).toBe(0); // hysteresis holds the unlock
+  });
+});
+
+describe("foveatedScore", () => {
+  const origin: [number, number, number] = [0, 0, 0];
+
+  it("with no view direction it is the plain squared center distance", () => {
+    expect(foveatedScore([3, 4, 0], origin, null)).toBe(25);
+    expect(foveatedScore([0, 0, 2], origin, undefined)).toBe(4);
+  });
+
+  it("equidistant on-axis nodes score below off-axis ones", () => {
+    const viewDirection: [number, number, number] = [0, 0, 1];
+    const onAxis = foveatedScore([0, 0, 10], origin, viewDirection);
+    const offAxis = foveatedScore([10, 0, 0], origin, viewDirection); // 90° off
+    const behind = foveatedScore([0, 0, -10], origin, viewDirection); // 180° off
+    expect(onAxis).toBe(100); // cos = 1 → no penalty, plain dist²
+    expect(offAxis).toBeGreaterThan(onAxis);
+    expect(behind).toBeGreaterThan(offAxis);
+  });
+
+  it("ordering-only invariant: score is monotone in distance along one ray", () => {
+    const viewDirection: [number, number, number] = [1, 0, 0];
+    const near = foveatedScore([5, 5, 0], origin, viewDirection);
+    const far = foveatedScore([10, 10, 0], origin, viewDirection); // same angle
+    expect(far).toBeGreaterThan(near);
+  });
+
+  it("a zero-distance node scores zero regardless of direction", () => {
+    expect(foveatedScore([0, 0, 0], origin, [0, 0, 1])).toBe(0);
   });
 });

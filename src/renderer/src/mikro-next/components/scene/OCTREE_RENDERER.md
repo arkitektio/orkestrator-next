@@ -202,6 +202,13 @@ a 14 MB `[2, 2048, 2048]` chunk decode — GPU-byte accounting made absurdly
 optimistic plans (pitfall P5). `budgetMinLevel` is the finest level whose
 chunk-aligned visible cost fits `maxPlanBytes`; `fixedLOD` overrides it.
 
+Refinement/fetch ORDER is **foveated** (`foveatedScore` in
+`core/octree/nodePlanning.ts`): roots and children sort by camera distance
+penalized by the angle off the view axis (derived per class by unprojecting
+the NDC center — `cameraPose` carries no orientation), so the screen CENTER
+sharpens before equidistant screen-edge bricks. Strictly ordering-only — it
+never admits or rejects a node; orthographic/2D fall back to plain distance.
+
 ### 2.7 The plan driver (`managers/nodePlanTracker.ts`)
 
 Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
@@ -248,6 +255,13 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   `storeId:chunkCoords`. Without it, 12 concurrent bricks touching the same
   plane chunk each triggered their own 14 MB decode — a measured **73×
   fetch amplification** (pitfall P8, the single worst bug of the bring-up).
+  **Dead-queue cancellation** rides on top: bricks reference-count their
+  chunks (`core/octree/chunkRefRegistry.ts`), and when the LAST referring
+  brick aborts, the chunk's per-fetch AbortController fires — the worker pool
+  cancels the task if it is still QUEUED (reclaiming the wasted decode during
+  fast navigation; `stats.cancelledDecodes`), while a STARTED task ignores it
+  and finishes into the chunk cache. Never cancel shared in-progress decodes —
+  that direction was the 13× refetch amplification.
 - **Byte-bounded decoded-chunk cache** (`zarr/caches/byteBudgetChunkCache.ts`,
   512 MB LRU). The runner's default cache is *count*-bounded; 500 entries of
   plane chunks pinned multiple GB (pitfall P6).

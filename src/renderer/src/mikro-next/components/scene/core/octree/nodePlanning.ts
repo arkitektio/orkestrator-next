@@ -95,6 +95,10 @@ export type NodeCamera = {
   voxelPosition: Vec3 | null;
   /** viewportHeight / (2·tan(fovY/2)): px per base voxel at voxel-distance 1. */
   pxPerVoxelAtUnitDistance: number;
+  /** Normalized view direction in base voxels (foveated ordering) — null for
+   * orthographic cameras or when it cannot be derived. Ordering-only input:
+   * it biases WHICH admitted node refines/fetches first, never the set. */
+  voxelViewDirection?: Vec3 | null;
 };
 
 export type PlanLayerNodesInput = {
@@ -129,12 +133,42 @@ const boxDistance = (box: VoxelBox, point: Vec3): number => {
   return scratchBox.distanceToPoint(scratchPoint);
 };
 
-const boxCenterDistanceSq = (box: VoxelBox, point: Vec3): number => {
-  const dx = (box.min[0] + box.max[0]) / 2 - point[0];
-  const dy = (box.min[1] + box.max[1]) / 2 - point[1];
-  const dz = (box.min[2] + box.max[2]) / 2 - point[2];
-  return dx * dx + dy * dy + dz * dz;
-};
+/** How much foveation penalizes off-axis nodes: at the view axis the score is
+ * plain distance²; at 90° off-axis it is distance² × (1 + w)². */
+export const FOVEA_WEIGHT = 1.5;
+
+/**
+ * Foveated ordering score (squared-distance space): distance to `origin`,
+ * penalized by the angle off the view axis. Equidistant nodes in the screen
+ * CENTER sort before nodes at the screen edge — pure camera distance loaded
+ * near-but-peripheral bricks first, which is backwards for "sharpen what I'm
+ * looking at". With a null `viewDirection` (orthographic / 2D) this is the
+ * plain squared center distance. Ordering-only: callers must never use it to
+ * admit or reject nodes.
+ */
+export function foveatedScore(
+  center: Vec3,
+  origin: Vec3,
+  viewDirection: Vec3 | null | undefined,
+  foveaWeight = FOVEA_WEIGHT,
+): number {
+  const dx = center[0] - origin[0];
+  const dy = center[1] - origin[1];
+  const dz = center[2] - origin[2];
+  const distSq = dx * dx + dy * dy + dz * dz;
+  if (!viewDirection || distSq === 0) return distSq;
+  const dist = Math.sqrt(distSq);
+  const cos =
+    (dx * viewDirection[0] + dy * viewDirection[1] + dz * viewDirection[2]) / dist;
+  const penalty = 1 + foveaWeight * (1 - cos);
+  return distSq * penalty * penalty; // ≡ (dist · penalty)², same ordering
+}
+
+const boxCenter = (box: VoxelBox): Vec3 => [
+  (box.min[0] + box.max[0]) / 2,
+  (box.min[1] + box.max[1]) / 2,
+  (box.min[2] + box.max[2]) / 2,
+];
 
 const boxesOverlap = (a: VoxelBox, b: VoxelBox): boolean =>
   a.min[0] < b.max[0] && b.min[0] < a.max[0] &&
@@ -361,6 +395,10 @@ export function planLayerNodes({
           (visibleBox.min[2] + visibleBox.max[2]) / 2,
         ]
       : [baseShape[0] / 2, baseShape[1] / 2, baseShape[2] / 2]);
+  /** Foveation axis — only meaningful with a real camera position. */
+  const viewAxis = camera?.voxelPosition ? camera.voxelViewDirection ?? null : null;
+  const orderScore = (box: VoxelBox): number =>
+    foveatedScore(boxCenter(box), focus, viewAxis);
 
   // --- Coarsest-level reservation -------------------------------------------
   // The residency manager pins EVERY resident coarsest brick in addition to
@@ -441,7 +479,7 @@ export function planLayerNodes({
     children
       .map((child) => ({
         child,
-        dist: boxCenterDistanceSq(nodeBaseBox(geometry, spec, level - 1, child), focus),
+        dist: orderScore(nodeBaseBox(geometry, spec, level - 1, child)),
       }))
       .sort((a, b) => a.dist - b.dist)
       .forEach(({ child }) => visit(level - 1, child));
@@ -475,7 +513,7 @@ export function planLayerNodes({
         const coords: Vec3 = [x, y, z];
         roots.push({
           coords,
-          dist: boxCenterDistanceSq(nodeBaseBox(geometry, spec, rootLevel, coords), focus),
+          dist: orderScore(nodeBaseBox(geometry, spec, rootLevel, coords)),
         });
       }
   roots.sort((a, b) => a.dist - b.dist);

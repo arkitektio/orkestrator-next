@@ -361,6 +361,13 @@ export const DebugPanel = () => {
               <span className="px-1 rounded border border-border/50">
                 evict {brickSystem.stats.evictions}
               </span>
+              {/* Zero-referrer queued decodes cancelled before wasting a
+                  worker slot — climbs during fast navigation. */}
+              {brickSystem.stats.cancelledDecodes > 0 && (
+                <span className="px-1 rounded border border-border/50">
+                  cancelled {brickSystem.stats.cancelledDecodes}
+                </span>
+              )}
               {/* Wall-clock plan→drained (fetchMs/repackMs are concurrent SUMS
                   and overstate wall time — judge streaming perf by this). */}
               {brickSystem.stats.timeToSharpMs > 0 && (

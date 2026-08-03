@@ -23,6 +23,7 @@ import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
+import { ChunkRefRegistry } from "../core/octree/chunkRefRegistry";
 import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache";
 import {
   BrickPoolState,
@@ -317,6 +318,11 @@ export type BrickSystemStats = {
   /** Out-of-plan bricks uploaded into FREE slots on leftover budget —
    * fallback data, never under the first-brick free pass. */
   staleUploads: number;
+  /** Zero-referrer chunk fetches aborted after their LAST brick let go:
+   * still-queued decode tasks are cancelled outright (the win); already
+   * started ones finish into the chunk cache regardless (aborting shared
+   * in-progress decodes was the 13× amplification bug — never do that). */
+  cancelledDecodes: number;
   fetchErrors: number;
 };
 
@@ -347,6 +353,13 @@ export class BrickResidencyManager {
    * N concurrent bricks touching the same plane chunk decode it N times
    * (observed 73× fetch amplification on plane-chunked SPIM data). */
   private readonly inFlightChunks = new Map<string, Promise<Chunk<DataType>>>();
+  /** Per-in-flight-chunk abort: fired ONLY when the last referring brick
+   * releases (see chunkRefs) — the worker pool then cancels the task if it
+   * is still QUEUED, while a started task ignores it and finishes into the
+   * cache. Entries live exactly as long as their inFlightChunks entry. */
+  private readonly inFlightChunkAborts = new Map<string, AbortController>();
+  /** Which live bricks need which in-flight chunk (`core/octree/chunkRefRegistry`). */
+  private readonly chunkRefs = new ChunkRefRegistry();
   /** Chunk fetches outlive individual brick aborts (shared!); this cancels
    * them all on dispose. */
   private readonly fetchAbort = new AbortController();
@@ -423,6 +436,7 @@ export class BrickResidencyManager {
     acquireFailures: 0,
     trimmed: 0,
     staleFetches: 0,
+    cancelledDecodes: 0,
     staleUploads: 0,
     fetchErrors: 0,
   };
@@ -1570,10 +1584,16 @@ export class BrickResidencyManager {
     const existing = this.inFlightChunks.get(key);
     if (existing) return existing;
 
+    // Per-chunk abort on top of the dispose-scoped one: fired only when the
+    // LAST referring brick releases this chunk (fetchBrick's finally). The
+    // worker runner's abort path cancels the task if still queued; a started
+    // task ignores the cancellation and its decode lands in the cache.
+    const chunkAbort = new AbortController();
+    this.inFlightChunkAborts.set(key, chunkAbort);
     const promise = getChunkWorker(arr, chunkCoords, {
       pool: workerPool,
       priority,
-      signal: this.fetchAbort.signal,
+      signal: AbortSignal.any([this.fetchAbort.signal, chunkAbort.signal]),
       useSharedArrayBuffer: true,
       cache: this.chunkCache,
     })
@@ -1586,6 +1606,7 @@ export class BrickResidencyManager {
       })
       .finally(() => {
         this.inFlightChunks.delete(key);
+        this.inFlightChunkAborts.delete(key);
       });
     this.inFlightChunks.set(key, promise);
     return promise;
@@ -1660,16 +1681,22 @@ export class BrickResidencyManager {
     // Generation priority: this plan's decodes outrank stranded queued tasks
     // of earlier plans in the worker pool (see fetchGeneration).
     const fetchPriority = this.fetchGeneration;
+    /** Chunk keys this brick registered as a referrer for (released in finally). */
+    const acquiredChunkKeys: string[] = [];
 
     try {
       const level = pool.geometry.levels[node.level];
       const arr = this.deps.viewerStore.getState().getArrayForStoreId(level.storeId);
 
-      const fetches: Promise<GpuQueuedChunk>[] = this.enumerateBrickChunkCoords(
-        pool,
-        node.level,
-        node.coords,
-      ).map(({ spatial, channelChunk, phasorChunk, chunkCoords }) =>
+      const chunkSpecs = this.enumerateBrickChunkCoords(pool, node.level, node.coords);
+      for (const { chunkCoords } of chunkSpecs) {
+        const chunkKey = `${level.storeId}:${chunkCoords.join(",")}`;
+        acquiredChunkKeys.push(chunkKey);
+        this.chunkRefs.acquire(chunkKey, node.key);
+      }
+
+      const fetches: Promise<GpuQueuedChunk>[] = chunkSpecs.map(
+        ({ spatial, channelChunk, phasorChunk, chunkCoords }) =>
         this.fetchChunkShared(arr, level.storeId, chunkCoords, fetchPriority).then((chunk) => ({
           coords: spatial,
           channelChunk,
@@ -1796,6 +1823,22 @@ export class BrickResidencyManager {
         console.warn(`[bricks] fetch failed for pool ${pool.poolKey} ${node.key}`, error);
       }
     } finally {
+      // Dead-queue cancellation: this brick no longer needs its chunks. Any
+      // chunk whose LAST referrer just left gets its per-chunk abort fired —
+      // a still-QUEUED decode is cancelled outright (the wasted work this
+      // exists to reclaim); a started one ignores it and finishes into the
+      // cache, so flip-backs stay cheap (never abort shared in-progress
+      // decodes — that was the 13× amplification bug). Happy-path releases
+      // are no-ops: the chunk promise already settled and cleared its entry.
+      for (const chunkKey of acquiredChunkKeys) {
+        if (this.chunkRefs.release(chunkKey, node.key)) {
+          const chunkAbort = this.inFlightChunkAborts.get(chunkKey);
+          if (chunkAbort) {
+            chunkAbort.abort();
+            this.stats.cancelledDecodes += 1;
+          }
+        }
+      }
       pool.inFlight.delete(node.key);
       if (!this.disposed) this.startNextFetches(pool);
     }
@@ -2533,6 +2576,8 @@ export class BrickResidencyManager {
     this.disposed = true;
     this.fetchAbort.abort();
     this.inFlightChunks.clear();
+    this.inFlightChunkAborts.clear();
+    this.chunkRefs.clear();
     this.lastChunkRead = null;
     if (this.poolsBumpTimer !== null) {
       clearTimeout(this.poolsBumpTimer);

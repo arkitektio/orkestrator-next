@@ -4,7 +4,9 @@ import { perfMonitor } from "./perfMonitor";
 import {
   FRAME_UPLOAD_BUDGET,
   MAX_STALE_QUEUE,
+  gpuFlushUploadBytes,
   partitionUploadQueue,
+  resolveDrainPolicy,
   shouldContinueDrain,
   shouldContinueStaleDrain,
 } from "./uploadBudget";
@@ -1837,6 +1839,8 @@ export class BrickResidencyManager {
       }
       if (planned) this.stats.acquireFailures += 1;
       else this.stats.planDrops += 1;
+      // Dropped without upload: the repacked payload is dead — recycle it.
+      if (pending.data) this.deps.repack.release(pending.data);
       return "done";
     }
 
@@ -1850,6 +1854,24 @@ export class BrickResidencyManager {
     if (pending.level === pool.geometry.levels.length - 1) {
       pool.coarsestResident.add(pending.key);
     }
+
+    // What this brick actually costs the frame. CPU path: the atlas-slot
+    // payload the writeTexture below uploads. GPU path: `flush()` must
+    // writeBuffer every source chunk not already in the GPU chunk cache
+    // (a plane chunk can be ~14 MB — far more than the slot bytes), and the
+    // flush itself has no wall-clock gate, so the budget has to charge those
+    // bytes HERE, at dispatch time. That bounds the flush's synchronous work
+    // to the frame budget: one cold plane-chunk brick fills the byte budget
+    // for the frame, while cache-hit bricks stay nearly free.
+    const frameCostBytes = pending.gpu
+      ? gpuFlushUploadBytes(
+          pending.gpu.chunks.map((chunk) => ({
+            cacheKey: chunk.cacheKey,
+            byteLength: chunk.data.byteLength,
+          })),
+          (cacheKey) => this.gpuRepacker?.hasChunk(cacheKey) ?? false,
+        )
+      : pending.bytes;
 
     if (pending.gpu) {
       // Compute repack straight into the slot. The page entry goes
@@ -1901,7 +1923,7 @@ export class BrickResidencyManager {
       acquired.slot.coords,
       PAGE_FLAG_RESIDENT,
     );
-    progress.bytes += pending.bytes;
+    progress.bytes += frameCostBytes;
     progress.bricks += 1;
     this.stats.bricksUploaded += 1;
     this.stats.bytesUploaded += pending.bytes;
@@ -1910,8 +1932,12 @@ export class BrickResidencyManager {
     return "done";
   }
 
-  /** Called from the provider's useFrame: bounded texture uploads per frame. */
-  drainUploads(): void {
+  /** Called from the provider's useFrame: bounded texture uploads per frame.
+   * `interacting` (the camera is mid-gesture) switches to the trickle policy —
+   * no free pass, no stale drain, no GPU-repack dispatch (see
+   * `resolveDrainPolicy`) — so uploads stop colliding with gesture frames;
+   * the deferred backlog drains at full budget on the first settled frame. */
+  drainUploads(interacting = false): void {
     if (this.disposed) return;
     // Idle fast path: a previous drain saw the whole pipeline empty and no
     // GPU flush in flight — skip the pool walks and per-frame allocations
@@ -1919,7 +1945,11 @@ export class BrickResidencyManager {
     if (!this.drainNeeded) return;
     const drainStartedAt = performance.now();
     const profile = qualityGovernor.getProfile();
-    const budget = { ...FRAME_UPLOAD_BUDGET, maxMs: profile.uploadBudgetMs };
+    const policy = resolveDrainPolicy(
+      { ...FRAME_UPLOAD_BUDGET, maxMs: profile.uploadBudgetMs },
+      interacting,
+    );
+    const budget = policy.budget;
     const progress = { bytes: 0, bricks: 0, uploadedAny: false };
     const progressOf = () => ({
       bytes: progress.bytes,
@@ -1951,13 +1981,25 @@ export class BrickResidencyManager {
       for (const entry of dropped) {
         pool.queuedKeys.delete(entry.key);
         this.stats.planDrops += 1;
+        // Never uploaded: the repacked payload is dead — recycle it.
+        if (entry.data) this.deps.repack.release(entry.data);
       }
       partitions.set(pool, { planned, stale });
     }
 
+    // The free pass exists so streaming always progresses; while interacting
+    // it is exactly the >maxMs hitch we are avoiding, so the strict predicate
+    // applies to planned bricks too.
+    const continuePlanned = policy.allowFreePass
+      ? shouldContinueDrain
+      : shouldContinueStaleDrain;
     for (const [pool, part] of partitions) {
-      while (part.planned.length > 0 && shouldContinueDrain(progressOf(), budget)) {
+      while (part.planned.length > 0 && continuePlanned(progressOf(), budget)) {
         const pending = part.planned[0];
+        // A GPU-path brick commits flush() to its source-chunk writeBuffers
+        // this frame — deferred while interacting (stays queued; the decoded
+        // chunks stay cached, so it lands at cache-hit cost on settle).
+        if (pending.gpu && !policy.allowGpuDispatch) break;
         const outcome = this.drainEntry(
           pool,
           pending,
@@ -1969,11 +2011,13 @@ export class BrickResidencyManager {
         pool.queuedKeys.delete(pending.key);
       }
     }
-    for (const [pool, part] of partitions) {
-      while (part.stale.length > 0 && shouldContinueStaleDrain(progressOf(), budget)) {
-        const pending = part.stale.shift()!;
-        pool.queuedKeys.delete(pending.key);
-        this.drainEntry(pool, pending, false, progress);
+    if (policy.allowStale) {
+      for (const [pool, part] of partitions) {
+        while (part.stale.length > 0 && shouldContinueStaleDrain(progressOf(), budget)) {
+          const pending = part.stale.shift()!;
+          pool.queuedKeys.delete(pending.key);
+          this.drainEntry(pool, pending, false, progress);
+        }
       }
     }
 
@@ -2098,11 +2142,16 @@ export class BrickResidencyManager {
       // The copy is only valid while the brick still owns the slot it was
       // uploaded into — evictions, remaps and flushes may have intervened,
       // and mirroring then would corrupt another brick's mirror slot.
-      if (this.pools.get(pool.poolKey) !== pool) continue;
-      const slot = pool.pool.slotOf(key);
-      if (!slot || slot.index !== slotIndex) continue;
-      mirrorBrickToBacking(pool.atlas, slotCoords, data);
-      pool.gpuStaleKeys.delete(key);
+      // Either way this entry held the payload's LAST reference (the atlas
+      // upload already copied it out at drain time) — recycle it.
+      if (this.pools.get(pool.poolKey) === pool) {
+        const slot = pool.pool.slotOf(key);
+        if (slot && slot.index === slotIndex) {
+          mirrorBrickToBacking(pool.atlas, slotCoords, data);
+          pool.gpuStaleKeys.delete(key);
+        }
+      }
+      this.deps.repack.release(data);
     }
     if (this.mirrorQueue.length > 0) this.scheduleMirrorDrain();
   }

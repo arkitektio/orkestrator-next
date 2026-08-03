@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACTIVE_DPR_LADDER,
+  predictBurstLadderScale,
   QualityGovernor,
   QUALITY_PROFILES,
+  resolveActiveLadderScale,
   resolveDpr,
+  STANDARD_QUALITY_PROFILES,
+  standardizeProfile,
   TIER_HIGH,
   TIER_LOW,
   TIER_MEDIUM,
@@ -155,5 +160,132 @@ describe("resolveDpr", () => {
     expect(resolveDpr(QUALITY_PROFILES[TIER_LOW], 2, false)).toBe(1.5);
     expect(resolveDpr(QUALITY_PROFILES[TIER_LOW], 1, false)).toBe(1);
     expect(resolveDpr(QUALITY_PROFILES[TIER_LOW], 1, true)).toBe(1);
+  });
+});
+
+describe("fidelity mode", () => {
+  it("standardizeProfile applies the Moderate settled caps only", () => {
+    const standard = standardizeProfile(QUALITY_PROFILES[TIER_HIGH]);
+    expect(standard.settledDprCap).toBe(1.5);
+    expect(standard.settledStepScale).toBe(1.25);
+    expect(standard.maxRaySteps).toBe(384);
+    // Active-path knobs are untouched — fidelity shapes only the settled image.
+    expect(standard.activeDprScale).toBe(QUALITY_PROFILES[TIER_HIGH].activeDprScale);
+    expect(standard.activeStepScale).toBe(QUALITY_PROFILES[TIER_HIGH].activeStepScale);
+    expect(standard.uploadBudgetMs).toBe(QUALITY_PROFILES[TIER_HIGH].uploadBudgetMs);
+    expect(standard.maxInflightBricks).toBe(QUALITY_PROFILES[TIER_HIGH].maxInflightBricks);
+  });
+
+  it("TIER_LOW is already at or below every cap and comes back unchanged", () => {
+    const low = QUALITY_PROFILES[TIER_LOW];
+    const standard = standardizeProfile(low);
+    expect(standard.settledDprCap).toBe(low.settledDprCap);
+    expect(standard.settledStepScale).toBe(low.settledStepScale);
+    expect(standard.maxRaySteps).toBe(low.maxRaySteps);
+  });
+
+  it("defaults to standard fidelity (no storage) and serves the standardized table", () => {
+    const g = new QualityGovernor();
+    expect(g.getFidelity()).toBe("standard");
+    expect(g.getProfile()).toBe(STANDARD_QUALITY_PROFILES[TIER_HIGH]);
+  });
+
+  it("high fidelity restores the exact full-quality table", () => {
+    const g = new QualityGovernor();
+    g.setFidelity("high");
+    expect(g.getProfile()).toBe(QUALITY_PROFILES[TIER_HIGH]);
+  });
+
+  it("notifies subscribers on change, not on a same-value set", () => {
+    const g = new QualityGovernor();
+    let notifications = 0;
+    g.subscribe(() => notifications++);
+    g.setFidelity("standard"); // already standard
+    expect(notifications).toBe(0);
+    g.setFidelity("high");
+    expect(notifications).toBe(1);
+  });
+
+  it("the settled DPR cap flows through resolveDpr", () => {
+    expect(resolveDpr(STANDARD_QUALITY_PROFILES[TIER_HIGH], 2, false)).toBe(1.5);
+    // Active frames are governed by the ladder, not by fidelity.
+    expect(resolveDpr(STANDARD_QUALITY_PROFILES[TIER_HIGH], 2, true)).toBe(2);
+  });
+});
+
+describe("interaction DPR ladder", () => {
+  it("selects quantized rungs from the frame-time EMA", () => {
+    expect(resolveActiveLadderScale(0)).toBe(1);
+    expect(resolveActiveLadderScale(12)).toBe(1);
+    expect(resolveActiveLadderScale(12.1)).toBe(0.75);
+    expect(resolveActiveLadderScale(20)).toBe(0.75);
+    expect(resolveActiveLadderScale(20.1)).toBe(0.5);
+    expect(resolveActiveLadderScale(1000)).toBe(0.5);
+  });
+
+  it("only ever returns a ladder rung (quantized, no continuous drift)", () => {
+    for (let ema = 0; ema <= 60; ema += 0.7) {
+      expect(ACTIVE_DPR_LADDER).toContain(resolveActiveLadderScale(ema));
+    }
+  });
+
+  it("HIGH now participates while active: a slow EMA drops the resolution", () => {
+    const high = QUALITY_PROFILES[TIER_HIGH];
+    expect(resolveDpr(high, 2, true, resolveActiveLadderScale(25))).toBe(1);
+    expect(resolveDpr(high, 2, true, resolveActiveLadderScale(15))).toBe(1.5);
+    // Settled frames are untouched by the ladder.
+    expect(resolveDpr(high, 2, false, resolveActiveLadderScale(25))).toBe(2);
+  });
+
+  it("rung 1 reproduces the pre-ladder behavior exactly", () => {
+    for (const tier of [TIER_HIGH, TIER_MEDIUM, TIER_LOW] as const) {
+      for (const initialDpr of [1, 1.5, 2]) {
+        for (const active of [true, false]) {
+          expect(resolveDpr(QUALITY_PROFILES[tier], initialDpr, active, 1)).toBe(
+            resolveDpr(QUALITY_PROFILES[tier], initialDpr, active),
+          );
+        }
+      }
+    }
+  });
+
+  it("never drops below 1 device pixel whatever the rung", () => {
+    for (const tier of [TIER_HIGH, TIER_MEDIUM, TIER_LOW] as const) {
+      expect(
+        resolveDpr(QUALITY_PROFILES[tier], 1, true, 0.5),
+      ).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("predictBurstLadderScale normalizes the EMA by the previous burst's rung²", () => {
+    // 8 ms measured at rung 0.5 ≈ 32 ms at full resolution → stay at 0.5, no
+    // cross-burst oscillation back to 1.
+    expect(predictBurstLadderScale(8, 0.5)).toBe(0.5);
+    // 8 ms at rung 0.75 ≈ 14.2 ms full-res → one rung of recovery.
+    expect(predictBurstLadderScale(8, 0.75)).toBe(0.75);
+    // Genuinely fast even normalized → climbs back to full resolution.
+    expect(predictBurstLadderScale(2, 0.5)).toBe(1);
+    expect(predictBurstLadderScale(6, 0.75)).toBe(1);
+  });
+
+  it("predictBurstLadderScale at rung 1 is the plain ladder", () => {
+    for (const ema of [0, 10, 15, 25, 60]) {
+      expect(predictBurstLadderScale(ema, 1)).toBe(resolveActiveLadderScale(ema));
+    }
+  });
+
+  it("predictBurstLadderScale tolerates degenerate previous rungs", () => {
+    expect(predictBurstLadderScale(10, 0)).toBe(resolveActiveLadderScale(10));
+    expect(predictBurstLadderScale(10, Number.NaN)).toBe(resolveActiveLadderScale(10));
+    // A rung above 1 never existed; clamp rather than divide the EMA up.
+    expect(predictBurstLadderScale(10, 2)).toBe(resolveActiveLadderScale(10));
+  });
+
+  it("predictBurstLadderScale only ever returns a ladder rung", () => {
+    for (const ema of [0, 7, 13, 21, 55]) {
+      for (const prev of [1, 0.75, 0.5]) {
+        expect(ACTIVE_DPR_LADDER).toContain(predictBurstLadderScale(ema, prev));
+      }
+    }
   });
 });

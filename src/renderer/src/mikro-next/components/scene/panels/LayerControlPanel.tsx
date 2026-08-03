@@ -6,7 +6,7 @@ import {
 import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useShallow } from "zustand/react/shallow";
+import { LongCommitProfiler } from "../core/commitProfiler";
 import { fitsExpanded } from "../core/layerListLayout";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { perfMonitor } from "../managers/perfMonitor";
@@ -16,7 +16,6 @@ import { LayerState, useSceneStore } from "../store/sceneStore";
 import {
   useViewerStore,
   type UnplannableLayerInfo,
-  type ViewerState,
 } from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
@@ -27,32 +26,12 @@ const formatBytes = (bytes: number): string =>
     ? `${(bytes / 1024 ** 3).toFixed(1)} GB`
     : `${Math.round(bytes / 1024 ** 2)} MB`;
 
-/**
- * Coarse per-layer viewport coverage, cached by `layerViewRanges` IDENTITY: a
- * zustand selector runs on EVERY store notification (residencyVersion,
- * poolsVersion, worldUnitsPerPixel, …), and the previous inline selector
- * rebuilt Object.entries + a fresh Record each time — ~16×/s during a zoom
- * for writes that had nothing to do with view ranges. The WeakMap returns a
- * STABLE object for an unchanged ranges map, so unrelated writes cost one
- * lookup and the useShallow compare short-circuits on identity.
- *
- * Buckets are 10 percentage points wide: zooming is precisely what sweeps
- * viewportFraction, and 5-point buckets crossed a boundary every few camera
- * ticks — each flip re-rendering the whole panel. Coverage now only feeds the
- * row badge; it decides neither the list order nor what is unfolded.
- */
-const layerCoverageCache = new WeakMap<object, Record<string, number>>();
-const selectLayerCoverage = (s: ViewerState): Record<string, number> => {
-  const ranges = s.layerViewRanges;
-  const cached = layerCoverageCache.get(ranges);
-  if (cached) return cached;
-  const out: Record<string, number> = {};
-  for (const [id, range] of Object.entries(ranges)) {
-    out[id] = Math.round(range.viewportFraction * 10) * 10; // 0..100 step 10
-  }
-  layerCoverageCache.set(ranges, out);
-  return out;
-};
+// Viewport coverage is deliberately GONE from this panel (and from
+// LayerViewRange entirely). It used to arrive as a bucketed Record and flow
+// into each card as a `viewportPercent` prop — and a changing prop defeats
+// `memo(LayerCard)`, so every bucket crossing during a zoom re-rendered the
+// card's whole render-graph editor subtree (measured 54–174 ms commits, the
+// sidebar's share of gesture jank).
 
 /**
  * The panel's own box, for the auto-expand decision. Bucketed to 32px and
@@ -141,7 +120,6 @@ const UnplannableNotice = ({
 const LayerCard = memo(function LayerCard({
   layer,
   expanded,
-  viewportPercent,
   unplannable,
   onSelect,
   onUpdate,
@@ -151,7 +129,6 @@ const LayerCard = memo(function LayerCard({
 }: {
   layer: LayerState;
   expanded: boolean;
-  viewportPercent?: number;
   unplannable?: UnplannableLayerInfo;
   /**
    * Toggle this card. Takes the CURRENT expanded state so the panel's handler
@@ -187,7 +164,6 @@ const LayerCard = memo(function LayerCard({
         embedded
         layer={layer}
         isSelected={expanded}
-        viewportPercent={viewportPercent}
         graphDirty={editor.dirty}
         savingGraph={editor.loading}
         onSaveGraph={editor.save}
@@ -232,10 +208,6 @@ export const LayerControlPanel = ({
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
-  // Coarse per-layer coverage instead of the raw `layerViewRanges` (the tracker
-  // rewrites the ranges on essentially every camera tick) — see
-  // selectLayerCoverage for the identity-cache + bucket-width rationale.
-  const layerCoverage = useViewerStore(useShallow(selectLayerCoverage));
   // Rarely changes (only when the viability verdict flips) — P17-clean.
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
   const [panelRef, panelSize] = useBucketedSize();
@@ -313,7 +285,6 @@ export const LayerControlPanel = ({
         key={layer.id}
         layer={layer}
         expanded={isExpanded(layer)}
-        viewportPercent={layerCoverage[layer.id]}
         unplannable={unplannableLayers[layer.id]}
         onSelect={handleSelect}
         onUpdate={updateLayer}
@@ -330,6 +301,7 @@ export const LayerControlPanel = ({
     // answers to THAT width, not the viewport's. No media queries: the same
     // component in the narrow in-viewport column and in a dragged-open sidebar
     // lays itself out from its own box.
+    <LongCommitProfiler id="layers-panel">
     <div
       ref={panelRef}
       className={
@@ -363,5 +335,6 @@ export const LayerControlPanel = ({
         </button>
       </div>
     </div>
+    </LongCommitProfiler>
   );
 };

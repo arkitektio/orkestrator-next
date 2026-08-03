@@ -1,6 +1,12 @@
-import { Canvas, events as createPointerEvents } from "@react-three/fiber";
+import {
+  Canvas,
+  events as createPointerEvents,
+  useStore as useThreeStore,
+} from "@react-three/fiber";
 import { SceneGizmo } from "./primitives/SceneGizmo";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { LongCommitProfiler } from "./core/commitProfiler";
+import { useViewStoreApi } from "./store/viewStore";
 import { WebGPURenderer } from "three/webgpu";
 import { CameraMatrixSync } from "./CameraMatrixSync";
 import { PerfFrameProbe } from "./PerfFrameProbe";
@@ -52,10 +58,44 @@ import { useViewerStore } from "./store/viewerStore";
  * the DOM wheel listener entirely; OrbitControls zooms through its own
  * listener and is unaffected.
  */
+/**
+ * Per-canvas gate for suppressing pointermove raycasts while the CAMERA is
+ * navigating: a pan/orbit drag produces 60–120 pointermoves/s, and each one
+ * raycasts the entire interaction set — with annotations mounted that walks
+ * every Line2 outline segment-by-segment, concurrently with the gesture. The
+ * gate reads `viewStore.cameraMoving`, so it goes exactly as long as the
+ * camera actually moves: drag-drawing tools (RoiDrawer/RectangleDrawer hold a
+ * button while the camera is still) and hover probes (no buttons) are
+ * untouched. Registered by `PointerMoveGate` below, keyed by the R3F root
+ * store so multiple mounted canvases stay independent.
+ */
+const pointerMoveGates = new WeakMap<object, () => boolean>();
+
 const sceneEvents: typeof createPointerEvents = (store) => {
   const manager = createPointerEvents(store);
   delete (manager.handlers as Partial<Record<"onWheel", unknown>> | undefined)?.onWheel;
+  const handlers = manager.handlers as
+    | Partial<Record<"onPointerMove", (event: PointerEvent) => void>>
+    | undefined;
+  const originalMove = handlers?.onPointerMove;
+  if (handlers && originalMove) {
+    handlers.onPointerMove = (event: PointerEvent) => {
+      if (event.buttons !== 0 && (pointerMoveGates.get(store)?.() ?? false)) return;
+      originalMove(event);
+    };
+  }
   return manager;
+};
+
+/** Registers this canvas's camera-motion gate (see pointerMoveGates). */
+const PointerMoveGate = () => {
+  const store = useThreeStore();
+  const viewApi = useViewStoreApi();
+  useEffect(() => {
+    pointerMoveGates.set(store, () => viewApi.getState().cameraMoving);
+    return () => void pointerMoveGates.delete(store);
+  }, [store, viewApi]);
+  return null;
 };
 
 const SceneWrapper = ({ children }: { children: ReactNode }) => {
@@ -259,11 +299,13 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <KeyboardModeController />
         <ModeCompatGuard />
         <SceneWrapper>
+          <LongCommitProfiler id="scene-canvas">
           <ambientLight intensity={0.7} />
           <pointLight position={[100, 100, 100]} />
 
           {/* The Camera Matrix Sync ensures that we can access the view matrix outside in html world */}
           <CameraMatrixSync />
+          <PointerMoveGate />
           <PerfFrameProbe />
           <CameraController />
           {/* Must follow CameraController: fits the as-loaded scene extent
@@ -301,13 +343,16 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
             axisHeadScale={1}
             axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}
           />
+          </LongCommitProfiler>
         </SceneWrapper>
 
         {/* The panel stack is the host's to compose — see DefaultScenePanels
             for the shape, and Scene.Column for what positions it. Panels
             below this line are the renderer's own (they answer to the
             canvas, not to a layout choice) and are not composable. */}
-        {props.children ?? <DefaultScenePanels />}
+        <LongCommitProfiler id="scene-chrome">
+          {props.children ?? <DefaultScenePanels />}
+        </LongCommitProfiler>
 
         <WhenDebug>
           <DebugPanel />

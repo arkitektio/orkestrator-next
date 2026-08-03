@@ -660,6 +660,16 @@ const getContinuousColorMapTexture = (
  * color for a normalized intensity `t`. Rows are sampled at their exact centers
  * so LinearFilter on the row axis still returns the correct row.
  */
+/**
+ * Baked-row cache: a row's texels depend ONLY on (colormap, color), and the
+ * atlas is rebuilt on EVERY channel-data change — including clim/gamma drags,
+ * where neither input moves. Without this every drag tick re-evaluated
+ * 256 × `sampleColorMapRgb` per row per member (the merged builder builds a
+ * per-member atlas AND the merged one). Bounded LRU; a hit is a 1 KB memcpy.
+ */
+const atlasRowCache = new Map<string, Uint8Array>();
+const ATLAS_ROW_CACHE_LIMIT = 256;
+
 export const buildColormapAtlas = (
   channels: { colormap: ColorMap | null | undefined; color?: number[] | null }[],
 ): THREE.DataTexture => {
@@ -669,6 +679,15 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
+    const rowKey = `${channel?.colormap ?? ""}|${channel?.color?.join(",") ?? ""}`;
+    const cached = atlasRowCache.get(rowKey);
+    if (cached) {
+      data.set(cached, row * width * 4);
+      // Refresh LRU position.
+      atlasRowCache.delete(rowKey);
+      atlasRowCache.set(rowKey, cached);
+      continue;
+    }
     // RESPONSE-CURVE CONVENTION (deliberate, user-validated): every NAMED
     // colormap row — including INTENSITY-with-base-color and the monochrome
     // family (Cyan, Red, Grey, …) — bakes its self-contained ramp
@@ -688,6 +707,7 @@ export const buildColormapAtlas = (
     const tintColor =
       channel?.colormap == null && channel?.color ? channel.color : null;
 
+    const rowData = new Uint8Array(width * 4);
     for (let x = 0; x < width; x++) {
       const t = x / (width - 1);
       let r: number;
@@ -703,12 +723,18 @@ export const buildColormapAtlas = (
       } else {
         [r, g, b] = sampleColorMapRgb(channel?.colormap, t, channel?.color);
       }
-      const idx = (row * width + x) * 4;
-      data[idx] = Math.round(r * 255);
-      data[idx + 1] = Math.round(g * 255);
-      data[idx + 2] = Math.round(b * 255);
-      data[idx + 3] = 255;
+      const idx = x * 4;
+      rowData[idx] = Math.round(r * 255);
+      rowData[idx + 1] = Math.round(g * 255);
+      rowData[idx + 2] = Math.round(b * 255);
+      rowData[idx + 3] = 255;
     }
+    data.set(rowData, row * width * 4);
+    if (atlasRowCache.size >= ATLAS_ROW_CACHE_LIMIT) {
+      const oldestKey = atlasRowCache.keys().next().value;
+      if (oldestKey !== undefined) atlasRowCache.delete(oldestKey);
+    }
+    atlasRowCache.set(rowKey, rowData);
   }
 
   const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);

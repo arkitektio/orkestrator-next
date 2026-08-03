@@ -90,17 +90,149 @@ export const QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
   },
 };
 
-/** DPR for the current activity state, derived from a profile. */
+/**
+ * Fidelity mode: how much settled-image quality the DEFAULT experience trades
+ * for performance. `"standard"` (the default) moderately caps the SETTLED
+ * profile — DPR ≤ 1.5 (~44 % fewer pixels on a retina display), settled step
+ * scale ≥ 1.25, ray steps ≤ 384 — while `"high"` restores today's exact
+ * full-quality table. Active-path knobs (active DPR/step scale, the
+ * interaction DPR ladder, upload budgets, in-flight counts) are deliberately
+ * untouched: fidelity shapes only the image you look at once the camera
+ * settles. Persisted in localStorage (`orkestrator.fidelity`), toggled in the
+ * DebugPanel next to the tier override; the governor `emit()`s on change so
+ * every profile consumer re-applies.
+ */
+export type FidelityMode = "standard" | "high";
+
+const FIDELITY_STORAGE_KEY = "orkestrator.fidelity";
+
+const readStoredFidelity = (): FidelityMode => {
+  try {
+    return window.localStorage.getItem(FIDELITY_STORAGE_KEY) === "high"
+      ? "high"
+      : "standard";
+  } catch {
+    return "standard";
+  }
+};
+
+/** The Moderate standard-fidelity reduction, applied per tier. TIER_LOW is
+ * already at or below every cap (1.5 / 1.5 / 256) and comes back effectively
+ * unchanged. Pure and exported for tests. */
+export function standardizeProfile(profile: QualityProfile): QualityProfile {
+  return {
+    ...profile,
+    settledDprCap: Math.min(profile.settledDprCap, 1.5),
+    settledStepScale: Math.max(profile.settledStepScale, 1.25),
+    maxRaySteps: Math.min(profile.maxRaySteps, 384),
+  };
+}
+
+/** Built once so `getProfile()` returns stable object identities per tier. */
+export const STANDARD_QUALITY_PROFILES: Record<QualityTier, QualityProfile> = {
+  [TIER_HIGH]: standardizeProfile(QUALITY_PROFILES[TIER_HIGH]),
+  [TIER_MEDIUM]: standardizeProfile(QUALITY_PROFILES[TIER_MEDIUM]),
+  [TIER_LOW]: standardizeProfile(QUALITY_PROFILES[TIER_LOW]),
+};
+
+/**
+ * Interaction DPR ladder: while the camera moves (or bricks stream), the
+ * frame-time EMA picks a quantized resolution multiplier applied ON TOP of
+ * the tier's `activeDprScale`. This is the "motion-time reduced-resolution
+ * rendering" the design doc deferred until `uStepScale` alone proved
+ * insufficient — it is the only lever that touches the raymarch's dominant
+ * cost (fragment count) when zoomed into a volume, and it applies on EVERY
+ * tier (HIGH's activeDprScale is 1, so strong machines previously got zero
+ * fill-rate relief exactly where fill-rate binds).
+ *
+ * Quantized rungs — not a continuous scale — so a drifting EMA cannot retarget
+ * the drawing buffer every frame (each `setDpr` reallocates render targets).
+ * The CALLER keeps the rung monotone within one activity burst (step down
+ * fast, recover only via the settled restore), so a mid-gesture EMA dip never
+ * bounces the resolution back up; this function stays pure.
+ */
+export const ACTIVE_DPR_LADDER: readonly number[] = [1, 0.75, 0.5];
+
+/** EMA at or below rung i's threshold selects rung i; above the last → 0.5.
+ * 12 is `PROMOTE_FRAME_MS` (an EMA the governor would promote on needs no
+ * resolution help); 20 sits just under `DEMOTE_FRAME_MS` so the ladder reacts
+ * a beat before the tier would demote. */
+const LADDER_EMA_THRESHOLDS_MS: readonly number[] = [12, 20];
+
+/** The ladder rung for a frame-time EMA (pure; thresholds ≤12 → 1, ≤20 → 0.75,
+ * else 0.5 — anchored on the governor's promote bound: an EMA it would promote
+ * on needs no resolution help). */
+export function resolveActiveLadderScale(emaMs: number): number {
+  for (let i = 0; i < LADDER_EMA_THRESHOLDS_MS.length; i++) {
+    if (emaMs <= LADDER_EMA_THRESHOLDS_MS[i]) return ACTIVE_DPR_LADDER[i];
+  }
+  return ACTIVE_DPR_LADDER[ACTIVE_DPR_LADDER.length - 1];
+}
+
+/**
+ * The rung for the NEXT activity burst, decided ONCE at burst entry and held
+ * for the whole burst. Mid-burst stepping was self-amplifying: every `setDpr`
+ * reallocates the render targets (a multi-hundred-ms frame), that spike frame
+ * inflated the EMA, the ladder dropped another rung, which reallocated again —
+ * the mitigation caused the very hitches it was meant to remove. One decision
+ * per burst caps the cost at exactly one realloc per gesture.
+ *
+ * The EMA is NORMALIZED by the rung the previous burst rendered at
+ * (`emaMs / rung²` — the raymarch is fragment-bound, and fragment count
+ * scales with rung²): an 8 ms EMA measured at rung 0.5 means ~32 ms at full
+ * resolution, so the prediction stays at 0.5 instead of oscillating back to 1
+ * — while a machine that is genuinely fast even normalized climbs back up on
+ * the next burst.
+ */
+export function predictBurstLadderScale(emaMs: number, previousRung: number): number {
+  const rung =
+    previousRung > 0 && Number.isFinite(previousRung) ? Math.min(previousRung, 1) : 1;
+  const normalizedEma = emaMs / (rung * rung);
+  return resolveActiveLadderScale(normalizedEma);
+}
+
+/**
+ * DPR for the current activity state, derived from a profile.
+ * `activeLadderScale` (from `resolveActiveLadderScale`, burst-monotone in the
+ * caller) multiplies the active DPR; 1 reproduces the pre-ladder behavior
+ * exactly. The result never drops below 1 device pixel.
+ */
 export function resolveDpr(
   profile: QualityProfile,
   initialDpr: number,
   active: boolean,
+  activeLadderScale = 1,
 ): number {
   if (!active) return Math.min(initialDpr, profile.settledDprCap);
-  return Math.min(
+  const base = Math.min(
     profile.activeDprCap,
     Math.max(1, initialDpr * profile.activeDprScale),
   );
+  return Math.max(1, base * activeLadderScale);
+}
+
+/**
+ * Kill switch (localStorage, default ON) for the interaction DPR ladder,
+ * mirroring `orkestrator.gpuRepack`. Read per frame by `QualityAdapter`, so
+ * toggling in the DebugPanel takes effect on the next gesture — no remount
+ * needed for an A/B.
+ */
+const ADAPTIVE_DPR_STORAGE_KEY = "orkestrator.adaptiveDpr";
+
+export function isAdaptiveDprEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(ADAPTIVE_DPR_STORAGE_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setAdaptiveDprEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(ADAPTIVE_DPR_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
 }
 
 /** Frame delta above this counts toward demotion (≈ can't hold ~40 fps). */
@@ -130,6 +262,7 @@ const clampTier = (value: number): QualityTier =>
 export class QualityGovernor {
   private autoTier: QualityTier = TIER_HIGH;
   private override: QualityTier | null = null;
+  private fidelity: FidelityMode = readStoredFidelity();
   private emaMs = 0;
   private slowFrames = 0;
   private fastFrames = 0;
@@ -200,7 +333,24 @@ export class QualityGovernor {
   }
 
   getProfile(): QualityProfile {
-    return QUALITY_PROFILES[this.getTier()];
+    const table =
+      this.fidelity === "high" ? QUALITY_PROFILES : STANDARD_QUALITY_PROFILES;
+    return table[this.getTier()];
+  }
+
+  getFidelity(): FidelityMode {
+    return this.fidelity;
+  }
+
+  setFidelity(mode: FidelityMode): void {
+    if (mode === this.fidelity) return;
+    this.fidelity = mode;
+    try {
+      window.localStorage.setItem(FIDELITY_STORAGE_KEY, mode);
+    } catch {
+      /* storage unavailable: session keeps its current state */
+    }
+    this.emit();
   }
 
   getEmaMs(): number {

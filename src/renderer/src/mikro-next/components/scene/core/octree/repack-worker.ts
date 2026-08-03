@@ -18,6 +18,10 @@ export type RepackWorkerRequest = {
   kind: "r8" | "r32f";
   elementCount: number;
   input: Omit<RepackBrickInput, "output">;
+  /** A previously returned output buffer, transferred back for reuse (the
+   * dispatcher's free list). Used only when its byteLength matches exactly;
+   * a mismatch (pool spec changed) falls back to a fresh allocation. */
+  recycled?: ArrayBuffer;
 };
 
 export type RepackWorkerResponse =
@@ -27,10 +31,22 @@ export type RepackWorkerResponse =
 const ctx = self as unknown as Worker;
 
 ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
-  const { id, kind, elementCount, input } = event.data;
+  const { id, kind, elementCount, input, recycled } = event.data;
   try {
+    const bytesNeeded = elementCount * (kind === "r8" ? 1 : 4);
+    let backing: ArrayBuffer;
+    if (recycled && recycled.byteLength === bytesNeeded) {
+      backing = recycled;
+      // The phasor path accumulates += into the output and RELIES on it
+      // arriving zeroed (reduceChunks); a fresh ArrayBuffer is zero by spec,
+      // a recycled one is not. A 1 MB fill is microseconds against the
+      // repack itself — the win is skipping the allocation + GC, not the fill.
+      new Uint8Array(backing).fill(0);
+    } else {
+      backing = new ArrayBuffer(bytesNeeded);
+    }
     const output: BrickArray =
-      kind === "r8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
+      kind === "r8" ? new Uint8Array(backing) : new Float32Array(backing);
     const result = repackBrick({ ...input, output });
     const response: RepackWorkerResponse = {
       id,

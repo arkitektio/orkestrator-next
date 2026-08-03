@@ -17,11 +17,6 @@ export interface LayerViewRange {
   zRange: [number, number] | null;
   /** Screen pixels per image pixel (how many viewer pixels one voxel occupies) */
   scale: number;
-  /**
-   * Rough fraction of the viewport this layer covers (0..1). A fast, imprecise
-   * estimate: the layer's frustum-clipped world box projected to an NDC 2D AABB.
-   */
-  viewportFraction: number;
 }
 
 /** Structural subset of viewerStore's TrackableObject. */
@@ -49,7 +44,6 @@ export type SceneVisibilityResult = {
 const frustum = new THREE.Frustum();
 const box = new THREE.Box3();
 const corner = new THREE.Vector3();
-const ndcCorner = new THREE.Vector3();
 const invPV = new THREE.Matrix4();
 const frustumBox = new THREE.Box3();
 const visibleBox = new THREE.Box3();
@@ -110,13 +104,29 @@ export function computeSceneVisibility({
   return { visibleIds, ranges };
 }
 
+/** `affineToMatrix4` allocates a Matrix4 per call; the raw affine array's
+ * identity is stable across camera ticks (layers are replaced immutably on
+ * edit), so cache per identity — this ran per layer per visibility recompute
+ * (~17 Hz during a gesture). Null (identity affine) shares one constant. */
+const affineMatrixCache = new WeakMap<number[][], THREE.Matrix4>();
+const IDENTITY_AFFINE = new THREE.Matrix4();
+const cachedAffineMatrix = (raw: number[][] | null | undefined): THREE.Matrix4 => {
+  if (!raw) return IDENTITY_AFFINE;
+  let matrix = affineMatrixCache.get(raw);
+  if (!matrix) {
+    matrix = affineToMatrix4(raw);
+    affineMatrixCache.set(raw, matrix);
+  }
+  return matrix;
+};
+
 function computeLayerViewRange(
   layer: LayerState,
   visibleWorldBox: THREE.Box3,
   projScreenMatrix: THREE.Matrix4,
   viewportSize: { width: number; height: number },
 ): LayerViewRange | null {
-  const affine = affineToMatrix4(layer.affineMatrix);
+  const affine = cachedAffineMatrix(layer.affineMatrix);
   invAffine.copy(affine).invert();
 
   // Visible box corners into layer-local space.
@@ -173,46 +183,7 @@ function computeLayerViewRange(
     yRange: [Math.max(0, Math.floor(voxelYMin)), Math.min(yMax, Math.ceil(voxelYMax))],
     zRange,
     scale,
-    viewportFraction: estimateViewportFraction(visibleWorldBox, projScreenMatrix),
   };
-}
-
-/**
- * Rough, fast estimate of how much of the viewport a layer covers (0..1).
- * Projects the 8 corners of the frustum-clipped world box to NDC, takes the 2D
- * AABB, clamps it to the [-1,1] NDC square, and returns its area over the full
- * viewport area (2×2 = 4). Not precise — deliberately cheap (8 matrix-vector
- * products). The box is pre-clipped to the frustum, so corners project cleanly.
- */
-function estimateViewportFraction(
-  visibleWorldBox: THREE.Box3,
-  projScreenMatrix: THREE.Matrix4,
-): number {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (let ix = 0; ix <= 1; ix++) {
-    for (let iy = 0; iy <= 1; iy++) {
-      for (let iz = 0; iz <= 1; iz++) {
-        ndcCorner
-          .set(
-            ix === 0 ? visibleWorldBox.min.x : visibleWorldBox.max.x,
-            iy === 0 ? visibleWorldBox.min.y : visibleWorldBox.max.y,
-            iz === 0 ? visibleWorldBox.min.z : visibleWorldBox.max.z,
-          )
-          .applyMatrix4(projScreenMatrix);
-        if (ndcCorner.x < minX) minX = ndcCorner.x;
-        if (ndcCorner.x > maxX) maxX = ndcCorner.x;
-        if (ndcCorner.y < minY) minY = ndcCorner.y;
-        if (ndcCorner.y > maxY) maxY = ndcCorner.y;
-      }
-    }
-  }
-  const clampedW = Math.min(1, maxX) - Math.max(-1, minX);
-  const clampedH = Math.min(1, maxY) - Math.max(-1, minY);
-  const fraction = (Math.max(0, clampedW) * Math.max(0, clampedH)) / 4;
-  return Math.min(1, Math.max(0, fraction));
 }
 
 /** Value equality for a visible-id set against the store's string array. */
@@ -229,14 +200,12 @@ function sameScale(a: number, b: number): boolean {
 /**
  * Value equality for two range maps (skip store writes when nothing changed).
  *
- * Only the fields that drive planning are compared: the integer voxel ranges and
- * `scale`. Two fields are deliberately handled with care because they jitter
- * continuously during a 3D orbit and would otherwise rewrite `layerViewRanges`
- * every camera tick — which re-renders the whole `LayerControlPanel` subtree:
- *  - `scale` is compared with a 1% relative tolerance (sub-1% wobble is ignored).
- *  - `viewportFraction` is NOT compared at all: it is cosmetic-only (the panel's
- *    coverage sort / badge) and NOT a planning input, so it must never gate the
- *    hot store write. The panel reads whatever value was last published.
+ * Every field is a planning input: the integer voxel ranges and `scale`.
+ * `scale` jitters continuously during a 3D orbit, so it is compared with a 1%
+ * relative tolerance (sub-1% wobble must not rewrite `layerViewRanges` per
+ * camera tick). The cosmetic-only `viewportFraction` estimate that used to
+ * ride along here was removed outright — it existed only for a sidebar badge
+ * whose prop churn defeated the layer cards' memoization.
  */
 export function sameViewRanges(
   previous: Record<string, LayerViewRange>,

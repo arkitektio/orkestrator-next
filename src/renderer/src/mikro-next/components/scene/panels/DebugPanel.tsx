@@ -4,7 +4,9 @@ import { ChevronDown, ClipboardCopy, Circle, Square } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import {
+  isAdaptiveDprEnabled,
   qualityGovernor,
+  setAdaptiveDprEnabled,
   TIER_LABELS,
   type QualityTier,
 } from "../core/qualityGovernor";
@@ -14,6 +16,10 @@ import {
   isVolumeMergeEnabled,
   setVolumeMergeEnabled,
 } from "../render/bricks/volumeMergeGroups";
+import {
+  isShaderFastPathEnabled,
+  setShaderFastPathEnabled,
+} from "../render/bricks/shaderFlags";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
@@ -37,6 +43,11 @@ export const DebugPanel = () => {
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
   const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
   const [volumeMergeOn, setVolumeMergeOn] = useState(isVolumeMergeEnabled);
+  const [shaderFastPathOn, setShaderFastPathOn] = useState(isShaderFastPathEnabled);
+  const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
+  // Applied drawing-buffer DPR (CanvasSync re-registers the canvas on every
+  // dpr change, so this chip tracks the interaction ladder live).
+  const canvasDpr = useViewerStore((s) => s.canvas?.dpr);
   const [gpuSelfTest, setGpuSelfTest] = useState<string | null>(null);
   // Tier/override/streaming flips only — rare (P17-clean).
   useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
@@ -53,6 +64,18 @@ export const DebugPanel = () => {
     const next = !volumeMergeOn;
     setVolumeMergeEnabled(next);
     setVolumeMergeOn(next);
+  };
+
+  const toggleShaderFastPath = () => {
+    const next = !shaderFastPathOn;
+    setShaderFastPathEnabled(next);
+    setShaderFastPathOn(next);
+  };
+
+  const toggleAdaptiveDpr = () => {
+    const next = !adaptiveDprOn;
+    setAdaptiveDprEnabled(next);
+    setAdaptiveDprOn(next);
   };
 
   const runGpuSelfTest = () => {
@@ -111,7 +134,9 @@ export const DebugPanel = () => {
       volumePasses: {
         layers: Object.values(viewerState.nodePlans).filter((p) => p.mode === "3D").length,
         merging: isVolumeMergeEnabled(),
+        shaderFastPath: isShaderFastPathEnabled(),
       },
+      fidelity: qualityGovernor.getFidelity(),
       cameraPose: viewState.cameraPose,
       layerViewRanges: viewerState.layerViewRanges,
       plans: Object.fromEntries(
@@ -232,6 +257,30 @@ export const DebugPanel = () => {
                     </button>
                   ))}
                 </div>
+                {/* Fidelity: how much SETTLED quality the default experience
+                    trades for performance. Standard caps settled DPR at 1.5,
+                    settled step scale at ≥1.25 and ray steps at 384; High is
+                    the full-quality table. Applies at the next settle. */}
+                <div className="flex gap-1">
+                  {(["standard", "high"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      title={
+                        mode === "standard"
+                          ? "Cheaper settled image: DPR ≤ 1.5, coarser ray steps. Applies on the next camera settle."
+                          : "Full settled quality (today's pre-fidelity behavior)."
+                      }
+                      className={`flex-1 rounded border px-1 py-0.5 text-[10px] transition-colors ${
+                        qualityGovernor.getFidelity() === mode
+                          ? "border-white/40 bg-white/15 text-white"
+                          : "border-border/50 text-muted-foreground hover:bg-white/10"
+                      }`}
+                      onClick={() => qualityGovernor.setFidelity(mode)}
+                    >
+                      {mode === "standard" ? "Standard fidelity" : "High fidelity"}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button
@@ -342,6 +391,25 @@ export const DebugPanel = () => {
               >
                 volume merge: {volumeMergeOn ? "on" : "off"}
               </button>
+              <button
+                onClick={toggleShaderFastPath}
+                title="Restructured raymarch: skip empty bricks BEFORE sampling, textureSampleLevel atlas taps, ATTENUATED_MIP early termination. Off = legacy emission order. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                shader fast path: {shaderFastPathOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleAdaptiveDpr}
+                title="Interaction DPR ladder: drop the drawing-buffer resolution by the frame-time EMA while the camera moves or bricks stream (all tiers), restore crisp on settle. Takes effect on the next gesture."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                adaptive dpr: {adaptiveDprOn ? "on" : "off"}
+              </button>
+              {typeof canvasDpr === "number" && (
+                <span className="px-1 rounded border border-border/50 text-muted-foreground">
+                  dpr {canvasDpr.toFixed(2)}
+                </span>
+              )}
               <button
                 onClick={runGpuSelfTest}
                 title="Repack one synthetic brick on GPU and CPU; compare voxel-for-voxel."

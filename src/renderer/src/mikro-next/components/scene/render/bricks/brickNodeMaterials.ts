@@ -67,6 +67,7 @@ export type UniformArrayNodeLike<T> = { array: T[] };
 
 import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
 import { NameScope } from "./tslNames";
+import { isShaderFastPathEnabled } from "./shaderFlags";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import {
   MAX_CHANNELS,
@@ -437,7 +438,12 @@ function emitChannelTap(
     // slab offset into the next channel's tap.
     const texel = vec3(resolved.texelBase).toVar(`${name}Texel`);
     texel.z.addAssign(float(int(slabIndex).mul(t.uChannelSlabDepth)));
-    raw.assign(texture3D(t.brickAtlas, texel.div(t.uAtlasTexels)).r.mul(t.uAtlasScale));
+    const tap = texture3D(t.brickAtlas, texel.div(t.uAtlasTexels));
+    // Fast path: explicit-LOD tap (textureSampleLevel). The atlas has no mips,
+    // so level 0 is the same texel data — but the implicit-derivative
+    // textureSample this replaces costs derivative math on every tap and is a
+    // WGSL uniformity hazard inside the divergent ray loop.
+    raw.assign((isShaderFastPathEnabled() ? tap.level(0) : tap).r.mul(t.uAtlasScale));
   });
   return raw;
 }
@@ -477,10 +483,17 @@ function emitSourceSample(
   // member's NameScope, which throws on a collision rather than letting TSL
   // silently rename (and, historically, silently shadow).
   nm: (name: string) => string = (name) => name,
+  // COMPILE-TIME phasor specialization: false (a member whose slots hold no
+  // phasor sources — `hasPhasorSources`) omits the whole phasor branch from
+  // the WGSL: the kind textureLoad, two extra atlas taps, atan/tan/sqrt, and
+  // the 16×24 nested cursor loop. The branch was runtime-skipped anyway, but
+  // it inflated register pressure and instruction footprint inside the
+  // step×slot loop of EVERY volume shader. The material is rebuilt when a
+  // phasor source appears (bundle memo keys on hasPhasorSources).
+  emitPhasor = true,
 ): SourceSample {
   const paramsA = vec4(c.chParamsA.element(slot)).toVar(nm("srcA")); // (slab, climMin, climMax, gamma)
   const paramsB = vec4(c.chParamsB.element(slot)).toVar(nm("srcB")); // (opacity, visible, invert, row)
-  const p0 = vec4(textureLoad(c.sourceParams, ivec2(int(0), slot))).toVar(nm("srcP0"));
 
   // The intensity tap: a channel's slab, or a phasor's mean-photon-count slab.
   // Either way the ordinary clim/gamma/invert transfer applies to it.
@@ -489,6 +502,14 @@ function emitSourceSample(
 
   const color = vec3(0.0).toVar(nm("srcColor"));
   const weight = float(0.0).toVar(nm("srcWeight"));
+
+  if (!emitPhasor) {
+    color.assign(c.colormapAtlas.sample(vec2(norm, paramsB.w)).rgb);
+    weight.assign(paramsB.x.mul(norm));
+    return { color, weight, norm };
+  }
+
+  const p0 = vec4(textureLoad(c.sourceParams, ivec2(int(0), slot))).toVar(nm("srcP0"));
 
   If(int(p0.x).equal(int(SOURCE_KIND_PHASOR)), () => {
     const p1 = vec4(textureLoad(c.sourceParams, ivec2(int(1), slot))).toVar(nm("srcP1"));
@@ -918,10 +939,15 @@ export function createVolumeNodeMaterial(
       slotCount: number;
       blendMode: number;
       projectionMode: number;
+      /** Compile-time phasor specialization input; absent → assume phasors. */
+      hasPhasorSources?: boolean;
     }[];
   },
   memberCount = 1,
 ): VolumeMaterialBundle {
+  // Read ONCE per material build (kill switch — see shaderFlags.ts): selects
+  // which node graph is emitted. Off = the legacy emission order, verbatim.
+  const fastPath = isShaderFastPathEnabled();
   const t = makeTraversalNodes(pool, dataRange);
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
@@ -944,6 +970,10 @@ export function createVolumeNodeMaterial(
       phasorValue: makePhasorValue(nm),
       cursorHit: makeCursorHit(c, nm),
       nm,
+      // Compile-time phasor specialization (fast path only): a member with no
+      // phasor sources gets the phasor branch omitted from its WGSL. Absent
+      // member info → conservative true (emit the branch).
+      emitPhasor: !fastPath || (channelData.members?.[m]?.hasPhasorSources ?? true),
     };
   });
 
@@ -1142,6 +1172,62 @@ export function createVolumeNodeMaterial(
       // walks per step for the identical answer.
       const resolved = emitResolveBrickResidency(t, pB, lvl);
 
+      // Empty-space skip hop: jump to the exit of the RESOLVED level's cell
+      // (hopLevel: the EMPTY brick's own level, or the coarsest cell when the
+      // whole chain is unmapped), not the fine desired level's.
+      const hopPastCell = () => {
+        rayT.addAssign(
+          max(stepLen, float(brickExitRel(pB, invD, resolved.hopLevel)).add(0.01)),
+        );
+        Continue();
+      };
+
+      if (fastPath) {
+        // FAST PATH — decide skippability BEFORE any per-slot sampling is
+        // emitted (CPU mirror: core/raymarchStep.ts). The legacy path below
+        // built the full transfer-function + colormap + phasor sample set
+        // first and only then tested the skip predicate, so every skipped
+        // step still paid the whole per-slot path.
+        //
+        // Unmapped chain: nothing to sample anywhere — hop immediately.
+        If(resolved.status.lessThan(0.5), () => {
+          hopPastCell();
+        });
+        // Uniform EMPTY brick: every slot taps the same uniform value, so the
+        // step's max norm is derivable with pure ALU (channelNormalize only —
+        // no colormap sample, no phasor taps, no cursor loop). Invisible
+        // slots are excluded, exactly like the sampling loop's guard. The
+        // max across members mirrors the legacy predicate: strictly more
+        // conservative than any single member's, so no member loses a sample.
+        If(resolved.status.greaterThan(1.5), () => {
+          const maxEmptyNorm = float(0.0).toVar("esMaxNorm");
+          memberNodes.forEach((mem, m) => {
+            Loop(
+              { start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<", name: `es${m}` },
+              (args: any) => {
+                const k = args[`es${m}`];
+                If(int(k).greaterThanEqual(mem.slotCount), () => {
+                  Break();
+                });
+                const slot = int(mem.slotFirst).add(int(k)).toVar();
+                If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
+                  Continue();
+                });
+                maxEmptyNorm.assign(
+                  max(
+                    maxEmptyNorm,
+                    float(memberFns[m].channelNormalize(slot, resolved.emptyValue)),
+                  ),
+                );
+              },
+            );
+          });
+          If(maxEmptyNorm.lessThanEqual(0.001), () => {
+            hopPastCell();
+          });
+        });
+      }
+
       // Per-sample composite, per member (ChunkPlane semantics).
       const maxSampleNorm = float(0.0).toVar();
       const samples = memberNodes.map((mem, m) => {
@@ -1177,6 +1263,7 @@ export function createVolumeNodeMaterial(
                 slot,
                 memberFns[m],
                 memberFns[m].nm,
+                memberFns[m].emitPhasor,
               );
               const color = sample.color;
               const weight = sample.weight;
@@ -1202,24 +1289,22 @@ export function createVolumeNodeMaterial(
         return { sampleColor, sampleNorm };
       });
 
-      // Empty-space skipping: nothing resident anywhere (status 0), or a
-      // known-uniform EMPTY brick (status 2) contributing nothing — jump to
-      // the exit of the RESOLVED level's cell (hopLevel: the EMPTY brick's
-      // own level, or the coarsest cell when the whole chain is unmapped),
-      // not the fine desired level's. Status 1 (resident) never skips.
-      // Merged, the test uses the MAX across members: strictly more
-      // conservative than any single member's, so no member loses a sample.
-      If(
-        resolved.status
-          .lessThan(0.5)
-          .or(resolved.status.greaterThan(1.5).and(maxSampleNorm.lessThanEqual(0.001))),
-        () => {
-          rayT.addAssign(
-            max(stepLen, float(brickExitRel(pB, invD, resolved.hopLevel)).add(0.01)),
-          );
-          Continue();
-        },
-      );
+      // LEGACY empty-space skipping (fast path decides BEFORE sampling, above):
+      // nothing resident anywhere (status 0), or a known-uniform EMPTY brick
+      // (status 2) contributing nothing — jump past the resolved cell. Status
+      // 1 (resident) never skips. Merged, the test uses the MAX across
+      // members: strictly more conservative than any single member's, so no
+      // member loses a sample.
+      if (!fastPath) {
+        If(
+          resolved.status
+            .lessThan(0.5)
+            .or(resolved.status.greaterThan(1.5).and(maxSampleNorm.lessThanEqual(0.001))),
+          () => {
+            hopPastCell();
+          },
+        );
+      }
 
       memberNodes.forEach((mem, m) => {
         const a = acc[m];
@@ -1228,11 +1313,28 @@ export function createVolumeNodeMaterial(
         If(a.done.not(), () => {
           If(int(mem.projectionMode).equal(1), () => {
             const depthFrac = rayT.sub(boundsX).div(rayLen);
-            const av = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
-            If(av.greaterThan(a.attenuatedMax), () => {
-              a.attenuatedMax.assign(av);
-              a.attenuatedColor.assign(sampleColor);
-            });
+            if (fastPath) {
+              const atten = exp(float(-1.5).mul(depthFrac)).toVar();
+              const av = sampleNorm.mul(atten);
+              If(av.greaterThan(a.attenuatedMax), () => {
+                a.attenuatedMax.assign(av);
+                a.attenuatedColor.assign(sampleColor);
+              });
+              // Early ray termination (CPU mirror: attenuatedMipDone). atten
+              // strictly decreases along the ray and sampleNorm ≤ 1, so every
+              // future contribution is < atten_now; once the accumulated max
+              // reaches that ceiling nothing later can beat it. Deterministic
+              // per pixel (P14-safe, same argument as the MIP 0.995 bound).
+              If(a.attenuatedMax.greaterThanEqual(atten), () => {
+                a.done.assign(true);
+              });
+            } else {
+              const av = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
+              If(av.greaterThan(a.attenuatedMax), () => {
+                a.attenuatedMax.assign(av);
+                a.attenuatedColor.assign(sampleColor);
+              });
+            }
           })
             .ElseIf(int(mem.projectionMode).equal(2), () => {
               // Step-size (opacity) correction — mirrors core/opacityCorrection.ts.
@@ -1261,7 +1363,8 @@ export function createVolumeNodeMaterial(
               // gamma (invert can reach exactly 1.0), so a max >= 0.995 is within
               // sub-colormap-step distance of the reachable ceiling — nothing
               // later on the ray can visibly beat it. Deterministic per pixel
-              // (P14-safe). ATTENUATED_MIP has no saturation bound: not applied.
+              // (P14-safe). ATTENUATED_MIP's depth-decay bound lives in its own
+              // branch above (fast path only).
               If(a.bestNorm.greaterThanEqual(0.995), () => {
                 a.done.assign(true);
               });

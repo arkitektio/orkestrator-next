@@ -178,6 +178,10 @@ export interface GpuRepacker<Token = unknown> {
    * still compiling vs permanently reverted to the CPU path. */
   status(): "pending" | "ready" | "broken";
   supports(atlas: BrickAtlas, chunks: readonly RepackChunk[]): boolean;
+  /** Whether a source chunk is already resident in the GPU chunk cache — the
+   * drain budget charges `writeBuffer` bytes only for misses
+   * (`gpuFlushUploadBytes`). */
+  hasChunk(cacheKey: string): boolean;
   /** Queue one brick (slot already acquired). Commands record at `flush`. */
   dispatch(job: GpuRepackJob<Token>): void;
   /** Submit the queued batch; null when nothing is queued. Never rejects. */
@@ -354,6 +358,10 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       );
     }
     return false;
+  }
+
+  hasChunk(cacheKey: string): boolean {
+    return this.chunkCache.has(cacheKey);
   }
 
   dispatch(job: GpuRepackJob<Token>): void {

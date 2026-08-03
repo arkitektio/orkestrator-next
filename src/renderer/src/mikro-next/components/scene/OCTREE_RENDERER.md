@@ -213,9 +213,32 @@ Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
 - **Replans are debounced** (`MIN_REPLAN_INTERVAL_MS = 200`): camera emissions
   arrive at ~16 Hz during a drag; replanning per tick burned the main thread
   for zero visual gain (pitfall P9). Tests must wait ≥ 280 ms (`settle()`).
+  While `cameraMoving`, the interval widens to
+  `MOTION_REPLAN_INTERVAL_MS = 500` — every mid-gesture replan turns the
+  fetch/upload pipeline over onto the very frames being dragged, and the
+  always-resident coarsest level covers newly exposed regions meanwhile. The
+  cameraMoving→false edge drops any pending motion timer and reschedules, so
+  the sharp replan lands the moment the gesture ends.
 
 Plan writes are identity-stable (`sameNodePlan`): a value-equal replan does not
 touch the store, so downstream React sees nothing.
+
+Two structural costs were removed from the replan itself:
+
+- **Equivalence-class planning.** Pools are shared by content address but
+  planning inputs are per layer, so the tracker groups plannable layers by
+  `poolKey` + `buildPlanInputSignature` (affine, fixedLOD, view range by
+  VALUE — `core/octree/planInputSignature.ts`) and runs `planLayerNodes` once
+  per class, assigning every member THE SAME plan object. Four channel layers
+  over one image: one DFS instead of four, and `reconcilePool`'s member union
+  degenerates to identical plans. The per-class camera (voxel frustum,
+  position) is built into module-level scratch objects — no THREE allocations
+  per replan.
+- **Derivation memo** mirroring `brickResidency.layerDerivationCache`:
+  `buildLevelSources` + `buildLayerLevelGeometry` + `resolveBrickSpec` +
+  `assessPoolViability` are cached per layer keyed on the identities they
+  read (layer, dataArrays, mode); only successes are cached so late-opening
+  stores retry, and entries are pruned when a layer leaves the scene.
 
 ### 2.8 Residency manager (`managers/brickResidency.ts`)
 
@@ -232,7 +255,17 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   the worker runner's signal path.
 - **Frame upload budget** 6 MB / 12 bricks, drained in
   `BrickSystemProvider`'s `useFrame`; every batch ends with page flush,
-  `residencyVersion++`, `invalidate()` (demand frameloop).
+  `residencyVersion++`, `invalidate()` (demand frameloop). GPU-repacked
+  bricks are charged their REAL flush cost — the source-chunk bytes the
+  compute path must `writeBuffer` for cache misses (`gpuFlushUploadBytes`),
+  not the atlas-slot bytes — which bounds the previously ungated synchronous
+  work inside `gpuRepacker.flush()` to the same frame budget. While the
+  camera is mid-gesture the drain runs the **interacting policy**
+  (`resolveDrainPolicy`): trickle budget (2 MB / 4 bricks / 1.5 ms), no
+  first-brick free pass, no stale pass, and GPU-repack dispatches deferred
+  entirely (their queue entries survive; decoded chunks stay cached) — so
+  uploads never collide with gesture frames and the backlog drains at full
+  budget on the first settled frame.
 - **Stats are first-seen-honest**: `bytesDecoded` counts a chunk key once, not
   per cache hit (pitfall P10). `buildDebugReport()` backs the DebugPanel's
   "Copy debug report" button — paste that JSON when reporting perf issues.
@@ -254,6 +287,18 @@ brick returns as a transferable. `stats.repackMs` is therefore wall time
 (queue + worker), not main-thread time. No cancellation: jobs are a few ms and
 out-of-plan results are landed into free slots by `drainUploads` (or counted
 as `planDrops` when none is free).
+
+**Output buffers are pooled** (`createBufferFreeList` + the request's
+`recycled` transfer): the worker used to allocate a fresh ~1.1 MB output per
+brick — sustained multi-MB/frame garbage while streaming. The residency
+manager calls `dispatcher.release(data)` at the three points a payload is
+provably dead (mirror copy landed / skipped, dropped without upload), the
+dispatcher size-classes the buffer by exact byteLength (cap
+`MAX_FREE_BUFFERS = 24`) and transfers it back to the worker with the next
+matching job. Recycled buffers are ZEROED in the worker — the phasor reduce
+path accumulates `+=` and relies on arriving zeroed. Missed release points
+just fall to GC; releasing a live buffer would detach it, so release only
+where the last reference dies.
 
 Related main-thread costs, assessed: the per-upload CPU backing-mirror copy in
 `writeBrickToAtlas` (§2.5) is KEPT — `sampleResident` (probes) and
@@ -278,6 +323,28 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   MIP / AttenuatedMIP / Volume / Iso accumulators, picking pass. While
   `cameraMoving`, `uStepScale = 3` triples the step size (~3× fewer samples);
   the camera-settle emission restores full quality automatically.
+
+  The **shader fast path** (`orkestrator.shaderFastPath`, default ON — flag in
+  `render/bricks/shaderFlags.ts`, read at material build time) restructures the
+  ray loop; CPU mirrors of every decision live in `core/raymarchStep.ts`:
+  - **Skip-before-sample.** The empty-space decision is emitted BEFORE the
+    per-slot sampling block: an unmapped chain hops immediately, and a uniform
+    EMPTY brick's max norm is derived with pure ALU from `resolved.emptyValue`
+    (`channelNormalize` only — no colormap sample, no phasor taps, no cursor
+    loop). The legacy order paid the full transfer-function path for every
+    skipped step just to compute the predicate.
+  - **`textureSampleLevel` atlas taps** (`emitChannelTap` `.level(0)`): no
+    implicit derivatives inside the divergent ray loop; identical texels (the
+    atlas has no mips). Applies to the 2D compositor too.
+  - **ATTENUATED_MIP early termination**: the depth weight `exp(-1.5·d)`
+    strictly decreases and `norm ≤ 1`, so once `attenuatedMax` reaches the
+    current weight nothing later can beat it (`attenuatedMipDone`) — this mode
+    previously always marched the full ray.
+  - **Compile-time phasor specialization**: a member whose slots hold no phasor
+    sources (`hasPhasorSources`, from `buildMergedChannelUniformData`) gets the
+    whole phasor branch — kind load, 2 extra taps, atan/tan/sqrt, the 16×24
+    cursor loop — omitted from its WGSL. The layer keys its material-bundle
+    memo on the flag, so adding a phasor source rebuilds the material.
 - **2D** (`layers/bricks/BrickPlaneLayer.tsx`): ONE full-layer quad (the
   per-chunk React mesh churn of `ChunkPlane` is gone); the legacy multi-channel
   compositor with its texture tap replaced by `sampleBrick(vec3(uv, slabZ),
@@ -680,10 +747,40 @@ not implement without cause):
 - `texStorage3D` allocation (skips the one-time zeroed 128 MB upload per pool),
 - lazy backing-mirror (drop the per-upload CPU memcpy in `writeBrickToAtlas`;
   entangled with `sampleResident` probes + context-loss restore, see §2.9),
-- motion-time reduced-resolution rendering (only if `uStepScale = 3` proves
-  insufficient),
-- uint16-native `R16` atlases (worker currently promotes to float32).
+- uint16-native `R16` atlases (worker currently promotes to float32),
+- per-frame `uniformArray` re-upload (~5 KB/material/frame: three's
+  `UniformArrayNode` is `updateType = RENDER` and `Buffer.update()` returns
+  true unconditionally, so five arrays rewrite every frame even static —
+  measured as queue-submission noise; the escape hatch, if a recording ever
+  shows otherwise, is moving `chParamsA/B` into the existing `sourceParams`
+  DataTexture side-band, which also frees two UBO bindings),
+- 3D / temporal prefetch (only 2D adjacent-z slabs prefetch today) and
+  occlusion-aware planning (the planner is frustum + distance only).
 
-No longer deferred: worker-side repack shipped with the P17 hardening
-(`repackDispatcher.ts`), alongside the per-array zarr-metadata memo and the
-`useSharedArrayBuffer` forwarding fix in `getChunkWorker`.
+No longer deferred:
+
+- worker-side repack shipped with the P17 hardening (`repackDispatcher.ts`),
+  alongside the per-array zarr-metadata memo and the `useSharedArrayBuffer`
+  forwarding fix in `getChunkWorker`;
+- **motion-time reduced-resolution rendering shipped** as the interaction DPR
+  ladder (`core/qualityGovernor.ts`, applied by `QualityAdapter`): a quantized
+  rung `[1, 0.75, 0.5] ×` the tier's active DPR, decided ONCE per activity
+  burst by `predictBurstLadderScale` — the frame-time EMA normalized by the
+  previous burst's rung² (fragment-bound: cheap-because-low-res frames must
+  not predict full-res headroom). Mid-burst stepping was self-amplifying
+  (every `setDpr` reallocates render targets; the spike frame inflated the
+  EMA, dropping another rung → another realloc), so a gesture now pays at
+  most ONE realloc, and frames immediately following any `setDpr` are never
+  fed to the governor. Floored at 1 device px, on EVERY tier (HIGH included);
+  the settle restore brings the crisp image back. Kill switch:
+  `orkestrator.adaptiveDpr` (read per frame; DebugPanel toggle + live dpr
+  chip);
+- **standard-fidelity default** (`FidelityMode` in `core/qualityGovernor.ts`,
+  key `orkestrator.fidelity`): the governor's SETTLED profiles are moderately
+  capped by default — DPR ≤ 1.5, settled step scale ≥ 1.25, ray steps ≤ 384
+  (`standardizeProfile`; TIER_LOW effectively unchanged) — trading a little
+  settled sharpness for frame time. "High fidelity" in the DebugPanel restores
+  the original table verbatim; active-path knobs are untouched either way;
+- the shader fast path + phasor specialization (§2.10,
+  `orkestrator.shaderFastPath`), equivalence-class planning (§2.7), the
+  GPU-flush byte accounting (§2.8) and the repack output free list (§2.9).

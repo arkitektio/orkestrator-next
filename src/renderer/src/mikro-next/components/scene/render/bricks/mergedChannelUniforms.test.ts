@@ -84,8 +84,73 @@ describe("buildMergedChannelUniformData — the golden invariant", () => {
     const only = layer([channel(), channel()]);
     const merged = build([{ layerId: "a", layer: only, slotOffset: 0 }]);
     expect(merged.members).toEqual([
-      { layerId: "a", slotFirst: 0, slotCount: 2, blendMode: 0, projectionMode: 0 },
+      {
+        layerId: "a",
+        slotFirst: 0,
+        slotCount: 2,
+        blendMode: 0,
+        projectionMode: 0,
+        hasPhasorSources: false,
+      },
     ]);
+  });
+});
+
+describe("buildMergedChannelUniformData — phasor specialization input", () => {
+  const phasorSource = () =>
+    ({
+      type: "phasor",
+      kind: "phasor",
+      label: null,
+      visible: true,
+      harmonic: 1,
+      transfer: {
+        colormap: ColorMap.Viridis,
+        mode: "phase",
+        cursors: [],
+        intensity: {
+          colormap: ColorMap.Viridis,
+          color: null,
+          climMin: 0,
+          climMax: 255,
+          gamma: 1,
+          opacity: 1,
+          invert: false,
+        },
+      },
+    }) as unknown as ChannelRenderNode;
+
+  it("flags only the members whose used slots hold phasor sources", () => {
+    const merged = build([
+      { layerId: "plain", layer: layer([channel()]), slotOffset: 0 },
+      {
+        layerId: "flim",
+        layer: layer([channel(), phasorSource()]),
+        slotOffset: 1,
+      },
+    ]);
+    expect(merged.members.map((m) => m.hasPhasorSources)).toEqual([false, true]);
+  });
+
+  it("a phasor source truncated away by the slot budget does not flag its member", () => {
+    const fifteen = Array.from({ length: 15 }, (_, i) => ({
+      layerId: `c${i}`,
+      layer: layer([channel({ intensityIndex: i })]),
+      slotOffset: i,
+    }));
+    // 15 slots used; this member's channel takes the 16th and its phasor
+    // overflows MAX_CHANNELS — the compiled shader will never sample it.
+    const merged = build([
+      ...fifteen,
+      {
+        layerId: "overflow",
+        layer: layer([channel(), phasorSource()]),
+        slotOffset: 15,
+      },
+    ]);
+    const overflow = merged.members.find((m) => m.layerId === "overflow");
+    expect(overflow?.slotCount).toBe(1);
+    expect(overflow?.hasPhasorSources).toBe(false);
   });
 });
 

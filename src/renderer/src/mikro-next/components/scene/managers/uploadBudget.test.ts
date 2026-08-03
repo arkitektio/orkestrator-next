@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  gpuFlushUploadBytes,
   partitionUploadQueue,
+  resolveDrainPolicy,
   shouldContinueDrain,
   shouldContinueStaleDrain,
   type DrainBudget,
@@ -142,5 +144,57 @@ describe("partitionUploadQueue — minUsefulLevel", () => {
     const { stale, dropped } = partitionUploadQueue(queue, protecting(), 2, 1);
     expect(dropped.map((e) => e.key)).toEqual(["fine", "s1"]);
     expect(stale.map((e) => e.key)).toEqual(["s2", "s3"]);
+  });
+});
+
+describe("resolveDrainPolicy", () => {
+  const tierBudget: DrainBudget = { maxBytes: 6 * 1024 * 1024, maxBricks: 12, maxMs: 4 };
+
+  it("idle: today's budget with every allowance on", () => {
+    const policy = resolveDrainPolicy(tierBudget, false);
+    expect(policy.budget).toEqual(tierBudget);
+    expect(policy.allowFreePass).toBe(true);
+    expect(policy.allowStale).toBe(true);
+    expect(policy.allowGpuDispatch).toBe(true);
+  });
+
+  it("interacting: trickle budget, no free pass, no stale, no GPU dispatch", () => {
+    const policy = resolveDrainPolicy(tierBudget, true);
+    expect(policy.budget.maxBytes).toBe(2 * 1024 * 1024);
+    expect(policy.budget.maxBricks).toBe(4);
+    expect(policy.budget.maxMs).toBe(1.5);
+    expect(policy.allowFreePass).toBe(false);
+    expect(policy.allowStale).toBe(false);
+    expect(policy.allowGpuDispatch).toBe(false);
+  });
+
+  it("interacting caps never RAISE a lower tier budget", () => {
+    const low: DrainBudget = { maxBytes: 1024, maxBricks: 2, maxMs: 1 };
+    const policy = resolveDrainPolicy(low, true);
+    expect(policy.budget).toEqual(low);
+  });
+});
+
+describe("gpuFlushUploadBytes", () => {
+  const chunk = (cacheKey: string, byteLength: number) => ({ cacheKey, byteLength });
+
+  it("charges only cache MISSES — a fully-cached brick costs the frame nothing", () => {
+    const chunks = [chunk("a", 14_000_000), chunk("b", 14_000_000)];
+    expect(gpuFlushUploadBytes(chunks, () => true)).toBe(0);
+  });
+
+  it("charges the full source-chunk bytes for misses (not the atlas slot size)", () => {
+    const chunks = [chunk("a", 14_000_000), chunk("b", 2_000_000)];
+    expect(gpuFlushUploadBytes(chunks, (key) => key === "b")).toBe(14_000_000);
+    expect(gpuFlushUploadBytes(chunks, () => false)).toBe(16_000_000);
+  });
+
+  it("charges a chunk referenced twice within one brick only once", () => {
+    const chunks = [chunk("a", 5), chunk("a", 5), chunk("b", 3)];
+    expect(gpuFlushUploadBytes(chunks, () => false)).toBe(8);
+  });
+
+  it("no chunks → zero", () => {
+    expect(gpuFlushUploadBytes([], () => false)).toBe(0);
   });
 });

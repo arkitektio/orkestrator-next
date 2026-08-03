@@ -1,6 +1,11 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { qualityGovernor, resolveDpr } from "../core/qualityGovernor";
+import {
+  isAdaptiveDprEnabled,
+  predictBurstLadderScale,
+  qualityGovernor,
+  resolveDpr,
+} from "../core/qualityGovernor";
 import { getGpuKey, type SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useViewStoreApi } from "../store/viewStore";
 
@@ -15,6 +20,12 @@ import { useViewStoreApi } from "../store/viewStore";
  *   the old motion-only regress missed: after a gesture, every residency bump
  *   rendered a full-quality frame for seconds. Active frames render at the
  *   tier's cheaper DPR, settle restores the crisp one.
+ * - The interaction DPR ladder (`predictBurstLadderScale`) further scales the
+ *   active DPR by the frame-time EMA — one quantized rung decided at BURST
+ *   ENTRY and held for the whole burst, so a gesture pays at most ONE
+ *   render-target realloc. Frames rendered right after a `setDpr` are never
+ *   fed to the governor (they measure the realloc, not the tier). Kill
+ *   switch: `orkestrator.adaptiveDpr` (read per frame; DebugPanel toggle).
  * - The active→settled DPR restore is HYSTERETIC (`SETTLE_RESTORE_MS`): every
  *   `setDpr` change reallocates the render targets, and `cameraMoving`'s
  *   trailing debounce plus streaming on/off chatter used to bounce the DPR
@@ -35,9 +46,9 @@ const SETTLE_RESTORE_MS = 500;
  * on its own), so a lone wheel notch — whose activity window is just the
  * motion frames plus the 150 ms camera settle — must never pay the
  * drop+restore realloc pair. Real gestures and streaming bursts run well past
- * this and still get the cheap DPR for their duration. Only tiers whose
- * active DPR differs from the settled one are affected at all (HIGH resolves
- * both to the same value and never reallocates).
+ * this and still get the cheap DPR for their duration. With the interaction
+ * DPR ladder every tier can drop while active (HIGH included — its EMA has to
+ * earn it), but a burst shorter than this delay still never reallocates.
  */
 const ACTIVE_DPR_DELAY_MS = 250;
 
@@ -61,6 +72,22 @@ export const QualityAdapter = () => {
   /** Wall-clock stamp of when the current activity burst began (null while quiet). */
   const activeSinceRef = useRef<number | null>(null);
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The ladder rung for the CURRENT burst — decided ONCE at burst entry
+   * (`predictBurstLadderScale`) and held: mid-burst stepping caused a realloc
+   * cascade (each setDpr spike inflated the EMA, dropping another rung). */
+  const burstLadderScaleRef = useRef(1);
+  /** The rung the PREVIOUS burst rendered at — normalizes its EMA when
+   * predicting the next burst's rung, so a cheap-because-low-res burst does
+   * not oscillate the prediction back up. */
+  const lastBurstRungRef = useRef(1);
+  /** setDpr wrapper that also drops the NEXT frame delta from the governor's
+   * learning: that frame measures the render-target realloc, not the tier —
+   * and feeding it back is what made the ladder self-amplify. */
+  const applyDpr = (dpr: number) => {
+    appliedDprRef.current = dpr;
+    setDpr(dpr);
+    lastFrameAtRef.current = null;
+  };
 
   // Persistence: the learned tier is a property of the GPU, keyed so a
   // driver/GPU change re-learns.
@@ -87,20 +114,38 @@ export const QualityAdapter = () => {
     // Doing it here rather than only in an effect catches mid-gesture demotes.
     if (active) {
       settledAtRef.current = null;
-      if (activeSinceRef.current === null) activeSinceRef.current = now;
-      const dpr = resolveDpr(qualityGovernor.getProfile(), initialDpr, true);
+      if (activeSinceRef.current === null) {
+        activeSinceRef.current = now;
+        // Rung decided ONCE per burst, from the previous burst's
+        // rung-normalized EMA — held for the whole gesture so it pays at
+        // most one realloc. Disabled → rung 1 → pre-ladder behavior.
+        burstLadderScaleRef.current = isAdaptiveDprEnabled()
+          ? predictBurstLadderScale(qualityGovernor.getEmaMs(), lastBurstRungRef.current)
+          : 1;
+      }
+      const dpr = resolveDpr(
+        qualityGovernor.getProfile(),
+        initialDpr,
+        true,
+        burstLadderScaleRef.current,
+      );
       // Entry hysteresis (ACTIVE_DPR_DELAY_MS): only sustained activity pays
       // the drop realloc — a lone wheel notch stays at the crisp DPR.
       if (
         dpr !== appliedDprRef.current &&
         now - activeSinceRef.current >= ACTIVE_DPR_DELAY_MS
       ) {
-        appliedDprRef.current = dpr;
-        setDpr(dpr);
+        applyDpr(dpr);
       }
       return;
     }
+    if (activeSinceRef.current !== null) {
+      // Burst just ended: remember the rung it rendered at for the next
+      // burst's normalized prediction.
+      lastBurstRungRef.current = burstLadderScaleRef.current;
+    }
     activeSinceRef.current = null;
+    burstLadderScaleRef.current = 1;
     // Quiet: restore the settled DPR only after SETTLE_RESTORE_MS of
     // continuous quiet (covers the continuous-rendering case; the effect's
     // timer covers the demand-idle case where no frames flow).
@@ -108,8 +153,7 @@ export const QualityAdapter = () => {
     if (now - settledAtRef.current >= SETTLE_RESTORE_MS) {
       const dpr = resolveDpr(qualityGovernor.getProfile(), initialDpr, false);
       if (dpr !== appliedDprRef.current) {
-        appliedDprRef.current = dpr;
-        setDpr(dpr);
+        applyDpr(dpr);
       }
     }
   });
@@ -134,6 +178,8 @@ export const QualityAdapter = () => {
         if (dpr !== appliedDprRef.current) {
           appliedDprRef.current = dpr;
           setDpr(dpr);
+          // Never learn from the realloc frame this setDpr causes.
+          lastFrameAtRef.current = null;
           invalidate();
         }
       }, SETTLE_RESTORE_MS);

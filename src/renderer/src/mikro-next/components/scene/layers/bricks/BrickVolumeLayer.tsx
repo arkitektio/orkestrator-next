@@ -30,6 +30,7 @@ import {
   updateChannelNodes,
   updateMergedMemberNodes,
 } from "../../render/bricks/brickNodeMaterials";
+import { buildChannelDataSignature } from "../../render/bricks/channelDataSignature";
 import { buildMergedChannelUniformData } from "../../render/bricks/mergedChannelUniforms";
 import {
   findMergeGroup,
@@ -221,6 +222,22 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return iSlab === -1 ? 0 : iSlab;
   }, [layer?.sources, layer?.channels, pool?.geometry]);
 
+  // Value signature over exactly the member fields the uniform builders read.
+  // Keying the memo below on this instead of the `layers` ARRAY means an edit
+  // to an unrelated layer (or to a field the builders never read) no longer
+  // pays the per-member texture allocations. Memoized on `layers` identity so
+  // renders triggered by plan/quality changes (the ones that happen during a
+  // gesture) skip the per-member JSON.stringify entirely.
+  const channelDataKey = useMemo(
+    () =>
+      isPrimary
+        ? groupMemberIds
+            .map((id) => buildChannelDataSignature(layers.find((l) => l.id === id)))
+            .join("|")
+        : "",
+    [isPrimary, groupMemberIds, layers],
+  );
+
   // Only the PRIMARY builds this: it allocates two DataTextures and a colormap
   // atlas per call, so having all N members build the identical merged data
   // would trade N raymarch passes for N allocations on every channel edit.
@@ -244,7 +261,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     [
       isPrimary,
       groupKey,
-      layers,
+      channelDataKey,
       pool?.geometry,
       pool?.spec.channelCount,
       pool?.minValue,
@@ -268,22 +285,42 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
   }, [pool, planTargetLevel]);
 
+  // Which members carry phasor sources — a COMPILE-TIME input: the material
+  // omits the phasor branch for members without them, so this key flipping
+  // must rebuild the material (unlike ordinary channel edits, which flow
+  // through the uniform nodes).
+  const phasorKey = channelData
+    ? channelData.members.map((m) => (m.hasPhasorSources ? "p" : "-")).join("")
+    : "";
+
   // TSL node material. Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
   const bundle = useMemo(() => {
     if (!pool || !channelData) return null;
+    // TSL node-graph construction is real JS work (per-member unrolled
+    // emission) and runs inside this commit; the WGSL pipeline compile then
+    // lands in the next render frame. Both show up as "[Violation] rAF
+    // handler took Nms" with no attribution — name it here when it is big.
+    const buildStartedAt = performance.now();
     const created = createVolumeNodeMaterial(pool, pool, channelData, groupMemberIds.length);
+    const buildMs = performance.now() - buildStartedAt;
+    if (buildMs >= 40) {
+      console.warn(
+        `[scene-perf] volume material build (${groupMemberIds.length} member(s)) took ${buildMs.toFixed(0)} ms`,
+      );
+    }
     created.nodes.uBaseShape.value.set(
       pool.geometry.levels[0].spatialShape[0],
       pool.geometry.levels[0].spatialShape[1],
       pool.geometry.levels[0].spatialShape[2],
     );
     return created;
-    // Rebuilt on MEMBERSHIP change (the shader unrolls per member), not on
-    // channel edits — those flow through the uniform nodes below.
+    // Rebuilt on MEMBERSHIP change (the shader unrolls per member) and on a
+    // member gaining/losing phasor sources (compile-time specialization), not
+    // on channel edits — those flow through the uniform nodes below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature, groupMemberIds.length, channelData === null]);
+  }, [pool, pool?.structureSignature, groupMemberIds.length, channelData === null, phasorKey]);
 
   /**
    * A non-primary member still needs a mounted mesh — three raycasts invisible

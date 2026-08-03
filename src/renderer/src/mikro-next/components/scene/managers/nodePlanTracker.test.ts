@@ -187,6 +187,78 @@ describe("startNodePlanTracking", () => {
     delete ARRAYS["store-huge"];
   });
 
+  it("plans co-pool layers with identical placement ONCE, sharing plan identity", async () => {
+    // The per-channel-layer case: same dataset, same affine, same view range →
+    // one equivalence class → one DFS, every member handed the same object.
+    const twin = { ...layer, id: "layer-2" } as unknown as LayerState;
+    const stores = makeStores([layer, twin]);
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({
+      layerViewRanges: { [LAYER_ID]: FULL_VIEW, "layer-2": { ...FULL_VIEW } },
+    });
+    await settle();
+
+    const plans = stores.viewerStore.getState().nodePlans;
+    expect(plans[LAYER_ID]).toBeDefined();
+    expect(plans["layer-2"]).toBe(plans[LAYER_ID]);
+
+    stop();
+  });
+
+  it("a co-pool member with a different affine plans separately", async () => {
+    const moved = {
+      ...layer,
+      id: "layer-moved",
+      affineMatrix: [
+        [1, 0, 0, 128],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+      ],
+    } as unknown as LayerState;
+    const stores = makeStores([layer, moved]);
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({
+      layerViewRanges: { [LAYER_ID]: FULL_VIEW, "layer-moved": { ...FULL_VIEW } },
+    });
+    await settle();
+
+    const plans = stores.viewerStore.getState().nodePlans;
+    expect(plans[LAYER_ID]).toBeDefined();
+    expect(plans["layer-moved"]).toBeDefined();
+    expect(plans["layer-moved"]).not.toBe(plans[LAYER_ID]);
+
+    stop();
+  });
+
+  it("throttles replans while the camera is moving, catches up on settle", async () => {
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    await settle(); // initial coarsest plan lands (~t=0)
+
+    // Gesture: the MOTION interval (500 ms) governs. Under the idle interval
+    // (200 ms, already elapsed) this view-range change would replan on the
+    // next animation frame — 150 ms later it must still be pending. On an
+    // overloaded runner the wait itself can overshoot the motion window, so
+    // the still-pending claim is only asserted when the clock stayed honest.
+    stores.viewStore.setState({ cameraMoving: true });
+    const changedAt = performance.now();
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await wait(150);
+    if (performance.now() - changedAt < 400) {
+      expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(1);
+    }
+
+    // Settle edge: the deferred sharp replan lands promptly (well before the
+    // motion timer would have fired).
+    stores.viewStore.setState({ cameraMoving: false });
+    await wait(100);
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID].targetLevel).toBe(0);
+
+    stop();
+  });
+
   it("stops reacting after cleanup", async () => {
     const stores = makeStores();
     const stop = startNodePlanTracking(stores);

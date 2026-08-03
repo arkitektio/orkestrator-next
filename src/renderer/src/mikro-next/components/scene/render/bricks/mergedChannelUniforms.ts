@@ -47,6 +47,14 @@ export type MergedMemberUniforms = {
   blendMode: number;
   /** `projectionModeToInt(layer.projection)` — filled by the caller. */
   projectionMode: number;
+  /**
+   * Whether any of this member's USED slots is a phasor source. Compile-time
+   * input to the material: a member without phasors gets the phasor branch
+   * (extra taps, atan/tan/sqrt, the 16×24 cursor loop) omitted from its WGSL
+   * entirely. The material must be REBUILT when this flips — the layer keys
+   * its bundle memo on it.
+   */
+  hasPhasorSources: boolean;
 };
 
 export type MergedChannelUniformData = Omit<
@@ -160,12 +168,12 @@ export function buildMergedChannelUniformData(
       cursorCount += 1;
     }
 
+    const memberSources = (input.layer?.sources ?? input.layer?.channels ?? []).slice(
+      0,
+      MAX_CHANNELS,
+    );
     for (let i = 0; i < slotCount; i++) {
-      const sources = (input.layer?.sources ?? input.layer?.channels ?? []).slice(
-        0,
-        MAX_CHANNELS,
-      );
-      const source = sources[i];
+      const source = memberSources[i];
       colormapSpecs.push(
         source
           ? source.type === "phasor"
@@ -186,6 +194,9 @@ export function buildMergedChannelUniformData(
       slotCount,
       blendMode: blendModeToInt(input.layer?.blend),
       projectionMode: projectionModeOf(input.layer),
+      hasPhasorSources: memberSources
+        .slice(0, slotCount)
+        .some((source) => source?.type === "phasor"),
     });
 
     single.atlas.dispose();

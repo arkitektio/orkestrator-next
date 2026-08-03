@@ -3,7 +3,11 @@ import type { BrickSpec } from "./brickSpec";
 import { repackBrick, type RepackChunk } from "./brickRepack";
 import { buildLayerLevelGeometry } from "./levelGeometry";
 import { fetchVoxelBox, nodeVoxelBox } from "./nodeAddress";
-import { createRepackDispatcher, createSyncRepackDispatcher } from "./repackDispatcher";
+import {
+  createBufferFreeList,
+  createRepackDispatcher,
+  createSyncRepackDispatcher,
+} from "./repackDispatcher";
 
 /**
  * The dispatcher must be a pure transport around `repackBrick` — same buffer,
@@ -79,6 +83,52 @@ describe("createRepackDispatcher", () => {
     const dispatcher = createRepackDispatcher();
     const outcome = await dispatcher.repack(buildJob([0, 0, 0]));
     expect(outcome.data.length).toBe(6 * 6 * 6 * 2);
+    dispatcher.release(outcome.data); // no-op on the sync impl, must not throw
     dispatcher.dispose();
+  });
+});
+
+describe("createBufferFreeList", () => {
+  it("recycles by exact byte length only", () => {
+    const list = createBufferFreeList();
+    list.put(new ArrayBuffer(1024));
+    expect(list.take(512)).toBeUndefined();
+    const hit = list.take(1024);
+    expect(hit?.byteLength).toBe(1024);
+    expect(list.take(1024)).toBeUndefined(); // consumed
+  });
+
+  it("bounds retained buffers and drops overflow to GC", () => {
+    const list = createBufferFreeList(2);
+    list.put(new ArrayBuffer(8));
+    list.put(new ArrayBuffer(8));
+    list.put(new ArrayBuffer(8)); // over the cap: silently dropped
+    expect(list.size()).toBe(2);
+    expect(list.take(8)).toBeDefined();
+    expect(list.take(8)).toBeDefined();
+    expect(list.take(8)).toBeUndefined();
+  });
+
+  it("refuses detached (zero-length) buffers", () => {
+    const list = createBufferFreeList();
+    list.put(new ArrayBuffer(0));
+    expect(list.size()).toBe(0);
+  });
+
+  it("keeps independent size classes", () => {
+    const list = createBufferFreeList();
+    list.put(new ArrayBuffer(16));
+    list.put(new ArrayBuffer(32));
+    expect(list.take(32)?.byteLength).toBe(32);
+    expect(list.take(16)?.byteLength).toBe(16);
+    expect(list.size()).toBe(0);
+  });
+
+  it("clear() empties every class", () => {
+    const list = createBufferFreeList();
+    list.put(new ArrayBuffer(16));
+    list.clear();
+    expect(list.size()).toBe(0);
+    expect(list.take(16)).toBeUndefined();
   });
 });

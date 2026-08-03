@@ -6,6 +6,7 @@ import { createRepackDispatcher } from "../core/octree/repackDispatcher";
 import type { SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useSceneStoreApi } from "../store/sceneStore";
 import { useViewerStoreApi } from "../store/viewerStore";
+import { useViewStoreApi } from "../store/viewStore";
 import { BrickResidencyManager } from "./brickResidency";
 
 /**
@@ -20,6 +21,7 @@ export function BrickSystemProvider() {
   const invalidate = useThree((state) => state.invalidate);
   const viewerStore = useViewerStoreApi();
   const sceneStore = useSceneStoreApi();
+  const viewStore = useViewStoreApi();
   const managerRef = useRef<BrickResidencyManager | null>(null);
 
   useEffect(() => {
@@ -56,7 +58,11 @@ export function BrickSystemProvider() {
   }, [gl, invalidate, viewerStore, sceneStore]);
 
   useFrame(() => {
-    managerRef.current?.drainUploads();
+    // Mid-gesture frames use the trickle drain policy (no free pass, no GPU
+    // dispatch) so uploads never collide with the interaction; the trailing
+    // cameraMoving debounce flips false on settle and the backlog drains at
+    // full budget.
+    managerRef.current?.drainUploads(viewStore.getState().cameraMoving);
   });
 
   return null;

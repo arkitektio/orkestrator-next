@@ -30,7 +30,6 @@ export const LayerRow = ({
   onFocus,
   onRemove,
   embedded = false,
-  viewportPercent,
   graphDirty = false,
   savingGraph = false,
   onSaveGraph,
@@ -42,11 +41,6 @@ export const LayerRow = ({
   onFocus: (layerId: string) => void;
   /** Remove the layer from its scene. */
   onRemove?: () => void;
-  /**
-   * Rough percentage of the viewport this layer occupies, shown as a small
-   * badge. Undefined for off-view layers (no coverage entry).
-   */
-  viewportPercent?: number;
   /**
    * When true the row is the header of an already-styled card (the expandable
    * layer card), so it drops its own border / background / rounding and just
@@ -109,14 +103,6 @@ export const LayerRow = ({
         >
           <Save className="h-3 w-3" />
         </button>
-      )}
-      {viewportPercent != null && (
-        <span
-          className="hidden shrink-0 text-[10px] tabular-nums text-white/40 @2xs/card:inline"
-          title="Rough share of the viewport this layer covers"
-        >
-          {viewportPercent > 0 ? `${viewportPercent}%` : "<1%"}
-        </span>
       )}
       {/* Always reachable at every width — a row you cannot hide or focus from
           is worse than a cramped one. Only the hit area grows with the card. */}

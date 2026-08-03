@@ -25,6 +25,7 @@ import { useModeStore } from "../../store/modeStore";
 import { type RoiBounds, useRoiSelectionStore } from "../../store/roiSelectionStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
+import { useViewStoreApi } from "../../store/viewStore";
 import type { SceneTransformContext } from "../../core/layerModel";
 
 /**
@@ -287,9 +288,14 @@ const AnnotationCollectionGroup = ({
   const setVisibleLayerRois = useRoiSelectionStore((s) => s.setVisibleLayerRois);
   const clearVisibleLayerRois = useRoiSelectionStore((s) => s.clearVisibleLayerRois);
 
+  const viewApi = useViewStoreApi();
   const { data } = useGetAnnotationsQuery({
     variables: { filters: { collection: collection.id } },
     pollInterval: 5000,
+    // A poll landing mid-gesture re-renders and re-diffs the whole annotation
+    // subtree while the user is dragging; skip those attempts (the next poll
+    // after settle catches up).
+    skipPollAttempt: () => viewApi.getState().cameraMoving,
   });
 
   const affineMatrix = useMemo(

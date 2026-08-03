@@ -29,6 +29,14 @@ export type RepackOutcome = RepackResult & { data: BrickArray };
 
 export interface RepackDispatcher {
   repack(job: RepackJob): Promise<RepackOutcome>;
+  /**
+   * Hand a finished output brick back for reuse. Call ONLY when the buffer is
+   * provably dead (uploaded + mirrored, or dropped without upload) — a
+   * released buffer is transferred to a worker and detached, so a live
+   * reference elsewhere would read a zero-length array. Best-effort: unmatched
+   * or overflowing buffers just fall to GC, exactly as before.
+   */
+  release(data: BrickArray): void;
   dispose(): void;
 }
 
@@ -43,7 +51,46 @@ export function createSyncRepackDispatcher(): RepackDispatcher {
       const result = repackBrick({ ...job.input, output });
       return Promise.resolve({ ...result, data: output });
     },
+    release: () => {}, // same-thread outputs just fall to GC
     dispose: () => {},
+  };
+}
+
+/** Free-list bound: at 12 in-flight bricks (~1.1 MB each for a 66³ r32f
+ * brick) this caps retained memory at ~26 MB across every active size class
+ * while still covering the steady-state streaming pipeline. */
+export const MAX_FREE_BUFFERS = 24;
+
+/**
+ * Size-classed ArrayBuffer free list for repack outputs. The worker path used
+ * to allocate a fresh ~1.1 MB output per brick, transfer it out and drop it
+ * after the atlas upload — sustained multi-MB/frame garbage while streaming.
+ * Buffers are keyed by exact byteLength (pool specs differ per pool) and
+ * handed back to the worker via the request's `recycled` transfer.
+ * Pure and exported for unit tests.
+ */
+export function createBufferFreeList(maxBuffers: number = MAX_FREE_BUFFERS) {
+  const bySize = new Map<number, ArrayBuffer[]>();
+  let count = 0;
+  return {
+    size: () => count,
+    put(buffer: ArrayBuffer): void {
+      if (buffer.byteLength === 0 || count >= maxBuffers) return; // detached or full
+      const bucket = bySize.get(buffer.byteLength);
+      if (bucket) bucket.push(buffer);
+      else bySize.set(buffer.byteLength, [buffer]);
+      count += 1;
+    },
+    take(byteLength: number): ArrayBuffer | undefined {
+      const bucket = bySize.get(byteLength);
+      const buffer = bucket?.pop();
+      if (buffer !== undefined) count -= 1;
+      return buffer;
+    },
+    clear(): void {
+      bySize.clear();
+      count = 0;
+    },
   };
 }
 
@@ -71,6 +118,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
   // Lazy: no worker exists until the first brick repacks.
   const workers: Worker[] = [];
   const pending = new Map<number, Pending>();
+  const freeList = createBufferFreeList();
   let nextId = 1;
   let nextWorker = 0;
   let disposed = false;
@@ -136,14 +184,24 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       const id = nextId++;
       return new Promise<RepackOutcome>((resolve, reject) => {
         pending.set(id, { resolve, reject, kind: job.kind });
+        const recycled = freeList.take(
+          job.elementCount * (job.kind === "r8" ? 1 : 4),
+        );
         const request: RepackWorkerRequest = {
           id,
           kind: job.kind,
           elementCount: job.elementCount,
           input: job.input,
+          recycled,
         };
-        worker.postMessage(request);
+        // Only `recycled` transfers; SAB-backed chunks stay shared and the
+        // rare non-SAB chunk structured-clones, exactly as before.
+        worker.postMessage(request, recycled ? [recycled] : []);
       });
+    },
+    release: (data) => {
+      if (disposed) return;
+      freeList.put(data.buffer as ArrayBuffer);
     },
     dispose: () => {
       disposed = true;
@@ -154,6 +212,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       }
       for (const worker of workers) worker.terminate();
       workers.length = 0;
+      freeList.clear();
     },
   };
 }

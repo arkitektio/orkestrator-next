@@ -26,6 +26,17 @@ export const CameraMatrixSync = ({
   // updates). Order matches writes in the frame callback below.
   const projSigRef = useRef<Float64Array>(new Float64Array(14).fill(Number.NaN));
   const projSigScratch = useRef<Float64Array>(new Float64Array(14));
+  // Latest changed-frame state, recorded IN PLACE (no allocation) every
+  // changed frame; snapshots for the store are built only at EMISSION time
+  // (≤ ~17/s leading + 1 settle), not per frame. The previous code allocated
+  // a Matrix4 clone + size + pose + world position on every moving frame
+  // (~360 objects/s) and cleared+set the settle timer per frame — the exact
+  // anti-pattern CanvasSync documents having fixed on its own path.
+  const pendingSize = useRef({ width: 0, height: 0 });
+  const pendingPosition = useRef(new THREE.Vector3());
+  const pendingPerspective = useRef(false);
+  const pendingFovY = useRef(0);
+  const lastChangeAtRef = useRef(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -97,18 +108,33 @@ export const CameraMatrixSync = ({
     // 5. Update previous state for next frame check
     previousFrameMatrix.current.copy(matrixRef.current);
 
-    // Capture the state at this exact moment
-    const snapshot = matrixRef.current.clone();
-    const currentSize = { width: size.width, height: size.height };
-    const worldPos = camera.getWorldPosition(new THREE.Vector3());
+    // Record the state of this changed frame IN PLACE — allocation-free.
+    // Snapshots are minted only when an emission actually happens.
+    pendingSize.current.width = size.width;
+    pendingSize.current.height = size.height;
+    camera.getWorldPosition(pendingPosition.current);
     const perspective = (camera as THREE.PerspectiveCamera).isPerspectiveCamera === true;
-    const pose = {
-      position: [worldPos.x, worldPos.y, worldPos.z] as [number, number, number],
-      isPerspective: perspective,
-      fovY: perspective
-        ? THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
-        : 0,
+    pendingPerspective.current = perspective;
+    pendingFovY.current = perspective
+      ? THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
+      : 0;
+
+    // Fresh objects per EMISSION: viewStore consumers key on identity, so the
+    // matrix/size/pose must be new objects each time they are published.
+    const emit = (moving: boolean) => {
+      const position = pendingPosition.current;
+      updateCameraData(
+        matrixRef.current.clone(),
+        { width: pendingSize.current.width, height: pendingSize.current.height },
+        {
+          position: [position.x, position.y, position.z] as [number, number, number],
+          isPerspective: pendingPerspective.current,
+          fovY: pendingFovY.current,
+        },
+        moving,
+      );
     };
+
     // Wall clock, NOT r3f's `clock`: setFrameloop() resets clock.elapsedTime to
     // 0 (PerfFrameProbe flips the loop to "always" when a recording is armed),
     // while lastEmitRef keeps the pre-reset value. On any canvas that has been
@@ -117,20 +143,33 @@ export const CameraMatrixSync = ({
     // exactly how a report of continuous panning came back with almost no
     // replans. The trailing settle already uses wall time (setTimeout).
     const nowMs = performance.now();
+    lastChangeAtRef.current = nowMs;
 
     // 6a. Trailing settle: guarantees a final, crisp update once the camera
     // comes to rest (the last motion frame may fall inside the throttle gap).
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      updateCameraData(snapshot, currentSize, pose, false); // settled
-    }, settleMs);
+    // Armed ONCE per motion window and self-re-arming until the camera has
+    // been quiet for settleMs — NOT cleared+set per frame (timer-heap churn).
+    if (timeoutRef.current === null) {
+      const armSettle = (delayMs: number) => {
+        timeoutRef.current = setTimeout(() => {
+          const quietForMs = performance.now() - lastChangeAtRef.current;
+          if (quietForMs >= settleMs) {
+            timeoutRef.current = null;
+            emit(false); // settled — matrixRef/pending hold the last change
+          } else {
+            armSettle(settleMs - quietForMs);
+          }
+        }, delayMs);
+      };
+      armSettle(settleMs);
+    }
 
     // 6b. Leading throttle: push DURING continuous motion at a bounded cadence
     // so panning retriggers the (linked) visibility + chunk-planning pipeline
     // live, instead of only after the camera stops.
     if (nowMs - lastEmitRef.current >= throttleMs) {
       lastEmitRef.current = nowMs;
-      updateCameraData(snapshot, currentSize, pose, true); // in motion
+      emit(true); // in motion
     }
   });
 

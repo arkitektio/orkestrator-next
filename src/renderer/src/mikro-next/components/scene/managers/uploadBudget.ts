@@ -68,6 +68,70 @@ export function shouldContinueStaleDrain(
  * refetches cheaply — holding many ~MB repacked payloads is the real cost). */
 export const MAX_STALE_QUEUE = 24;
 
+/**
+ * How the drain behaves for the current interaction state. While the camera
+ * moves, uploads are what collide with gesture frames: the first-brick free
+ * pass admits single >15 ms `writeTexture`s, the stale pass spends leftover
+ * budget on out-of-plan bricks, and a GPU-repack dispatch commits `flush()`
+ * to multi-MB synchronous `writeBuffer`s. The interacting policy suspends all
+ * three and shrinks the budget to a trickle — safe because the coarsest level
+ * is always fully resident (deferred bricks render coarse, never black), and
+ * the backlog drains at full budget the moment the gesture settles.
+ */
+export type DrainPolicy = {
+  budget: DrainBudget;
+  allowFreePass: boolean;
+  allowStale: boolean;
+  allowGpuDispatch: boolean;
+};
+
+/** Interacting caps: a trickle that never causes a felt hitch. */
+const INTERACTING_MAX_BYTES = 2 * 1024 * 1024;
+const INTERACTING_MAX_BRICKS = 4;
+const INTERACTING_MAX_MS = 1.5;
+
+export function resolveDrainPolicy(
+  tierBudget: DrainBudget,
+  interacting: boolean,
+): DrainPolicy {
+  if (!interacting) {
+    return { budget: tierBudget, allowFreePass: true, allowStale: true, allowGpuDispatch: true };
+  }
+  return {
+    budget: {
+      maxBytes: Math.min(tierBudget.maxBytes, INTERACTING_MAX_BYTES),
+      maxBricks: Math.min(tierBudget.maxBricks, INTERACTING_MAX_BRICKS),
+      maxMs: Math.min(tierBudget.maxMs, INTERACTING_MAX_MS),
+    },
+    allowFreePass: false,
+    allowStale: false,
+    allowGpuDispatch: false,
+  };
+}
+
+/**
+ * The REAL synchronous main-thread cost a GPU-repacked brick adds to the
+ * frame: `flush()` must `writeBuffer` every source chunk not already resident
+ * in the GPU chunk cache. On plane-chunked data a single chunk is ~14 MB —
+ * far more than the atlas-slot bytes the CPU path pays — and the flush runs
+ * with no wall-clock gate, so this is the number the drain budget has to
+ * charge at dispatch time. Cached chunks cost nothing (the batch pins them).
+ * A chunk referenced twice within one brick is charged once.
+ */
+export function gpuFlushUploadBytes(
+  chunks: readonly { cacheKey: string; byteLength: number }[],
+  isChunkCached: (cacheKey: string) => boolean,
+): number {
+  let bytes = 0;
+  const seen = new Set<string>();
+  for (const chunk of chunks) {
+    if (seen.has(chunk.cacheKey)) continue;
+    seen.add(chunk.cacheKey);
+    if (!isChunkCached(chunk.cacheKey)) bytes += chunk.byteLength;
+  }
+  return bytes;
+}
+
 export type QueueEntry = { key: string; uniformValue: number | null; level: number };
 
 /**

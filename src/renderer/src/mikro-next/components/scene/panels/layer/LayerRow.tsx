@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Crosshair, Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
-import { useModeStore } from "../../store/modeStore";
 import { LayerState } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
 import {
@@ -61,7 +60,6 @@ export const LayerRow = ({
   // answer actually changed rather than every row in the list.
   const isProbeTarget = useViewerStore((s) => s.probeLayerId === layer.id);
   const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
-  const setInteractionMode = useModeStore((s) => s.setInteractionMode);
 
   return (
     <div
@@ -132,8 +130,10 @@ export const LayerRow = ({
           }
           onClick={(e) => {
             e.stopPropagation();
+            // Pin ONLY: choosing which layer answers the probe must not yank
+            // the whole scene into PROBE mode — the user may be mid-navigation
+            // or mid-annotation and just setting up the target for later.
             setProbeLayerId(isProbeTarget ? null : layer.id);
-            if (!isProbeTarget) setInteractionMode("PROBE");
           }}
         >
           <Crosshair className="h-3 w-3" />

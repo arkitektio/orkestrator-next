@@ -259,6 +259,25 @@ describe("startNodePlanTracking", () => {
     stop();
   });
 
+  it("REMOVES the plan when a layer turns invisible (visibility must reach the renderer)", async () => {
+    const stores = makeStores();
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await settle();
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBeDefined();
+
+    // Same layer, now hidden: it is filtered from planning, and the stale plan
+    // must be PUBLISHED away — residency reconciles pools (and merged passes
+    // drop the member) off the nodePlans identity change.
+    stores.sceneStore.setState({
+      layers: [{ ...layer, visible: false } as unknown as LayerState],
+    } as never);
+    await settle();
+    expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBeUndefined();
+
+    stop();
+  });
+
   it("stops reacting after cleanup", async () => {
     const stores = makeStores();
     const stop = startNodePlanTracking(stores);

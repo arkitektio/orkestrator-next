@@ -22,7 +22,6 @@ import {
   useRoiDrawingStoreApi,
 } from "../../store/roiDrawingStore";
 import { useSceneStore } from "../../store/sceneStore";
-import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import {
@@ -73,7 +72,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
   const meshRef = useRef<THREE.Mesh | null>(null);
-  const skipSelectionClickRef = useRef(false);
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
@@ -127,8 +125,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
-  const isSelected = useSelectionStore((s) => s.selectedLayerId === layerId);
-  const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
 
   useEffect(() => {
     const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
@@ -174,6 +170,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       const order = layers.findIndex((l) => l.id === id);
       const memberLayer = order >= 0 ? layers[order] : undefined;
       if (!memberLayer) return;
+      // A hidden member must leave the merged pass IMMEDIATELY: the pool's
+      // membership only updates after the next replan + reconcile, and until
+      // then the primary would keep compositing the hidden layer's channels.
+      if (memberLayer.visible === false) return;
       const targetLevel = viewerStoreApi.getState().nodePlans[id]?.targetLevel;
       if (targetLevel === undefined) return;
       members.push({
@@ -587,7 +587,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         }
         if (interactionMode === "PROBE") {
           e.stopPropagation();
-          skipSelectionClickRef.current = true;
           // Synchronous: click latency matters, click storms don't.
           updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
           return;
@@ -627,15 +626,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
             e.stopPropagation();
             drawing.setPendingPrimitiveAnchor(probe.worldPos);
           }
-          return; // never layer-select while annotating
         }
-        if (skipSelectionClickRef.current) {
-          skipSelectionClickRef.current = false;
-          return;
-        }
-        if (interactionMode === "PROBE" || e.altKey) return;
-        e.stopPropagation();
-        setSelectedLayerId(isSelected ? null : layerId);
+        // NO click-to-select: volumes routinely overlay each other, so a
+        // raycast pick is ambiguous — the front-most box would claim clicks
+        // meant for the layer behind it. Layer selection lives in the layers
+        // panel, where every layer is individually addressable.
       }}
     >
       {/* Non-primary members of a merged group keep their mesh MOUNTED but

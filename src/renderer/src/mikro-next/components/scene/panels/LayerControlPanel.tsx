@@ -4,10 +4,9 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LongCommitProfiler } from "../core/commitProfiler";
-import { fitsExpanded } from "../core/layerListLayout";
 import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
@@ -32,37 +31,6 @@ const formatBytes = (bytes: number): string =>
 // `memo(LayerCard)`, so every bucket crossing during a zoom re-rendered the
 // card's whole render-graph editor subtree (measured 54–174 ms commits, the
 // sidebar's share of gesture jank).
-
-/**
- * The panel's own box, for the auto-expand decision. Bucketed to 32px and
- * compared before commit so dragging the rail's resize handle doesn't re-render
- * the whole layer list on every observer tick — only when a bucket boundary is
- * crossed, which is also the only granularity `fitsExpanded` can act on.
- *
- * `{0, 0}` means "not measured yet" and reads as no space, so the first paint
- * is collapsed rather than briefly unfolding everything.
- */
-const useBucketedSize = () => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const width = Math.round(entry.contentRect.width / 32) * 32;
-      const height = Math.round(entry.contentRect.height / 32) * 32;
-      setSize((prev) =>
-        prev.width === width && prev.height === height ? prev : { width, height },
-      );
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, size] as const;
-};
 
 /**
  * Warning strip for a layer refused by the pool-viability guard (P18): its
@@ -173,7 +141,10 @@ const LayerCard = memo(function LayerCard({
         onRemove={handleRemove}
       />
       {unplannable && <UnplannableNotice layer={layer} info={unplannable} />}
-      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+      {/* NO open/close animation: the collapsible height animation forced
+          layout + paint of the whole editor subtree on every toggle and kept
+          animating during store-driven re-renders — the cards snap instead. */}
+      <CollapsibleContent className="overflow-hidden">
         <div className="border-t border-white/10">
           <LayerGraphFlyout
             inline
@@ -210,10 +181,8 @@ export const LayerControlPanel = ({
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   // Rarely changes (only when the viability verdict flips) — P17-clean.
   const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
-  const [panelRef, panelSize] = useBucketedSize();
   // Per-layer explicit open/closed, keyed by id. Absent = follow the
-  // space-derived default; present = the user has said otherwise for that card
-  // and resizing the rail must not overrule them.
+  // selection; present = the user has said otherwise for that card.
   const [expandOverrides, setExpandOverrides] = useState<Record<string, boolean>>({});
 
   // Deleting refetches GetScene, which reinitializes the scene stores so the
@@ -264,17 +233,13 @@ export const LayerControlPanel = ({
   // position.
   const shownLayers = layers;
 
-  // Unfold everything when the panel can actually seat it (see
-  // `core/layerListLayout.ts`): a wide rail showing three layers has no reason
-  // to make you click each one open. What this is NOT is a visibility rule —
-  // coverage and frustum no longer open or close anything, so nothing pops open
-  // mid-zoom or shuts on the layer you are editing.
-  const autoExpand = fitsExpanded(panelSize, layers.length);
-
-  // Explicit choice first, then the space-derived default, then the selection —
-  // so a click still unfolds a card in a rail too small to auto-expand.
+  // NO auto-expand: unfolding used to be space-derived (`fitsExpanded`), which
+  // meant a rail resize could pop every editor open at once — mounting every
+  // card's full render-graph editor subtree in a single commit and making
+  // every subsequent layers-store write walk all of them. Cards open only on
+  // an explicit click (or the selection), one at a time.
   const isExpanded = (layer: LayerState) =>
-    expandOverrides[layer.id] ?? (autoExpand || layer.id === selectedLayerId);
+    expandOverrides[layer.id] ?? layer.id === selectedLayerId;
 
   // The row IS the button: selecting it unfolds the editor inline within the
   // same card (one border around header + body), rather than popping a
@@ -303,7 +268,6 @@ export const LayerControlPanel = ({
     // lays itself out from its own box.
     <LongCommitProfiler id="layers-panel">
     <div
-      ref={panelRef}
       className={
         variant === "sidebar"
           ? "@container/layers flex h-full min-h-0 flex-col p-2"

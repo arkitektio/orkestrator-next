@@ -136,7 +136,7 @@ export function startNodePlanTracking({
     const prevPlans = viewerState.nodePlans;
     const nextPlans: Record<string, LayerNodePlan> = {};
     const nextUnplannable: Record<string, UnplannableLayerInfo> = {};
-    let changed = Object.keys(prevPlans).some((layerId) => !layers.find((l) => l.id === layerId));
+    let changed = false;
 
     const plannableLayers = layers.filter(
       (layer) => layer.visible !== false && (layer.lens.dataset.dataArrays?.length ?? 0) > 0,
@@ -316,6 +316,21 @@ export function startNodePlanTracking({
         } else {
           nextPlans[member.layer.id] = next;
           changed = true;
+        }
+      }
+    }
+
+    // Plan REMOVALS must publish too: a layer that turned invisible (or lost
+    // its arrays, or left the scene) is filtered out of planning above, so it
+    // never reaches the per-class loop — without this check its STALE plan
+    // stayed in the store, residency never reconciled the pool, and a merged
+    // pass kept compositing the hidden layer's channels. New keys always set
+    // `changed` in the loop (prev === null), so only disappearances need it.
+    if (!changed) {
+      for (const layerId of Object.keys(prevPlans)) {
+        if (!(layerId in nextPlans)) {
+          changed = true;
+          break;
         }
       }
     }

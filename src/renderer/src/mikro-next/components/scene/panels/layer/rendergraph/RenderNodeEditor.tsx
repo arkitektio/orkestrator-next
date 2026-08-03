@@ -172,6 +172,10 @@ const ColormapControl = ({
  * via the layer's dtype range. Histogram data comes from the layer's active
  * anchor (first anchor carrying a value histogram).
  */
+/** Stable empty fallback: a fresh `[]` literal per render used to invalidate
+ * every downstream LevelsEditor memo on layers without a server histogram. */
+const EMPTY_BINS: number[] = [];
+
 const TransferHistogram = ({
   layer,
   transfer,
@@ -200,8 +204,8 @@ const TransferHistogram = ({
   // works in — so pass it straight through (null = full range).
   return (
     <LevelsEditor
-      bins={vh?.bins ?? []}
-      histogram={vh?.histogram ?? []}
+      bins={vh?.bins ?? EMPTY_BINS}
+      histogram={vh?.histogram ?? EMPTY_BINS}
       value={{
         min: transfer.climMin ?? dtypeMin,
         max: transfer.climMax ?? dtypeMax,
@@ -457,13 +461,37 @@ const PhasorNodeEditor = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const context = layer?.lens.phasor;
-  const scale = resolvePhasorScale({
-    axisType: context?.axisType,
-    harmonic: node.harmonic,
-    laserFrequency: context?.laserFrequency,
-    window: context?.window,
-  });
+  // Memoized on the underlying stable facts: `resolvePhasorScale` returns a
+  // fresh object per call and it feeds PhasorPlot's canvas-draw effect deps —
+  // an unstable identity forced a full bins² canvas redraw on EVERY render
+  // of this editor (i.e. every clim drag tick anywhere in the card).
+  const scale = useMemo(
+    () =>
+      resolvePhasorScale({
+        axisType: context?.axisType,
+        harmonic: node.harmonic,
+        laserFrequency: context?.laserFrequency,
+        window: context?.window,
+      }),
+    [context?.axisType, node.harmonic, context?.laserFrequency, context?.window],
+  );
   const histogram = context?.phasorHistogram ?? null;
+  // Same identity discipline for the plot's histogram prop (was an inline
+  // object literal — new identity per render → per-render canvas redraw).
+  const plotHistogram = useMemo(
+    () =>
+      histogram
+        ? {
+            bins: histogram.bins,
+            counts: histogram.counts,
+            gMin: histogram.gMin,
+            gMax: histogram.gMax,
+            sMin: histogram.sMin,
+            sMax: histogram.sMax,
+          }
+        : null,
+    [histogram],
+  );
   const setTransfer = (patch: Partial<PhasorRenderNode["transfer"]>) =>
     onChange({ ...node, transfer: { ...node.transfer, ...patch } });
 
@@ -501,18 +529,7 @@ const PhasorNodeEditor = ({
       {open && (
         <div className="relative flex flex-col gap-2 pt-2">
           <PhasorPlot
-            histogram={
-              histogram
-                ? {
-                    bins: histogram.bins,
-                    counts: histogram.counts,
-                    gMin: histogram.gMin,
-                    gMax: histogram.gMax,
-                    sMin: histogram.sMin,
-                    sMax: histogram.sMax,
-                  }
-                : null
-            }
+            histogram={plotHistogram}
             cursors={node.transfer.cursors}
             scale={scale}
             onCursorsChange={(cursors) => setTransfer({ cursors })}
@@ -708,14 +725,18 @@ const ContainerNodeEditor = ({
   const addChild = (child: RenderNode) =>
     onChange({ ...node, children: [...node.children, child] });
 
+  // Each channel takes an equal flex share of the row (wrapping when narrow)
+  // instead of stacking full-width: several channels sit side by side and the
+  // card stops growing a screen-tall column per channel.
   const childEditors = node.children.map((child, i) => (
-    <RenderNodeEditor
-      key={i}
-      node={child}
-      onChange={(c) => setChild(i, c)}
-      onRemove={() => setChild(i, null)}
-      layer={layer}
-    />
+    <div key={i} className="min-w-[240px] flex-1">
+      <RenderNodeEditor
+        node={child}
+        onChange={(c) => setChild(i, c)}
+        onRemove={() => setChild(i, null)}
+        layer={layer}
+      />
+    </div>
   ));
 
   const addMenu = <AddNodeMenu layer={layer} onAdd={addChild} />;
@@ -744,9 +765,9 @@ const ContainerNodeEditor = ({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-1">
           {childEditors}
-          {addMenu}
+          <div className="w-full">{addMenu}</div>
         </div>
       </div>
     );

@@ -6,7 +6,7 @@ import type {
 import { useGetLensAnchorsQuery } from "@/mikro-next/api/graphql";
 import { LightPathListView } from "@/mikro-next/components/lightpath/LightPathListView";
 import { Tags } from "lucide-react";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   type AnchorMatch,
   describePins,
@@ -77,12 +77,15 @@ const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
   </div>
 );
 
-/** Read-only shape of a value distribution — reference, not a levels editor. */
-const HistogramSparkline = ({
+/** Read-only shape of a value distribution — reference, not a levels editor.
+ * Memoized on the histogram's identity (Apollo-cached, stable): the metadata
+ * pane re-partitions on every layer edit (a clim drag ticks per frame), and
+ * without the memo every tick rebuilt one `<rect>` per bin per anchor. */
+const HistogramSparkline = memo(function HistogramSparkline({
   histogram,
 }: {
   histogram: readonly number[];
-}) => {
+}) {
   // reduce, not Math.max(...bins): a fine-grained histogram would blow the
   // argument limit.
   const peak = histogram.reduce((best, count) => Math.max(best, count), 1);
@@ -109,7 +112,7 @@ const HistogramSparkline = ({
       })}
     </svg>
   );
-};
+});
 
 const ValueHistogramSpoke = ({
   histogram,

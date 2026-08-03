@@ -91,9 +91,12 @@ export const LevelsEditor = ({
     );
   }, [bins, histogram.length, domainMin, domainSpan]);
 
-  // Log-scaled bar heights (see doc comment).
+  // Log-scaled bar heights (see doc comment). Plain loop for the max — a
+  // spread over a 256-bin array allocates an arguments list per call.
   const barHeights = useMemo(() => {
-    const maxLog = Math.log1p(Math.max(...histogram, 1));
+    let maxCount = 1;
+    for (const count of histogram) if (count > maxCount) maxCount = count;
+    const maxLog = Math.log1p(maxCount);
     return histogram.map((count) => (Math.log1p(Math.max(count, 0)) / maxLog) * PLOT_HEIGHT);
   }, [histogram]);
 
@@ -106,17 +109,18 @@ export const LevelsEditor = ({
   );
 
   // The bar rects — one per histogram bin, often 256 per channel — are the
-  // heaviest part of this subtree, and the layer panel re-renders during
-  // camera motion (view-range churn). Memoizing the ELEMENT ARRAY lets React
-  // bail out on identical element references instead of re-creating and
-  // re-diffing every bin on renders where nothing histogram-related changed.
+  // heaviest part of this subtree. CRITICALLY, this memo must NOT depend on
+  // the dragged clim (`black`/`white`): it used to color each bar by
+  // in-window-ness, which invalidated the memo and rebuilt + re-diffed all
+  // 256 elements on EVERY drag tick. Bars are now drawn fully colored once
+  // per histogram/domain change, and the out-of-window regions are dimmed by
+  // two overlay rects (below) whose position is a cheap per-render attribute.
   const bars = useMemo(
     () =>
       histogram.map((_, i) => {
         const v = binValues[i] ?? domainMin;
         const h = barHeights[i];
         if (h <= 0) return null;
-        const inWindow = v >= black && v <= white;
         // Position bars by value (not index) so they bunch correctly when the
         // domain is wider than the data. Width spans to the next bin; the last
         // bin mirrors its predecessor's gap.
@@ -130,11 +134,11 @@ export const LevelsEditor = ({
             y={PLOT_HEIGHT - h}
             width={w + 0.15}
             height={h}
-            fill={inWindow ? barColors[i] : "rgba(255,255,255,0.10)"}
+            fill={barColors[i]}
           />
         );
       }),
-    [histogram, binValues, barHeights, barColors, black, white, domainMin, domainSpan],
+    [histogram, binValues, barHeights, barColors, domainMin, domainSpan],
   );
 
   // Transfer curve over the full domain, in plot coordinates.
@@ -188,6 +192,21 @@ export const LevelsEditor = ({
     }
   };
 
+  // rAF-coalesced drag: pointermove fires 60–120×/s and every `onChange` used
+  // to commit the whole chain synchronously — layer store write → full card
+  // editor re-render → GPU uniform rebuild — PER EVENT. One rAF slot holds
+  // the latest clientX and applies it once per frame; pointerup flushes.
+  const dragRafRef = useRef<number | null>(null);
+  const pendingClientXRef = useRef(0);
+
+  const flushDrag = () => {
+    if (dragRafRef.current !== null) {
+      cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = null;
+    }
+    if (dragRef.current) applyDrag(pendingClientXRef.current);
+  };
+
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     dragRef.current = { target: nearestTarget(event.clientX), black, white };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -196,10 +215,18 @@ export const LevelsEditor = ({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (dragRef.current) applyDrag(event.clientX);
+    if (!dragRef.current) return;
+    pendingClientXRef.current = event.clientX;
+    if (dragRafRef.current === null) {
+      dragRafRef.current = requestAnimationFrame(() => {
+        dragRafRef.current = null;
+        if (dragRef.current) applyDrag(pendingClientXRef.current);
+      });
+    }
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    flushDrag(); // the release position must land even mid-frame
     dragRef.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -260,6 +287,21 @@ export const LevelsEditor = ({
         >
           <rect x={0} y={0} width={100} height={PLOT_HEIGHT} fill="rgba(0,0,0,0.3)" />
           {bars}
+          {/* Out-of-window dimming: two overlay rects instead of per-bar
+              recoloring — dragging a stop moves an attribute on TWO elements
+              rather than rebuilding all ~256 bar rects (see the bars memo). */}
+          {xOf(black) > 0 && (
+            <rect x={0} y={0} width={xOf(black)} height={PLOT_HEIGHT} fill="rgba(0,0,0,0.6)" />
+          )}
+          {xOf(white) < 100 && (
+            <rect
+              x={xOf(white)}
+              y={0}
+              width={100 - xOf(white)}
+              height={PLOT_HEIGHT}
+              fill="rgba(0,0,0,0.6)"
+            />
+          )}
           {/* Transfer curve + its window edges. */}
           {[black, white].map((v, i) => (
             <line

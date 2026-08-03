@@ -25,8 +25,18 @@ import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
-import { createVolumeNodeMaterial, updateChannelNodes } from "../../render/bricks/brickNodeMaterials";
-import { buildChannelUniformData } from "../../render/bricks/channelUniforms";
+import {
+  createVolumeNodeMaterial,
+  updateChannelNodes,
+  updateMergedMemberNodes,
+} from "../../render/bricks/brickNodeMaterials";
+import { buildMergedChannelUniformData } from "../../render/bricks/mergedChannelUniforms";
+import {
+  findMergeGroup,
+  isVolumeMergeEnabled,
+  planVolumeMergeGroups,
+  type MergeMember,
+} from "../../render/bricks/volumeMergeGroups";
 
 /**
  * Brick-pool replacement for the monolithic `VolumeLayer`/`VolumeTextureMesh`
@@ -112,7 +122,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     () => qualityGovernor.getVersion(),
   );
 
-  const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
+  const layers = useSceneStore((s) => s.layers);
+  const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   const isSelected = useSelectionStore((s) => s.selectedLayerId === layerId);
@@ -131,23 +142,109 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const pool = brickSystem?.getLayerPool(layerId) ?? null;
 
+  // --- Merged pass ------------------------------------------------------
+  //
+  // Layers sharing a pool share the atlas, page table, geometry and value
+  // range, so they can be raymarched in ONE pass instead of N. Each member
+  // component independently derives the same grouping from the same store
+  // snapshot (planVolumeMergeGroups is pure), then the group's PRIMARY carries
+  // the merged material and the rest render nothing. No provider, no shared
+  // state, no cross-component messaging.
+  // Read out of the live Set every render (it holds a handful of ids) and key
+  // the memo on the CONTENT. `pool.members` is replaced wholesale on each
+  // reconcile without bumping poolsVersion, and a swap like {a,b,c,d} →
+  // {a,b,c,e} changes neither the pool identity nor the Set size — so keying on
+  // either would silently serve a stale membership.
+  const memberKey = pool ? [...pool.members].sort().join(",") : "";
+  const memberIds = useMemo(
+    () => (memberKey === "" ? [] : memberKey.split(",")),
+    [memberKey],
+  );
+  // Scalar selector: a joined string only changes identity when a member's
+  // target level actually moves, so this does not re-render per replan.
+  const memberLevelsKey = useViewerStore((s) =>
+    memberIds.map((id) => s.nodePlans[id]?.targetLevel ?? -1).join(","),
+  );
+
+  const mergeGroup = useMemo(() => {
+    if (!pool || !isVolumeMergeEnabled()) return null;
+    const members: MergeMember[] = [];
+    memberIds.forEach((id) => {
+      const order = layers.findIndex((l) => l.id === id);
+      const memberLayer = order >= 0 ? layers[order] : undefined;
+      if (!memberLayer) return;
+      const targetLevel = viewerStoreApi.getState().nodePlans[id]?.targetLevel;
+      if (targetLevel === undefined) return;
+      members.push({
+        layerId: id,
+        order,
+        affineKey: buildAffineMatrix(memberLayer).elements.join(","),
+        sourceCount: (memberLayer.sources ?? memberLayer.channels ?? []).length,
+        cursorCount: (memberLayer.phasors ?? []).reduce(
+          (total, phasor) => total + (phasor.transfer.cursors?.length ?? 0),
+          0,
+        ),
+        targetLevel,
+      });
+    });
+    return findMergeGroup(planVolumeMergeGroups(members), layerId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, memberIds, layers, memberLevelsKey, layerId, viewerStoreApi]);
+
+  /** Non-primary members of a merged group draw nothing — the primary does. */
+  const isPrimary = mergeGroup === null || mergeGroup.primaryId === layerId;
+  const groupMemberIds = useMemo(
+    () => mergeGroup?.memberIds ?? [layerId],
+    [mergeGroup, layerId],
+  );
+  const groupKey = groupMemberIds.join(",");
+
+  /**
+   * Atlas slab this LAYER's first source taps, for the CPU probe march.
+   *
+   * Deliberately derived from the layer rather than read out of `channelData`:
+   * under a merged pass that array holds every member's slots, and a
+   * non-primary member has no `channelData` at all — but probing must still
+   * work on it. Mirrors slot 0 of `buildChannelUniformData`.
+   */
+  const probeChannelIndex = useMemo(() => {
+    const source = (layer?.sources ?? layer?.channels ?? [])[0];
+    if (!source) return 0;
+    const maxIndex = Math.max(0, (pool?.geometry.channelSlabCount ?? 1) - 1);
+    if (source.type === "channel") {
+      return Math.min(maxIndex, Math.max(0, source.intensityIndex ?? 0));
+    }
+    // A phasor's intensity tap is its mean-photon-count slab.
+    const iSlab = (pool?.geometry.slabs ?? []).findIndex(
+      (slab) => slab.kind === "phasor" && slab.node === 0 && slab.component === "i",
+    );
+    return iSlab === -1 ? 0 : iSlab;
+  }, [layer?.sources, layer?.channels, pool?.geometry]);
+
+  // Only the PRIMARY builds this: it allocates two DataTextures and a colormap
+  // atlas per call, so having all N members build the identical merged data
+  // would trade N raymarch passes for N allocations on every channel edit.
   const channelData = useMemo(
     () =>
-      buildChannelUniformData(
-        layer,
+      !isPrimary
+        ? null
+        : buildMergedChannelUniformData(
+        groupMemberIds.map((id, index) => ({
+          layerId: id,
+          layer: layers.find((l) => l.id === id),
+          slotOffset: index,
+        })),
         Math.max(0, (pool?.geometry.channelSlabCount ?? 1) - 1),
         pool?.minValue ?? 0,
         pool?.maxValue ?? 1,
         pool?.geometry,
+        (l) => projectionModeToInt(l?.projection),
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      layer?.channels,
-      layer?.phasors,
-      layer?.sources,
-      layer?.blend,
-      layer?.colormap,
-      layer?.color,
+      isPrimary,
+      groupKey,
+      layers,
       pool?.geometry,
       pool?.spec.channelCount,
       pool?.minValue,
@@ -175,16 +272,30 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
   const bundle = useMemo(() => {
-    if (!pool) return null;
-    const created = createVolumeNodeMaterial(pool, pool, channelData);
+    if (!pool || !channelData) return null;
+    const created = createVolumeNodeMaterial(pool, pool, channelData, groupMemberIds.length);
     created.nodes.uBaseShape.value.set(
       pool.geometry.levels[0].spatialShape[0],
       pool.geometry.levels[0].spatialShape[1],
       pool.geometry.levels[0].spatialShape[2],
     );
     return created;
+    // Rebuilt on MEMBERSHIP change (the shader unrolls per member), not on
+    // channel edits — those flow through the uniform nodes below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature]);
+  }, [pool, pool?.structureSignature, groupMemberIds.length, channelData === null]);
+
+  /**
+   * A non-primary member still needs a mounted mesh — three raycasts invisible
+   * objects, so probing/annotation/selection depend on it, and the planner
+   * measures this layer's box through it. It does NOT need the raymarcher: the
+   * primary's merged pass already draws its channels.
+   */
+  const hiddenMaterial = useMemo(
+    () => (isPrimary ? null : new THREE.MeshBasicMaterial({ visible: false })),
+    [isPrimary],
+  );
+  useEffect(() => () => hiddenMaterial?.dispose(), [hiddenMaterial]);
 
   useEffect(() => {
     const material = bundle?.material;
@@ -199,17 +310,33 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   // Dynamic uniform-node pushes (no material rebuild).
   useEffect(() => {
-    if (!bundle || planTargetLevel === undefined) return;
+    if (!bundle || !channelData || planTargetLevel === undefined) return;
     const n = bundle.nodes;
     updateChannelNodes(n, channelData);
     n.minValue.value = pool?.minValue ?? 0;
     n.maxValue.value = pool?.maxValue ?? 1;
-    n.uDesiredLevel.value = planTargetLevel;
+    // The FINEST level any member planned: residency is shared and the walk
+    // goes coarser from here, so this is the finest data actually resident.
+    n.uDesiredLevel.value = mergeGroup?.targetLevel ?? planTargetLevel;
     n.uLodBias.value = lodBias;
     n.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     n.uMinDelta.value = marchParams.minDelta;
     n.uMaxSteps.value = qualityGovernor.getProfile().maxRaySteps;
-    n.projectionMode.value = projectionModeToInt(layer?.projection);
+    // Per-member projection/blend/slot range. For a lone layer this is the one
+    // member and behaves exactly as the old single `projectionMode` write.
+    updateMergedMemberNodes(
+      n,
+      channelData.members.map((m) => ({
+        slotFirst: m.slotFirst,
+        slotCount: m.slotCount,
+        blendMode: m.blendMode,
+        projectionMode: m.projectionMode,
+        // Nothing has ever written this from the layer — the uniform keeps its
+        // default. Kept per-member so an iso threshold can be plumbed later
+        // without touching the shader.
+        isoThreshold: 0.5,
+      })),
+    );
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, qualityVersion, marchParams, layer?.projection, invalidate]);
@@ -274,7 +401,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       bounds: [Math.max(bounds.start, 0), bounds.end],
       baseShape: baseLevel.spatialShape,
       desiredLevel: plan.targetLevel,
-      channel: channelData.channelIndex[0] ?? 0,
+      channel: probeChannelIndex,
       minValue: pool.minValue,
       maxValue: pool.maxValue,
       // layer.climMin/climMax are absolute base-native; marchResidentBricks works
@@ -362,7 +489,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   useEffect(() => () => probeCoalescer.cancel(), [probeCoalescer]);
 
   if (layer?.visible === false) return null;
-  if (planMode !== "3D" || !pool || !bundle) return null;
+  if (planMode !== "3D" || !pool) return null;
+  // The primary must have its material before it can draw; a non-primary
+  // renders the invisible placeholder and keeps its interaction surface.
+  const meshMaterial = isPrimary ? bundle?.material : hiddenMaterial;
+  if (!meshMaterial) return null;
 
   const base = pool.geometry.levels[0];
   const volumeSize: [number, number, number] = [
@@ -470,15 +601,22 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         setSelectedLayerId(isSelected ? null : layerId);
       }}
     >
+      {/* Non-primary members of a merged group keep their mesh MOUNTED but
+          invisible: the primary's single pass already draws them, while three
+          skips invisible objects when rendering and NOT when raycasting — so
+          probing, annotation placement and selection keep working, and
+          `computeSceneVisibility` still measures this layer's own box for the
+          planner. Only the rasterization is dropped, which is the whole point. */}
       <mesh
         key={pool.structureSignature}
         ref={meshRef}
         scale={volumeSize}
         renderOrder={1}
+        visible={isPrimary}
       >
         <boxGeometry args={[1, 1, 1]} />
         {/* TSL node raymarcher — see brickNodeMaterials.ts (WGSL + GLSL). */}
-        <primitive object={bundle.material} attach="material" />
+        <primitive object={meshMaterial} attach="material" />
       </mesh>
 
       {isDebug && (

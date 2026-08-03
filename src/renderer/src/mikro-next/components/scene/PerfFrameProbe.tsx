@@ -23,8 +23,14 @@ import { useViewStoreApi } from "./store/viewStore";
  * the frame without participating in it: the Hud stays the sole renderer, and
  * the recording measures the same pipeline the user experiences when idle.
  *
- * `renderCalls` is reported per frame so this can never regress silently again —
- * it must read 2 (main scene + gizmo overlay).
+ * `renderCalls` is reported per frame so this can never regress silently again.
+ * The expected value is 5, not 2, and the decomposition is worth knowing:
+ * `needsFrameBufferTarget` is true (R3F applies ACES tone mapping + sRGB
+ * output), so three renders into an offscreen target and then runs a
+ * full-screen output pass — and that pass is itself a counted `render()`.
+ * `clear()` runs one too. drei's Hud does render(main) -> clearDepth() ->
+ * render(hud), giving main(1) + output(2) + clearDepth-output(3) + hud(4) +
+ * output(5). Three of the five are tone-map/colour blits.
  */
 
 /** React subscription to the monitor's recording flag. */

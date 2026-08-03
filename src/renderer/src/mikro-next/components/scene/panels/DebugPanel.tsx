@@ -10,6 +10,10 @@ import {
 } from "../core/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
 import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/computeRepack";
+import {
+  isVolumeMergeEnabled,
+  setVolumeMergeEnabled,
+} from "../render/bricks/volumeMergeGroups";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
@@ -32,6 +36,7 @@ export const DebugPanel = () => {
   const recording = usePerfRecording();
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
   const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
+  const [volumeMergeOn, setVolumeMergeOn] = useState(isVolumeMergeEnabled);
   const [gpuSelfTest, setGpuSelfTest] = useState<string | null>(null);
   // Tier/override/streaming flips only — rare (P17-clean).
   useSyncExternalStore(qualityGovernor.subscribe, () => qualityGovernor.getVersion());
@@ -42,6 +47,12 @@ export const DebugPanel = () => {
     const next = !gpuRepackOn;
     setGpuRepackEnabled(next);
     setGpuRepackOn(next);
+  };
+
+  const toggleVolumeMerge = () => {
+    const next = !volumeMergeOn;
+    setVolumeMergeEnabled(next);
+    setVolumeMergeOn(next);
   };
 
   const runGpuSelfTest = () => {
@@ -76,6 +87,31 @@ export const DebugPanel = () => {
       currentZ: viewerState.currentZ,
       budgetBytes: getInitialVolumeTextureBudgetBytes(),
       viewportSize: viewState.viewportSize,
+      // CSS size alone cannot tell you the fragment count — the quality
+      // governor modulates DPR per tier, so `pixels` is the number the
+      // raymarch actually pays for, per pass.
+      drawingBuffer: viewerState.canvas
+        ? {
+            width: Math.round(viewerState.canvas.size.width * viewerState.canvas.dpr),
+            height: Math.round(viewerState.canvas.size.height * viewerState.canvas.dpr),
+            dpr: viewerState.canvas.dpr,
+            pixels: Math.round(
+              viewerState.canvas.size.width *
+                viewerState.canvas.dpr *
+                viewerState.canvas.size.height *
+                viewerState.canvas.dpr,
+            ),
+          }
+        : null,
+      // Full-screen volume raymarch passes per frame. With merging OFF this is
+      // one per 3D-planned layer. With it ON, co-pool layers collapse into one
+      // pass each, so the real count is the number of merge GROUPS — at least
+      // `brickSystem.poolCount` and at most `layers` (a group splits when
+      // members disagree on transform or overflow the uniform budget).
+      volumePasses: {
+        layers: Object.values(viewerState.nodePlans).filter((p) => p.mode === "3D").length,
+        merging: isVolumeMergeEnabled(),
+      },
       cameraPose: viewState.cameraPose,
       layerViewRanges: viewerState.layerViewRanges,
       plans: Object.fromEntries(
@@ -300,6 +336,13 @@ export const DebugPanel = () => {
                 gpu repack: {gpuRepackOn ? "on" : "off"}
               </button>
               <button
+                onClick={toggleVolumeMerge}
+                title="Raymarch layers that share a brick pool in ONE pass instead of one each. Off = one pass per layer (the pre-merge path). Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                volume merge: {volumeMergeOn ? "on" : "off"}
+              </button>
+              <button
                 onClick={runGpuSelfTest}
                 title="Repack one synthetic brick on GPU and CPU; compare voxel-for-voxel."
                 className="px-1 rounded border border-border/50 hover:bg-accent"
@@ -393,11 +436,13 @@ const PerfSessionSummary = ({ report }: { report: PerfSessionReport }) => {
             ? `${report.gpuMs.avg.toFixed(1)}/${report.gpuMs.max.toFixed(0)}ms`
             : "n/a"}
         </span>
-        {/* Expected 2 = main scene + gizmo overlay. A 3 means something is
-            rasterizing the scene twice and the fps below is not the real one. */}
+        {/* Baseline 5: main scene + gizmo hud, each followed by the renderer's
+            tone-map/colour output pass (itself a counted render), plus one more
+            for the Hud's clearDepth. Above that, something is rasterizing an
+            extra time and the fps below is not the real one. */}
         <span
           className={`rounded border px-1 ${
-            report.renderCalls.max > 2
+            report.renderCalls.max > 5
               ? "border-amber-500/50 text-amber-300"
               : "border-border/50"
           }`}

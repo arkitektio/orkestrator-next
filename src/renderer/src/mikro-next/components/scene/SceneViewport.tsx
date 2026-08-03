@@ -1,5 +1,5 @@
-import { GizmoHelper, GizmoViewport } from "@react-three/drei";
 import { Canvas, events as createPointerEvents } from "@react-three/fiber";
+import { SceneGizmo } from "./primitives/SceneGizmo";
 import { type ReactNode } from "react";
 import { WebGPURenderer } from "three/webgpu";
 import { CameraMatrixSync } from "./CameraMatrixSync";
@@ -290,9 +290,17 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
             <BrickResidencyOverlay />
           </WhenDebug>
 
-          <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
-            <GizmoViewport labelColor="white" axisHeadScale={1} axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]} />
-          </GizmoHelper>
+          {/* Local, not drei's GizmoHelper: that one calls gl.clearDepth()
+              between the scene and hud renders, which under this renderer's
+              tone-mapped output path costs a full-screen colour blit every
+              frame. See SceneGizmo. */}
+          <SceneGizmo
+            alignment="bottom-right"
+            margin={[100, 100]}
+            labelColor="white"
+            axisHeadScale={1}
+            axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}
+          />
         </SceneWrapper>
 
         {/* The panel stack is the host's to compose — see DefaultScenePanels

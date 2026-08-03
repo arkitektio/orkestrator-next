@@ -25,6 +25,7 @@ export const CanvasSync = () => {
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls);
   const size = useThree((s) => s.size);
+  const dpr = useThree((s) => s.viewport.dpr);
   const invalidate = useThree((s) => s.invalidate);
   const storeApi = useViewerStoreApi();
   const lastPublishRef = useRef(0);
@@ -50,9 +51,13 @@ export const CanvasSync = () => {
       camera,
       controls: ctrl,
       size,
+      dpr,
       invalidate,
     });
-  }, [camera, controls, invalidate, registerCanvas, size]);
+    // `dpr` is a dep so the registered context tracks the quality governor's
+    // DPR switches; nothing subscribes to `canvas` in React, so the extra
+    // writes cost a store set and no renders.
+  }, [camera, controls, invalidate, registerCanvas, size, dpr]);
 
   // Publish worldUnitsPerPixel at a bounded cadence (leading + trailing).
   useFrame(({ camera, size }) => {

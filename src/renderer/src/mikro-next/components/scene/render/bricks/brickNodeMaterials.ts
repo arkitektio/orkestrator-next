@@ -66,6 +66,7 @@ export type UniformNodeLike<T> = { value: T };
 export type UniformArrayNodeLike<T> = { array: T[] };
 
 import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
+import { NameScope } from "./tslNames";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import {
   MAX_CHANNELS,
@@ -471,37 +472,42 @@ function emitSourceSample(
   resolved: ResolvedResidency,
   slot: any,
   fns: { channelNormalize: any; phasorValue: any; cursorHit: any },
+  // A merged pass emits this body once per MEMBER, so every declaration here
+  // exists once per member in one shader. `nm` mints names through the
+  // member's NameScope, which throws on a collision rather than letting TSL
+  // silently rename (and, historically, silently shadow).
+  nm: (name: string) => string = (name) => name,
 ): SourceSample {
-  const paramsA = vec4(c.chParamsA.element(slot)).toVar("srcA"); // (slab, climMin, climMax, gamma)
-  const paramsB = vec4(c.chParamsB.element(slot)).toVar("srcB"); // (opacity, visible, invert, row)
-  const p0 = vec4(textureLoad(c.sourceParams, ivec2(int(0), slot))).toVar("srcP0");
+  const paramsA = vec4(c.chParamsA.element(slot)).toVar(nm("srcA")); // (slab, climMin, climMax, gamma)
+  const paramsB = vec4(c.chParamsB.element(slot)).toVar(nm("srcB")); // (opacity, visible, invert, row)
+  const p0 = vec4(textureLoad(c.sourceParams, ivec2(int(0), slot))).toVar(nm("srcP0"));
 
   // The intensity tap: a channel's slab, or a phasor's mean-photon-count slab.
   // Either way the ordinary clim/gamma/invert transfer applies to it.
-  const rawIntensity = emitChannelTap(t, resolved, int(paramsA.x).toVar("srcSlab"), "srcI");
-  const norm = float(fns.channelNormalize(slot, rawIntensity)).toVar("srcNorm");
+  const rawIntensity = emitChannelTap(t, resolved, int(paramsA.x).toVar(nm("srcSlab")), nm("srcI"));
+  const norm = float(fns.channelNormalize(slot, rawIntensity)).toVar(nm("srcNorm"));
 
-  const color = vec3(0.0).toVar("srcColor");
-  const weight = float(0.0).toVar("srcWeight");
+  const color = vec3(0.0).toVar(nm("srcColor"));
+  const weight = float(0.0).toVar(nm("srcWeight"));
 
   If(int(p0.x).equal(int(SOURCE_KIND_PHASOR)), () => {
-    const p1 = vec4(textureLoad(c.sourceParams, ivec2(int(1), slot))).toVar("srcP1");
-    const p2 = vec4(textureLoad(c.sourceParams, ivec2(int(2), slot))).toVar("srcP2");
+    const p1 = vec4(textureLoad(c.sourceParams, ivec2(int(1), slot))).toVar(nm("srcP1"));
+    const p2 = vec4(textureLoad(c.sourceParams, ivec2(int(2), slot))).toVar(nm("srcP2"));
 
-    const rawG = emitChannelTap(t, resolved, int(p0.y).toVar("srcGSlab"), "srcG");
-    const rawS = emitChannelTap(t, resolved, int(p0.z).toVar("srcSSlab"), "srcS");
+    const rawG = emitChannelTap(t, resolved, int(p0.y).toVar(nm("srcGSlab")), nm("srcG"));
+    const rawS = emitChannelTap(t, resolved, int(p0.z).toVar(nm("srcSSlab")), nm("srcS"));
 
-    const value = float(fns.phasorValue(rawG, rawS, p1)).toVar("srcValue");
+    const value = float(fns.phasorValue(rawG, rawS, p1)).toVar(nm("srcValue"));
     const valueNorm = clamp(
       value.sub(p2.x).div(max(p2.y.sub(p2.x), 0.000001)),
       0.0,
       0.999,
-    ).toVar("srcValueNorm");
+    ).toVar(nm("srcValueNorm"));
     color.assign(c.colormapAtlas.sample(vec2(valueNorm, paramsB.w)).rgb);
 
     // A cursor repaints the pixels of phasor space it covers. Test against the
     // CALIBRATED phasor — the same (g, s) the plot draws the cursor in.
-    const cursor = vec4(fns.cursorHit(slot, rawG, rawS)).toVar("srcCursor");
+    const cursor = vec4(fns.cursorHit(slot, rawG, rawS)).toVar(nm("srcCursor"));
     If(cursor.w.greaterThan(0.5), () => {
       color.assign(cursor.xyz);
     });
@@ -555,8 +561,18 @@ const TAU = Math.PI * 2;
  *
  * `p1` is the source's (mode, phaseOffset, modulationFactor, omega) texel.
  */
-const makePhasorValue = () =>
-  Fn(([rawG, rawS, p1]: any[]) => {
+const makePhasorValue = (nm: (name: string) => string = (name) => name) => {
+  // Minted ONCE per factory call — the Fn body is inlined at each call site,
+  // so names baked in here are per-member by construction.
+  const N = {
+    g: nm("phG"),
+    s: nm("phS"),
+    phase: nm("phPhase"),
+    mod: nm("phMod"),
+    phaseValue: nm("phPhaseValue"),
+    modValue: nm("phModValue"),
+  };
+  return Fn(([rawG, rawS, p1]: any[]) => {
     const phaseOffset = float(vec4(p1).y);
     const modulationFactor = float(vec4(p1).z);
     const omega = float(vec4(p1).w);
@@ -566,18 +582,18 @@ const makePhasorValue = () =>
     // factor (calibratePhasor).
     const co = cos(phaseOffset);
     const si = sin(phaseOffset);
-    const g = modulationFactor.mul(float(rawG).mul(co).sub(float(rawS).mul(si))).toVar("phG");
-    const s = modulationFactor.mul(float(rawG).mul(si).add(float(rawS).mul(co))).toVar("phS");
+    const g = modulationFactor.mul(float(rawG).mul(co).sub(float(rawS).mul(si))).toVar(N.g);
+    const s = modulationFactor.mul(float(rawG).mul(si).add(float(rawS).mul(co))).toVar(N.s);
 
-    const phase = atan(s, g).toVar("phPhase");
+    const phase = atan(s, g).toVar(N.phase);
     If(phase.lessThan(0.0), () => {
       phase.assign(phase.add(TAU));
     });
-    const modulation = sqrt(g.mul(g).add(s.mul(s))).toVar("phMod");
+    const modulation = sqrt(g.mul(g).add(s.mul(s))).toVar(N.mod);
 
     // Uncalibrated (omega == 0): the phasor is only readable in its own terms.
-    const phaseValue = float(0.0).toVar("phPhaseValue");
-    const modulationValue = float(0.0).toVar("phModValue");
+    const phaseValue = float(0.0).toVar(N.phaseValue);
+    const modulationValue = float(0.0).toVar(N.modValue);
 
     If(omega.lessThanEqual(0.0), () => {
       phaseValue.assign(phase.div(TAU));
@@ -602,6 +618,7 @@ const makePhasorValue = () =>
       ),
     );
   });
+};
 
 /**
  * Does this pixel's (calibrated) phasor fall inside any of the source's
@@ -611,29 +628,50 @@ const makePhasorValue = () =>
  * Mirrors `cursorHit`: circles by distance, polygons by the even-odd crossing
  * test. Vertices are packed two per texel after the two header texels.
  */
-const makeCursorHit = (c: any) =>
-  Fn(([slot, g, s]: any[]) => {
-    const result = vec4(0.0).toVar("curResult");
+const makeCursorHit = (c: any, nm: (name: string) => string = (name) => name) => {
+  // Minted ONCE per factory call, for the same reason as makePhasorValue: the
+  // Fn body is inlined at every call site, so a merged pass would otherwise
+  // declare these names once per member in one scope.
+  const N = {
+    result: nm("curResult"),
+    cur: nm("cur"),
+    head: nm("curHead"),
+    style: nm("curStyle"),
+    centre: nm("curCentre"),
+    inside: nm("curInside"),
+    count: nm("curCount"),
+    cross: nm("curCross"),
+    cpt: nm("cpt"),
+    cptJ: nm("cptJ"),
+    pi: nm("curPi"),
+    pj: nm("curPj"),
+  };
+  return Fn(([slot, g, s]: any[]) => {
+    const result = vec4(0.0).toVar(N.result);
 
     Loop(
-      { start: int(0), end: int(MAX_CURSORS), type: "int", condition: "<", name: "cur" },
-      ({ cur }: any) => {
+      { start: int(0), end: int(MAX_CURSORS), type: "int", condition: "<", name: N.cur },
+      // Loop hands the iterator back keyed by its NAME, which is now
+      // member-prefixed — destructuring a literal `cur` would silently yield
+      // undefined and feed it straight into ivec2().
+      (args: any) => {
+        const cur = args[N.cur];
         If(int(cur).greaterThanEqual(c.cursorCount), () => {
           Break();
         });
-        const header = vec4(textureLoad(c.cursorParams, ivec2(int(0), cur))).toVar("curHead");
+        const header = vec4(textureLoad(c.cursorParams, ivec2(int(0), cur))).toVar(N.head);
         // (kind, source slot, point count, visible)
         If(int(header.y).notEqual(int(slot)).or(header.w.lessThan(0.5)), () => {
           Continue();
         });
-        const style = vec4(textureLoad(c.cursorParams, ivec2(int(1), cur))).toVar("curStyle");
-        const centre = vec4(textureLoad(c.cursorParams, ivec2(int(2), cur))).toVar("curCentre");
+        const style = vec4(textureLoad(c.cursorParams, ivec2(int(1), cur))).toVar(N.style);
+        const centre = vec4(textureLoad(c.cursorParams, ivec2(int(2), cur))).toVar(N.centre);
 
-        const inside = bool(false).toVar("curInside");
+        const inside = bool(false).toVar(N.inside);
 
         If(int(header.x).equal(int(CURSOR_KIND_POLYGON)), () => {
-          const count = int(header.z).toVar("curCount");
-          const crossings = int(0).toVar("curCross");
+          const count = int(header.z).toVar(N.count);
+          const crossings = int(0).toVar(N.cross);
           // Even-odd: count the edges the ray from (g, s) crosses. `j` trails
           // `i` by one vertex, wrapping at the end.
           Loop(
@@ -642,15 +680,16 @@ const makeCursorHit = (c: any) =>
               end: int(MAX_CURSOR_POINTS),
               type: "int",
               condition: "<",
-              name: "cpt",
+              name: N.cpt,
             },
-            ({ cpt }: any) => {
+            (args: any) => {
+              const cpt = args[N.cpt];
               If(int(cpt).greaterThanEqual(count), () => {
                 Break();
               });
-              const j = select(int(cpt).equal(int(0)), count.sub(1), int(cpt).sub(1)).toVar("cptJ");
-              const pi = phasorPolygonPoint(c, cur, int(cpt)).toVar("curPi");
-              const pj = phasorPolygonPoint(c, cur, j).toVar("curPj");
+              const j = select(int(cpt).equal(int(0)), count.sub(1), int(cpt).sub(1)).toVar(N.cptJ);
+              const pi = phasorPolygonPoint(c, cur, int(cpt)).toVar(N.pi);
+              const pj = phasorPolygonPoint(c, cur, j).toVar(N.pj);
               const crosses = pi.y
                 .greaterThan(float(s))
                 .notEqual(pj.y.greaterThan(float(s)));
@@ -685,6 +724,7 @@ const makeCursorHit = (c: any) =>
 
     return result;
   });
+};
 
 /** Vertex `index` of a polygon cursor: two (g, s) pairs per texel, after the
  * two header texels and the centre texel. */
@@ -706,9 +746,14 @@ const commonMaterialSettings = (material: NodeMaterial) => {
   material.blending = THREE.AdditiveBlending;
   material.depthWrite = false;
   material.lights = false;
-  // Parity with the raw-GLSL ShaderMaterials this port replaces: their
-  // FragColor bypassed tone mapping entirely; keep the additive compositing
-  // values untouched by the renderer's output transform.
+  // NOTE: this is a NO-OP on the WebGPU backend and does NOT do what the name
+  // suggests. `toneMapped` is read only by WebGLRenderer/WebGLPrograms; nothing
+  // under renderers/common or nodes/ looks at it. The output transform runs as
+  // a separate full-screen pass (`Renderer._renderOutput`) driven by
+  // `needsFrameBufferTarget`, which is on because R3F applies ACES + sRGB — so
+  // this material's additive result IS tone-mapped and sRGB-encoded regardless.
+  // Kept only as a declaration of intent, and because it would matter if the
+  // WebGL2 fallback path is ever exercised.
   material.toneMapped = false;
 };
 
@@ -820,26 +865,109 @@ export type VolumeMaterialNodes = TraversalNodesPublic &
     uStepScale: UniformNodeLike<number>;
     uMaxSteps: UniformNodeLike<number>;
     uBaseShape: UniformNodeLike<THREE.Vector3>;
+    /** Member 0's projection mode — the single-layer alias. */
     projectionMode: UniformNodeLike<number>;
+    /** Member 0's iso threshold — the single-layer alias. */
     isoThreshold: UniformNodeLike<number>;
+    /** Per-member scalars for a merged pass; length 1 for a single layer. */
+    members: {
+      slotFirst: UniformNodeLike<number>;
+      slotCount: UniformNodeLike<number>;
+      blendMode: UniformNodeLike<number>;
+      projectionMode: UniformNodeLike<number>;
+      isoThreshold: UniformNodeLike<number>;
+    }[];
   };
 
 export type VolumeMaterialBundle = { material: NodeMaterial; nodes: VolumeMaterialNodes };
 
+/**
+ * One raymarch pass for one or more co-pool layers.
+ *
+ * `memberCount > 1` MERGES layers that share a brick pool into a single pass.
+ * They share the atlas, page table, geometry, brick spec and value range (that
+ * is what `buildPoolKey` asserts), so N passes walked the same volume N times:
+ * N full rasterizations of the same screen region and N page-table level walks
+ * per ray step, with no early-Z to save any of it (additive + depthWrite off +
+ * Discard). Merged, the ray is walked ONCE and every member accumulates from
+ * the shared residency resolve.
+ *
+ * Members are unrolled in JS rather than looped in the shader: each needs its
+ * own set of projection accumulators, which a dynamic loop would have to keep
+ * in indexable local arrays. The per-member CHANNEL loop stays dynamic over
+ * `slotFirst`/`slotCount` uniforms, so adding or removing a channel does not
+ * rebuild the material — only a membership change does.
+ *
+ * Semantics preserved exactly:
+ *  - Each member keeps its own projection mode, blend mode and iso threshold.
+ *  - Each member's early-out (MIP saturation, VOLUME alpha, ISO first crossing)
+ *    becomes a per-member `done` flag instead of a shared `Break`, so a
+ *    finished member stops accumulating without cutting the others' ray short.
+ *  - Empty-space skipping tests the MAX sample across members — strictly more
+ *    conservative than any single member's test, so no member loses a sample.
+ *  - The output sums the members' contributions, which is exactly what the
+ *    framebuffer's additive blending did across the separate passes.
+ */
 export function createVolumeNodeMaterial(
   pool: LayerBrickPool,
   dataRange: { minValue: number; maxValue: number },
-  channelData: ChannelUniformData,
+  channelData: ChannelUniformData & {
+    /** Present when the data came from `buildMergedChannelUniformData`. */
+    members?: readonly {
+      slotFirst: number;
+      slotCount: number;
+      blendMode: number;
+      projectionMode: number;
+    }[];
+  },
+  memberCount = 1,
 ): VolumeMaterialBundle {
   const t = makeTraversalNodes(pool, dataRange);
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
   c.maxValue.value = dataRange.maxValue;
-  const fns = {
-    channelNormalize: makeChannelNormalize(c),
-    phasorValue: makePhasorValue(),
-    cursorHit: makeCursorHit(c),
-  };
+  // One Fn set per MEMBER. `makePhasorValue` and `makeCursorHit` bake named
+  // declarations into bodies that TSL INLINES at every call site, so a merged
+  // pass declares `curPi`/`cptJ`/`phG`/... once per member in one scope — TSL
+  // auto-renames those, which is precisely the silent-shadowing mechanism this
+  // module has been bitten by before. Minting through one NameScope makes a
+  // collision throw at build time instead of becoming a wrong image.
+  //
+  // With one member the prefix is empty, so the generated WGSL is what it was
+  // before merging existed. `makeChannelNormalize` needs no prefix: it declares
+  // only unnamed vars, which TSL numbers uniquely on its own.
+  const nameScope = new NameScope();
+  const memberFns = Array.from({ length: Math.max(1, memberCount) }, (_, m) => {
+    const nm = nameScope.prefixed(memberCount > 1 ? `m${m}` : "");
+    return {
+      channelNormalize: makeChannelNormalize(c),
+      phasorValue: makePhasorValue(nm),
+      cursorHit: makeCursorHit(c, nm),
+      nm,
+    };
+  });
+
+  // Per-member scalars are plain `uniform()` nodes, NOT `uniformArray` — every
+  // uniformArray is its own uniform-buffer binding on WebGPU and this material
+  // already sits near the 12-per-stage device limit, while individual uniforms
+  // pack into three's shared node group and cost no binding.
+  // Seeded from the data the material is built with, so the very first frame
+  // is already correct — waiting for the uniform effect would flash member 0
+  // rendering every member's slots.
+  const memberNodes = Array.from({ length: Math.max(1, memberCount) }, (_, m) => {
+    const seed = channelData.members?.[m];
+    return {
+      slotFirst: uniform(seed?.slotFirst ?? 0, "int"),
+      slotCount: uniform(
+        seed ? seed.slotCount : m === 0 ? channelData.numChannels : 0,
+        "int",
+      ),
+      blendMode: uniform(seed?.blendMode ?? (m === 0 ? channelData.blendMode : 0), "int"),
+      // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
+      projectionMode: uniform(seed?.projectionMode ?? 0, "int"),
+      isoThreshold: uniform(0.5, "float"),
+    };
+  });
 
   const uDesiredLevel = uniform(0, "int");
   const uLodBias = uniform(1, "float");
@@ -851,8 +979,10 @@ export function createVolumeNodeMaterial(
   // volume; MAX_RAY_STEPS stays the compile-time loop bound.
   const uMaxSteps = uniform(MAX_RAY_STEPS, "float");
   const uBaseShape = uniform(new THREE.Vector3(1, 1, 1), "vec3");
-  const projectionMode = uniform(0, "int"); // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
-  const isoThreshold = uniform(0.5, "float");
+  // Back-compat aliases: the single-layer call site writes `projectionMode` /
+  // `isoThreshold` directly, which is member 0.
+  const projectionMode = memberNodes[0].projectionMode;
+  const isoThreshold = memberNodes[0].isoThreshold;
 
   const material = new NodeMaterial();
   commonMaterialSettings(material);
@@ -961,14 +1091,22 @@ export function createVolumeNodeMaterial(
     // Jitter must not depend on rayLen or uStepScale (motion-invariant, P14).
     const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(uMinDelta)).toVar("rayT");
 
-    const bestNorm = float(0.0).toVar(); // MIP
-    const bestColor = vec3(0.0).toVar();
-    const attenuatedMax = float(0.0).toVar(); // ATTENUATED_MIP
-    const attenuatedColor = vec3(0.0).toVar();
-    const volColor = vec3(0.0).toVar(); // VOLUME front-to-back
-    const volAlpha = float(0.0).toVar();
-    const isoHit = bool(false).toVar(); // ISOSURFACE
-    const isoColor = vec3(0.0).toVar();
+    // Per-member accumulators. Deliberately UNNAMED `.toVar()`: TSL mints a
+    // unique name for each, which is what makes unrolling members into one
+    // scope safe. A named var here would collide across members.
+    const acc = memberNodes.map(() => ({
+      bestNorm: float(0.0).toVar(), // MIP
+      bestColor: vec3(0.0).toVar(),
+      attenuatedMax: float(0.0).toVar(), // ATTENUATED_MIP
+      attenuatedColor: vec3(0.0).toVar(),
+      volColor: vec3(0.0).toVar(), // VOLUME front-to-back
+      volAlpha: float(0.0).toVar(),
+      isoHit: bool(false).toVar(), // ISOSURFACE
+      isoColor: vec3(0.0).toVar(),
+      // Replaces the single-pass `Break()`: this member has all it can get, but
+      // the ray continues for the others.
+      done: bool(false).toVar(),
+    }));
 
     Loop({ start: int(0), end: int(MAX_RAY_STEPS), type: "int", condition: "<" }, ({ i }: any) => {
       // Tier cap: the uniform can't feed the compile-constant loop bound, so
@@ -980,6 +1118,14 @@ export function createVolumeNodeMaterial(
       If(rayT.greaterThan(boundsY), () => {
         Break();
       });
+      // Every member has finished: nothing further along the ray can change
+      // the image. For one member this is exactly the old per-mode `Break`.
+      let allDone: any = acc[0].done;
+      for (let m = 1; m < acc.length; m++) allDone = allDone.and(acc[m].done);
+      If(allDone, () => {
+        Break();
+      });
+
       const pB = originB.add(rayT.mul(dirB)).toVar();
       const lvl = int(desiredLevelAt(pB, originB)).toVar();
 
@@ -991,57 +1137,82 @@ export function createVolumeNodeMaterial(
         .mul(max(float(uStepScale), 1.0))
         .toVar();
 
-      // Per-sample channel composite (ChunkPlane semantics). Residency is
-      // channel-independent: resolve ONCE per step, tap per channel (the
-      // page-table level walk used to run per channel per step).
-      const sampleColor = select(int(c.blendMode).equal(1), vec3(1.0), vec3(0.0)).toVar();
-      const sampleNorm = float(0.0).toVar();
+      // Residency is channel- AND member-independent: resolve ONCE per step.
+      // This is the whole point of merging — N members used to pay N level
+      // walks per step for the identical answer.
       const resolved = emitResolveBrickResidency(t, pB, lvl);
 
-      If(resolved.status.greaterThanEqual(0.5), () => {
-        Loop(
-          { start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<", name: "ch" },
-          ({ ch }: any) => {
-            If(int(ch).greaterThanEqual(c.numChannels), () => {
-              Break();
-            });
-            If(vec4(c.chParamsB.element(ch)).y.lessThan(0.5), () => {
-              Continue();
-            });
-
-            const sample = emitSourceSample(t, c, resolved, ch, fns);
-            const color = sample.color;
-            const weight = sample.weight;
-            // The ray ranks samples by INTENSITY, never by phasor value: a MIP
-            // through a lifetime overlay must pick the brightest voxel along the
-            // ray and show ITS lifetime — not the longest lifetime, which would
-            // pick out the dimmest background pixels.
-            sampleNorm.assign(max(sampleNorm, sample.norm));
-
-            If(int(c.blendMode).equal(1), () => {
-              sampleColor.mulAssign(mix(vec3(1.0), color, weight));
-            })
-              .ElseIf(int(c.blendMode).equal(2), () => {
-                sampleColor.assign(sampleColor.mul(oneMinus(weight)).add(color.mul(weight)));
-              })
-              .Else(() => {
-                sampleColor.addAssign(color.mul(weight));
+      // Per-sample composite, per member (ChunkPlane semantics).
+      const maxSampleNorm = float(0.0).toVar();
+      const samples = memberNodes.map((mem, m) => {
+        const sampleColor = select(int(mem.blendMode).equal(1), vec3(1.0), vec3(0.0)).toVar();
+        const sampleNorm = float(0.0).toVar();
+        If(resolved.status.greaterThanEqual(0.5), () => {
+          Loop(
+            {
+              start: int(0),
+              end: int(MAX_CHANNELS),
+              type: "int",
+              condition: "<",
+              // Distinct iterator per member — see the shadowing note on
+              // emitResolveBrickResidency.
+              name: `ch${m}`,
+            },
+            (args: any) => {
+              const k = args[`ch${m}`];
+              If(int(k).greaterThanEqual(mem.slotCount), () => {
+                Break();
               });
-          },
-        );
+              // Members' slots are concatenated into the shared arrays; this
+              // member owns [slotFirst, slotFirst + slotCount).
+              const slot = int(mem.slotFirst).add(int(k)).toVar();
+              If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
+                Continue();
+              });
+
+              const sample = emitSourceSample(
+                t,
+                c,
+                resolved,
+                slot,
+                memberFns[m],
+                memberFns[m].nm,
+              );
+              const color = sample.color;
+              const weight = sample.weight;
+              // The ray ranks samples by INTENSITY, never by phasor value: a MIP
+              // through a lifetime overlay must pick the brightest voxel along the
+              // ray and show ITS lifetime — not the longest lifetime, which would
+              // pick out the dimmest background pixels.
+              sampleNorm.assign(max(sampleNorm, sample.norm));
+
+              If(int(mem.blendMode).equal(1), () => {
+                sampleColor.mulAssign(mix(vec3(1.0), color, weight));
+              })
+                .ElseIf(int(mem.blendMode).equal(2), () => {
+                  sampleColor.assign(sampleColor.mul(oneMinus(weight)).add(color.mul(weight)));
+                })
+                .Else(() => {
+                  sampleColor.addAssign(color.mul(weight));
+                });
+            },
+          );
+        });
+        maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
+        return { sampleColor, sampleNorm };
       });
 
       // Empty-space skipping: nothing resident anywhere (status 0), or a
       // known-uniform EMPTY brick (status 2) contributing nothing — jump to
       // the exit of the RESOLVED level's cell (hopLevel: the EMPTY brick's
       // own level, or the coarsest cell when the whole chain is unmapped),
-      // not the fine desired level's. Status 1 (resident) never skips, same
-      // as the old per-channel bestStatus/anyResident bookkeeping this
-      // replaces.
+      // not the fine desired level's. Status 1 (resident) never skips.
+      // Merged, the test uses the MAX across members: strictly more
+      // conservative than any single member's, so no member loses a sample.
       If(
         resolved.status
           .lessThan(0.5)
-          .or(resolved.status.greaterThan(1.5).and(sampleNorm.lessThanEqual(0.001))),
+          .or(resolved.status.greaterThan(1.5).and(maxSampleNorm.lessThanEqual(0.001))),
         () => {
           rayT.addAssign(
             max(stepLen, float(brickExitRel(pB, invD, resolved.hopLevel)).add(0.01)),
@@ -1050,46 +1221,53 @@ export function createVolumeNodeMaterial(
         },
       );
 
-      If(int(projectionMode).equal(1), () => {
-        const depthFrac = rayT.sub(boundsX).div(rayLen);
-        const a = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
-        If(a.greaterThan(attenuatedMax), () => {
-          attenuatedMax.assign(a);
-          attenuatedColor.assign(sampleColor);
+      memberNodes.forEach((mem, m) => {
+        const a = acc[m];
+        const { sampleColor, sampleNorm } = samples[m];
+        // A finished member contributes nothing further; the others march on.
+        If(a.done.not(), () => {
+          If(int(mem.projectionMode).equal(1), () => {
+            const depthFrac = rayT.sub(boundsX).div(rayLen);
+            const av = sampleNorm.mul(exp(float(-1.5).mul(depthFrac)));
+            If(av.greaterThan(a.attenuatedMax), () => {
+              a.attenuatedMax.assign(av);
+              a.attenuatedColor.assign(sampleColor);
+            });
+          })
+            .ElseIf(int(mem.projectionMode).equal(2), () => {
+              // Step-size (opacity) correction — mirrors core/opacityCorrection.ts.
+              const av = oneMinus(
+                pow(max(oneMinus(sampleNorm), 0.0), stepLen.div(max(refStep, 1e-5))),
+              );
+              a.volColor.addAssign(oneMinus(a.volAlpha).mul(av).mul(sampleColor));
+              a.volAlpha.addAssign(oneMinus(a.volAlpha).mul(av));
+              If(a.volAlpha.greaterThanEqual(0.98), () => {
+                a.done.assign(true);
+              });
+            })
+            .ElseIf(int(mem.projectionMode).equal(3), () => {
+              If(sampleNorm.greaterThanEqual(mem.isoThreshold), () => {
+                a.isoHit.assign(true);
+                a.isoColor.assign(sampleColor);
+                a.done.assign(true);
+              });
+            })
+            .Else(() => {
+              If(sampleNorm.greaterThan(a.bestNorm), () => {
+                a.bestNorm.assign(sampleNorm);
+                a.bestColor.assign(sampleColor);
+              });
+              // Early ray termination: the normalize clamps to [0, 0.999] before
+              // gamma (invert can reach exactly 1.0), so a max >= 0.995 is within
+              // sub-colormap-step distance of the reachable ceiling — nothing
+              // later on the ray can visibly beat it. Deterministic per pixel
+              // (P14-safe). ATTENUATED_MIP has no saturation bound: not applied.
+              If(a.bestNorm.greaterThanEqual(0.995), () => {
+                a.done.assign(true);
+              });
+            });
         });
-      })
-        .ElseIf(int(projectionMode).equal(2), () => {
-          // Step-size (opacity) correction — mirrors core/opacityCorrection.ts.
-          const a = oneMinus(
-            pow(max(oneMinus(sampleNorm), 0.0), stepLen.div(max(refStep, 1e-5))),
-          );
-          volColor.addAssign(oneMinus(volAlpha).mul(a).mul(sampleColor));
-          volAlpha.addAssign(oneMinus(volAlpha).mul(a));
-          If(volAlpha.greaterThanEqual(0.98), () => {
-            Break();
-          });
-        })
-        .ElseIf(int(projectionMode).equal(3), () => {
-          If(sampleNorm.greaterThanEqual(isoThreshold), () => {
-            isoHit.assign(true);
-            isoColor.assign(sampleColor);
-            Break();
-          });
-        })
-        .Else(() => {
-          If(sampleNorm.greaterThan(bestNorm), () => {
-            bestNorm.assign(sampleNorm);
-            bestColor.assign(sampleColor);
-          });
-          // Early ray termination: the normalize clamps to [0, 0.999] before
-          // gamma (invert can reach exactly 1.0), so a max ≥ 0.995 is within
-          // sub-colormap-step distance of the reachable ceiling — nothing
-          // later on the ray can visibly beat it. Deterministic per pixel
-          // (P14-safe). ATTENUATED_MIP has no saturation bound: not applied.
-          If(bestNorm.greaterThanEqual(0.995), () => {
-            Break();
-          });
-        });
+      });
 
       rayT.addAssign(stepLen);
     });
@@ -1097,28 +1275,40 @@ export function createVolumeNodeMaterial(
     const outColor = vec3(0.0).toVar("finalColor");
     const keep = bool(false).toVar("keepFragment");
 
-    If(int(projectionMode).equal(2), () => {
-      If(volAlpha.greaterThanEqual(0.01), () => {
-        outColor.assign(volColor);
-        keep.assign(true);
-      });
-    })
-      .ElseIf(int(projectionMode).equal(3), () => {
-        If(isoHit, () => {
-          outColor.assign(isoColor);
+    // SUM the members. Across layers the compositing was always additive (the
+    // material is AdditiveBlending and a layer's own blend applies only within
+    // its own slots), and addition is associative — so summing here is exactly
+    // what the framebuffer did across the separate passes. For one member the
+    // addAssign onto a zeroed var is the old plain assign.
+    memberNodes.forEach((mem, m) => {
+      const a = acc[m];
+      If(int(mem.projectionMode).equal(2), () => {
+        If(a.volAlpha.greaterThanEqual(0.01), () => {
+          outColor.addAssign(a.volColor);
           keep.assign(true);
         });
       })
-      .Else(() => {
-        // MIP / ATTENUATED_MIP: premultiplied additive output.
-        const outNorm = select(int(projectionMode).equal(1), attenuatedMax, bestNorm);
-        If(outNorm.greaterThanEqual(0.01), () => {
-          outColor.assign(
-            select(int(projectionMode).equal(1), attenuatedColor, bestColor),
+        .ElseIf(int(mem.projectionMode).equal(3), () => {
+          If(a.isoHit, () => {
+            outColor.addAssign(a.isoColor);
+            keep.assign(true);
+          });
+        })
+        .Else(() => {
+          // MIP / ATTENUATED_MIP: premultiplied additive output.
+          const outNorm = select(
+            int(mem.projectionMode).equal(1),
+            a.attenuatedMax,
+            a.bestNorm,
           );
-          keep.assign(true);
+          If(outNorm.greaterThanEqual(0.01), () => {
+            outColor.addAssign(
+              select(int(mem.projectionMode).equal(1), a.attenuatedColor, a.bestColor),
+            );
+            keep.assign(true);
+          });
         });
-      });
+    });
 
     Discard(keep.not());
     return vec4(outColor, 1.0);
@@ -1138,6 +1328,36 @@ export function createVolumeNodeMaterial(
       uBaseShape,
       projectionMode,
       isoThreshold,
+      members: memberNodes,
     } as VolumeMaterialNodes,
   };
+}
+
+/**
+ * Push a merged group's per-member uniforms. Channel arrays/textures go through
+ * the existing `updateChannelNodes`; this covers only the per-member scalars
+ * the merged fragment reads.
+ *
+ * Members whose data is missing this frame are zeroed rather than left stale —
+ * a stale `slotCount` would have the shader read another member's slots.
+ */
+export function updateMergedMemberNodes(
+  nodes: VolumeMaterialNodes,
+  members: readonly {
+    slotFirst: number;
+    slotCount: number;
+    blendMode: number;
+    projectionMode: number;
+    isoThreshold: number;
+  }[],
+): void {
+  const target = nodes.members ?? [];
+  for (let m = 0; m < target.length; m++) {
+    const source = members[m];
+    target[m].slotFirst.value = source?.slotFirst ?? 0;
+    target[m].slotCount.value = source?.slotCount ?? 0;
+    target[m].blendMode.value = source?.blendMode ?? 0;
+    target[m].projectionMode.value = source?.projectionMode ?? 0;
+    target[m].isoThreshold.value = source?.isoThreshold ?? 0.5;
+  }
 }

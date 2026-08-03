@@ -1,8 +1,11 @@
 import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
-import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
-import { resolveBrickSpec } from "../core/octree/brickSpec";
+import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
+import { atlasBytesPerVoxel, atlasKindForGeometry } from "../core/octree/atlasFormat";
+import { totalBrickCount } from "../core/octree/nodeAddress";
+import { resolvePoolBudget } from "../core/octree/poolBudget";
 import { assessPoolViability } from "../core/octree/poolViability";
 import { buildPoolKey } from "../core/octree/poolKey";
 import { buildSliceSignature } from "../core/sliceSignature";
@@ -163,13 +166,26 @@ export function startNodePlanTracking({
       derived.push({ layer, levels, geometry, spec, poolKey });
     }
 
-    const maxPlanBytes = Math.min(
-      MAX_LAYER_POOL_BYTES,
-      getInitialVolumeTextureBudgetBytes() / Math.max(1, poolKeys.size),
-    );
-
-    // PASS 2 — plan each layer against that budget.
+    // PASS 2 — plan each layer against its pool's slot budget.
+    //
+    // The budget is per-POOL and `slotBytes` depends on the layer's own brick
+    // spec and atlas kind, so it is resolved inside the loop rather than once
+    // above. `resolvePoolBudget` is shared with `brickResidency.ensurePool` —
+    // that shared call is what keeps the plan inside the atlas it will land in,
+    // headroom included.
+    const deviceBudgetBytes = getInitialVolumeTextureBudgetBytes();
     for (const { layer, geometry, spec } of derived) {
+      const slotBytes = brickSlotBytes(
+        spec,
+        atlasBytesPerVoxel(atlasKindForGeometry(geometry)),
+      );
+      const { maxPlanBytes } = resolvePoolBudget({
+        deviceBudgetBytes,
+        poolCount: poolKeys.size,
+        slotBytes,
+        totalBrickBytes: totalBrickCount(geometry, spec) * slotBytes,
+      });
+
       let camera: NodeCamera | null = null;
       if (mode === "3D" && viewProjectionMatrix) {
         const voxelToWorld = buildVolumeVoxelToWorld(layer);

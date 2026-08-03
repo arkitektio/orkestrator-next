@@ -12,7 +12,12 @@ import { fitCameraToObject } from "../core/cameraFit";
 export interface CanvasContext {
   camera: THREE.Camera;
   controls: { target: THREE.Vector3; update: () => void } | null;
+  /** CSS pixels. */
   size: { width: number; height: number };
+  /** Active device-pixel ratio — the quality governor modulates this per tier,
+   * so it is NOT `window.devicePixelRatio`. `size * dpr` is the real fragment
+   * count the raymarch pays; the debug report needs it to stop guessing. */
+  dpr: number;
   invalidate: () => void;
 }
 

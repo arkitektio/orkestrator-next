@@ -28,9 +28,11 @@
  * `gpuMs` is a main-thread stall (e.g. a React re-render storm), not a GPU bound.
  *
  * `renderCalls` is the fourth number and exists to keep the probe honest about
- * ITSELF: it counts `renderer.render()` invocations per frame, so a probe (or a
- * drei `Hud`) that quietly rasterizes the scene a second time shows up as a 3
- * instead of a 2 rather than as a mysterious halving of fps.
+ * ITSELF: it counts `renderer.render()` invocations per frame, so anything that
+ * quietly rasterizes the scene an extra time shows up here rather than as a
+ * mysterious drop in fps. Note the baseline is 5, not 2 — the renderer's
+ * tone-map/colour output pass is itself a counted render and runs after every
+ * scene render AND every clear. See PerfFrameProbe for the decomposition.
  *
  * Kept free of the renderer and React so it is unit-testable; the rAF timing
  * loop lives in `PerfFrameProbe`.
@@ -57,8 +59,8 @@ export type FrameSample = {
   /** Main-thread time spent inside the frame (all useFrame subscribers + the
    * render call(s) + r3f internals), from before-effects to after-effects. */
   frameMainThreadMs: number;
-  /** `renderer.render()` invocations this frame. Expected 2 (main scene + gizmo
-   * hud); a 3 means something is rasterizing the scene twice. */
+  /** `renderer.render()` invocations this frame. Baseline is 5 — see the module
+   * doc; anything above that means something is rasterizing an extra time. */
   renderCalls: number;
   /** GPU time for the frame, or null when timer queries are unavailable. */
   gpuMs: number | null;

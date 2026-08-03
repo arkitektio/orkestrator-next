@@ -7,6 +7,7 @@ import type { SlabDesc } from "../../core/octree/levelGeometry";
 import { cursorPaletteColor, resolvePhasorScale, type PhasorScale } from "../../core/phasor";
 import type { PhasorRenderNode } from "../../core/renderGraph";
 import { buildColormapAtlas } from "../colormaps";
+import { MAX_CHANNELS, MAX_CURSORS, MAX_CURSOR_POINTS } from "./channelLimits";
 import { toBase } from "@/lib/quantities";
 
 /**
@@ -26,11 +27,9 @@ import { toBase } from "@/lib/quantities";
  * cursor list is variable-length anyway.
  */
 
-export const MAX_CHANNELS = 16;
-/** Cursors across the whole layer (all sources). */
-export const MAX_CURSORS = 16;
-/** Vertices a polygon cursor may carry (packed 2 per texel). */
-export const MAX_CURSOR_POINTS = 24;
+// Capacity constants live in a leaf module so pure consumers (the merge
+// planner) can import them without dragging in the GraphQL API types below.
+export { MAX_CHANNELS, MAX_CURSORS, MAX_CURSOR_POINTS } from "./channelLimits";
 
 export const SOURCE_KIND_CHANNEL = 0;
 export const SOURCE_KIND_PHASOR = 1;

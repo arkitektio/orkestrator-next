@@ -17,7 +17,7 @@ import {
 } from "../../../../lib/zarr/runner";
 import { workerPool } from "../../../workers/pool";
 import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
-import { MAX_LAYER_POOL_BYTES, getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
 import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
@@ -30,6 +30,7 @@ import {
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
 import { buildPoolKey, buildStructureSignature } from "../core/octree/poolKey";
+import { MIN_POOL_HEADROOM_SLOTS, resolvePoolBudget } from "../core/octree/poolBudget";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
@@ -104,7 +105,6 @@ import {
 // Per-frame texSubImage3D budget lives in ./uploadBudget (bytes + bricks +
 // WALL-CLOCK cap — the time cap is what keeps integrated GPUs smooth, P19).
 const PAGE_TEXTURE_MAX_EXTENT = 2048;
-const MIN_POOL_HEADROOM_SLOTS = 64;
 // In-flight fetch count, residency-bump throttle and upload time budget are
 // TIER-scaled — read from the quality governor's profile at use sites (P19).
 
@@ -536,6 +536,12 @@ export class BrickResidencyManager {
           },
           pageTableSize: pool.pageTable.layout.size,
           slotsUsed: pool.pool.size,
+          // Cache headroom actually achieved vs. intended. `chooseSlotGrid`
+          // factorises the slot count and can round DOWN, so the target is a
+          // goal, not a guarantee — read these two together before concluding
+          // the budget maths is wrong.
+          freeSlots: pool.atlas.capacity - pool.pool.size,
+          headroomTarget: MIN_POOL_HEADROOM_SLOTS,
           residentByLevel,
           emptyBricks: pool.emptyValues.size,
           inFlight: pool.inFlight.size,
@@ -1425,14 +1431,19 @@ export class BrickResidencyManager {
 
     // Shared with the planner's byte accounting (see atlasKindForGeometry):
     // the two MUST agree on bytes-per-slot or plans request more slots than
-    // the pool holds.
+    // the pool holds. `resolvePoolBudget` is the shared call that also reserves
+    // the cache headroom the plan is not allowed to spend — without it a plan
+    // that maxes the budget leaves zero free slots and the pool thrashes.
     const atlasKind = atlasKindForGeometry(geometry);
     const bytesPerVoxel = atlasBytesPerVoxel(atlasKind);
     const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
-    const budgetShare = Math.min(
-      MAX_LAYER_POOL_BYTES,
-      getInitialVolumeTextureBudgetBytes() / planCount,
-    );
+    const maxUsefulSlotsForBudget = totalBrickCount(geometry, spec);
+    const { atlasBytes } = resolvePoolBudget({
+      deviceBudgetBytes: getInitialVolumeTextureBudgetBytes(),
+      poolCount: planCount,
+      slotBytes,
+      totalBrickBytes: maxUsefulSlotsForBudget * slotBytes,
+    });
     const coarsestGrid = brickGridForLevel(geometry, spec, geometry.levels.length - 1);
     const maxTextureExtent = Math.min(
       PAGE_TEXTURE_MAX_EXTENT,
@@ -1448,7 +1459,7 @@ export class BrickResidencyManager {
     );
     const desiredSlots = Math.min(
       maxUsefulSlots,
-      Math.max(minSlots, Math.floor(budgetShare / slotBytes)),
+      Math.max(minSlots, Math.floor(atlasBytes / slotBytes)),
     );
 
     const gpuRepacker = this.ensureGpuRepacker();

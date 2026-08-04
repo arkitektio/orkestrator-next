@@ -1198,11 +1198,11 @@ export class BrickResidencyManager {
       }
     }
 
-    // Fetch every planned node that isn't resident yet, in fallback-first /
-    // near-first order (see compareFetchOrder — the old global coarse-first
-    // sort let far coarse targets preempt near fine ones, exactly backwards
-    // while zooming in). Only the tier profile's maxInflightBricks run
-    // concurrently; the rest wait in pendingFetch.
+    // Fetch every planned node that isn't resident yet, in band/score order
+    // (see compareFetchOrder): rootLevel backdrop first, then on-screen nodes
+    // by distance to the view focus with coarse-first ties, margin prefetch
+    // last. Only the tier profile's maxInflightBricks run concurrently; the
+    // rest wait in pendingFetch.
     // Reversed: startNextFetches pops from the tail.
     // Deduped by key across members — two layers planning the same brick must
     // enqueue one fetch, not two (the second would be dropped by the guards in
@@ -1224,6 +1224,8 @@ export class BrickResidencyManager {
         pending.push(node);
       }
     }
+    // fetchScore units are each member layer's base voxels, so cross-layer
+    // ordering is approximate (already true of the per-plan emission index).
     pool.pendingFetch = pending.sort(compareFetchOrder).reverse();
     // Fresh plan → fresh retry allowance (see the fetchBrick catch).
     pool.fetchRetries.clear();
@@ -2419,8 +2421,17 @@ export class BrickResidencyManager {
       this.stats.fetchErrors += 1;
       if (pool.protectedKeys.has(token.key)) {
         this.wakeDrain();
-        // Tail = next to dispatch (pendingFetch is in reverse dispatch order).
-        pool.pendingFetch.push({ key: token.key, level, coords, role: "target", priority: 0 });
+        // Tail = next to dispatch (pendingFetch is in reverse dispatch order
+        // and never re-sorted after reconcile, so score/band are inert here).
+        pool.pendingFetch.push({
+          key: token.key,
+          level,
+          coords,
+          role: "target",
+          priority: 0,
+          fetchScore: 0,
+          fetchBand: 0,
+        });
         this.startNextFetches(pool);
       }
       touchedPools.add(pool);

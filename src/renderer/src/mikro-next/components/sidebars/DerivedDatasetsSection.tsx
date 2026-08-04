@@ -61,7 +61,7 @@ const DerivedRow = ({
         <div className="flex min-w-0 flex-col gap-1">
           <MikroADataset.DetailLink
             object={dataset}
-            className="truncate text-sm font-medium"
+            className="break-all text-sm font-medium"
           >
             {dataset.name}
           </MikroADataset.DetailLink>
@@ -157,7 +157,7 @@ export const DerivedDatasetsSection = ({
                 {group.title}
               </div>
               {group.subtitle && (
-                <div className="truncate font-mono text-[0.625rem] text-muted-foreground">
+                <div className="break-all font-mono text-[0.625rem] text-muted-foreground">
                   {group.subtitle}
                 </div>
               )}

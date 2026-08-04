@@ -1,9 +1,17 @@
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { MikroCoordinateSystem } from "@/linkers";
 import { GetADatasetQuery, useGetADatasetDerivedQuery } from "../../api/graphql";
 import {
   ADATASET_SPEC_INFO,
+  arrayNbytes,
   baseDtypeOf,
+  datasetNbytes,
+  formatBytes,
   formatShape,
 } from "../../specs";
 import { DatasetCalibrationSection } from "./DatasetCalibrationSection";
@@ -25,6 +33,9 @@ type PageDataset = GetADatasetQuery["adataset"];
  */
 export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
   const dtype = baseDtypeOf(dataset.dataArrays);
+  const nbytes = datasetNbytes(dataset.dataArrays);
+  // `level` is a field, not a position — the API does not promise order.
+  const levels = [...dataset.dataArrays].sort((a, b) => a.level - b.level);
 
   // cache-and-network so reopening the tab after a task ran shows what it
   // produced rather than the answer from before it started.
@@ -36,7 +47,10 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
   return (
     <div className="flex flex-col gap-4 overflow-y-auto p-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">{dataset.name}</h2>
+        {/* `break-all` like the page title: a name is usually one long token, so
+            the default word-wrap would not wrap it and it would run out of the
+            rail. The description below is prose and keeps wrapping at spaces. */}
+        <h2 className="break-all text-lg font-semibold">{dataset.name}</h2>
         {dataset.description && (
           <p className="text-sm text-muted-foreground">{dataset.description}</p>
         )}
@@ -53,12 +67,65 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
             <span className="font-mono text-xs">{dtype}</span>
           </div>
         )}
+        {nbytes !== undefined && (
+          <Popover>
+            <PopoverTrigger asChild>
+              {/* The total is the fact the rail carries; the per-level split it
+                  sums over lives behind the click, so the deliberately-removed
+                  level listing does not creep back into the panel itself. */}
+              <button
+                type="button"
+                className="flex w-fit items-baseline gap-2"
+                title="Show per-level arrays"
+              >
+                <span className="text-xs text-muted-foreground">Size</span>
+                <span className="font-mono text-xs underline decoration-dotted underline-offset-2">
+                  {formatBytes(nbytes)}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 gap-1.5">
+              <div className="text-xs font-semibold">
+                Data arrays
+                {dataset.multiscale && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    · {levels.length} levels
+                  </span>
+                )}
+              </div>
+              {levels.map((array) => (
+                <div
+                  key={array.id}
+                  className="flex items-baseline justify-between gap-2"
+                >
+                  <span className="shrink-0 text-muted-foreground">
+                    L{array.level}
+                  </span>
+                  <span className="min-w-0 break-all font-mono">
+                    {formatShape(dataset.axisNames, array.shape)}
+                  </span>
+                  <span className="shrink-0 font-mono text-muted-foreground">
+                    {(() => {
+                      const levelBytes = arrayNbytes(array);
+                      return levelBytes === undefined
+                        ? "?"
+                        : formatBytes(levelBytes);
+                    })()}
+                  </span>
+                </div>
+              ))}
+              <div className="text-[0.625rem] text-muted-foreground">
+                Uncompressed, computed from shape × dtype.
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
         {dataset.multiscale && (
           <div>
             {/* Carries the DEPTH, not just the fact: it is what survives of the
                 per-level listing this panel used to end with. */}
             <Badge variant="outline" className="text-[0.625rem]">
-              multiscale · {dataset.dataArrays.length} levels
+              {dataset.dataArrays.length} levels
             </Badge>
           </div>
         )}
@@ -69,7 +136,7 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
           <div className="text-xs font-semibold">Intrinsic system</div>
           <MikroCoordinateSystem.DetailLink
             object={dataset.intrinsicSystem}
-            className="truncate text-xs"
+            className="break-all text-xs"
           >
             {dataset.intrinsicSystem.name}
           </MikroCoordinateSystem.DetailLink>

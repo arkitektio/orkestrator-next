@@ -69,7 +69,7 @@ export const ProvenanceEntryBody = ({
               <span>during task</span>
               <RekuestTask.DetailLink
                 object={{ id: entry.task.taskId }}
-                className="truncate font-mono underline-offset-2 hover:underline"
+                className="break-all font-mono underline-offset-2 hover:underline"
               >
                 {entry.task.taskId}
               </RekuestTask.DetailLink>
@@ -90,20 +90,20 @@ export const ProvenanceEntryBody = ({
               >
                 <span className="font-medium">{change.field}</span>
                 {shape === "set" ? (
-                  <span className="min-w-0 truncate font-mono">
+                  <span className="min-w-0 break-all font-mono">
                     {change.newValue}
                   </span>
                 ) : shape === "cleared" ? (
-                  <span className="min-w-0 truncate font-mono text-muted-foreground line-through">
+                  <span className="min-w-0 break-all font-mono text-muted-foreground line-through">
                     {change.oldValue}
                   </span>
                 ) : (
                   <>
-                    <span className="min-w-0 truncate font-mono text-muted-foreground line-through">
+                    <span className="min-w-0 break-all font-mono text-muted-foreground line-through">
                       {change.oldValue}
                     </span>
                     <span className="text-muted-foreground">→</span>
-                    <span className="min-w-0 truncate font-mono">
+                    <span className="min-w-0 break-all font-mono">
                       {change.newValue}
                     </span>
                   </>

@@ -216,3 +216,52 @@ export const baseDtypeOf = (
   dataArrays: readonly { level: number; store: { dtype?: string | null } }[]
 ): string | undefined =>
   (dataArrays.find((array) => array.level === 0) ?? dataArrays[0])?.store.dtype ?? undefined
+
+/**
+ * Storage bytes per element of a zarr dtype name (`uint8`, `float64`, …), read
+ * off the bit width in the name so `int64` and `complex128` work without being
+ * enumerated. `bool` stores one byte per element. Undefined for a name that
+ * does not carry its width — the callers treat that as "size unknown" rather
+ * than guessing.
+ */
+export const dtypeBytes = (dtype: string | null | undefined): number | undefined => {
+  if (!dtype) return undefined
+  if (dtype === 'bool') return 1
+  const bits = /^(?:u?int|float|complex)(\d+)$/.exec(dtype)?.[1]
+  return bits ? Number(bits) / 8 : undefined
+}
+
+type SizedArray = { shape: readonly number[]; store: { dtype?: string | null } }
+
+/** Uncompressed bytes of one array: element count × dtype width. */
+export const arrayNbytes = (array: SizedArray): number | undefined => {
+  const width = dtypeBytes(array.store.dtype)
+  if (width === undefined) return undefined
+  return array.shape.reduce((total, extent) => total * extent, 1) * width
+}
+
+/**
+ * Uncompressed bytes across every pyramid level — what the dataset costs to
+ * hold, not what zarr's compression left on disk (the store does not report
+ * that). Undefined as soon as ANY level's dtype is unreadable: a partial sum
+ * shown as "the size" would be a plausible wrong number, which is worse than
+ * no number.
+ */
+export const datasetNbytes = (dataArrays: readonly SizedArray[]): number | undefined => {
+  let total = 0
+  for (const array of dataArrays) {
+    const nbytes = arrayNbytes(array)
+    if (nbytes === undefined) return undefined
+    total += nbytes
+  }
+  return dataArrays.length > 0 ? total : undefined
+}
+
+/** `1.5 GB`-style rendering, binary-1024 steps like the file pages use. */
+export const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(k)))
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${units[i]}`
+}

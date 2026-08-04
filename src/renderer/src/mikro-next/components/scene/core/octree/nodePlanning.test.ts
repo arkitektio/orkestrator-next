@@ -403,6 +403,39 @@ describe("planLayerNodes (3D octree)", () => {
     expect(fineTargets.every((n) => n.coords[0] <= 1)).toBe(true);
   });
 
+  it("3D: fetchScore is the foveated box distance from the camera", () => {
+    const p = planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VOL_VIEW,
+      camera: perspectiveCamera([-50, 128, 128], 100),
+      lodBias: 1,
+      currentZ: undefined,
+    });
+    expect(p.nodes.every((n) => Number.isFinite(n.fetchScore) && n.fetchScore >= 0)).toBe(true);
+    // The camera sits at x = −50: the cheapest fine brick must be in the
+    // x = 0 brick row (nearest box face), not a farther row.
+    const fine = p.nodes.filter((n) => n.role === "target" && n.level === 0);
+    const cheapest = fine.reduce((a, b) => (b.fetchScore < a.fetchScore ? b : a));
+    expect(cheapest.coords[0]).toBe(0);
+  });
+
+  it("3D ortho: the brick containing the view center scores 0", () => {
+    const p = planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VOL_VIEW,
+      camera: null,
+      lodBias: 1,
+      currentZ: undefined,
+    });
+    expect(Math.min(...p.nodes.map((n) => n.fetchScore))).toBe(0);
+  });
+
   it("caps the finest level by visible data volume, not just slot bytes", () => {
     // L0 in full view = 256³ = 16.7 MB of data; a 3 MB share must stay at L1
     // (2.1 MB) even though the screen footprint asks for full resolution —
@@ -494,30 +527,152 @@ describe("compareFetchOrder", () => {
     role: PlannedNode["role"],
     priority: number,
     level = 0,
-  ): PlannedNode => ({ key: `${level}:${priority}`, level, coords: [0, 0, 0], role, priority });
-
-  it("dispatches the keep fallback chain before any target", () => {
-    const sorted = [
-      node("target", 1, 0),
-      node("keep", 5, 2),
-      node("target", 3, 0),
-      node("keep", 0, 3),
-    ].sort(compareFetchOrder);
-    expect(sorted.map((n) => `${n.role}:${n.priority}`)).toEqual([
-      "keep:0",
-      "keep:5",
-      "target:1",
-      "target:3",
-    ]);
+    fetchScore = 0,
+    fetchBand: PlannedNode["fetchBand"] = 1,
+  ): PlannedNode => ({
+    key: `${level}:${priority}`,
+    level,
+    coords: [0, 0, 0],
+    role,
+    priority,
+    fetchScore,
+    fetchBand,
   });
 
-  it("orders targets near-first (plan priority), NOT coarse-first", () => {
-    // A far coarse target (level 2, emitted late) must not preempt a near
-    // fine target (level 0, emitted early) — the old `b.level - a.level`
-    // sort did exactly that, starving newly visible fine bricks on zoom-in.
-    const nearFine = node("target", 2, 0);
-    const farCoarse = node("target", 40, 2);
+  it("dispatches the rootLevel backdrop first regardless of distance", () => {
+    const backdrop = node("target", 9, 3, 1e9, 0);
+    const nearTarget = node("target", 0, 0, 0, 1);
+    expect([nearTarget, backdrop].sort(compareFetchOrder)[0]).toBe(backdrop);
+  });
+
+  it("dispatches a near target before a far keep", () => {
+    // The old global keep-before-target rule stalled the bricks under the
+    // cursor behind the whole viewport's intermediate fallback chain on
+    // zoom-in — a far fallback must not preempt near targets.
+    const nearTarget = node("target", 5, 0, 100, 1);
+    const farKeep = node("keep", 1, 2, 1e6, 1);
+    expect([farKeep, nearTarget].sort(compareFetchOrder)[0]).toBe(nearTarget);
+  });
+
+  it("resolves score ties coarse-first (the ancestor chain over the focus)", () => {
+    // Box distance is monotone under ancestry, so the focus chain all ties
+    // at 0 — the coarse-first tiebreak lands it root→leaf, fallback first.
+    const chain = [
+      node("target", 2, 0, 0, 1),
+      node("keep", 1, 1, 0, 1),
+      node("keep", 0, 2, 0, 1),
+    ];
+    expect(chain.sort(compareFetchOrder).map((n) => n.level)).toEqual([2, 1, 0]);
+  });
+
+  it("dispatches margin-only prefetch last even when it is closer", () => {
+    const margin = node("target", 0, 0, 10, 2);
+    const onScreen = node("target", 1, 0, 1e6, 1);
+    expect([margin, onScreen].sort(compareFetchOrder)[0]).toBe(onScreen);
+  });
+
+  it("orders targets near-first (fetchScore), NOT coarse-first", () => {
+    // A far coarse target must not preempt a near fine target — a global
+    // coarse-first sort would starve newly visible fine bricks on zoom-in.
+    const nearFine = node("target", 2, 0, 100, 1);
+    const farCoarse = node("target", 40, 2, 1e6, 1);
     expect([farCoarse, nearFine].sort(compareFetchOrder)[0]).toBe(nearFine);
+  });
+});
+
+describe("planLayerNodes fetch ordering (band + score)", () => {
+  // 2048² image, 3 levels (256² payload): L2 roots 2×2, L1 4×4, L0 8×8.
+  const bigLayer = {
+    ...makeLayer(),
+    lens: {
+      slices: [],
+      axisNames: ["y", "x", "c"],
+      shape: [2048, 2048, 1],
+      dataset: { axisNames: ["y", "x", "c"], dataArrays: [] },
+    },
+  } as unknown as LayerState;
+  const bigLevels: LevelSource[] = [
+    { shape: [2048, 2048, 1], chunks: [256, 256, 1], dtype: "uint8", storeId: "b0" },
+    { shape: [1024, 1024, 1], chunks: [256, 256, 1], dtype: "uint8", storeId: "b1", scaleFactors: [2, 2, 1] },
+    { shape: [512, 512, 1], chunks: [256, 256, 1], dtype: "uint8", storeId: "b2", scaleFactors: [4, 4, 1] },
+  ];
+  const bigGeo = buildLayerLevelGeometry(["y", "x", "c"], bigLayer, bigLevels)!;
+  const bigSpec = resolveBrickSpec(bigGeo, "2D");
+
+  // Viewport [800,1000]² → focus (900,900); prefetch-expanded to [750,1050]².
+  const p = planLayerNodes({
+    layer: bigLayer,
+    geometry: bigGeo,
+    spec: bigSpec,
+    mode: "2D",
+    viewRange: { xRange: [800, 1000], yRange: [800, 1000], zRange: null, scale: 2 },
+    camera: null,
+    lodBias: 1,
+    currentZ: 0,
+  });
+  const sorted = [...p.nodes].sort(compareFetchOrder);
+  const byKey = new Map(p.nodes.map((n) => [n.key, n]));
+
+  it("scores 0 for the node containing the focus at every level", () => {
+    expect(byKey.get("2:0:0:0")?.fetchScore).toBe(0);
+    expect(byKey.get("1:1:1:0")?.fetchScore).toBe(0);
+    expect(byKey.get("0:3:3:0")?.fetchScore).toBe(0);
+  });
+
+  it("tags roots band 0, on-screen band 1, margin-only band 2", () => {
+    expect(p.nodes.filter((n) => n.level === 2).every((n) => n.fetchBand === 0)).toBe(true);
+    expect(byKey.get("0:3:3:0")?.fetchBand).toBe(1);
+    // [512,768)² overlaps only the expanded margin, not the strict viewport.
+    expect(byKey.get("0:2:2:0")?.fetchBand).toBe(2);
+  });
+
+  it("dispatches roots, then the focus chain coarse→fine, then by distance, margin last", () => {
+    const rootCount = p.nodes.filter((n) => n.fetchBand === 0).length;
+    expect(rootCount).toBe(4);
+    expect(sorted.slice(0, rootCount).every((n) => n.fetchBand === 0)).toBe(true);
+    expect(sorted[0].key).toBe("2:0:0:0"); // nearest root first
+    // First non-root dispatches: the score-0 chain over the focus,
+    // coarse-first — the near fallback lands just before the near target.
+    expect(sorted[rootCount].key).toBe("1:1:1:0");
+    expect(sorted[rootCount + 1].key).toBe("0:3:3:0");
+    // Within one band a near target beats a farther keep — the inversion
+    // this sort exists for.
+    const nearTarget = sorted.findIndex((n) => n.key === "0:2:3:0"); // score 132²
+    const farKeep = sorted.findIndex((n) => n.key === "1:2:2:0"); // score 2·124²
+    expect(nearTarget).toBeGreaterThan(-1);
+    expect(farKeep).toBeGreaterThan(nearTarget);
+    // Margin-only prefetch dispatches after every on-screen brick.
+    const lastOnScreen = sorted.map((n) => n.fetchBand).lastIndexOf(1);
+    const firstMargin = sorted.findIndex((n) => n.fetchBand === 2);
+    expect(firstMargin).toBeGreaterThan(lastOnScreen);
+  });
+
+  it("2D projects z out of the score (slab ≠ mid-stack focus)", () => {
+    // 3-slab stack viewed at slab 0: the focus z is mid-stack (1.5) while
+    // every node sits at slab 0 — the xy-only score must still be exactly 0
+    // for bricks touching the viewport center.
+    const zLevels: LevelSource[] = [
+      { shape: [3, 512, 512, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "z0" },
+      { shape: [3, 256, 256, 1], chunks: [1, 256, 256, 1], dtype: "uint8", storeId: "z1", scaleFactors: [1, 2, 2, 1] },
+    ];
+    const layer = makeLayer({ zAxis: "z" });
+    const geo = buildLayerLevelGeometry(["z", "y", "x", "c"], layer, zLevels)!;
+    const spec = resolveBrickSpec(geo, "2D");
+    const slabPlan = planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "2D",
+      viewRange: FULL_VIEW,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+    });
+    // All four L0 bricks touch the focus (256,256) → xy distance 0; any z
+    // leakage would make this 0.25 (dz = 0.5 to the slab's z box).
+    const fine = slabPlan.nodes.filter((n) => n.level === 0);
+    expect(fine.length).toBeGreaterThan(0);
+    expect(fine.every((n) => n.fetchScore === 0)).toBe(true);
   });
 });
 

@@ -4,9 +4,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Camera, Settings2 } from "lucide-react";
 import { MikroCoordinateSystem } from "@/linkers";
+import { layerDisplayLabel } from "../panels/layer/layerIdentity";
+import { resolveProbeStrategy } from "../core/probe/probeModes";
+import type { ProbeMode } from "../core/probe/probeTypes";
+import { effectiveProbeLayerId } from "../core/probe/probeTargeting";
 import { useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
@@ -25,6 +30,139 @@ const SettingRow = ({
     <Switch checked={checked} onCheckedChange={onChange} />
   </div>
 );
+
+const PROBE_MODES: { mode: ProbeMode; label: string }[] = [
+  { mode: "auto", label: "Auto" },
+  { mode: "first-hit", label: "First hit" },
+  { mode: "max", label: "Max" },
+  { mode: "gradient", label: "Gradient" },
+];
+
+const STRATEGY_LABELS: Record<string, string> = {
+  "first-hit": "first hit",
+  max: "max intensity",
+  gradient: "strongest gradient",
+  "volume-accum": "opacity depth",
+  plane: "plane",
+};
+
+/**
+ * How the probe BEHAVES — target layer, march strategy, threshold. Moved out
+ * of the probe HUD so the readout can be just the reading; these are settings,
+ * and this popover is where the scene's settings live.
+ */
+const ProbeSettingsSection = () => {
+  const displayMode = useModeStore((s) => s.displayMode);
+  const probeMode = useViewerStore((s) => s.probeMode);
+  const setProbeMode = useViewerStore((s) => s.setProbeMode);
+  const probeThreshold = useViewerStore((s) => s.probeThreshold);
+  const setProbeThreshold = useViewerStore((s) => s.setProbeThreshold);
+  const probeLayerId = useViewerStore((s) => s.probeLayerId);
+  const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
+  const layers = useSceneStore((s) => s.layers);
+
+  // Both brick layers bail on `visible === false`, so a hidden layer cannot
+  // answer a probe (`core/modeCompat.ts`). An alive explicit pin drives the
+  // picker's value; a dead pin (hidden/gone layer) shows as Auto WITHOUT being
+  // erased — it heals by derivation and resurrects if its layer comes back.
+  const probeableLayers = layers.filter((candidate) => candidate.visible !== false);
+  const pinnedLayer =
+    probeLayerId !== null
+      ? layers.find(
+          (candidate) => candidate.id === probeLayerId && candidate.visible !== false,
+        )
+      : undefined;
+
+  // The strategy resolves against the layer that will ANSWER the next probe —
+  // the effective target — since this section configures future probes, not a
+  // reading that already happened.
+  const targetId = effectiveProbeLayerId(probeLayerId, layers);
+  const targetLayer = layers.find((candidate) => candidate.id === targetId);
+  const resolved = resolveProbeStrategy(
+    probeMode,
+    targetLayer?.projection,
+    probeThreshold,
+  );
+  // The slider matters only where the march actually consumes it: 3D, an
+  // effective first-hit strategy, and not the iso override.
+  const showThreshold =
+    displayMode === "3D" &&
+    resolved.strategy === "first-hit" &&
+    resolved.threshold === probeThreshold;
+
+  return (
+    <div className="mt-1 border-t pt-1">
+      <div className="py-1 text-xs font-medium">Probe</div>
+
+      {/* Which layer the probe reads. Exactly one layer answers — Auto follows
+          the first visible layer; picking one pins it explicitly (it sticks
+          through reorders). */}
+      <select
+        value={pinnedLayer?.id ?? ""}
+        onChange={(event) =>
+          setProbeLayerId(event.target.value === "" ? null : event.target.value)
+        }
+        className="h-6 w-full min-w-0 rounded border bg-transparent px-1 text-xs"
+        title="Which layer the probe reads"
+      >
+        <option value="">
+          {probeableLayers[0]
+            ? `Auto — first layer (${layerDisplayLabel(probeableLayers[0])})`
+            : "Auto — no visible layer"}
+        </option>
+        {probeableLayers.map((candidate) => (
+          <option key={candidate.id} value={candidate.id}>
+            {layerDisplayLabel(candidate)}
+          </option>
+        ))}
+      </select>
+
+      {displayMode === "3D" && (
+        <div className="mt-2">
+          <div className="grid grid-cols-4 gap-0.5 rounded bg-muted p-0.5">
+            {PROBE_MODES.map(({ mode, label }) => (
+              <button
+                key={mode}
+                onClick={() => setProbeMode(mode)}
+                className={`rounded px-1 py-0.5 text-[10px] transition-colors ${
+                  probeMode === mode
+                    ? "bg-background font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {probeMode === "auto" && (
+            <p className="mt-1 text-[10px] leading-4 text-muted-foreground">
+              Following the projection: {STRATEGY_LABELS[resolved.strategy]}.
+            </p>
+          )}
+        </div>
+      )}
+
+      {showThreshold && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+            <span>Threshold</span>
+            <span className="rounded bg-muted px-1 font-mono">
+              {probeThreshold.toFixed(3)}
+            </span>
+          </div>
+          <Slider
+            min={0}
+            max={1}
+            step={0.005}
+            value={[probeThreshold]}
+            onValueChange={([value]) => setProbeThreshold(value)}
+            className="py-2"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * Everything you can change about how the scene is DRAWN, behind one gear.
@@ -137,6 +275,9 @@ export const SceneSettings = () => {
             />
           </div>
         )}
+
+        <ProbeSettingsSection />
+
         {world && (
           <div className="mt-1 flex items-center justify-between gap-2 border-t pt-2">
             <span className="text-xs text-muted-foreground">World</span>

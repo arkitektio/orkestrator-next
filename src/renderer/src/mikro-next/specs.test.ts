@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest'
 import { ADatasetSpec } from './api/graphql'
 import {
   ADATASET_SPECS,
+  arrayNbytes,
   baseDtypeOf,
+  datasetNbytes,
+  dtypeBytes,
+  formatBytes,
   formatShape,
   modifierSpecsOf,
   spatialSpecOf,
@@ -152,5 +156,66 @@ describe('baseDtypeOf', () => {
   it('is undefined for no arrays, and for an array that has no dtype', () => {
     expect(baseDtypeOf([])).toBeUndefined()
     expect(baseDtypeOf([level(0, null)])).toBeUndefined()
+  })
+})
+
+describe('dtypeBytes', () => {
+  it('reads the width off the name, including the wide types', () => {
+    expect(dtypeBytes('uint8')).toBe(1)
+    expect(dtypeBytes('int16')).toBe(2)
+    expect(dtypeBytes('float32')).toBe(4)
+    expect(dtypeBytes('int64')).toBe(8)
+    expect(dtypeBytes('complex128')).toBe(16)
+  })
+
+  it('stores bool as one byte per element', () => {
+    expect(dtypeBytes('bool')).toBe(1)
+  })
+
+  it('is undefined for a missing or unreadable name', () => {
+    expect(dtypeBytes(null)).toBeUndefined()
+    expect(dtypeBytes(undefined)).toBeUndefined()
+    expect(dtypeBytes('|u1')).toBeUndefined()
+  })
+})
+
+describe('arrayNbytes and datasetNbytes', () => {
+  const array = (shape: number[], dtype: string | null) => ({
+    shape,
+    store: { dtype }
+  })
+
+  it('multiplies element count by dtype width', () => {
+    expect(arrayNbytes(array([512, 512], 'uint16'))).toBe(512 * 512 * 2)
+  })
+
+  it('sums every level of a pyramid', () => {
+    expect(
+      datasetNbytes([array([1024, 1024], 'uint8'), array([512, 512], 'uint8')])
+    ).toBe(1024 * 1024 + 512 * 512)
+  })
+
+  it('refuses a partial sum when any level has an unreadable dtype', () => {
+    expect(
+      datasetNbytes([array([1024, 1024], 'uint8'), array([512, 512], null)])
+    ).toBeUndefined()
+  })
+
+  it('is undefined for no arrays at all', () => {
+    expect(datasetNbytes([])).toBeUndefined()
+  })
+})
+
+describe('formatBytes', () => {
+  it('steps through binary-1024 units', () => {
+    expect(formatBytes(0)).toBe('0 B')
+    expect(formatBytes(512)).toBe('512 B')
+    expect(formatBytes(1024)).toBe('1 KB')
+    expect(formatBytes(1536)).toBe('1.5 KB')
+    expect(formatBytes(3 * 1024 ** 3)).toBe('3 GB')
+  })
+
+  it('stays in the top unit rather than inventing one past PB', () => {
+    expect(formatBytes(1024 ** 6)).toBe('1024 PB')
   })
 })

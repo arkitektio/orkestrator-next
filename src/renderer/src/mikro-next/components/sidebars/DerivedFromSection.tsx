@@ -59,19 +59,19 @@ export const DerivedFromSection = ({
                 {parent ? (
                   <MikroADataset.DetailLink
                     object={parent}
-                    className="truncate text-sm font-medium"
+                    className="break-all text-sm font-medium"
                   >
                     {parent.name}
                   </MikroADataset.DetailLink>
                 ) : edge.output ? (
                   <MikroCoordinateSystem.DetailLink
                     object={edge.output}
-                    className="truncate text-sm font-medium"
+                    className="break-all text-sm font-medium"
                   >
                     {edge.output.name}
                   </MikroCoordinateSystem.DetailLink>
                 ) : (
-                  <span className="truncate text-sm text-muted-foreground">
+                  <span className="break-all text-sm text-muted-foreground">
                     Unknown parent
                   </span>
                 )}

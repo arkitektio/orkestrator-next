@@ -24,8 +24,9 @@ import {
  * Roles are reduced to two because the shader falls back to coarser resident
  * bricks per sample: there are no "cover" chunks and no render feedback.
  *  - "target": fetch + protect from pool eviction
- *  - "keep":   protect only (the ancestor chain of every target, so a
- *              fallback is always resident)
+ *  - "keep":   the ancestor chain of every target, so a fallback is always
+ *              resident. Protected AND fetched when missing — but a far
+ *              keep dispatches after near targets (see compareFetchOrder)
  *
  * Traversal refines closest-first, so when the byte budget runs out it is
  * the distant regions that degrade to coarser bricks.
@@ -38,6 +39,21 @@ export type PlannedNode = {
   role: "target" | "keep";
   /** Emission order within the plan (deterministic, near-first). */
   priority: number;
+  /**
+   * Foveated squared distance (base voxels²) from the plan focus to the
+   * NEAREST point of the node's base box; xy-only in 2D (focus z is
+   * mid-stack while nodes sit at slabZ, so a raw dz² would be constant
+   * within a level but incomparable across levels). 0 = contains the focus.
+   * Box distance is monotone under ancestry: an ancestor's box contains its
+   * descendants', so ancestor score ≤ descendant score.
+   */
+  fetchScore: number;
+  /**
+   * 0 = rootLevel backdrop (few bricks — the shader's no-hole guarantee for
+   * the whole view, always fetched first), 1 = overlaps the strict viewport,
+   * 2 = margin-only prefetch (fetched last).
+   */
+  fetchBand: 0 | 1 | 2;
 };
 
 export type LayerNodePlan = {
@@ -293,6 +309,8 @@ export function planLayerNodes({
   // --- Visible region in base voxels ---------------------------------------
   const baseShape = levels[0].spatialShape;
   let visibleBox: VoxelBox | null = null;
+  /** The viewport WITHOUT the prefetch margin — band tagging only. */
+  let strictBox: VoxelBox | null = null;
   if (viewRange) {
     const ex = expandVoxelRange(viewRange.xRange, PREFETCH_MARGIN);
     const ey = expandVoxelRange(viewRange.yRange, PREFETCH_MARGIN);
@@ -306,6 +324,20 @@ export function planLayerNodes({
         Math.min(baseShape[0], ex[1]),
         Math.min(baseShape[1], ey[1]),
         Math.min(baseShape[2], ez[1]),
+      ],
+    };
+    const sz: [number, number] =
+      mode === "3D" && viewRange.zRange ? viewRange.zRange : [0, baseShape[2]];
+    strictBox = {
+      min: [
+        Math.max(0, viewRange.xRange[0]),
+        Math.max(0, viewRange.yRange[0]),
+        Math.max(0, sz[0]),
+      ],
+      max: [
+        Math.min(baseShape[0], viewRange.xRange[1]),
+        Math.min(baseShape[1], viewRange.yRange[1]),
+        Math.min(baseShape[2], sz[1]),
       ],
     };
   }
@@ -400,6 +432,24 @@ export function planLayerNodes({
   const orderScore = (box: VoxelBox): number =>
     foveatedScore(boxCenter(box), focus, viewAxis);
 
+  const clampToRange = (v: number, lo: number, hi: number) =>
+    Math.min(hi, Math.max(lo, v));
+  /**
+   * Foveated squared distance from the focus to the box's NEAREST point —
+   * unlike center-based `orderScore` this is comparable across levels, which
+   * a global fetch sort needs. 2D projects z out entirely (see PlannedNode).
+   */
+  const fetchScoreOf = (box: VoxelBox): number =>
+    foveatedScore(
+      [
+        clampToRange(focus[0], box.min[0], box.max[0]),
+        clampToRange(focus[1], box.min[1], box.max[1]),
+        mode === "2D" ? focus[2] : clampToRange(focus[2], box.min[2], box.max[2]),
+      ],
+      focus,
+      viewAxis,
+    );
+
   // --- Coarsest-level reservation -------------------------------------------
   // The residency manager pins EVERY resident coarsest brick in addition to
   // the plan (the shader's fallback of last resort), so the slots a plan can
@@ -425,8 +475,23 @@ export function planLayerNodes({
   let refineBytes = 0;
   let targetLevel = coarsest;
 
-  const emit = (level: number, coords: Vec3, role: PlannedNode["role"]) => {
-    nodes.push({ key: nodeKey(level, coords), level, coords, role, priority: nodes.length });
+  const emit = (
+    level: number,
+    coords: Vec3,
+    role: PlannedNode["role"],
+    baseBox: VoxelBox,
+  ) => {
+    const fetchBand: PlannedNode["fetchBand"] =
+      level === rootLevel ? 0 : strictBox && !boxesOverlap(baseBox, strictBox) ? 2 : 1;
+    nodes.push({
+      key: nodeKey(level, coords),
+      level,
+      coords,
+      role,
+      priority: nodes.length,
+      fetchScore: fetchScoreOf(baseBox),
+      fetchBand,
+    });
     planBytes += slotBytes;
     if (level < coarsest) refineBytes += slotBytes;
     if (role === "target" && level < targetLevel) targetLevel = level;
@@ -471,11 +536,11 @@ export function planLayerNodes({
     }
 
     if (children.length === 0) {
-      emit(level, coords, "target");
+      emit(level, coords, "target", baseBox);
       return;
     }
 
-    emit(level, coords, "keep");
+    emit(level, coords, "keep", baseBox);
     children
       .map((child) => ({
         child,
@@ -523,16 +588,26 @@ export function planLayerNodes({
 }
 
 /**
- * Fetch dispatch order for a plan's missing nodes: the "keep" fallback chain
- * first (few, coarse — the shader's safety net across the whole view), then
- * targets in plan priority order. Emission is a near-first DFS that emits
- * every ancestor before its children, so `priority` alone already orders each
- * target behind its own fallbacks; a global coarse-first sort would instead
- * let far coarse targets preempt near fine ones — exactly backwards while
- * zooming in.
+ * Fetch dispatch order for a plan's missing nodes:
+ *  band 0 — rootLevel backdrop (few bricks, the shader's no-hole guarantee
+ *           for the WHOLE view) — always first;
+ *  band 1 — on-screen nodes by foveated box distance to the focus, ties
+ *           coarse-first. Box distance is monotone under ancestry, so the
+ *           near subtree's fallback chain (score 0 over the focus) lands
+ *           root→leaf just before its target, while a FAR keep or target
+ *           (large distance) no longer preempts near targets — the previous
+ *           global keep-before-target rule stalled the area under the cursor
+ *           behind the whole viewport's intermediate fallback chain on
+ *           zoom-in;
+ *  band 2 — margin-only prefetch, last.
+ * Emission index is the final deterministic tiebreak.
  */
-export const compareFetchOrder = (a: PlannedNode, b: PlannedNode): number =>
-  a.role === b.role ? a.priority - b.priority : a.role === "keep" ? -1 : 1;
+export const compareFetchOrder = (a: PlannedNode, b: PlannedNode): number => {
+  if (a.fetchBand !== b.fetchBand) return a.fetchBand - b.fetchBand;
+  if (a.fetchScore !== b.fetchScore) return a.fetchScore - b.fetchScore;
+  if (a.level !== b.level) return b.level - a.level; // coarse-first at ties
+  return a.priority - b.priority;
+};
 
 /** Value equality between two plans (skip store writes / preserve identity). */
 export function sameNodePlan(a: LayerNodePlan, b: LayerNodePlan): boolean {

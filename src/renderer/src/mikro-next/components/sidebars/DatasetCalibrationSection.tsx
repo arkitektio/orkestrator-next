@@ -54,14 +54,14 @@ export const DatasetCalibrationSection = ({
       <div className="text-xs font-semibold">Pixel size</div>
       {calibrations.map(({ system, entries }) => (
         <div key={system.id} className="flex flex-col gap-1">
-          <div className="flex flex-row flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-xs">
+          <div className="flex flex-col flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-xs">
             {entries.map((entry) => (
               <span key={entry.axis}>{formatPixelSize(entry)}</span>
             ))}
           </div>
           <MikroCoordinateSystem.DetailLink
             object={system}
-            className="truncate text-[0.625rem] uppercase tracking-wide text-muted-foreground"
+            className="break-all text-[0.625rem] uppercase tracking-wide text-muted-foreground"
           >
             in {system.name}
           </MikroCoordinateSystem.DetailLink>

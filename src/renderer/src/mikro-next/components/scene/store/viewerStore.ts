@@ -4,6 +4,7 @@ import { MikroClient } from "@/lib/zarr/store/types";
 import { RefObject } from "react";
 import * as THREE from 'three';
 import { SceneFragment } from "@/mikro-next/api/graphql";
+import type { BrandTarget } from "@/providers/settings/brandTheme";
 import { createConfiguredSceneStores } from "../sources/zarrSources";
 import { openSceneArrays, type OpenedZarrArray } from "../sources/arrayRegistry";
 import { fitCameraToObject } from "../core/cameraFit";
@@ -217,6 +218,14 @@ export interface ViewerState {
    */
   captureScreenshot: (() => Promise<Blob | null>) | null;
   registerCapture: (fn: (() => Promise<Blob | null>) | null) => void;
+  /**
+   * The majority hue actually ON SCREEN, sampled from rendered canvas pixels
+   * by `CanvasHueProbe`. Null until a frame with content has been sampled
+   * (and again when the canvas unmounts) — `SceneBrandTheme` then falls back
+   * to the colormap-derived estimate.
+   */
+  sampledBrandTarget: BrandTarget | null;
+  setSampledBrandTarget: (target: BrandTarget | null) => void;
   /** Fit the camera so that the given layer fills the viewport */
   fitToLayer: (layerId: string) => void;
 }
@@ -319,6 +328,11 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     registerCanvas: (ctx) => set({ canvas: ctx }),
     captureScreenshot: null,
     registerCapture: (fn) => set({ captureScreenshot: fn }),
+    sampledBrandTarget: null,
+    setSampledBrandTarget: (target) => {
+      if (get().sampledBrandTarget === target) return; // skip no-op writes
+      set({ sampledBrandTarget: target });
+    },
     fitToLayer: (layerId) => {
       const { trackables, canvas } = get();
 

@@ -92,3 +92,59 @@ export function formatDrawMeasure(
 
   return `${measure.vertexCount} pts · ${formatSceneLength(measure.length)} ${unit}`;
 }
+
+/**
+ * A STORED annotation's headline number, by its `RoiKind`. Kinds that share a
+ * drawing tool's convention reuse `measureDraw`; a closed POLYGON is the one
+ * shape whose headline is its area, which no gesture readout ever needed.
+ * Plain string keys on purpose: the generated `RoiKind` enum lives in the
+ * Apollo hooks barrel, which this pure module must not import.
+ */
+const ANNOTATION_TOOL_BY_KIND: Partial<Record<string, DrawingTool>> = {
+  RECTANGLE: "RECTANGLE",
+  ELLIPSIS: "ELLIPSIS",
+  LINE: "LINE",
+  POLYGON: "POLYGON",
+  PATH: "PATH",
+  CUBE: "CUBE",
+  SPHERE: "SPHERE",
+};
+
+/** Shoelace area of the xy footprint; winding direction doesn't matter. */
+export function polygonArea(points: readonly OutlinePlanar[]): number {
+  let twice = 0;
+  for (let index = 0; index < points.length; index += 1) {
+    const a = points[index];
+    const b = points[(index + 1) % points.length];
+    twice += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(twice) / 2;
+}
+
+export type AnnotationMeasure =
+  | DrawMeasure
+  | { kind: "area"; area: number; vertexCount: number };
+
+export function measureAnnotation(
+  roiKind: string,
+  points: readonly OutlinePlanar[],
+): AnnotationMeasure | null {
+  const tool = ANNOTATION_TOOL_BY_KIND[roiKind];
+  if (!tool || points.length < 2) return null;
+  if (tool === "POLYGON" && points.length >= 3) {
+    return { kind: "area", area: polygonArea(points), vertexCount: points.length };
+  }
+  return measureDraw(tool, points);
+}
+
+/** e.g. "1 240 µm²" for a polygon; everything else via `formatDrawMeasure`. */
+export function formatAnnotationMeasure(
+  measure: AnnotationMeasure | null,
+  unit: string,
+): string | null {
+  if (!measure) return null;
+  if (measure.kind === "area") {
+    return `${formatSceneLength(measure.area)} ${unit}²`;
+  }
+  return formatDrawMeasure(measure, unit);
+}

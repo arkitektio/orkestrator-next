@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatDrawMeasure, formatSceneLength, measureDraw } from "./roiMeasure";
+import {
+  formatAnnotationMeasure,
+  formatDrawMeasure,
+  formatSceneLength,
+  measureAnnotation,
+  measureDraw,
+  polygonArea,
+} from "./roiMeasure";
 import { unitLabel, UNIT_LABELS } from "./sceneUnits";
 
 /**
@@ -79,6 +86,65 @@ describe("formatDrawMeasure", () => {
 
   it("says nothing when there is nothing to measure", () => {
     expect(formatDrawMeasure(null, "µm")).toBeNull();
+  });
+});
+
+describe("polygonArea", () => {
+  it("measures a unit square regardless of winding", () => {
+    const square = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 1, y: 1 },
+      { x: 0, y: 1 },
+    ];
+    expect(polygonArea(square)).toBe(1);
+    expect(polygonArea([...square].reverse())).toBe(1);
+  });
+
+  it("measures a triangle", () => {
+    expect(
+      polygonArea([
+        { x: 0, y: 0 },
+        { x: 4, y: 0 },
+        { x: 0, y: 3 },
+      ]),
+    ).toBe(6);
+  });
+});
+
+describe("measureAnnotation", () => {
+  it("headlines a POLYGON by its area", () => {
+    const measure = measureAnnotation("POLYGON", [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ]);
+    expect(measure).toEqual({ kind: "area", area: 100, vertexCount: 4 });
+    expect(formatAnnotationMeasure(measure, "µm")).toBe("100 µm²");
+  });
+
+  it("reuses the drawing conventions for the shared kinds", () => {
+    expect(
+      measureAnnotation("RECTANGLE", [{ x: 0, y: 0 }, { x: 10, y: 4 }]),
+    ).toEqual({ kind: "box", width: 10, height: 4 });
+    expect(
+      measureAnnotation("LINE", [{ x: 0, y: 0 }, { x: 3, y: 4 }]),
+    ).toEqual({ kind: "length", length: 5 });
+    expect(
+      measureAnnotation("SPHERE", [{ x: 0, y: 0 }, { x: 10, y: 10 }]),
+    ).toEqual({ kind: "length", length: 5 });
+  });
+
+  it("says nothing for unmeasurable kinds or too few points", () => {
+    expect(measureAnnotation("POINT", [{ x: 0, y: 0 }])).toBeNull();
+    expect(measureAnnotation("SLICE", [{ x: 0, y: 0 }, { x: 1, y: 1 }])).toBeNull();
+    expect(measureAnnotation("POLYGON", [{ x: 0, y: 0 }, { x: 1, y: 1 }])).toEqual({
+      kind: "path",
+      length: Math.hypot(1, 1),
+      vertexCount: 2,
+    });
+    expect(formatAnnotationMeasure(null, "µm")).toBeNull();
   });
 });
 

@@ -20,12 +20,12 @@ const REPRESENTATIVE_T = 0.85;
  * applied is kept. At that chroma the hue is invisible anyway — this only stops
  * it spinning to a meaningless angle on the way there.
  */
-const HUE_NOISE_FLOOR = 0.002;
+export const HUE_NOISE_FLOOR = 0.002;
 
 /** The top of the band the theme's `oklch()` tokens were designed around;
  * saturated colormaps overshoot it. Nothing is clamped up from below, so a grey
  * colormap really does give a grey app. */
-const MAX_BRAND_CHROMA = 0.26;
+export const MAX_BRAND_CHROMA = 0.26;
 
 /**
  * Average a set of colors into one brand target.

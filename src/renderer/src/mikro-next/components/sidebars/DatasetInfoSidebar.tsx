@@ -133,10 +133,10 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
 
       {dataset.intrinsicSystem && (
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-semibold">Intrinsic system</div>
+          <div className="text-xs font-semibold">Coordinate system</div>
           <MikroCoordinateSystem.DetailLink
             object={dataset.intrinsicSystem}
-            className="break-all text-xs"
+            className="break-all text-2xs ellipsis font-mono text-muted-foreground"
           >
             {dataset.intrinsicSystem.name}
           </MikroCoordinateSystem.DetailLink>

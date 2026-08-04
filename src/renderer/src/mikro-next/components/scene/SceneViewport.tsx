@@ -36,6 +36,7 @@ import { SceneShortcuts } from "./overlays/SceneShortcuts";
 import { DrawSizeReadout } from "./overlays/DrawSizeReadout";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";
+import { CanvasHueProbe } from "./theme/CanvasHueProbe";
 import { DebugPanel } from "./panels/DebugPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
@@ -318,6 +319,8 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
           {/* Annotation outlines are hairline-thin to pick without this. */}
           <LinePickTuning />
           <SceneScreenshot />
+          {/* Feeds SceneBrandTheme the majority hue of the rendered pixels. */}
+          <CanvasHueProbe />
 
           {/* Interaction Layers */}
           {/* The SceneAxis is a simple XYZ axis helper that also shows the scale of the scene */}

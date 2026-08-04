@@ -48,7 +48,7 @@ export const DatasetTitleOverlay = ({
             it. */}
         <MikroADataset.DetailLink
           object={dataset}
-          className="break-all text-3xl font-semibold leading-tight"
+          className="text-3xl font-semibold leading-tight text-ellipsis truncate ellipsis break-all"
         >
           {dataset.name}
         </MikroADataset.DetailLink>

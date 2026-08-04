@@ -2,14 +2,19 @@ import { useMemo } from "react";
 import { useBrandOverride } from "@/providers/settings/useBrandOverride";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
+import { useViewerStore } from "../store/viewerStore";
 import { layerBrandTarget } from "./brandTarget";
 
 /**
- * Tints the app to the scene's main layer while the scene is open.
+ * Tints the app to the scene while it is open. Renders nothing — it only owns
+ * the brand override, which the CSS transition eases in and out.
  *
- * "Main layer" is the one the user is looking at: the layer selected in the
- * Layers panel, else the first visible one. Renders nothing — it only owns the
- * brand override, which the CSS transition eases in and out.
+ * Two sources, in preference order:
+ *   1. the SAMPLED target — the majority hue of the pixels actually rendered,
+ *      published by `CanvasHueProbe` from inside the canvas;
+ *   2. the colormap-derived ESTIMATE from the main layer (the layer selected
+ *      in the Layers panel, else the first visible one) — the tint before the
+ *      first frame lands, and whenever the canvas is blank or unmounted.
  *
  * Mounted by `SceneProvider` once the store scope exists, so every scene host
  * (dataset page, scene page) gets it without per-page wiring.
@@ -17,8 +22,9 @@ import { layerBrandTarget } from "./brandTarget";
 export const SceneBrandTheme = () => {
   const layers = useSceneStore((state) => state.layers);
   const selectedLayerId = useSelectionStore((state) => state.selectedLayerId);
+  const sampled = useViewerStore((state) => state.sampledBrandTarget);
 
-  const target = useMemo(() => {
+  const estimate = useMemo(() => {
     const mainLayer =
       layers.find((layer) => layer.id === selectedLayerId) ??
       layers.find((layer) => layer.visible !== false) ??
@@ -27,7 +33,7 @@ export const SceneBrandTheme = () => {
     return mainLayer ? layerBrandTarget(mainLayer.channels) : null;
   }, [layers, selectedLayerId]);
 
-  useBrandOverride(target);
+  useBrandOverride(sampled ?? estimate);
 
   return null;
 };

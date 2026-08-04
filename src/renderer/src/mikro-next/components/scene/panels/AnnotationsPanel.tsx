@@ -1,10 +1,16 @@
 import { useMemo } from "react";
+import * as THREE from "three";
 import { Focus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { MikroAnnotation } from "@/linkers";
 import { useGetAnnotationsQuery, type ListAnnotationFragment } from "@/mikro-next/api/graphql";
-import { type AnnotationLayerVariant } from "../core/annotationBounds";
+import {
+  resolveCollectionMatrix,
+  type AnnotationLayerVariant,
+} from "../core/annotationBounds";
+import { formatAnnotationMeasure, measureAnnotation } from "../core/roiMeasure";
+import { unitLabel } from "../core/sceneUnits";
 import { useNavigateToAnnotation } from "../interactions/useNavigateToAnnotation";
 import { useDeleteSelectedRois } from "../interactions/useDeleteSelectedRois";
 import { useRoiSelectionStore, type SelectedRoi } from "../store/roiSelectionStore";
@@ -167,6 +173,8 @@ const AnnotationLayerSection = ({
   });
   const toggleSelectedRoi = useRoiSelectionStore((s) => s.toggleSelectedRoi);
   const navigateToAnnotation = useNavigateToAnnotation();
+  const transformContext = useSceneStore((s) => s.transformContext);
+  const spatialUnit = useSceneStore((s) => s.spatialUnit);
 
   const annotations = data?.annotations ?? [];
   const systemId = collection.coordinateSystem.id ?? null;
@@ -174,6 +182,28 @@ const AnnotationLayerSection = ({
     () => (collection.coordinateSystem.axes ?? []).map((axis) => axis.name),
     [collection],
   );
+
+  // Measures are quoted in WORLD units (the scene's µm), not the collection's
+  // raw numbers — the same frame the scale bar and draw readout speak.
+  const affineMatrix = useMemo(
+    () => resolveCollectionMatrix(layer, collection, transformContext),
+    [layer, collection, transformContext],
+  );
+  const unit = unitLabel(spatialUnit);
+  const measureOf = (annotation: ListAnnotationFragment): string | null => {
+    const worldPoints = (annotation.vectors ?? []).map((vector) => {
+      const world = new THREE.Vector3(
+        vector[0] ?? 0,
+        vector[1] ?? 0,
+        vector[2] ?? 0,
+      ).applyMatrix4(affineMatrix);
+      return { x: world.x, y: world.y, z: world.z };
+    });
+    return formatAnnotationMeasure(
+      measureAnnotation(annotation.kind, worldPoints),
+      unit,
+    );
+  };
 
   // The same SelectedRoi the canvas layer builds: raw collection-space vectors
   // plus the collection's own system — attribute plans do any frame conversion.
@@ -204,6 +234,7 @@ const AnnotationLayerSection = ({
           key={annotation.id}
           annotation={annotation}
           index={index}
+          measure={measureOf(annotation)}
           isSelected={selectedIds.has(annotation.id)}
           onToggle={() => toggleSelectedRoi(toRoi(annotation))}
           onGoTo={() => navigateToAnnotation(annotation, layer)}
@@ -216,18 +247,20 @@ const AnnotationLayerSection = ({
 const AnnotationRow = ({
   annotation,
   index,
+  measure,
   isSelected,
   onToggle,
   onGoTo,
 }: {
   annotation: ListAnnotationFragment;
   index: number;
+  measure: string | null;
   isSelected: boolean;
   onToggle: () => void;
   onGoTo: () => void;
 }) => (
   <Card
-    className={`flex cursor-pointer items-center gap-2 px-2 py-2 transition-colors ${
+    className={`group flex cursor-pointer items-center gap-2 px-2 py-2 transition-colors ${
       isSelected
         ? // Amber — the same color the scene highlights the selected shape in.
           "border-amber-400/40 bg-amber-400/10"
@@ -242,8 +275,17 @@ const AnnotationRow = ({
       </CardTitle>
       <div className="text-xs text-muted-foreground">
         {formatRoiKind(annotation.kind)}
+        {measure && ` · ${measure}`}
       </div>
     </div>
+    {/* Hover-revealed: the smart action button (run workflows on this
+        annotation). Wrapped so opening it never toggles the selection. */}
+    <span
+      className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <MikroAnnotation.ObjectButton object={annotation} />
+    </span>
     <Button
       variant="ghost"
       size="xs"

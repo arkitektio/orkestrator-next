@@ -159,9 +159,14 @@ export const PageLayout = ({
             variant == "default" ? "bg-radial-[at_100%_100%] from-background to-backgroundpaired" : "bg-black text-gray-300",
           )}
         >
+          {/* `min-h-16 shrink-0` pins the row to exactly 4rem. Without an
+              explicit min-height the item's `min-height: auto` lets tall
+              content (a breadcrumb trail wrapping to a second line) grow the
+              row, and `items-center` then pushes the breadcrumbs down — model
+              pages ended up a couple of pixels lower than list pages. */}
           <div
             className={cn(
-              "h-16 flex-row flex justify-between flex-initial dark:border-gray-700 px-2 py-2 items-center",
+              "h-16 min-h-16 shrink-0 flex-row flex justify-between dark:border-gray-700 px-2 py-2 items-center",
               variant == "default"
                 ? ""
                 : "border-0 bg-black bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
@@ -172,12 +177,14 @@ export const PageLayout = ({
               <span className="sr-only">Toggle ModulePane</span>
             </Button>
             <Separator orientation="vertical" className="h-6 my-auto mr-3" />
-            <div className="flex-grow flex flex-col truncate">
-              <div className="flex-shrink ">
+            {/* `min-w-0` lets this actually shrink below its content width so
+                the trail truncates instead of wrapping. */}
+            <div className="flex-grow min-w-0 flex flex-col truncate">
+              <div className="flex-shrink min-w-0">
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-initial text-foreground flex flex-row gap-1 max-w-3xl">
+            <div className="flex-initial shrink-0 text-foreground flex flex-row gap-1 items-center max-w-3xl">
 
               {actions}
               {pageActions}

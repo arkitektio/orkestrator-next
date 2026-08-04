@@ -1,6 +1,6 @@
 import { srgbToOklch } from "@/lib/color/oklch";
 import type { BrandTarget } from "@/providers/settings/brandTheme";
-import { HUE_NOISE_FLOOR, MAX_BRAND_CHROMA } from "./brandTarget";
+import { MAX_BRAND_CHROMA } from "./brandTarget";
 
 /**
  * The MAJORITY hue of a rendered frame, from a small RGBA pixel sample.
@@ -18,6 +18,14 @@ import { HUE_NOISE_FLOOR, MAX_BRAND_CHROMA } from "./brandTarget";
  *   - chroma, because a dim/grey pixel has no meaningful hue to vote for. A
  *     mostly-black volume render with a few vivid voxels correctly tints
  *     toward the voxels.
+ *
+ * "Majority" means majority OF THE COLOR that is there: whitish pixels
+ *  (chroma below `WHITISH_FLOOR`) are disenfranchised entirely, so a mostly
+ *  white/grey render with any genuinely colored region tints toward the
+ *  region — a white theme is the answer only when there is no color at all.
+ *  For the same reason an elected hue is floored at `MIN_ELECTED_CHROMA`:
+ *  a hue that won the election should read as a real tint, not wash out
+ *  because pale pixels shared its band.
  *
  * Bins are in OKLCH hue — the same angle space the brand theme is
  * parameterised in — so "majority" here lands directly on `--brand-hue`.
@@ -41,6 +49,19 @@ const ALPHA_FLOOR = 8;
  * a theme derived from a handful of stray pixels. */
 const MIN_COVERAGE = 0.02;
 
+/** Below this OKLCH chroma a pixel reads as white/grey, not as a color, and
+ * gets no hue vote. Well above `HUE_NOISE_FLOOR` (which only guards against
+ * rounding noise): this is a PERCEPTUAL cut, so that a dominant white field
+ * cannot outvote a real color. */
+const WHITISH_FLOOR = 0.04;
+
+/** An elected hue is presented at least this saturated. Without it, pale
+ * pixels sharing the winning band drag the mean toward white and the tint
+ * becomes invisible — the "whitish theme" outcome the election explicitly
+ * exists to avoid. Comfortably below the `MAX_BRAND_CHROMA` ceiling the
+ * theme tokens were designed around. */
+const MIN_ELECTED_CHROMA = 0.08;
+
 const TO_RADIANS = Math.PI / 180;
 
 /**
@@ -56,7 +77,8 @@ export const majorityHueFromPixels = (
   const weight = new Float64Array(BIN_COUNT);
   const sumA = new Float64Array(BIN_COUNT);
   const sumB = new Float64Array(BIN_COUNT);
-  const alphaWeight = new Float64Array(BIN_COUNT);
+  /** Σ chroma·weight per bin — for the vividness-weighted band chroma. */
+  const chromaWeight = new Float64Array(BIN_COUNT);
 
   const pixelCount = rgba.length >>> 2;
   let covered = 0;
@@ -72,9 +94,9 @@ export const majorityHueFromPixels = (
 
     const { c, h } = srgbToOklch(rgba[i], rgba[i + 1], rgba[i + 2]);
     chromaSum += c * alpha;
-    // Achromatic pixels count toward coverage (a grey render is a grey theme)
-    // but have no hue to vote for.
-    if (c < HUE_NOISE_FLOOR) continue;
+    // Whitish pixels count toward coverage (an all-grey render is a grey
+    // theme) but get no hue vote, no matter how many they are.
+    if (c < WHITISH_FLOOR) continue;
 
     const w = c * alpha;
     const bin = Math.min(BIN_COUNT - 1, (h / 360) * BIN_COUNT) | 0;
@@ -82,7 +104,7 @@ export const majorityHueFromPixels = (
     weight[bin] += w;
     sumA[bin] += w * Math.cos(radians);
     sumB[bin] += w * Math.sin(radians);
-    alphaWeight[bin] += alpha;
+    chromaWeight[bin] += c * w;
   }
 
   if (covered < pixelCount * MIN_COVERAGE) return null;
@@ -104,12 +126,16 @@ export const majorityHueFromPixels = (
   const next = (best + 1) % BIN_COUNT;
   const a = sumA[prev] + sumA[best] + sumA[next];
   const b = sumB[prev] + sumB[best] + sumB[next];
-  // Alpha-weighted mean chroma vector of the winning band: within a 45° span
-  // cancellation is negligible, so this is the band's honest saturation.
-  const bandAlpha = alphaWeight[prev] + alphaWeight[best] + alphaWeight[next];
-  const chroma = Math.min(Math.hypot(a, b) / bandAlpha, MAX_BRAND_CHROMA);
-
-  if (chroma < HUE_NOISE_FLOOR) return { hue: null, chroma };
+  // Vividness-weighted (Σc·w / Σw) rather than a plain mean: the band's tint
+  // should look like its saturated members, not be averaged toward white by
+  // its pale ones. Floored so an elected hue is always a visible tint.
+  const bandWeight = weight[prev] + weight[best] + weight[next];
+  const bandChroma =
+    (chromaWeight[prev] + chromaWeight[best] + chromaWeight[next]) / bandWeight;
+  const chroma = Math.min(
+    Math.max(bandChroma, MIN_ELECTED_CHROMA),
+    MAX_BRAND_CHROMA,
+  );
 
   const hue = (Math.atan2(b, a) / TO_RADIANS + 360) % 360;
   return { hue, chroma };

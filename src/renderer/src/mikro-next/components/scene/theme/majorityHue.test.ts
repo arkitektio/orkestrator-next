@@ -57,6 +57,20 @@ describe("majorityHueFromPixels", () => {
     expect(circularDelta(target!.hue!, red.h)).toBeLessThan(15);
   });
 
+  it("never elects white: a dominant white field loses to any real color", () => {
+    // A mostly-white render with one vivid region tints toward the region,
+    // and the tint is a VISIBLE one — not washed out by the white majority.
+    const data = pixels(
+      ...fill(58, [255, 255, 255, 255]),
+      ...fill(6, [0, 80, 255, 255]),
+    );
+    const target = majorityHueFromPixels(data);
+    const blue = srgbToOklch(0, 80, 255);
+    expect(target!.hue).not.toBeNull();
+    expect(circularDelta(target!.hue!, blue.h)).toBeLessThan(15);
+    expect(target!.chroma).toBeGreaterThanOrEqual(0.08);
+  });
+
   it("ignores grey pixels when electing the hue", () => {
     // A mostly-grey render with one vivid region tints toward the region.
     const data = pixels(
@@ -67,6 +81,18 @@ describe("majorityHueFromPixels", () => {
     const blue = srgbToOklch(0, 80, 255);
     expect(target!.hue).not.toBeNull();
     expect(circularDelta(target!.hue!, blue.h)).toBeLessThan(15);
+  });
+
+  it("pale pixels sharing the winning band don't wash the tint out", () => {
+    // Vivid red plus a pile of barely-pink pixels in the same hue band: the
+    // published chroma stays a visible tint rather than averaging whitish.
+    const data = pixels(
+      ...fill(10, [255, 0, 0, 255]),
+      ...fill(40, [255, 210, 210, 255]),
+    );
+    const target = majorityHueFromPixels(data);
+    expect(target!.hue).not.toBeNull();
+    expect(target!.chroma).toBeGreaterThanOrEqual(0.08);
   });
 
   it("reports an achromatic frame as a grey theme, not as nothing", () => {

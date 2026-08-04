@@ -259,8 +259,9 @@ const AnnotationRow = ({
   onToggle: () => void;
   onGoTo: () => void;
 }) => (
+  // One compact line: index, then kind · measure, actions pinned right.
   <Card
-    className={`group flex cursor-pointer items-center gap-2 px-2 py-2 transition-colors ${
+    className={`group flex  flex-row cursor-pointer items-center gap-2 px-2 py-1 transition-colors ${
       isSelected
         ? // Amber — the same color the scene highlights the selected shape in.
           "border-amber-400/40 bg-amber-400/10"
@@ -269,15 +270,13 @@ const AnnotationRow = ({
     title={isSelected ? "Click to deselect" : "Click to select"}
     onClick={onToggle}
   >
-    <div className="min-w-0 flex-1">
-      <CardTitle className="break-words text-sm font-medium">
-        {indexLabel(index)}
-      </CardTitle>
-      <div className="text-xs text-muted-foreground">
-        {formatRoiKind(annotation.kind)}
-        {measure && ` · ${measure}`}
-      </div>
-    </div>
+    <CardTitle className="shrink-0 text-xs font-medium">
+      {indexLabel(index)}
+    </CardTitle>
+    <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+      {formatRoiKind(annotation.kind)}
+      {measure && ` · ${measure}`}
+    </span>
     {/* Hover-revealed: the smart action button (run workflows on this
         annotation). Wrapped so opening it never toggles the selection. */}
     <span
@@ -289,7 +288,7 @@ const AnnotationRow = ({
     <Button
       variant="ghost"
       size="xs"
-      className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+      className="h-6 w-6 shrink-0 p-0 text-muted-foreground hover:text-foreground"
       title="Go to annotation"
       onClick={(event) => {
         event.stopPropagation();

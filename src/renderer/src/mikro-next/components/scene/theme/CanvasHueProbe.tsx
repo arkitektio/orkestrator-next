@@ -1,4 +1,4 @@
-import { useFrame, useThree } from "@react-three/fiber";
+import { addAfterEffect, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import type { BrandTarget } from "@/providers/settings/brandTheme";
@@ -9,16 +9,29 @@ import { majorityHueFromPixels, sameBrandTarget } from "./majorityHue";
  * is plenty to find a majority and keeps the readback at 4 KB. */
 const SAMPLE_SIZE = 32;
 
-/** How long the canvas must sit still before a sample is taken. */
-const QUIET_MS = 200;
+/** How long the canvas must sit still before a sample is analysed. Generous
+ * on purpose: the tint is a secondary effect, so it should settle in after
+ * the view does, not chase it. */
+const QUIET_MS = 750;
 
 /** During CONTINUOUS rendering (orbit, animation playback) the quiet period
- * never arrives — sample at least this often so the tint still follows. */
-const MAX_WAIT_MS = 1200;
+ * never arrives — sample at least this often so the tint still follows,
+ * unhurried. */
+const MAX_WAIT_MS = 4000;
 
 type Scratch = {
   canvas: OffscreenCanvas;
   ctx: OffscreenCanvasRenderingContext2D;
+};
+
+const makeScratch = (options?: CanvasRenderingContext2DSettings): Scratch | null => {
+  const canvas = new OffscreenCanvas(SAMPLE_SIZE, SAMPLE_SIZE);
+  const ctx = canvas.getContext("2d", options);
+  if (!ctx) return null;
+  // "copy" replaces every pixel including alpha — no clear pass, and no
+  // blending against the previous snapshot.
+  ctx.globalCompositeOperation = "copy";
+  return { canvas, ctx };
 };
 
 /**
@@ -27,21 +40,28 @@ type Scratch = {
  * `SceneBrandTheme` prefers over the colormap-derived estimate — so the app
  * tint follows what is actually on screen, not what the render graph predicts.
  *
- * Performance is the design constraint, accuracy is not:
- *   - `useFrame` only stamps a timestamp; all real work happens in a trailing
- *     debounce (`QUIET_MS`) off the frame loop, capped by `MAX_WAIT_MS` so
- *     sustained motion still updates.
- *   - the frame is shrunk on the GPU via `createImageBitmap({resize})` —
- *     asynchronous, so no main-thread sync against the full-resolution
- *     framebuffer — and only the 32×32 result is ever read back.
- *   - the scratch 2D canvas is created once and composites with `"copy"`, so
- *     no clear pass and no alpha blending against the previous sample.
+ * Capture and analysis are two stages, and the split is load-bearing:
  *
- * Reading the live canvas (rather than the screenshot path's offscreen
- * re-render) is safe here because sampling always happens strictly AFTER a
- * presented frame — the debounce only ever fires later than the `useFrame`
- * that armed it — and Chromium keeps the last presented WebGPU image
- * drawable. Renders null; mount inside `<Canvas>`.
+ *   1. CAPTURE — a `drawImage` downscale of the frame into a persistent
+ *      32×32 canvas, in `addAfterEffect`, i.e. the same task that rendered.
+ *      It cannot happen any later: the scene renders on demand with no
+ *      preserveDrawingBuffer, so once the task yields and the frame is
+ *      presented, reading the canvas yields transparent black (the same fact
+ *      that forces `SceneScreenshot` to re-render offscreen). The blit is a
+ *      GPU-side scale to 1024 texels — negligible next to the frame that
+ *      just rendered, which is why paying it per frame is fine.
+ *
+ *   2. ANALYSIS — debounced off the frame loop (`QUIET_MS` of stillness,
+ *      capped by `MAX_WAIT_MS` so sustained motion still updates). The 32×32
+ *      snapshot canvas is a plain 2D canvas whose contents persist, so the
+ *      late read is safe. It is bounced through `createImageBitmap` into a
+ *      second, CPU-side scratch before `getImageData`: reading the GPU-backed
+ *      snapshot directly would both sync-flush the GPU and, worse, invite
+ *      Chromium's readback heuristic to quietly demote it to software —
+ *      turning the per-frame blit of stage 1 into a full-resolution CPU
+ *      readback. The bitmap hop keeps the hot canvas write-only.
+ *
+ * Renders null; mount inside `<Canvas>`.
  */
 export const CanvasHueProbe = () => {
   const gl = useThree((state) => state.gl);
@@ -49,14 +69,19 @@ export const CanvasHueProbe = () => {
   const { settings } = useSettings();
   const enabled = settings.sceneThemeSync !== false;
 
-  // useFrame closures are long-lived; refs keep them reading current values
-  // without resubscribing the frame hook.
+  // Frame-loop closures are long-lived; refs keep them reading current values
+  // without resubscribing.
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
   const clockRef = useRef({
+    /** Set by useFrame, consumed by the after-effect: THIS canvas rendered in
+     * the current loop tick (the after-effect hook is global to all roots). */
+    framePending: false,
+    /** The snapshot canvas holds a real frame (not its initial blank). */
+    snapshotValid: false,
     lastFrameAt: 0,
-    /** When the first unsampled frame landed; null = nothing pending. */
+    /** When the first unanalysed frame landed; null = nothing pending. */
     dirtySince: null as number | null,
     timer: null as ReturnType<typeof setTimeout> | null,
     sampling: false,
@@ -65,30 +90,25 @@ export const CanvasHueProbe = () => {
      * publishes nothing. */
     lastPublished: null as BrandTarget | null,
   });
-  const scratchRef = useRef<Scratch | null>(null);
+  /** GPU-backed snapshot target — written every frame, never read directly. */
+  const snapshotRef = useRef<Scratch | null>(null);
+  /** CPU-side readback canvas — only ever sees 32×32 bitmaps. */
+  const readbackRef = useRef<Scratch | null>(null);
 
   const sample = async (): Promise<void> => {
     const clock = clockRef.current;
     if (clock.sampling) return;
     clock.sampling = true;
     try {
-      const source = gl.domElement;
-      if (!source || source.width === 0 || source.height === 0) return;
-
-      if (scratchRef.current === null) {
-        const canvas = new OffscreenCanvas(SAMPLE_SIZE, SAMPLE_SIZE);
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return;
-        ctx.globalCompositeOperation = "copy";
-        scratchRef.current = { canvas, ctx };
+      const snapshot = snapshotRef.current;
+      if (!snapshot || !clock.snapshotValid) return;
+      if (readbackRef.current === null) {
+        readbackRef.current = makeScratch({ willReadFrequently: true });
+        if (readbackRef.current === null) return;
       }
-      const { ctx } = scratchRef.current;
+      const { ctx } = readbackRef.current;
 
-      const bitmap = await createImageBitmap(source, {
-        resizeWidth: SAMPLE_SIZE,
-        resizeHeight: SAMPLE_SIZE,
-        resizeQuality: "low",
-      });
+      const bitmap = await createImageBitmap(snapshot.canvas);
       try {
         ctx.drawImage(bitmap, 0, 0);
       } finally {
@@ -102,8 +122,8 @@ export const CanvasHueProbe = () => {
       clock.lastPublished = target;
       viewerApi.getState().setSampledBrandTarget(target);
     } catch {
-      // A failed capture (canvas mid-teardown, bitmap refusal) keeps the last
-      // published target; the next frame re-arms the debounce anyway.
+      // A failed capture keeps the last published target; the next frame
+      // re-arms the debounce anyway.
     } finally {
       clock.sampling = false;
     }
@@ -123,16 +143,40 @@ export const CanvasHueProbe = () => {
     }
   };
 
-  // Stamp-only: runs on every rendered frame of the demand loop, so it must
-  // stay allocation- and work-free. A single timer is armed at most once per
-  // quiet period — no per-frame clearTimeout churn.
+  // Flag-only: runs before this canvas renders; the capture itself must wait
+  // for the rendered frame (the after-effect below).
   useFrame(() => {
-    if (!enabledRef.current) return;
-    const clock = clockRef.current;
-    clock.lastFrameAt = performance.now();
-    if (clock.dirtySince === null) clock.dirtySince = clock.lastFrameAt;
-    if (clock.timer === null) clock.timer = setTimeout(check, QUIET_MS);
+    clockRef.current.framePending = true;
   });
+
+  useEffect(() => {
+    const clock = clockRef.current;
+    const capture = () => {
+      if (!clock.framePending) return;
+      clock.framePending = false;
+      if (!enabledRef.current) return;
+
+      const source = gl.domElement;
+      if (!source || source.width === 0 || source.height === 0) return;
+      if (snapshotRef.current === null) {
+        snapshotRef.current = makeScratch();
+        if (snapshotRef.current === null) return;
+      }
+
+      // Same-task with the render — the ONLY moment the frame is readable.
+      snapshotRef.current.ctx.drawImage(source, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+      clock.snapshotValid = true;
+
+      const now = performance.now();
+      clock.lastFrameAt = now;
+      if (clock.dirtySince === null) clock.dirtySince = now;
+      if (clock.timer === null) clock.timer = setTimeout(check, QUIET_MS);
+    };
+    return addAfterEffect(capture);
+    // check/sample are stable in behaviour (all state lives in refs); gl is
+    // the one real dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gl]);
 
   // Turning the setting off mid-scene hands the tint back to the colormap
   // estimate immediately rather than freezing the last sample.
@@ -140,6 +184,7 @@ export const CanvasHueProbe = () => {
     if (enabled) return;
     const clock = clockRef.current;
     clock.dirtySince = null;
+    clock.snapshotValid = false;
     clock.lastPublished = null;
     viewerApi.getState().setSampledBrandTarget(null);
   }, [enabled, viewerApi]);

@@ -15,6 +15,12 @@
       "File",
       "Image"
     ],
+    "FileLinkContainer": [
+      "ADataset",
+      "AnnotationCollection",
+      "MeshCollection",
+      "TableDataset"
+    ],
     "InViewSource": [
       "ADataset",
       "AnnotationCollection",
@@ -126,6 +132,7 @@
       "Experiment",
       "FieldTransformation",
       "File",
+      "FileLink",
       "FileView",
       "HistogramView",
       "IdentityTransformation",

@@ -93,8 +93,9 @@ configureSmartBuilder({
     );
   },
   renderModelPage: ({ identifier, children, ...props }: SmartModelPage & { identifier: string }) => {
-    // No Rooms injection here any more: ModelPageLayout renders the identical
-    // Guard.Alpaka-wrapped StructureRoomsSidebar as a default tab itself.
+    // No Rooms injection here: the tab is gone from ModelPageLayout's defaults
+    // too. Conversations start from the "Talk" button in the page header, which
+    // is where they were actually being started from.
     return (
       <ModelPageLayout
         identifier={identifier}

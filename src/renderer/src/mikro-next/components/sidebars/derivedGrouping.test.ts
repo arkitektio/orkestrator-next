@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupDerived, UNPLACED_GROUP } from "./derivedGrouping";
+import { groupDerived, parentDatasetOfEdge, UNPLACED_GROUP } from "./derivedGrouping";
 
 const INTRINSIC = "cs-intrinsic";
 
@@ -112,5 +112,56 @@ describe("groupDerived", () => {
       "cs-b",
       UNPLACED_GROUP,
     ]);
+  });
+});
+
+describe("parentDatasetOfEdge", () => {
+  const edge = (residents: { __typename: string; [k: string]: unknown }[]) => ({
+    output: { residents },
+  });
+
+  it("names the dataset living in the space the edge lands in", () => {
+    expect(
+      parentDatasetOfEdge(
+        edge([{ __typename: "ADataset", id: "ds-1", name: "Raw stack" }]),
+      ),
+    ).toEqual({ id: "ds-1", name: "Raw stack" });
+  });
+
+  it("reaches through a lens when the parent was a crop", () => {
+    expect(
+      parentDatasetOfEdge(
+        edge([
+          { __typename: "Lens", id: "lens-1", dataset: { id: "ds-2", name: "Timelapse" } },
+        ]),
+      ),
+    ).toEqual({ id: "ds-2", name: "Timelapse" });
+  });
+
+  it("prefers the dataset itself over a lens onto it", () => {
+    // Both present means the space IS the dataset's grid; naming the dataset
+    // directly is the more useful of two true answers.
+    expect(
+      parentDatasetOfEdge(
+        edge([
+          { __typename: "Lens", id: "lens-1", dataset: { id: "ds-lens", name: "Via lens" } },
+          { __typename: "ADataset", id: "ds-direct", name: "Direct" },
+        ]),
+      ),
+    ).toEqual({ id: "ds-direct", name: "Direct" });
+  });
+
+  it("skips resident kinds that are not datasets", () => {
+    expect(
+      parentDatasetOfEdge(
+        edge([{ __typename: "MeshCollection" }, { __typename: "TableDataset" }]),
+      ),
+    ).toBeNull();
+  });
+
+  it("is null for an empty or absent output space", () => {
+    expect(parentDatasetOfEdge(edge([]))).toBeNull();
+    expect(parentDatasetOfEdge({ output: null })).toBeNull();
+    expect(parentDatasetOfEdge({})).toBeNull();
   });
 });

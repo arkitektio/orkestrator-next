@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPixelSize, pixelSizeEntries } from "./pixelSize";
+import { formatPixelSize, pixelSizeEntries, spatialPixelSizes } from "./pixelSize";
 
 /**
  * A calibration's pixel size is displayed by pairing three differently-ordered
@@ -10,8 +10,8 @@ import { formatPixelSize, pixelSizeEntries } from "./pixelSize";
 
 // The physical (y, x) system in micrometres.
 const PHYSICAL = [
-  { name: "y", unit: "µm" },
-  { name: "x", unit: "µm" },
+  { name: "y", unit: "µm", type: "SPACE" },
+  { name: "x", unit: "µm", type: "SPACE" },
 ];
 
 describe("pixelSizeEntries", () => {
@@ -22,8 +22,8 @@ describe("pixelSizeEntries", () => {
     );
 
     expect(entries).toEqual([
-      { axis: "y", value: 0.5, unit: "µm" },
-      { axis: "x", value: 0.25, unit: "µm" },
+      { axis: "y", value: 0.5, unit: "µm", type: "SPACE" },
+      { axis: "x", value: 0.25, unit: "µm", type: "SPACE" },
     ]);
   });
 
@@ -37,8 +37,8 @@ describe("pixelSizeEntries", () => {
     );
 
     expect(entries).toEqual([
-      { axis: "y", value: 0.5, unit: "µm" },
-      { axis: "x", value: 0.25, unit: "µm" },
+      { axis: "y", value: 0.5, unit: "µm", type: "SPACE" },
+      { axis: "x", value: 0.25, unit: "µm", type: "SPACE" },
     ]);
   });
 
@@ -53,8 +53,8 @@ describe("pixelSizeEntries", () => {
     );
 
     expect(entries).toEqual([
-      { axis: "x", value: 0.5, unit: "µm" },
-      { axis: "y", value: 0.25, unit: "µm" },
+      { axis: "x", value: 0.5, unit: "µm", type: "SPACE" },
+      { axis: "y", value: 0.25, unit: "µm", type: "SPACE" },
     ]);
   });
 
@@ -74,8 +74,8 @@ describe("pixelSizeEntries", () => {
     );
 
     expect(entries).toEqual([
-      { axis: "y", value: 0.5, unit: "µm" },
-      { axis: "x", value: 0.25, unit: "µm" },
+      { axis: "y", value: 0.5, unit: "µm", type: "SPACE" },
+      { axis: "x", value: 0.25, unit: "µm", type: "SPACE" },
     ]);
   });
 
@@ -91,10 +91,10 @@ describe("pixelSizeEntries", () => {
   it("reports a null unit rather than guessing one", () => {
     const entries = pixelSizeEntries(
       { inputAxes: ["y"], outputAxes: ["y"], scale: [2] },
-      [{ name: "y", unit: null }],
+      [{ name: "y", unit: null, type: "SPACE" }],
     );
 
-    expect(entries).toEqual([{ axis: "y", value: 2, unit: null }]);
+    expect(entries).toEqual([{ axis: "y", value: 2, unit: null, type: "SPACE" }]);
   });
 
   it("falls back to the input name only when the edge names no outputs", () => {
@@ -103,18 +103,148 @@ describe("pixelSizeEntries", () => {
       PHYSICAL,
     );
 
-    expect(entries).toEqual([{ axis: "y", value: 0.5, unit: "µm" }]);
+    expect(entries).toEqual([{ axis: "y", value: 0.5, unit: "µm", type: "SPACE" }]);
   });
 });
 
 describe("formatPixelSize", () => {
   it("renders an axis, its size and its unit", () => {
-    expect(formatPixelSize({ axis: "x", value: 0.325, unit: "µm" })).toBe(
+    expect(formatPixelSize({ axis: "x", value: 0.325, unit: "µm", type: "SPACE" })).toBe(
       "x 0.325 µm",
     );
   });
 
   it("omits a missing unit rather than printing null", () => {
-    expect(formatPixelSize({ axis: "c", value: 1, unit: null })).toBe("c 1");
+    expect(formatPixelSize({ axis: "c", value: 1, unit: null, type: "CHANNEL" })).toBe("c 1");
+  });
+});
+
+describe("pixelSizeEntries through a wrapper edge", () => {
+  // What CalibrateForm authors: a BY_DIMENSION, which carries no parameters of
+  // its own — the schema gives it `transformations` and nothing else.
+  const axes = [
+    { name: "z", unit: "µm", type: "SPACE" },
+    { name: "y", unit: "µm", type: "SPACE" },
+    { name: "x", unit: "µm", type: "SPACE" },
+  ];
+
+  it("unwraps children that each act on one axis", () => {
+    expect(
+      pixelSizeEntries(
+        {
+          inputAxes: ["z", "y", "x"],
+          outputAxes: ["z", "y", "x"],
+          transformations: [
+            { inputAxes: ["z"], outputAxes: ["z"], scale: [0.5] },
+            { inputAxes: ["y"], outputAxes: ["y"], scale: [0.1] },
+            { inputAxes: ["x"], outputAxes: ["x"], scale: [0.1] },
+          ],
+        },
+        axes,
+      ),
+    ).toEqual([
+      { axis: "z", value: 0.5, unit: "µm", type: "SPACE" },
+      { axis: "y", value: 0.1, unit: "µm", type: "SPACE" },
+      { axis: "x", value: 0.1, unit: "µm", type: "SPACE" },
+    ]);
+  });
+
+  it("reads in the wrapper's axis order, not the children's arrival order", () => {
+    const entries = pixelSizeEntries(
+      {
+        inputAxes: ["z", "y", "x"],
+        outputAxes: ["z", "y", "x"],
+        transformations: [
+          { inputAxes: ["x"], outputAxes: ["x"], scale: [0.1] },
+          { inputAxes: ["z"], outputAxes: ["z"], scale: [0.5] },
+        ],
+      },
+      axes,
+    );
+    expect(entries.map((entry) => entry.axis)).toEqual(["z", "x"]);
+  });
+
+  it("prefers the wrapper's own parameters when it has them", () => {
+    // A leaf that also happens to carry children must not be double-read.
+    expect(
+      pixelSizeEntries(
+        {
+          inputAxes: ["x"],
+          outputAxes: ["x"],
+          scale: [2],
+          transformations: [{ inputAxes: ["x"], outputAxes: ["x"], scale: [99] }],
+        },
+        [{ name: "x", unit: "µm", type: "SPACE" }],
+      ),
+    ).toEqual([{ axis: "x", value: 2, unit: "µm", type: "SPACE" }]);
+  });
+
+  it("keeps the first writer when children disagree about an axis", () => {
+    expect(
+      pixelSizeEntries(
+        {
+          outputAxes: ["x"],
+          transformations: [
+            { inputAxes: ["x"], outputAxes: ["x"], scale: [0.1] },
+            { inputAxes: ["x"], outputAxes: ["x"], scale: [0.9] },
+          ],
+        },
+        [{ name: "x", unit: "µm", type: "SPACE" }],
+      ),
+    ).toEqual([{ axis: "x", value: 0.1, unit: "µm", type: "SPACE" }]);
+  });
+
+  it("is still empty for a wrapper whose children carry no parameters", () => {
+    expect(
+      pixelSizeEntries(
+        { outputAxes: ["x"], transformations: [{ inputAxes: ["x"], outputAxes: ["x"] }] },
+        axes,
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("spatialPixelSizes", () => {
+  // A calibration edge scales EVERY axis it maps. The time step of a timelapse
+  // and the bin width of a spectrum are real measurements, but they are not the
+  // size of a pixel, and printing them under "Pixel size" claims a geometry
+  // that is not there.
+  const MIXED = [
+    { name: "t", unit: "s", type: "TIME" },
+    { name: "c", unit: "dimensionless", type: "CHANNEL" },
+    { name: "z", unit: "µm", type: "SPACE" },
+    { name: "y", unit: "µm", type: "SPACE" },
+  ];
+
+  it("keeps only the SPACE axes", () => {
+    const entries = pixelSizeEntries(
+      {
+        inputAxes: ["t", "c", "z", "y"],
+        outputAxes: ["t", "c", "z", "y"],
+        scale: [0.5, 1, 0.3, 0.1],
+      },
+      MIXED,
+    );
+
+    expect(entries).toHaveLength(4);
+    expect(spatialPixelSizes(entries)).toEqual([
+      { axis: "z", value: 0.3, unit: "µm", type: "SPACE" },
+      { axis: "y", value: 0.1, unit: "µm", type: "SPACE" },
+    ]);
+  });
+
+  it("drops an axis the output system never typed", () => {
+    // An unlabelled axis is not evidence of a spatial one.
+    const entries = pixelSizeEntries(
+      { inputAxes: ["q"], outputAxes: ["q"], scale: [1] },
+      [{ name: "q", unit: "µm" }],
+    );
+
+    expect(entries).toEqual([{ axis: "q", value: 1, unit: "µm", type: null }]);
+    expect(spatialPixelSizes(entries)).toEqual([]);
+  });
+
+  it("is empty rather than throwing when there is nothing to filter", () => {
+    expect(spatialPixelSizes([])).toEqual([]);
   });
 });

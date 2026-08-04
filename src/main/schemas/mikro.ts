@@ -91,6 +91,8 @@ export type ADataset = {
   /** Everything computed from this dataset, whatever kind of container it is: the derived datasets `derivedDatasets` lists, and also the measurement tables, mesh collections and annotation collections that named this dataset as their source. A separate field rather than a widening of that one, which stays honestly about *datasets*. Same edges, same kind-blindness: an UNMAPPABLE child came from here even though its geometry did not survive */
   derivedResidents: Array<Resident>;
   description?: Maybe<Scalars['String']['output']>;
+  /** The files written out of this dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
+  exports: Array<FileLink>;
   id: Scalars['ID']['output'];
   /** The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and unit-independent */
   intrinsicSystem?: Maybe<CoordinateSystem>;
@@ -105,6 +107,8 @@ export type ADataset = {
   scenes: Array<Scene>;
   /** The dataset's shape: that of its level-0 array */
   shape: Array<Scalars['Int']['output']>;
+  /** The files this dataset was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete */
+  sourceFiles: Array<FileLink>;
   /** What this dataset structurally is, materialized from the axes of its intrinsic coordinate system at creation: the one spatial spec its SPACE axis count denotes, then a modifier per acquisition axis present. A 3D timelapse is [VOLUME, TIMESERIES, MULTICHANNEL]. Presence, not size: a stack with a single plane is still a VOLUME. Empty while the intrinsic system does not exist yet */
   spec: Array<ADatasetSpec>;
 };
@@ -119,8 +123,20 @@ export type ADatasetDataArraysArgs = {
 
 
 /** A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the physical spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid */
+export type ADatasetExportsArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
+};
+
+
+/** A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the physical spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid */
 export type ADatasetProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A multi-dimensional array dataset. Its dimensions and their types live on the axes of its INTRINSIC (pixel grid) coordinate system; physical units live on the physical spaces it has edges into; its pyramid levels are DataArrays, each mapping into its grid */
+export type ADatasetSourceFilesArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
 };
 
 export type ADatasetFilter = {
@@ -163,6 +179,10 @@ export type ADatasetFilter = {
   scene?: InputMaybe<Scalars['ID']['input']>;
   /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter to the datasets converted from this file -- every series of it, unless `sourceSeriesIdentifier` narrows that. A file link, not a derivation: this asks which bytes the arrays were read out of, where `derivedFrom` asks which data they were computed from. A dataset can honestly answer both */
+  sourceFile?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter to the datasets converted from one series of a file. Pair it with `sourceFile`; alone it matches that series identifier in any file */
+  sourceSeriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   /** Filter to datasets satisfying every one of these specs, e.g. [VOLUME, TIMESERIES] for 3D timelapses. Materialized from the axes of the intrinsic coordinate system at creation. A dataset carries one spatial spec (by how many SPACE axes it has) plus a modifier per acquisition axis present, so two spatial specs together match nothing */
   spec?: InputMaybe<Array<ADatasetSpec>>;
 };
@@ -518,12 +538,16 @@ export type AnnotationCollection = {
   /** Every edge from this collection's space back into data the shapes are drawn over, in declared order -- the first is the primary parent, the one that places it. An identity into a scene's world for a scene-minted collection, an identity into a dataset's system for one drawn over an image. Empty for a freestanding collection */
   derivedFrom: Array<Transformation>;
   description?: Maybe<Scalars['String']['output']>;
+  /** The files written out of this annotation collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
+  exports: Array<FileLink>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** Provenance entries for this annotation collection */
   provenanceEntries: Array<ProvenanceEntry>;
   /** The scene this collection was minted for as its default drawing surface, or null for a freestanding or dataset-derived collection. Bookkeeping, not placement: the registration edge is what places it */
   scene?: Maybe<Scene>;
+  /** The files this annotation collection was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete */
+  sourceFiles: Array<FileLink>;
 };
 
 
@@ -536,8 +560,20 @@ export type AnnotationCollectionAnnotationsArgs = {
 
 
 /** A named set of human-drawn annotations, owning the coordinate system they are drawn in. The CRUD counterpart of a table dataset's machine-produced rows: shapes a person draws and edits, sharing one drawing space and one registration story */
+export type AnnotationCollectionExportsArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
+};
+
+
+/** A named set of human-drawn annotations, owning the coordinate system they are drawn in. The CRUD counterpart of a table dataset's machine-produced rows: shapes a person draws and edits, sharing one drawing space and one registration story */
 export type AnnotationCollectionProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A named set of human-drawn annotations, owning the coordinate system they are drawn in. The CRUD counterpart of a table dataset's machine-produced rows: shapes a person draws and edits, sharing one drawing space and one registration story */
+export type AnnotationCollectionSourceFilesArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
 };
 
 /** The fields an ANNOTATION_COLLECTION derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
@@ -545,6 +581,14 @@ export type AnnotationCollectionDerivedFromInput = {
   annotationCollection: Scalars['ID']['input'];
   kind?: DerivationSourceKind;
   transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
+/** The fields an ANNOTATION_COLLECTION export link reads. Published for codegen; the wire type is the flat ExportOfInput */
+export type AnnotationCollectionExportOfInput = {
+  annotationCollection: Scalars['ID']['input'];
+  kind?: FileLinkContainerKind;
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   valueRelation?: InputMaybe<ValueRelation>;
 };
 
@@ -1582,7 +1626,7 @@ export type CoordinateSystem = {
   placedSystems: Array<CoordinateSystem>;
   /** Provenance entries for this coordinate system: who created it, and every subsequent change */
   provenanceEntries: Array<ProvenanceEntry>;
-  /** Every top-level edge landing in this space -- the claims that place something here. They belong to the space, so every scene composing over this system sees the same list, each entry unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. On a shared world these are the registrations a client authored; on a container's own grid they are the lens crops and derived children that land in it. Composing the matrices stays the client's job */
+  /** Every top-level edge landing in this space -- the claims that place something here. They belong to the space, so every scene composing over this system sees the same list, each entry unique for its data-tree, and `layers.pathToWorld` searches exactly these plus the datasets' own facts. On a shared world these are the registrations a client authored; on a container's own grid they are the lens crops and derived children that land in it. Composing the matrices stays the client's job. Not filtered by kind, so a table's own system also lists the FIELD edge of any mask keying it -- that one places nothing (a FIELD has no inverse, so no path walks it backwards); it is a dereference, and `attributePlans` is what reads it */
   registrations: Array<Transformation>;
   /** The data living in this space. Empty for a pure reference frame -- a world, an atlas -- which is what a space with no residents *is*; there is no separate kind to consult. Several residents may share one space: a dataset's own pyramid levels and unsliced lenses live in its grid, and a hundred tiles acquired on one stage can be registered into one stage frame */
   residents: Array<Resident>;
@@ -1687,6 +1731,7 @@ export type CreateADatasetInput = {
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   name: Scalars['String']['input'];
   scales: Array<ScaleInput>;
+  sourceFiles?: InputMaybe<Array<SourceFileInput>>;
 };
 
 /** Input for creating a named camera tour of a scene. The waypoints are given in tour order and that order is what is stored -- a tour is authored as a whole, never a stop at a time */
@@ -1707,6 +1752,7 @@ export type CreateAnnotationCollectionInput = {
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+  sourceFiles?: InputMaybe<Array<SourceFileInput>>;
 };
 
 /** Input for drawing an annotation. Provide exactly one of `collection` (append to it) or `scene` (draw on the scene: its annotation collection is found, or minted on first use together with its coordinate system, its registration into the world, and its layer) */
@@ -1810,6 +1856,7 @@ export type CreateMeshCollectionInput = {
   geometry?: InputMaybe<Array<Scalars['ParquetLike']['input']>>;
   grid?: InputMaybe<Scalars['Any']['input']>;
   provenanceMetadata?: InputMaybe<Scalars['Any']['input']>;
+  sourceFiles?: InputMaybe<Array<SourceFileInput>>;
   specVersion: Scalars['String']['input'];
   version: Scalars['String']['input'];
 };
@@ -1953,7 +2000,9 @@ export type CreateTableDatasetInput = {
   data: Scalars['ParquetLike']['input'];
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  keyedBy?: InputMaybe<Array<KeyedByInput>>;
   name: Scalars['String']['input'];
+  sourceFiles?: InputMaybe<Array<SourceFileInput>>;
   validateSchema?: Scalars['Boolean']['input'];
 };
 
@@ -2091,6 +2140,14 @@ export type DatasetDerivedFromInput = {
   dataset: Scalars['ID']['input'];
   kind?: DerivationSourceKind;
   transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
+/** The fields a DATASET export link reads. Published for codegen; the wire type is the flat ExportOfInput */
+export type DatasetExportOfInput = {
+  dataset: Scalars['ID']['input'];
+  kind?: FileLinkContainerKind;
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   valueRelation?: InputMaybe<ValueRelation>;
 };
 
@@ -2699,6 +2756,24 @@ export type ExperimentOrder =
   |  { createdAt?: never; id: Ordering; name?: never; }
   |  { createdAt?: never; id?: never; name: Ordering; };
 
+/** The container this file was written from, as a discriminated union: `kind` selects which sort of container is being named, and only that member's id field is read -- any other is rejected. The member inputs annotated `@unionElementOf(union: "ExportOfInput")` say which field each kind reads. Direction is always this file -> the data it was written from */
+export type ExportOfInput = {
+  /** (ANNOTATION_COLLECTION) The annotation collection this file was written from */
+  annotationCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** (DATASET) The array dataset this file was written from */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Which sort of thing the container is. It fixes which id field below is read; any other is rejected */
+  kind: FileLinkContainerKind;
+  /** (MESH_COLLECTION) The mesh collection this file was written from */
+  meshCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** Which part of the file this concerns -- the series of a multi-series LIF or CZI, the sheet of a workbook. Omit when the file holds one thing. It is part of the link's identity, not a label on it: one dataset fused from two series of one file is two links, and two links naming the same file and the same series are refused */
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  /** (TABLE_DATASET) The table dataset this file was written from */
+  tableDataset?: InputMaybe<Scalars['ID']['input']>;
+  /** What the conversion did to the *values*: IDENTICAL for a lossless transcode (a CZI to a Zarr, a dataset to an OME-TIFF), TRANSFORMED for a projection or a contrast-stretched PNG, CATEGORIZED when the values became labels. Omit when unstated; the converter and its parameters belong to task provenance */
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
 /** Whether the server can state where a source sits in a space, and if not, why not. Derived, never stored. */
 export enum ExtentState {
   /** The path walks an edge against its stored direction, and this server composes forward only. The step *is* invertible -- a placement search offers a backwards step only for a map that has an inverse -- so invert the flagged step and compose `path` yourself. */
@@ -2763,11 +2838,14 @@ export type File = {
   createdThroughBy?: Maybe<User>;
   /** The user who created this file */
   creator: User;
+  /** The containers converted out of this file: the datasets a converter wrote from it, one per series. **Not a derivation** -- a file has no coordinate system, so these links claim no geometry and place nothing; they say only that this file's bytes and that data are the same thing */
+  derivedContainers: Array<FileLink>;
+  /** The containers this file was written from: the dataset exported to OME-TIFF, the mesh collection written to STL. The mirror of `derivedContainers` */
+  exportedFrom: Array<FileLink>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** The organization this file belongs to */
   organization: Organization;
-  origins: Array<Image>;
   /** Provenance entries for this file */
   provenanceEntries: Array<ProvenanceEntry>;
   /** The size of the file in bytes */
@@ -2778,10 +2856,14 @@ export type File = {
 
 
 /** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
-export type FileOriginsArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  ordering?: Array<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
+export type FileDerivedContainersArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
+};
+
+
+/** A file in its original format (e.g. a microscopy vendor file), stored in a BigFileStore. Files are the raw sources that images are converted from, and file views link back to the images that originated from them. */
+export type FileExportedFromArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
 };
 
 
@@ -2828,24 +2910,156 @@ export type FileFilter = {
   dataset?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by a list of dataset IDs */
   datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter to the files written out of this container -- the OME-TIFF a dataset was exported to. The opposite direction from `sourceOf` */
+  exportedFrom?: InputMaybe<FileLinkContainerRef>;
+  /** Filter by file extension, case-insensitively and with the leading dot optional: `czi`, `.czi` and `CZI` are the same request, and `ome.tiff` matches only the double extension. A normalizing convenience over `name: {iEndsWith: ".czi"}`, which is still there if you want the raw lookup */
+  extension?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by whether any unstructured metadata has been attached to the file */
+  hasMetadata?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by whether the file's bytes ever arrived: false finds the `File` rows whose upload was granted and never completed, which carry no store at all */
+  hasStore?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter to the files linked to this container in *either* direction: read into it or written out of it. Use `sourceOf` or `exportedFrom` when the direction matters */
+  linkedTo?: InputMaybe<FileLinkContainerRef>;
+  /** Filter to the files holding one sort of thing. Derived from the extension at query time and stored nowhere -- see `FileMimeGroup`, which explains why this reads the name rather than `contentType`. A curated list, so treat it as a picker convenience and filter on `name` or `contentType` when you need an exact answer */
+  mimeGroup?: InputMaybe<FileMimeGroup>;
   name?: InputMaybe<StrFilterLookup>;
-  /** Filter for files that are not derived from another file */
+  /** Filter for files nothing was exported into: the raw sources a converter read, as opposed to the files written out of data already here. Reads the file's links, which replaced the `origins` M2M -- that column was never written by any resolver, so this filter used to answer `true` for every file in the database */
   notDerived?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by whether the upload completed. **Implies a store**: a file with no store at all is `hasStore: false`, not `populated: false`, so the two are not complementary and combining `hasStore: false` with `populated: false` matches nothing */
+  populated?: InputMaybe<Scalars['Boolean']['input']>;
   /** Search by name (case-insensitive substring) */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter to files linked under this series of a multi-series file -- 'series-3' of a LIF. Matches on any link, in either direction */
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   size?: InputMaybe<IntFilterLookup>;
+  /** Filter to the files this container was produced from -- the CZI a converter read to write its arrays. The file-side mirror of `ADatasetFilter.sourceFile`, and the reason this takes a `{kind, id}` rather than a bare ID: dataset 3 and table 3 both exist, so an unqualified id could not say which was meant */
+  sourceOf?: InputMaybe<FileLinkContainerRef>;
+  /** Filter for files no data references at all -- the uploads nothing was ever converted from and nothing was ever written into. The orphans, in other words: what a cleanup view wants. `notDerived` is the weaker question (nothing was *exported* into it), so every unlinked file is also notDerived, and not the reverse */
+  unlinked?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+/** A file and a container holding the same data, and which of the two was made from the other. **Not a derivation**: `derivedFrom` states how one space maps into another, and a file has no space, so this claims no geometry and no placement -- only that these bytes and this data are the same thing */
+export type FileLink = {
+  __typename?: 'FileLink';
+  /** The data side of the link. Exactly one container is set on a link, and this is it */
+  container: FileLinkContainer;
+  createdAt: Scalars['DateTime']['output'];
+  /** The task this link was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
+  /** The user who recorded this link */
+  creator?: Maybe<User>;
+  /** Which side was made from the other: SOURCE when the container was produced from the file (an ingest), RENDITION when the file was written from the container (an export) */
+  direction: FileLinkDirection;
+  /** The file side of the link */
+  file: File;
+  id: Scalars['ID']['output'];
+  /** The organization this link belongs to */
+  organization: Organization;
+  /** Provenance entries for this link */
+  provenanceEntries: Array<ProvenanceEntry>;
+  /** Which part of the file this link concerns -- the series of a multi-series LIF or CZI. Empty when the file holds one thing. Part of the link's identity, so a dataset fused from two series of one file has two links */
+  seriesIdentifier?: Maybe<Scalars['String']['output']>;
+  /** What the conversion did to the values: IDENTICAL for a lossless transcode, TRANSFORMED for a projection or a contrast-stretched export. Null when unstated */
+  valueRelation?: Maybe<ValueRelation>;
+};
+
+
+/** A file and a container holding the same data, and which of the two was made from the other. **Not a derivation**: `derivedFrom` states how one space maps into another, and a file has no space, so this claims no geometry and no placement -- only that these bytes and this data are the same thing */
+export type FileLinkProvenanceEntriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** The data side of a file link: a container whose contents a file encodes */
+export type FileLinkContainer = ADataset | AnnotationCollection | MeshCollection | TableDataset;
+
+/** Which sort of container a file link names: the discriminator of `ExportOfInput`. Only the four containers that hold data a file can be written from or read into -- a lens is a selection over a dataset rather than a thing with its own bytes, and a coordinate system is a space, which no file encodes */
+export enum FileLinkContainerKind {
+  /** An annotation collection, the container a GeoJSON or ROI file is loaded into. */
+  AnnotationCollection = 'ANNOTATION_COLLECTION',
+  /** An array dataset -- the container an image file is converted into, and the one an OME-TIFF is written from. */
+  Dataset = 'DATASET',
+  /** A mesh collection, the container an STL or OBJ file is loaded into. */
+  MeshCollection = 'MESH_COLLECTION',
+  /** A table dataset, the container a CSV or parquet file is loaded into. */
+  TableDataset = 'TABLE_DATASET'
+}
+
+/** One container a file link points at: `kind` says which sort of thing it is, `id` says which one. Structured rather than a bare ID because a link can name four different kinds of container and their ids are drawn from separate sequences -- dataset 3 and table dataset 3 both exist, and an unqualified 3 could not choose */
+export type FileLinkContainerRef = {
+  /** The container's ID, in the sequence its `kind` names */
+  id: Scalars['ID']['input'];
+  /** Which sort of container. It fixes which column the filter reads */
+  kind: FileLinkContainerKind;
+};
+
+/** Which side of a file link was made from the other. A file is a store, not a container -- it has no coordinate system -- so this relates bytes to data rather than two spaces, and it is deliberately not a `DerivedFromInput` kind. Direction has to be stated because nothing else records which side existed first */
+export enum FileLinkDirection {
+  /** The file was produced from the container: a dataset written out as OME-TIFF, a mesh exported to STL. This is the export direction, and the container existed first. */
+  Rendition = 'RENDITION',
+  /** The container was produced from the file: a CZI a converter read to write a Zarr dataset, a CSV a table was loaded from. This is the ingest direction, and the file existed first. */
+  Source = 'SOURCE'
+}
+
+export type FileLinkFilter = {
+  AND?: InputMaybe<FileLinkFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<FileLinkFilter>;
+  OR?: InputMaybe<FileLinkFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  direction?: InputMaybe<FileLinkDirection>;
+  /** Filter by the file side of the link */
+  file?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  seriesIdentifier?: InputMaybe<StrFilterLookup>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
+/** A coarse bucket for what sort of thing a file holds, for a picker that wants "just the images". **Derived at query time from the file's extension, never stored** -- so it cannot drift from the file it describes, and it is a filter only. Classified by extension rather than by `contentType` on purpose: a CZI, LIF or ND2 is uploaded as `application/octet-stream`, so a content-type rule would file every vendor image under OTHER, which is precisely the case worth finding. `contentType` is the fallback when the extension is unknown. It is a curated list, not an authority: filter on `name` or `contentType` directly when you need an exact answer */
+export enum FileMimeGroup {
+  /** Shapes and regions: geojson, roi, zip-of-rois, xml. */
+  Annotation = 'ANNOTATION',
+  /** Containers of other files: zip, tar, gz, 7z. A zipped acquisition is an ARCHIVE, not an IMAGE -- the extension is all this reads. */
+  Archive = 'ARCHIVE',
+  /** Human-readable notes and reports: pdf, txt, md, docx. */
+  Document = 'DOCUMENT',
+  /** Bioimage and picture formats: the vendor files (czi, lif, nd2, oib, lsm, ims, scn, svs) plus tiff/ome.tiff, png and jpeg. */
+  Image = 'IMAGE',
+  /** Surface geometry: stl, obj, ply, off. */
+  Mesh = 'MESH',
+  /** Nothing the curated list recognizes, and no usable `contentType`. Includes every file with no extension at all. */
+  Other = 'OTHER',
+  /** Tabular data: csv, tsv, parquet, feather, xlsx. */
+  Table = 'TABLE'
+}
+
 export type FileOrder =
-  { createdAt: Ordering; id?: never; name?: never; size?: never; }
-  |  { createdAt?: never; id: Ordering; name?: never; size?: never; }
-  |  { createdAt?: never; id?: never; name: Ordering; size?: never; }
-  |  { createdAt?: never; id?: never; name?: never; size: Ordering; };
+  { contentType: Ordering; createdAt?: never; id?: never; name?: never; size?: never; }
+  |  { contentType?: never; createdAt: Ordering; id?: never; name?: never; size?: never; }
+  |  { contentType?: never; createdAt?: never; id: Ordering; name?: never; size?: never; }
+  |  { contentType?: never; createdAt?: never; id?: never; name: Ordering; size?: never; }
+  |  { contentType?: never; createdAt?: never; id?: never; name?: never; size: Ordering; };
 
 /** A file view establishes a relationship between an image and a file: it records that this view of the image was originally part of the file (optionally a specific series within it) and links back to the source file. */
 export type FileView = View & {
@@ -3066,12 +3280,12 @@ export type FromArrayLikeInput = {
 export type FromFileLike = {
   /** The ID of the dataset to put the file in (defaults to the current default dataset) */
   dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** The containers this file was written from */
+  exportOf?: InputMaybe<Array<ExportOfInput>>;
   /** The uploaded big-file store to create the file from */
   file: Scalars['FileLike']['input'];
   /** The name of the file */
   fileName: Scalars['String']['input'];
-  /** The IDs of entities this file was derived from */
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 /** Input for creating a table from an uploaded parquet store */
@@ -3086,8 +3300,6 @@ export type FromParquetLike = {
   labelAccessors?: InputMaybe<Array<PartialLabelAccessorInput>>;
   /** The name of the table */
   name: Scalars['String']['input'];
-  /** The IDs of tables this table was derived from */
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 /** Temporary S3 credentials for reading a media object. */
@@ -3762,6 +3974,13 @@ export type IntFilterLookup = {
   startsWith?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** A label mask whose pixel values are the ids this table is indexed by. It authors the FIELD edge in the direction the map actually runs -- mask pixels -> table rows -- which is the direction attributePlans discovers, and the opposite of the lineage `derivedFrom` records */
+export type KeyedByInput = {
+  dataset: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  validity?: InputMaybe<PlacementValidity>;
+};
+
 /** A label accessor declares that the values of its table columns are pixel values of an associated mask view, allowing clients to join table rows to mask labels. */
 export type LabelAccessor = Accessor & {
   __typename?: 'LabelAccessor';
@@ -4206,6 +4425,35 @@ export type LightpathViewCongruentViewsArgs = {
   types?: InputMaybe<Array<ViewKind>>;
 };
 
+/** The provenance component around one piece of data: every container it was computed from or that was computed from it, transitively, and the derivation edges between them. The lineage counterpart of `coordinateGraph`, and the difference is which edges are *walked*: that one crosses every edge touching a space, so a registration pulls in everything else registered into the same world -- the neighbourhood, not the provenance. This crosses derivation edges only, in both directions, because asking a source what came out of it and asking a product what went into it are the same graph read from two ends */
+export type LineageGraph = {
+  __typename?: 'LineageGraph';
+  /** Every derivation edge with both containers in `nodes`, ordered by ID. Stored direction throughout -- child to source -- so the arrow points the way provenance reads. **Kind-blind**: an UNMAPPABLE edge is here, and is the point of the kind existing, since 'this came from that and the geometry did not survive' is exactly how a measurement table hangs off the mask it was measured from. Filter on `kind` for the chain that actually places things; a registration is never here at all */
+  edges: Array<Transformation>;
+  /** Every container in the component, the root's own included, ordered by kind and then by ID. Containers rather than spaces: a lineage is a story about data, and a dataset's pixel grid, its pyramid levels and its lenses are one node in it rather than three. Empty when the root space belongs to no container -- a world was computed from nothing and nothing was computed from it */
+  nodes: Array<Resident>;
+  /** The coordinate system the walk started from. Its container is the node the graph is centred on */
+  root: CoordinateSystem;
+};
+
+/** Record a link between a file and the data it encodes, after both already exist. Two shapes, one per direction: name a `file` plus `sourceOf` to record what that file was written from, or name one container plus `sourceFiles` to record which files it was produced from */
+export type LinkFileInput = {
+  /** The annotation collection the files were read into */
+  annotationCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** The array dataset the files were read into */
+  dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** The file the containers were written to */
+  file?: InputMaybe<Scalars['ID']['input']>;
+  /** The mesh collection the files were read into */
+  meshCollection?: InputMaybe<Scalars['ID']['input']>;
+  /** The files a container was produced from */
+  sourceFiles?: InputMaybe<Array<SourceFileInput>>;
+  /** The containers this file was written from */
+  sourceOf?: InputMaybe<Array<ExportOfInput>>;
+  /** The table dataset the files were read into */
+  tableDataset?: InputMaybe<Scalars['ID']['input']>;
+};
+
 /** The duckdb half of a plan: look the sampled value up in the parquet. Bind order for `sql` is the parquet path/URL first (the read_parquet argument, supplied by the worker from its own access grant), then the key values in `keyColumns` order. Do not assume one row per point: (t, i) uniqueness is a convention no unique index backs, so the worker gets rows, plural */
 export type LookupStep = {
   __typename?: 'LookupStep';
@@ -4435,13 +4683,29 @@ export type MeshCollection = {
   derivedFrom: Array<Transformation>;
   /** The geometry encoding: how positions, normals and indices are quantized and compressed */
   encoding: Scalars['Any']['output'];
+  /** The files written out of this mesh collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
+  exports: Array<FileLink>;
   /** The Parquet stores holding the geometry shards */
   geometry: Array<ParquetStore>;
   /** The octree grid. Its `cellSize` is in voxels of the coordinate system, so the octree aligns to the label grid the meshes were extracted from */
   grid: Scalars['Any']['output'];
   id: Scalars['ID']['output'];
+  /** The files this mesh collection was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete */
+  sourceFiles: Array<FileLink>;
   specVersion: Scalars['String']['output'];
   version: Scalars['String']['output'];
+};
+
+
+/** An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL */
+export type MeshCollectionExportsArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
+};
+
+
+/** An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL */
+export type MeshCollectionSourceFilesArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
 };
 
 /** The fields a MESH_COLLECTION derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
@@ -4449,6 +4713,14 @@ export type MeshCollectionDerivedFromInput = {
   kind?: DerivationSourceKind;
   meshCollection: Scalars['ID']['input'];
   transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
+/** The fields a MESH_COLLECTION export link reads. Published for codegen; the wire type is the flat ExportOfInput */
+export type MeshCollectionExportOfInput = {
+  kind?: FileLinkContainerKind;
+  meshCollection: Scalars['ID']['input'];
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   valueRelation?: InputMaybe<ValueRelation>;
 };
 
@@ -4809,6 +5081,8 @@ export type Mutation = {
   fromFileLike: File;
   /** Create a table from parquet-like data */
   fromParquetLike: Table;
+  /** Record a link between a file and the data it encodes, after both already exist */
+  linkFile: Array<FileLink>;
   /** Pin a camera for quick access */
   pinCamera: Camera;
   /** Pin a dataset for quick access */
@@ -4873,6 +5147,8 @@ export type Mutation = {
   requestZarrUpload: ZarrUploadGrant;
   /** Revert dataset to a previous version */
   revertDataset: Dataset;
+  /** Delete a file link */
+  unlinkFile: Scalars['ID']['output'];
   /** Rename a dataset or redescribe it -- the whole of what is editable, and audited on `provenanceEntries`. Its arrays, axes and coordinate systems are fixed at creation; a recomputation is a new dataset */
   updateADataset: ADataset;
   /** Re-author a camera tour: rename it, or replace its stops */
@@ -5412,6 +5688,11 @@ export type MutationFromParquetLikeArgs = {
 };
 
 
+export type MutationLinkFileArgs = {
+  input: LinkFileInput;
+};
+
+
 export type MutationPinCameraArgs = {
   input: PinCameraInput;
 };
@@ -5570,6 +5851,11 @@ export type MutationRequestZarrUploadArgs = {
 
 export type MutationRevertDatasetArgs = {
   input: RevertInput;
+};
+
+
+export type MutationUnlinkFileArgs = {
+  input: UnlinkFileInput;
 };
 
 
@@ -7198,6 +7484,8 @@ export type Query = {
   lenses: Array<Lens>;
   /** Get a single lightpath view by ID */
   lightpathView: LightpathView;
+  /** Walk the *derivation* edges out from one container and return its provenance component: everything this data was computed from, everything computed from it, transitively in both directions, and the edges between them. Distinct from `coordinateGraph`, which walks every edge touching a space -- a registration there drags in every other dataset registered into the same world, which is a neighbourhood rather than a lineage. Nodes are containers, not spaces: a dataset's grid, its levels and its lenses are one node in a provenance story. Kind-blind, so an UNMAPPABLE edge is included and is the point -- that is how a measurement table hangs off the mask it was measured from; filter on `kind` for the chain that actually places things. Root it at any container's coordinate system */
+  lineageGraph: LineageGraph;
   /** Get display information (label and color) for one pixel value of a mask */
   maskedPixelInfo: MaskedPixelInfo;
   /** List the memberships of the current organization (excluding bots) */
@@ -7557,6 +7845,12 @@ export type QueryLensesArgs = {
 
 export type QueryLightpathViewArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryLineageGraphArgs = {
+  coordinateSystem: Scalars['ID']['input'];
+  maxDepth?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -8965,6 +9259,13 @@ export type SnapshotOrder =
   |  { createdAt?: never; id: Ordering; name?: never; }
   |  { createdAt?: never; id?: never; name: Ordering; };
 
+/** One file this container was produced from -- the CZI a converter read to write these arrays, the CSV this table was loaded from. Recorded as a link between bytes and data, deliberately not as a coordinate-graph edge: a file has no space, so there is no map to state and `derivedFrom` is the wrong mechanism */
+export type SourceFileInput = {
+  file: Scalars['ID']['input'];
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
 /** One source in view of a region: where it sits in the queried coordinate system, how it got there, and which of its coordinate anchors are in view */
 export type SourcePlacement = {
   __typename?: 'SourcePlacement';
@@ -9152,7 +9453,6 @@ export type Table = {
   createdThroughBy?: Maybe<User>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  origins: Array<Image>;
   /** All rows of the table's parquet data */
   rows: Array<Scalars['MetricMap']['output']>;
   store: ParquetStore;
@@ -9163,14 +9463,6 @@ export type Table = {
 export type TableAccessorsArgs = {
   filters?: InputMaybe<AccessorFilter>;
   types?: InputMaybe<Array<AccessorKind>>;
-};
-
-
-/** A table of tabular data, stored as a Parquet file. Tables are typically derived from images (e.g. measurements or localisations) and can be queried column- and row-wise through the API. */
-export type TableOriginsArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  ordering?: Array<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** A cell of a table */
@@ -9254,6 +9546,8 @@ export type TableDataset = {
   /** Every edge from this table's space back into data it was computed from, in declared order -- the first is the primary parent, the one that places it. UNMAPPABLE where the lineage is recorded but no geometry is claimed; empty for a freestanding table. The same relation a derived dataset's `derivedFrom` records */
   derivedFrom: Array<Transformation>;
   description?: Maybe<Scalars['String']['output']>;
+  /** The files written out of this table dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
+  exports: Array<FileLink>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** Every change made to this table: who created it, and every subsequent rename or redescription, attributed to the client, user and task it happened under. Only `name` and `description` can change -- the store, the columns and the coordinate system derived from them are fixed at creation */
@@ -9262,14 +9556,28 @@ export type TableDataset = {
   provenanceMetadata: Scalars['Any']['output'];
   /** Every column, in any table, that declares this table as its reference target -- the reverse of `TableDatasetColumn.references`. This table cannot be deleted while any of them exist */
   referencedBy: Array<TableDatasetColumn>;
+  /** The files this table dataset was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete */
+  sourceFiles: Array<FileLink>;
   /** The Parquet store holding the rows. Request an access grant from it and read the Parquet directly */
   store: ParquetStore;
 };
 
 
 /** A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Its store, its columns and that coordinate system are fixed at creation -- only `name` and `description` can be updated, and a recomputation is a new table rather than an edit of this one. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL */
+export type TableDatasetExportsArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
+};
+
+
+/** A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Its store, its columns and that coordinate system are fixed at creation -- only `name` and `description` can be updated, and a recomputation is a new table rather than an edit of this one. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL */
 export type TableDatasetProvenanceEntriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Its store, its columns and that coordinate system are fixed at creation -- only `name` and `description` can be updated, and a recomputation is a new table rather than an edit of this one. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL */
+export type TableDatasetSourceFilesArgs = {
+  filters?: InputMaybe<FileLinkFilter>;
 };
 
 /** One declared column of a table dataset: its name, dtype and role. A COORDINATE column is also an axis of the table's space */
@@ -9293,6 +9601,14 @@ export type TableDatasetDerivedFromInput = {
   kind?: DerivationSourceKind;
   tableDataset: Scalars['ID']['input'];
   transform?: InputMaybe<TransformInput>;
+  valueRelation?: InputMaybe<ValueRelation>;
+};
+
+/** The fields a TABLE_DATASET export link reads. Published for codegen; the wire type is the flat ExportOfInput */
+export type TableDatasetExportOfInput = {
+  kind?: FileLinkContainerKind;
+  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  tableDataset: Scalars['ID']['input'];
   valueRelation?: InputMaybe<ValueRelation>;
 };
 
@@ -9360,8 +9676,6 @@ export type TableFilter = {
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
-  /** Filter for tables that are not derived from another table */
-  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
   /** Search by name (full-text search) */
@@ -9799,6 +10113,12 @@ export type TreeNodeInput = {
   gap?: InputMaybe<Scalars['Int']['input']>;
   kind: RenderNodeKind;
   label?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for deleting a file link by ID */
+export type UnlinkFileInput = {
+  /** The ID of the file link to delete */
+  id: Scalars['ID']['input'];
 };
 
 /** The fields an UNMAPPABLE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput */
@@ -10384,7 +10704,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -10405,7 +10725,7 @@ export type DataArrayFragment = { __typename?: 'DataArray', id: string, level: n
 
 export type ListADatasetFragment = { __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null };
 
-export type ADatasetFragment = { __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } | null, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, shape: Array<number>, chunkShape: Array<number>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> };
+export type ADatasetFragment = { __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } | null, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, shape: Array<number>, chunkShape: Array<number>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> };
 
 export type FullCoordinateAnchorFragment = { __typename?: 'CoordinateAnchor', id: string, coordinates: any, channelLabel?: { __typename?: 'ChannelLabel', id: string, label: string } | null, valueHistogram?: { __typename?: 'ValueHistogram', id: string, bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, lightGraph?: { __typename?: 'LightPath', id: string, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'ApertureElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelength?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLength: any, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistance?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameter?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PolarizerElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'ShutterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'WaveplateElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null, microscope?: { __typename?: 'OptikitState', id: string, state: { __typename?: 'OptikitStateGraph', temperature?: any | null, stage?: { __typename?: 'StageState', x?: any | null, y?: any | null, z?: any | null } | null, devices: Array<{ __typename?: 'DeviceState', kind?: string | null, label: string, settings: Array<{ __typename?: 'Setting', name: string, text?: string | null, number?: number | null, flag?: boolean | null, quantity?: any | null }> }> } } | null, phasorCalibrations: Array<{ __typename?: 'PhasorCalibration', id: string, axis: string, harmonic: number, phaseOffset?: number | null, modulationFactor?: number | null, reference?: string | null }>, phasorHistograms: Array<{ __typename?: 'PhasorHistogram', id: string, axis: string, harmonic: number, bins: number, calibrated: boolean, total?: number | null, gMin: number, gMax: number, sMin: number, sMax: number }> };
 
@@ -10525,7 +10845,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
+export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } };
 
@@ -10683,9 +11003,9 @@ export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, ke
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, bucket: string };
 
-export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> };
+export type TableFragment = { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> };
 
-export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
+export type ListTableFragment = { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
 
 export type TableDatasetColumnFragment = { __typename?: 'TableDatasetColumn', id: string, name: string, longName?: string | null, dtype: string, role: TableColumnRole, axisType?: AxisType | null, unit?: string | null, order: number };
 
@@ -11067,13 +11387,12 @@ export type CreateEraMutation = { __typename?: 'Mutation', createEra: { __typena
 export type From_File_LikeMutationVariables = Exact<{
   file: Scalars['FileLike']['input'];
   name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   dataset?: InputMaybe<Scalars['ID']['input']>;
   viewPagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type DeleteFileMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11327,12 +11646,11 @@ export type PinStageMutation = { __typename?: 'Mutation', pinStage: { __typename
 export type From_Parquet_LikeMutationVariables = Exact<{
   dataframe: Scalars['ParquetLike']['input'];
   name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   dataset?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
 
 export type CreateTransformationMutationVariables = Exact<{
   input: CreateTransformationInput;
@@ -11439,7 +11757,7 @@ export type GetADatasetQueryVariables = Exact<{
 }>;
 
 
-export type GetADatasetQuery = { __typename?: 'Query', adataset: { __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, scenes: Array<{ __typename?: 'Scene', id: string, name: string, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } | null, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, shape: Array<number>, chunkShape: Array<number>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } };
+export type GetADatasetQuery = { __typename?: 'Query', adataset: { __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, scenes: Array<{ __typename?: 'Scene', id: string, name: string, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } | null, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, shape: Array<number>, chunkShape: Array<number>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> } };
 
 export type GetADatasetsQueryVariables = Exact<{
   filters?: InputMaybe<ADatasetFilter>;
@@ -11455,7 +11773,7 @@ export type GetADatasetDerivedQueryVariables = Exact<{
 }>;
 
 
-export type GetADatasetDerivedQuery = { __typename?: 'Query', adataset: { __typename?: 'ADataset', id: string, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, derivedDatasets: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, derivedFrom: Array<{ __typename?: 'AffineTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'BijectionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'ByDimensionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'FieldTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'IdentityTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'MapAxisTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'RotationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'ScaleTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'SequenceTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'TranslationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }> }, lenses: Array<{ __typename?: 'Lens', id: string, axisNames: Array<string>, shape: Array<number>, slices: Array<{ __typename?: 'Slice', axis: string, start?: number | null, stop?: number | null, step?: number | null }>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }> };
+export type GetADatasetDerivedQuery = { __typename?: 'Query', adataset: { __typename?: 'ADataset', id: string, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, derivedFrom: Array<{ __typename?: 'AffineTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'BijectionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'ByDimensionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'FieldTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'IdentityTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'MapAxisTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'RotationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'ScaleTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'SequenceTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'TranslationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null }>, derivedDatasets: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, derivedFrom: Array<{ __typename?: 'AffineTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'BijectionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'ByDimensionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'FieldTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'IdentityTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'MapAxisTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'RotationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'ScaleTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'SequenceTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'TranslationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename?: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }> }, lenses: Array<{ __typename?: 'Lens', id: string, axisNames: Array<string>, shape: Array<number>, slices: Array<{ __typename?: 'Slice', axis: string, start?: number | null, stop?: number | null, step?: number | null }>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }> };
 
 export type GetADatasetIntrinsicSystemQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11617,7 +11935,7 @@ export type GetFileQueryVariables = Exact<{
 }>;
 
 
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, origins: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
@@ -11895,7 +12213,7 @@ export type GetTableQueryVariables = Exact<{
 }>;
 
 
-export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
 
 export type GetTablesQueryVariables = Exact<{
   filters?: InputMaybe<TableFilter>;
@@ -11903,7 +12221,7 @@ export type GetTablesQueryVariables = Exact<{
 }>;
 
 
-export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
+export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
 
 export type GetTableDatasetQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -12174,6 +12492,7 @@ export const ADatasetFragmentDoc = gql`
   axisNames
   shape
   multiscale
+  spec
   intrinsicSystem {
     ...CoordinateSystem
   }
@@ -12768,9 +13087,6 @@ export const BigFileStoreFragmentDoc = gql`
     ${BigFileAccessGrantFragmentDoc}`;
 export const FileFragmentDoc = gql`
     fragment File on File {
-  origins {
-    ...ListImage
-  }
   id
   name
   store {
@@ -12792,8 +13108,8 @@ export const FileFragmentDoc = gql`
   size
   contentType
 }
-    ${ListImageFragmentDoc}
-${BigFileStoreFragmentDoc}
+    ${BigFileStoreFragmentDoc}
+${ListImageFragmentDoc}
 ${ProvenanceEntryFragmentDoc}`;
 export const SnapshotFragmentDoc = gql`
     fragment Snapshot on Snapshot {
@@ -13580,9 +13896,6 @@ export const LabelAccessorFragmentDoc = gql`
     ${AccessorFragmentDoc}`;
 export const TableFragmentDoc = gql`
     fragment Table on Table {
-  origins {
-    id
-  }
   id
   name
   store {
@@ -13608,9 +13921,6 @@ ${ImageAccessorFragmentDoc}
 ${LabelAccessorFragmentDoc}`;
 export const ListTableFragmentDoc = gql`
     fragment ListTable on Table {
-  origins {
-    id
-  }
   id
   name
   store {
@@ -14053,10 +14363,8 @@ export const CreateEraDocument = gql`
 }
     `;
 export const From_File_LikeDocument = gql`
-    mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID, $viewPagination: OffsetPaginationInput) {
-  fromFileLike(
-    input: {file: $file, fileName: $name, origins: $origins, dataset: $dataset}
-  ) {
+    mutation from_file_like($file: FileLike!, $name: String!, $dataset: ID, $viewPagination: OffsetPaginationInput) {
+  fromFileLike(input: {file: $file, fileName: $name, dataset: $dataset}) {
     ...File
   }
 }
@@ -14302,10 +14610,8 @@ export const PinStageDocument = gql`
 }
     ${StageFragmentDoc}`;
 export const From_Parquet_LikeDocument = gql`
-    mutation from_parquet_like($dataframe: ParquetLike!, $name: String!, $origins: [ID!], $dataset: ID) {
-  fromParquetLike(
-    input: {dataframe: $dataframe, name: $name, origins: $origins, dataset: $dataset}
-  ) {
+    mutation from_parquet_like($dataframe: ParquetLike!, $name: String!, $dataset: ID) {
+  fromParquetLike(input: {dataframe: $dataframe, name: $name, dataset: $dataset}) {
     ...Table
   }
 }
@@ -14424,6 +14730,35 @@ export const GetADatasetDerivedDocument = gql`
       id
       name
     }
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    derivedFrom {
+      id
+      kind
+      valueRelation
+      output {
+        id
+        name
+        residents {
+          __typename
+          ... on ADataset {
+            id
+            name
+          }
+          ... on Lens {
+            id
+            dataset {
+              id
+              name
+            }
+          }
+        }
+      }
+      ... on UnmappableTransformation {
+        reason
+      }
+    }
     derivedDatasets {
       ...ListADataset
       derivedFrom {
@@ -14453,7 +14788,8 @@ export const GetADatasetDerivedDocument = gql`
     }
   }
 }
-    ${ListADatasetFragmentDoc}
+    ${ProvenanceEntryFragmentDoc}
+${ListADatasetFragmentDoc}
 ${DimSliceFragmentDoc}`;
 export const GetADatasetIntrinsicSystemDocument = gql`
     query GetADatasetIntrinsicSystem($id: ID!) {

@@ -12,6 +12,7 @@ import { AnimationPanel } from "./panels/AnimationPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import {
   SceneAnimationsSidebar,
+  SceneAnnotationsSidebar,
   SceneLayersSidebar,
 } from "./panels/sceneSidebarTabs";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
@@ -77,4 +78,5 @@ export const Scene = Object.assign(SceneRoot, {
   DimSliders: DimSliderPanel,
   LayersSidebar: SceneLayersSidebar,
   AnimationsSidebar: SceneAnimationsSidebar,
+  AnnotationsSidebar: SceneAnnotationsSidebar,
 });

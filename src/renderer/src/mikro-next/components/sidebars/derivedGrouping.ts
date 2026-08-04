@@ -105,3 +105,49 @@ export const groupDerived = <L extends GroupableLens, D extends GroupableDerived
     (group) => group.items.length > 0,
   );
 };
+
+/** A `Resident` of the space an edge lands in, as far as finding a parent cares. */
+export type ParentResident =
+  | { __typename: "ADataset"; id: string; name: string }
+  | { __typename: "Lens"; id: string; dataset: { id: string; name: string } }
+  | { __typename: string };
+
+export type ParentEdge = {
+  output?: { residents: readonly ParentResident[] } | null;
+};
+
+/**
+ * The dataset on the far side of a derivation edge.
+ *
+ * An edge does not name its parent — it names the SPACE it lands in, and the
+ * parent is whatever dataset lives there. Two shapes reach one: the space is a
+ * dataset's own intrinsic grid (an `ADataset` resident), or it is the crop a
+ * lens cuts out (a `Lens` resident, whose `dataset` is the parent). The other
+ * resident kinds — arrays, meshes, tables — are not datasets and are skipped.
+ *
+ * Prefers a direct `ADataset` over a lens: when both are present the space IS
+ * the dataset's grid, and naming the dataset is the more direct answer.
+ * Null when nothing in the space is a dataset, which is a placement this UI has
+ * nothing useful to say about rather than an error.
+ */
+export const parentDatasetOfEdge = (
+  edge: ParentEdge,
+): { id: string; name: string } | null => {
+  const residents = edge.output?.residents ?? [];
+
+  for (const resident of residents) {
+    if (resident.__typename === "ADataset") {
+      const dataset = resident as { id: string; name: string };
+      return { id: dataset.id, name: dataset.name };
+    }
+  }
+
+  for (const resident of residents) {
+    if (resident.__typename === "Lens") {
+      const lens = resident as { dataset: { id: string; name: string } };
+      return { id: lens.dataset.id, name: lens.dataset.name };
+    }
+  }
+
+  return null;
+};

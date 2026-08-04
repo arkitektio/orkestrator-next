@@ -39,7 +39,7 @@ import { SceneScreenshot } from "./overlays/SceneScreenshot";
 import { DebugPanel } from "./panels/DebugPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
-import { SelectedRoiPanel } from "./panels/SelectedRoiPanel";
+import { RoiDeleteKeybinding } from "./interactions/RoiDeleteKeybinding";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { WebGPUUnavailableError } from "./render/gpu/webgpuSupport";
 import { useModeStore } from "./store/modeStore";
@@ -356,7 +356,10 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <WhenDebug>
           <DebugPanel />
         </WhenDebug>
-        <SelectedRoiPanel />
+        {/* Selection details live in the Annotations sidebar tab; only the
+            Backspace-delete keybinding stays viewport-owned (sidebar tabs
+            unmount when inactive, a keybinding must not). */}
+        <RoiDeleteKeybinding />
         <VisibilityManager />
         <AttributeProbeTracker />
         <ScaleBar />

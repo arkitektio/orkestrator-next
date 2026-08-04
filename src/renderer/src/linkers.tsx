@@ -708,6 +708,11 @@ export const MikroROI = buildSmart(
   "mikro/rois",
   { name: "R O I" },
 );
+export const MikroAnnotation = buildSmart(
+  "@mikro/annotation",
+  "mikro/annotations",
+  { name: "Annotation" },
+);
 export const MikroEntityRelation = buildSmart(
   "@mikro/entityrelation",
   "mikro/entityrelations",

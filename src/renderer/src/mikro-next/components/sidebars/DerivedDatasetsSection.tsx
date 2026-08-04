@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/empty";
 import { MikroADataset } from "@/linkers";
 import { Grid3x3 } from "lucide-react";
-import { GetADatasetDerivedQuery, useGetADatasetDerivedQuery } from "../../api/graphql";
+import { GetADatasetDerivedQuery } from "../../api/graphql";
 import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec } from "../../specs";
 import { groupDerived } from "./derivedGrouping";
 
@@ -14,10 +14,14 @@ import { groupDerived } from "./derivedGrouping";
  * What came OUT of this dataset — the deconvolutions, segmentations, projections
  * and fusions that named one of its spaces as a parent.
  *
- * `ADataset.derivedDatasets` is already the union the tab promises: a child is
+ * `ADataset.derivedDatasets` is already the union this promises: a child is
  * listed there whether it was computed from the dataset's intrinsic grid or from
  * the space a slicing lens cuts out, because a lens' space IS a space of the
  * dataset. The lenses are fetched alongside only to LABEL the groups.
+ *
+ * A section rather than a tab of its own: it is one half of the dataset's
+ * lineage, and it reads next to the other half (`derivedFrom`) and the edit
+ * history in the Info tab. The query lives with that tab, so this takes data.
  */
 
 type QueryLens = GetADatasetDerivedQuery["lenses"][number];
@@ -112,57 +116,32 @@ const DerivedRow = ({
   );
 };
 
-export const DerivedDatasetsSidebar = ({
-  dataset,
+export const DerivedDatasetsSection = ({
+  intrinsicSystem,
+  lenses,
+  derived,
 }: {
-  dataset: { id: string };
+  intrinsicSystem: GetADatasetDerivedQuery["adataset"]["intrinsicSystem"];
+  lenses: readonly QueryLens[];
+  derived: readonly QueryDerived[];
 }) => {
-  // cache-and-network so reopening the tab after a task ran shows what it
-  // produced; the tab is unmounted while inactive (Radix TabsContent), so the
-  // query does not fire until someone actually opens it.
-  const { data, error, loading } = useGetADatasetDerivedQuery({
-    variables: { id: dataset.id },
-    fetchPolicy: "cache-and-network",
-  });
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <h2 className="mb-4 text-lg font-semibold">Derived datasets</h2>
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">
-            Error loading derived datasets: {error.message}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="p-4 text-xs text-muted-foreground">
-        {loading ? "Loading…" : null}
-      </div>
-    );
-  }
-
   const groups = groupDerived<QueryLens, QueryDerived>(
-    data.adataset.intrinsicSystem?.id,
-    data.adataset.intrinsicSystem?.name,
-    data.lenses,
-    data.adataset.derivedDatasets,
+    intrinsicSystem?.id,
+    intrinsicSystem?.name,
+    lenses,
+    derived,
   );
 
-  const total = data.adataset.derivedDatasets.length;
-
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex flex-col gap-3">
       <div className="flex flex-row items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">Derived datasets</h2>
-        <span className="text-xs tabular-nums text-muted-foreground">{total}</span>
+        <div className="text-xs font-semibold">Derived to</div>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {derived.length}
+        </span>
       </div>
 
-      {total === 0 ? (
+      {derived.length === 0 ? (
         <Empty>
           <EmptyTitle>Nothing derived yet</EmptyTitle>
           <EmptyDescription>
@@ -174,7 +153,9 @@ export const DerivedDatasetsSidebar = ({
         groups.map((group) => (
           <div key={group.key} className="flex flex-col gap-2">
             <div className="flex flex-col gap-0.5">
-              <div className="text-xs font-semibold">{group.title}</div>
+              <div className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">
+                {group.title}
+              </div>
               {group.subtitle && (
                 <div className="truncate font-mono text-[0.625rem] text-muted-foreground">
                   {group.subtitle}

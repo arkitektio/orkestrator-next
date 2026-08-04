@@ -42,6 +42,9 @@ fragment ADataset on ADataset {
   axisNames
   shape
   multiscale
+  # What the dataset structurally is. On the list fragment for the card badges;
+  # here because the detail page's Info panel leads with the same tags.
+  spec
   # The structural pixel grid: the space ROIs resolve against and every level
   # and lens maps into.
   intrinsicSystem {

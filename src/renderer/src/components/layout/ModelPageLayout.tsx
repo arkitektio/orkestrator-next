@@ -1,7 +1,6 @@
 import { Guard } from "@/app/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { RunsSidebar } from "@/rekuest/sidebars/RunsSidebar";
 import { Identifier, Object } from "@/types";
 import { useMemo } from "react";
 import { Sidebars } from "./Sidebars";
@@ -15,7 +14,6 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -66,9 +64,6 @@ export const ModelPageLayout = ({
   const knowledgeSidebar = (
     <KnowledgeSidebar identifier={identifier} object={object} />
   );
-  const alpakaRoomsSidebar = (
-    <StructureRoomsSidebar identifier={identifier} object={object} />
-  );
 
   return (
     <PageLayout
@@ -82,12 +77,6 @@ export const ModelPageLayout = ({
           <Sidebars.Tab label="Comments">{kommentsSidebar}</Sidebars.Tab>
           <Sidebars.Tab label="Knowledge">
             <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>
-          </Sidebars.Tab>
-          <Sidebars.Tab label="Rooms">
-            <Guard.Alpaka>{alpakaRoomsSidebar}</Guard.Alpaka>
-          </Sidebars.Tab>
-          <Sidebars.Tab label="Tasks">
-            <RunsSidebar identifier={identifier} object={object} />
           </Sidebars.Tab>
           {additionalSidebars}
         </Sidebars>

@@ -1,6 +1,7 @@
 import { SceneGuard, useSceneScopeStatus } from "../SceneProvider";
 import { useSceneStore } from "../store/sceneStore";
 import { AnimationPanel } from "./AnimationPanel";
+import { AnnotationsPanel } from "./AnnotationsPanel";
 import { LayerControlPanel } from "./LayerControlPanel";
 
 /**
@@ -47,5 +48,12 @@ export const SceneLayersSidebar = () => (
 export const SceneAnimationsSidebar = () => (
   <SceneGuard fallback={<SidebarFallback />}>
     <AnimationPanel variant="sidebar" />
+  </SceneGuard>
+);
+
+/** Every annotation in the scene, with selection details, as a sidebar tab. */
+export const SceneAnnotationsSidebar = () => (
+  <SceneGuard fallback={<SidebarFallback />}>
+    <AnnotationsPanel variant="sidebar" />
   </SceneGuard>
 );

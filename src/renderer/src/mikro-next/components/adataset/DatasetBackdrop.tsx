@@ -25,11 +25,11 @@ type PageDataset = GetADatasetQuery["adataset"];
  * registrations are the offer; anything further is a space the dataset reaches
  * THROUGH another, which the bootstrap resolves on its own.
  *
- * One small round trip, shared through the Apollo cache by both callers on the
- * page (the backdrop and the header button), so mounting them together costs
- * one request, not two.
+ * One small round trip, shared through the Apollo cache by every caller on the
+ * page (the backdrop, the header button, and the Info tab's pixel sizes), so
+ * mounting them together costs one request, not three.
  */
-const useDatasetWorlds = (dataset: PageDataset) => {
+export const useDatasetWorlds = (dataset: PageDataset) => {
   const gridId = dataset.intrinsicSystem?.id;
   const { data } = useGetCoordinateGraphQuery({
     variables: { coordinateSystem: gridId as string, maxDepth: 1 },

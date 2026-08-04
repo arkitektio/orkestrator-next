@@ -7,12 +7,7 @@ import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownlo
 import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 import { MikroFile, MikroImage } from "@/linkers";
 import { useDownload } from "@/providers/download/DownloadProvider";
-import {
-  DownloadIcon,
-  FileIcon,
-  ImageIcon,
-  LinkIcon
-} from "lucide-react";
+import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
 import { useGetFileQuery, useListFileViewsQuery } from "../api/graphql";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
@@ -157,53 +152,9 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           </div>
         </dl>
 
-      {/* Origins (Lineage) */}
-      {file.origins && file.origins.length > 0 && (
-        <div className="space-y-4 mb-8 mt-3">
-          <div className="flex items-center gap-2 mb-2 border-b border-border/40 pb-2">
-            <LinkIcon className="h-4 w-4 text-indigo-500" />
-            <h2 className="text-lg font-bold tracking-tight">Origin Images</h2>
-            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 font-semibold text-xs ml-auto">
-              {file.origins.length} Total
-            </Badge>
-          </div>
-
-          <ListRender array={file.origins} fit>
-            {(origin) => (
-              <MikroImage.Smart object={origin} key={origin.id}>
-                <div className="relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden">
-                  {origin.latestSnapshot?.store ? (
-                    <WithMikroMediaUrl media={origin.latestSnapshot.store}>
-                      {(url) => (
-                        <img
-                          src={url}
-                          alt={origin.name}
-                          className="object-cover w-full h-full transition-transform duration-300 rounded-lg"
-                        />
-                      )}
-                    </WithMikroMediaUrl>
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted/30">
-                      <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                  )}
-
-                  <div className="px-2 py-2 h-full w-full absolute rounded-lg top-0 left-0 bg-black/40 hover:bg-black/20 transition-all ease-in-out duration-200 flex flex-col justify-between overflow-hidden">
-                    <div className="flex justify-between items-start gap-2">
-                      <MikroImage.DetailLink
-                        className="z-10 font-bold text-md cursor-pointer break-words line-clamp-2"
-                        object={origin}
-                      >
-                        {origin.name || "Unnamed Image"}
-                      </MikroImage.DetailLink>
-                    </div>
-                  </div>
-                </div>
-              </MikroImage.Smart>
-            )}
-          </ListRender>
-        </div>
-      )}
+      {/* The "Origin Images" section used to sit here. `File.origins` was
+          removed from the mikro schema, so there is nothing left to render:
+          what a file came from is now told by its provenance entries. */}
 
       {/* Derived Images */}
       <div className="space-y-4 mt-4">

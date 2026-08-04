@@ -41,9 +41,14 @@ export const DatasetTitleOverlay = ({
       {/* The name leads, at heading weight — this is the page's title, and the
           page has no other. */}
       <div className="flex flex-col gap-0.5">
+        {/* `break-all`, not `truncate` or `break-words`: a dataset name is
+            usually one long token with no spaces in it, so wrapping only at
+            spaces would not wrap at all and an ellipsis would hide the part
+            that tells them apart — the tail. Breaking mid-token shows all of
+            it. */}
         <MikroADataset.DetailLink
           object={dataset}
-          className="truncate text-3xl font-semibold leading-tight"
+          className="break-all text-3xl font-semibold leading-tight"
         >
           {dataset.name}
         </MikroADataset.DetailLink>

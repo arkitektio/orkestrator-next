@@ -1,7 +1,4 @@
 fragment Table on Table {
-  origins {
-    id
-  }
   id
   name
   store {
@@ -23,9 +20,6 @@ fragment Table on Table {
 }
 
 fragment ListTable on Table {
-  origins {
-    id
-  }
   id
   name
   store {

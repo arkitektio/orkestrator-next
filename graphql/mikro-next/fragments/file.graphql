@@ -1,7 +1,4 @@
 fragment File on File {
-  origins {
-    ...ListImage
-  }
   id
   name
   store {

@@ -8,30 +8,50 @@ import {
 } from "./sceneNavigation";
 
 describe("navigationActionForKey", () => {
-  it("pans along the screen basis with a bare arrow", () => {
-    expect(navigationActionForKey("ArrowLeft", false)).toEqual({ kind: "pan", dx: -1, dy: 0 });
-    expect(navigationActionForKey("ArrowRight", false)).toEqual({ kind: "pan", dx: 1, dy: 0 });
-    expect(navigationActionForKey("ArrowUp", false)).toEqual({ kind: "pan", dx: 0, dy: 1 });
-    expect(navigationActionForKey("ArrowDown", false)).toEqual({ kind: "pan", dx: 0, dy: -1 });
+  it.each(["2D", "3D"] as const)("pans along the screen basis with a bare arrow (%s)", (mode) => {
+    expect(navigationActionForKey("ArrowLeft", false, mode)).toEqual({ kind: "pan", dx: -1, dy: 0 });
+    expect(navigationActionForKey("ArrowRight", false, mode)).toEqual({ kind: "pan", dx: 1, dy: 0 });
+    expect(navigationActionForKey("ArrowUp", false, mode)).toEqual({ kind: "pan", dx: 0, dy: 1 });
+    expect(navigationActionForKey("ArrowDown", false, mode)).toEqual({ kind: "pan", dx: 0, dy: -1 });
   });
 
-  it("puts the data axes on the shifted arrows", () => {
-    expect(navigationActionForKey("ArrowLeft", true)).toEqual({ kind: "z", direction: -1 });
-    expect(navigationActionForKey("ArrowRight", true)).toEqual({ kind: "z", direction: 1 });
+  it("turns the camera on the shifted horizontals in 3D", () => {
+    expect(navigationActionForKey("ArrowLeft", true, "3D")).toEqual({
+      kind: "orbit",
+      direction: -1,
+    });
+    expect(navigationActionForKey("ArrowRight", true, "3D")).toEqual({
+      kind: "orbit",
+      direction: 1,
+    });
   });
 
-  it("zooms in on shift+up, out on shift+down", () => {
-    expect(navigationActionForKey("ArrowUp", true)).toEqual({ kind: "zoom", direction: 1 });
-    expect(navigationActionForKey("ArrowDown", true)).toEqual({ kind: "zoom", direction: -1 });
+  it("walks the Z stack on the same keys in 2D, where turning is disabled", () => {
+    expect(navigationActionForKey("ArrowLeft", true, "2D")).toEqual({ kind: "z", direction: -1 });
+    expect(navigationActionForKey("ArrowRight", true, "2D")).toEqual({ kind: "z", direction: 1 });
+  });
+
+  it.each(["2D", "3D"] as const)("zooms on shift+up/down in %s", (mode) => {
+    expect(navigationActionForKey("ArrowUp", true, mode)).toEqual({ kind: "zoom", direction: 1 });
+    expect(navigationActionForKey("ArrowDown", true, mode)).toEqual({ kind: "zoom", direction: -1 });
   });
 
   it("leaves every other key alone", () => {
     // The digit row belongs to the layer-visibility binding, and the numpad
     // arrows report their own codes — neither is claimed here.
-    expect(navigationActionForKey("Digit1", true)).toBeNull();
-    expect(navigationActionForKey("Numpad4", false)).toBeNull();
-    expect(navigationActionForKey("KeyD", false)).toBeNull();
-    expect(navigationActionForKey("", true)).toBeNull();
+    expect(navigationActionForKey("Digit1", true, "3D")).toBeNull();
+    expect(navigationActionForKey("Numpad4", false, "2D")).toBeNull();
+    expect(navigationActionForKey("KeyD", false, "3D")).toBeNull();
+    expect(navigationActionForKey("", true, "2D")).toBeNull();
+  });
+
+  it("never returns an action its mode cannot perform", () => {
+    // The point of the split: no key is dead, and neither is bound to something
+    // the current view has switched off.
+    for (const code of ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]) {
+      expect(navigationActionForKey(code, true, "2D")?.kind).not.toBe("orbit");
+      expect(navigationActionForKey(code, true, "3D")?.kind).not.toBe("z");
+    }
   });
 });
 

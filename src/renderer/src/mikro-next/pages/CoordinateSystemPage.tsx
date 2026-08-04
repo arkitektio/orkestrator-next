@@ -25,6 +25,7 @@ import {
   PixelSizeEdge,
   formatPixelSize,
   pixelSizeEntries,
+  spatialPixelSizes,
 } from "../components/coordinates/pixelSize";
 import {
   isReferenceFrame,
@@ -136,10 +137,12 @@ export const CoordinateSystemPage = asDetailQueryRoute(
     // Units are the test rather than "has a scale edge" because a pyramid level
     // maps into its dataset's grid by a scale too — but into unitless pixels,
     // which is a resolution, not a pixel size.
+    // SPACE axes only: a calibration edge scales the time and spectral axes
+    // too, but those are sampling intervals rather than the extent of a voxel,
+    // and listing them under "Pixel size" claims a geometry that is not there.
     const calibrationEdge = inbound[0];
-    const pixelSizes = pixelSizeEntries(
-      calibrationEdge as PixelSizeEdge,
-      system.axes,
+    const pixelSizes = spatialPixelSizes(
+      pixelSizeEntries(calibrationEdge as PixelSizeEdge, system.axes),
     );
     const isCalibration = pixelSizes.some((entry) => entry.unit);
     const assumed = assumedCount(inbound);

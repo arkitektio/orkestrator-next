@@ -25,6 +25,7 @@ const Page = asDetailQueryRoute(
           additionalSidebars={
             <>
               <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>
+              <Sidebars.Tab label="Annotations"><Scene.AnnotationsSidebar /></Sidebars.Tab>
               <Sidebars.Tab label="Animations"><Scene.AnimationsSidebar /></Sidebars.Tab>
             </>
           }

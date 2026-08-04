@@ -1,70 +1,27 @@
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { MikroHistory, RekuestTask } from "@/linkers";
-import { AppInfo } from "@/lok-next/components/protected/AppInfo";
-import { UserInfo } from "@/lok-next/components/protected/UserInfo";
-import Timestamp from "react-timestamp";
-import { HistoryKind, ProvenanceEntryFragment } from "../../api/graphql";
+import { Card, CardContent } from "@/components/ui/card";
+import { MikroHistory } from "@/linkers";
+import { ProvenanceEntryFragment } from "../../api/graphql";
+import { ProvenanceEntryBody } from "../provenance/ProvenanceEntryBody";
 
 interface HistoryCardProps {
   history: ProvenanceEntryFragment;
-
 }
 
+/**
+ * One provenance entry as a standalone card, for the pages that give provenance
+ * a rail of its own.
+ *
+ * The card is now just the frame: what it says lives in `ProvenanceEntryBody`,
+ * shared with the dataset Info tab's compact rows. It used to have a
+ * `CardHeader`/`CardTitle` of its own, which made every entry in a list read as
+ * a heading — a list of twenty renames is not twenty headings.
+ */
 const TheCard = ({ history }: HistoryCardProps) => {
   return (
-    <MikroHistory.Smart object={history} key={history.id}>
-      <Card key={history.id}>
-        <CardHeader className="flex flex-row gap-1">
-          <div className="my-auto">
-            <UserInfo sub={history.user?.sub}></UserInfo>
-          </div>
-          <div>
-            <CardTitle>
-              {history.kind == HistoryKind.Create && "created it"}{" "}
-              {history.kind == HistoryKind.Update && "updated"}{" "}
-              {history.kind == HistoryKind.Delete && "deleted it"}
-            </CardTitle>
-            <CardDescription>
-              <Timestamp date={history.date} relative className="text-xs" />
-              <div className="text-muted-xs w-auto text-sm">
-                {history.client && (
-                  <>
-                    utilizing{" "}
-                    <AppInfo clientId={history.client?.clientId}></AppInfo>
-                  </>
-                )}
-              </div>
-              {history.task && (
-                <RekuestTask.DetailLink
-                  className={({ isActive } /*  */) =>
-                    "z-10 font-bold text-md mb-2 cursor-pointer " +
-                    (isActive ? "text-primary-300" : "")
-                  }
-                  object={{id: history.task.taskId}}
-                >
-                  <Badge> during</Badge>
-                </RekuestTask.DetailLink>
-              )}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {history.effectiveChanges.map((change) => (
-            <div className="flex flex-row gap-1">
-              <Badge variant="outline"> {change.field}</Badge>{" "}
-              <div className="text-xs text-muted-foreground my-auto">from</div>{" "}
-              <div className="text-muted-xs my-auto">{change.oldValue}</div>{" "}
-              <div className="text-xs text-muted-foreground my-auto">to</div>
-              <div className="text-muted-xs my-auto">{change.newValue}</div>
-            </div>
-          ))}
+    <MikroHistory.Smart object={history}>
+      <Card className="transition-colors hover:bg-accent/50">
+        <CardContent className="p-3">
+          <ProvenanceEntryBody entry={history} />
         </CardContent>
       </Card>
     </MikroHistory.Smart>

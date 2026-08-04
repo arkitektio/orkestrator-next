@@ -7,7 +7,6 @@ import { DatasetBackdrop } from '../components/adataset/DatasetBackdrop'
 import { DatasetTitleOverlay } from '../components/adataset/DatasetTitleOverlay'
 import { Scene } from '../components/scene/Scene'
 import { DatasetInfoSidebar } from '../components/sidebars/DatasetInfoSidebar'
-import { DerivedDatasetsSidebar } from '../components/sidebars/DerivedDatasetsSidebar'
 
 export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) => {
   const dataset = data.adataset
@@ -49,11 +48,11 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       additionalSidebars={
         <>
           <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>
+          <Sidebars.Tab label="Annotations"><Scene.AnnotationsSidebar /></Sidebars.Tab>
+          {/* No separate "Derived" tab: what this dataset came from and what
+              came out of it are both in Info, next to the facts they explain. */}
           <Sidebars.Tab label="Info">
             <DatasetInfoSidebar dataset={dataset} />
-          </Sidebars.Tab>
-          <Sidebars.Tab label="Derived">
-            <DerivedDatasetsSidebar dataset={dataset} />
           </Sidebars.Tab>
         </>
       }

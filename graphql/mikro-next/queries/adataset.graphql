@@ -20,12 +20,20 @@ query GetADatasets(
   }
 }
 
-# What this dataset produced: every child that named one of its spaces as a parent —
-# its intrinsic grid, or the space a slicing lens cuts out. `derivedDatasets` already
-# unions both (a lens' space IS a space of the dataset), so the lenses here only LABEL
-# the groups, they do not widen the set. A derivation edge maps the child's own grid
+# Where this dataset came from and what it produced, plus its edit history — the
+# whole provenance panel in one round trip.
+#
+# Downwards: every child that named one of its spaces as a parent — its intrinsic
+# grid, or the space a slicing lens cuts out. `derivedDatasets` already unions both
+# (a lens' space IS a space of the dataset), so the lenses here only LABEL the
+# groups, they do not widen the set. A derivation edge maps the child's own grid
 # BACK INTO the space it was computed from, so `derivedFrom[].output` is the parent
 # space — and `derivedFrom[0]` is the primary parent, the one that places the child.
+#
+# Upwards: this dataset's OWN `derivedFrom`, empty for anything acquired rather than
+# computed. The parent is not on the edge, it is whatever lives in the space the edge
+# lands in, so `output.residents` is the hop back to a dataset — directly for a
+# parent's intrinsic grid, through `Lens.dataset` when the parent was a crop.
 query GetADatasetDerived($id: ID!) {
   adataset(id: $id) {
     id
@@ -34,6 +42,35 @@ query GetADatasetDerived($id: ID!) {
     intrinsicSystem {
       id
       name
+    }
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    derivedFrom {
+      id
+      kind
+      valueRelation
+      output {
+        id
+        name
+        residents {
+          __typename
+          ... on ADataset {
+            id
+            name
+          }
+          ... on Lens {
+            id
+            dataset {
+              id
+              name
+            }
+          }
+        }
+      }
+      ... on UnmappableTransformation {
+        reason
+      }
     }
     derivedDatasets {
       ...ListADataset

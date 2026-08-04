@@ -276,10 +276,12 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   work inside `gpuRepacker.flush()` to the same frame budget. While the
   camera is mid-gesture the drain runs the **interacting policy**
   (`resolveDrainPolicy`): trickle budget (2 MB / 4 bricks / 1.5 ms), no
-  first-brick free pass, no stale pass, and GPU-repack dispatches deferred
-  entirely (their queue entries survive; decoded chunks stay cached) — so
-  uploads never collide with gesture frames and the backlog drains at full
-  budget on the first settled frame.
+  first-brick free pass, no stale pass. GPU-repack dispatch deliberately
+  STAYS allowed — blocking it starved gpu-path pools for whole gestures
+  (measured: 110 decoded bricks stuck in the upload queue, 565 planDrops as
+  replans turned the undrained queue over); the real-bytes charging above
+  bounds the flush to ~one cold-chunk `writeBuffer` per frame instead. The
+  backlog drains at full budget on the first settled frame.
 - **Stats are first-seen-honest**: `bytesDecoded` counts a chunk key once, not
   per cache hit (pitfall P10). `buildDebugReport()` backs the DebugPanel's
   "Copy debug report" button — paste that JSON when reporting perf issues.
@@ -359,6 +361,20 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
     whole phasor branch — kind load, 2 extra taps, atan/tan/sqrt, the 16×24
     cursor loop — omitted from its WGSL. The layer keys its material-bundle
     memo on the flag, so adding a phasor source rebuilds the material.
+
+  **Zoom smoothing** (`orkestrator.smoothZoom`, default ON, DebugPanel
+  toggle): once a RESIDENT sample's resolved level is magnified past
+  `uSmoothThreshold` px/voxel (default 3), the INTENSITY tap switches from
+  trilinear to a tricubic B-spline reconstruction — 8 trilinear taps via the
+  two-tap decomposition (`emitTricubicTap`; algebra pinned by
+  `core/tricubic.ts` tests) — so magnified fluorescence renders as smooth
+  blobs instead of hard voxel blocks. Cost is bounded: it only engages where
+  rays are short (deep zoom). Caveats: the 1-voxel atlas border is smaller
+  than the ±1.5-voxel cubic support, so taps are CLAMPED to the slot/slab
+  interior (edge voxels smooth slightly less; border 2 is the follow-up if
+  seams show); phasor g/s taps stay single-tap; CPU probes read RAW voxel
+  values — smoothing is a display-space reconstruction filter, measurements
+  are unchanged.
 - **2D** (`layers/bricks/BrickPlaneLayer.tsx`): ONE full-layer quad (the
   per-chunk React mesh churn of `ChunkPlane` is gone); the legacy multi-channel
   compositor with its texture tap replaced by `sampleBrick(vec3(uv, slabZ),

@@ -71,12 +71,18 @@ export const MAX_STALE_QUEUE = 24;
 /**
  * How the drain behaves for the current interaction state. While the camera
  * moves, uploads are what collide with gesture frames: the first-brick free
- * pass admits single >15 ms `writeTexture`s, the stale pass spends leftover
- * budget on out-of-plan bricks, and a GPU-repack dispatch commits `flush()`
- * to multi-MB synchronous `writeBuffer`s. The interacting policy suspends all
- * three and shrinks the budget to a trickle — safe because the coarsest level
- * is always fully resident (deferred bricks render coarse, never black), and
- * the backlog drains at full budget the moment the gesture settles.
+ * pass admits single >15 ms `writeTexture`s and the stale pass spends
+ * leftover budget on out-of-plan bricks — the interacting policy suspends
+ * both and shrinks the budget to a trickle.
+ *
+ * GPU-repack dispatch stays ALLOWED while interacting. Blocking it starved
+ * gpu-path pools outright during any continuous gesture (measured: 110
+ * decoded bricks stuck in the upload queue, 565 planDrops as replans turned
+ * the undrained queue over — nothing rendered sharp until the camera fully
+ * stopped). The trickle budget bounds the cost instead: GPU bricks are
+ * charged their REAL flush bytes (source-chunk cache misses,
+ * `gpuFlushUploadBytes`), so at most ~one cold-chunk `writeBuffer` lands per
+ * frame and cache-hit bricks flow nearly free.
  */
 export type DrainPolicy = {
   budget: DrainBudget;
@@ -105,7 +111,7 @@ export function resolveDrainPolicy(
     },
     allowFreePass: false,
     allowStale: false,
-    allowGpuDispatch: false,
+    allowGpuDispatch: true,
   };
 }
 

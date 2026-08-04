@@ -158,14 +158,17 @@ describe("resolveDrainPolicy", () => {
     expect(policy.allowGpuDispatch).toBe(true);
   });
 
-  it("interacting: trickle budget, no free pass, no stale, no GPU dispatch", () => {
+  it("interacting: trickle budget, no free pass, no stale — but GPU dispatch STAYS on", () => {
     const policy = resolveDrainPolicy(tierBudget, true);
     expect(policy.budget.maxBytes).toBe(2 * 1024 * 1024);
     expect(policy.budget.maxBricks).toBe(4);
     expect(policy.budget.maxMs).toBe(1.5);
     expect(policy.allowFreePass).toBe(false);
     expect(policy.allowStale).toBe(false);
-    expect(policy.allowGpuDispatch).toBe(false);
+    // Blocking GPU dispatch starved gpu-path pools for entire gestures
+    // (110-brick queue backlogs, 565 planDrops); the byte budget bounds the
+    // flush cost instead.
+    expect(policy.allowGpuDispatch).toBe(true);
   });
 
   it("interacting caps never RAISE a lower tier budget", () => {

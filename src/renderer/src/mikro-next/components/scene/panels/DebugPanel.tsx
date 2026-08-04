@@ -18,7 +18,9 @@ import {
 } from "../render/bricks/volumeMergeGroups";
 import {
   isShaderFastPathEnabled,
+  isSmoothZoomEnabled,
   setShaderFastPathEnabled,
+  setSmoothZoomEnabled,
 } from "../render/bricks/shaderFlags";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
@@ -44,6 +46,7 @@ export const DebugPanel = () => {
   const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
   const [volumeMergeOn, setVolumeMergeOn] = useState(isVolumeMergeEnabled);
   const [shaderFastPathOn, setShaderFastPathOn] = useState(isShaderFastPathEnabled);
+  const [smoothZoomOn, setSmoothZoomOn] = useState(isSmoothZoomEnabled);
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   // Applied drawing-buffer DPR (CanvasSync re-registers the canvas on every
   // dpr change, so this chip tracks the interaction ladder live).
@@ -70,6 +73,12 @@ export const DebugPanel = () => {
     const next = !shaderFastPathOn;
     setShaderFastPathEnabled(next);
     setShaderFastPathOn(next);
+  };
+
+  const toggleSmoothZoom = () => {
+    const next = !smoothZoomOn;
+    setSmoothZoomEnabled(next);
+    setSmoothZoomOn(next);
   };
 
   const toggleAdaptiveDpr = () => {
@@ -404,6 +413,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 shader fast path: {shaderFastPathOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleSmoothZoom}
+                title="Tricubic reconstruction of magnified fluorescence (8-tap B-spline past ~3 px/voxel): smooth blobs instead of hard voxel blocks. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                smooth zoom: {smoothZoomOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleAdaptiveDpr}

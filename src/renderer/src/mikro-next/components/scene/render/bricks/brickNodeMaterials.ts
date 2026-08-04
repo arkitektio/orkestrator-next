@@ -67,7 +67,7 @@ export type UniformArrayNodeLike<T> = { array: T[] };
 
 import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
 import { NameScope } from "./tslNames";
-import { isShaderFastPathEnabled } from "./shaderFlags";
+import { isShaderFastPathEnabled, isSmoothZoomEnabled } from "./shaderFlags";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import {
   MAX_CHANNELS,
@@ -318,6 +318,12 @@ type ResolvedResidency = {
    * per fragment).
    */
   hopLevel: any;
+  /** Level the walk stopped RESIDENT at (coarsest when not resident) — the
+   * zoom-smoothing gate needs its voxel scale. */
+  residentLevel: any;
+  /** Atlas texel of the resident SLOT's origin (no border, no slab offset) —
+   * the tricubic tap clamp bounds derive from it. Zero when not resident. */
+  slotOriginTexel: any;
 };
 
 /**
@@ -359,6 +365,8 @@ function emitResolveBrickResidency(
   // Defaults to the coarsest level: only overwritten when the walk stops at
   // an EMPTY entry, so a fully-unmapped chain hops a coarsest-sized cell.
   const hopLevel = int(t.uNumLevels).sub(1).toVar("resHopLevel");
+  const residentLevel = int(t.uNumLevels).sub(1).toVar("resResidentLevel");
+  const slotOriginTexel = vec3(0.0).toVar("resSlotOrigin");
 
   Loop(
     { start: int(0), end: t.uNumLevels, type: "int", condition: "<", name: "sbLvl" },
@@ -404,6 +412,8 @@ function emitResolveBrickResidency(
         const inBrick = levelVoxel.sub(vec3(brick.mul(t.uBrickPayload)));
         const slot = ivec3(entry.xyz.mul(255.0).add(0.5));
         status.assign(1.0);
+        residentLevel.assign(int(sbLvl));
+        slotOriginTexel.assign(vec3(slot.mul(t.uSlotSize)));
         texelBase.assign(
           vec3(slot.mul(t.uSlotSize)).add(float(t.uBrickBorder)).add(inBrick),
         );
@@ -412,7 +422,7 @@ function emitResolveBrickResidency(
     },
   );
 
-  return { status, emptyValue, texelBase, hopLevel };
+  return { status, emptyValue, texelBase, hopLevel, residentLevel, slotOriginTexel };
 }
 
 /**
@@ -429,6 +439,10 @@ function emitChannelTap(
   // A phasor source taps THREE slabs in one scope (g, s, intensity), so the tap
   // vars must be uniquely named — two `chRaw`s in one scope would redeclare.
   name = "ch",
+  /** Zoom-smoothing gate node (or null when the filter is not emitted):
+   * when true at runtime, the resident tap is tricubic instead of trilinear.
+   * Only the INTENSITY tap passes this — phasor g/s stay single-tap. */
+  smooth: any = null,
 ): any {
   const raw = float(0.0).toVar(`${name}Raw`);
   If(resolved.status.greaterThan(1.5), () => {
@@ -438,14 +452,94 @@ function emitChannelTap(
     // slab offset into the next channel's tap.
     const texel = vec3(resolved.texelBase).toVar(`${name}Texel`);
     texel.z.addAssign(float(int(slabIndex).mul(t.uChannelSlabDepth)));
-    const tap = texture3D(t.brickAtlas, texel.div(t.uAtlasTexels));
-    // Fast path: explicit-LOD tap (textureSampleLevel). The atlas has no mips,
-    // so level 0 is the same texel data — but the implicit-derivative
-    // textureSample this replaces costs derivative math on every tap and is a
-    // WGSL uniformity hazard inside the divergent ray loop.
-    raw.assign((isShaderFastPathEnabled() ? tap.level(0) : tap).r.mul(t.uAtlasScale));
+    const singleTap = () => {
+      const tap = texture3D(t.brickAtlas, texel.div(t.uAtlasTexels));
+      // Fast path: explicit-LOD tap (textureSampleLevel). The atlas has no
+      // mips, so level 0 is the same texel data — but the implicit-derivative
+      // textureSample this replaces costs derivative math on every tap and is
+      // a WGSL uniformity hazard inside the divergent ray loop.
+      raw.assign((isShaderFastPathEnabled() ? tap.level(0) : tap).r.mul(t.uAtlasScale));
+    };
+    if (smooth) {
+      If(smooth, () => {
+        raw.assign(emitTricubicTap(t, resolved, texel, slabIndex, name));
+      }).Else(singleTap);
+    } else {
+      singleTap();
+    }
   });
   return raw;
+}
+
+/**
+ * Tricubic B-spline reconstruction of one channel slab at `texel` (continuous
+ * atlas texel coords, slab offset already applied) — the zoom-smoothing
+ * filter: magnified fluorescence renders as smooth blobs instead of the hard
+ * blocks trilinear leaves. Classic two-tap decomposition (Sigg & Hadwiger):
+ * per axis the four cubic weights collapse into TWO hardware-trilinear taps,
+ * so the full filter is 8 taps instead of 64. CPU lockstep mirror + algebra
+ * tests: `core/tricubic.ts`.
+ *
+ * The atlas border is 1 voxel but cubic support reaches ±1.5, so every tap is
+ * CLAMPED to the slot interior (x/y) and the channel slab (z) — edge voxels
+ * smooth slightly less rather than bleeding into a neighboring slot/slab.
+ * Emitted inside the slot loop: every declaration is uniquely named.
+ */
+function emitTricubicTap(
+  t: any,
+  resolved: ResolvedResidency,
+  texel: any,
+  slabIndex: any,
+  name: string,
+): any {
+  // Texel centers sit at half-integers: split into base index + fraction.
+  const tc = vec3(texel).sub(0.5).toVar(`${name}CubTc`);
+  const base = floor(tc).toVar(`${name}CubI`);
+  const f = tc.sub(base).toVar(`${name}CubF`);
+  const f2 = f.mul(f);
+  const f3 = f2.mul(f);
+  const omf = oneMinus(f);
+  // Uniform cubic B-spline weights (vectorized over xyz).
+  const w0 = omf.mul(omf).mul(omf).div(6.0).toVar(`${name}CubW0`);
+  const w1 = f3.mul(3.0).sub(f2.mul(6.0)).add(4.0).div(6.0).toVar(`${name}CubW1`);
+  const w2 = f3.mul(-3.0).add(f2.mul(3.0)).add(f.mul(3.0)).add(1.0).div(6.0).toVar(`${name}CubW2`);
+  const w3 = f3.div(6.0).toVar(`${name}CubW3`);
+  const g0 = w0.add(w1).toVar(`${name}CubG0`);
+  // Two tap positions per axis (+0.5 restores texel-center coords). The
+  // denominators are ≥ 1/6 for f ∈ [0,1) — no epsilon needed.
+  const h0 = base.sub(1.0).add(w1.div(g0)).add(0.5).toVar(`${name}CubH0`);
+  const h1 = base.add(1.0).add(w3.div(w2.add(w3))).add(0.5).toVar(`${name}CubH1`);
+
+  // Clamp to the slot interior / channel slab (border 1 < cubic support 1.5).
+  const slabStart = vec3(resolved.slotOriginTexel).z.add(
+    float(int(slabIndex).mul(t.uChannelSlabDepth)),
+  );
+  const clampMin = vec3(
+    vec3(resolved.slotOriginTexel).x.add(0.5),
+    vec3(resolved.slotOriginTexel).y.add(0.5),
+    slabStart.add(0.5),
+  ).toVar(`${name}CubMin`);
+  const clampMax = vec3(
+    vec3(resolved.slotOriginTexel).x.add(vec3(t.uSlotSize).x).sub(0.5),
+    vec3(resolved.slotOriginTexel).y.add(vec3(t.uSlotSize).y).sub(0.5),
+    slabStart.add(float(t.uChannelSlabDepth)).sub(0.5),
+  ).toVar(`${name}CubMax`);
+  h0.assign(clamp(h0, clampMin, clampMax));
+  h1.assign(clamp(h1, clampMin, clampMax));
+
+  const g1 = oneMinus(g0);
+  const tap = (x: any, y: any, z: any) =>
+    texture3D(t.brickAtlas, vec3(x, y, z).div(t.uAtlasTexels)).level(0).r;
+  // 8 taps, weighted by the per-axis g products.
+  const acc = tap(h0.x, h0.y, h0.z).mul(g0.x).mul(g0.y).mul(g0.z)
+    .add(tap(h1.x, h0.y, h0.z).mul(g1.x).mul(g0.y).mul(g0.z))
+    .add(tap(h0.x, h1.y, h0.z).mul(g0.x).mul(g1.y).mul(g0.z))
+    .add(tap(h1.x, h1.y, h0.z).mul(g1.x).mul(g1.y).mul(g0.z))
+    .add(tap(h0.x, h0.y, h1.z).mul(g0.x).mul(g0.y).mul(g1.z))
+    .add(tap(h1.x, h0.y, h1.z).mul(g1.x).mul(g0.y).mul(g1.z))
+    .add(tap(h0.x, h1.y, h1.z).mul(g0.x).mul(g1.y).mul(g1.z))
+    .add(tap(h1.x, h1.y, h1.z).mul(g1.x).mul(g1.y).mul(g1.z));
+  return acc.mul(t.uAtlasScale);
 }
 
 /** What one compositor slot contributes at one sample point. */
@@ -491,13 +585,21 @@ function emitSourceSample(
   // step×slot loop of EVERY volume shader. The material is rebuilt when a
   // phasor source appears (bundle memo keys on hasPhasorSources).
   emitPhasor = true,
+  /** Zoom-smoothing gate node (null = filter not emitted) — see emitChannelTap. */
+  smooth: any = null,
 ): SourceSample {
   const paramsA = vec4(c.chParamsA.element(slot)).toVar(nm("srcA")); // (slab, climMin, climMax, gamma)
   const paramsB = vec4(c.chParamsB.element(slot)).toVar(nm("srcB")); // (opacity, visible, invert, row)
 
   // The intensity tap: a channel's slab, or a phasor's mean-photon-count slab.
   // Either way the ordinary clim/gamma/invert transfer applies to it.
-  const rawIntensity = emitChannelTap(t, resolved, int(paramsA.x).toVar(nm("srcSlab")), nm("srcI"));
+  const rawIntensity = emitChannelTap(
+    t,
+    resolved,
+    int(paramsA.x).toVar(nm("srcSlab")),
+    nm("srcI"),
+    smooth,
+  );
   const norm = float(fns.channelNormalize(slot, rawIntensity)).toVar(nm("srcNorm"));
 
   const color = vec3(0.0).toVar(nm("srcColor"));
@@ -885,6 +987,8 @@ export type VolumeMaterialNodes = TraversalNodesPublic &
     uMinDelta: UniformNodeLike<number>;
     uStepScale: UniformNodeLike<number>;
     uMaxSteps: UniformNodeLike<number>;
+    /** Zoom-smoothing engagement threshold (px per resolved voxel; 0 = off). */
+    uSmoothThreshold: UniformNodeLike<number>;
     uBaseShape: UniformNodeLike<THREE.Vector3>;
     /** Member 0's projection mode — the single-layer alias. */
     projectionMode: UniformNodeLike<number>;
@@ -948,6 +1052,9 @@ export function createVolumeNodeMaterial(
   // Read ONCE per material build (kill switch — see shaderFlags.ts): selects
   // which node graph is emitted. Off = the legacy emission order, verbatim.
   const fastPath = isShaderFastPathEnabled();
+  // Zoom smoothing (tricubic reconstruction past uSmoothThreshold px/voxel);
+  // off = the filter is not emitted at all.
+  const smoothZoom = isSmoothZoomEnabled();
   const t = makeTraversalNodes(pool, dataRange);
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
@@ -1004,6 +1111,10 @@ export function createVolumeNodeMaterial(
   const uPxPerVoxelAtUnitDist = uniform(0, "float");
   const uMinDelta = uniform(1, "float");
   const uStepScale = uniform(1, "float");
+  // Zoom smoothing engages when the RESOLVED level's voxel spans at least
+  // this many screen px (0 = runtime off without a rebuild). Perspective
+  // only — ortho has no per-sample footprint here.
+  const uSmoothThreshold = uniform(3, "float");
   // Per-tier hard iteration ceiling (quality profile `maxRaySteps`). Capping
   // steps LENGTHENS the stride (see floorDelta) rather than cutting the far
   // volume; MAX_RAY_STEPS stays the compile-time loop bound.
@@ -1228,6 +1339,25 @@ export function createVolumeNodeMaterial(
         });
       }
 
+      // Zoom-smoothing gate, ONCE per step (shared by every member/slot):
+      // tricubic engages only on RESIDENT samples whose resolved level is
+      // magnified past uSmoothThreshold px per voxel — the same footprint
+      // math as desiredLevelAt (keep in lockstep). Perspective only.
+      let smoothActive: any = null;
+      if (smoothZoom) {
+        const stepDist = max(distance(pB, originB), 1.0);
+        const resolvedPxPerVoxel = float(uPxPerVoxelAtUnitDist)
+          .div(stepDist)
+          .mul(vec3(t.uLevelScale.element(resolved.residentLevel)).x);
+        smoothActive = uPxPerVoxelAtUnitDist
+          .greaterThan(0.0)
+          .and(uSmoothThreshold.greaterThan(0.0))
+          .and(resolved.status.greaterThanEqual(0.5))
+          .and(resolved.status.lessThan(1.5))
+          .and(resolvedPxPerVoxel.greaterThanEqual(uSmoothThreshold))
+          .toVar("smoothActive");
+      }
+
       // Per-sample composite, per member (ChunkPlane semantics).
       const maxSampleNorm = float(0.0).toVar();
       const samples = memberNodes.map((mem, m) => {
@@ -1264,6 +1394,7 @@ export function createVolumeNodeMaterial(
                 memberFns[m],
                 memberFns[m].nm,
                 memberFns[m].emitPhasor,
+                smoothActive,
               );
               const color = sample.color;
               const weight = sample.weight;
@@ -1428,6 +1559,7 @@ export function createVolumeNodeMaterial(
       uMinDelta,
       uStepScale,
       uMaxSteps,
+      uSmoothThreshold,
       uBaseShape,
       projectionMode,
       isoThreshold,

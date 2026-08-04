@@ -210,6 +210,9 @@ export type LayerBrickPool = {
    * REVERSE dispatch order — startNextFetches pops from the tail (O(1); a
    * shift-consumed queue was O(n²) across a large plan). */
   pendingFetch: PlannedNode[];
+  /** Bounded per-key retry counts for failed fetches of still-planned bricks
+   * (self-heal without waiting for the next replan). Cleared per reconcile. */
+  fetchRetries: Map<string, number>;
   queue: PendingBrick[];
   /** Keys currently in `queue` (O(1) membership for reconcile). */
   queuedKeys: Set<string>;
@@ -360,6 +363,14 @@ export class BrickResidencyManager {
   private readonly inFlightChunkAborts = new Map<string, AbortController>();
   /** Which live bricks need which in-flight chunk (`core/octree/chunkRefRegistry`). */
   private readonly chunkRefs = new ChunkRefRegistry();
+  /** Monotonic per-fetch owner suffix: a brick dropped and immediately
+   * re-planned runs TWO overlapping fetchBrick invocations with the SAME
+   * node.key — with the bare key as owner, the old invocation's finally
+   * released the ref the new one had just acquired (Set semantics), fired the
+   * last-ref abort and cancelled the NEW fetch's queued chunks. The brick
+   * then stayed unloaded until the next replan. Owner identity must be the
+   * INVOCATION, not the brick. */
+  private fetchOwnerSeq = 0;
   /** Chunk fetches outlive individual brick aborts (shared!); this cancels
    * them all on dispose. */
   private readonly fetchAbort = new AbortController();
@@ -1214,6 +1225,8 @@ export class BrickResidencyManager {
       }
     }
     pool.pendingFetch = pending.sort(compareFetchOrder).reverse();
+    // Fresh plan → fresh retry allowance (see the fetchBrick catch).
+    pool.fetchRetries.clear();
 
     // Reclaim headroom BEFORE dispatching, so this reconcile's fetches land in
     // free slots instead of evicting each other.
@@ -1537,6 +1550,7 @@ export class BrickResidencyManager {
       coarsestResident: new Set(),
       inFlight: new Map(),
       pendingFetch: [],
+      fetchRetries: new Map(),
       queue: [],
       queuedKeys: new Set(),
       emptyValues: new Map(),
@@ -1582,7 +1596,20 @@ export class BrickResidencyManager {
   ): Promise<Chunk<DataType>> {
     const key = `${storeId}:${chunkCoords.join(",")}`;
     const existing = this.inFlightChunks.get(key);
-    if (existing) return existing;
+    if (existing) {
+      // NEVER hand out a DOOMED entry: a brick abort fires the per-chunk
+      // controller synchronously and then synchronously starts replacement
+      // fetches (finally → startNextFetches), all BEFORE the cancelled
+      // promise's own async cleanup has removed it from this map. A new
+      // subscriber to that promise inherits the rejection and its brick
+      // stays unloaded until the next replan — the "sometimes doesn't load /
+      // loads seconds later" regression. An aborted entry is cleared here
+      // and the fetch re-issued fresh.
+      const existingAbort = this.inFlightChunkAborts.get(key);
+      if (!existingAbort || !existingAbort.signal.aborted) return existing;
+      this.inFlightChunks.delete(key);
+      this.inFlightChunkAborts.delete(key);
+    }
 
     // Per-chunk abort on top of the dispose-scoped one: fired only when the
     // LAST referring brick releases this chunk (fetchBrick's finally). The
@@ -1605,8 +1632,13 @@ export class BrickResidencyManager {
         return chunk as Chunk<DataType>;
       })
       .finally(() => {
-        this.inFlightChunks.delete(key);
-        this.inFlightChunkAborts.delete(key);
+        // Identity-guarded: a doomed entry may already have been REPLACED by
+        // a fresh fetch (the branch above). Unconditional deletes here tore
+        // down the replacement's dedup + cancellation entries.
+        if (this.inFlightChunks.get(key) === promise) {
+          this.inFlightChunks.delete(key);
+          this.inFlightChunkAborts.delete(key);
+        }
       });
     this.inFlightChunks.set(key, promise);
     return promise;
@@ -1683,6 +1715,13 @@ export class BrickResidencyManager {
     const fetchPriority = this.fetchGeneration;
     /** Chunk keys this brick registered as a referrer for (released in finally). */
     const acquiredChunkKeys: string[] = [];
+    /** Unique per INVOCATION — see fetchOwnerSeq: the same brick key can have
+     * two overlapping fetches during a plan flip, and the old one's release
+     * must never strip the new one's reference. */
+    const ownerToken = `${node.key}#${++this.fetchOwnerSeq}`;
+    /** Set by the catch when a still-planned brick's fetch failed and has
+     * retry budget left; consumed in the finally (after inFlight clears). */
+    let retryNode = false;
 
     try {
       const level = pool.geometry.levels[node.level];
@@ -1692,7 +1731,7 @@ export class BrickResidencyManager {
       for (const { chunkCoords } of chunkSpecs) {
         const chunkKey = `${level.storeId}:${chunkCoords.join(",")}`;
         acquiredChunkKeys.push(chunkKey);
-        this.chunkRefs.acquire(chunkKey, node.key);
+        this.chunkRefs.acquire(chunkKey, ownerToken);
       }
 
       const fetches: Promise<GpuQueuedChunk>[] = chunkSpecs.map(
@@ -1821,6 +1860,18 @@ export class BrickResidencyManager {
       if (!controller.signal.aborted) {
         this.stats.fetchErrors += 1;
         console.warn(`[bricks] fetch failed for pool ${pool.poolKey} ${node.key}`, error);
+        // Bounded self-heal: a failed fetch of a STILL-PLANNED brick used to
+        // wait for the next replan (a camera move) to retry — on an idle
+        // camera that is a visible hole for seconds. Two retries per plan,
+        // reset each reconcile; the actual requeue happens in the finally
+        // below, after our own inFlight entry is gone.
+        if (!this.disposed && pool.protectedKeys.has(node.key)) {
+          const retries = pool.fetchRetries.get(node.key) ?? 0;
+          if (retries < 2) {
+            pool.fetchRetries.set(node.key, retries + 1);
+            retryNode = true;
+          }
+        }
       }
     } finally {
       // Dead-queue cancellation: this brick no longer needs its chunks. Any
@@ -1831,7 +1882,7 @@ export class BrickResidencyManager {
       // decodes — that was the 13× amplification bug). Happy-path releases
       // are no-ops: the chunk promise already settled and cleared its entry.
       for (const chunkKey of acquiredChunkKeys) {
-        if (this.chunkRefs.release(chunkKey, node.key)) {
+        if (this.chunkRefs.release(chunkKey, ownerToken)) {
           const chunkAbort = this.inFlightChunkAborts.get(chunkKey);
           if (chunkAbort) {
             chunkAbort.abort();
@@ -1840,6 +1891,15 @@ export class BrickResidencyManager {
         }
       }
       pool.inFlight.delete(node.key);
+      if (
+        retryNode &&
+        !this.disposed &&
+        !pool.inFlight.has(node.key) &&
+        !pool.queuedKeys.has(node.key) &&
+        !pool.pendingFetch.some((pendingNode) => pendingNode.key === node.key)
+      ) {
+        pool.pendingFetch.push(node); // tail = dispatched next
+      }
       if (!this.disposed) this.startNextFetches(pool);
     }
   }

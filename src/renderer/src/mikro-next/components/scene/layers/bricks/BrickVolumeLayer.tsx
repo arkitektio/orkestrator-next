@@ -595,6 +595,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           interactionMode === "ANNOTATE" &&
           isDrawingTool(roiDrawingApi.getState().activeTool)
         ) {
+          // An armed probe layer must answer annotation placement too — since
+          // arming no longer switches modes, "pin then annotate" is the
+          // normal flow. Declined WITHOUT stopPropagation so the event falls
+          // through to the pinned layer's mesh behind this one (same pattern
+          // as the hover probe above).
+          if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
           // Feedback only, and the point the drawer will read: the marker and
           // axis guides land on it before the click event arrives. What gets
           // created happens in onClick (here, or in the drawer's), which R3F
@@ -604,6 +610,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       }}
       onClick={(e) => {
         if (interactionMode === "ANNOTATE") {
+          // Same pin rule as onPointerDown: only the armed probe layer places
+          // annotations; others let the click fall through to it.
+          if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
           // An orbit-drag release is not an anchor.
           if (e.delta > DRAG_THRESHOLD_PX) return;
           const drawing = roiDrawingApi.getState();

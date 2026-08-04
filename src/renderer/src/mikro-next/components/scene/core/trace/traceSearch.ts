@@ -1,5 +1,5 @@
 /**
- * A* over a 3D voxel lattice — the search behind the TRACE tool.
+ * A* over a 3D voxel lattice — the search behind the vector enhancer.
  *
  * The tool computes a path only when the user clicks (one hop between two known
  * waypoints), which is exactly the case A* is for: a single source and a single

@@ -156,7 +156,7 @@ const ColormapControl = ({
           <PopoverContent align="end" className="w-auto p-2">
             <RgbColorPicker
               color={rgb}
-              onChange={(c) => set({ color: [c.r, c.g, c.b] })}
+              onChange={(c) => set({ color: [c.r, c.g, c.b, 255] })}
             />
           </PopoverContent>
         </Popover>

@@ -378,11 +378,24 @@ export const newPhasorNode = (layer: ImageLayerFragment): PhasorRenderNode => ({
   },
 });
 
+/**
+ * Normalize a color to the server's RGBA scalar: exactly 4 components. The
+ * color picker (and legacy data) produce RGB triples, which the API rejects
+ * with "takes exactly 4 components, but got 3" on save — append an opaque
+ * alpha. Client consumers only ever read indices 0–2, so RGBA is safe
+ * everywhere in-memory too.
+ */
+export const toRgba = (color: number[] | null): number[] | null => {
+  if (!color) return null;
+  if (color.length === 3) return [...color, 255];
+  return color.length > 4 ? color.slice(0, 4) : color;
+};
+
 const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
   climMin: transfer.climMin,
   climMax: transfer.climMax,
   colormap: transfer.colormap,
-  color: transfer.color,
+  color: toRgba(transfer.color),
   gamma: transfer.gamma,
   opacity: transfer.opacity,
   invert: transfer.invert,
@@ -393,7 +406,7 @@ const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({
   kind: cursor.kind,
   label: cursor.label,
   visible: cursor.visible,
-  color: cursor.color,
+  color: toRgba(cursor.color),
   g: cursor.g,
   s: cursor.s,
   radius: cursor.radius,

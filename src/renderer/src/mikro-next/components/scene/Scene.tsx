@@ -8,7 +8,6 @@ import {
 import { SceneDock } from "./SceneDock";
 import { SceneProvider } from "./SceneProvider";
 import { DefaultScenePanels, SceneViewport } from "./SceneViewport";
-import { SceneOverlay } from "./overlays/SceneOverlay";
 import { AnimationPanel } from "./panels/AnimationPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import {
@@ -47,7 +46,6 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => (
  *       <Scene.Trigger />
  *       <Scene.Panels>
  *         <MyOwnCard />
- *         <Scene.Controls />
  *       </Scene.Panels>
  *     </Scene.Column>
  *     <Scene.Dock side="bottom">
@@ -58,7 +56,10 @@ const SceneRoot = (props: { scene: SceneFragment; children?: ReactNode }) => (
  *
  * A dock's side decides its sliders' orientation, so moving a scrubber to
  * another edge is a one-word change. The layer list is not a floating panel
- * any more — it is `Scene.LayersSidebar`, a ModelPage sidebar tab.
+ * any more — it is `Scene.LayersSidebar`, a ModelPage sidebar tab — and neither
+ * are the view settings, which are a gear in the viewport's own bottom-right
+ * HUD. `Scene.Column` is therefore empty scaffolding until a host puts a panel
+ * of its own in it.
  */
 export const Scene = Object.assign(SceneRoot, {
   Provider: SceneProvider,
@@ -67,9 +68,9 @@ export const Scene = Object.assign(SceneRoot, {
   Trigger: SceneColumnTrigger,
   Panels: SceneColumnPanels,
   DefaultPanels: DefaultScenePanels,
-  Controls: SceneOverlay,
-  // No `Probe`: the probe readout docks bottom-right with the mode controls
-  // and is rendered by the viewport itself, not composed into a column.
+  // No `Controls` and no `Probe`: the view settings and the probe readout both
+  // dock bottom-right with the mode controls, rendered by the viewport itself
+  // rather than composed into a column.
   Animations: AnimationPanel,
   Dock: SceneDock,
   ZSlider: ZSliderPanel,

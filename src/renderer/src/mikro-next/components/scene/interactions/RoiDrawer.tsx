@@ -10,8 +10,8 @@ import {
   useRoiDrawingStore,
   DRAWING_TOOL_TO_ROI_KIND,
   isDrawingTool,
+  isEnhanceableTool,
   isPrimitiveTool,
-  isTraceTool,
   type DrawingTool,
 } from "../store/roiDrawingStore";
 import {
@@ -20,6 +20,7 @@ import {
   useTraceWaypoints,
   type TraceWaypoint,
 } from "./useTraceHop";
+import { closingInsert, hopExtension } from "../core/vectorEnhance";
 import { planarRadius, primitiveCornerVectors } from "../core/primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "../store/roiDrawSessionStore";
 import { useSceneStore } from "../store/sceneStore";
@@ -47,6 +48,17 @@ const COMMITTED_COLOR = "#f59e0b";
 
 type Phase = "idle" | "pressed" | "dragging" | "anchored";
 
+/** One click of an enhanceable chain: where it landed, and what it resolved to. */
+interface DrawAnchor {
+  world: THREE.Vector3;
+  /**
+   * The click located on a layer's data — the input one traced edge needs.
+   * Null when the enhancer is off or the click fell outside every layer;
+   * an edge with a null end is drawn straight.
+   */
+  waypoint: TraceWaypoint | null;
+}
+
 interface DrawSession {
   phase: Phase;
   /** Canvas px at pointerdown — the drag-threshold basis. */
@@ -65,11 +77,12 @@ interface DrawSession {
   cursor: THREE.Vector3 | null;
   lastClickPx: ScreenPoint | null;
   /**
-   * TRACE only: the waypoints the user actually clicked. `vertices` holds the
-   * FOUND path, which is far denser — the handles, and the next hop's start,
-   * belong to the clicks rather than to what the search returned.
+   * The points the user actually clicked. `vertices` holds the full chain,
+   * which is far denser when the vector enhancer traced the edges — the
+   * handles, the rubber band's origin and the next edge's start belong to the
+   * clicks rather than to what the search returned.
    */
-  waypoints: TraceWaypoint[];
+  anchors: DrawAnchor[];
 }
 
 const freshSession = (): DrawSession => ({
@@ -81,7 +94,7 @@ const freshSession = (): DrawSession => ({
   vertices: [],
   cursor: null,
   lastClickPx: null,
-  waypoints: [],
+  anchors: [],
 });
 
 const eventPx = (event: ThreeEvent<PointerEvent | MouseEvent>): ScreenPoint => ({
@@ -101,6 +114,7 @@ export const RoiDrawer = () => {
   const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
   const setPendingPrimitiveAnchor = useRoiDrawingStore((s) => s.setPendingPrimitiveAnchor);
   const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
+  const vectorEnhance = useRoiDrawingStore((s) => s.vectorEnhance);
   const setTraceMessage = useRoiDrawingStore((s) => s.setTraceMessage);
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
@@ -129,8 +143,12 @@ export const RoiDrawer = () => {
   const tool: DrawingTool | null = isDrawingTool(activeTool) ? activeTool : null;
   const isPolygonLike = tool === "POLYGON" || tool === "PATH";
   const isPrimitive = isPrimitiveTool(tool);
-  /** Click-per-waypoint in BOTH views: the shape between them is searched for. */
-  const isTrace = isTraceTool(tool);
+  /**
+   * Vector enhancer active for this tool: each clicked edge is traced through
+   * the data (`core/trace/`) instead of drawn straight. The toggle moves at
+   * click cadence at worst, so a plain subscription costs nothing (P17).
+   */
+  const enhanceOn = vectorEnhance && isEnhanceableTool(tool);
   const unit = unitLabel(spatialUnit);
   /**
    * In 3D there is no slice to draw on, so every vertex comes from the volume
@@ -196,6 +214,9 @@ export const RoiDrawer = () => {
       roiOutline(tool, lifted, z, { closePolygon: false }),
     );
 
+    // Always a STRAIGHT line, even when the enhancer will trace the closure on
+    // commit: this preview repaints at pointer cadence, and an A* per
+    // pointermove is not a price a preview may charge.
     const showClosing =
       tool === "POLYGON" && session.vertices.length >= 2 && session.cursor;
     closingRef.current?.setPoints(
@@ -262,13 +283,17 @@ export const RoiDrawer = () => {
   );
 
   const finishShape = useCallback(
-    (worldVectors: THREE.Vector3[]) => {
+    // `asTool` lets a gesture commit as a different tool than the one that ran
+    // it: an enhanced LINE is an open polyline, and RoiKind.Line is a strictly
+    // two-point kind — it commits as PATH so every found vertex survives.
+    (worldVectors: THREE.Vector3[], asTool?: DrawingTool) => {
       if (!tool) return;
+      const committedTool = asTool ?? tool;
 
       const roi: DrawnRoi = {
         id: Math.random().toString(36).substring(2, 9),
-        kind: DRAWING_TOOL_TO_ROI_KIND[tool],
-        tool,
+        kind: DRAWING_TOOL_TO_ROI_KIND[committedTool],
+        tool: committedTool,
         worldVectors: worldVectors.map((v) => ({ x: v.x, y: v.y, z: v.z })),
       };
 
@@ -343,15 +368,30 @@ export const RoiDrawer = () => {
     if (!pendingPathSeed) return;
     if (interactionMode !== "ANNOTATE" || tool !== "PATH") return;
     const session = sessionRef.current;
+    const seed = new THREE.Vector3(...pendingPathSeed);
     session.planeZ = pendingPathSeed[2];
-    session.vertices = [new THREE.Vector3(...pendingPathSeed)];
+    session.vertices = [seed];
+    // The seed is an anchor like any click, so the first enhanced edge can
+    // trace FROM it. A seed off every layer just makes that edge straight.
+    session.anchors = [
+      { world: seed, waypoint: enhanceOn ? traceWaypoints.fromWorld(seed) : null },
+    ];
     session.phase = "anchored";
     session.cursor = null;
     session.lastClickPx = null;
     setPlacedVertices([...session.vertices]);
     paintCoalescer.schedule(paint);
     setPendingPathSeed(null);
-  }, [pendingPathSeed, interactionMode, tool, paint, paintCoalescer, setPendingPathSeed]);
+  }, [
+    pendingPathSeed,
+    interactionMode,
+    tool,
+    enhanceOn,
+    traceWaypoints,
+    paint,
+    paintCoalescer,
+    setPendingPathSeed,
+  ]);
 
   // Probe-derived volumetric anchor: a click on the volume seeded the center
   // (see BrickVolumeLayer). Same declaration-order invariant as the path seed
@@ -435,6 +475,66 @@ export const RoiDrawer = () => {
     return world ? new THREE.Vector3(...world) : null;
   };
 
+  /**
+   * The edge `prev`→`next`: traced through the data when the enhancer is on
+   * and both clicks resolved onto one layer's data, the plain straight segment
+   * otherwise. A failed hop FALLS BACK to straight and says so — the click is
+   * never refused, so the chain always advances.
+   */
+  const enhanceEdge = (
+    prev: DrawAnchor | undefined,
+    next: DrawAnchor,
+  ): THREE.Vector3[] => {
+    if (!prev || !enhanceOn) return [next.world];
+    if (!prev.waypoint || !next.waypoint) {
+      setTraceMessage("Click landed off the data — straight edge used");
+      return [next.world];
+    }
+    // The flat view draws one slice; the box must not reach past it.
+    const hop = runTraceHop(prev.waypoint, next.waypoint, { flatten: !probePlaced });
+    if (!hop.ok) {
+      setTraceMessage(traceFailureMessage(hop.reason));
+      return [next.world];
+    }
+    setTraceMessage(null);
+    return hopExtension(hop.points);
+  };
+
+  /**
+   * Commit the chain. An enhanced POLYGON gets one more hop — last anchor back
+   * to the first — so its CLOSING edge follows the data too; on failure the
+   * implicit straight closure stands. The failure message is set after
+   * `finishShape`, whose `resetSession` would otherwise wipe it.
+   */
+  const finishChain = () => {
+    const session = sessionRef.current;
+    let vertices = [...session.vertices];
+    let failure: string | null = null;
+    if (tool === "POLYGON" && enhanceOn && session.anchors.length >= 3) {
+      const first = session.anchors[0];
+      const last = session.anchors[session.anchors.length - 1];
+      if (first.waypoint && last.waypoint) {
+        const hop = runTraceHop(last.waypoint, first.waypoint, {
+          flatten: !probePlaced,
+        });
+        if (hop.ok) vertices = [...vertices, ...closingInsert(hop.points)];
+        else failure = traceFailureMessage(hop.reason);
+      }
+    }
+    finishShape(vertices);
+    if (failure) setTraceMessage(failure);
+  };
+
+  /** One clicked point of a chain: resolve it onto the data when enhancing. */
+  const anchorAt = (world: THREE.Vector3): DrawAnchor => ({
+    world,
+    waypoint: enhanceOn
+      ? probePlaced
+        ? traceWaypoints.fromProbe()
+        : traceWaypoints.fromWorld(world)
+      : null,
+  });
+
   return (
     <group>
       {/* Invisible interaction plane. It still raycasts — Mesh.raycast never
@@ -447,7 +547,7 @@ export const RoiDrawer = () => {
           // anchor never comes from this plane (the volume seeds it). In 3D
           // EVERY tool is a click tool: there is no drag-a-plane gesture when
           // the points come from the probe.
-          if (probePlaced || isPolygonLike || isTrace || tool === "POINT" || isPrimitive) {
+          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) {
             return;
           }
           const hit = pointOnPlane(e);
@@ -507,7 +607,7 @@ export const RoiDrawer = () => {
           paintCoalescer.schedule(paint);
         }}
         onPointerUp={(e) => {
-          if (probePlaced || isPolygonLike || isTrace || tool === "POINT" || isPrimitive) {
+          if (probePlaced || isPolygonLike || tool === "POINT" || isPrimitive) {
             return;
           }
 
@@ -526,7 +626,19 @@ export const RoiDrawer = () => {
             (session.movedPastThreshold || !session.anchorPress);
 
           if (shouldCommit && session.cursor) {
-            finishShape([session.vertices[0], session.cursor.clone().setZ(session.planeZ)]);
+            const start = session.vertices[0];
+            const end = session.cursor.clone().setZ(session.planeZ);
+            if (tool === "LINE" && enhanceOn) {
+              // A LINE enhances once, at commit — its rubber band stays
+              // straight because A* at pointermove cadence is off the table.
+              // Both endpoints resolve here (the drag flow kept no anchors).
+              finishShape(
+                [start, ...enhanceEdge(anchorAt(start), anchorAt(end))],
+                "PATH",
+              );
+              return;
+            }
+            finishShape([start, end]);
             return;
           }
 
@@ -561,69 +673,6 @@ export const RoiDrawer = () => {
             return;
           }
 
-          // TRACE: one click, one WAYPOINT — the vertices between them are
-          // found, not placed. Handled ahead of the 3D branch because the
-          // gesture is the same in both views; only where the waypoint comes
-          // from differs (the probe in 3D, the drawn slice in 2D).
-          if (isTrace) {
-            // An orbit-drag release is not a waypoint.
-            if (e.delta > DRAG_THRESHOLD_PX) return;
-            const planeHit = probePlaced ? null : pointOnPlane(e);
-            const waypoint = probePlaced
-              ? traceWaypoints.fromProbe()
-              : planeHit
-                ? traceWaypoints.fromWorld(planeHit)
-                : null;
-            if (!waypoint) {
-              setTraceMessage("Click on a layer's data to place a waypoint");
-              return;
-            }
-            e.stopPropagation();
-
-            const px = eventPx(e);
-            const session = sessionRef.current;
-
-            // Finish on a double-click, once there is a traced span to keep.
-            if (
-              e.detail >= 2 &&
-              session.waypoints.length >= 2 &&
-              (!session.lastClickPx || withinSlop(px, session.lastClickPx))
-            ) {
-              finishShape([...session.vertices]);
-              return;
-            }
-
-            const previous = session.waypoints[session.waypoints.length - 1];
-            if (previous) {
-              // The flat view draws one slice; the box must not reach past it.
-              const hop = runTraceHop(previous, waypoint, { flatten: !probePlaced });
-              if (!hop.ok) {
-                // The chain survives a failed hop — the user re-places this
-                // waypoint rather than starting the trace again.
-                setTraceMessage(traceFailureMessage(hop.reason));
-                return;
-              }
-              // `slice(1)`: the hop starts at the waypoint already committed.
-              session.vertices = [...session.vertices, ...hop.points.slice(1)];
-            } else {
-              session.planeZ = waypoint.world[2];
-              session.vertices = [new THREE.Vector3(...waypoint.world)];
-            }
-
-            setTraceMessage(null);
-            session.waypoints = [...session.waypoints, waypoint];
-            session.lastClickPx = px;
-            session.phase = "anchored";
-            session.cursor = new THREE.Vector3(...waypoint.world);
-            cursorPxRef.current = px;
-            // Handles mark the CLICKS, not the hundreds of found points.
-            setPlacedVertices(
-              session.waypoints.map((point) => new THREE.Vector3(...point.world)),
-            );
-            paintCoalescer.schedule(paint);
-            return;
-          }
-
           // 3D: one click, one probed vertex. The POINT tool is the volume's
           // own job (it creates the annotation at the probed coordinate), so it
           // is the one tool that never reaches this branch.
@@ -640,28 +689,45 @@ export const RoiDrawer = () => {
 
             if (isPolygonLike) {
               // Same double-click finish as the flat gesture, position-checked.
+              // Counted in ANCHORS: with the enhancer on, one traced edge
+              // already yields many vertices, and those are not clicks.
               if (
                 e.detail >= 2 &&
-                session.vertices.length >= 2 &&
+                session.anchors.length >= 2 &&
                 (!session.lastClickPx || withinSlop(px, session.lastClickPx))
               ) {
-                finishShape([...session.vertices]);
+                finishChain();
                 return;
               }
             } else if (session.vertices.length === 1) {
               // The two-point tools (rectangle, ellipse, line) commit on their
               // second probed point — the corner pair the annotation carries,
               // which the renderer extrudes when the two straddle depth.
+              if (tool === "LINE" && enhanceOn) {
+                // The enhanced LINE traces its one edge at commit, and commits
+                // as PATH: RoiKind.Line is a strictly two-point kind.
+                const prev = session.anchors[0];
+                finishShape(
+                  [session.vertices[0], ...enhanceEdge(prev, anchorAt(probed))],
+                  "PATH",
+                );
+                return;
+              }
               finishShape([session.vertices[0], probed]);
               return;
             }
 
-            session.vertices = [...session.vertices, probed];
+            const anchor = anchorAt(probed);
+            session.vertices = isPolygonLike
+              ? [...session.vertices, ...enhanceEdge(session.anchors[session.anchors.length - 1], anchor)]
+              : [...session.vertices, probed];
+            session.anchors = [...session.anchors, anchor];
             session.lastClickPx = px;
             session.phase = "anchored";
             session.cursor = probed.clone();
             cursorPxRef.current = px;
-            setPlacedVertices(session.vertices);
+            // Handles mark the CLICKS, not the points a traced edge found.
+            setPlacedVertices(session.anchors.map((a) => a.world));
             paintCoalescer.schedule(paint);
             return;
           }
@@ -684,27 +750,31 @@ export const RoiDrawer = () => {
 
           // Finish on double-click — but only if the second click landed on the
           // first. `detail` is position-blind, so without this two quick vertex
-          // placements would end the polygon.
+          // placements would end the polygon. Counted in ANCHORS: with the
+          // enhancer on, one traced edge already yields many vertices.
           const isDoubleClick =
             e.detail >= 2 &&
-            session.vertices.length >= 2 &&
+            session.anchors.length >= 2 &&
             (!session.lastClickPx || withinSlop(px, session.lastClickPx));
 
           if (isDoubleClick) {
-            finishShape([...session.vertices]);
+            finishChain();
             return;
           }
 
           if (session.vertices.length === 0) session.planeZ = currentZ;
+          const anchor = anchorAt(hit.clone().setZ(session.planeZ));
           session.vertices = [
             ...session.vertices,
-            hit.clone().setZ(session.planeZ),
+            ...enhanceEdge(session.anchors[session.anchors.length - 1], anchor),
           ];
+          session.anchors = [...session.anchors, anchor];
           session.lastClickPx = px;
           session.phase = "anchored";
           session.cursor = hit.clone();
           cursorPxRef.current = px;
-          setPlacedVertices(session.vertices);
+          // Handles mark the CLICKS, not the points a traced edge found.
+          setPlacedVertices(session.anchors.map((a) => a.world));
           paintCoalescer.schedule(paint);
         }}
       >

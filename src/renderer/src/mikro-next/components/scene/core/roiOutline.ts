@@ -121,9 +121,5 @@ export function roiOutline(
       return polylineOutline(points, z, options.closePolygon ?? true);
     case "PATH":
       return polylineOutline(points, z);
-    // A trace is an open polyline like a path — the difference is only in where
-    // its points came from (found, not clicked).
-    case "TRACE":
-      return polylineOutline(points, z);
   }
 }

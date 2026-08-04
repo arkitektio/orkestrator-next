@@ -6,6 +6,7 @@ import { layerDisplayLabel } from "./layer/layerIdentity";
 import { resolveProbeStrategy } from "../core/probe/probeModes";
 import type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
 import { formatProbeValue } from "../core/probe/valueFormat";
+import { effectiveProbeLayerId } from "../core/probe/probeTargeting";
 import { beginPathFromProbe } from "../interactions/pathFromProbe";
 import { useCreateSceneAnnotation } from "../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../store/modeStore";
@@ -19,8 +20,10 @@ import type { LayerState } from "../core/layerModel";
  * strategy uses it), the probed coordinate with per-channel raw values and
  * their provenance (exact vs LOD-approximate vs pending), plus actions that
  * make the probe durable — mark it as a point annotation or start a path
- * draw anchored at it. Also shows which layer the probe is pinned to, if any;
- * the pin itself is set from each layer card's probe toggle.
+ * draw anchored at it. Also owns the target picker: exactly ONE layer answers
+ * the probe — the first visible layer by default, or an explicitly selected
+ * one (`effectiveProbeLayerId`). The layer card's probe toggle sets the same
+ * pin.
  *
  * Renderer-owned and self-positioning: it docks bottom-right, directly above
  * `SceneModeControls`, because it is the readout for the mode those controls
@@ -94,8 +97,11 @@ export const SelectedPointPanel = () => {
     : null;
 
   // Both brick layers bail on `visible === false`, so a hidden layer cannot
-  // answer a probe (`core/modeCompat.ts`) — a pin naming one is as dead as a
-  // pin naming a deleted layer.
+  // answer a probe (`core/modeCompat.ts`). An alive explicit pin drives the
+  // picker's value; a dead pin (hidden/gone layer) shows as Auto WITHOUT being
+  // erased — it heals by derivation and resurrects if its layer comes back.
+  const probeableLayers = layers.filter((candidate) => candidate.visible !== false);
+  const effectiveTargetId = effectiveProbeLayerId(probeLayerId, layers);
   const pinnedLayer =
     probeLayerId !== null
       ? layers.find(
@@ -103,13 +109,19 @@ export const SelectedPointPanel = () => {
         )
       : undefined;
 
-  // A pin that names a layer which is gone or hidden makes EVERY layer decline
-  // the pointer (see `layerAnswersProbe`) — probing would just go dead with no
-  // visible cause. Drop it back to front-most instead.
-  const pinnedIsGone = probeLayerId !== null && !pinnedLayer;
+  // Reconcile a stale reading with a moved target. All NEW probes come from
+  // the effective target (the brick layers gate on it), so a mismatch can only
+  // mean the target shifted underneath an old reading — unpin, first layer
+  // hidden, probed layer hidden — and one layer's values must not sit under
+  // another layer's name. `probeAfterPinChange` cannot catch these: it has no
+  // layer list, so it cannot compute the default target.
+  const staleProbe =
+    probedCoordinate !== null &&
+    effectiveTargetId !== null &&
+    probedCoordinate.layerId !== effectiveTargetId;
   useEffect(() => {
-    if (pinnedIsGone) setProbeLayerId(null);
-  }, [pinnedIsGone, setProbeLayerId]);
+    if (staleProbe) setProbedCoordinate(null);
+  }, [staleProbe, setProbedCoordinate]);
 
   const inProbeMode = interactionMode === "PROBE";
   if (!inProbeMode && !probedCoordinate) return null;
@@ -165,22 +177,33 @@ export const SelectedPointPanel = () => {
         </div>
       </div>
 
-      {/* The pin itself is set per layer, from the layer card's probe toggle.
-          Surfaced here because it is otherwise invisible state: without it, a
-          probe that refuses to read the layer under the cursor looks broken. */}
-      {pinnedLayer && (
-        <button
-          className="mt-2 flex w-full items-center gap-1.5 rounded border border-sky-400/30 bg-sky-400/10 px-1.5 py-1 text-left text-[10px] text-sky-200 transition-colors hover:border-sky-400/60"
-          title="Only this layer answers the probe — click to read the front-most layer again"
-          onClick={() => setProbeLayerId(null)}
+      {/* Which layer the probe reads. Exactly one layer answers — Auto follows
+          the first visible layer; picking one pins it explicitly (it sticks
+          through reorders). Always visible: the target is otherwise invisible
+          state, and a probe that refuses the layer under the cursor looks
+          broken without it. */}
+      <div className="mt-2 flex items-center gap-1.5">
+        <Crosshair className="h-3 w-3 shrink-0 text-white/50" />
+        <select
+          value={pinnedLayer?.id ?? ""}
+          onChange={(event) =>
+            setProbeLayerId(event.target.value === "" ? null : event.target.value)
+          }
+          className="pointer-events-auto h-6 min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-1 text-[10px] text-white/90"
+          title="Which layer the probe reads"
         >
-          <Crosshair className="h-3 w-3 shrink-0" />
-          <span className="min-w-0 flex-1 truncate">
-            Pinned to {layerDisplayLabel(pinnedLayer)}
-          </span>
-          <span className="shrink-0 text-sky-200/60">unpin</span>
-        </button>
-      )}
+          <option value="" className="bg-zinc-900">
+            {probeableLayers[0]
+              ? `Auto — first layer (${layerDisplayLabel(probeableLayers[0])})`
+              : "Auto — no visible layer"}
+          </option>
+          {probeableLayers.map((candidate) => (
+            <option key={candidate.id} value={candidate.id} className="bg-zinc-900">
+              {layerDisplayLabel(candidate)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {displayMode === "3D" && (
         <div className="mt-2">

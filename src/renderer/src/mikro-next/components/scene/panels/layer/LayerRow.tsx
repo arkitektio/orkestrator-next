@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Crosshair, Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
-import { LayerState } from "../../store/sceneStore";
+import { LayerState, useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
+import { effectiveProbeLayerId } from "../../core/probe/probeTargeting";
 import {
   FLAVOR_BADGE_CLASSES,
   layerDisplayLabel,
@@ -56,9 +57,16 @@ export const LayerRow = ({
   const label = layerDisplayLabel(layer);
   const flavor = layerFlavor(layer);
   const hidden = layer.visible === false;
-  // Selected down to a boolean, so pinning re-renders only the two rows whose
-  // answer actually changed rather than every row in the list.
-  const isProbeTarget = useViewerStore((s) => s.probeLayerId === layer.id);
+  // The highlight follows the EFFECTIVE target — the first visible layer by
+  // default — so default probing never looks untargeted; the click keys on the
+  // explicit pin, so clicking the default target pins it (survives reorders)
+  // rather than writing a no-op null. Subscribing to `probeLayerId` re-renders
+  // every row on a pin change; rows are cheap and pinning is click cadence.
+  const probeLayerId = useViewerStore((s) => s.probeLayerId);
+  const isExplicitPin = probeLayerId === layer.id;
+  const isProbeTarget = useSceneStore(
+    (s) => effectiveProbeLayerId(probeLayerId, s.layers) === layer.id,
+  );
   const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
 
   return (
@@ -105,11 +113,9 @@ export const LayerRow = ({
       {/* Always reachable at every width — a row you cannot hide or focus from
           is worse than a cramped one. Only the hit area grows with the card. */}
       <div className="flex shrink-0 items-center opacity-60 transition-opacity group-hover:opacity-100 @md/card:opacity-100">
-        {/* Pin the probe to this layer. Stacked layers otherwise let the
-            front-most one claim every pointer event, so this is how you read
-            the one underneath. Pinning also enters PROBE — clicking "probe
-            this layer" while navigating and having nothing happen would be a
-            dead end. */}
+        {/* Pin the probe to this layer. Exactly one layer answers the probe —
+            the first visible one by default — so with stacked layers this is
+            how you read one further down. */}
         <Button
           variant="ghost"
           size="xs"
@@ -119,21 +125,24 @@ export const LayerRow = ({
               : "h-6 w-6 p-0 text-white/70 hover:text-white @md/card:h-7 @md/card:w-7"
           }
           // A hidden layer draws no mesh, so it can answer no probe — pinning
-          // it would silence probing entirely (`layerAnswersProbe`).
+          // it is merely pointless now (the target derivation falls back to
+          // the first visible layer), but offering the button would still lie.
           disabled={hidden}
           title={
             hidden
               ? "A hidden layer cannot be probed"
-              : isProbeTarget
-                ? "Only this layer answers the probe — click to read the front-most layer again"
-                : "Probe this layer, whatever is drawn in front of it"
+              : isExplicitPin
+                ? "Only this layer answers the probe — click to return to the default (first layer)"
+                : isProbeTarget
+                  ? "Answers the probe by default — click to pin it explicitly"
+                  : "Probe this layer instead of the default"
           }
           onClick={(e) => {
             e.stopPropagation();
             // Pin ONLY: choosing which layer answers the probe must not yank
             // the whole scene into PROBE mode — the user may be mid-navigation
             // or mid-annotation and just setting up the target for later.
-            setProbeLayerId(isProbeTarget ? null : layer.id);
+            setProbeLayerId(isExplicitPin ? null : layer.id);
           }}
         >
           <Crosshair className="h-3 w-3" />

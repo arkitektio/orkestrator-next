@@ -16,6 +16,7 @@ import { displayModeToPreferredView } from "../core/preferredView";
 import { useScenePreferencesEditor } from "../panels/animation/useAnimationEditor";
 import { InteractionMode, useModeStore } from "../store/modeStore";
 import { useSceneStore } from "../store/sceneStore";
+import { SceneSettings } from "./SceneSettings";
 
 /** Icon per interaction mode for the compact mode control. */
 const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
@@ -30,7 +31,11 @@ const INTERACTION_ICONS: Record<InteractionMode, LucideIcon> = {
  * pointer gesture does. Renderer-owned HUD, so every host gets them in the
  * same place. Left to right: interaction modes, the hover-probe toggle (only
  * while in PROBE, since it modifies nothing else), the 2D/3D display toggle,
- * and the pin.
+ * the pin, and the view-settings gear.
+ *
+ * The gear is here rather than in a panel column because it answers the same
+ * question as its neighbours — what this view looks like — and a corner is a
+ * cheaper place to look than a foldable card on the far side of the canvas.
  *
  * The pin travels with the display toggle because it is about exactly that:
  * which view the scene opens in for everyone. A preference, not a lock —
@@ -126,6 +131,8 @@ export const SceneModeControls = () => {
       >
         <Pin className="h-3.5 w-3.5" />
       </Button>
+
+      <SceneSettings />
     </div>
   );
 };

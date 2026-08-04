@@ -190,3 +190,29 @@ export const splitAxesBySpec = (
   const boundary = axes.length - rank
   return { acquisition: axes.slice(0, boundary), spatial: axes.slice(boundary) }
 }
+
+/**
+ * A shape as it gets read aloud: `1024x 1024y 5z` — each extent glued to the
+ * axis it runs along. Two parallel lists (`x × y × z` over `1024, 1024, 5`) say
+ * the same thing but make the reader pair them up by counting, which is exactly
+ * the work a label should have already done.
+ *
+ * Driven by `shape`, so a dataset whose axis names are short of its rank still
+ * shows every extent (with `?` for the axis nobody named).
+ */
+export const formatShape = (
+  axisNames: readonly string[],
+  shape: readonly number[]
+): string => shape.map((extent, index) => `${extent}${axisNames[index] ?? '?'}`).join(' ')
+
+/**
+ * The dtype the dataset is stored in, off the base level — a multiscale
+ * pyramid's levels are the same array at different resolutions, so they share
+ * one. `level` is a field, not a position, and the API does not promise the
+ * arrays come back in order, so this looks level 0 up rather than taking
+ * `[0]`; the first array is only the fallback for a set that has no level 0.
+ */
+export const baseDtypeOf = (
+  dataArrays: readonly { level: number; store: { dtype?: string | null } }[]
+): string | undefined =>
+  (dataArrays.find((array) => array.level === 0) ?? dataArrays[0])?.store.dtype ?? undefined

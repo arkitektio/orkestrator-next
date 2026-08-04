@@ -12,11 +12,14 @@ import {
   type AxisSelection,
 } from "../../core/selection";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
-import { layerAnswersProbe } from "../../core/probe/probeTargeting";
+import {
+  effectiveProbeLayerId,
+  layerAnswersProbe,
+} from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
-import { useSceneStore } from "../../store/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { getBackendTexture, type SceneRenderer } from "../../render/gpu/sceneRenderer";
@@ -63,9 +66,24 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const viewerStoreApi = useViewerStoreApi();
 
   const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
+  const sceneStoreApi = useSceneStoreApi();
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   const { createPointAnnotation } = useCreateSceneAnnotation();
+
+  // Event-time resolution — fresh pin AND fresh layer list, no render
+  // subscription: exactly one layer (the effective probe target) answers.
+  const answersProbe = useCallback(
+    () =>
+      layerAnswersProbe(
+        effectiveProbeLayerId(
+          viewerStoreApi.getState().probeLayerId,
+          sceneStoreApi.getState().layers,
+        ),
+        layerId,
+      ),
+    [viewerStoreApi, sceneStoreApi, layerId],
+  );
 
   useEffect(() => {
     const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
@@ -396,8 +414,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       onPointerMove={(event) => {
         if (interactionMode !== "PROBE" || !probeFollowsCursor || event.buttons !== 0) return;
         // Before stopPropagation: declining silently lets the event fall
-        // through to the pinned layer behind this one.
-        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+        // through to the target layer behind this one.
+        if (!answersProbe()) return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();
@@ -409,13 +427,13 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       }}
       onPointerOut={() => {
         if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
-        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+        if (!answersProbe()) return;
         probeCoalescer.cancel();
         updateProbe(null, { save: false, origin: "hover" });
       }}
       onPointerDown={(event) => {
         if (interactionMode !== "PROBE") return;
-        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+        if (!answersProbe()) return;
         const group = groupRef.current;
         if (!group) return;
         event.stopPropagation();

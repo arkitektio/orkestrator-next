@@ -3,30 +3,34 @@ import * as THREE from "three";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 
 import {
-  SceneLayerFragment,
   useGetAnnotationsQuery,
   type ListAnnotationFragment,
   RoiKind,
 } from "@/mikro-next/api/graphql";
-import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { Line } from "../../primitives/Line";
 import { SPHERE_KIND, ellipsoidCrossSectionScale } from "../../core/primitiveDraw";
-import { affineToMatrix4, sceneZExtent } from "../../core/worldTransform";
+import { sceneZExtent } from "../../core/worldTransform";
 import { computeWorldUnitsPerPixel } from "../../core/probeWorld";
 import {
   isAnnotationInView,
   sceneCoverages,
-  zSpanOf,
   type ScenePlane,
-  type ZSpan,
 } from "../../core/annotationVisibility";
+import {
+  MIN_DEPTH,
+  ellipseRing,
+  getVectorPoint,
+  getWorldExtent,
+  resolveCollectionMatrix,
+  type AnnotationCollectionRef,
+  type AnnotationLayerVariant,
+} from "../../core/annotationBounds";
 import { useModeStore } from "../../store/modeStore";
-import { type RoiBounds, useRoiSelectionStore } from "../../store/roiSelectionStore";
+import { useRoiSelectionStore } from "../../store/roiSelectionStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
-import type { SceneTransformContext } from "../../core/layerModel";
 
 /**
  * AnnotationLayer renderer: the drawn shapes of one AnnotationCollection.
@@ -42,11 +46,6 @@ import type { SceneTransformContext } from "../../core/layerModel";
  * and fill live on each Annotation and are read off the query, not the layer.
  */
 
-type AnnotationLayerVariant = Extract<SceneLayerFragment, { __typename: "AnnotationLayer" }>;
-type AnnotationCollectionRef = AnnotationLayerVariant["annotationCollection"];
-
-const ANNOTATION_RENDER_Z = 0.15;
-const MIN_DEPTH = 0.001;
 const DEFAULT_STROKE = "#38bdf8";
 const ACTIVE_STROKE = "#f59e0b";
 /** Fill alpha for a shape that asks to be filled but names no fill color. */
@@ -94,164 +93,6 @@ function resolveStyle(annotation: ListAnnotationFragment, isActive: boolean): Sh
     fill: annotation.filled ? (fill?.color ?? strokeColor) : null,
     fillOpacity: fill?.opacity ?? IMPLIED_FILL_OPACITY,
   };
-}
-
-function getVectorPoint(vector: number[], flattenToPlane: boolean): [number, number, number] {
-  return [vector[0] ?? 0, vector[1] ?? 0, flattenToPlane ? ANNOTATION_RENDER_Z : (vector[2] ?? 0)];
-}
-
-function getRectangleCorners(
-  start: number[],
-  end: number[],
-  flattenToPlane: boolean,
-): [number, number, number][] {
-  const [x0, y0, z0] = getVectorPoint(start, flattenToPlane);
-  const [x1, y1, z1] = getVectorPoint(end, flattenToPlane);
-
-  if (flattenToPlane || Math.abs(z1 - z0) < MIN_DEPTH) {
-    return [
-      [x0, y0, z0],
-      [x1, y0, z0],
-      [x1, y1, z0],
-      [x0, y1, z0],
-    ];
-  }
-
-  return [
-    [x0, y0, z0],
-    [x1, y0, z0],
-    [x1, y1, z0],
-    [x0, y1, z0],
-    [x0, y0, z1],
-    [x1, y0, z1],
-    [x1, y1, z1],
-    [x0, y1, z1],
-  ];
-}
-
-/** One closed-able ring of an axis-aligned ellipse at a fixed z. */
-function ellipseRing(
-  cx: number,
-  cy: number,
-  z: number,
-  rx: number,
-  ry: number,
-  segments: number,
-): [number, number, number][] {
-  const points: [number, number, number][] = [];
-  for (let index = 0; index < segments; index += 1) {
-    const theta = (index / segments) * Math.PI * 2;
-    points.push([cx + rx * Math.cos(theta), cy + ry * Math.sin(theta), z]);
-  }
-  return points;
-}
-
-function getEllipsisPoints(
-  start: number[],
-  end: number[],
-  flattenToPlane: boolean,
-  segments = 24,
-): [number, number, number][] {
-  const [x0, y0, z0] = getVectorPoint(start, flattenToPlane);
-  const [x1, y1, z1] = getVectorPoint(end, flattenToPlane);
-  const cx = (x0 + x1) / 2;
-  const cy = (y0 + y1) / 2;
-  const rx = Math.abs(x1 - x0) / 2;
-  const ry = Math.abs(y1 - y0) / 2;
-  const points = ellipseRing(cx, cy, z0, rx, ry, segments);
-
-  if (!flattenToPlane && Math.abs(z1 - z0) >= MIN_DEPTH) {
-    points.push(...ellipseRing(cx, cy, z1, rx, ry, segments));
-  }
-
-  return points;
-}
-
-function getAnnotationSelectionPoints(
-  annotation: ListAnnotationFragment,
-  flattenToPlane: boolean,
-): [number, number, number][] {
-  const vectors = annotation.vectors;
-  if (!vectors || vectors.length === 0) return [];
-
-  if (annotation.kind === RoiKind.Point && vectors.length >= 1) {
-    return [getVectorPoint(vectors[0], flattenToPlane)];
-  }
-
-  if (annotation.kind === RoiKind.Line && vectors.length >= 2) {
-    return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
-  }
-
-  if (annotation.kind === RoiKind.Rectangle && vectors.length >= 2) {
-    return getRectangleCorners(vectors[0], vectors[1], flattenToPlane);
-  }
-
-  if (annotation.kind === RoiKind.Ellipsis && vectors.length >= 2) {
-    return getEllipsisPoints(vectors[0], vectors[1], flattenToPlane);
-  }
-
-  return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
-}
-
-/**
- * The shape in WORLD µm: the x/y box the rubber band selects against, and the
- * z extent the flat view's plane test reads. Both come from the same pass over
- * the (unflattened) geometry — the whole point of the z span is the depth
- * `flattenToPlane` would throw away.
- */
-function getWorldExtent(
-  annotation: ListAnnotationFragment,
-  affineMatrix: THREE.Matrix4,
-): { bounds: RoiBounds; zSpan: ZSpan } | null {
-  const points = getAnnotationSelectionPoints(annotation, false);
-  if (points.length === 0) return null;
-
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  const worldPoints: [number, number, number][] = [];
-
-  points.forEach(([x, y, z]) => {
-    const world = new THREE.Vector3(x, y, z).applyMatrix4(affineMatrix);
-    minX = Math.min(minX, world.x);
-    maxX = Math.max(maxX, world.x);
-    minY = Math.min(minY, world.y);
-    maxY = Math.max(maxY, world.y);
-    worldPoints.push([world.x, world.y, world.z]);
-  });
-
-  return {
-    bounds: { minX, maxX, minY, maxY },
-    zSpan: zSpanOf(worldPoints) ?? { min: 0, max: 0 },
-  };
-}
-
-/**
- * The collection's drawing space → scene world. The collection owns its
- * coordinate system, so its axes name the columns of every edge on the path;
- * `spatial` is the (x, y, z) triple the composer reads them out in.
- */
-function resolveCollectionMatrix(
-  layer: AnnotationLayerVariant,
-  collection: AnnotationCollectionRef,
-  transformContext: SceneTransformContext,
-): THREE.Matrix4 {
-  const names = (collection.coordinateSystem.axes ?? []).map((axis) => axis.name);
-  const spatial = [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
-  const composed = composePlacementPath(layer.pathToWorld, transformContext, spatial, names);
-  if (!composed) {
-    // A null path is UNREGISTERED or UNMAPPABLE — the layer's `placement` says
-    // which, but the shared SceneLayer fragment does not select it. The shapes
-    // are still drawn, in the collection's own space, rather than dropped
-    // silently.
-    console.warn(
-      `[annotation] collection ${collection.id}: no path to world; ` +
-        `drawing in the collection's own space`,
-    );
-    return new THREE.Matrix4().identity();
-  }
-  return affineToMatrix4(composed);
 }
 
 export const AnnotationLayerRenderer = ({ layerId }: { layerId: string }) => {

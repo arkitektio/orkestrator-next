@@ -5,11 +5,8 @@ import { beginPathFromProbe } from "./pathFromProbe";
 import { useRoiDrawingStoreApi } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
-import {
-  buildAffineMatrix,
-  getLayerZSize,
-  voxelToPhysicalZ,
-} from "../core/worldTransform";
+import { stepSceneZ } from "../core/sceneNavigation";
+import { sceneZExtent } from "../core/worldTransform";
 
 /** Hold-to-activate bindings. Release restores whatever was active before. */
 const HOLD_MODES: Record<string, InteractionMode> = {
@@ -32,40 +29,12 @@ export const KeyboardModeController = () => {
   const roiDrawingApi = useRoiDrawingStoreApi();
   const setCurrentZ = useViewerStore((s) => s.setCurrentZ);
 
-  const zNavigation = useMemo(() => {
-    if (displayMode !== "2D") return null;
-
-    let minZ = Infinity;
-    let maxZ = -Infinity;
-    let maxVoxel = 1;
-    let hasZ = false;
-
-    for (const layer of layers) {
-      const zSize = getLayerZSize(layer);
-      if (zSize === null || zSize <= 1) continue;
-
-      hasZ = true;
-      maxVoxel = Math.max(maxVoxel, zSize - 1);
-
-      const affine = buildAffineMatrix(layer);
-      const zStart = voxelToPhysicalZ(affine, 0);
-      const zEnd = voxelToPhysicalZ(affine, zSize - 1);
-
-      minZ = Math.min(minZ, zStart, zEnd);
-      maxZ = Math.max(maxZ, zStart, zEnd);
-    }
-
-    if (!hasZ) return null;
-
-    const range = maxZ - minZ;
-    const step = range > 0 ? range / maxVoxel : 1;
-
-    return {
-      min: minZ,
-      max: maxZ,
-      step: step > 0 ? step : 1,
-    };
-  }, [displayMode, layers]);
+  // `sceneZExtent` has no display-mode gate of its own — `currentZ` is only the
+  // flat view's slice plane, so the gate belongs here.
+  const zNavigation = useMemo(
+    () => (displayMode === "2D" ? sceneZExtent(layers) : null),
+    [displayMode, layers],
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -133,12 +102,10 @@ export const KeyboardModeController = () => {
 
       e.preventDefault();
 
+      // Same stepping as Shift+←/→ (`KeyboardSceneNavigation`), so the two ways
+      // of walking the stack cannot disagree about where a slice is.
       const { currentZ } = viewerStoreApi.getState();
-      const delta = e.deltaY > 0 ? zNavigation.step : -zNavigation.step;
-      const nextZ = Math.min(
-        zNavigation.max,
-        Math.max(zNavigation.min, currentZ + delta),
-      );
+      const nextZ = stepSceneZ(zNavigation, currentZ, e.deltaY > 0 ? 1 : -1);
 
       if (nextZ !== currentZ) {
         setCurrentZ(nextZ);

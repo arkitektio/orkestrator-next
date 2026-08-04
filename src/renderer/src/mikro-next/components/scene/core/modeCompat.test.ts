@@ -72,7 +72,6 @@ describe("availableAnnotateTools", () => {
       "POINT",
       "LINE",
       "PATH",
-      "TRACE",
     ]);
   });
 
@@ -87,14 +86,8 @@ describe("availableAnnotateTools", () => {
       "POINT",
       "LINE",
       "PATH",
-      "TRACE",
     ]);
     expect(tools).not.toContain("SELECT");
-  });
-
-  it("offers TRACE in both views — it searches whatever box its waypoints span", () => {
-    expect(isAnnotateToolAvailable("TRACE", ctx2D)).toBe(true);
-    expect(isAnnotateToolAvailable("TRACE", ctx3D)).toBe(true);
   });
 
   it("agrees with the single-tool predicate", () => {

@@ -29,7 +29,6 @@ const ALL_TOOLS: AnnotateTool[] = [
   "POINT",
   "LINE",
   "PATH",
-  "TRACE",
 ];
 
 /**
@@ -66,6 +65,10 @@ export const fallbackToolFor = (
  * Deliberately not gated on brick residency: that is streaming cadence, and
  * gating the mode picker on it would make the Probe button flicker while bricks
  * stream in.
+ *
+ * Equivalent by design to `effectiveProbeLayerId(…) !== null`
+ * (`core/probe/probeTargeting.ts`): some layer can answer the probe exactly
+ * when some layer is visible.
  */
 export const hasProbeableLayer = (
   layers: readonly { visible?: boolean }[],
@@ -84,9 +87,9 @@ export function availableInteractionModes(ctx: ModeContext): InteractionMode[] {
 
 /**
  * The marquee is 2D-only; the volumetric tools are 3D-only. Every shape tool
- * works in both — flat on the drawn slice, probe-placed in the volume. TRACE is
- * in both too: it searches the box its waypoints span, which is a flat one when
- * the flat view drew them.
+ * works in both — flat on the drawn slice, probe-placed in the volume. The
+ * vector enhancer rides along in both too: it searches the box its anchors
+ * span, which is a flat one when the flat view drew them.
  */
 export function isAnnotateToolAvailable(
   tool: AnnotateTool,

@@ -12,11 +12,6 @@ import { CameraMatrixSync } from "./CameraMatrixSync";
 import { PerfFrameProbe } from "./PerfFrameProbe";
 import { ScaleBar } from "./ScaleBar";
 import { ScaleGrid } from "./ScaleGrid";
-import {
-  SceneColumn,
-  SceneColumnPanels,
-  SceneColumnTrigger,
-} from "./SceneColumn";
 import { SceneDock } from "./SceneDock";
 import { SceneGuard, useSceneScopeStatus } from "./SceneProvider";
 import { ThreeDScene } from "./ThreeDScene";
@@ -27,7 +22,9 @@ import { CanvasSync } from "./cameras/CanvasSync";
 import { LinePickTuning } from "./primitives/LinePickTuning";
 import { InitialCameraFit } from "./cameras/InitialCameraFit";
 import { QualityAdapter } from "./cameras/QualityAdapter";
+import { KeyboardLayerVisibility } from "./interactions/KeyboardLayerVisibility";
 import { KeyboardModeController } from "./interactions/KeyboardModeController";
+import { KeyboardSceneNavigation } from "./interactions/KeyboardSceneNavigation";
 import { ModeCompatGuard } from "./interactions/ModeCompatGuard";
 import { SceneAxis } from "./layers/SceneAxis";
 import { AttributeProbeTracker } from "./managers/AttributeProbeTracker";
@@ -35,9 +32,9 @@ import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { SceneModeControls } from "./overlays/SceneModeControls";
+import { SceneShortcuts } from "./overlays/SceneShortcuts";
 import { DrawSizeReadout } from "./overlays/DrawSizeReadout";
 import { RoiToolbar } from "./overlays/RoiToolbar";
-import { SceneOverlay } from "./overlays/SceneOverlay";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";
 import { DebugPanel } from "./panels/DebugPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
@@ -230,22 +227,19 @@ const WhenDebug = ({ children }: { children: ReactNode }) => {
 };
 
 /**
- * The panel stack a viewport gets when its host composes nothing: everything on
- * the left, foldable. Exported as Scene.DefaultPanels so a host that only wants
- * to *add* a panel can render it alongside its own instead of restating it.
- * The layer list and animations are NOT here — they live in the page's
- * right-rail sidebar (`sceneSidebarTabs.tsx`), outside the viewport.
+ * The panel stack a viewport gets when its host composes nothing: the two
+ * scrubbers, docked at the edges the dimensions they scrub read along. Exported
+ * as Scene.DefaultPanels so a host that only wants to *add* a panel can render
+ * it alongside its own instead of restating it.
+ *
+ * There is no floating panel column any more. The view settings that used to
+ * fill it are a gear in the bottom-right HUD (`SceneModeControls`), and the
+ * layer list and animations live in the page's right-rail sidebar
+ * (`sceneSidebarTabs.tsx`) — both outside the viewport. `Scene.Column` remains
+ * for a host that has a panel of its own to float.
  */
 export const DefaultScenePanels = () => (
   <>
-    <SceneColumn>
-      <SceneColumnTrigger />
-      <SceneColumnPanels>
-        <SceneOverlay />
-      </SceneColumnPanels>
-    </SceneColumn>
-    {/* Z docks right, opposite the panel column: both defaulting left would
-        stack the scrubber on top of the panel column. */}
     <SceneDock side="right">
       <ZSliderPanel />
     </SceneDock>
@@ -297,6 +291,7 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         style={backgroundStyle(status.scene.backgroundColor)}
       >
         <KeyboardModeController />
+        <KeyboardLayerVisibility />
         <ModeCompatGuard />
         <SceneWrapper>
           <LongCommitProfiler id="scene-canvas">
@@ -308,6 +303,10 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
           <PointerMoveGate />
           <PerfFrameProbe />
           <CameraController />
+          {/* Also after CameraController: needs the installed controls to pan
+              and dolly against. Arrow keys, so it lives in the canvas rather
+              than with the other keyboard components outside it. */}
+          <KeyboardSceneNavigation />
           {/* Must follow CameraController: fits the as-loaded scene extent
               before the first painted frame (and on 2D/3D remounts). */}
           <InitialCameraFit />
@@ -368,6 +367,9 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <SceneModeControls />
 
         <RoiToolbar />
+        {/* Last, and the only overlay that covers the canvas: on top of
+            everything it documents. */}
+        <SceneShortcuts />
       </div>
     </SceneGuard>
   );

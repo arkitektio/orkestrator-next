@@ -3,7 +3,14 @@
 // pulls in the Apollo hooks barrel, which touches `window` on load)
 import { describe, expect, it } from 'vitest'
 import { ADatasetSpec } from './api/graphql'
-import { ADATASET_SPECS, modifierSpecsOf, spatialSpecOf, splitAxesBySpec } from './specs'
+import {
+  ADATASET_SPECS,
+  baseDtypeOf,
+  formatShape,
+  modifierSpecsOf,
+  spatialSpecOf,
+  splitAxesBySpec
+} from './specs'
 
 describe('the spec catalogue', () => {
   it('covers every enum member exactly once', () => {
@@ -107,5 +114,43 @@ describe('splitAxesBySpec', () => {
   it("names an axis '?' when axisNames is shorter than shape", () => {
     const { spatial } = splitAxesBySpec(['y'], [512, 512], [ADatasetSpec.Image])
     expect(spatial.map((axis) => axis.name)).toEqual(['y', '?'])
+  })
+})
+
+describe('formatShape', () => {
+  it('glues each extent to its axis', () => {
+    expect(formatShape(['x', 'y', 'z'], [1024, 1024, 5])).toBe('1024x 1024y 5z')
+  })
+
+  it("marks an extent '?' when axisNames is shorter than shape", () => {
+    expect(formatShape(['y'], [512, 512])).toBe('512y 512?')
+  })
+
+  it('ignores axis names the shape does not reach', () => {
+    expect(formatShape(['t', 'y', 'x'], [512, 512])).toBe('512t 512y')
+  })
+
+  it('is empty for a scalar with no axes', () => {
+    expect(formatShape([], [])).toBe('')
+  })
+})
+
+describe('baseDtypeOf', () => {
+  const level = (n: number, dtype: string | null) => ({
+    level: n,
+    store: { dtype }
+  })
+
+  it('reads the base level, not the first element', () => {
+    expect(baseDtypeOf([level(2, 'uint8'), level(0, 'uint16')])).toBe('uint16')
+  })
+
+  it('falls back to the first array when nothing is level 0', () => {
+    expect(baseDtypeOf([level(1, 'float32')])).toBe('float32')
+  })
+
+  it('is undefined for no arrays, and for an array that has no dtype', () => {
+    expect(baseDtypeOf([])).toBeUndefined()
+    expect(baseDtypeOf([level(0, null)])).toBeUndefined()
   })
 })

@@ -14,6 +14,7 @@ import {
   useCreateSceneFromCoordinateSystemMutation,
   useGetCoordinateGraphQuery,
 } from "../../api/graphql";
+import { formatShape } from "../../specs";
 import { datasetRegistrations } from "../coordinates/registrations";
 
 type PageDataset = GetADatasetQuery["adataset"];
@@ -155,11 +156,9 @@ export const DatasetBackdrop = ({
   const worlds = useDatasetWorlds(dataset);
   const axes = dataset.intrinsicSystem?.axes ?? [];
 
-  // Axis names over the shape, paired by position: "z × y × x" over
-  // "64 × 2048 × 2048" reads as one fact where two lists would not.
-  const dimensions = dataset.axisNames
-    .map((name, index) => `${name} ${dataset.shape[index] ?? "?"}`)
-    .join("  ·  ");
+  // The same "64z 2048y 2048x" the title overlay uses — one dataset should not
+  // read two ways depending on whether it has a scene yet.
+  const dimensions = formatShape(dataset.axisNames, dataset.shape);
 
   return (
     <div className="flex h-full w-full items-center justify-center p-6">

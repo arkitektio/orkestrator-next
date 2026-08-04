@@ -202,7 +202,7 @@ Proposed defaults: `ambient 0.25, specular 0.35, shininess 32, surfaceGain 6`.
 
 `store/modeStore.ts` — `cinematic: boolean` + `setCinematic`, session-only, per
 scene, resets on scene change. `BrickVolumeLayer` already imports `useModeStore`
-and `SceneOverlay` already reads both stores, so it costs nothing.
+and `SceneSettings` already reads both stores, so it costs nothing.
 
 Recorded tension: `cinematic` is semantically a *view* setting, and its popover
 siblings (`showScaleBar`, `showScaleGrid`, `debug`) all live in `viewerStore`, as
@@ -249,7 +249,7 @@ shadowing hazard bites hardest. Loop iterator names are not auto-renamed the way
 | `store/modeStore.ts` | `cinematic` + setter. |
 | `store/viewerStore.ts` | Phase 0: `isoThreshold` + setter. |
 | `panels/IsoThresholdPanel.tsx` | Phase 0: new, from `SelectedPointPanel.tsx`'s threshold block. |
-| `overlays/SceneOverlay.tsx` | one `SettingRow` in the Settings2 popover. |
+| `overlays/SceneSettings.tsx` | one `SettingRow` in the Settings2 popover. |
 | `core/qualityGovernor.ts` | Phase 2: `litVolumeWhileActive` + pure `resolveCinematic`. |
 | `OCTREE_RENDERER.md` | C2 as a numbered invariant beside the existing pitfalls. |
 

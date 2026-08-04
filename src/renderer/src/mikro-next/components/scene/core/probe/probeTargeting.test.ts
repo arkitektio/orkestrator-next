@@ -1,22 +1,80 @@
 import { describe, expect, it } from "vitest";
-import { layerAnswersProbe, probeAfterPinChange } from "./probeTargeting";
+import {
+  effectiveProbeLayerId,
+  layerAnswersProbe,
+  probeAfterPinChange,
+} from "./probeTargeting";
 
-describe("layerAnswersProbe", () => {
-  it("lets every layer answer when nothing is pinned", () => {
-    expect(layerAnswersProbe(null, "a")).toBe(true);
-    expect(layerAnswersProbe(null, "b")).toBe(true);
+describe("effectiveProbeLayerId", () => {
+  const layers = [
+    { id: "a", visible: true },
+    { id: "b", visible: true },
+    { id: "c", visible: true },
+  ];
+
+  it("defaults to the first layer with no pin", () => {
+    expect(effectiveProbeLayerId(null, layers)).toBe("a");
   });
 
-  it("lets only the pinned layer answer", () => {
+  it("lets an explicit visible pin win over the first layer", () => {
+    expect(effectiveProbeLayerId("b", layers)).toBe("b");
+  });
+
+  it("skips a hidden first layer for the default", () => {
+    expect(
+      effectiveProbeLayerId(null, [
+        { id: "a", visible: false },
+        { id: "b", visible: true },
+      ]),
+    ).toBe("b");
+  });
+
+  it("treats an undefined visible as visible", () => {
+    expect(effectiveProbeLayerId(null, [{ id: "a" }])).toBe("a");
+  });
+
+  it("falls back to the first visible layer when the pin names a hidden one", () => {
+    expect(
+      effectiveProbeLayerId("b", [
+        { id: "a", visible: true },
+        { id: "b", visible: false },
+      ]),
+    ).toBe("a");
+  });
+
+  it("falls back to the first visible layer when the pin names a gone one", () => {
+    expect(effectiveProbeLayerId("gone", layers)).toBe("a");
+  });
+
+  it("is null when every layer is hidden", () => {
+    expect(
+      effectiveProbeLayerId(null, [
+        { id: "a", visible: false },
+        { id: "b", visible: false },
+      ]),
+    ).toBeNull();
+    expect(
+      effectiveProbeLayerId("a", [{ id: "a", visible: false }]),
+    ).toBeNull();
+  });
+
+  it("is null with no layers at all", () => {
+    expect(effectiveProbeLayerId(null, [])).toBeNull();
+    expect(effectiveProbeLayerId("a", [])).toBeNull();
+  });
+});
+
+describe("layerAnswersProbe", () => {
+  it("lets only the target layer answer", () => {
     expect(layerAnswersProbe("a", "a")).toBe(true);
     expect(layerAnswersProbe("a", "b")).toBe(false);
   });
 
-  // A pin naming a layer that is gone (deleted while pinned) must not leave
-  // every layer answering — the probe goes quiet until the pin is cleared.
-  it("is false for all layers when the pin names none of them", () => {
-    expect(layerAnswersProbe("gone", "a")).toBe(false);
-    expect(layerAnswersProbe("gone", "b")).toBe(false);
+  // Null target = no layer can answer (everything hidden). Never "everyone":
+  // that was the old front-most-wins ambiguity this module exists to remove.
+  it("lets no layer answer when there is no target", () => {
+    expect(layerAnswersProbe(null, "a")).toBe(false);
+    expect(layerAnswersProbe(null, "b")).toBe(false);
   });
 });
 
@@ -31,8 +89,9 @@ describe("probeAfterPinChange", () => {
     expect(probeAfterPinChange(probe, "a")).toBe(probe);
   });
 
-  // Unpinning widens what may answer next; it says nothing about what was
-  // already read, so the readout stays up.
+  // Resetting to the default keeps the reading here: without the layer list
+  // this helper cannot know the default target — the probe panel's
+  // reconciliation drops it if it mismatches the derived target.
   it("keeps the reading when the pin is cleared", () => {
     expect(probeAfterPinChange(probe, null)).toBe(probe);
   });

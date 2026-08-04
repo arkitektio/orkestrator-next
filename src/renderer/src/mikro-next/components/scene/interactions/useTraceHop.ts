@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import * as THREE from "three";
 
 import { buildAffineMatrix } from "../core/worldTransform";
+import { effectiveProbeLayerId } from "../core/probe/probeTargeting";
 import { simplifyPath, type PathPoint } from "../core/trace/pathSimplify";
 import { buildTraceCost, type TraceWeights } from "../core/trace/traceCost";
 import {
@@ -26,8 +27,8 @@ import { useSceneStoreApi } from "../store/sceneStore";
 import { useViewerStoreApi } from "../store/viewerStore";
 
 /**
- * One hop of the TRACE tool: two probed waypoints in, the path the data suggests
- * between them out, in world coordinates.
+ * One edge of the vector enhancer: two probed waypoints in, the path the data
+ * suggests between them out, in world coordinates.
  *
  * This is the impure shell around `core/trace/` — it decides WHICH layer, WHICH
  * channel and WHICH pyramid level to ask about, reads the voxels out of the
@@ -148,9 +149,12 @@ export const useTraceHop = () => {
  * 3D goes through the probe, which already carries the layer AND the voxel it
  * landed on — no inversion, and the point is exactly where the ray met the
  * data. 2D has no probe in ANNOTATE mode, only a world point on the drawn
- * slice, so the layer is found by asking each visible one whether that point is
- * inside it. Front-to-back order is the store's layer order, which is the same
- * order the flat view stacks them in.
+ * slice, so the point is resolved against THE probe target layer
+ * (`effectiveProbeLayerId`) — the same single layer that answers probing.
+ * Deliberately no containment fallback: scanning other layers would let one
+ * chain's vertices resolve to different layers, the exact ambiguity the
+ * single-target rule removes. A click outside the target's extent returns
+ * null, which the drawer degrades to a straight edge.
  */
 export const useTraceWaypoints = () => {
   const sceneStoreApi = useSceneStoreApi();
@@ -169,21 +173,23 @@ export const useTraceWaypoints = () => {
   const fromWorld = useCallback(
     (world: THREE.Vector3): TraceWaypoint | null => {
       const layers = sceneStoreApi.getState().layers;
-      for (const layer of layers) {
-        if (layer.visible === false) continue;
-        const shape = traceLayerShape(layer);
-        if (!shape) continue;
+      const targetId = effectiveProbeLayerId(
+        viewerStoreApi.getState().probeLayerId,
+        layers,
+      );
+      const layer = layers.find((candidate) => candidate.id === targetId);
+      if (!layer) return null;
+      const shape = traceLayerShape(layer);
+      if (!shape) return null;
 
-        const inverse = buildAffineMatrix(layer).invert();
-        const local = world.clone().applyMatrix4(inverse);
-        const voxel = layerLocalToVoxel([local.x, local.y, local.z], shape);
-        if (!voxel) continue; // the click is outside this layer's extent
+      const inverse = buildAffineMatrix(layer).invert();
+      const local = world.clone().applyMatrix4(inverse);
+      const voxel = layerLocalToVoxel([local.x, local.y, local.z], shape);
+      if (!voxel) return null; // the click is outside the target's extent
 
-        return { layerId: layer.id, voxel, world: [world.x, world.y, world.z] };
-      }
-      return null;
+      return { layerId: layer.id, voxel, world: [world.x, world.y, world.z] };
     },
-    [sceneStoreApi],
+    [sceneStoreApi, viewerStoreApi],
   );
 
   return { fromProbe, fromWorld };

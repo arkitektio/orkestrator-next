@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -10,7 +10,10 @@ import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
-import { layerAnswersProbe } from "../../core/probe/probeTargeting";
+import {
+  effectiveProbeLayerId,
+  layerAnswersProbe,
+} from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
 import { DRAG_THRESHOLD_PX } from "../../core/drawGesture";
@@ -21,7 +24,7 @@ import {
   isProbeDerivedTool,
   useRoiDrawingStoreApi,
 } from "../../store/roiDrawingStore";
-import { useSceneStore } from "../../store/sceneStore";
+import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import {
@@ -123,8 +126,23 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const layers = useSceneStore((s) => s.layers);
   const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
+  const sceneStoreApi = useSceneStoreApi();
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+
+  // Event-time resolution — fresh pin AND fresh layer list, no render
+  // subscription: exactly one layer (the effective probe target) answers.
+  const answersProbe = useCallback(
+    () =>
+      layerAnswersProbe(
+        effectiveProbeLayerId(
+          viewerStoreApi.getState().probeLayerId,
+          sceneStoreApi.getState().layers,
+        ),
+        layerId,
+      ),
+    [viewerStoreApi, sceneStoreApi, layerId],
+  );
 
   useEffect(() => {
     const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
@@ -558,8 +576,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
             isDrawingTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing || e.buttons !== 0) return;
         // Declined BEFORE stopPropagation, so the event falls through to the
-        // pinned layer behind this one instead of being swallowed here.
-        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+        // target layer behind this one instead of being swallowed here.
+        if (!answersProbe()) return;
         // The event already raycast this volume's box, so the front-most
         // volume claims the hover; the march itself is deferred to the frame.
         e.stopPropagation();
@@ -574,15 +592,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           (interactionMode === "ANNOTATE" &&
             isDrawingTool(roiDrawingApi.getState().activeTool));
         if (!hoverProbing) return;
-        if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+        if (!answersProbe()) return;
         probeCoalescer.cancel();
         updateProbe(null, false);
       }}
       onPointerDown={(e) => {
-        if (
-          interactionMode === "PROBE" &&
-          !layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)
-        ) {
+        if (interactionMode === "PROBE" && !answersProbe()) {
           return;
         }
         if (interactionMode === "PROBE") {
@@ -595,12 +610,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           interactionMode === "ANNOTATE" &&
           isDrawingTool(roiDrawingApi.getState().activeTool)
         ) {
-          // An armed probe layer must answer annotation placement too — since
-          // arming no longer switches modes, "pin then annotate" is the
-          // normal flow. Declined WITHOUT stopPropagation so the event falls
-          // through to the pinned layer's mesh behind this one (same pattern
-          // as the hover probe above).
-          if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+          // The probe target must answer annotation placement too — every 3D
+          // vertex comes from the probe, so placement follows the same
+          // single-layer rule. Declined WITHOUT stopPropagation so the event
+          // falls through to the target layer's mesh behind this one (same
+          // pattern as the hover probe above).
+          if (!answersProbe()) return;
           // Feedback only, and the point the drawer will read: the marker and
           // axis guides land on it before the click event arrives. What gets
           // created happens in onClick (here, or in the drawer's), which R3F
@@ -610,9 +625,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       }}
       onClick={(e) => {
         if (interactionMode === "ANNOTATE") {
-          // Same pin rule as onPointerDown: only the armed probe layer places
+          // Same rule as onPointerDown: only the probe target places
           // annotations; others let the click fall through to it.
-          if (!layerAnswersProbe(viewerStoreApi.getState().probeLayerId, layerId)) return;
+          if (!answersProbe()) return;
           // An orbit-drag release is not an anchor.
           if (e.delta > DRAG_THRESHOLD_PX) return;
           const drawing = roiDrawingApi.getState();

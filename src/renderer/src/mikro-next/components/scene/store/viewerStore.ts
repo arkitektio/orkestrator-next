@@ -125,10 +125,10 @@ export interface ViewerState {
   /** User-selected probe strategy; "auto" follows the layer's projection. */
   probeMode: ProbeMode;
   /**
-   * Which layer the probe reads, or null for "whatever is in front". Every
-   * layer raycasts its own mesh, so with layers stacked the front-most one
-   * claims the pointer — pinning an id here makes the others decline the event
-   * (without stopping propagation) so it falls through to the pinned layer.
+   * Which layer the probe reads, or null for the DEFAULT: the first visible
+   * layer (see `effectiveProbeLayerId`). Exactly one layer ever answers —
+   * every other layer declines the pointer event (without stopping
+   * propagation) so it falls through to the target layer's mesh.
    */
   probeLayerId: string | null;
 
@@ -168,9 +168,10 @@ export interface ViewerState {
   setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
   setProbeThreshold: (threshold: number) => void
   setProbeMode: (mode: ProbeMode) => void
-  /** Pin the probe to one layer, or null to read whatever is in front. Clears
-   * a probe belonging to a different layer, so the readout never keeps showing
-   * values from a layer the probe no longer reads. */
+  /** Pin the probe to one layer, or null for the default (first visible
+   * layer). Clears a probe belonging to a different layer, so the readout
+   * never keeps showing values from a layer the probe no longer reads; the
+   * probe panel reconciles the default-target cases this setter cannot see. */
   setProbeLayerId: (layerId: string | null) => void
   /** Async exact-value upgrade: patches the active probe when the fetched key
    * still matches (no-op set otherwise, so late arrivals never cause

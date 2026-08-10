@@ -12271,6 +12271,13 @@ export type GetTableDatasetQueryVariables = Exact<{
 
 export type GetTableDatasetQuery = { __typename?: 'Query', tableDataset: { __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableDatasetColumn', id: string, name: string, longName?: string | null, dtype: string, role: TableColumnRole, axisType?: AxisType | null, unit?: string | null, order: number }>, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } } };
 
+export type GetTableDatasetDerivedQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetTableDatasetDerivedQuery = { __typename?: 'Query', tableDataset: { __typename?: 'TableDataset', id: string, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, derivedFrom: Array<{ __typename?: 'AffineTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'BijectionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'ByDimensionTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'FieldTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'IdentityTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'MapAxisTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'RotationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'ScaleTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'SequenceTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'TranslationTransformation', id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null } | { __typename?: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, valueRelation?: ValueRelation | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null }> } };
+
 export type GetTableDatasetsQueryVariables = Exact<{
   filters?: InputMaybe<TableDatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -15396,6 +15403,42 @@ export const GetTableDatasetDocument = gql`
   }
 }
     ${TableDatasetFragmentDoc}`;
+export const GetTableDatasetDerivedDocument = gql`
+    query GetTableDatasetDerived($id: ID!) {
+  tableDataset(id: $id) {
+    id
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+    derivedFrom {
+      id
+      kind
+      valueRelation
+      output {
+        id
+        name
+        residents {
+          __typename
+          ... on ADataset {
+            id
+            name
+          }
+          ... on Lens {
+            id
+            dataset {
+              id
+              name
+            }
+          }
+        }
+      }
+      ... on UnmappableTransformation {
+        reason
+      }
+    }
+  }
+}
+    ${ProvenanceEntryFragmentDoc}`;
 export const GetTableDatasetsDocument = gql`
     query GetTableDatasets($filters: TableDatasetFilter, $pagination: OffsetPaginationInput, $ordering: [TableDatasetOrder!]) {
   tableDatasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
@@ -15981,6 +16024,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GetTableDataset(variables: GetTableDatasetQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTableDatasetQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetTableDatasetQuery>({ document: GetTableDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetTableDataset', 'query', variables);
+    },
+    GetTableDatasetDerived(variables: GetTableDatasetDerivedQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTableDatasetDerivedQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetTableDatasetDerivedQuery>({ document: GetTableDatasetDerivedDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetTableDatasetDerived', 'query', variables);
     },
     GetTableDatasets(variables?: GetTableDatasetsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTableDatasetsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetTableDatasetsQuery>({ document: GetTableDatasetsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetTableDatasets', 'query', variables);

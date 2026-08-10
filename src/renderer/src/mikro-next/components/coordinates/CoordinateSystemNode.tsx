@@ -1,7 +1,10 @@
 import { cn } from "@/lib/utils";
 import { MikroCoordinateSystem } from "@/linkers";
 import { Handle, NodeProps, Position } from "@xyflow/react";
-import { isReferenceFrame, residentLabel } from "./residents";
+import { Boxes, Globe } from "lucide-react";
+import { MAX_VISIBLE_RESIDENTS, SYSTEM_WIDTH } from "./nodeSize";
+import { ResidentChip } from "./ResidentChip";
+import { isReferenceFrame, residentName, visibleResidents } from "./residents";
 import { CoordinateSystemNode as TNode } from "./types";
 
 // Inhabited vs. uninhabited is the whole vocabulary the graph has left, and
@@ -17,10 +20,31 @@ export const OCCUPANCY_LABEL = {
   inhabited: "inhabited",
 } as const;
 
+/** The same two colours as the spine, for the header icon. */
+const OCCUPANCY_TEXT = {
+  frame: "text-violet-500",
+  inhabited: "text-blue-500",
+} as const;
+
+const OCCUPANCY_ICON = {
+  frame: Globe,
+  inhabited: Boxes,
+} as const;
+
+const OCCUPANCY_TITLE = {
+  frame:
+    "Nothing lives in this space. Sources register into it and scenes adopt it as their world; it outlives every scene over it.",
+  inhabited: "The data living in this space.",
+} as const;
+
 export type Occupancy = keyof typeof OCCUPANCY_DOT;
 
 export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
   const { system, isRoot } = data;
+
+  const occupancy: Occupancy = isReferenceFrame(system) ? "frame" : "inhabited";
+  const OccupancyIcon = OCCUPANCY_ICON[occupancy];
+  const { shown, hidden } = visibleResidents(system, MAX_VISIBLE_RESIDENTS);
 
   return (
     <>
@@ -30,30 +54,64 @@ export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
         className="!bg-muted-foreground"
       />
       <div
+        style={{ width: SYSTEM_WIDTH }}
         className={cn(
-          "flex w-[220px] overflow-hidden rounded-lg border bg-card shadow-sm",
+          "flex overflow-hidden rounded-lg border bg-card shadow-sm",
           isRoot && "ring-2 ring-offset-1 ring-primary ring-offset-background",
         )}
       >
         {/* Occupancy reads as a colour spine rather than a badge competing
             with the name for the eye. */}
-        <div
-          className={cn(
-            "w-1 shrink-0",
-            OCCUPANCY_DOT[isReferenceFrame(system) ? "frame" : "inhabited"],
-          )}
-        />
+        <div className={cn("w-1 shrink-0", OCCUPANCY_DOT[occupancy])} />
         <div className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
-          <MikroCoordinateSystem.DetailLink
-            object={system}
-            className="truncate text-sm font-semibold leading-tight"
-          >
-            {system.name}
-          </MikroCoordinateSystem.DetailLink>
-          <div className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
-            {residentLabel(system)}
+          <div className="flex min-w-0 items-center gap-1">
+            <MikroCoordinateSystem.DetailLink
+              object={system}
+              className="min-w-0 flex-1 truncate text-sm font-semibold leading-tight"
+            >
+              {system.name}
+            </MikroCoordinateSystem.DetailLink>
+            <OccupancyIcon
+              className={cn("h-3.5 w-3.5 shrink-0", OCCUPANCY_TEXT[occupancy])}
+            />
           </div>
-          <div className="flex flex-wrap gap-1">
+
+          {/* Who lives here — the space's whole story now that `kind` is gone.
+              One chip per resident rather than a wrapping cloud: the names are
+              long, and a predictable row count is what lets the ELK layout size
+              this node correctly. */}
+          <div className="flex min-w-0 flex-col gap-0.5">
+            {occupancy === "frame" ? (
+              // An empty band would read as a missing answer. Dashed, because
+              // that is already this graph's vocabulary for "not a concrete
+              // thing" — the same borders a composite transformation wears.
+              <span
+                title={OCCUPANCY_TITLE.frame}
+                className="truncate rounded border border-dashed border-violet-500/50 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
+              >
+                reference frame — nothing lives here
+              </span>
+            ) : (
+              <>
+                {shown.map((resident) => (
+                  <ResidentChip
+                    key={`${resident.__typename}-${resident.id}`}
+                    resident={resident}
+                  />
+                ))}
+                {hidden.length > 0 && (
+                  <span
+                    title={hidden.map(residentName).join("\n")}
+                    className="truncate px-1 text-[10px] leading-tight text-muted-foreground"
+                  >
+                    +{hidden.length} more
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-1 border-t pt-1">
             {[...system.axes]
               .sort((a, b) => a.order - b.order)
               .map((axis) => (

@@ -176,7 +176,7 @@ export const TaskStatusHero = (props: { task: DetailTaskFragment }) => {
   const theme = statusTheme(task);
   const running = !task.isDone && !isTerminalEvent(task.latestEventKind);
   const walltime = formatWalltime(task);
-  const agent = task.implementation.agent;
+  const agent = task.implementation?.agent;
 
   return (
     <div className={cn("rounded-xl border p-5 ring-1", theme.ring, theme.bg)}>
@@ -241,11 +241,17 @@ export const TaskStatusHero = (props: { task: DetailTaskFragment }) => {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3 text-xs">
-        <RekuestImplementation.DetailLink object={task.implementation}>
-          <Badge variant="outline" className="cursor-pointer font-mono">
-            {task.implementation.interface}
+        {task.implementation ? (
+          <RekuestImplementation.DetailLink object={task.implementation}>
+            <Badge variant="outline" className="cursor-pointer font-mono">
+              {task.implementation.interface}
+            </Badge>
+          </RekuestImplementation.DetailLink>
+        ) : (
+          <Badge variant="outline" className="font-mono text-muted-foreground">
+            Unassigned
           </Badge>
-        </RekuestImplementation.DetailLink>
+        )}
         {agent && (
           <RekuestAgent.DetailLink object={agent}>
             <Badge variant="secondary" className="cursor-pointer">
@@ -448,7 +454,7 @@ export const TaskTimeLine = (props: {
             return (
               <LogRow key={e.id} event={e}>
                 <span className="text-muted-foreground">
-                  delegated to {e.delegatedTo?.implementation.action.name}
+                  delegated to {e.delegatedTo?.action.name}
                 </span>
                 {e.delegatedTo && (
                   <RekuestTask.DetailLink

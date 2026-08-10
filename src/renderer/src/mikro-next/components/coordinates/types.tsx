@@ -25,26 +25,29 @@ export type CoordinateSystemNode = Node<
   "coordinateSystem"
 >;
 
-export type TransformationNodeData = {
+export type TransformationEdgeData = {
   transformation: TransformationFragment;
+  /** Where this edge sits in the fan of maps sharing its pair of spaces. */
+  parallelIndex: number;
+  parallelCount: number;
+  [key: string]: unknown;
 };
 
 /**
- * A transformation is a NODE, not an edge label. The graph's whole point is
- * what happens *between* the spaces, and a label floating on a bezier reads as
- * decoration; a node reads as a step. So every edge becomes
- * system → [transformation] → system, and the plain lines carry no meaning
- * beyond direction.
+ * A transformation is an EDGE, not a node. The graph's whole point is which
+ * spaces reach which, and drawing every map as its own box doubles the node
+ * count and buries that: system → [box] → system reads as a pipeline of things
+ * rather than as a neighbourhood of spaces. So the map rides the line it
+ * describes — kind, parameters and validity in a label on the edge itself.
  */
-export type TransformationNode = Node<
-  TransformationNodeData,
+export type TransformationEdge = Edge<
+  TransformationEdgeData,
   "transformation"
 >;
 
-export type GraphNode = CoordinateSystemNode | TransformationNode;
+export type GraphNode = CoordinateSystemNode;
 
-/** Plain smoothstep connectors — they carry direction and nothing else. */
-export type GraphEdge = Edge;
+export type GraphEdge = TransformationEdge;
 
 /**
  * A one-line summary of what an edge actually does. The graph query returns

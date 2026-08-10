@@ -1,5 +1,5 @@
 import { CheckCircle, Clock, Loader, XCircle } from "lucide-react";
-import { TaskEventKind, TaskStatus } from "../api/graphql";
+import { TaskEventKind } from "../api/graphql";
 
 /**
  * Single source of truth for the task status vocabulary: how a task's
@@ -179,16 +179,18 @@ export const isCancelable = (task: { isDone?: boolean | null }) =>
 export const isInterruptable = (task: { isDone?: boolean | null }) =>
   task.isDone !== true;
 
-/** Filter-chip options shared by the org-wide and per-agent task pages. */
-export const TASK_STATUS_FILTER_OPTIONS: {
+/**
+ * Coarse lifecycle filter-chip options shared by the org-wide and per-agent
+ * task pages. The server dropped the `TaskStatus` vocabulary in favour of the
+ * `isDone` flag; every finer-grained distinction it used to offer (cancelled,
+ * critical, assigning) is already covered by {@link TASK_STATE_FILTER_OPTIONS}.
+ */
+export const TASK_DONE_FILTER_OPTIONS: {
   label: string;
-  value: TaskStatus;
+  value: boolean;
 }[] = [
-  { label: "Done", value: TaskStatus.Done },
-  { label: "Ongoing", value: TaskStatus.Ongoing },
-  { label: "Assigning", value: TaskStatus.Assigning },
-  { label: "Cancelled", value: TaskStatus.Cancelled },
-  { label: "Critical", value: TaskStatus.Critical },
+  { label: "Running", value: false },
+  { label: "Done", value: true },
 ];
 
 export const TASK_STATE_FILTER_OPTIONS: {

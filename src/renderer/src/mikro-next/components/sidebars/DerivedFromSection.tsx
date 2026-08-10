@@ -1,10 +1,24 @@
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { MikroADataset, MikroCoordinateSystem } from "@/linkers";
 import { CornerDownRight } from "lucide-react";
-import { GetADatasetDerivedQuery } from "../../api/graphql";
-import { parentDatasetOfEdge } from "./derivedGrouping";
+import { ParentEdge, parentDatasetOfEdge } from "./derivedGrouping";
 
-type QueryEdge = GetADatasetDerivedQuery["adataset"]["derivedFrom"][number];
+/**
+ * The narrowest shape this section needs, rather than one query's generated type:
+ * `derivedFrom` is the same relation on an array dataset and on a table dataset,
+ * and both pages select it identically, so typing it structurally lets one
+ * component serve both instead of the two diverging. Same reasoning as
+ * `ParentEdge`, which this builds on.
+ *
+ * `reason` is optional because only UnmappableTransformation carries one.
+ */
+export type QueryEdge = ParentEdge & {
+  id: string;
+  kind: string;
+  valueRelation?: string | null;
+  output?: { id: string; name: string } | null;
+  reason?: string | null;
+};
 
 /**
  * Where this dataset came FROM — the other half of its lineage.
@@ -20,8 +34,17 @@ type QueryEdge = GetADatasetDerivedQuery["adataset"]["derivedFrom"][number];
  */
 export const DerivedFromSection = ({
   edges,
+  emptyTitle = "Acquired, not computed",
+  emptyDescription = "This dataset names no parent, so it came off an instrument rather than out of a task.",
 }: {
   edges: readonly QueryEdge[];
+  /**
+   * What "no parents" MEANS, which is container-specific: an array dataset with
+   * no derivation edge was acquired, while a table with none is freestanding —
+   * nothing measures a feature table off an instrument.
+   */
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) => {
   return (
     <div className="flex flex-col gap-3">
@@ -34,11 +57,8 @@ export const DerivedFromSection = ({
 
       {edges.length === 0 ? (
         <Empty>
-          <EmptyTitle>Acquired, not computed</EmptyTitle>
-          <EmptyDescription>
-            This dataset names no parent, so it came off an instrument rather
-            than out of a task.
-          </EmptyDescription>
+          <EmptyTitle>{emptyTitle}</EmptyTitle>
+          <EmptyDescription>{emptyDescription}</EmptyDescription>
         </Empty>
       ) : (
         edges.map((edge, index) => {
@@ -65,7 +85,10 @@ export const DerivedFromSection = ({
                   </MikroADataset.DetailLink>
                 ) : edge.output ? (
                   <MikroCoordinateSystem.DetailLink
-                    object={edge.output}
+                    // Just the identity, not the whole edge target: the link
+                    // needs an id, and `output.residents` is a readonly array
+                    // the smart object's JSON-ish shape does not accept.
+                    object={{ id: edge.output.id, name: edge.output.name }}
                     className="break-all text-sm font-medium"
                   >
                     {edge.output.name}

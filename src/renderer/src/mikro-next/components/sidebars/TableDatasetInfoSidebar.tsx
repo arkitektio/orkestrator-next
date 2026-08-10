@@ -1,7 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { MikroCoordinateSystem, MikroTableDataset } from "@/linkers";
-import { GetTableDatasetQuery, TableColumnRole } from "../../api/graphql";
+import {
+  GetTableDatasetQuery,
+  TableColumnRole,
+  useGetTableDatasetDerivedQuery,
+} from "../../api/graphql";
 import { residentLabel } from "../coordinates/residents";
+import { DerivedFromSection } from "./DerivedFromSection";
+import { ProvenanceSection } from "./ProvenanceSection";
 
 type PageTable = GetTableDatasetQuery["tableDataset"];
 
@@ -14,9 +20,13 @@ type PageTable = GetTableDatasetQuery["tableDataset"];
  * What the array page says with shape/dtype/levels, a table says with its
  * declared columns: their roles are what makes it either a placeable table (it
  * has COORDINATE columns, which ARE the axes of the space it owns) or a pure
- * measurement table keyed by an index. Everything here comes off the page's own
- * query — no second round trip, unlike the array page's lineage, which the
- * table schema does not expose to us yet.
+ * measurement table keyed by an index.
+ *
+ * The static facts come from the page's own query; the lineage and the history
+ * are one extra round trip made here, exactly as on the array page — the tab is
+ * unmounted while inactive (Radix `TabsContent`) so it costs nothing until
+ * someone opens it. One section fewer than the array's four: nothing on
+ * TableDataset points downwards, so there is no "derived tables" to list.
  */
 export const TableDatasetInfoSidebar = ({ dataset }: { dataset: PageTable }) => {
   // `order` is a field, not a position — the API does not promise order.
@@ -24,6 +34,13 @@ export const TableDatasetInfoSidebar = ({ dataset }: { dataset: PageTable }) => 
   const coordinateColumns = columns.filter(
     (column) => column.role === TableColumnRole.Coordinate,
   );
+
+  // cache-and-network so reopening the tab after a task ran shows what it
+  // recorded rather than the answer from before it started.
+  const { data, error, loading } = useGetTableDatasetDerivedQuery({
+    variables: { id: dataset.id },
+    fetchPolicy: "cache-and-network",
+  });
 
   return (
     <div className="flex flex-col gap-4 overflow-y-auto p-4">
@@ -130,6 +147,34 @@ export const TableDatasetInfoSidebar = ({ dataset }: { dataset: PageTable }) => 
           ))
         )}
       </div>
+
+      {/* Lineage and history. One failure message for both: they come from one
+          query, so a partial rendering would be a lie about which part is
+          missing. */}
+      {error ? (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3">
+          <p className="text-sm text-destructive">
+            Could not load lineage: {error.message}
+          </p>
+        </div>
+      ) : !data ? (
+        <div className="text-xs text-muted-foreground">
+          {loading ? "Loading lineage…" : null}
+        </div>
+      ) : (
+        <>
+          <DerivedFromSection
+            edges={data.tableDataset.derivedFrom}
+            // Not "acquired": nothing measures a feature table off an
+            // instrument. A table with no parent edge is one that claims no data
+            // underneath it at all.
+            emptyTitle="Freestanding table"
+            emptyDescription="This table names no parent, so its rows are not recorded as measured over any other data."
+          />
+
+          <ProvenanceSection entries={data.tableDataset.provenanceEntries} />
+        </>
+      )}
     </div>
   );
 };

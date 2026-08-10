@@ -17,30 +17,30 @@ import CoordinateSystemNode, {
   OCCUPANCY_LABEL,
   Occupancy,
 } from "./CoordinateSystemNode";
-import { parallelIndices } from "./edgeLayout";
-import { systemNodeSize } from "./nodeSize";
-import TransformationEdge from "./TransformationEdge";
+import TransformationNode from "./TransformationNode";
 import { GraphEdge, GraphNode } from "./types";
 
 export type CoordinateGraph = GetCoordinateGraphQuery["coordinateGraph"];
 
+const SYSTEM_WIDTH = 220;
+const SYSTEM_HEIGHT = 76;
+const TRANSFORM_WIDTH = 190;
+const TRANSFORM_HEIGHT = 68;
+
 const nodeTypes = {
   coordinateSystem: CoordinateSystemNode,
+  transformation: TransformationNode,
 };
 
-const edgeTypes = {
-  transformation: TransformationEdge,
-};
-
-// Left-to-right layers: spaces in columns, the maps between them in the gaps.
-// The gap is generous because the transformation label lives IN it — a tight
-// layer spacing puts labels on top of the nodes they connect.
+// Left-to-right layers. Because every transformation is its own node, the
+// layering alternates space / operation / space on its own — the layout does
+// the storytelling.
 const layeredLayout = {
   "elk.algorithm": "layered",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
-  "elk.layered.spacing.nodeNodeBetweenLayers": "160",
-  "elk.spacing.nodeNode": "48",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "70",
+  "elk.spacing.nodeNode": "36",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
 };
 
@@ -48,6 +48,11 @@ const layeredLayout = {
 // are Tailwind v4 oklch() values, so wrapping one in hsl() yields an invalid
 // color — the stroke is ignored and the arrow marker (an SVG <marker> with an
 // invalid fill) renders nothing at all.
+const edgeStyle = {
+  stroke: "currentColor",
+  strokeWidth: 1.5,
+};
+
 const marker = {
   type: MarkerType.ArrowClosed,
   width: 16,
@@ -56,10 +61,10 @@ const marker = {
 };
 
 /**
- * Coordinate systems are the nodes; the transformations between them are the
- * edges, drawn in their true stored direction (input → output). An edge whose
- * input or output falls outside the returned component (the walk is
- * depth-bounded) is dropped rather than drawn dangling.
+ * The graph is bipartite: coordinate systems and the transformations between
+ * them are both nodes, and the lines only say "then". An edge whose input or
+ * output falls outside the returned component (the walk is depth-bounded) is
+ * dropped rather than drawn dangling.
  */
 const buildGraph = (
   graph: CoordinateGraph,
@@ -74,42 +79,73 @@ const buildGraph = (
     data: { system, isRoot: system.id === graph.root.id },
   }));
 
-  const drawable = graph.transformations.filter((transformation) => {
-    const { input, output } = transformation;
+  const edges: GraphEdge[] = [];
+
+  for (const transformation of graph.transformations) {
+    const input = transformation.input;
+    const output = transformation.output;
     // Not silent: a transformation with an endpoint missing from the walk
     // cannot be drawn, and a graph that quietly renders fewer edges than the
     // server returned is worse than one that says so.
-    if (!input || !output || !known.has(input.id) || !known.has(output.id)) {
+    if (
+      !input ||
+      !output ||
+      !known.has(input.id) ||
+      !known.has(output.id)
+    ) {
       dropped++;
-      return false;
+      continue;
     }
-    return true;
-  });
 
-  // Several maps can join the same two spaces. As edges they would route along
-  // the same path and stack their labels, so each one is told where it sits in
-  // the fan before it is drawn.
-  const fan = parallelIndices(
-    drawable.map((transformation) => ({
-      source: transformation.input!.id,
-      target: transformation.output!.id,
-    })),
-  );
+    const id = `t-${transformation.id}`;
+    nodes.push({
+      id,
+      type: "transformation" as const,
+      position: { x: 0, y: 0 },
+      data: { transformation },
+    });
 
-  const edges: GraphEdge[] = drawable.map((transformation, i) => ({
-    id: transformation.id,
-    source: transformation.input!.id,
-    target: transformation.output!.id,
-    type: "transformation" as const,
-    markerEnd: marker,
-    data: {
-      transformation,
-      parallelIndex: fan[i].index,
-      parallelCount: fan[i].count,
-    },
-  }));
+    edges.push({
+      id: `${input.id}->${id}`,
+      source: input.id,
+      target: id,
+      type: "smoothstep" as const,
+      style: edgeStyle,
+    });
+    edges.push({
+      id: `${id}->${output.id}`,
+      source: id,
+      target: output.id,
+      type: "smoothstep" as const,
+      style: edgeStyle,
+      markerEnd: marker,
+    });
+  }
 
   return { nodes, edges, dropped };
+};
+
+// ELK places boxes, so it needs the height the node will actually render at —
+// both kinds grow with their content (a composite lists its children, a system
+// wraps its axis chips), and a stale constant here shows up as overlap.
+const sizeOf = (node: GraphNode) => {
+  if (node.type === "transformation") {
+    const transformation = node.data.transformation;
+    const children =
+      "transformations" in transformation
+        ? transformation.transformations.length
+        : 0;
+    return {
+      width: TRANSFORM_WIDTH,
+      height: TRANSFORM_HEIGHT + children * 14,
+    };
+  }
+
+  const axisRows = Math.ceil(node.data.system.axes.length / 4);
+  return {
+    width: SYSTEM_WIDTH,
+    height: SYSTEM_HEIGHT + Math.max(0, axisRows - 1) * 16,
+  };
 };
 
 const Legend = ({
@@ -129,8 +165,8 @@ const Legend = ({
       </span>
     ))}
     <span className="flex items-center gap-1">
-      <span className="h-0 w-4 border-t-2 border-dashed border-muted-foreground/60" />
-      assumed or unmappable
+      <span className="h-2 w-3 rounded-sm border-2 border-primary/70 bg-primary/10" />
+      transformation
     </span>
     <span className="w-full border-t pt-1 font-mono text-muted-foreground">
       {systems} systems · {transformations} transformations
@@ -167,12 +203,7 @@ export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
       .layout({
         id: "root",
         layoutOptions: layeredLayout,
-        // ELK places boxes, so it needs the height each node will ACTUALLY
-        // render at — both the resident list and the axis chips grow it.
-        children: rawNodes.map((node) => ({
-          id: node.id,
-          ...systemNodeSize(node.data.system),
-        })),
+        children: rawNodes.map((node) => ({ id: node.id, ...sizeOf(node) })),
         edges: rawEdges.map((edge) => ({
           id: edge.id,
           sources: [edge.source],
@@ -212,11 +243,10 @@ export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onInit={(reactFlow) => setInstance(reactFlow)}
-        defaultEdgeOptions={{ type: "transformation" }}
+        defaultEdgeOptions={{ type: "smoothstep" }}
         nodesConnectable={false}
         fitView
         proOptions={{ hideAttribution: true }}

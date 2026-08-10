@@ -38,6 +38,10 @@ fragment MinimalTask on Task {
   latestEventKind
   isDone
   createdAt
+  action {
+    id
+    name
+  }
   implementation {
     id
     interface
@@ -141,6 +145,9 @@ fragment TaskEvent on TaskEvent {
   message
   delegatedTo {
     id
+    action {
+      name
+    }
     implementation {
       id
       interface

@@ -10,7 +10,7 @@ import TaskList from "@/rekuest/components/lists/TaskList";
 import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Ordering, TaskStatus } from "@/rekuest/api/graphql";
+import { Ordering } from "@/rekuest/api/graphql";
 import { OrgTasksUpdater } from "../components/updaters/OrgTasksUpdater";
 import { Loader2, Podcast } from "lucide-react";
 
@@ -180,7 +180,7 @@ const Page = () => {
             Ongoing Tasks
           </span>
         }
-        filters={{ status: [TaskStatus.Assigning, TaskStatus.Ongoing] }}
+        filters={{ isDone: false, rootIsnull: true }}
         order={{ createdAt: Ordering.Desc }}
       />
 

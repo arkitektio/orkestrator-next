@@ -2200,9 +2200,6 @@ type ImplementationMapping {
 input ImplementationOrder @oneOf {
   active: Ordering
   createdAt: Ordering
-  finishedAt: Ordering
-  startedAt: Ordering
-  status: Ordering
 }
 
 type ImplementationUpdate {
@@ -4112,8 +4109,10 @@ type Task {
   """Unique ID of the task."""
   id: ID!
 
-  """Implementation assigned to execute."""
-  implementation: Implementation!
+  """
+  Implementation assigned to execute. Null until the task is mapped to one.
+  """
+  implementation: Implementation
 
   """List of recent instructions for this task."""
   instructs: [TaskInstruct!]!
@@ -4230,6 +4229,11 @@ input TaskEventFilter {
   DISTINCT: Boolean
   NOT: TaskEventFilter
   OR: TaskEventFilter
+
+  """Filter by IDs of the task events"""
+  ids: [ID!]
+
+  """Filter by the kind of the event"""
   kind: [TaskEventKind!]
 }
 
@@ -4265,20 +4269,62 @@ enum TaskField {
   CREATED_AT
 }
 
+"""A way to filter tasks"""
 input TaskFilter {
   AND: TaskFilter
   DISTINCT: Boolean
   NOT: TaskFilter
   OR: TaskFilter
+
+  """Filter by the structures this task acted on"""
   actedOn: [String!]
+
+  """Filter by the action the task was assigned to"""
+  action: ID
+
+  """Filter by the agent executing the task"""
   agent: ID
+
+  """Filter by the canonical args hash (the replay-discovery key)"""
+  argsHash: String
+
+  """Filter by the caller (client/user/organization) that created the task"""
+  caller: ID
+
+  """
+  Filter by the client ID of the app the executing agent is registered to
+  """
   clientId: ID
+
+  """Only tasks created after this timestamp"""
   createdAfter: DateTime
+
+  """Only tasks created before this timestamp"""
   createdBefore: DateTime
+
+  """Filter by IDs of the tasks"""
   ids: [ID!]
+
+  """Filter by the implementation the task is currently mapped to"""
   implementation: ID
+
+  """Filter by whether the task has finished"""
+  isDone: Boolean
+
+  """Filter by the direct parent task"""
+  parent: ID
+
+  """Filter by the caller-supplied reference of the task"""
+  reference: String
+
+  """Filter by the root task of the execution tree"""
+  root: ID
+
+  """Keep only root tasks (true) or only descendants of a root (false)"""
+  rootIsnull: Boolean
+
+  """Filter by the latest lifecycle event of the task"""
   state: [TaskEventKind!]
-  status: [TaskStatus!]
 }
 
 """An instruct event for a specific task."""
@@ -4309,8 +4355,6 @@ enum TaskInstructKind {
 input TaskOrder @oneOf {
   createdAt: Ordering
   finishedAt: Ordering
-  startedAt: Ordering
-  status: Ordering
 }
 
 type TaskStats {
@@ -4334,15 +4378,6 @@ type TaskStats {
 
   """Sum"""
   sum(field: TaskField!): Float
-}
-
-"""The event kind of the taskevent"""
-enum TaskStatus {
-  ASSIGNING
-  CANCELLED
-  CRITICAL
-  DONE
-  ONGOING
 }
 
 """Datetime fields of Task for bucketing"""

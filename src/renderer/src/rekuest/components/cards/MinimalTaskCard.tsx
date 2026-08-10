@@ -13,7 +13,7 @@ const TheCard = ({ item }: Props) => {
         <CardHeader>
           <CardTitle>
             <RekuestTask.DetailLink object={item}>
-              {item.implementation.interface}
+              {item.implementation?.interface ?? item.action.name}
             </RekuestTask.DetailLink>
             <div className="text-muted-foreground font-light mt-2">
               <Timestamp date={item.createdAt} relative />

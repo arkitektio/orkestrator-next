@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isReferenceFrame, residentLabel, residentName } from "./residents";
+import {
+  isReferenceFrame,
+  residentLabel,
+  residentName,
+  visibleResidents,
+} from "./residents";
 
 /**
  * `residents` is the whole vocabulary a coordinate system has left — these
@@ -74,5 +79,37 @@ describe("residentLabel", () => {
         ],
       }),
     ).toBe("3 residents");
+  });
+});
+
+describe("visibleResidents", () => {
+  const tiles = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      __typename: "ADataset",
+      name: `tile-${i}`,
+    }));
+
+  it("shows everything when it fits, and hides nothing", () => {
+    const { shown, hidden } = visibleResidents({ residents: tiles(2) }, 3);
+    expect(shown).toHaveLength(2);
+    expect(hidden).toHaveLength(0);
+  });
+
+  it("keeps the names of the ones it can show and counts the rest", () => {
+    const { shown, hidden } = visibleResidents({ residents: tiles(10) }, 3);
+    expect(shown.map((r) => r.name)).toEqual(["tile-0", "tile-1", "tile-2"]);
+    expect(hidden).toHaveLength(7);
+  });
+
+  it("hides nothing when the residents exactly fill the cap", () => {
+    const { shown, hidden } = visibleResidents({ residents: tiles(3) }, 3);
+    expect(shown).toHaveLength(3);
+    expect(hidden).toHaveLength(0);
+  });
+
+  it("has nothing to show for a reference frame", () => {
+    const { shown, hidden } = visibleResidents({ residents: [] }, 3);
+    expect(shown).toHaveLength(0);
+    expect(hidden).toHaveLength(0);
   });
 });

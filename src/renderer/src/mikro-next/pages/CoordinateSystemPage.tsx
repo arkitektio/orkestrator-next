@@ -3,15 +3,10 @@ import { useDialog } from "@/app/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  MikroADataset,
-  MikroCoordinateSystem,
-  MikroTableDataset,
-} from "@/linkers";
+import { MikroCoordinateSystem } from "@/linkers";
 import { Ruler, Waypoints } from "lucide-react";
 import { ReactNode } from "react";
 import {
-  CoordinateSystemFragment,
   useGetCoordinateGraphQuery,
   useGetCoordinateSystemQuery,
 } from "../api/graphql";
@@ -21,6 +16,10 @@ import EdgeTable, {
   assumedCount,
   ValidityBadge,
 } from "../components/coordinates/EdgeTable";
+import {
+  RESIDENT_KIND_LABEL,
+  ResidentLink,
+} from "../components/coordinates/ResidentChip";
 import {
   PixelSizeEdge,
   formatPixelSize,
@@ -49,47 +48,6 @@ import AxesTable from "../components/tables/AxesTable";
  * actually encoding per-axis factors rather than on a kind that no longer
  * exists — which is exactly the set of systems it used to fire for.
  */
-
-/** Who lives in this space. Several may, and the frame case has none. */
-const ResidentLink = (props: {
-  resident: CoordinateSystemFragment["residents"][number];
-}) => {
-  const { resident } = props;
-  switch (resident.__typename) {
-    case "ADataset":
-      return (
-        <MikroADataset.DetailLink object={resident}>
-          {resident.name}
-        </MikroADataset.DetailLink>
-      );
-    case "TableDataset":
-      return (
-        <MikroTableDataset.DetailLink object={resident}>
-          {resident.name}
-        </MikroTableDataset.DetailLink>
-      );
-    case "AnnotationCollection":
-      // No @mikro/annotationcollection linker exists, so it names itself.
-      return <span>{resident.name}</span>;
-    case "Lens":
-      // A lens has no name of its own, so it borrows its dataset's.
-      return (
-        <span>
-          a lens of{" "}
-          <MikroADataset.DetailLink object={resident.dataset}>
-            {resident.dataset.name}
-          </MikroADataset.DetailLink>
-        </span>
-      );
-    case "DataArray":
-      // A DataArray has neither a name nor a back-reference to its dataset.
-      return <span>pyramid level {resident.level}</span>;
-    case "MeshCollection":
-      return <span>mesh collection {resident.version}</span>;
-    default:
-      return null;
-  }
-};
 
 const Section = (props: {
   title: string;
@@ -263,7 +221,7 @@ export const CoordinateSystemPage = asDetailQueryRoute(
                   <div key={`${resident.__typename}-${resident.id}`}>
                     <ResidentLink resident={resident} />
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {resident.__typename}
+                      {RESIDENT_KIND_LABEL[resident.__typename]}
                     </span>
                   </div>
                 ))}

@@ -1,15 +1,17 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { RekuestTask } from "@/linkers";
 import { TaskFilter, TaskOrder, OffsetPaginationInput, useListTasksQuery } from "@/rekuest/api/graphql";
+import { ReactNode } from "react";
 import TaskCard from "../cards/TaskCard";
 
 export type Props = {
   filters?: TaskFilter;
   order?: TaskOrder;
   pagination?: OffsetPaginationInput;
+  title?: ReactNode;
 };
 
-const List = ({ filters, order, pagination }: Props) => {
+const List = ({ filters, order, pagination, title }: Props) => {
   const { data, error, refetch } = useListTasksQuery({
     variables: {
       filter: filters,
@@ -23,7 +25,7 @@ const List = ({ filters, order, pagination }: Props) => {
         array={data?.tasks}
         title={
           <RekuestTask.ListLink className="flex-0">
-            Latest Tasks
+            {title ?? "Latest Tasks"}
           </RekuestTask.ListLink>
         }
         refetch={refetch}

@@ -88,8 +88,23 @@ export const CreateSceneControl = ({
     awaitRefetchQueries: true,
     onCompleted: (result) => onCreated(result.createSceneFromCoordinateSystem.id),
   });
+  // `defaultFor` nominates the new scene as the one this dataset opens on and
+  // takes its thumbnail from — without it a freshly staged dataset stays
+  // tile-less in every list, since the thumbnail is now the newest picture of a
+  // NOMINATED scene rather than something derived from sole occupancy.
+  //
+  // Only when the dataset nominates nothing yet: staging a second scene is not a
+  // claim that it should replace the picture someone already chose. Changing an
+  // existing nomination is what the title overlay's "Make default" is for.
   const stage = (coordinateSystem: string) =>
-    createScene({ variables: { input: { coordinateSystem } } });
+    createScene({
+      variables: {
+        input: {
+          coordinateSystem,
+          defaultFor: dataset.defaultScene ? undefined : [dataset.id],
+        },
+      },
+    });
 
   const label = loading ? "Creating scene…" : "Create scene";
 

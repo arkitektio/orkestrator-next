@@ -27,11 +27,20 @@ fragment ListADataset on ADataset {
   # system's axes. Cheap (no nested selection) and it is what a card leads with,
   # so it belongs on the list fragment rather than a second round trip.
   spec
-  # A picture of a scene that places this dataset and nothing else — null
-  # whenever every scene it sits in also holds other data, so most datasets will
-  # not have one and the card cannot lean on it.
+  # The newest picture of the scene this dataset NOMINATES (`defaultScene`) —
+  # null until something nominates one, so the card must still stand on its own
+  # without a tile. It is a picture of that composition rather than of this
+  # dataset: if the nominated scene stages other data too, the tile shows that
+  # as well. (It used to answer from sole occupancy instead — the newest picture
+  # of a scene whose only anchored dataset was this one.)
   latestSnapshot {
     ...SceneSnapshot
+  }
+  # Selected next to the tile because it is what the tile is OF: the card links
+  # to it, and its absence is why a dataset has no picture.
+  defaultScene {
+    id
+    name
   }
 }
 

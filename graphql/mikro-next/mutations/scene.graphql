@@ -54,3 +54,26 @@ mutation CreateSceneFromCoordinateSystem(
     ...ListScene
   }
 }
+
+# Nominate the scene a dataset opens on, and takes its thumbnail from. `scene:
+# null` clears it.
+#
+# A nomination, not a derivation: it says nothing about where the data sits, and
+# is NOT the answer to which scenes show the dataset — that stays `scenes`.
+#
+# Selects `latestSnapshot` alongside it because the two move together: the
+# thumbnail IS the newest picture of the nominated scene, so writing both into
+# the normalized cache re-tiles every card showing this dataset without a
+# refetch.
+mutation SetDefaultScene($dataset: ID!, $scene: ID) {
+  setDefaultScene(input: { dataset: $dataset, scene: $scene }) {
+    id
+    defaultScene {
+      id
+      name
+    }
+    latestSnapshot {
+      ...SceneSnapshot
+    }
+  }
+}

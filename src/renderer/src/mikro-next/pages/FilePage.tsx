@@ -7,8 +7,9 @@ import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownlo
 import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
 import { MikroFile, MikroImage } from "@/linkers";
 import { useDownload } from "@/providers/download/DownloadProvider";
-import { DownloadIcon, FileIcon, ImageIcon } from "lucide-react";
+import { DownloadIcon, FileIcon, Grid3x3, ImageIcon } from "lucide-react";
 import { useGetFileQuery, useListFileViewsQuery } from "../api/graphql";
+import ADatasetList from "../components/lists/ADatasetList";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 // Helper for formatting file size
@@ -155,6 +156,29 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       {/* The "Origin Images" section used to sit here. `File.origins` was
           removed from the mikro schema, so there is nothing left to render:
           what a file came from is now told by its provenance entries. */}
+
+      {/* Derived Datasets — the array datasets a converter wrote out of these
+          bytes. Filtered server-side with `sourceFile` rather than walking
+          `file.derivedContainers`: that field is kind-blind (tables, meshes and
+          annotation collections come back on it too), and going through the
+          list keeps the same card, pagination and empty state as every other
+          dataset list. */}
+      <div className="space-y-4 mt-4">
+        <ADatasetList
+          filters={{ sourceFile: file.id }}
+          title={
+            <div className="flex items-center pb-2">
+              <Grid3x3 className="h-4 w-4 text-sky-500" />
+              <h2 className="text-lg font-bold tracking-tight">
+                Derived Datasets
+              </h2>
+            </div>
+          }
+          emptyTitle="No datasets from this file"
+          emptyDescription="Nothing has been converted out of these bytes yet."
+          defaultLimit={10}
+        />
+      </div>
 
       {/* Derived Images */}
       <div className="space-y-4 mt-4">

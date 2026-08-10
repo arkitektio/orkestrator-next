@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardTitle } from '@/components/ui/card'
-import { MikroADataset } from '@/linkers'
-import { Grid3x3 } from 'lucide-react'
+import { MikroADataset, MikroScene } from '@/linkers'
+import { Clapperboard, Grid3x3 } from 'lucide-react'
 import { ListADatasetFragment } from '../../api/graphql'
 import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec, type ADatasetAxis } from '../../specs'
 import { SnapshotBackdrop } from './SnapshotBackdrop'
@@ -63,6 +63,27 @@ const TheCard = ({ item: adataset }: Props) => {
                   {adataset.name}
                 </MikroADataset.DetailLink>
               </CardTitle>
+
+              {/* What the tile is a picture OF. The backdrop is the newest
+                  snapshot of the scene this dataset nominates, so that scene is
+                  where the picture leads — the name still leads to the dataset.
+                  Absent for a dataset that nominates nothing, which is also
+                  exactly the case with no picture to explain. */}
+              {adataset.defaultScene && (
+                <MikroScene.DetailLink
+                  object={adataset.defaultScene}
+                  className="shrink-0"
+                  title={adataset.defaultScene.name}
+                >
+                  <Badge
+                    variant="outline"
+                    className="max-w-24 gap-1 border-white/40 px-1 py-0 text-[10px] font-normal text-white"
+                  >
+                    <Clapperboard className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{adataset.defaultScene.name}</span>
+                  </Badge>
+                </MikroScene.DetailLink>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">

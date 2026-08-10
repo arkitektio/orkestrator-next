@@ -7,6 +7,14 @@ query GetADataset($id: ID!) {
     scenes {
       ...ListScene
     }
+    # Which of them to OPEN — a stored nomination, not something derived from the
+    # list above, and the two can disagree: a nominated scene need not be one
+    # this dataset is rendered in (it stages the dataset's neighbourhood, say).
+    # The page lands here and falls back to the first scene only when nothing is
+    # nominated.
+    defaultScene {
+      ...ListScene
+    }
   }
 }
 

@@ -10,8 +10,9 @@ import TaskList from "@/rekuest/components/lists/TaskList";
 import { useState } from "react";
 import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Ordering } from "@/rekuest/api/graphql";
-import { Podcast } from "lucide-react";
+import { Ordering, TaskStatus } from "@/rekuest/api/graphql";
+import { OrgTasksUpdater } from "../components/updaters/OrgTasksUpdater";
+import { Loader2, Podcast } from "lucide-react";
 
 
 
@@ -170,6 +171,18 @@ const Page = () => {
             </CardHeader>
 
       <ActionList />
+
+      <OrgTasksUpdater />
+      <TaskList
+        title={
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Ongoing Tasks
+          </span>
+        }
+        filters={{ status: [TaskStatus.Assigning, TaskStatus.Ongoing] }}
+        order={{ createdAt: Ordering.Desc }}
+      />
 
       <TaskList />
       <AgentList filters={{ user: userSub, appIdentifier: appIdentifier, deviceId: deviceId }} order={{ lastSeen: Ordering.Desc }} />

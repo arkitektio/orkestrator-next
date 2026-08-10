@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -7,7 +8,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { MikroADataset } from '@/linkers'
-import { GetADatasetQuery } from '../../api/graphql'
+import { Star } from 'lucide-react'
+import { GetADatasetQuery, useSetDefaultSceneMutation } from '../../api/graphql'
 import { baseDtypeOf, formatShape } from '../../specs'
 
 type PageDataset = GetADatasetQuery['adataset']
@@ -35,6 +37,13 @@ export const DatasetTitleOverlay = ({
   sceneLoading: boolean
 }) => {
   const dtype = baseDtypeOf(dataset.dataArrays)
+
+  // The nomination the page landed on. Selecting `latestSnapshot` in the
+  // mutation is what makes this cheap: Apollo writes the new nomination AND the
+  // tile it implies into the normalized ADataset, so this control needs no
+  // refetch and every card already showing the dataset re-tiles itself.
+  const [setDefaultScene, { loading: nominating }] = useSetDefaultSceneMutation()
+  const defaultSceneId = dataset.defaultScene?.id
 
   return (
     <div className="pointer-events-auto absolute left-3 top-3 z-40 flex w-[50%] flex-col gap-2 rounded-lg ">
@@ -67,18 +76,53 @@ export const DatasetTitleOverlay = ({
           only way to change which scene is drawn, so it gets the room to show a
           whole scene name rather than being squeezed alongside the heading. */}
       {dataset.scenes.length > 0 ? (
-        <Select value={activeSceneId} onValueChange={onSelectScene}>
-          <SelectTrigger className="h-7 w-[20%] bg-black">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {dataset.scenes.map((scene) => (
-              <SelectItem key={scene.id} value={scene.id}>
-                {scene.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-row items-center gap-2">
+          <Select value={activeSceneId} onValueChange={onSelectScene}>
+            <SelectTrigger className="h-7 w-[20%] bg-black">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {dataset.scenes.map((scene) => (
+                <SelectItem key={scene.id} value={scene.id}>
+                  {scene.name}
+                  {/* Which one the dataset opens on and takes its tile from —
+                      otherwise the nomination is invisible and "Make default"
+                      beside it reads as a toggle with no state. A star rather
+                      than the word: `SelectItem` children are cloned into the
+                      trigger, and the trigger is narrow enough that a second
+                      word in it would truncate the scene's name. */}
+                  {scene.id === defaultSceneId && (
+                    <Star
+                      className="h-3 w-3 shrink-0 text-muted-foreground"
+                      aria-label="default scene"
+                    />
+                  )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Offered for whatever is on screen, because that is the picture
+              someone just decided they want to be the dataset's. Hidden for the
+              nominated scene itself rather than disabled: there is nothing to
+              undo here — clearing a nomination is not a thing this page asks for. */}
+          {activeSceneId && activeSceneId !== defaultSceneId && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+              disabled={nominating}
+              onClick={() =>
+                setDefaultScene({
+                  variables: { dataset: dataset.id, scene: activeSceneId }
+                })
+              }
+            >
+              <Star className="h-3.5 w-3.5" />
+              {nominating ? 'Setting…' : 'Make default'}
+            </Button>
+          )}
+        </div>
       ) : (
         <span className="truncate text-xs text-muted-foreground">No scenes yet</span>
       )}

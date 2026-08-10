@@ -21,6 +21,11 @@ type ADataset {
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
 
   """
+  The scene to open for this dataset, and where `latestSnapshot` comes from. A nomination, not a derivation: it says nothing about where the data sits and is **not** the answer to which scenes show this dataset -- that is `scenes`, which the coordinate graph answers and which no stored column could contradict. Null until something sets it, with `setDefaultScene` or `defaultFor` on either scene-creating mutation
+  """
+  defaultScene: Scene
+
+  """
   The datasets computed from this one -- the other end of `derivedFrom`, and the way to ask what a source produced: the deconvolutions, segmentations and projections that named a space of this dataset as their parent. Derived from the same edges, never a stored back-reference that could disagree with them. Every child, not just those this dataset places: a fusion that named this source second is listed here, and so is a child whose derivation is UNMAPPABLE -- it came from here even though its geometry did not survive. The maps themselves are on each child's own `derivedFrom`
   """
   derivedDatasets: [ADataset!]!
@@ -48,7 +53,7 @@ type ADataset {
   intrinsicSystem: CoordinateSystem
 
   """
-  The most recent picture that shows this dataset and nothing else, for previewing it without loading the array. Snapshots are taken of scenes, not of datasets, so this only answers with a scene whose *only* anchored dataset is this one -- anchored meaning the scene's world is one of the dataset's own systems or a registration into it sets out from one, and a picture blending several datasets is a preview of none of them. Null when every scene it is anchored in also holds other data. Caveats it cannot rule out: the dataset may be anchored in that scene without any layer drawing it (the picture can be empty), a mesh or table collection may be drawn over it as an annotation, and a dataset placed only through a derived parent's registration does not count -- for or against
+  The most recent picture of this dataset's `defaultScene`, for previewing it without loading the array. Null when no default scene is set. **A picture of the scene, not of the dataset**: snapshots are taken of compositions, so if the nominated scene stages other data too, the tile shows that data as well. This used to answer instead from *sole occupancy* -- the newest picture of a scene whose only anchored dataset was this one -- which guaranteed the picture showed nothing else but returned null for every dataset staged alongside another, and cost a five-query graph walk per request to decide
   """
   latestSnapshot: SceneSnapshot
 
@@ -120,6 +125,11 @@ input ADatasetFilter {
   Filter to datasets whose intrinsic coordinate system carries every one of these axis types, e.g. [TIME, CHANNEL]. The raw form of `spec`, for the types no spec names: COORDINATE, DISPLACEMENT, INDEX
   """
   hasAxisTypes: [AxisType!]
+
+  """
+  Filter by whether the dataset nominates a scene to open. False finds the ones with no thumbnail -- what `backfill_default_scenes` could not seed, and the work remaining before that command can be deleted
+  """
+  hasDefaultScene: Boolean
 
   """
   Filter by whether the dataset has an edge into a space with real units. False finds the data that is still only pixels, with no pixel size or stage pose recorded. Unrelated to a phasor histogram's `calibrated`, which is about reference correction
@@ -588,7 +598,7 @@ type Annotation {
   id: UUID!
 
   """
-  The annotation's bounding box in the nearest intrinsic space, derived from every corner of its geometry (an affine-transformed box is not a box: min/max alone gives a strictly too-small answer under rotation or shear). Intrinsic, not world: world is scene-owned, and one collection can sit in two scenes under two registrations
+  The annotation's bounding box in the nearest intrinsic space its collection's chain reaches, derived from every corner of its geometry (an affine-transformed box is not a box: min/max alone gives a strictly too-small answer under rotation or shear). Intrinsic, not world: world is scene-owned, and one collection can sit in two scenes under two registrations. **Not always a dataset's pixel grid**: a registration, or a derivation that changes rank, is not something a box can be pushed across -- it says nothing about the axes it does not name, so there is no extent to give them -- and the box then stays in the collection's own drawing space. Boxes compare only within one frame, which is why the spatial filters require a collection or coordinate system alongside
   """
   intrinsicBbox: BoundingBox
   kind: RoiKind!
@@ -2439,6 +2449,7 @@ Bootstrap a renderable scene over an existing coordinate system. Over an ownerle
 """
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
+  defaultFor: [ID!] = null
   name: String = null
   policy: ScenePolicyInput! = {includeMeshes: true, kind: null, nchildren: 8, transformTables: false}
 }
@@ -2451,6 +2462,7 @@ input CreateSceneInput {
   backgroundColor: [Float!] = null
   blending: Blending = null
   coordinateSystem: ID = null
+  defaultFor: [ID!] = null
   epoch: DateTime = null
   name: String!
   preferredView: PreferredView = null
@@ -5131,7 +5143,7 @@ type Lens {
   id: ID!
 
   """
-  The most recent picture that shows this lens' dataset and nothing else -- the tile to put on this lens. The same picture the dataset itself reports: snapshots are taken of scenes, and sole occupancy is a fact about the dataset, so every lens over one dataset answers alike. Null when every scene it is anchored in also holds other data
+  The most recent picture of this lens' dataset's `defaultScene` -- the tile to put on this lens. The same picture the dataset itself reports: the nomination is a fact about the dataset, so every lens over one dataset answers alike. Null when the dataset nominates no scene
   """
   latestSnapshot: SceneSnapshot
 
@@ -6342,6 +6354,11 @@ type Mutation {
 
   """Revert dataset to a previous version"""
   revertDataset(input: RevertInput!): Dataset!
+
+  """
+  Nominate the scene to open for a dataset, and take its thumbnail from. Null clears it
+  """
+  setDefaultScene(input: SetDefaultSceneInput!): ADataset!
 
   """Delete a file link"""
   unlinkFile(input: UnlinkFileInput!): ID!
@@ -9725,6 +9742,11 @@ type Scene {
 
   """The viewer background, as RGBA. Null lets the viewer use its own"""
   backgroundColor: [Float!]
+
+  """
+  The datasets that nominate this scene as the one to open for them, and take their thumbnail from it. Several may: a scene staging a plate is a reasonable landing place for every dataset in it. Not the datasets this scene *shows* -- for that, ask each dataset's `scenes`, which the coordinate graph derives
+  """
+  defaultFor(filters: ADatasetFilter, ordering: [ADatasetOrder!]! = [], pagination: OffsetPaginationInput): [ADataset!]!
   id: ID!
 
   """
@@ -9758,6 +9780,11 @@ input SceneFilter {
   NOT: SceneFilter
   OR: SceneFilter
   blending: BlendingChoices
+
+  """
+  Filter to the scene this dataset nominates as its default. A choice someone made, not the set of scenes that show the dataset -- for that, ask the dataset's `scenes`
+  """
+  defaultForDataset: ID
   id: ID
 
   """Filter by list of IDs"""
@@ -9936,6 +9963,15 @@ type SequenceTransformation implements Transformation {
   """
   valueRelation: ValueRelation
   version: Int!
+}
+
+"""Nominate the scene to open for a dataset, and take its thumbnail from"""
+input SetDefaultSceneInput {
+  """The dataset to nominate a scene for"""
+  dataset: ID!
+
+  """The scene to nominate, or null to clear the nomination"""
+  scene: ID = null
 }
 
 """One named device setting, exactly one value slot filled"""

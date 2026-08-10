@@ -370,7 +370,10 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
         </DropdownMenu>
       </div>
 
-      <div className="flex flex-grow flex-col">
+      {/* The rows are what scrolls — `min-h-0` lets this shrink below its
+          content height so the search bar above and the pager below stay put
+          instead of being pushed off the page by a full page of rows. */}
+      <div className="flex min-h-0 flex-grow flex-col overflow-y-auto">
         <Table className="flex-grow">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

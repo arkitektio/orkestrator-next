@@ -21,9 +21,13 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
     []
   )
 
-  // The first scene is the one to land in: a bootstrapped dataset has exactly
-  // one, so the common case needs no choice at all.
-  const activeSceneId = selectedSceneId ?? dataset.scenes.at(0)?.id
+  // The nominated scene is the one to land in — `defaultScene` is a choice
+  // someone made, and it is also where the dataset's thumbnail comes from, so
+  // opening anything else would show a different picture than the card that was
+  // clicked. Falling back to the first scene keeps a dataset that nominates
+  // nothing (the nomination is null until something sets it) openable as before.
+  const activeSceneId =
+    selectedSceneId ?? dataset.defaultScene?.id ?? dataset.scenes.at(0)?.id
 
   // The dataset only carries ListScene (id + name) for the switcher — the
   // renderer needs layers and the world, so the active scene is fetched in

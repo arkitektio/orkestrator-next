@@ -10400,7 +10400,7 @@ type TableColumn {
 }
 
 """
-One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and optional unit and becomes an axis of the table's space
+One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and becomes an axis of the table's space; a COORDINATE or ATTRIBUTE column may state the unit its values are in
 """
 input TableColumnInput {
   axisType: AxisType = null
@@ -10410,7 +10410,7 @@ input TableColumnInput {
   name: String!
   references: ID = null
   role: TableColumnRole! = ATTRIBUTE
-  unit: String = null
+  unit: Unit = null
 }
 
 """
@@ -10517,7 +10517,7 @@ type TableDatasetColumn {
   """
   references: TableDataset
   role: TableColumnRole!
-  unit: String
+  unit: Unit
 }
 
 """

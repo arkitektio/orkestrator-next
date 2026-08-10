@@ -9,7 +9,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { JustUsername } from '@/lok-next/components/UserAvatar'
 import { CubeIcon } from '@radix-ui/react-icons'
 import { useDebounce } from '@uidotdev/usehooks'
-import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, Image } from 'lucide-react'
+import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, Image, PenTool } from 'lucide-react'
 import * as React from 'react'
 import { NavLink } from 'react-router-dom'
 import { GlobalSearchQueryVariables, useGlobalSearchQuery, useMembersQuery } from '../api/graphql'
@@ -62,6 +62,10 @@ export const NavigationPane = () => {
           <PaneLink to="/mikro/rois" className="flex gap-3 w-full hover:text-primary">
             <CubeIcon className="h-4 w-4" />
             Rois
+          </PaneLink>
+          <PaneLink to="/mikro/annotations" className="flex gap-3 w-full hover:text-primary">
+            <PenTool className="h-4 w-4" />
+            Annotations
           </PaneLink>
           <PaneLink to="/mikro/datasets" className="flex gap-3 w-full hover:text-primary">
             <Folder className="h-4 w-4" />

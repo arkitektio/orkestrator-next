@@ -15,7 +15,7 @@ export const useDeleteSelectedRois = (): {
   const selectedRois = useRoiSelectionStore((s) => s.selectedRois);
   const removeSelectedRoi = useRoiSelectionStore((s) => s.removeSelectedRoi);
   const [deleteAnnotationMutation, { loading: isDeleting }] = useDeleteAnnotationMutation({
-    refetchQueries: ["GetAnnotations"],
+    refetchQueries: ["GetSceneAnnotations"],
     awaitRefetchQueries: false,
   });
 

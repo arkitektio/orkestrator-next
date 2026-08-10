@@ -19,7 +19,7 @@ import EdgeTable, {
 import {
   RESIDENT_KIND_LABEL,
   ResidentLink,
-} from "../components/coordinates/ResidentChip";
+} from "../components/coordinates/ResidentLink";
 import {
   PixelSizeEdge,
   formatPixelSize,

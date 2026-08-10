@@ -92,19 +92,3 @@ export const occupancyLabel = (system: InhabitedLike): string => {
   return `${count} ${count === 1 ? "resident" : "residents"}`;
 };
 
-/**
- * The first `max` residents, and everything that did not fit.
- *
- * A node has room for a few chips, not for a stage frame's hundred tiles — but
- * "3 residents" (what `residentLabel` degrades to) throws away the names of the
- * ones it *could* have shown. So the split is explicit: the caller renders
- * `shown` and says how many are `hidden`, and the layout code sizes the node off
- * the same `shown.length` the renderer draws, so the two cannot drift.
- */
-export const visibleResidents = <R extends ResidentLike>(
-  system: InhabitedLike<R>,
-  max: number,
-): { shown: readonly R[]; hidden: readonly R[] } => ({
-  shown: system.residents.slice(0, max),
-  hidden: system.residents.slice(max),
-});

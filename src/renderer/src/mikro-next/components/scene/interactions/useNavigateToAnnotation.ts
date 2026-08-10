@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { ListAnnotationFragment } from "@/mikro-next/api/graphql";
+import type { SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import {
   getWorldExtent,
   resolveCollectionMatrix,
@@ -27,7 +27,7 @@ export const useNavigateToAnnotation = () => {
   const modeStoreApi = useModeStoreApi();
 
   return useCallback(
-    (annotation: ListAnnotationFragment, layer: AnnotationLayerVariant) => {
+    (annotation: SceneAnnotationFragment, layer: AnnotationLayerVariant) => {
       if (!layer.annotationCollection) return;
       const { transformContext, layers } = sceneStoreApi.getState();
       const matrix = resolveCollectionMatrix(

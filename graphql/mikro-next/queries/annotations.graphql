@@ -1,11 +1,32 @@
 query GetAnnotation($id: ID!) {
   annotation(id: $id) {
-    ...Annotation
+    ...DetailAnnotation
   }
 }
 
-query GetAnnotations($filters: AnnotationFilter, $pagination: OffsetPaginationInput) {
+# The renderer's list: one entry per collection, polled by every mounted
+# AnnotationLayer and ridden along by the annotations panel (same variables, so
+# Apollo serves both from one cache entry). Keep its selection lean — see
+# `SceneAnnotation`. Named in `refetchQueries` by string in
+# useCreateSceneAnnotation / useDeleteSelectedRois.
+query GetSceneAnnotations(
+  $filters: AnnotationFilter
+  $pagination: OffsetPaginationInput
+) {
   annotations(filters: $filters, pagination: $pagination) {
+    ...SceneAnnotation
+  }
+}
+
+# The browse list behind /mikro/annotations. A separate document from
+# `GetSceneAnnotations` because the card needs its collection and the renderer
+# must not pay for it.
+query GetAnnotations(
+  $filters: AnnotationFilter
+  $ordering: [AnnotationOrder!]
+  $pagination: OffsetPaginationInput
+) {
+  annotations(filters: $filters, ordering: $ordering, pagination: $pagination) {
     ...ListAnnotation
   }
 }

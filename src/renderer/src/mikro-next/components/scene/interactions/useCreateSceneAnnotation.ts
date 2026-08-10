@@ -46,7 +46,7 @@ export const useCreateSceneAnnotation = () => {
         );
         const result = await createAnnotation({
           variables: { input: { scene: sceneId, kind, vectors: worldVectors } },
-          refetchQueries: hasAnnotationLayer ? ["GetAnnotations"] : ["GetScene"],
+          refetchQueries: hasAnnotationLayer ? ["GetSceneAnnotations"] : ["GetScene"],
           awaitRefetchQueries: false,
         });
         const created = result.data?.createAnnotation ?? null;

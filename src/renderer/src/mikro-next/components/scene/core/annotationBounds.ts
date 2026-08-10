@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import {
   RoiKind,
-  type ListAnnotationFragment,
+  type SceneAnnotationFragment,
   type SceneLayerFragment,
 } from "@/mikro-next/api/graphql";
 import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
@@ -103,7 +103,7 @@ export function getEllipsisPoints(
 }
 
 export function getAnnotationSelectionPoints(
-  annotation: ListAnnotationFragment,
+  annotation: SceneAnnotationFragment,
   flattenToPlane: boolean,
 ): [number, number, number][] {
   const vectors = annotation.vectors;
@@ -135,7 +135,7 @@ export function getAnnotationSelectionPoints(
  * `flattenToPlane` would throw away.
  */
 export function getWorldExtent(
-  annotation: ListAnnotationFragment,
+  annotation: SceneAnnotationFragment,
   affineMatrix: THREE.Matrix4,
 ): { bounds: RoiBounds; zSpan: ZSpan } | null {
   const points = getAnnotationSelectionPoints(annotation, false);

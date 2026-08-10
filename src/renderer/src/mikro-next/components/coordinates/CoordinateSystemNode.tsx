@@ -2,9 +2,8 @@ import { cn } from "@/lib/utils";
 import { MikroCoordinateSystem } from "@/linkers";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 import { Boxes, Globe } from "lucide-react";
-import { MAX_VISIBLE_RESIDENTS, SYSTEM_WIDTH } from "./nodeSize";
-import { ResidentChip } from "./ResidentChip";
-import { isReferenceFrame, residentName, visibleResidents } from "./residents";
+import { SYSTEM_WIDTH } from "./nodeSize";
+import { isReferenceFrame } from "./residents";
 import { CoordinateSystemNode as TNode } from "./types";
 
 // Inhabited vs. uninhabited is the whole vocabulary the graph has left, and
@@ -44,7 +43,6 @@ export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
 
   const occupancy: Occupancy = isReferenceFrame(system) ? "frame" : "inhabited";
   const OccupancyIcon = OCCUPANCY_ICON[occupancy];
-  const { shown, hidden } = visibleResidents(system, MAX_VISIBLE_RESIDENTS);
 
   return (
     <>
@@ -72,44 +70,26 @@ export const CoordinateSystemNode = ({ data }: NodeProps<TNode>) => {
               {system.name}
             </MikroCoordinateSystem.DetailLink>
             <OccupancyIcon
+              aria-label={OCCUPANCY_LABEL[occupancy]}
               className={cn("h-3.5 w-3.5 shrink-0", OCCUPANCY_TEXT[occupancy])}
-            />
+            >
+              <title>{OCCUPANCY_TITLE[occupancy]}</title>
+            </OccupancyIcon>
           </div>
 
-          {/* Who lives here — the space's whole story now that `kind` is gone.
-              One chip per resident rather than a wrapping cloud: the names are
-              long, and a predictable row count is what lets the ELK layout size
-              this node correctly. */}
-          <div className="flex min-w-0 flex-col gap-0.5">
-            {occupancy === "frame" ? (
-              // An empty band would read as a missing answer. Dashed, because
-              // that is already this graph's vocabulary for "not a concrete
-              // thing" — the same borders a composite transformation wears.
-              <span
-                title={OCCUPANCY_TITLE.frame}
-                className="truncate rounded border border-dashed border-violet-500/50 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
-              >
-                reference frame — nothing lives here
-              </span>
-            ) : (
-              <>
-                {shown.map((resident) => (
-                  <ResidentChip
-                    key={`${resident.__typename}-${resident.id}`}
-                    resident={resident}
-                  />
-                ))}
-                {hidden.length > 0 && (
-                  <span
-                    title={hidden.map(residentName).join("\n")}
-                    className="truncate px-1 text-[10px] leading-tight text-muted-foreground"
-                  >
-                    +{hidden.length} more
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+          {/* Who lives here hangs off this node as its own resident nodes.
+              A frame has none, and an empty space would read as a missing
+              answer rather than as the answer — so it says so. Dashed, because
+              that is already this graph's vocabulary for "not a concrete
+              thing". */}
+          {occupancy === "frame" && (
+            <span
+              title={OCCUPANCY_TITLE.frame}
+              className="truncate rounded border border-dashed border-violet-500/50 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
+            >
+              reference frame — nothing lives here
+            </span>
+          )}
 
           <div className="flex flex-wrap gap-1 border-t pt-1">
             {[...system.axes]

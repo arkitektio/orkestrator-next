@@ -4,7 +4,7 @@ import { Focus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { MikroAnnotation } from "@/linkers";
-import { useGetAnnotationsQuery, type ListAnnotationFragment } from "@/mikro-next/api/graphql";
+import { useGetSceneAnnotationsQuery, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import {
   resolveCollectionMatrix,
   type AnnotationLayerVariant,
@@ -132,7 +132,7 @@ const SelectedAnnotationCard = ({
   showAttributes: boolean;
 }) => {
   const collectionId = layer?.annotationCollection?.id;
-  const { data } = useGetAnnotationsQuery({
+  const { data } = useGetSceneAnnotationsQuery({
     variables: { filters: { collection: collectionId ?? "" } },
     skip: !collectionId,
   });
@@ -168,7 +168,7 @@ const AnnotationLayerSection = ({
   selectedIds: ReadonlySet<string>;
 }) => {
   const collection = layer.annotationCollection!;
-  const { data } = useGetAnnotationsQuery({
+  const { data } = useGetSceneAnnotationsQuery({
     variables: { filters: { collection: collection.id } },
   });
   const toggleSelectedRoi = useRoiSelectionStore((s) => s.toggleSelectedRoi);
@@ -190,7 +190,7 @@ const AnnotationLayerSection = ({
     [layer, collection, transformContext],
   );
   const unit = unitLabel(spatialUnit);
-  const measureOf = (annotation: ListAnnotationFragment): string | null => {
+  const measureOf = (annotation: SceneAnnotationFragment): string | null => {
     const worldPoints = (annotation.vectors ?? []).map((vector) => {
       const world = new THREE.Vector3(
         vector[0] ?? 0,
@@ -207,7 +207,7 @@ const AnnotationLayerSection = ({
 
   // The same SelectedRoi the canvas layer builds: raw collection-space vectors
   // plus the collection's own system — attribute plans do any frame conversion.
-  const toRoi = (annotation: ListAnnotationFragment): SelectedRoi => ({
+  const toRoi = (annotation: SceneAnnotationFragment): SelectedRoi => ({
     id: annotation.id,
     layerId: layer.id,
     name: annotation.name,
@@ -252,7 +252,7 @@ const AnnotationRow = ({
   onToggle,
   onGoTo,
 }: {
-  annotation: ListAnnotationFragment;
+  annotation: SceneAnnotationFragment;
   index: number;
   measure: string | null;
   isSelected: boolean;

@@ -3,7 +3,7 @@
 // module pulls in the Apollo hooks barrel, which touches `window` on load)
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { RoiKind, type ListAnnotationFragment } from "@/mikro-next/api/graphql";
+import { RoiKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import {
   getAnnotationSelectionPoints,
   getWorldExtent,
@@ -13,8 +13,8 @@ import {
 const annotation = (
   kind: RoiKind,
   vectors: number[][],
-): ListAnnotationFragment =>
-  ({ id: "a1", name: "a", kind, vectors, coordinates: [] }) as unknown as ListAnnotationFragment;
+): SceneAnnotationFragment =>
+  ({ id: "a1", name: "a", kind, vectors, coordinates: [] }) as unknown as SceneAnnotationFragment;
 
 describe("getAnnotationSelectionPoints", () => {
   it("takes only the first vertex of a POINT", () => {

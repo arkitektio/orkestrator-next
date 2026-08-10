@@ -25,29 +25,27 @@ export type CoordinateSystemNode = Node<
   "coordinateSystem"
 >;
 
-export type TransformationEdgeData = {
-  transformation: TransformationFragment;
-  /** Where this edge sits in the fan of maps sharing its pair of spaces. */
-  parallelIndex: number;
-  parallelCount: number;
-  [key: string]: unknown;
+export type ResidentNodeData = {
+  resident: CoordinateSystemFragment["residents"][number];
+  /** The space it lives in — the node it hangs off. */
+  systemId: string;
 };
 
 /**
- * A transformation is an EDGE, not a node. The graph's whole point is which
- * spaces reach which, and drawing every map as its own box doubles the node
- * count and buries that: system → [box] → system reads as a pipeline of things
- * rather than as a neighbourhood of spaces. So the map rides the line it
- * describes — kind, parameters and validity in a label on the edge itself.
+ * Who lives in a space, drawn as its own node.
+ *
+ * The alternative — a list of names inside the system's card — makes the most
+ * important thing about a space the smallest text on it, and gives a dataset no
+ * place of its own in a picture that is otherwise about where things sit. As
+ * nodes, residency is structure: you can see which grid a dataset lives in, and
+ * a space with nothing attached is visibly the pure reference frame.
  */
-export type TransformationEdge = Edge<
-  TransformationEdgeData,
-  "transformation"
->;
+export type ResidentNode = Node<ResidentNodeData, "resident">;
 
-export type GraphNode = CoordinateSystemNode;
+export type GraphNode = CoordinateSystemNode | ResidentNode;
 
-export type GraphEdge = TransformationEdge;
+/** Plain connectors: transformations carry a label, residency does not. */
+export type GraphEdge = Edge;
 
 /**
  * A one-line summary of what an edge actually does. The graph query returns

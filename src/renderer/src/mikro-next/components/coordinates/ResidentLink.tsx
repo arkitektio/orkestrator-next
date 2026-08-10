@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { MikroADataset, MikroTableDataset } from "@/linkers";
 import {
   Aperture,
@@ -25,7 +24,7 @@ export type Resident = ResidentFragment;
 
 type Kind = Resident["__typename"];
 
-/** Same convention as the transformation edge's kind → icon map. */
+/** Same convention as the transformation kind → icon map. */
 export const RESIDENT_ICON: Record<Kind, LucideIcon> = {
   ADataset: Layers,
   TableDataset: Table2,
@@ -87,33 +86,3 @@ export const ResidentLink = (props: {
       return <span className={className}>{residentName(resident)}</span>;
   }
 };
-
-/**
- * A resident as a chip — the graph node's unit of residency.
- *
- * Deliberately built from the same `rounded bg-muted text-[10px]` vocabulary as
- * the axis chips below it in the node, so a coordinate system reads as one
- * object rather than two stacked widgets.
- */
-export const ResidentChip = (props: {
-  resident: Resident;
-  className?: string;
-}) => {
-  const { resident, className } = props;
-  const Icon = RESIDENT_ICON[resident.__typename];
-
-  return (
-    <span
-      title={`${residentName(resident)} — ${RESIDENT_KIND_LABEL[resident.__typename]}`}
-      className={cn(
-        "flex min-w-0 max-w-full items-center gap-1 rounded bg-muted px-1 py-0.5 text-[10px] leading-tight",
-        className,
-      )}
-    >
-      <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
-      <ResidentLink resident={resident} className="truncate" />
-    </span>
-  );
-};
-
-export default ResidentChip;

@@ -5,6 +5,8 @@ import { Route, Routes } from "react-router";
 import ADatasetPage from "./pages/ADatasetPage";
 import ADatasetSpecPage from "./pages/ADatasetSpecPage";
 import ADatasetsPage from "./pages/ADatasetsPage";
+import AnnotationPage from "./pages/AnnotationPage";
+import AnnotationsPage from "./pages/AnnotationsPage";
 import CoordinateSystemPage from "./pages/CoordinateSystemPage";
 import CoordinateSystemsPage from "./pages/CoordinateSystemsPage";
 import DatasetPage from "./pages/DatasetPage";
@@ -56,6 +58,8 @@ export const MikroNextModule = () => {
           <Route path="coordinatesystems" element={<CoordinateSystemsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="rois" element={<RoisPage />} />
+          <Route path="annotations" element={<AnnotationsPage />} />
+          <Route path="annotations/:id" element={<AnnotationPage />} />
           <Route path="scenes" element={<ScenesPage />} />
           <Route path="scenes/:id" element={<ScenePage />} />
           <Route path="peerhome/:id" element={<PeerHomePage />} />

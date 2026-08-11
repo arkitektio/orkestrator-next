@@ -1,108 +1,63 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { useDialog } from "@/app/dialog";
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroCoordinateSystem } from "@/linkers";
 import { Ruler, Waypoints } from "lucide-react";
-import { ReactNode } from "react";
+
 import {
   useGetCoordinateGraphQuery,
   useGetCoordinateSystemQuery,
 } from "../api/graphql";
 import SceneCard from "../components/cards/SceneCard";
 import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
-import EdgeTable, {
-  assumedCount,
-  ValidityBadge,
-} from "../components/coordinates/EdgeTable";
-import {
-  RESIDENT_KIND_LABEL,
-  ResidentLink,
-} from "../components/coordinates/ResidentLink";
-import {
-  PixelSizeEdge,
-  formatPixelSize,
-  pixelSizeEntries,
-  spatialPixelSizes,
-} from "../components/coordinates/pixelSize";
-import {
-  isReferenceFrame,
-  residentLabel,
-} from "../components/coordinates/residents";
+import EdgeTable, { assumedCount } from "../components/coordinates/EdgeTable";
+import { isReferenceFrame, residentLabel } from "../components/coordinates/residents";
 import { AnyTransformation } from "../components/coordinates/types";
-import AxesTable from "../components/tables/AxesTable";
+import { CoordinateSystemInfoSidebar } from "../components/sidebars/CoordinateSystemInfoSidebar";
+import { CoordinateSystemProvenanceSidebar } from "../components/sidebars/CoordinateSystemProvenanceSidebar";
 
 /**
- * A coordinate system's page.
+ * A coordinate system's page, laid out like `ADatasetPage`: the picture fills
+ * the stage and everything *about* it lives in the rail.
  *
- * A system no longer declares what it is — `residents` is the whole vocabulary,
+ * For a space the picture is the GRAPH. A system's whole meaning is relational
+ * — what maps into it, what it maps into, which spaces it reaches — and that is
+ * a shape, not a list. It used to sit in a 500px card below four tables of the
+ * same edges; here it is the page, on black, and the tables are the rail.
+ *
+ * A system no longer declares what it is: `residents` is the whole vocabulary,
  * and its emptiness is the only distinction the schema still draws. So the page
  * asks one of two questions:
  *
  *   nothing lives here   what is registered into me, how much do we trust it,
  *                        and which scenes have adopted me as their world?
  *   something lives here who lives here, what reaches me, and what I map into?
- *
- * The old PHYSICAL section survives as a pixel-size readout, gated on the edge
- * actually encoding per-axis factors rather than on a kind that no longer
- * exists — which is exactly the set of systems it used to fire for.
  */
-
-const Section = (props: {
-  title: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex flex-row items-center justify-between gap-2">
-        <span>{props.title}</span>
-        {props.action}
-      </CardTitle>
-    </CardHeader>
-    <CardContent>{props.children}</CardContent>
-  </Card>
-);
-
 export const CoordinateSystemPage = asDetailQueryRoute(
   useGetCoordinateSystemQuery,
   ({ data }) => {
     const system = data.coordinateSystem;
     const { openDialog } = useDialog();
 
-    // The same query CoordinateGraphView fires below — Apollo dedupes it, so
-    // the edges cost nothing extra. The list queries deliberately cannot answer
-    // "which edges relate to THIS system" (relatedness is transitive); the
-    // graph walk is the schema's own answer, so partition its result rather
+    // The same query CoordinateGraphView fires on the stage — Apollo dedupes
+    // it, so the edges cost nothing extra. The list queries deliberately cannot
+    // answer "which edges relate to THIS system" (relatedness is transitive);
+    // the graph walk is the schema's own answer, so partition its result rather
     // than adding a transformations(filters:) round trip.
     const { data: graphData } = useGetCoordinateGraphQuery({
       variables: { coordinateSystem: system.id },
     });
 
-    const edges: AnyTransformation[] = graphData?.coordinateGraph.transformations ?? [];
+    const edges: AnyTransformation[] =
+      graphData?.coordinateGraph.transformations ?? [];
     const inbound = edges.filter((edge) => edge?.output?.id === system.id);
     const outbound = edges.filter((edge) => edge?.input?.id === system.id);
 
     // Nothing lives here: a world, an atlas — a space built to be registered
     // into rather than to hold anything of its own.
     const isFrame = isReferenceFrame(system);
-
-    // A calibration is reached from the space it calibrates by exactly one
-    // edge, and that edge's parameters ARE the pixel size. There is no PHYSICAL
-    // kind left to gate on, so gate on what actually made those systems
-    // different: this space's axes CARRY UNITS, and something scales into it.
-    // Units are the test rather than "has a scale edge" because a pyramid level
-    // maps into its dataset's grid by a scale too — but into unitless pixels,
-    // which is a resolution, not a pixel size.
-    // SPACE axes only: a calibration edge scales the time and spectral axes
-    // too, but those are sampling intervals rather than the extent of a voxel,
-    // and listing them under "Pixel size" claims a geometry that is not there.
-    const calibrationEdge = inbound[0];
-    const pixelSizes = spatialPixelSizes(
-      pixelSizeEntries(calibrationEdge as PixelSizeEdge, system.axes),
-    );
-    const isCalibration = pixelSizes.some((entry) => entry.unit);
     const assumed = assumedCount(inbound);
 
     const registerButton = (
@@ -145,164 +100,137 @@ export const CoordinateSystemPage = asDetailQueryRoute(
       <MikroCoordinateSystem.ModelPage
         object={system}
         title={system.name}
+        variant="black"
+        overlay
         actions={<MikroCoordinateSystem.Actions object={system} />}
         pageActions={isFrame ? registerButton : calibrateButton}
+        additionalSidebars={
+          <>
+            <Sidebars.Tab label="Info">
+              <CoordinateSystemInfoSidebar system={system} inbound={inbound} />
+            </Sidebars.Tab>
+            {/* The edges as tables, one direction each. Same data as the graph
+                behind them, different question: the picture says what this
+                space is connected to, the tables say how much each of those
+                connections is worth. */}
+            <Sidebars.Tab label="Registrations">
+              <div className="flex flex-col gap-4 overflow-y-auto p-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-row items-baseline justify-between gap-2">
+                    <div className="text-xs font-semibold">
+                      {isFrame ? "Registered sources" : "Reached from"}
+                    </div>
+                    {assumed > 0 && (
+                      <span className="text-xs text-destructive">
+                        {assumed} of {inbound.length} assumed
+                      </span>
+                    )}
+                  </div>
+                  <EdgeTable
+                    edges={inbound}
+                    direction="in"
+                    empty={
+                      isFrame
+                        ? "Nothing is registered into this space yet. Register a dataset, table or another space to place it here."
+                        : "Nothing maps into this space."
+                    }
+                  />
+                  {isFrame && registerButton}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="text-xs font-semibold">Maps into</div>
+                  <EdgeTable
+                    edges={outbound}
+                    direction="out"
+                    empty="Nothing is derived from this space: it has no calibration and no registration. Its geometry is only expressed in its own coordinates."
+                  />
+                  {calibrateButton}
+                </div>
+              </div>
+            </Sidebars.Tab>
+            {/* A space is adopted, never owned: several scenes may share one,
+                and it outlives each of them. */}
+            <Sidebars.Tab label="Scenes">
+              <div className="flex flex-col gap-2 overflow-y-auto p-4">
+                <div className="flex flex-row items-baseline justify-between gap-2">
+                  <div className="text-xs font-semibold">Worlded here</div>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {system.scenes.length}
+                  </span>
+                </div>
+                {system.scenes.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    No scenes use this coordinate system as their world yet.
+                  </span>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {system.scenes.map((scene) => (
+                      <SceneCard key={scene.id} scene={scene} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Sidebars.Tab>
+            <Sidebars.Tab label="Provenance">
+              <CoordinateSystemProvenanceSidebar id={system.id} />
+            </Sidebars.Tab>
+          </>
+        }
+        defaultSidebar="Info"
+        sidebarKey="CoordinateSystemDetail"
       >
-        <div className="flex flex-col gap-3 p-3">
-          <div className="flex flex-row flex-wrap items-center gap-2">
-            <MikroCoordinateSystem.DetailLink object={system} className="text-3xl">
+        <div className="relative h-full w-full">
+          {/* Bottom-right: the page owns the top-left corner (the title
+              below) and React Flow parks its zoom controls bottom-left. */}
+          <CoordinateGraphView
+            coordinateSystem={system.id}
+            legendPosition="bottom-right"
+          />
+
+          {/* Page chrome, not graph chrome: positioned by the page so it sits
+              in the same corner whatever the walk returned. `pointer-events` is
+              opted into by the card alone, so the flow stays pannable all
+              around it. `z-40` clears the flow's own panels. */}
+          <div className="pointer-events-none absolute left-3 top-3 z-40 flex max-w-[50%] flex-col gap-1">
+            <MikroCoordinateSystem.DetailLink
+              object={system}
+              className="pointer-events-auto ellipsis truncate break-all text-3xl font-semibold leading-tight text-ellipsis"
+            >
               {system.name}
             </MikroCoordinateSystem.DetailLink>
-            {/* What this space is, said the only way the schema still says it:
-                by who lives in it. */}
-            <Badge
-              variant="outline"
-              title={
-                isFrame
-                  ? "Nothing lives in this space. Sources register into it and scenes adopt it as their world; it outlives every scene over it."
-                  : "The data living in this space."
-              }
-            >
-              {residentLabel(system)}
-            </Badge>
-          </div>
-
-          <div className="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <span className="font-mono">
-              {[...system.axes]
-                .sort((a, b) => a.order - b.order)
-                .map((axis) => axis.name)
-                .join(" ")}
-            </span>
-            {/* The residents are not repeated here — the badge above names the
-                one that matters, and the Residents section below links them
-                all. */}
-            {/* Only meaningful for a calibrated system with a TIME axis. An
-                unanchored clock is not a defect: the time axis is still a
-                perfectly composable relative coordinate. */}
-            {system.axes.some((axis) => axis.type === "TIME") &&
-              (system.epoch ? (
-                <span title="wall_clock = epoch + t * unit">
-                  t=0 ≙ {new Date(system.epoch).toISOString()}
-                </span>
-              ) : (
-                <span title="The time axis is still a perfectly composable relative coordinate.">
-                  clock unanchored
-                </span>
-              ))}
-          </div>
-
-          {isFrame ? (
-            <Section
-              title="Registered sources"
-              action={
-                <div className="flex items-center gap-2">
-                  {assumed > 0 && (
-                    <span className="text-xs font-normal text-destructive">
-                      {assumed} of {inbound.length}{" "}
-                      {inbound.length === 1 ? "placement is" : "placements are"}{" "}
-                      still an assumption
-                    </span>
-                  )}
-                  {registerButton}
-                </div>
-              }
-            >
-              <EdgeTable
-                edges={inbound}
-                direction="in"
-                empty="Nothing is registered into this space yet. Register a dataset, table or another space to place it here."
-              />
-            </Section>
-          ) : (
-            <Section title="Residents">
-              <div className="flex flex-col gap-1 text-sm">
-                {system.residents.map((resident) => (
-                  <div key={`${resident.__typename}-${resident.id}`}>
-                    <ResidentLink resident={resident} />
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {RESIDENT_KIND_LABEL[resident.__typename]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {isCalibration && calibrationEdge && (
-            <Section title="Pixel size">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-row flex-wrap items-center gap-3">
-                  {pixelSizes.map((entry) => (
-                    <span key={entry.axis} className="font-mono text-sm">
-                      {formatPixelSize(entry)}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>maps from</span>
-                  {calibrationEdge.input && (
-                    <MikroCoordinateSystem.DetailLink
-                      object={calibrationEdge.input}
-                    >
-                      {calibrationEdge.input.name}
-                    </MikroCoordinateSystem.DetailLink>
-                  )}
-                  {calibrationEdge.validity && (
-                    <ValidityBadge validity={calibrationEdge.validity} />
-                  )}
-                </div>
-              </div>
-            </Section>
-          )}
-
-          {!isFrame && (
-            <>
-              <Section title="Reached from">
-                <EdgeTable
-                  edges={inbound}
-                  direction="in"
-                  empty="Nothing maps into this space."
-                />
-              </Section>
-              <Section title="Maps into" action={calibrateButton}>
-                <EdgeTable
-                  edges={outbound}
-                  direction="out"
-                  empty="Nothing is derived from this space: it has no calibration and no registration. Its geometry is only expressed in its own coordinates."
-                />
-              </Section>
-            </>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Coordinate graph</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[500px] p-0">
-              <CoordinateGraphView coordinateSystem={system.id} />
-            </CardContent>
-          </Card>
-
-          <Section title="Axes">
-            <AxesTable axes={system.axes} />
-          </Section>
-
-          {isFrame && (
-            <Section title="Scenes">
-              {system.scenes.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No scenes use this coordinate system as their world yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {system.scenes.map((scene) => (
-                    <SceneCard key={scene.id} scene={scene} />
-                  ))}
-                </div>
+            <div className="flex flex-row flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">
+                {[...system.axes]
+                  .sort((a, b) => a.order - b.order)
+                  .map((axis) => axis.name)
+                  .join(" ") || "no axes"}
+              </span>
+              {/* What this space is, said the only way the schema still says
+                  it: by who lives in it. */}
+              <Badge
+                variant="outline"
+                className="font-sans text-[0.625rem]"
+                title={
+                  isFrame
+                    ? "Nothing lives in this space. Sources register into it and scenes adopt it as their world; it outlives every scene over it."
+                    : "The data living in this space."
+                }
+              >
+                {residentLabel(system)}
+              </Badge>
+              {/* The schema asks for exactly one thing to be loud: an assumed
+                  placement must be visible. A count on the stage, the edges
+                  themselves one tab away. */}
+              {assumed > 0 && (
+                <Badge variant="destructive" className="font-sans text-[0.625rem]">
+                  {assumed}{" "}
+                  {inbound.length === 1 ? "placement is" : "placements are"}{" "}
+                  assumed
+                </Badge>
               )}
-            </Section>
-          )}
+            </div>
+          </div>
         </div>
       </MikroCoordinateSystem.ModelPage>
     );

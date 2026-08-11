@@ -1,4 +1,5 @@
 import { useGetCoordinateGraphQuery } from "@/mikro-next/api/graphql";
+import type { PanelPosition } from "@xyflow/react";
 import CoordinateGraphFlow from "./CoordinateGraphFlow";
 
 /**
@@ -11,9 +12,12 @@ import CoordinateGraphFlow from "./CoordinateGraphFlow";
 export const CoordinateGraphView = ({
   coordinateSystem,
   maxDepth,
+  legendPosition,
 }: {
   coordinateSystem: string;
   maxDepth?: number;
+  /** Passed through: the caller owns whichever corner it draws in itself. */
+  legendPosition?: PanelPosition;
 }) => {
   const { data, loading, error } = useGetCoordinateGraphQuery({
     variables: { coordinateSystem, maxDepth },
@@ -35,7 +39,12 @@ export const CoordinateGraphView = ({
     );
   }
 
-  return <CoordinateGraphFlow graph={data.coordinateGraph} />;
+  return (
+    <CoordinateGraphFlow
+      graph={data.coordinateGraph}
+      legendPosition={legendPosition}
+    />
+  );
 };
 
 export default CoordinateGraphView;

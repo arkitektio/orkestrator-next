@@ -11913,6 +11913,13 @@ export type GetCoordinateSystemQueryVariables = Exact<{
 
 export type GetCoordinateSystemQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, scenes: Array<{ __typename?: 'Scene', id: string, name: string, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } };
 
+export type GetCoordinateSystemProvenanceQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetCoordinateSystemProvenanceQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+
 export type GetCoordinateGraphQueryVariables = Exact<{
   coordinateSystem: Scalars['ID']['input'];
   maxDepth?: InputMaybe<Scalars['Int']['input']>;
@@ -15022,6 +15029,16 @@ export const GetCoordinateSystemDocument = gql`
 }
     ${CoordinateSystemFragmentDoc}
 ${ListSceneFragmentDoc}`;
+export const GetCoordinateSystemProvenanceDocument = gql`
+    query GetCoordinateSystemProvenance($id: ID!) {
+  coordinateSystem(id: $id) {
+    id
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+  }
+}
+    ${ProvenanceEntryFragmentDoc}`;
 export const GetCoordinateGraphDocument = gql`
     query GetCoordinateGraph($coordinateSystem: ID!, $maxDepth: Int) {
   coordinateGraph(coordinateSystem: $coordinateSystem, maxDepth: $maxDepth) {
@@ -15934,6 +15951,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GetCoordinateSystem(variables: GetCoordinateSystemQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCoordinateSystemQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetCoordinateSystemQuery>({ document: GetCoordinateSystemDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCoordinateSystem', 'query', variables);
+    },
+    GetCoordinateSystemProvenance(variables: GetCoordinateSystemProvenanceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCoordinateSystemProvenanceQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCoordinateSystemProvenanceQuery>({ document: GetCoordinateSystemProvenanceDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCoordinateSystemProvenance', 'query', variables);
     },
     GetCoordinateGraph(variables: GetCoordinateGraphQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCoordinateGraphQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetCoordinateGraphQuery>({ document: GetCoordinateGraphDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetCoordinateGraph', 'query', variables);

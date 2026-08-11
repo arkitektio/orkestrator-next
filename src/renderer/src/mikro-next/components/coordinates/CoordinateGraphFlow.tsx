@@ -4,6 +4,7 @@ import {
   Controls,
   MarkerType,
   Panel,
+  PanelPosition,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
@@ -17,11 +18,10 @@ import CoordinateSystemNode, {
   OCCUPANCY_LABEL,
   Occupancy,
 } from "./CoordinateSystemNode";
-import { RESIDENT_NODE_HEIGHT, systemNodeSize } from "./nodeSize";
-import ResidentNode, {
-  RESIDENT_COLOR,
-  residentNodeWidth,
-} from "./ResidentNode";
+import { facingHandles, sourceHandleId, targetHandleId } from "./handles";
+import { LAYOUT_OPTIONS } from "./layout";
+import { NODE_DIAMETER, NODE_SIZE } from "./nodeSize";
+import ResidentNode, { RESIDENT_COLOR } from "./ResidentNode";
 import { describeTransformation, GraphEdge, GraphNode } from "./types";
 
 export type CoordinateGraph = GetCoordinateGraphQuery["coordinateGraph"];
@@ -29,23 +29,6 @@ export type CoordinateGraph = GetCoordinateGraphQuery["coordinateGraph"];
 const nodeTypes = {
   coordinateSystem: CoordinateSystemNode,
   resident: ResidentNode,
-};
-
-// DisCo packs the graph's connected components; each component is drawn by
-// `layered`, which is what produces the left-to-right chain of spaces. The walk
-// this view renders is usually one component, so DisCo mostly has nothing to
-// pack — it earns its place when a depth-bounded walk leaves an island, which
-// layered would otherwise strand in a corner.
-const layout = {
-  "elk.algorithm": "disco",
-  "elk.disco.componentCompaction.strategy": "POLYOMINO",
-  "elk.disco.componentCompaction.componentLayoutAlgorithm": "layered",
-  "elk.direction": "RIGHT",
-  "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
-  "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-  // Room in the gap for the edge label React Flow draws on the line.
-  "elk.layered.spacing.nodeNodeBetweenLayers": "130",
-  "elk.spacing.nodeNode": "32",
 };
 
 // `currentColor`, not `hsl(var(--muted-foreground))`: this app's design tokens
@@ -117,7 +100,8 @@ const buildGraph = (
         id: `lives-in-${id}`,
         source: system.id,
         target: id,
-        type: "smoothstep" as const,
+        // Straight: residency is a tie, not a route.
+        type: "straight" as const,
         style: residencyStyle,
       });
     }
@@ -141,7 +125,9 @@ const buildGraph = (
       id: transformation.id,
       source: input.id,
       target: output.id,
-      type: "smoothstep" as const,
+      // Bezier, not smoothstep: right angles read as a routed pipeline, and
+      // nothing about where these spaces landed is orthogonal any more.
+      type: "default" as const,
       // React Flow draws the label on the line itself, which is all a
       // transformation needs to say from across the graph. The rest — axes,
       // validity, a composite's children — is the edge table's job.
@@ -149,7 +135,13 @@ const buildGraph = (
       labelBgPadding: [4, 2] as [number, number],
       labelBgBorderRadius: 4,
       labelBgStyle: { fill: "var(--background)", fillOpacity: 0.85 },
-      labelStyle: { fontSize: 10 },
+      // `fill` explicitly, paired with the chip's `--background`. React Flow's
+      // default for the label is `fill: inherit`, and nothing up the SVG chain
+      // sets one — so it lands on SVG's initial black, which is invisible on a
+      // dark chip. `currentColor` would not fix it either: that resolves to the
+      // wrapper's muted-foreground, which is chosen to contrast with the PAGE,
+      // and this text sits on the chip.
+      labelStyle: { fontSize: 10, fill: "var(--foreground)" },
       style: unmappable || assumed ? assumedStyle : transformationStyle,
       markerEnd: unmappable ? undefined : marker,
     });
@@ -157,14 +149,6 @@ const buildGraph = (
 
   return { nodes, edges, dropped };
 };
-
-const sizeOf = (node: GraphNode) =>
-  node.type === "resident"
-    ? {
-        width: residentNodeWidth(node.data.resident),
-        height: RESIDENT_NODE_HEIGHT,
-      }
-    : systemNodeSize(node.data.system);
 
 const Legend = ({
   systems,
@@ -205,7 +189,18 @@ const Legend = ({
   </div>
 );
 
-export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
+export const CoordinateGraphFlow = ({
+  graph,
+  legendPosition = "top-left",
+}: {
+  graph: CoordinateGraph;
+  /**
+   * Where the legend parks. A page that puts its own title over the canvas owns
+   * that corner, and the flow cannot know — so the caller says. Default is the
+   * corner it has always used, for the sidebar tabs that overlay nothing.
+   */
+  legendPosition?: PanelPosition;
+}) => {
   const [instance, setInstance] =
     React.useState<ReactFlowInstance<GraphNode, GraphEdge> | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([]);
@@ -227,8 +222,10 @@ export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
     new ELK()
       .layout({
         id: "root",
-        layoutOptions: layout,
-        children: rawNodes.map((node) => ({ id: node.id, ...sizeOf(node) })),
+        layoutOptions: LAYOUT_OPTIONS,
+        // One size for everything — that is what lets a size-blind layout be
+        // safe.
+        children: rawNodes.map((node) => ({ id: node.id, ...NODE_SIZE })),
         edges: rawEdges.map((edge) => ({
           id: edge.id,
           sources: [edge.source],
@@ -237,15 +234,46 @@ export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
       })
       .then(({ children }) => {
         if (cancelled) return;
+
+        const at = new Map((children ?? []).map((child) => [child.id, child]));
+        const positions = new Map(
+          rawNodes.map((node) => [
+            node.id,
+            { x: at.get(node.id)?.x ?? 0, y: at.get(node.id)?.y ?? 0 },
+          ]),
+        );
+
         setNodes(
-          rawNodes.map((node) => {
-            const placed = children?.find((child) => child.id === node.id);
+          rawNodes.map((node) => ({
+            ...node,
+            position: positions.get(node.id)!,
+          })),
+        );
+
+        // Which side each edge attaches to is only knowable once everything has
+        // settled — that is the price of a layout with no fixed direction. Same
+        // size for every node, so the centre is the position plus one radius.
+        const centre = (id: string) => {
+          const position = positions.get(id)!;
+          return {
+            x: position.x + NODE_DIAMETER / 2,
+            y: position.y + NODE_DIAMETER / 2,
+          };
+        };
+
+        setEdges(
+          rawEdges.map((edge) => {
+            const from = centre(edge.source);
+            const to = centre(edge.target);
+            const sides = facingHandles(to.x - from.x, to.y - from.y);
             return {
-              ...node,
-              position: { x: placed?.x ?? 0, y: placed?.y ?? 0 },
+              ...edge,
+              sourceHandle: sourceHandleId(sides.source),
+              targetHandle: targetHandleId(sides.target),
             };
           }),
         );
+
         instance?.fitView({ padding: 0.2 });
       })
       .catch((error) => {
@@ -277,14 +305,14 @@ export const CoordinateGraphFlow = ({ graph }: { graph: CoordinateGraph }) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onInit={(reactFlow) => setInstance(reactFlow)}
-        defaultEdgeOptions={{ type: "smoothstep" }}
+        defaultEdgeOptions={{ type: "default" }}
         nodesConnectable={false}
         fitView
         proOptions={{ hideAttribution: true }}
       >
         <Background gap={16} size={1} />
         <Controls showInteractive={false} />
-        <Panel position="top-left">
+        <Panel position={legendPosition}>
           <Legend
             systems={graph.systems.length}
             residents={residents}

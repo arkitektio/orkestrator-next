@@ -11919,6 +11919,13 @@ export type GetCoordinateSystemQueryVariables = Exact<{
 
 export type GetCoordinateSystemQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, scenes: Array<{ __typename?: 'Scene', id: string, name: string, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } };
 
+export type GetCoordinateSystemProvenanceQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetCoordinateSystemProvenanceQuery = { __typename?: 'Query', coordinateSystem: { __typename?: 'CoordinateSystem', id: string, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+
 export type GetCoordinateGraphQueryVariables = Exact<{
   coordinateSystem: Scalars['ID']['input'];
   maxDepth?: InputMaybe<Scalars['Int']['input']>;
@@ -17806,6 +17813,44 @@ export function useGetCoordinateSystemLazyQuery(baseOptions?: ApolloReactHooks.L
 export type GetCoordinateSystemQueryHookResult = ReturnType<typeof useGetCoordinateSystemQuery>;
 export type GetCoordinateSystemLazyQueryHookResult = ReturnType<typeof useGetCoordinateSystemLazyQuery>;
 export type GetCoordinateSystemQueryResult = Apollo.QueryResult<GetCoordinateSystemQuery, GetCoordinateSystemQueryVariables>;
+export const GetCoordinateSystemProvenanceDocument = gql`
+    query GetCoordinateSystemProvenance($id: ID!) {
+  coordinateSystem(id: $id) {
+    id
+    provenanceEntries {
+      ...ProvenanceEntry
+    }
+  }
+}
+    ${ProvenanceEntryFragmentDoc}`;
+
+/**
+ * __useGetCoordinateSystemProvenanceQuery__
+ *
+ * To run a query within a React component, call `useGetCoordinateSystemProvenanceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCoordinateSystemProvenanceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCoordinateSystemProvenanceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetCoordinateSystemProvenanceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCoordinateSystemProvenanceQuery, GetCoordinateSystemProvenanceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetCoordinateSystemProvenanceQuery, GetCoordinateSystemProvenanceQueryVariables>(GetCoordinateSystemProvenanceDocument, options);
+      }
+export function useGetCoordinateSystemProvenanceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCoordinateSystemProvenanceQuery, GetCoordinateSystemProvenanceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetCoordinateSystemProvenanceQuery, GetCoordinateSystemProvenanceQueryVariables>(GetCoordinateSystemProvenanceDocument, options);
+        }
+export type GetCoordinateSystemProvenanceQueryHookResult = ReturnType<typeof useGetCoordinateSystemProvenanceQuery>;
+export type GetCoordinateSystemProvenanceLazyQueryHookResult = ReturnType<typeof useGetCoordinateSystemProvenanceLazyQuery>;
+export type GetCoordinateSystemProvenanceQueryResult = Apollo.QueryResult<GetCoordinateSystemProvenanceQuery, GetCoordinateSystemProvenanceQueryVariables>;
 export const GetCoordinateGraphDocument = gql`
     query GetCoordinateGraph($coordinateSystem: ID!, $maxDepth: Int) {
   coordinateGraph(coordinateSystem: $coordinateSystem, maxDepth: $maxDepth) {

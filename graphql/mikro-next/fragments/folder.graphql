@@ -1,18 +1,15 @@
-fragment Dataset on Dataset {
+fragment Folder on Folder {
   id
   name
   description
   provenanceEntries {
     ...ProvenanceEntry
   }
-  images {
-    ...ListImage
-  }
   files {
     ...ListFile
   }
   children {
-    ...ListDataset
+    ...ListFolder
   }
   isDefault
   pinned
@@ -23,7 +20,7 @@ fragment Dataset on Dataset {
   tags
 }
 
-fragment ListDataset on Dataset {
+fragment ListFolder on Folder {
   id
   name
   description

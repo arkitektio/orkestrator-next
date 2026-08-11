@@ -1,14 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroScene } from "@/linkers";
 import {
-  DatasetFilter,
+  FolderFilter,
   OffsetPaginationInput,
   useGetScenesQuery,
 } from "../../api/graphql";
 import SceneCard from "../cards/SceneCard";
 
 export type Props = {
-  filters?: DatasetFilter;
+  filters?: FolderFilter;
   pagination?: OffsetPaginationInput;
 };
 

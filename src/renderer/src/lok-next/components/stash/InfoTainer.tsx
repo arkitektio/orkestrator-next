@@ -1,35 +1,21 @@
-import { useGetDatasetQuery, useGetImageQuery } from "@/mikro-next/api/graphql";
+import { useGetFolderQuery } from "@/mikro-next/api/graphql";
 
-export const ImageRender = (props: { object: string }) => {
-  const { data } = useGetImageQuery({
+export const FolderRender = (props: { object: string }) => {
+  const { data } = useGetFolderQuery({
     variables: {
       id: props.object,
     },
   });
 
-  return <>{data?.image.name}</>;
-};
-
-export const DatasetRender = (props: { object: string }) => {
-  const { data } = useGetDatasetQuery({
-    variables: {
-      id: props.object,
-    },
-  });
-
-  return <>{data?.dataset.name}</>;
+  return <>{data?.folder.name}</>;
 };
 
 export const ConditionalStructureRender = (props: {
   identifier: string;
   object: string;
 }) => {
-  if (props.identifier === "@mikronext/image") {
-    return <ImageRender object={props.object} />;
-  }
-
-  if (props.identifier === "@mikronext/dataset") {
-    return <DatasetRender object={props.object} />;
+  if (props.identifier === "@mikro/folder") {
+    return <FolderRender object={props.object} />;
   }
 
   return (

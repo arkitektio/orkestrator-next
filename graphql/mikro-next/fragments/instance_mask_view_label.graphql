@@ -1,4 +1,0 @@
-fragment InstanceMaskViewLabel on InstanceMaskViewLabel {
-  id
-  values
-}

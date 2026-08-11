@@ -1,14 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMikroBigFileDownload } from "@/datalayer/hooks/useMikroBigFileDownload";
-import { WithMikroMediaUrl } from "@/lib/datalayer/mikroAccess";
-import { MikroFile, MikroImage } from "@/linkers";
+import { MikroFile } from "@/linkers";
 import { useDownload } from "@/providers/download/DownloadProvider";
-import { DownloadIcon, FileIcon, Grid3x3, ImageIcon } from "lucide-react";
-import { useGetFileQuery, useListFileViewsQuery } from "../api/graphql";
+import { DownloadIcon, FileIcon, Grid3x3 } from "lucide-react";
+import { useGetFileQuery } from "../api/graphql";
+import { MoveToFolderButton } from "../components/folder/MoveToFolderButton";
 import ADatasetList from "../components/lists/ADatasetList";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
@@ -62,11 +61,6 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
 
   const file = data?.file;
 
-  const viewsQuery = useListFileViewsQuery({
-    variables: { file: file?.id || "" },
-    skip: !file?.id,
-  });
-
   if (!file) return null;
 
 
@@ -80,6 +74,9 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       title={file.name}
       pageActions={
         <div className="flex items-center gap-2">
+          {/* No `currentFolder`: `File` exposes no folder field, so the badge
+              stays dark until the schema can answer where this file sits. */}
+          <MoveToFolderButton files={[file.id]} />
           <Button
             onClick={() => {
               startDownload(file.name, async ({ id, signal }) => {
@@ -180,63 +177,6 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         />
       </div>
 
-      {/* Derived Images */}
-      <div className="space-y-4 mt-4">
-
-        <ListRender
-          array={viewsQuery.data?.file?.views}
-          refetch={async (variables) => {
-            return viewsQuery.refetch(variables);
-          }}
-          title={
-
-        <div className="flex items-center  pb-2">
-          <ImageIcon className="h-4 w-4 text-emerald-500" />
-          <h2 className="text-lg font-bold tracking-tight">Derived Images</h2>
-        </div>
-          }
-          limit={10}
-        >
-          {(view, index) => (
-            <MikroImage.Smart object={view.image} key={index}>
-              <div className="relative rounded group text-white bg-center group-hover:scale-102 bg-background shadow-lg aspect-square rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group-hover:shadow-xl overflow-hidden">
-                {view.image.latestSnapshot?.store ? (
-                  <WithMikroMediaUrl media={view.image.latestSnapshot.store}>
-                    {(url) => (
-                      <img
-                        src={url}
-                        alt={view.image.name}
-                        className="object-cover w-full h-full transition-transform duration-300 rounded-lg"
-                      />
-                    )}
-                  </WithMikroMediaUrl>
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-muted/30">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                )}
-
-                <div className="px-2 py-2 h-full w-full absolute rounded-lg top-0 left-0 bg-black/40 hover:bg-black/20 transition-all ease-in-out duration-200 flex flex-col justify-between overflow-hidden">
-                  <div className="flex justify-between items-start gap-2">
-                    <MikroImage.DetailLink
-                      className="z-10 font-bold text-md cursor-pointer break-words line-clamp-2"
-                      object={view.image}
-                    >
-                      {view.image?.name || "Unnamed Image"}
-                    </MikroImage.DetailLink>
-
-                    {view.seriesIdentifier && (
-                      <Badge variant="secondary" className="text-xs shrink-0 bg-background/80 backdrop-blur-sm text-foreground shadow-sm">
-                        Series {view.seriesIdentifier}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </MikroImage.Smart>
-          )}
-        </ListRender>
-      </div>
     </MikroFile.ModelPage>
   );
 });

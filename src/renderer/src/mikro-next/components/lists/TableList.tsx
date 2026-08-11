@@ -1,14 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroTable } from "@/linkers";
 import {
-  DatasetFilter,
+  FolderFilter,
   OffsetPaginationInput,
   useGetTablesQuery,
 } from "../../api/graphql";
 import TableCard from "../cards/TableCard";
 
 export type Props = {
-  filters?: DatasetFilter;
+  filters?: FolderFilter;
   pagination?: OffsetPaginationInput;
 };
 

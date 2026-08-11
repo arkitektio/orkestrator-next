@@ -9,20 +9,12 @@ import AnnotationPage from "./pages/AnnotationPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
 import CoordinateSystemPage from "./pages/CoordinateSystemPage";
 import CoordinateSystemsPage from "./pages/CoordinateSystemsPage";
-import DatasetPage from "./pages/DatasetPage";
-import DatasetsPage from "./pages/DatasetsPage";
 import FilePage from "./pages/FilePage";
 import FilesPage from "./pages/FilesPage";
+import FolderPage from "./pages/FolderPage";
+import FoldersPage from "./pages/FoldersPage";
 import HomePage from "./pages/HomePage";
-import ImagePage from "./pages/ImagePage";
-import ImagesPage from "./pages/ImagesPage";
-import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
-import LightpathViewPage from "./pages/LightpathViewPage";
 import PeerHomePage from "./pages/PeerHomePage";
-import RoiPage from "./pages/RoiPage";
-import RoisPage from "./pages/RoisPage";
-import StagePage from "./pages/StagePage";
-import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import TableDatasetPage from "./pages/TableDatasetPage";
@@ -38,15 +30,8 @@ export const MikroNextModule = () => {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="home" element={<HomePage />} />
-          <Route path="images/:id" element={<ImagePage />} />
-          <Route path="lightpathviews/:id" element={<LightpathViewPage />} />
-          <Route
-            path="instancemaskviewlabels/:id"
-            element={<InstanceMaskViewLabelPage />}
-          />
-          <Route path="images" element={<ImagesPage />} />
-          <Route path="datasets/:id" element={<DatasetPage />} />
-          <Route path="datasets" element={<DatasetsPage />} />
+          <Route path="folders/:id" element={<FolderPage />} />
+          <Route path="folders" element={<FoldersPage />} />
           {/* Three segments, so it cannot be mistaken for adatasets/:id. */}
           <Route path="adatasets/spec/:spec" element={<ADatasetSpecPage />} />
           <Route path="adatasets/:id" element={<ADatasetPage />} />
@@ -57,20 +42,16 @@ export const MikroNextModule = () => {
           />
           <Route path="coordinatesystems" element={<CoordinateSystemsPage />} />
           <Route path="files" element={<FilesPage />} />
-          <Route path="rois" element={<RoisPage />} />
           <Route path="annotations" element={<AnnotationsPage />} />
           <Route path="annotations/:id" element={<AnnotationPage />} />
           <Route path="scenes" element={<ScenesPage />} />
           <Route path="scenes/:id" element={<ScenePage />} />
           <Route path="peerhome/:id" element={<PeerHomePage />} />
-          <Route path="rois/:id" element={<RoiPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="tables/:id" element={<TablePage />} />
           <Route path="tabledatasets" element={<TableDatasetsPage />} />
           <Route path="tabledatasets/:id" element={<TableDatasetPage />} />
-          <Route path="stages/:id" element={<StagePage />} />
-          <Route path="stages" element={<StagesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>

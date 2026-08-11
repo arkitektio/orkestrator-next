@@ -22,14 +22,11 @@ import { StructureRelationCategoryDisplay } from "@/kraph/displays/StructureRela
 import { createDisplayProvider } from "@/lib/display/registry";
 import { MessageDisplay } from "@/alpaka/displays/MessageDisplay";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
-import { DatasetDisplay } from "@/mikro-next/displays/DatasetDisplay";
+import { FolderDisplay } from "@/mikro-next/displays/FolderDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
-import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { InstrumentDisplay } from "@/mikro-next/displays/InstrumentDisplay";
-import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
 import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
-import { StageDisplay } from "@/mikro-next/displays/StageDisplay";
 import { TableDisplay } from "@/mikro-next/displays/TableDisplay";
 import { TableDatasetDisplay } from "@/mikro-next/displays/TableDatasetDisplay";
 
@@ -40,19 +37,12 @@ import { TableDatasetDisplay } from "@/mikro-next/displays/TableDatasetDisplay";
 export const { DisplayProvider, useDisplay, useDisplayComponent } =
   createDisplayProvider({
     // mikro
-    "@mikro-next/image": ImageDisplay,
     "@mikro-next/file": FileDisplay,
-    "@mikro-next/dataset": DatasetDisplay,
-    "@mikro-next/stage": StageDisplay,
-    "@mikro-next/roi": RoiDisplay,
     "@mikro-next/snapshot": SnapshotDisplay,
     "@mikro/file": FileDisplay,
     "@mikro/scene": SceneDisplay,
-    "@mikro/image": ImageDisplay,
-    "@mikro/roi": RoiDisplay,
     "@mikro/snapshot": SnapshotDisplay,
-    "@mikro/dataset": DatasetDisplay,
-    "@mikro/stage": StageDisplay,
+    "@mikro/folder": FolderDisplay,
     "@mikro/table": TableDisplay,
     "@mikro/tabledataset": TableDatasetDisplay,
     "@mikro/instrument": InstrumentDisplay,

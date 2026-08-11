@@ -119,8 +119,8 @@ describe("portToLabel", () => {
 
   it("resolves a structure identifier via the smart registry", () => {
     expect(
-      portToLabel({ kind: PortKind.Structure, key: "s", identifier: "@mikro/image" } as LabellablePort),
-    ).toBe("@mikro/image");
+      portToLabel({ kind: PortKind.Structure, key: "s", identifier: "@mikro/folder" } as LabellablePort),
+    ).toBe("@mikro/folder");
   });
 
   it("describes a list by its child", () => {

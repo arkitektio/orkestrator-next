@@ -1,5 +1,4 @@
 import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
-import { FileViewFragment } from "./mikro-next/api/graphql";
 
 // Linkers for the smart models
 // Linkers represent ways to reference a smart model consistently in the ui, and
@@ -163,11 +162,6 @@ export const RekuestDashboard = buildSmart(
   { name: "Dashboard" },
 );
 
-export const MikroImage = buildSmart(
-  "@mikro/image",
-  "mikro/images",
-  { name: "Image (Mikro)" },
-);
 export const MikroSnapshot = buildSmart(
   "@mikro/snapshot",
   "mikro/snapshots",
@@ -193,16 +187,11 @@ export const MikroRenderedPlot = buildSmart(
   "mikro/renderedplots",
   { name: "Rendered Plot" },
 );
-export const MikroRenderTree = buildSmart(
-  "@mikronext/rendertree",
-  "mikro/rendertrees",
-  { name: "Render Tree" },
-);
 
-export const MikroDataset = buildSmart(
-  "@mikro/dataset",
-  "mikro/datasets",
-  { name: "Dataset (Mikro)" },
+export const MikroFolder = buildSmart(
+  "@mikro/folder",
+  "mikro/folders",
+  { name: "Folder" },
 );
 
 export const MikroADataset = buildSmart(
@@ -498,11 +487,6 @@ export const MikroExperiment = buildSmart(
   { name: "Experiment (Mikro)" },
 );
 
-export const MikroInstanceMaskViewLabel = buildSmart(
-  "@mikro/instancemaskviewlabel",
-  "mikro/instancemaskviewlabels",
-  { name: "Instance Mask View Label" },
-);
 
 export const KraphProtocol = buildSmart(
   "@kraph/protocol",
@@ -555,69 +539,14 @@ export const MikroHistory = buildSmart(
   { name: "History" },
 );
 
-export const MikroAffineTransformationView = buildSmart(
-  "@mikro/affinetransformationview",
-  "mikro/affinetransformationviews",
-  { name: "Affine Transformation View" },
-);
 
-export const MikroLabelView = buildSmart(
-  "@mikro/labelview",
-  "mikro/labelviews",
-  { name: "Label View" },
-);
 
-export const MikroSpecimenView = buildSmart(
-  "@mikro/specimenview",
-  "mikro/specimenviews",
-  { name: "Specimen View" },
-);
 
-export const MikroFileView = buildSmart<FileViewFragment>(
-  "@mikro/fileview",
-  "mikro/fileviews",
-  { name: "File View" },
-);
-export const MikroHistogramView = buildSmart(
-  "@mikro/histogramview",
-  "mikro/histogramviews",
-  { name: "Histogram View" },
-);
-export const MikroPixelView = buildSmart(
-  "@mikro/pixelview",
-  "mikro/pixelviews",
-  { name: "Pixel View" },
-);
 
-export const MikroROIView = buildSmart(
-  "@mikro/roiview",
-  "mikro/roiviews",
-  { name: "ROI View" },
-);
 
-export const MikroDerivedView = buildSmart(
-  "@mikro/derivedview",
-  "mikro/derivedviews",
-  { name: "Derived View" },
-);
 
-export const MikroProtocolStepView = buildSmart(
-  "@mikro/protocolstepview",
-  "mikro/protocolstepviews",
-  { name: "Protocol Step View" },
-);
 
-export const MikroMultiPositionView = buildSmart(
-  "@mikro/multipositionview",
-  "mikro/multipositionviews",
-  { name: "Multi Position View" },
-);
 
-export const MikroAcquisitionView = buildSmart(
-  "@mikro/acquisitionview",
-  "mikro/acquisitionviews",
-  { name: "Acquisition View" },
-);
 
 export const MikroFluorophore = buildSmart(
   "@mikro/fluorophore",
@@ -629,11 +558,6 @@ export const MikroFile = buildSmart(
   "@mikro/file",
   "mikro/files",
   { name: "File (Mikro)" },
-);
-export const MikroStage = buildSmart(
-  "@mikro/stage",
-  "mikro/stages",
-  { name: "Stage" },
 );
 export const MikroScene = buildSmart(
   "@mikro/scene",
@@ -651,51 +575,11 @@ export const MikroTableDataset = buildSmart(
   { name: "Table Dataset" },
 );
 
-export const MikroChannelView = buildSmart(
-  "@mikro/channelview",
-  "mikro/channelviews",
-  { name: "Channel View" },
-);
 
-export const MikroMaskView = buildSmart(
-  "@mikro/maskview",
-  "mikro/maskviews",
-  { name: "Mask View" },
-);
-export const MikroInstanceMaskView = buildSmart(
-  "@mikro/instancemaskview",
-  "mikro/instancemaskviews",
-  { name: "Instance Mask View" },
-);
-export const MikroReferenceView = buildSmart(
-  "@mikro/referenceview",
-  "mikro/referenceviews",
-  { name: "Reference View" },
-);
 
-export const MikroRGBView = buildSmart(
-  "@mikro/rgbview",
-  "mikro/rgbviews",
-  { name: "RGB View" },
-);
 
-export const MikroRGBContext = buildSmart(
-  "@mikro/rgbcontext",
-  "mikro/rgbcontexts",
-  { name: "RGB Context" },
-);
 
-export const MikroOpticsView = buildSmart(
-  "@mikro/opticsview",
-  "mikro/opticsviews",
-  { name: "Optics View" },
-);
 
-export const MikroLightpathView = buildSmart(
-  "@mikro/lightpathview",
-  "mikro/lightpathviews",
-  { name: "Lightpath View" },
-);
 
 export const MikroInstrument = buildSmart(
   "@mikro/instrument",
@@ -703,11 +587,6 @@ export const MikroInstrument = buildSmart(
   { name: "Instrument" },
 );
 
-export const MikroROI = buildSmart(
-  "@mikro/roi",
-  "mikro/rois",
-  { name: "R O I" },
-);
 export const MikroAnnotation = buildSmart(
   "@mikro/annotation",
   "mikro/annotations",

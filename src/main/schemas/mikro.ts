@@ -95,6 +95,8 @@ export type ADataset = {
   description?: Maybe<Scalars['String']['output']>;
   /** The files written out of this dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
   exports: Array<FileLink>;
+  /** The folder this dataset is filed in. Organisational only: it says where a user keeps this dataset, never where the data sits in space -- that is `intrinsicSystem` and the edges out of it */
+  folder?: Maybe<Folder>;
   id: Scalars['ID']['output'];
   /** The dataset's INTRINSIC coordinate system: its level-0 pixel grid, the space every pyramid level and lens maps into and the space ROIs resolve against. Structural and unit-independent */
   intrinsicSystem?: Maybe<CoordinateSystem>;
@@ -161,6 +163,10 @@ export type ADatasetFilter = {
   /** Filter to the datasets computed from this one -- the deconvolutions, segmentations and projections that named a space of it as their parent. Every child, not just the ones it places: a fusion that named it second is listed, and so is a child whose derivation is UNMAPPABLE, since it still came from here */
   derivedFrom?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<StrFilterLookup>;
+  /** Filter by the folder this dataset is filed in */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter to datasets whose intrinsic coordinate system carries every one of these axis types, e.g. [TIME, CHANNEL]. The raw form of `spec`, for the types no spec names: COORDINATE, DISPLACEMENT, INDEX */
   hasAxisTypes?: InputMaybe<Array<AxisType>>;
   /** Filter by whether the dataset nominates a scene to open. False finds the ones with no thumbnail -- what `backfill_default_scenes` could not seed, and the work remaining before that command can be deleted */
@@ -544,6 +550,8 @@ export type AnnotationCollection = {
   description?: Maybe<Scalars['String']['output']>;
   /** The files written out of this annotation collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
   exports: Array<FileLink>;
+  /** The folder this annotation collection is filed in. Organisational only: distinct from `scene`, which says which drawing surface minted it, and from `coordinateSystem`, which says where its shapes are drawn */
+  folder?: Maybe<Folder>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** Provenance entries for this annotation collection */
@@ -609,6 +617,10 @@ export type AnnotationCollectionFilter = {
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
   /** Filter by the dataset the shapes are drawn over, following the derivation edge */
   dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the folder this annotation collection is filed in */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -1210,13 +1222,13 @@ export type CameraStateInput = {
   projectionScale?: InputMaybe<Scalars['Float']['input']>;
 };
 
-/** Input for changing an existing dataset's name or parent */
-export type ChangeDatasetInput = {
-  /** The ID of the dataset to change */
+/** Input for changing an existing folder's name or parent */
+export type ChangeFolderInput = {
+  /** The ID of the folder to change */
   id: Scalars['ID']['input'];
-  /** The name of the dataset */
+  /** The name of the folder */
   name: Scalars['String']['input'];
-  /** The ID of the parent dataset to nest this dataset under */
+  /** The ID of the parent folder to nest this folder under */
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -1349,8 +1361,7 @@ export enum ChildrenOrderDirection {
 
 export enum ChildrenOrderField {
   CreatedAt = 'CREATED_AT',
-  Name = 'NAME',
-  UpdatedAt = 'UPDATED_AT'
+  Name = 'NAME'
 }
 
 export type ChildrenPaginationInput = {
@@ -1733,6 +1744,7 @@ export type CreateADatasetInput = {
   axes: Array<AxisInput>;
   data: Scalars['ArrayLike']['input'];
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   scales: Array<ScaleInput>;
   sourceFiles?: InputMaybe<Array<SourceFileInput>>;
@@ -1755,6 +1767,7 @@ export type CreateAnnotationCollectionInput = {
   axes: Array<AxisInput>;
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   sourceFiles?: InputMaybe<Array<SourceFileInput>>;
 };
@@ -1799,11 +1812,11 @@ export type CreateCoordinateSystemInput = {
   registrations?: Array<RegistrationPathInput>;
 };
 
-/** Input for creating a new dataset to organize images and files */
-export type CreateDatasetInput = {
-  /** The name of the dataset */
+/** Input for creating a new folder to organize images and files */
+export type CreateFolderInput = {
+  /** The name of the folder */
   name: Scalars['String']['input'];
-  /** The ID of the parent dataset to nest this dataset under */
+  /** The ID of the parent folder to nest this folder under */
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -1857,6 +1870,7 @@ export type CreateMeshCollectionInput = {
   catalog: Scalars['ParquetLike']['input'];
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   encoding?: InputMaybe<Scalars['Any']['input']>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
   geometry?: InputMaybe<Array<Scalars['ParquetLike']['input']>>;
   grid?: InputMaybe<Scalars['Any']['input']>;
   provenanceMetadata?: InputMaybe<Scalars['Any']['input']>;
@@ -2006,6 +2020,7 @@ export type CreateTableDatasetInput = {
   data: Scalars['ParquetLike']['input'];
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
   keyedBy?: InputMaybe<Array<KeyedByInput>>;
   name: Scalars['String']['input'];
   sourceFiles?: InputMaybe<Array<SourceFileInput>>;
@@ -2083,64 +2098,6 @@ export type DataArrayOrder =
   { id: Ordering; level?: never; }
   |  { id?: never; level: Ordering; };
 
-/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
-export type Dataset = {
-  __typename?: 'Dataset';
-  children: Array<Dataset>;
-  createdAt: Scalars['DateTime']['output'];
-  /** The task this dataset was created through, if any */
-  createdThrough?: Maybe<Task>;
-  /** The assigner of the creating task, if any */
-  createdThroughBy?: Maybe<User>;
-  creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
-  files: Array<File>;
-  id: Scalars['ID']['output'];
-  images: Array<Image>;
-  isDefault: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  parent?: Maybe<Dataset>;
-  pinned: Scalars['Boolean']['output'];
-  /** Provenance entries for this dataset */
-  provenanceEntries: Array<ProvenanceEntry>;
-  tags: Array<Scalars['String']['output']>;
-};
-
-
-/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
-export type DatasetChildrenArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  ordering?: Array<DatasetOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
-export type DatasetFilesArgs = {
-  filters?: InputMaybe<FileFilter>;
-  ordering?: Array<FileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
-export type DatasetImagesArgs = {
-  filters?: InputMaybe<ImageFilter>;
-  ordering?: Array<ImageOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-/** A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
-export type DatasetProvenanceEntriesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-export type DatasetChildrenFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
-  showChildren?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
 /** The fields a DATASET derivation reads. Published for codegen; the wire type is the flat DerivedFromInput */
 export type DatasetDerivedFromInput = {
   dataset: Scalars['ID']['input'];
@@ -2156,50 +2113,6 @@ export type DatasetExportOfInput = {
   seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
   valueRelation?: InputMaybe<ValueRelation>;
 };
-
-export type DatasetFilter = {
-  AND?: InputMaybe<DatasetFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<DatasetFilter>;
-  OR?: InputMaybe<DatasetFilter>;
-  /** Filter by the sub of the user that assigned the creating task */
-  assignedBy?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter for items created after this datetime */
-  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
-  /** Filter for items created before this datetime */
-  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
-  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
-  createdThrough?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
-  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by the rekuest task id the item was created through */
-  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<StrFilterLookup>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  isDefault?: InputMaybe<Scalars['Boolean']['input']>;
-  name?: InputMaybe<StrFilterLookup>;
-  /** Filter by the creator's subject ID */
-  owner?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by the parent dataset (list the children of a dataset) */
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter for datasets with (true) or without (false) a parent */
-  parentless?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Filter by whether the current user has pinned the item */
-  pinned?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Search by name (full-text search) */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Filter by tag names */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type DatasetImageFile = Dataset | File | Image;
-
-export type DatasetOrder =
-  { createdAt: Ordering; id?: never; name?: never; }
-  |  { createdAt?: never; id: Ordering; name?: never; }
-  |  { createdAt?: never; id?: never; name: Ordering; };
 
 /** Input for deleting an array dataset by ID */
 export type DeleteADatasetInput = {
@@ -2242,12 +2155,6 @@ export type DeleteDataArrayInput = {
   id: Scalars['ID']['input'];
 };
 
-/** Input for deleting a dataset by ID */
-export type DeleteDatasetInput = {
-  /** The ID of the dataset to delete */
-  id: Scalars['ID']['input'];
-};
-
 /** Input for deleting an era by ID */
 export type DeleteEraInput = {
   /** The ID of the era to delete */
@@ -2257,6 +2164,12 @@ export type DeleteEraInput = {
 /** Input for deleting a file by ID */
 export type DeleteFileInput = {
   /** The ID of the file to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting a folder by ID */
+export type DeleteFolderInput = {
+  /** The ID of the folder to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -2912,14 +2825,14 @@ export type FileFilter = {
   createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the rekuest task id the item was created through */
   createdThroughTask?: InputMaybe<Scalars['String']['input']>;
-  /** Filter by the dataset this file belongs to */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by a list of dataset IDs */
-  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter to the files written out of this container -- the OME-TIFF a dataset was exported to. The opposite direction from `sourceOf` */
   exportedFrom?: InputMaybe<FileLinkContainerRef>;
   /** Filter by file extension, case-insensitively and with the leading dot optional: `czi`, `.czi` and `CZI` are the same request, and `ome.tiff` matches only the double extension. A normalizing convenience over `name: {iEndsWith: ".czi"}`, which is still there if you want the raw lookup */
   extension?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by the folder this file belongs to */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter by whether any unstructured metadata has been attached to the file */
   hasMetadata?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by whether the file's bytes ever arrived: false finds the `File` rows whose upload was granted and never completed, which carry no store at all */
@@ -3236,6 +3149,148 @@ export type FloatFilterLookup = {
   startsWith?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type Folder = {
+  __typename?: 'Folder';
+  /** The array datasets filed in this folder */
+  adatasets: Array<ADataset>;
+  /** The annotation collections filed in this folder */
+  annotationCollections: Array<AnnotationCollection>;
+  children: Array<Folder>;
+  createdAt: Scalars['DateTime']['output'];
+  /** The task this folder was created through, if any */
+  createdThrough?: Maybe<Task>;
+  /** The assigner of the creating task, if any */
+  createdThroughBy?: Maybe<User>;
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  files: Array<File>;
+  id: Scalars['ID']['output'];
+  images: Array<Image>;
+  isDefault: Scalars['Boolean']['output'];
+  /** The mesh collections filed in this folder */
+  meshCollections: Array<MeshCollection>;
+  name: Scalars['String']['output'];
+  parent?: Maybe<Folder>;
+  pinned: Scalars['Boolean']['output'];
+  /** Provenance entries for this folder */
+  provenanceEntries: Array<ProvenanceEntry>;
+  /** The table datasets filed in this folder */
+  tableDatasets: Array<TableDataset>;
+  tags: Array<Scalars['String']['output']>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderAdatasetsArgs = {
+  filters?: InputMaybe<ADatasetFilter>;
+  ordering?: Array<ADatasetOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderAnnotationCollectionsArgs = {
+  filters?: InputMaybe<AnnotationCollectionFilter>;
+  ordering?: Array<AnnotationCollectionOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderChildrenArgs = {
+  filters?: InputMaybe<FolderFilter>;
+  ordering?: Array<FolderOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderFilesArgs = {
+  filters?: InputMaybe<FileFilter>;
+  ordering?: Array<FileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderImagesArgs = {
+  filters?: InputMaybe<ImageFilter>;
+  ordering?: Array<ImageOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderMeshCollectionsArgs = {
+  filters?: InputMaybe<MeshCollectionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderProvenanceEntriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro. */
+export type FolderTableDatasetsArgs = {
+  filters?: InputMaybe<TableDatasetFilter>;
+  ordering?: Array<TableDatasetOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Anything filed in a folder: a sub-folder, an image, a file, or one of the four containers */
+export type FolderChild = ADataset | AnnotationCollection | File | Folder | Image | MeshCollection | TableDataset;
+
+export type FolderChildrenFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
+  showChildren?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type FolderFilter = {
+  AND?: InputMaybe<FolderFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<FolderFilter>;
+  OR?: InputMaybe<FolderFilter>;
+  /** Filter by the sub of the user that assigned the creating task */
+  assignedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for items created after this datetime */
+  createdAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for items created before this datetime */
+  createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by the database ID of the task the item was created through (the `createdThrough { id }` field) */
+  createdThrough?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field) */
+  createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the rekuest task id the item was created through */
+  createdThroughTask?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  isDefault?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<StrFilterLookup>;
+  /** Filter by the creator's subject ID */
+  owner?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the parent folder (list the children of a folder) */
+  parent?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter for folders with (true) or without (false) a parent */
+  parentless?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by whether the current user has pinned the item */
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name (full-text search) */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by tag names */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type FolderOrder =
+  { createdAt: Ordering; id?: never; name?: never; }
+  |  { createdAt?: never; id: Ordering; name?: never; }
+  |  { createdAt?: never; id?: never; name: Ordering; };
+
 /** A channel descriptor */
 export type FrameInfo = {
   __typename?: 'FrameInfo';
@@ -3250,12 +3305,12 @@ export type FromArrayLikeInput = {
   array: Scalars['ImageLike']['input'];
   /** Optional list of channel views */
   channelViews?: InputMaybe<Array<PartialChannelViewInput>>;
-  /** Optional dataset ID to associate the image with */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
   /** Optional list of derived views */
   derivedViews?: InputMaybe<Array<PartialDerivedViewInput>>;
   /** Optional list of file views */
   fileViews?: InputMaybe<Array<PartialFileViewInput>>;
+  /** Optional folder ID to associate the image with */
+  folder?: InputMaybe<Scalars['ID']['input']>;
   /** Optional list of instance mask views */
   instanceMaskViews?: InputMaybe<Array<PartialInstanceMaskViewInput>>;
   /** Optional list of lightpath views */
@@ -3284,14 +3339,14 @@ export type FromArrayLikeInput = {
 
 /** Input for creating a file record from an uploaded big-file store */
 export type FromFileLike = {
-  /** The ID of the dataset to put the file in (defaults to the current default dataset) */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
   /** The containers this file was written from */
   exportOf?: InputMaybe<Array<ExportOfInput>>;
   /** The uploaded big-file store to create the file from */
   file: Scalars['FileLike']['input'];
   /** The name of the file */
   fileName: Scalars['String']['input'];
+  /** The ID of the folder to put the file in (defaults to the current default folder) */
+  folder?: InputMaybe<Scalars['ID']['input']>;
 };
 
 /** Input for creating a table from an uploaded parquet store */
@@ -3483,8 +3538,6 @@ export type Image = {
   createdThroughBy?: Maybe<User>;
   /** Who created this image */
   creator?: Maybe<User>;
-  /** The dataset this image belongs to */
-  dataset?: Maybe<Dataset>;
   /** Views this image was derived from */
   derivedFromViews: Array<DerivedView>;
   /** Instance mask views */
@@ -3495,6 +3548,8 @@ export type Image = {
   derivedViews: Array<DerivedView>;
   /** File views relating to source files */
   fileViews: Array<FileView>;
+  /** The folder this image belongs to */
+  folder?: Maybe<Folder>;
   /** The channels of this image */
   frames: Array<FrameInfo>;
   /** Histogram views describing pixel value distribution */
@@ -3695,12 +3750,12 @@ export type ImageFilter = {
   createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the rekuest task id the item was created through */
   createdThroughTask?: InputMaybe<Scalars['String']['input']>;
-  dataset?: InputMaybe<DatasetFilter>;
-  /** Filter by a list of dataset IDs */
-  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
   description?: InputMaybe<StrFilterLookup>;
   /** Filter for images converted from this file (through their file views) */
   file?: InputMaybe<Scalars['ID']['input']>;
+  folder?: InputMaybe<FolderFilter>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter for images that have (or have no) ROIs */
   hasRois?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -4662,7 +4717,7 @@ export type MediaUploadGrant = {
 /** A user's membership in an organization, carrying the roles they hold there. */
 export type Membership = {
   __typename?: 'Membership';
-  datasets: Array<Dataset>;
+  folders: Array<Folder>;
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   organization: Organization;
@@ -4672,9 +4727,9 @@ export type Membership = {
 
 
 /** A user's membership in an organization, carrying the roles they hold there. */
-export type MembershipDatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  ordering?: Array<DatasetOrder>;
+export type MembershipFoldersArgs = {
+  filters?: InputMaybe<FolderFilter>;
+  ordering?: Array<FolderOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -4691,6 +4746,8 @@ export type MeshCollection = {
   encoding: Scalars['Any']['output'];
   /** The files written out of this mesh collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
   exports: Array<FileLink>;
+  /** The folder this mesh collection is filed in. Organisational only: it says where a user keeps this collection, never where the meshes sit in space -- that is `coordinateSystem` and the edges out of it */
+  folder?: Maybe<Folder>;
   /** The Parquet stores holding the geometry shards */
   geometry: Array<ParquetStore>;
   /** The octree grid. Its `cellSize` is in voxels of the coordinate system, so the octree aligns to the label grid the meshes were extracted from */
@@ -4743,6 +4800,10 @@ export type MeshCollectionFilter = {
   createdBefore?: InputMaybe<Scalars['DateTime']['input']>;
   /** Filter by the dataset the meshes were extracted from, following the derivation edge */
   dataset?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by the folder this mesh collection is filed in */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -4911,12 +4972,12 @@ export type Mutation = {
   createContinousScanView: ContinousScanView;
   /** Create a SHARED coordinate system (an ownerless space) and, in one call, author the edges registering any number of sources (datasets, table datasets, mesh collections, coordinate systems) into it */
   createCoordinateSystem: CoordinateSystem;
-  /** Create a new dataset to organize data */
-  createDataset: Dataset;
   /** Create a new era for temporal organization */
   createEra: Era;
   /** Create a new view for file data */
   createFileView: FileView;
+  /** Create a new folder to organize data */
+  createFolder: Folder;
   /** Create a new view for histogram data */
   createHistogramView: HistogramView;
   /** Create a new view for instance mask data */
@@ -5009,12 +5070,12 @@ export type Mutation = {
   deleteCoordinateSystem: Scalars['ID']['output'];
   /** Delete an existing data array */
   deleteDataArray: Scalars['ID']['output'];
-  /** Delete an existing dataset */
-  deleteDataset: Scalars['ID']['output'];
   /** Delete an existing era */
   deleteEra: Scalars['ID']['output'];
   /** Delete an existing file */
   deleteFile: Scalars['ID']['output'];
+  /** Delete an existing folder */
+  deleteFolder: Scalars['ID']['output'];
   /** Delete an existing histogram view */
   deleteHistogramView: Scalars['ID']['output'];
   /** Delete an existing image */
@@ -5065,8 +5126,8 @@ export type Mutation = {
   deleteViewCollection: Scalars['ID']['output'];
   /** Ensure a camera exists, creating if needed */
   ensureCamera: Camera;
-  /** Create a new dataset to organize data */
-  ensureDataset: Dataset;
+  /** Create a new folder to organize data */
+  ensureFolder: Folder;
   /** Ensure an instrument exists, creating if needed */
   ensureInstrument: Instrument;
   /** Ensure a multi-well plate exists, creating if needed */
@@ -5091,10 +5152,10 @@ export type Mutation = {
   linkFile: Array<FileLink>;
   /** Pin a camera for quick access */
   pinCamera: Camera;
-  /** Pin a dataset for quick access */
-  pinDataset: Dataset;
   /** Pin an era for quick access */
   pinEra: Era;
+  /** Pin a folder for quick access */
+  pinFolder: Folder;
   /** Pin an image for quick access */
   pinImage: Image;
   /** Pin an instrument for quick access */
@@ -5115,20 +5176,36 @@ export type Mutation = {
   pinView: View;
   /** Pin a view collection for quick access */
   pinViewCollection: ViewCollection;
-  /** Add datasets as children of another dataset */
-  putDatasetsInDataset: Dataset;
-  /** Add files to a dataset */
-  putFilesInDataset: Dataset;
-  /** Add images to a dataset */
-  putImagesInDataset: Dataset;
-  /** Relate an image to a dataset */
-  relateToDataset: Image;
-  /** Remove datasets from being children of another dataset */
-  releaseDatasetsFromDataset: Dataset;
-  /** Remove files from a dataset */
-  releaseFilesFromDataset: Dataset;
-  /** Remove images from a dataset */
-  releaseImagesFromDataset: Dataset;
+  /** File array datasets in a folder */
+  putADatasetsInFolder: Folder;
+  /** File annotation collections in a folder */
+  putAnnotationCollectionsInFolder: Folder;
+  /** Add files to a folder */
+  putFilesInFolder: Folder;
+  /** Add folders as children of another folder */
+  putFoldersInFolder: Folder;
+  /** Add images to a folder */
+  putImagesInFolder: Folder;
+  /** File mesh collections in a folder */
+  putMeshCollectionsInFolder: Folder;
+  /** File table datasets in a folder */
+  putTableDatasetsInFolder: Folder;
+  /** Relate an image to a folder */
+  relateToFolder: Image;
+  /** Unfile array datasets from a folder. They are not deleted, only unfiled */
+  releaseADatasetsFromFolder: Folder;
+  /** Unfile annotation collections from a folder. They are not deleted, only unfiled */
+  releaseAnnotationCollectionsFromFolder: Folder;
+  /** Remove files from a folder */
+  releaseFilesFromFolder: Folder;
+  /** Remove folders from being children of another folder */
+  releaseFoldersFromFolder: Folder;
+  /** Remove images from a folder */
+  releaseImagesFromFolder: Folder;
+  /** Unfile mesh collections from a folder. They are not deleted, only unfiled */
+  releaseMeshCollectionsFromFolder: Folder;
+  /** Unfile table datasets from a folder. They are not deleted, only unfiled */
+  releaseTableDatasetsFromFolder: Folder;
   /** Request temporary S3 read credentials for a big file */
   requestBigfileAccess: BigFileAccessGrant;
   /** Request an upload grant for a big file store */
@@ -5151,8 +5228,8 @@ export type Mutation = {
   requestZarrAccess: ZarrAccessGrant;
   /** Request an upload grant for a Zarr store */
   requestZarrUpload: ZarrUploadGrant;
-  /** Revert dataset to a previous version */
-  revertDataset: Dataset;
+  /** Revert folder to a previous version */
+  revertFolder: Folder;
   /** Nominate the scene to open for a dataset, and take its thumbnail from. Null clears it */
   setDefaultScene: ADataset;
   /** Delete a file link */
@@ -5165,8 +5242,8 @@ export type Mutation = {
   updateAnnotation: Annotation;
   /** Rename a shared coordinate system or anchor its clock. Shared spaces only -- an owned system's name is its container's business, and where data sits is an edge (updateTransformation), not a property of the space */
   updateCoordinateSystem: CoordinateSystem;
-  /** Update dataset metadata */
-  updateDataset: Dataset;
+  /** Update folder metadata */
+  updateFolder: Folder;
   /** Update an existing image's metadata */
   updateImage: Image;
   /** Update an existing layer's lens, scene, affine transformation, and colormap settings */
@@ -5261,11 +5338,6 @@ export type MutationCreateCoordinateSystemArgs = {
 };
 
 
-export type MutationCreateDatasetArgs = {
-  input: CreateDatasetInput;
-};
-
-
 export type MutationCreateEraArgs = {
   input: EraInput;
 };
@@ -5273,6 +5345,11 @@ export type MutationCreateEraArgs = {
 
 export type MutationCreateFileViewArgs = {
   input: FileViewInput;
+};
+
+
+export type MutationCreateFolderArgs = {
+  input: CreateFolderInput;
 };
 
 
@@ -5506,11 +5583,6 @@ export type MutationDeleteDataArrayArgs = {
 };
 
 
-export type MutationDeleteDatasetArgs = {
-  input: DeleteDatasetInput;
-};
-
-
 export type MutationDeleteEraArgs = {
   input: DeleteEraInput;
 };
@@ -5518,6 +5590,11 @@ export type MutationDeleteEraArgs = {
 
 export type MutationDeleteFileArgs = {
   input: DeleteFileInput;
+};
+
+
+export type MutationDeleteFolderArgs = {
+  input: DeleteFolderInput;
 };
 
 
@@ -5641,8 +5718,8 @@ export type MutationEnsureCameraArgs = {
 };
 
 
-export type MutationEnsureDatasetArgs = {
-  input: CreateDatasetInput;
+export type MutationEnsureFolderArgs = {
+  input: CreateFolderInput;
 };
 
 
@@ -5706,13 +5783,13 @@ export type MutationPinCameraArgs = {
 };
 
 
-export type MutationPinDatasetArgs = {
-  input: PinDatasetInput;
+export type MutationPinEraArgs = {
+  input: PinEraInput;
 };
 
 
-export type MutationPinEraArgs = {
-  input: PinEraInput;
+export type MutationPinFolderArgs = {
+  input: PinFolderInput;
 };
 
 
@@ -5766,38 +5843,78 @@ export type MutationPinViewCollectionArgs = {
 };
 
 
-export type MutationPutDatasetsInDatasetArgs = {
+export type MutationPutADatasetsInFolderArgs = {
   input: AssociateInput;
 };
 
 
-export type MutationPutFilesInDatasetArgs = {
+export type MutationPutAnnotationCollectionsInFolderArgs = {
   input: AssociateInput;
 };
 
 
-export type MutationPutImagesInDatasetArgs = {
+export type MutationPutFilesInFolderArgs = {
   input: AssociateInput;
 };
 
 
-export type MutationRelateToDatasetArgs = {
+export type MutationPutFoldersInFolderArgs = {
+  input: AssociateInput;
+};
+
+
+export type MutationPutImagesInFolderArgs = {
+  input: AssociateInput;
+};
+
+
+export type MutationPutMeshCollectionsInFolderArgs = {
+  input: AssociateInput;
+};
+
+
+export type MutationPutTableDatasetsInFolderArgs = {
+  input: AssociateInput;
+};
+
+
+export type MutationRelateToFolderArgs = {
   id: Scalars['ID']['input'];
   other: Scalars['ID']['input'];
 };
 
 
-export type MutationReleaseDatasetsFromDatasetArgs = {
+export type MutationReleaseADatasetsFromFolderArgs = {
   input: DesociateInput;
 };
 
 
-export type MutationReleaseFilesFromDatasetArgs = {
+export type MutationReleaseAnnotationCollectionsFromFolderArgs = {
   input: DesociateInput;
 };
 
 
-export type MutationReleaseImagesFromDatasetArgs = {
+export type MutationReleaseFilesFromFolderArgs = {
+  input: DesociateInput;
+};
+
+
+export type MutationReleaseFoldersFromFolderArgs = {
+  input: DesociateInput;
+};
+
+
+export type MutationReleaseImagesFromFolderArgs = {
+  input: DesociateInput;
+};
+
+
+export type MutationReleaseMeshCollectionsFromFolderArgs = {
+  input: DesociateInput;
+};
+
+
+export type MutationReleaseTableDatasetsFromFolderArgs = {
   input: DesociateInput;
 };
 
@@ -5857,7 +5974,7 @@ export type MutationRequestZarrUploadArgs = {
 };
 
 
-export type MutationRevertDatasetArgs = {
+export type MutationRevertFolderArgs = {
   input: RevertInput;
 };
 
@@ -5892,8 +6009,8 @@ export type MutationUpdateCoordinateSystemArgs = {
 };
 
 
-export type MutationUpdateDatasetArgs = {
-  input: ChangeDatasetInput;
+export type MutationUpdateFolderArgs = {
+  input: ChangeFolderInput;
 };
 
 
@@ -7080,17 +7197,17 @@ export type PinCameraInput = {
   pin: Scalars['Boolean']['input'];
 };
 
-/** Input for pinning or unpinning a dataset for quick access */
-export type PinDatasetInput = {
-  /** The ID of the dataset to pin or unpin */
+/** Input for pinning or unpinning an era for quick access */
+export type PinEraInput = {
+  /** The ID of the era to pin or unpin */
   id: Scalars['ID']['input'];
   /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
 };
 
-/** Input for pinning or unpinning an era for quick access */
-export type PinEraInput = {
-  /** The ID of the era to pin or unpin */
+/** Input for pinning or unpinning a folder for quick access */
+export type PinFolderInput = {
+  /** The ID of the folder to pin or unpin */
   id: Scalars['ID']['input'];
   /** True to pin, false to unpin */
   pin: Scalars['Boolean']['input'];
@@ -7435,8 +7552,8 @@ export type Query = {
   channelViews: Array<ChannelView>;
   /** Get the channel infos of a specific image */
   channelsFor: Array<ChannelInfo>;
-  /** List the child datasets of a dataset */
-  children: Array<DatasetImageFile>;
+  /** List the child folders of a folder */
+  children: Array<FolderChild>;
   /** List continuous scan views (recording scan directions) */
   continousScanViews: Array<ContinousScanView>;
   /** Walk the coordinate graph out from one system: every coordinate system it reaches and every top-level edge between them. Reachability is undirected (an edge pointing into the system relates to it as much as one pointing out), the edges keep their true direction, and nothing is composed -- what the list queries cannot answer is 'which edges relate to *this* one', because relatedness is transitive and a filter is not */
@@ -7449,10 +7566,6 @@ export type Query = {
   dataArray: DataArray;
   /** List data arrays (the multiscale zarr arrays backing array datasets) */
   dataArrays: Array<DataArray>;
-  /** Get a single dataset by ID */
-  dataset: Dataset;
-  /** List datasets (folder-like collections of images, files and tables) */
-  datasets: Array<Dataset>;
   /** Get generic key-value descriptors for an object identified by identifier and ID */
   describe: Array<Descriptor>;
   /** List eras (named time epochs on a microscope that timepoint views anchor to) */
@@ -7469,6 +7582,10 @@ export type Query = {
   fileViews: Array<FileView>;
   /** List files (raw microscopy files such as .czi or .ome.tiff) */
   files: Array<File>;
+  /** Get a single folder by ID */
+  folder: Folder;
+  /** List folders (collections of images, files and tables) */
+  folders: Array<Folder>;
   /** Returns a single image by ID */
   image: Image;
   /** List image accessors (columns of tables that reference images) */
@@ -7511,12 +7628,12 @@ export type Query = {
   multiWellPlate: MultiWellPlate;
   /** List multi well plates */
   multiWellPlates: Array<MultiWellPlate>;
-  /** List datasets created by the current user */
-  mydatasets: Array<Dataset>;
   /** List eras created by the current user */
   myeras: Array<Era>;
   /** List files created by the current user */
   myfiles: Array<File>;
+  /** List folders created by the current user */
+  myfolders: Array<Folder>;
   /** List images created by the current user */
   myimages: Array<Image>;
   /** List objectives created by the current user */
@@ -7694,7 +7811,7 @@ export type QueryChannelsForArgs = {
 
 
 export type QueryChildrenArgs = {
-  filters?: InputMaybe<DatasetChildrenFilter>;
+  filters?: InputMaybe<FolderChildrenFilter>;
   order?: InputMaybe<ChildrenOrder>;
   pagination?: InputMaybe<ChildrenPaginationInput>;
   parent: Scalars['ID']['input'];
@@ -7733,18 +7850,6 @@ export type QueryDataArrayArgs = {
 export type QueryDataArraysArgs = {
   filters?: InputMaybe<DataArrayFilter>;
   ordering?: Array<DataArrayOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryDatasetArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryDatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  ordering?: Array<DatasetOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -7794,6 +7899,18 @@ export type QueryFileViewsArgs = {
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
   ordering?: Array<FileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryFolderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryFoldersArgs = {
+  filters?: InputMaybe<FolderFilter>;
+  ordering?: Array<FolderOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -7895,13 +8012,6 @@ export type QueryMultiWellPlatesArgs = {
 };
 
 
-export type QueryMydatasetsArgs = {
-  filters?: InputMaybe<DatasetFilter>;
-  ordering?: Array<DatasetOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryMyerasArgs = {
   filters?: InputMaybe<EraFilter>;
   ordering?: Array<EraOrder>;
@@ -7912,6 +8022,13 @@ export type QueryMyerasArgs = {
 export type QueryMyfilesArgs = {
   filters?: InputMaybe<FileFilter>;
   ordering?: Array<FileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMyfoldersArgs = {
+  filters?: InputMaybe<FolderFilter>;
+  ordering?: Array<FolderOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -8678,11 +8795,11 @@ export type RequestZarrUploadInput = {
 /** A piece of data living in a coordinate system. Data belongs to a space; the space belongs to nobody */
 export type Resident = ADataset | AnnotationCollection | DataArray | Lens | MeshCollection | TableDataset;
 
-/** Input for reverting a dataset to a previous history revision */
+/** Input for reverting a folder to a previous history revision */
 export type RevertInput = {
-  /** The ID of the provenance history entry to revert the dataset to */
+  /** The ID of the provenance history entry to revert the folder to */
   historyId: Scalars['ID']['input'];
-  /** The ID of the dataset to revert */
+  /** The ID of the folder to revert */
   id: Scalars['ID']['input'];
 };
 
@@ -9461,12 +9578,12 @@ export type SubscriptionAffineTransformationViewsArgs = {
 
 
 export type SubscriptionFilesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
 export type SubscriptionImagesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -9581,6 +9698,8 @@ export type TableDataset = {
   description?: Maybe<Scalars['String']['output']>;
   /** The files written out of this table dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles` */
   exports: Array<FileLink>;
+  /** The folder this table dataset is filed in. Organisational only: it says where a user keeps this table, never where its rows sit in space -- that is `coordinateSystem` and the edges out of it */
+  folder?: Maybe<Folder>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** Every change made to this table: who created it, and every subsequent rename or redescription, attributed to the client, user and task it happened under. Only `name` and `description` can change -- the store, the columns and the coordinate system derived from them are fixed at creation */
@@ -9665,6 +9784,10 @@ export type TableDatasetFilter = {
   /** Filter by the dataset the table was computed from, following its derivation edge */
   dataset?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<StrFilterLookup>;
+  /** Filter by the folder this table dataset is filed in */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Filter to tables that declare a column of this role, e.g. TRACK_ID */
   hasColumnRole?: InputMaybe<TableColumnRole>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -9701,10 +9824,10 @@ export type TableFilter = {
   createdThroughBy?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by the rekuest task id the item was created through */
   createdThroughTask?: InputMaybe<Scalars['String']['input']>;
-  /** Filter by the dataset this table belongs to */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by a list of dataset IDs */
-  datasets?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by the folder this table belongs to */
+  folder?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by a list of folder IDs */
+  folders?: InputMaybe<Array<Scalars['ID']['input']>>;
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -10737,7 +10860,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -10750,7 +10873,7 @@ type Accessor_LabelAccessor_Fragment = { __typename?: 'LabelAccessor', id: strin
 
 export type AccessorFragment = Accessor_ImageAccessor_Fragment | Accessor_LabelAccessor_Fragment;
 
-export type LabelAccessorFragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } };
+export type LabelAccessorFragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
 
 export type ImageAccessorFragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
 
@@ -10876,23 +10999,15 @@ export type ParquetAccessGrantFragment = { __typename?: 'ParquetAccessGrant', ac
 
 export type GeneralParquetAccessGrantFragment = { __typename?: 'GeneralParquetAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string };
 
-export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
-
-export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
-
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
+export type FileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } };
 
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type FolderFragment = { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
 
-export type RgbImageFragment = { __typename?: 'Image', name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
-
-export type ListImageFragment = { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null };
-
-export type InstanceMaskViewLabelFragment = { __typename?: 'InstanceMaskViewLabel', id: string, values: any };
+export type ListFolderFragment = { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean };
 
 export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
 
@@ -11004,21 +11119,13 @@ export type LightpathGraphFragment = { __typename?: 'LightpathGraph', elements: 
 
 export type MeshCollectionFragment = { __typename?: 'MeshCollection', id: string, version: string, specVersion: string, grid: any, encoding: any, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> }, catalog: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, geometry: Array<{ __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }> };
 
-export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
+export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
 
 export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
 
 export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
 
 export type ProvenanceEntryFragment = { __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> };
-
-export type RgbContextFragment = { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> } };
-
-export type ListRgbContextFragment = { __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> };
-
-export type ListRoiFragment = { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
 export type SceneFragment = { __typename?: 'Scene', id: string, name: string, preferredView: PreferredView, backgroundColor?: Array<number> | null, animations: Array<{ __typename?: 'Animation', id: string, name: string, description?: string | null, createdAt: any, waypoints: Array<{ __typename?: 'AnimationWaypoint', id: string, order: number, name: string, durationMs: number, easing: Easing, camera: { __typename?: 'CameraState', position: any, crossSectionOrientation?: Array<number> | null, crossSectionScale?: number | null, projectionOrientation?: Array<number> | null, projectionScale?: number | null } }> }>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, worldCoordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> }, layers: Array<{ __typename: 'AnnotationLayer', id: string, kind: LayerKind, blending: Blending, opacity: number, visible: boolean, order: number, annotationCollection: { __typename?: 'AnnotationCollection', id: string, name: string, description?: string | null, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } }, pathToWorld?: Array<{ __typename?: 'PlacementStep', inverted: boolean, transformation: { __typename: 'AffineTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', version: number, scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', version: number, translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', version: number, reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } }> | null } | { __typename: 'ImageLayer', id: string, kind: LayerKind, blending: Blending, opacity: number, visible: boolean, order: number, lens: { __typename?: 'Lens', id: string, shape: Array<number>, axisNames: Array<string>, renderAxes: { __typename?: 'RenderAxes', x: string, y: string, z?: string | null, t?: string | null, intensity?: string | null, phasor?: string | null }, phasor?: { __typename?: 'PhasorContext', axis: string, axisType: AxisType, bins: number, binWidth?: any | null, harmonic: number, laserFrequency?: any | null, window?: any | null, calibration?: { __typename?: 'PhasorCalibration', id: string, harmonic: number, phaseOffset?: number | null, modulationFactor?: number | null, reference?: string | null } | null, phasorHistogram?: { __typename?: 'PhasorHistogram', id: string, bins: number, counts: Array<number>, gMin: number, gMax: number, sMin: number, sMax: number, profile: Array<number>, total?: number | null, calibrated: boolean } | null } | null, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, slices: Array<{ __typename?: 'Slice', axis: string, start?: number | null, stop?: number | null, step?: number | null }>, dataset: { __typename?: 'ADataset', id: string, name: string, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, intrinsicSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, dataArrays: Array<{ __typename?: 'DataArray', id: string, level: number, shape: Array<number>, chunkShape: Array<number>, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, toParent?: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | null, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } }> }, activeAnchors: Array<{ __typename?: 'CoordinateAnchor', id: string, coordinates: any, valueHistogram?: { __typename?: 'ValueHistogram', bins: Array<number>, histogram: Array<number>, min?: number | null, max?: number | null, p1?: number | null, p99?: number | null } | null, channelLabel?: { __typename?: 'ChannelLabel', label: string } | null, lightGraph?: { __typename?: 'LightPath', graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'ApertureElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelength?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLength: any, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistance?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameter?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PolarizerElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'ShutterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'WaveplateElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | null }> }, renderGraph?: { __typename?: 'LayerRenderGraph', root: { __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null, children: Array<{ __typename?: 'BlendNode', blending: Blending, kind: string, label?: string | null } | { __typename?: 'ChannelSourceNode', kind: string, label?: string | null, intensityAxis?: string | null, intensityIndex: number, visible: boolean, transfer: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null } } | { __typename?: 'PhasorNode', kind: string, label?: string | null, phasorAxis: string, harmonic: number, intensityAxis?: string | null, intensityIndex: number, visible: boolean, phasorTransfer: { __typename?: 'PhasorTransfer', colormap: ColorMap, mode: PhasorColorMode, min?: any | null, max?: any | null, weightByIntensity: boolean, intensity: { __typename?: 'TransferFunction', climMin?: number | null, climMax?: number | null, colormap?: ColorMap | null, color?: Array<number> | null, gamma?: number | null, opacity?: number | null, invert?: boolean | null, categorical?: boolean | null }, cursors: Array<{ __typename?: 'PhasorCursor', kind: PhasorCursorKind, label?: string | null, visible: boolean, color?: Array<number> | null, g?: number | null, s?: number | null, radius?: number | null, points?: Array<Array<number>> | null }> } } | { __typename?: 'ProjectionNode', mode: ProjectionMode, kind: string, label?: string | null }> }> }> } } | null, pathToWorld?: Array<{ __typename?: 'PlacementStep', inverted: boolean, transformation: { __typename: 'AffineTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', version: number, scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', version: number, translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', version: number, reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } }> | null } | { __typename: 'MeshLayer', materialColor?: Array<number> | null, wireframe: boolean, id: string, kind: LayerKind, blending: Blending, opacity: number, visible: boolean, order: number, collection?: { __typename?: 'MeshCollection', id: string, version: string, specVersion: string, grid: any, encoding: any, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> }, catalog: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, geometry: Array<{ __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }> } | null, pathToWorld?: Array<{ __typename?: 'PlacementStep', inverted: boolean, transformation: { __typename: 'AffineTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', version: number, scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', version: number, translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', version: number, reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } }> | null } | { __typename: 'PointLayer', xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, sizeColumn?: string | null, colorColumn?: string | null, idColumn?: string | null, pointSize?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, blending: Blending, opacity: number, visible: boolean, order: number, tableDataset: { __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableDatasetColumn', id: string, name: string, longName?: string | null, dtype: string, role: TableColumnRole, axisType?: AxisType | null, unit?: any | null, order: number }>, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } }, pathToWorld?: Array<{ __typename?: 'PlacementStep', inverted: boolean, transformation: { __typename: 'AffineTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', version: number, scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', version: number, translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', version: number, reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } }> | null } | { __typename: 'TrackLayer', trackIdColumn?: string | null, xColumn?: string | null, yColumn?: string | null, zColumn?: string | null, tColumn?: string | null, colorByColumn?: string | null, lineWidth?: number | null, colormap?: ColorMap | null, id: string, kind: LayerKind, blending: Blending, opacity: number, visible: boolean, order: number, tableDataset: { __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableDatasetColumn', id: string, name: string, longName?: string | null, dtype: string, role: TableColumnRole, axisType?: AxisType | null, unit?: any | null, order: number }>, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } }, pathToWorld?: Array<{ __typename?: 'PlacementStep', inverted: boolean, transformation: { __typename: 'AffineTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', version: number, affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', version: number, scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', version: number, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', version: number, translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', version: number, reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } }> | null }> };
 
@@ -11028,10 +11135,6 @@ export type SceneSnapshotFragment = { __typename?: 'SceneSnapshot', id: string, 
 
 export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } };
 
-export type StageFragment = { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape: Array<number> } }, stage: { __typename?: 'Stage', id: string, name: string } }> };
-
-export type ListStageFragment = { __typename?: 'Stage', id: string, name: string };
-
 export type ZarrStoreFragment = { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null };
 
 export type ParquetStoreFragment = { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string };
@@ -11040,7 +11143,7 @@ export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, ke
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, bucket: string };
 
-export type TableFragment = { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> };
+export type TableFragment = { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> };
 
 export type ListTableFragment = { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
 
@@ -11051,76 +11154,6 @@ export type ListTableDatasetFragment = { __typename?: 'TableDataset', id: string
 export type TableDatasetFragment = { __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableDatasetColumn', id: string, name: string, longName?: string | null, dtype: string, role: TableColumnRole, axisType?: AxisType | null, unit?: any | null, order: number }>, coordinateSystem: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'ADataset', id: string, name: string } | { __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ADataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } };
 
 export type VideoFragment = { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
-
-type View_AcquisitionView_Fragment = { __typename?: 'AcquisitionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_AffineTransformationView_Fragment = { __typename?: 'AffineTransformationView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ChannelView_Fragment = { __typename?: 'ChannelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ContinousScanView_Fragment = { __typename?: 'ContinousScanView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_DerivedView_Fragment = { __typename?: 'DerivedView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_FileView_Fragment = { __typename?: 'FileView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_HistogramView_Fragment = { __typename?: 'HistogramView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_InstanceMaskView_Fragment = { __typename?: 'InstanceMaskView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_LabelView_Fragment = { __typename?: 'LabelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_LightpathView_Fragment = { __typename?: 'LightpathView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_MaskView_Fragment = { __typename?: 'MaskView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_OpticsView_Fragment = { __typename?: 'OpticsView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RgbView_Fragment = { __typename?: 'RGBView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RoiView_Fragment = { __typename?: 'ROIView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ReferenceView_Fragment = { __typename?: 'ReferenceView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ScaleView_Fragment = { __typename?: 'ScaleView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_TimepointView_Fragment = { __typename?: 'TimepointView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_WellPositionView_Fragment = { __typename?: 'WellPositionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_DerivedView_Fragment | View_FileView_Fragment | View_HistogramView_Fragment | View_InstanceMaskView_Fragment | View_LabelView_Fragment | View_LightpathView_Fragment | View_MaskView_Fragment | View_OpticsView_Fragment | View_RgbView_Fragment | View_RoiView_Fragment | View_ReferenceView_Fragment | View_ScaleView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
-
-export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, excitationWavelength?: any | null, emissionWavelength?: any | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null };
-
-export type LightpathViewFragment = { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'ApertureElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelength?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLength: any, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistance?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameter?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PolarizerElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'ShutterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'WaveplateElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } };
-
-export type DerivedViewFragment = { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiViewFragment = { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } };
-
-export type FileViewFragment = { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } };
-
-export type AffineTransformationViewFragment = { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } };
-
-export type RgbViewFragment = { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> };
-
-export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, timeSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } };
-
-export type OpticsViewFragment = { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null };
-
-export type MaskViewFragment = { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } };
-
-export type ReferenceViewFragment = { __typename?: 'ReferenceView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type InstanceMaskViewFragment = { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } | null };
-
-export type AcquisitionViewFragment = { __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null };
-
-export type WellPositionViewFragment = { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null };
-
-export type ContinousScanViewFragment = { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type HistogramViewFragment = { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
 
 export type CreateAnimationMutationVariables = Exact<{
   scene: Scalars['ID']['input'];
@@ -11327,92 +11360,6 @@ export type RequestGeneralZarrAccessMutationVariables = Exact<{
 
 export type RequestGeneralZarrAccessMutation = { __typename?: 'Mutation', requestGeneralZarrAccess: { __typename?: 'GeneralZarrAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, bucket: string } };
 
-export type CreateDatasetMutationVariables = Exact<{
-  input: CreateDatasetInput;
-}>;
-
-
-export type CreateDatasetMutation = { __typename?: 'Mutation', createDataset: { __typename?: 'Dataset', id: string, name: string } };
-
-export type UpdateDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
-}>;
-
-
-export type UpdateDatasetMutation = { __typename?: 'Mutation', updateDataset: { __typename?: 'Dataset', id: string, name: string } };
-
-export type PinDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
-
-
-export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type PutDatasetsInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type PutImagesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type ReleaseImagesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type PutFilesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type ReleaseFilesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-}>;
-
-
-export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type RevertDatasetMutationVariables = Exact<{
-  dataset: Scalars['ID']['input'];
-  history: Scalars['ID']['input'];
-}>;
-
-
-export type RevertDatasetMutation = { __typename?: 'Mutation', revertDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null } };
-
-export type DeleteDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteDatasetMutation = { __typename?: 'Mutation', deleteDataset: string };
-
 export type CreateEraMutationVariables = Exact<{
   name: Scalars['String']['input'];
   begin?: InputMaybe<Scalars['DateTime']['input']>;
@@ -11424,12 +11371,11 @@ export type CreateEraMutation = { __typename?: 'Mutation', createEra: { __typena
 export type From_File_LikeMutationVariables = Exact<{
   file: Scalars['FileLike']['input'];
   name: Scalars['String']['input'];
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-  viewPagination?: InputMaybe<OffsetPaginationInput>;
+  folder?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type DeleteFileMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11438,27 +11384,107 @@ export type DeleteFileMutationVariables = Exact<{
 
 export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
 
-export type PinImageMutationVariables = Exact<{
+export type CreateFolderMutationVariables = Exact<{
+  input: CreateFolderInput;
+}>;
+
+
+export type CreateFolderMutation = { __typename?: 'Mutation', createFolder: { __typename?: 'Folder', id: string, name: string } };
+
+export type UpdateFolderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+
+export type UpdateFolderMutation = { __typename?: 'Mutation', updateFolder: { __typename?: 'Folder', id: string, name: string } };
+
+export type PinFolderMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
 }>;
 
 
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinFolderMutation = { __typename?: 'Mutation', pinFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
-export type UpdateImageMutationVariables = Exact<{
-  input: UpdateImageInput;
+export type PutFoldersInFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PutFoldersInFolderMutation = { __typename?: 'Mutation', putFoldersInFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
-export type DeleteImageMutationVariables = Exact<{
+export type ReleaseFoldersFromFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseFoldersFromFolderMutation = { __typename?: 'Mutation', releaseFoldersFromFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type PutFilesInFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutFilesInFolderMutation = { __typename?: 'Mutation', putFilesInFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseFilesFromFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseFilesFromFolderMutation = { __typename?: 'Mutation', releaseFilesFromFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type RevertFolderMutationVariables = Exact<{
+  folder: Scalars['ID']['input'];
+  history: Scalars['ID']['input'];
+}>;
+
+
+export type RevertFolderMutation = { __typename?: 'Mutation', revertFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null } };
+
+export type DeleteFolderMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: string };
+export type DeleteFolderMutation = { __typename?: 'Mutation', deleteFolder: string };
+
+export type PutADatasetsInFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutADatasetsInFolderMutation = { __typename?: 'Mutation', putADatasetsInFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseADatasetsFromFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseADatasetsFromFolderMutation = { __typename?: 'Mutation', releaseADatasetsFromFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type PutTableDatasetsInFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type PutTableDatasetsInFolderMutation = { __typename?: 'Mutation', putTableDatasetsInFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type ReleaseTableDatasetsFromFolderMutationVariables = Exact<{
+  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
+}>;
+
+
+export type ReleaseTableDatasetsFromFolderMutation = { __typename?: 'Mutation', releaseTableDatasetsFromFolder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type CreateInstrumentMutationVariables = Exact<{
   serialNumber: Scalars['String']['input'];
@@ -11553,7 +11579,7 @@ export type CreateMultiWellPlateMutationVariables = Exact<{
 }>;
 
 
-export type CreateMultiWellPlateMutation = { __typename?: 'Mutation', createMultiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type CreateMultiWellPlateMutation = { __typename?: 'Mutation', createMultiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null } };
 
 export type AutoCreateMultiWellPlateMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -11588,42 +11614,6 @@ export type AssignUserPermissionsMutationVariables = Exact<{
 
 
 export type AssignUserPermissionsMutation = { __typename?: 'Mutation', assignUserPermission: Array<{ __typename?: 'UserObjectPermission', permission: string, user: { __typename?: 'User', sub: string } }> };
-
-export type CreateRgbContextMutationVariables = Exact<{
-  input: CreateRgbContextInput;
-}>;
-
-
-export type CreateRgbContextMutation = { __typename?: 'Mutation', createRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> } } };
-
-export type UpdateRgbContextMutationVariables = Exact<{
-  input: UpdateRgbContextInput;
-}>;
-
-
-export type UpdateRgbContextMutation = { __typename?: 'Mutation', updateRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> } } };
-
-export type PinRoiMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
-
-
-export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
-
-export type CreateRoiMutationVariables = Exact<{
-  input: RoiInput;
-}>;
-
-
-export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
-
-export type DeleteRoiMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteRoiMutation = { __typename?: 'Mutation', deleteRoi: string };
 
 export type DeleteSceneMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11665,29 +11655,6 @@ export type SetDefaultSceneMutationVariables = Exact<{
 
 export type SetDefaultSceneMutation = { __typename?: 'Mutation', setDefaultScene: { __typename?: 'ADataset', id: string, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } };
 
-export type CreateSnapshotMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  file: Scalars['ImageFileLike']['input'];
-}>;
-
-
-export type CreateSnapshotMutation = { __typename?: 'Mutation', createSnapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } };
-
-export type CreateStageMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-
-export type CreateStageMutation = { __typename?: 'Mutation', createStage: { __typename?: 'Stage', id: string, name: string } };
-
-export type PinStageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-}>;
-
-
-export type PinStageMutation = { __typename?: 'Mutation', pinStage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape: Array<number> } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
-
 export type From_Parquet_LikeMutationVariables = Exact<{
   dataframe: Scalars['ParquetLike']['input'];
   name: Scalars['String']['input'];
@@ -11695,7 +11662,7 @@ export type From_Parquet_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> } };
 
 export type CreateTransformationMutationVariables = Exact<{
   input: CreateTransformationInput;
@@ -11703,99 +11670,6 @@ export type CreateTransformationMutationVariables = Exact<{
 
 
 export type CreateTransformationMutation = { __typename?: 'Mutation', createTransformation: { __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, transformations: Array<{ __typename: 'AffineTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'BijectionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ByDimensionTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'FieldTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, field?: { __typename?: 'CoordinateSystem', id: string, name: string, residents: Array<{ __typename: 'ADataset' } | { __typename: 'AnnotationCollection' } | { __typename: 'DataArray' } | { __typename: 'Lens' } | { __typename: 'MeshCollection' } | { __typename: 'TableDataset' }> } | null, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'IdentityTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'MapAxisTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'RotationTransformation', affine: Array<Array<number>>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'ScaleTransformation', scale: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'SequenceTransformation', id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null }>, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'TranslationTransformation', translation: Array<number>, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } | { __typename: 'UnmappableTransformation', reason?: string | null, id: string, kind: TransformKind, name?: string | null, inputAxes: Array<string>, outputAxes: Array<string>, validity: PlacementValidity, input?: { __typename?: 'CoordinateSystem', id: string, name: string } | null, output?: { __typename?: 'CoordinateSystem', id: string, name: string } | null } };
-
-export type CreateAffineTransformationViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
-  stage?: InputMaybe<Scalars['ID']['input']>;
-}>;
-
-
-export type CreateAffineTransformationViewMutation = { __typename?: 'Mutation', createAffineTransformationView: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } };
-
-export type DeleteAffineTransformationViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteAffineTransformationViewMutation = { __typename?: 'Mutation', deleteAffineTransformationView: string };
-
-export type DeleteRgbViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteRgbViewMutation = { __typename?: 'Mutation', deleteRgbView: string };
-
-export type DeleteChannelViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteChannelViewMutation = { __typename?: 'Mutation', deleteChannelView: string };
-
-export type DeleteHistogramViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteHistogramViewMutation = { __typename?: 'Mutation', deleteHistogramView: string };
-
-export type CreateRgbViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  context: Scalars['ID']['input'];
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  colorMap?: InputMaybe<ColorMap>;
-}>;
-
-
-export type CreateRgbViewMutation = { __typename?: 'Mutation', createRgbView: { __typename?: 'RGBView', id: string } };
-
-export type CreateWellPositionViewMutationVariables = Exact<{
-  input: WellPositionViewInput;
-}>;
-
-
-export type CreateWellPositionViewMutation = { __typename?: 'Mutation', createWellPositionView: { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null } };
-
-export type CreateContinousScanViewMutationVariables = Exact<{
-  input: ContinousScanViewInput;
-}>;
-
-
-export type CreateContinousScanViewMutation = { __typename?: 'Mutation', createContinousScanView: { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } };
-
-export type CreateMaskViewMutationVariables = Exact<{
-  input: MaskViewInput;
-}>;
-
-
-export type CreateMaskViewMutation = { __typename?: 'Mutation', createMaskView: { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } };
-
-export type CreateInstanceMaskViewMutationVariables = Exact<{
-  input: InstanceMaskViewInput;
-}>;
-
-
-export type CreateInstanceMaskViewMutation = { __typename?: 'Mutation', createInstanceMaskView: { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } | null } };
-
-export type UpdateRgbViewMutationVariables = Exact<{
-  input: UpdateRgbViewInput;
-}>;
-
-
-export type UpdateRgbViewMutation = { __typename?: 'Mutation', updateRgbView: { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } };
-
-export type CreateViewCollectionMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-
-export type CreateViewCollectionMutation = { __typename?: 'Mutation', createViewCollection: { __typename?: 'ViewCollection', id: string, name: string } };
 
 export type GetADatasetQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11900,11 +11774,11 @@ export type GetCameraQuery = { __typename?: 'Query', camera: { __typename?: 'Cam
 export type ChildrenQueryVariables = Exact<{
   id: Scalars['ID']['input'];
   pagination?: InputMaybe<ChildrenPaginationInput>;
-  filters?: InputMaybe<DatasetChildrenFilter>;
+  filters?: InputMaybe<FolderChildrenFilter>;
 }>;
 
 
-export type ChildrenQuery = { __typename?: 'Query', children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean } | { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } } | { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }> };
+export type ChildrenQuery = { __typename?: 'Query', children: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null } | { __typename?: 'AnnotationCollection', id: string, name: string } | { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } } | { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean } | { __typename?: 'Image' } | { __typename?: 'MeshCollection', id: string, version: string } | { __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string> }> };
 
 export type GetCoordinateSystemQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11974,29 +11848,12 @@ export type RegisterSourceCandidatesQueryVariables = Exact<{
 
 export type RegisterSourceCandidatesQuery = { __typename?: 'Query', adatasets: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null }>, tableDatasets: Array<{ __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string> }> };
 
-export type GetDatasetQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
-
-export type GetDatasetsQueryVariables = Exact<{
-  filters?: InputMaybe<DatasetFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  ordering?: InputMaybe<Array<DatasetOrder> | DatasetOrder>;
-}>;
-
-
-export type GetDatasetsQuery = { __typename?: 'Query', datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
-
 export type GetFileQueryVariables = Exact<{
   id: Scalars['ID']['input'];
-  viewPagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, accessGrant: { __typename?: 'BigFileAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, path: string, key: string, bucket: string } }, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
@@ -12007,33 +11864,44 @@ export type GetFilesQueryVariables = Exact<{
 
 export type GetFilesQuery = { __typename?: 'Query', files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }> };
 
+export type GetFolderQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetFolderQuery = { __typename?: 'Query', folder: { __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, children: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+
+export type GetFoldersQueryVariables = Exact<{
+  filters?: InputMaybe<FolderFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  ordering?: InputMaybe<Array<FolderOrder> | FolderOrder>;
+}>;
+
+
+export type GetFoldersQuery = { __typename?: 'Query', folders: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }> };
+
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  noImages: Scalars['Boolean']['input'];
+  noAdatasets: Scalars['Boolean']['input'];
   noFiles: Scalars['Boolean']['input'];
-  noDatasets: Scalars['Boolean']['input'];
+  noFolders: Scalars['Boolean']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', images?: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files?: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, datasets?: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
-
-export type ImagesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string }> };
+export type GlobalSearchQuery = { __typename?: 'Query', adatasets?: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null }>, files?: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }>, folders?: Array<{ __typename?: 'Folder', id: string, name: string, description?: string | null, isDefault: boolean }> };
 
 export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type HomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }> };
+export type HomePageQuery = { __typename?: 'Query', adatasets: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }> };
 
 export type PeerHomePageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type PeerHomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }> };
+export type PeerHomePageQuery = { __typename?: 'Query', adatasets: Array<{ __typename?: 'ADataset', id: string, name: string, description?: string | null, axisNames: Array<string>, shape: Array<number>, multiscale: boolean, spec: Array<ADatasetSpec>, latestSnapshot?: { __typename?: 'SceneSnapshot', id: string, name: string, createdAt: any, majorColor?: Array<number> | null, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null, defaultScene?: { __typename?: 'Scene', id: string, name: string } | null }>, files: Array<{ __typename?: 'File', id: string, name: string, size?: number | null, contentType?: string | null, creator: { __typename?: 'User', sub: string } }> };
 
 export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12046,38 +11914,6 @@ export type PeerHomePageStatsQueryVariables = Exact<{
 
 
 export type PeerHomePageStatsQuery = { __typename?: 'Query', imagesStats: { __typename?: 'ImageStats', count: number, series: Array<{ __typename?: 'TimeBucket', count: number }> } };
-
-export type GetImageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
-
-export type GetImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  ordering?: InputMaybe<Array<ImageOrder> | ImageOrder>;
-}>;
-
-
-export type GetImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }> };
-
-export type ListImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  ordering?: InputMaybe<Array<ImageOrder> | ImageOrder>;
-}>;
-
-
-export type ListImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }> };
-
-export type GetInstanceMaskViewLabelQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetInstanceMaskViewLabelQuery = { __typename?: 'Query', instanceMaskViewLabel: { __typename?: 'InstanceMaskViewLabel', id: string, values: any } };
 
 export type GetInstrumentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -12109,24 +11945,17 @@ export type ListLensesForDatasetQueryVariables = Exact<{
 
 export type ListLensesForDatasetQuery = { __typename?: 'Query', lenses: Array<{ __typename?: 'Lens', id: string, slices: Array<{ __typename?: 'Slice', axis: string, start?: number | null, stop?: number | null, step?: number | null }> }> };
 
-export type GetLightpathViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetLightpathViewQuery = { __typename?: 'Query', lightpathView: { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'ApertureElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelength?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLength: any, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistance?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameter?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PolarizerElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'ShutterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'WaveplateElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } };
-
 export type MembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MembersQuery = { __typename?: 'Query', members: Array<{ __typename?: 'Membership', user: { __typename?: 'User', sub: string }, datasets: Array<{ __typename?: 'Dataset', id: string, name: string }> }> };
+export type MembersQuery = { __typename?: 'Query', members: Array<{ __typename?: 'Membership', user: { __typename?: 'User', sub: string }, folders: Array<{ __typename?: 'Folder', id: string, name: string }> }> };
 
 export type GetMultiWellPlateQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetMultiWellPlateQuery = { __typename?: 'Query', multiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type GetMultiWellPlateQuery = { __typename?: 'Query', multiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null } };
 
 export type GetMultiWellPlatesQueryVariables = Exact<{
   filters?: InputMaybe<MultiWellPlateFilter>;
@@ -12168,52 +11997,6 @@ export type PermissionOptionsQueryVariables = Exact<{
 
 export type PermissionOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'PermissionOption', value: string, label: string }> };
 
-export type GetMaskedPixelInfoQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetMaskedPixelInfoQuery = { __typename?: 'Query', maskedPixelInfo: { __typename?: 'MaskedPixelInfo', label: string } };
-
-export type GetRgbContextQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetRgbContextQuery = { __typename?: 'Query', rgbcontext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> } } };
-
-export type GetRgbContextsQueryVariables = Exact<{
-  filters?: InputMaybe<RgbContextFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
-
-
-export type GetRgbContextsQuery = { __typename?: 'Query', rgbcontexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
-
-export type RgbContextOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type RgbContextOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBContext', value: string, label: string }> };
-
-export type GetRoiQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, kind: HistoryKind, date: any, task?: { __typename?: 'Task', id: string, taskId: string } | null, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
-
-export type GetRoIsQueryVariables = Exact<{
-  filters?: InputMaybe<RoiFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-  ordering?: InputMaybe<Array<RoiOrder> | RoiOrder>;
-}>;
-
-
-export type GetRoIsQuery = { __typename?: 'Query', rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
-
 export type RowsQueryVariables = Exact<{
   table: Scalars['ID']['input'];
   filters?: InputMaybe<RowFilter>;
@@ -12246,35 +12029,12 @@ export type GetSnapshotQueryVariables = Exact<{
 
 export type GetSnapshotQuery = { __typename?: 'Query', snapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } };
 
-export type GetStageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetStageQuery = { __typename?: 'Query', stage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape: Array<number> } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
-
-export type GetStagesQueryVariables = Exact<{
-  filters?: InputMaybe<StageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
-
-
-export type GetStagesQuery = { __typename?: 'Query', stages: Array<{ __typename?: 'Stage', id: string, name: string }> };
-
-export type StageOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type StageOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Stage', value: string, label: string }> };
-
 export type GetTableQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, maskView: { __typename?: 'MaskView', id: string } }> } };
+export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null }> } };
 
 export type GetTablesQueryVariables = Exact<{
   filters?: InputMaybe<TableFilter>;
@@ -12306,59 +12066,6 @@ export type GetTableDatasetsQueryVariables = Exact<{
 
 
 export type GetTableDatasetsQuery = { __typename?: 'Query', tableDatasets: Array<{ __typename?: 'TableDataset', id: string, name: string, description?: string | null, axisNames: Array<string> }> };
-
-export type GetRgbViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetRgbViewQuery = { __typename?: 'Query', rgbView: { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } };
-
-export type SearchRgbViewsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type SearchRgbViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBView', value: string, label: string }> };
-
-export type ActiveImageViewsQueryVariables = Exact<{
-  image: Scalars['ID']['input'];
-  selector?: InputMaybe<Selector>;
-  exclude?: InputMaybe<Array<ViewKind> | ViewKind>;
-}>;
-
-
-export type ActiveImageViewsQuery = { __typename?: 'Query', activeViews: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: any | null, emissionWavelength?: any | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } }, labels?: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } | null } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'ApertureElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelength?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLength: any, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', min: any, max: any } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistance?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameter?: any | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PolarizerElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'ShutterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'WaveplateElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path: string, shape: Array<number>, dtype?: string | null, chunks: Array<number>, version?: string | null } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, timeSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
-
-export type ListFileViewsQueryVariables = Exact<{
-  file: Scalars['ID']['input'];
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
-
-
-export type ListFileViewsQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null }, file: { __typename?: 'File', id: string, name: string } }> } };
-
-export type WatchImagesSubscriptionVariables = Exact<{
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-}>;
-
-
-export type WatchImagesSubscription = { __typename?: 'Subscription', images: { __typename?: 'ImageEvent', delete?: string | null, create?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } | null, update?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', id: string, key: string, bucket: string } } | null } | null } };
-
-export type WatchRoisSubscriptionVariables = Exact<{
-  image: Scalars['ID']['input'];
-}>;
-
-
-export type WatchRoisSubscription = { __typename?: 'Subscription', rois: { __typename?: 'RoiEvent', delete?: string | null, create?: { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } } | null, update?: { __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } } | null } };
-
-export type WatchTransformationViewsSubscriptionVariables = Exact<{
-  stage: Scalars['ID']['input'];
-}>;
-
-
-export type WatchTransformationViewsSubscription = { __typename?: 'Subscription', affineTransformationViews: { __typename?: 'AffineTransformationViewEvent', delete?: string | null, create?: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape: Array<number> } }, stage: { __typename?: 'Stage', id: string, name: string } } | null, update?: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape: Array<number> } }, stage: { __typename?: 'Stage', id: string, name: string } } | null } };
 
 export const MediaStoreFragmentDoc = gql`
     fragment MediaStore on MediaStore {
@@ -13096,88 +12803,13 @@ export const GeneralParquetAccessGrantFragmentDoc = gql`
   bucket
 }
     `;
-export const ProvenanceEntryFragmentDoc = gql`
-    fragment ProvenanceEntry on ProvenanceEntry {
+export const EraFragmentDoc = gql`
+    fragment Era on Era {
   id
-  task {
-    id
-    taskId
-  }
-  kind
-  user {
-    sub
-  }
-  client {
-    clientId
-  }
-  date
-  effectiveChanges {
-    field
-    oldValue
-    newValue
-  }
+  begin
+  name
 }
     `;
-export const ListImageFragmentDoc = gql`
-    fragment ListImage on Image {
-  latestSnapshot {
-    id
-    store {
-      ...MediaStore
-    }
-  }
-  id
-  name
-}
-    ${MediaStoreFragmentDoc}`;
-export const ListFileFragmentDoc = gql`
-    fragment ListFile on File {
-  id
-  name
-  creator {
-    sub
-  }
-  size
-  contentType
-}
-    `;
-export const ListDatasetFragmentDoc = gql`
-    fragment ListDataset on Dataset {
-  id
-  name
-  description
-  isDefault
-}
-    `;
-export const DatasetFragmentDoc = gql`
-    fragment Dataset on Dataset {
-  id
-  name
-  description
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  images {
-    ...ListImage
-  }
-  files {
-    ...ListFile
-  }
-  children {
-    ...ListDataset
-  }
-  isDefault
-  pinned
-  createdAt
-  creator {
-    sub
-  }
-  tags
-}
-    ${ProvenanceEntryFragmentDoc}
-${ListImageFragmentDoc}
-${ListFileFragmentDoc}
-${ListDatasetFragmentDoc}`;
 export const BigFileAccessGrantFragmentDoc = gql`
     fragment BigFileAccessGrant on BigFileAccessGrant {
   accessKey
@@ -13200,19 +12832,34 @@ export const BigFileStoreFragmentDoc = gql`
   }
 }
     ${BigFileAccessGrantFragmentDoc}`;
+export const ProvenanceEntryFragmentDoc = gql`
+    fragment ProvenanceEntry on ProvenanceEntry {
+  id
+  task {
+    id
+    taskId
+  }
+  kind
+  user {
+    sub
+  }
+  client {
+    clientId
+  }
+  date
+  effectiveChanges {
+    field
+    oldValue
+    newValue
+  }
+}
+    `;
 export const FileFragmentDoc = gql`
     fragment File on File {
   id
   name
   store {
     ...BigFileStore
-  }
-  views(pagination: $viewPagination) {
-    id
-    seriesIdentifier
-    image {
-      ...ListImage
-    }
   }
   provenanceEntries {
     ...ProvenanceEntry
@@ -13224,186 +12871,51 @@ export const FileFragmentDoc = gql`
   contentType
 }
     ${BigFileStoreFragmentDoc}
-${ListImageFragmentDoc}
 ${ProvenanceEntryFragmentDoc}`;
-export const SnapshotFragmentDoc = gql`
-    fragment Snapshot on Snapshot {
-  id
-  store {
-    ...MediaStore
-  }
-}
-    ${MediaStoreFragmentDoc}`;
-export const VideoFragmentDoc = gql`
-    fragment Video on Video {
-  id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
-export const ViewFragmentDoc = gql`
-    fragment View on View {
-  xMin
-  xMax
-  yMin
-  yMax
-  tMin
-  tMax
-  cMin
-  cMax
-  zMin
-  zMax
-}
-    `;
-export const HistogramViewFragmentDoc = gql`
-    fragment HistogramView on HistogramView {
-  ...View
-  id
-  bins
-  min
-  max
-  histogram
-}
-    ${ViewFragmentDoc}`;
-export const RgbViewFragmentDoc = gql`
-    fragment RGBView on RGBView {
-  ...View
-  id
-  contexts {
-    id
-    name
-  }
-  name
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  congruentViews(types: [HISTOGRAM]) {
-    ...HistogramView
-  }
-  colorMap
-  contrastLimitMin
-  contrastLimitMax
-  gamma
-  active
-  fullColour
-  baseColor
-}
-    ${ViewFragmentDoc}
-${ZarrStoreFragmentDoc}
-${HistogramViewFragmentDoc}`;
-export const ListRgbContextFragmentDoc = gql`
-    fragment ListRGBContext on RGBContext {
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
+export const ListFileFragmentDoc = gql`
+    fragment ListFile on File {
   id
   name
-  views {
-    ...RGBView
+  creator {
+    sub
   }
-  blending
-  t
-  z
-  c
-}
-    ${ZarrStoreFragmentDoc}
-${RgbViewFragmentDoc}`;
-export const ListRoiFragmentDoc = gql`
-    fragment ListROI on ROI {
-  id
-  image {
-    id
-    name
-  }
-  kind
-  vectors
+  size
+  contentType
 }
     `;
-export const ImageFragmentDoc = gql`
-    fragment Image on Image {
+export const ListFolderFragmentDoc = gql`
+    fragment ListFolder on Folder {
   id
   name
-  store {
-    ...ZarrStore
-  }
-  derivedFromViews {
-    image {
-      id
-      name
-    }
-  }
-  pinned
-  renders {
-    ...Snapshot
-    ...Video
-  }
-  dataset {
-    name
-    id
-  }
-  createdAt
+  description
+  isDefault
+}
+    `;
+export const FolderFragmentDoc = gql`
+    fragment Folder on Folder {
+  id
+  name
+  description
   provenanceEntries {
     ...ProvenanceEntry
   }
+  files {
+    ...ListFile
+  }
+  children {
+    ...ListFolder
+  }
+  isDefault
+  pinned
+  createdAt
   creator {
     sub
   }
   tags
-  rgbContexts {
-    ...ListRGBContext
-  }
-  rois {
-    ...ListROI
-  }
 }
-    ${ZarrStoreFragmentDoc}
-${SnapshotFragmentDoc}
-${VideoFragmentDoc}
-${ProvenanceEntryFragmentDoc}
-${ListRgbContextFragmentDoc}
-${ListRoiFragmentDoc}`;
-export const InstanceMaskViewLabelFragmentDoc = gql`
-    fragment InstanceMaskViewLabel on InstanceMaskViewLabel {
-  id
-  values
-}
-    `;
+    ${ProvenanceEntryFragmentDoc}
+${ListFileFragmentDoc}
+${ListFolderFragmentDoc}`;
 export const InstrumentFragmentDoc = gql`
     fragment Instrument on Instrument {
   model
@@ -13417,29 +12929,12 @@ export const CcdElementFragmentDoc = gql`
   pixelSize
 }
     ${OpticalElementFragmentDoc}`;
-export const WellPositionViewFragmentDoc = gql`
-    fragment WellPositionView on WellPositionView {
-  ...View
-  id
-  column
-  row
-  well {
-    id
-    rows
-    columns
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
 export const MultiWellPlateFragmentDoc = gql`
     fragment MultiWellPlate on MultiWellPlate {
   id
-  views {
-    ...WellPositionView
-  }
   name
 }
-    ${WellPositionViewFragmentDoc}`;
+    `;
 export const ListMultiWellPlateFragmentDoc = gql`
     fragment ListMultiWellPlate on MultiWellPlate {
   id
@@ -13453,69 +12948,6 @@ export const ObjectiveFragmentDoc = gql`
   serialNumber
 }
     `;
-export const RgbContextFragmentDoc = gql`
-    fragment RGBContext on RGBContext {
-  id
-  views {
-    ...RGBView
-  }
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  pinned
-  name
-  z
-  t
-  c
-  blending
-}
-    ${RgbViewFragmentDoc}
-${ZarrStoreFragmentDoc}`;
-export const RgbImageFragmentDoc = gql`
-    fragment RGBImage on Image {
-  name
-  rgbContexts {
-    ...ListRGBContext
-  }
-}
-    ${ListRgbContextFragmentDoc}`;
-export const RoiFragmentDoc = gql`
-    fragment ROI on ROI {
-  id
-  pinned
-  image {
-    id
-    ...RGBImage
-  }
-  createdAt
-  creator {
-    sub
-  }
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  kind
-  vectors
-}
-    ${RgbImageFragmentDoc}
-${ProvenanceEntryFragmentDoc}`;
 export const CameraStateFragmentDoc = gql`
     fragment CameraState on CameraState {
   position
@@ -13944,40 +13376,14 @@ export const SceneFragmentDoc = gql`
 ${SceneSnapshotFragmentDoc}
 ${CoordinateSystemFragmentDoc}
 ${SceneLayerFragmentDoc}`;
-export const AffineTransformationViewFragmentDoc = gql`
-    fragment AffineTransformationView on AffineTransformationView {
-  ...View
+export const SnapshotFragmentDoc = gql`
+    fragment Snapshot on Snapshot {
   id
-  affineMatrix
-  stage {
-    id
-    name
+  store {
+    ...MediaStore
   }
 }
-    ${ViewFragmentDoc}`;
-export const StageFragmentDoc = gql`
-    fragment Stage on Stage {
-  id
-  affineViews {
-    ...AffineTransformationView
-    image {
-      id
-      store {
-        shape
-      }
-      name
-    }
-  }
-  pinned
-  name
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const ListStageFragmentDoc = gql`
-    fragment ListStage on Stage {
-  id
-  name
-}
-    `;
+    ${MediaStoreFragmentDoc}`;
 export const AccessorFragmentDoc = gql`
     fragment Accessor on Accessor {
   id
@@ -13995,9 +13401,6 @@ export const ImageAccessorFragmentDoc = gql`
 export const LabelAccessorFragmentDoc = gql`
     fragment LabelAccessor on LabelAccessor {
   ...Accessor
-  maskView {
-    id
-  }
 }
     ${AccessorFragmentDoc}`;
 export const TableFragmentDoc = gql`
@@ -14042,152 +13445,15 @@ export const ListTableDatasetFragmentDoc = gql`
   axisNames
 }
     `;
-export const ChannelViewFragmentDoc = gql`
-    fragment ChannelView on ChannelView {
-  ...View
+export const VideoFragmentDoc = gql`
+    fragment Video on Video {
   id
-  channelName: name
-  excitationWavelength
-  emissionWavelength
-  acquisitionMode
-}
-    ${ViewFragmentDoc}`;
-export const LightpathViewFragmentDoc = gql`
-    fragment LightpathView on LightpathView {
-  ...View
-  id
-  graph {
-    ...LightpathGraph
+  store {
+    key
+    presignedUrl
   }
-}
-    ${ViewFragmentDoc}
-${LightpathGraphFragmentDoc}`;
-export const DerivedViewFragmentDoc = gql`
-    fragment DerivedView on DerivedView {
-  ...View
-  id
-  originImage {
-    id
-    name
-  }
-  operation
-}
-    ${ViewFragmentDoc}`;
-export const RoiViewFragmentDoc = gql`
-    fragment ROIView on ROIView {
-  ...View
-  id
-  roi {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const FileViewFragmentDoc = gql`
-    fragment FileView on FileView {
-  ...View
-  id
-  seriesIdentifier
-  file {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const EraFragmentDoc = gql`
-    fragment Era on Era {
-  id
-  begin
-  name
 }
     `;
-export const TimepointViewFragmentDoc = gql`
-    fragment TimepointView on TimepointView {
-  ...View
-  id
-  timeSinceStart
-  indexSinceStart
-  era {
-    ...Era
-  }
-}
-    ${ViewFragmentDoc}
-${EraFragmentDoc}`;
-export const OpticsViewFragmentDoc = gql`
-    fragment OpticsView on OpticsView {
-  ...View
-  id
-  objective {
-    id
-    name
-    serialNumber
-  }
-  camera {
-    id
-    name
-    serialNumber
-  }
-  instrument {
-    id
-    name
-    serialNumber
-  }
-}
-    ${ViewFragmentDoc}`;
-export const MaskViewFragmentDoc = gql`
-    fragment MaskView on MaskView {
-  ...View
-  id
-  referenceView {
-    id
-    image {
-      id
-      name
-    }
-  }
-}
-    ${ViewFragmentDoc}`;
-export const ReferenceViewFragmentDoc = gql`
-    fragment ReferenceView on ReferenceView {
-  ...View
-  id
-}
-    ${ViewFragmentDoc}`;
-export const InstanceMaskViewFragmentDoc = gql`
-    fragment InstanceMaskView on InstanceMaskView {
-  ...View
-  id
-  referenceView {
-    id
-    image {
-      id
-      name
-    }
-  }
-  labels {
-    ...ParquetStore
-  }
-}
-    ${ViewFragmentDoc}
-${ParquetStoreFragmentDoc}`;
-export const AcquisitionViewFragmentDoc = gql`
-    fragment AcquisitionView on AcquisitionView {
-  ...View
-  id
-  description
-  acquiredAt
-  operator {
-    sub
-  }
-}
-    ${ViewFragmentDoc}`;
-export const ContinousScanViewFragmentDoc = gql`
-    fragment ContinousScanView on ContinousScanView {
-  ...View
-  id
-  direction
-}
-    ${ViewFragmentDoc}`;
 export const CreateAnimationDocument = gql`
     mutation CreateAnimation($scene: ID!, $name: String!, $description: String, $waypoints: [AnimationWaypointInput!]!) {
   createAnimation(
@@ -14381,85 +13647,6 @@ export const RequestGeneralZarrAccessDocument = gql`
   }
 }
     ${GeneralZarrAccessGrantFragmentDoc}`;
-export const CreateDatasetDocument = gql`
-    mutation CreateDataset($input: CreateDatasetInput!) {
-  createDataset(input: $input) {
-    id
-    name
-  }
-}
-    `;
-export const UpdateDatasetDocument = gql`
-    mutation UpdateDataset($id: ID!, $name: String!) {
-  updateDataset(input: {id: $id, name: $name}) {
-    id
-    name
-  }
-}
-    `;
-export const PinDatasetDocument = gql`
-    mutation PinDataset($id: ID!, $pin: Boolean!) {
-  pinDataset(input: {id: $id, pin: $pin}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const PutDatasetsInDatasetDocument = gql`
-    mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
-  putDatasetsInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const ReleaseDatasetsFromDatasetDocument = gql`
-    mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseDatasetsFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const PutImagesInDatasetDocument = gql`
-    mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
-  putImagesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const ReleaseImagesFromDatasetDocument = gql`
-    mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseImagesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const PutFilesInDatasetDocument = gql`
-    mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
-  putFilesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const ReleaseFilesFromDatasetDocument = gql`
-    mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseFilesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const RevertDatasetDocument = gql`
-    mutation RevertDataset($dataset: ID!, $history: ID!) {
-  revertDataset(input: {id: $dataset, historyId: $history}) {
-    id
-    name
-    description
-  }
-}
-    `;
-export const DeleteDatasetDocument = gql`
-    mutation DeleteDataset($id: ID!) {
-  deleteDataset(input: {id: $id})
-}
-    `;
 export const CreateEraDocument = gql`
     mutation CreateEra($name: String!, $begin: DateTime) {
   createEra(input: {name: $name, begin: $begin}) {
@@ -14469,8 +13656,8 @@ export const CreateEraDocument = gql`
 }
     `;
 export const From_File_LikeDocument = gql`
-    mutation from_file_like($file: FileLike!, $name: String!, $dataset: ID, $viewPagination: OffsetPaginationInput) {
-  fromFileLike(input: {file: $file, fileName: $name, dataset: $dataset}) {
+    mutation from_file_like($file: FileLike!, $name: String!, $folder: ID) {
+  fromFileLike(input: {file: $file, fileName: $name, folder: $folder}) {
     ...File
   }
 }
@@ -14480,25 +13667,99 @@ export const DeleteFileDocument = gql`
   deleteFile(input: {id: $id})
 }
     `;
-export const PinImageDocument = gql`
-    mutation PinImage($id: ID!, $pin: Boolean!) {
-  pinImage(input: {id: $id, pin: $pin}) {
-    ...Image
+export const CreateFolderDocument = gql`
+    mutation CreateFolder($input: CreateFolderInput!) {
+  createFolder(input: $input) {
+    id
+    name
   }
-}
-    ${ImageFragmentDoc}`;
-export const UpdateImageDocument = gql`
-    mutation UpdateImage($input: UpdateImageInput!) {
-  updateImage(input: $input) {
-    ...Image
-  }
-}
-    ${ImageFragmentDoc}`;
-export const DeleteImageDocument = gql`
-    mutation DeleteImage($id: ID!) {
-  deleteImage(input: {id: $id})
 }
     `;
+export const UpdateFolderDocument = gql`
+    mutation UpdateFolder($id: ID!, $name: String!) {
+  updateFolder(input: {id: $id, name: $name}) {
+    id
+    name
+  }
+}
+    `;
+export const PinFolderDocument = gql`
+    mutation PinFolder($id: ID!, $pin: Boolean!) {
+  pinFolder(input: {id: $id, pin: $pin}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const PutFoldersInFolderDocument = gql`
+    mutation PutFoldersInFolder($selfs: [ID!]!, $other: ID!) {
+  putFoldersInFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const ReleaseFoldersFromFolderDocument = gql`
+    mutation ReleaseFoldersFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseFoldersFromFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const PutFilesInFolderDocument = gql`
+    mutation PutFilesInFolder($selfs: [ID!]!, $other: ID!) {
+  putFilesInFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const ReleaseFilesFromFolderDocument = gql`
+    mutation ReleaseFilesFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseFilesFromFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const RevertFolderDocument = gql`
+    mutation RevertFolder($folder: ID!, $history: ID!) {
+  revertFolder(input: {id: $folder, historyId: $history}) {
+    id
+    name
+    description
+  }
+}
+    `;
+export const DeleteFolderDocument = gql`
+    mutation DeleteFolder($id: ID!) {
+  deleteFolder(input: {id: $id})
+}
+    `;
+export const PutADatasetsInFolderDocument = gql`
+    mutation PutADatasetsInFolder($selfs: [ID!]!, $other: ID!) {
+  putADatasetsInFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const ReleaseADatasetsFromFolderDocument = gql`
+    mutation ReleaseADatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseADatasetsFromFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const PutTableDatasetsInFolderDocument = gql`
+    mutation PutTableDatasetsInFolder($selfs: [ID!]!, $other: ID!) {
+  putTableDatasetsInFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const ReleaseTableDatasetsFromFolderDocument = gql`
+    mutation ReleaseTableDatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseTableDatasetsFromFolder(input: {selfs: $selfs, other: $other}) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
 export const CreateInstrumentDocument = gql`
     mutation CreateInstrument($serialNumber: String!, $name: String, $model: String) {
   createInstrument(
@@ -14632,39 +13893,6 @@ export const AssignUserPermissionsDocument = gql`
   }
 }
     `;
-export const CreateRgbContextDocument = gql`
-    mutation CreateRGBContext($input: CreateRGBContextInput!) {
-  createRgbContext(input: $input) {
-    ...RGBContext
-  }
-}
-    ${RgbContextFragmentDoc}`;
-export const UpdateRgbContextDocument = gql`
-    mutation UpdateRGBContext($input: UpdateRGBContextInput!) {
-  updateRgbContext(input: $input) {
-    ...RGBContext
-  }
-}
-    ${RgbContextFragmentDoc}`;
-export const PinRoiDocument = gql`
-    mutation PinROI($id: ID!, $pin: Boolean!) {
-  pinRoi(input: {id: $id, pin: $pin}) {
-    ...ROI
-  }
-}
-    ${RoiFragmentDoc}`;
-export const CreateRoiDocument = gql`
-    mutation CreateROI($input: RoiInput!) {
-  createRoi(input: $input) {
-    ...ROI
-  }
-}
-    ${RoiFragmentDoc}`;
-export const DeleteRoiDocument = gql`
-    mutation DeleteROI($id: ID!) {
-  deleteRoi(input: {id: $id})
-}
-    `;
 export const DeleteSceneDocument = gql`
     mutation DeleteScene($id: ID!) {
   deleteScene(input: {id: $id})
@@ -14707,28 +13935,6 @@ export const SetDefaultSceneDocument = gql`
   }
 }
     ${SceneSnapshotFragmentDoc}`;
-export const CreateSnapshotDocument = gql`
-    mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
-  createSnapshot(input: {file: $file, image: $image}) {
-    ...Snapshot
-  }
-}
-    ${SnapshotFragmentDoc}`;
-export const CreateStageDocument = gql`
-    mutation CreateStage($name: String!) {
-  createStage(input: {name: $name}) {
-    id
-    name
-  }
-}
-    `;
-export const PinStageDocument = gql`
-    mutation PinStage($id: ID!, $pin: Boolean!) {
-  pinStage(input: {id: $id, pin: $pin}) {
-    ...Stage
-  }
-}
-    ${StageFragmentDoc}`;
 export const From_Parquet_LikeDocument = gql`
     mutation from_parquet_like($dataframe: ParquetLike!, $name: String!, $dataset: ID) {
   fromParquetLike(input: {dataframe: $dataframe, name: $name, dataset: $dataset}) {
@@ -14743,87 +13949,6 @@ export const CreateTransformationDocument = gql`
   }
 }
     ${TransformationFragmentDoc}`;
-export const CreateAffineTransformationViewDocument = gql`
-    mutation CreateAffineTransformationView($image: ID!, $affineMatrix: FourByFourMatrix!, $stage: ID) {
-  createAffineTransformationView(
-    input: {image: $image, affineMatrix: $affineMatrix, stage: $stage}
-  ) {
-    ...AffineTransformationView
-  }
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const DeleteAffineTransformationViewDocument = gql`
-    mutation DeleteAffineTransformationView($id: ID!) {
-  deleteAffineTransformationView(input: {id: $id})
-}
-    `;
-export const DeleteRgbViewDocument = gql`
-    mutation DeleteRGBView($id: ID!) {
-  deleteRgbView(input: {id: $id})
-}
-    `;
-export const DeleteChannelViewDocument = gql`
-    mutation DeleteChannelView($id: ID!) {
-  deleteChannelView(input: {id: $id})
-}
-    `;
-export const DeleteHistogramViewDocument = gql`
-    mutation DeleteHistogramView($id: ID!) {
-  deleteHistogramView(input: {id: $id})
-}
-    `;
-export const CreateRgbViewDocument = gql`
-    mutation CreateRgbView($image: ID!, $context: ID!, $gamma: Float, $contrastLimitMax: Float, $contrastLimitMin: Float, $rescale: Boolean, $active: Boolean, $colorMap: ColorMap) {
-  createRgbView(
-    input: {image: $image, context: $context, gamma: $gamma, contrastLimitMax: $contrastLimitMax, contrastLimitMin: $contrastLimitMin, rescale: $rescale, active: $active, colorMap: $colorMap}
-  ) {
-    id
-  }
-}
-    `;
-export const CreateWellPositionViewDocument = gql`
-    mutation CreateWellPositionView($input: WellPositionViewInput!) {
-  createWellPositionView(input: $input) {
-    ...WellPositionView
-  }
-}
-    ${WellPositionViewFragmentDoc}`;
-export const CreateContinousScanViewDocument = gql`
-    mutation CreateContinousScanView($input: ContinousScanViewInput!) {
-  createContinousScanView(input: $input) {
-    ...ContinousScanView
-  }
-}
-    ${ContinousScanViewFragmentDoc}`;
-export const CreateMaskViewDocument = gql`
-    mutation CreateMaskView($input: MaskViewInput!) {
-  createMaskView(input: $input) {
-    ...MaskView
-  }
-}
-    ${MaskViewFragmentDoc}`;
-export const CreateInstanceMaskViewDocument = gql`
-    mutation CreateInstanceMaskView($input: InstanceMaskViewInput!) {
-  createInstanceMaskView(input: $input) {
-    ...InstanceMaskView
-  }
-}
-    ${InstanceMaskViewFragmentDoc}`;
-export const UpdateRgbViewDocument = gql`
-    mutation UpdateRGBView($input: UpdateRGBViewInput!) {
-  updateRgbView(input: $input) {
-    ...RGBView
-  }
-}
-    ${RgbViewFragmentDoc}`;
-export const CreateViewCollectionDocument = gql`
-    mutation CreateViewCollection($name: String!) {
-  createViewCollection(input: {name: $name}) {
-    id
-    name
-  }
-}
-    `;
 export const GetADatasetDocument = gql`
     query GetADataset($id: ID!) {
   adataset(id: $id) {
@@ -15008,16 +14133,26 @@ export const GetCameraDocument = gql`
 }
     ${CameraFragmentDoc}`;
 export const ChildrenDocument = gql`
-    query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
+    query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: FolderChildrenFilter) {
   children(parent: $id, pagination: $pagination, filters: $filters) {
     ...ListFile
-    ...ListImage
-    ...ListDataset
+    ...ListFolder
+    ...ListADataset
+    ...ListTableDataset
+    ... on MeshCollection {
+      id
+      version
+    }
+    ... on AnnotationCollection {
+      id
+      name
+    }
   }
 }
     ${ListFileFragmentDoc}
-${ListImageFragmentDoc}
-${ListDatasetFragmentDoc}`;
+${ListFolderFragmentDoc}
+${ListADatasetFragmentDoc}
+${ListTableDatasetFragmentDoc}`;
 export const GetCoordinateSystemDocument = gql`
     query GetCoordinateSystem($id: ID!) {
   coordinateSystem(id: $id) {
@@ -15117,22 +14252,8 @@ export const RegisterSourceCandidatesDocument = gql`
 }
     ${ListADatasetFragmentDoc}
 ${ListTableDatasetFragmentDoc}`;
-export const GetDatasetDocument = gql`
-    query GetDataset($id: ID!) {
-  dataset(id: $id) {
-    ...Dataset
-  }
-}
-    ${DatasetFragmentDoc}`;
-export const GetDatasetsDocument = gql`
-    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput, $ordering: [DatasetOrder!]) {
-  datasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListDataset
-  }
-}
-    ${ListDatasetFragmentDoc}`;
 export const GetFileDocument = gql`
-    query GetFile($id: ID!, $viewPagination: OffsetPaginationInput = {limit: 5, offset: 0}) {
+    query GetFile($id: ID!) {
   file(id: $id) {
     ...File
   }
@@ -15145,47 +14266,54 @@ export const GetFilesDocument = gql`
   }
 }
     ${ListFileFragmentDoc}`;
+export const GetFolderDocument = gql`
+    query GetFolder($id: ID!) {
+  folder(id: $id) {
+    ...Folder
+  }
+}
+    ${FolderFragmentDoc}`;
+export const GetFoldersDocument = gql`
+    query GetFolders($filters: FolderFilter, $pagination: OffsetPaginationInput, $ordering: [FolderOrder!]) {
+  folders(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListFolder
+  }
+}
+    ${ListFolderFragmentDoc}`;
 export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $noImages: Boolean!, $noFiles: Boolean!, $noDatasets: Boolean!, $pagination: OffsetPaginationInput) {
-  images: images(filters: {search: $search}, pagination: $pagination) @skip(if: $noImages) {
-    ...ListImage
+    query GlobalSearch($search: String, $noAdatasets: Boolean!, $noFiles: Boolean!, $noFolders: Boolean!, $pagination: OffsetPaginationInput) {
+  adatasets: adatasets(filters: {search: $search}, pagination: $pagination) @skip(if: $noAdatasets) {
+    ...ListADataset
   }
   files: files(filters: {search: $search}, pagination: $pagination) @skip(if: $noFiles) {
     ...ListFile
   }
-  datasets: datasets(filters: {search: $search}, pagination: $pagination) @skip(if: $noDatasets) {
-    ...ListDataset
+  folders: folders(filters: {search: $search}, pagination: $pagination) @skip(if: $noFolders) {
+    ...ListFolder
   }
 }
-    ${ListImageFragmentDoc}
+    ${ListADatasetFragmentDoc}
 ${ListFileFragmentDoc}
-${ListDatasetFragmentDoc}`;
-export const ImagesDocument = gql`
-    query Images {
-  images {
-    id
-  }
-}
-    `;
+${ListFolderFragmentDoc}`;
 export const HomePageDocument = gql`
     query HomePage {
-  images: images(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
-    ...ListImage
+  adatasets: adatasets(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
+    ...ListADataset
   }
   files: files(pagination: {limit: 1}, ordering: [{createdAt: DESC}]) {
     ...ListFile
   }
 }
-    ${ListImageFragmentDoc}
+    ${ListADatasetFragmentDoc}
 ${ListFileFragmentDoc}`;
 export const PeerHomePageDocument = gql`
     query PeerHomePage($id: ID!) {
-  images: images(
+  adatasets: adatasets(
     pagination: {limit: 1}
     filters: {owner: $id}
     ordering: [{createdAt: DESC}]
   ) {
-    ...ListImage
+    ...ListADataset
   }
   files: files(
     pagination: {limit: 1}
@@ -15195,7 +14323,7 @@ export const PeerHomePageDocument = gql`
     ...ListFile
   }
 }
-    ${ListImageFragmentDoc}
+    ${ListADatasetFragmentDoc}
 ${ListFileFragmentDoc}`;
 export const HomePageStatsDocument = gql`
     query HomePageStats {
@@ -15217,34 +14345,6 @@ export const PeerHomePageStatsDocument = gql`
   }
 }
     `;
-export const GetImageDocument = gql`
-    query GetImage($id: ID!) {
-  image(id: $id) {
-    ...Image
-  }
-}
-    ${ImageFragmentDoc}`;
-export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $ordering: [ImageOrder!]) {
-  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListImage
-  }
-}
-    ${ListImageFragmentDoc}`;
-export const ListImagesDocument = gql`
-    query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $ordering: [ImageOrder!]) {
-  images(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListImage
-  }
-}
-    ${ListImageFragmentDoc}`;
-export const GetInstanceMaskViewLabelDocument = gql`
-    query GetInstanceMaskViewLabel($id: ID!) {
-  instanceMaskViewLabel(id: $id) {
-    ...InstanceMaskViewLabel
-  }
-}
-    ${InstanceMaskViewLabelFragmentDoc}`;
 export const GetInstrumentDocument = gql`
     query GetInstrument($id: ID!) {
   instrument(id: $id) {
@@ -15282,20 +14382,13 @@ export const ListLensesForDatasetDocument = gql`
   }
 }
     ${DimSliceFragmentDoc}`;
-export const GetLightpathViewDocument = gql`
-    query GetLightpathView($id: ID!) {
-  lightpathView(id: $id) {
-    ...LightpathView
-  }
-}
-    ${LightpathViewFragmentDoc}`;
 export const MembersDocument = gql`
     query Members {
   members {
     user {
       sub
     }
-    datasets(pagination: {limit: 3}, filters: {parentless: true}) {
+    folders(pagination: {limit: 3}, filters: {parentless: true}) {
       id
       name
     }
@@ -15356,52 +14449,6 @@ export const PermissionOptionsDocument = gql`
   }
 }
     `;
-export const GetMaskedPixelInfoDocument = gql`
-    query GetMaskedPixelInfo($id: ID!) {
-  maskedPixelInfo(id: $id) {
-    label
-  }
-}
-    `;
-export const GetRgbContextDocument = gql`
-    query GetRGBContext($id: ID!) {
-  rgbcontext(id: $id) {
-    ...RGBContext
-  }
-}
-    ${RgbContextFragmentDoc}`;
-export const GetRgbContextsDocument = gql`
-    query GetRGBContexts($filters: RGBContextFilter, $pagination: OffsetPaginationInput) {
-  rgbcontexts(filters: $filters, pagination: $pagination) {
-    ...ListRGBContext
-  }
-}
-    ${ListRgbContextFragmentDoc}`;
-export const RgbContextOptionsDocument = gql`
-    query RGBContextOptions($search: String, $values: [ID!]) {
-  options: rgbcontexts(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-export const GetRoiDocument = gql`
-    query GetROI($id: ID!) {
-  roi(id: $id) {
-    ...ROI
-  }
-}
-    ${RoiFragmentDoc}`;
-export const GetRoIsDocument = gql`
-    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $ordering: [ROIOrder!]) {
-  rois(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListROI
-  }
-}
-    ${ListRoiFragmentDoc}`;
 export const RowsDocument = gql`
     query Rows($table: ID!, $filters: RowFilter, $pagination: TablePaginationInput) {
   rows(table: $table, filters: $filters, pagination: $pagination)
@@ -15428,31 +14475,6 @@ export const GetSnapshotDocument = gql`
   }
 }
     ${SnapshotFragmentDoc}`;
-export const GetStageDocument = gql`
-    query GetStage($id: ID!) {
-  stage(id: $id) {
-    ...Stage
-  }
-}
-    ${StageFragmentDoc}`;
-export const GetStagesDocument = gql`
-    query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
-  stages(filters: $filters, pagination: $pagination) {
-    ...ListStage
-  }
-}
-    ${ListStageFragmentDoc}`;
-export const StageOptionsDocument = gql`
-    query StageOptions($search: String, $values: [ID!]) {
-  options: stages(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
 export const GetTableDocument = gql`
     query GetTable($id: ID!) {
   table(id: $id) {
@@ -15517,124 +14539,6 @@ export const GetTableDatasetsDocument = gql`
   }
 }
     ${ListTableDatasetFragmentDoc}`;
-export const GetRgbViewDocument = gql`
-    query GetRGBView($id: ID!) {
-  rgbView(id: $id) {
-    ...RGBView
-  }
-}
-    ${RgbViewFragmentDoc}`;
-export const SearchRgbViewsDocument = gql`
-    query SearchRGBViews($search: String, $values: [ID!]) {
-  options: rgbViews(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-export const ActiveImageViewsDocument = gql`
-    query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
-  activeViews(image: $image, selector: $selector, exclude: $exclude) {
-    ...ChannelView
-    ...AffineTransformationView
-    ...MaskView
-    ...InstanceMaskView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...HistogramView
-    ...LightpathView
-  }
-}
-    ${ChannelViewFragmentDoc}
-${AffineTransformationViewFragmentDoc}
-${MaskViewFragmentDoc}
-${InstanceMaskViewFragmentDoc}
-${TimepointViewFragmentDoc}
-${OpticsViewFragmentDoc}
-${AcquisitionViewFragmentDoc}
-${RgbViewFragmentDoc}
-${WellPositionViewFragmentDoc}
-${DerivedViewFragmentDoc}
-${RoiViewFragmentDoc}
-${FileViewFragmentDoc}
-${HistogramViewFragmentDoc}
-${LightpathViewFragmentDoc}`;
-export const ListFileViewsDocument = gql`
-    query ListFileViews($file: ID!, $pagination: OffsetPaginationInput = {limit: 10, offset: 0}) {
-  file(id: $file) {
-    id
-    views(pagination: $pagination) {
-      ...FileView
-      image {
-        ...ListImage
-      }
-    }
-  }
-}
-    ${FileViewFragmentDoc}
-${ListImageFragmentDoc}`;
-export const WatchImagesDocument = gql`
-    subscription WatchImages($dataset: ID) {
-  images(dataset: $dataset) {
-    create {
-      ...ListImage
-    }
-    delete
-    update {
-      ...ListImage
-    }
-  }
-}
-    ${ListImageFragmentDoc}`;
-export const WatchRoisDocument = gql`
-    subscription WatchRois($image: ID!) {
-  rois(image: $image) {
-    create {
-      ...ListROI
-    }
-    delete
-    update {
-      ...ListROI
-    }
-  }
-}
-    ${ListRoiFragmentDoc}`;
-export const WatchTransformationViewsDocument = gql`
-    subscription WatchTransformationViews($stage: ID!) {
-  affineTransformationViews(stage: $stage) {
-    create {
-      ...AffineTransformationView
-      image {
-        id
-        store {
-          shape
-        }
-        name
-      }
-    }
-    delete
-    update {
-      ...AffineTransformationView
-      image {
-        id
-        store {
-          shape
-        }
-        name
-      }
-    }
-  }
-}
-    ${AffineTransformationViewFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -15724,39 +14628,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     RequestGeneralZarrAccess(variables: RequestGeneralZarrAccessMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RequestGeneralZarrAccessMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestGeneralZarrAccessMutation>({ document: RequestGeneralZarrAccessDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RequestGeneralZarrAccess', 'mutation', variables);
     },
-    CreateDataset(variables: CreateDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateDatasetMutation>({ document: CreateDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateDataset', 'mutation', variables);
-    },
-    UpdateDataset(variables: UpdateDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateDatasetMutation>({ document: UpdateDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateDataset', 'mutation', variables);
-    },
-    PinDataset(variables: PinDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PinDatasetMutation>({ document: PinDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinDataset', 'mutation', variables);
-    },
-    PutDatasetsInDataset(variables: PutDatasetsInDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutDatasetsInDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PutDatasetsInDatasetMutation>({ document: PutDatasetsInDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutDatasetsInDataset', 'mutation', variables);
-    },
-    ReleaseDatasetsFromDataset(variables: ReleaseDatasetsFromDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseDatasetsFromDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseDatasetsFromDatasetMutation>({ document: ReleaseDatasetsFromDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseDatasetsFromDataset', 'mutation', variables);
-    },
-    PutImagesInDataset(variables: PutImagesInDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutImagesInDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PutImagesInDatasetMutation>({ document: PutImagesInDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutImagesInDataset', 'mutation', variables);
-    },
-    ReleaseImagesFromDataset(variables: ReleaseImagesFromDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseImagesFromDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseImagesFromDatasetMutation>({ document: ReleaseImagesFromDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseImagesFromDataset', 'mutation', variables);
-    },
-    PutFilesInDataset(variables: PutFilesInDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutFilesInDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PutFilesInDatasetMutation>({ document: PutFilesInDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutFilesInDataset', 'mutation', variables);
-    },
-    ReleaseFilesFromDataset(variables: ReleaseFilesFromDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseFilesFromDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseFilesFromDatasetMutation>({ document: ReleaseFilesFromDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseFilesFromDataset', 'mutation', variables);
-    },
-    RevertDataset(variables: RevertDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RevertDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RevertDatasetMutation>({ document: RevertDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RevertDataset', 'mutation', variables);
-    },
-    DeleteDataset(variables: DeleteDatasetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteDatasetMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteDatasetMutation>({ document: DeleteDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteDataset', 'mutation', variables);
-    },
     CreateEra(variables: CreateEraMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateEraMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateEraMutation>({ document: CreateEraDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateEra', 'mutation', variables);
     },
@@ -15766,14 +14637,44 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     DeleteFile(variables: DeleteFileMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteFileMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteFileMutation>({ document: DeleteFileDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteFile', 'mutation', variables);
     },
-    PinImage(variables: PinImageMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinImageMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PinImageMutation>({ document: PinImageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinImage', 'mutation', variables);
+    CreateFolder(variables: CreateFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateFolderMutation>({ document: CreateFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateFolder', 'mutation', variables);
     },
-    UpdateImage(variables: UpdateImageMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateImageMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImageMutation>({ document: UpdateImageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateImage', 'mutation', variables);
+    UpdateFolder(variables: UpdateFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateFolderMutation>({ document: UpdateFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateFolder', 'mutation', variables);
     },
-    DeleteImage(variables: DeleteImageMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteImageMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImageMutation>({ document: DeleteImageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteImage', 'mutation', variables);
+    PinFolder(variables: PinFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PinFolderMutation>({ document: PinFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinFolder', 'mutation', variables);
+    },
+    PutFoldersInFolder(variables: PutFoldersInFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutFoldersInFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PutFoldersInFolderMutation>({ document: PutFoldersInFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutFoldersInFolder', 'mutation', variables);
+    },
+    ReleaseFoldersFromFolder(variables: ReleaseFoldersFromFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseFoldersFromFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseFoldersFromFolderMutation>({ document: ReleaseFoldersFromFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseFoldersFromFolder', 'mutation', variables);
+    },
+    PutFilesInFolder(variables: PutFilesInFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutFilesInFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PutFilesInFolderMutation>({ document: PutFilesInFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutFilesInFolder', 'mutation', variables);
+    },
+    ReleaseFilesFromFolder(variables: ReleaseFilesFromFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseFilesFromFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseFilesFromFolderMutation>({ document: ReleaseFilesFromFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseFilesFromFolder', 'mutation', variables);
+    },
+    RevertFolder(variables: RevertFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RevertFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RevertFolderMutation>({ document: RevertFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RevertFolder', 'mutation', variables);
+    },
+    DeleteFolder(variables: DeleteFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteFolderMutation>({ document: DeleteFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteFolder', 'mutation', variables);
+    },
+    PutADatasetsInFolder(variables: PutADatasetsInFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutADatasetsInFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PutADatasetsInFolderMutation>({ document: PutADatasetsInFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutADatasetsInFolder', 'mutation', variables);
+    },
+    ReleaseADatasetsFromFolder(variables: ReleaseADatasetsFromFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseADatasetsFromFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseADatasetsFromFolderMutation>({ document: ReleaseADatasetsFromFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseADatasetsFromFolder', 'mutation', variables);
+    },
+    PutTableDatasetsInFolder(variables: PutTableDatasetsInFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PutTableDatasetsInFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PutTableDatasetsInFolderMutation>({ document: PutTableDatasetsInFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PutTableDatasetsInFolder', 'mutation', variables);
+    },
+    ReleaseTableDatasetsFromFolder(variables: ReleaseTableDatasetsFromFolderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReleaseTableDatasetsFromFolderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReleaseTableDatasetsFromFolderMutation>({ document: ReleaseTableDatasetsFromFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ReleaseTableDatasetsFromFolder', 'mutation', variables);
     },
     CreateInstrument(variables: CreateInstrumentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateInstrumentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateInstrumentMutation>({ document: CreateInstrumentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateInstrument', 'mutation', variables);
@@ -15826,21 +14727,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     AssignUserPermissions(variables: AssignUserPermissionsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AssignUserPermissionsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssignUserPermissionsMutation>({ document: AssignUserPermissionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'AssignUserPermissions', 'mutation', variables);
     },
-    CreateRGBContext(variables: CreateRgbContextMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateRgbContextMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateRgbContextMutation>({ document: CreateRgbContextDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateRGBContext', 'mutation', variables);
-    },
-    UpdateRGBContext(variables: UpdateRgbContextMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateRgbContextMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRgbContextMutation>({ document: UpdateRgbContextDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateRGBContext', 'mutation', variables);
-    },
-    PinROI(variables: PinRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinRoiMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PinRoiMutation>({ document: PinRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinROI', 'mutation', variables);
-    },
-    CreateROI(variables: CreateRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateRoiMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateRoiMutation>({ document: CreateRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateROI', 'mutation', variables);
-    },
-    DeleteROI(variables: DeleteRoiMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteRoiMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRoiMutation>({ document: DeleteRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteROI', 'mutation', variables);
-    },
     DeleteScene(variables: DeleteSceneMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteSceneMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteSceneMutation>({ document: DeleteSceneDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteScene', 'mutation', variables);
     },
@@ -15856,56 +14742,11 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     SetDefaultScene(variables: SetDefaultSceneMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SetDefaultSceneMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<SetDefaultSceneMutation>({ document: SetDefaultSceneDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SetDefaultScene', 'mutation', variables);
     },
-    CreateSnapshot(variables: CreateSnapshotMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateSnapshotMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateSnapshotMutation>({ document: CreateSnapshotDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateSnapshot', 'mutation', variables);
-    },
-    CreateStage(variables: CreateStageMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateStageMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateStageMutation>({ document: CreateStageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateStage', 'mutation', variables);
-    },
-    PinStage(variables: PinStageMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PinStageMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PinStageMutation>({ document: PinStageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PinStage', 'mutation', variables);
-    },
     from_parquet_like(variables: From_Parquet_LikeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<From_Parquet_LikeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<From_Parquet_LikeMutation>({ document: From_Parquet_LikeDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'from_parquet_like', 'mutation', variables);
     },
     CreateTransformation(variables: CreateTransformationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateTransformationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateTransformationMutation>({ document: CreateTransformationDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateTransformation', 'mutation', variables);
-    },
-    CreateAffineTransformationView(variables: CreateAffineTransformationViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateAffineTransformationViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateAffineTransformationViewMutation>({ document: CreateAffineTransformationViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateAffineTransformationView', 'mutation', variables);
-    },
-    DeleteAffineTransformationView(variables: DeleteAffineTransformationViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteAffineTransformationViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteAffineTransformationViewMutation>({ document: DeleteAffineTransformationViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteAffineTransformationView', 'mutation', variables);
-    },
-    DeleteRGBView(variables: DeleteRgbViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteRgbViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRgbViewMutation>({ document: DeleteRgbViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteRGBView', 'mutation', variables);
-    },
-    DeleteChannelView(variables: DeleteChannelViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteChannelViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteChannelViewMutation>({ document: DeleteChannelViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteChannelView', 'mutation', variables);
-    },
-    DeleteHistogramView(variables: DeleteHistogramViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteHistogramViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteHistogramViewMutation>({ document: DeleteHistogramViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'DeleteHistogramView', 'mutation', variables);
-    },
-    CreateRgbView(variables: CreateRgbViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateRgbViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateRgbViewMutation>({ document: CreateRgbViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateRgbView', 'mutation', variables);
-    },
-    CreateWellPositionView(variables: CreateWellPositionViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateWellPositionViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateWellPositionViewMutation>({ document: CreateWellPositionViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateWellPositionView', 'mutation', variables);
-    },
-    CreateContinousScanView(variables: CreateContinousScanViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateContinousScanViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateContinousScanViewMutation>({ document: CreateContinousScanViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateContinousScanView', 'mutation', variables);
-    },
-    CreateMaskView(variables: CreateMaskViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateMaskViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateMaskViewMutation>({ document: CreateMaskViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateMaskView', 'mutation', variables);
-    },
-    CreateInstanceMaskView(variables: CreateInstanceMaskViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateInstanceMaskViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateInstanceMaskViewMutation>({ document: CreateInstanceMaskViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateInstanceMaskView', 'mutation', variables);
-    },
-    UpdateRGBView(variables: UpdateRgbViewMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<UpdateRgbViewMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRgbViewMutation>({ document: UpdateRgbViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'UpdateRGBView', 'mutation', variables);
-    },
-    CreateViewCollection(variables: CreateViewCollectionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreateViewCollectionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateViewCollectionMutation>({ document: CreateViewCollectionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'CreateViewCollection', 'mutation', variables);
     },
     GetADataset(variables: GetADatasetQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetADatasetQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetADatasetQuery>({ document: GetADatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetADataset', 'query', variables);
@@ -15976,23 +14817,20 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     RegisterSourceCandidates(variables?: RegisterSourceCandidatesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RegisterSourceCandidatesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RegisterSourceCandidatesQuery>({ document: RegisterSourceCandidatesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RegisterSourceCandidates', 'query', variables);
     },
-    GetDataset(variables: GetDatasetQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDatasetQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetDatasetQuery>({ document: GetDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDataset', 'query', variables);
-    },
-    GetDatasets(variables?: GetDatasetsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetDatasetsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetDatasetsQuery>({ document: GetDatasetsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetDatasets', 'query', variables);
-    },
     GetFile(variables: GetFileQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetFileQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetFileQuery>({ document: GetFileDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetFile', 'query', variables);
     },
     GetFiles(variables?: GetFilesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetFilesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetFilesQuery>({ document: GetFilesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetFiles', 'query', variables);
     },
+    GetFolder(variables: GetFolderQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetFolderQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetFolderQuery>({ document: GetFolderDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetFolder', 'query', variables);
+    },
+    GetFolders(variables?: GetFoldersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetFoldersQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetFoldersQuery>({ document: GetFoldersDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetFolders', 'query', variables);
+    },
     GlobalSearch(variables: GlobalSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GlobalSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GlobalSearchQuery>({ document: GlobalSearchDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GlobalSearch', 'query', variables);
-    },
-    Images(variables?: ImagesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ImagesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ImagesQuery>({ document: ImagesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Images', 'query', variables);
     },
     HomePage(variables?: HomePageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<HomePageQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<HomePageQuery>({ document: HomePageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'HomePage', 'query', variables);
@@ -16006,18 +14844,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     PeerHomePageStats(variables: PeerHomePageStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PeerHomePageStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PeerHomePageStatsQuery>({ document: PeerHomePageStatsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PeerHomePageStats', 'query', variables);
     },
-    GetImage(variables: GetImageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetImageQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetImageQuery>({ document: GetImageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetImage', 'query', variables);
-    },
-    GetImages(variables?: GetImagesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetImagesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetImagesQuery>({ document: GetImagesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetImages', 'query', variables);
-    },
-    ListImages(variables?: ListImagesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListImagesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ListImagesQuery>({ document: ListImagesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListImages', 'query', variables);
-    },
-    GetInstanceMaskViewLabel(variables: GetInstanceMaskViewLabelQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetInstanceMaskViewLabelQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetInstanceMaskViewLabelQuery>({ document: GetInstanceMaskViewLabelDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetInstanceMaskViewLabel', 'query', variables);
-    },
     GetInstrument(variables: GetInstrumentQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetInstrumentQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetInstrumentQuery>({ document: GetInstrumentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetInstrument', 'query', variables);
     },
@@ -16029,9 +14855,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ListLensesForDataset(variables: ListLensesForDatasetQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListLensesForDatasetQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ListLensesForDatasetQuery>({ document: ListLensesForDatasetDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListLensesForDataset', 'query', variables);
-    },
-    GetLightpathView(variables: GetLightpathViewQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetLightpathViewQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetLightpathViewQuery>({ document: GetLightpathViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetLightpathView', 'query', variables);
     },
     Members(variables?: MembersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MembersQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MembersQuery>({ document: MembersDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Members', 'query', variables);
@@ -16054,24 +14877,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     PermissionOptions(variables: PermissionOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<PermissionOptionsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PermissionOptionsQuery>({ document: PermissionOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'PermissionOptions', 'query', variables);
     },
-    GetMaskedPixelInfo(variables: GetMaskedPixelInfoQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetMaskedPixelInfoQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetMaskedPixelInfoQuery>({ document: GetMaskedPixelInfoDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetMaskedPixelInfo', 'query', variables);
-    },
-    GetRGBContext(variables: GetRgbContextQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRgbContextQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetRgbContextQuery>({ document: GetRgbContextDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetRGBContext', 'query', variables);
-    },
-    GetRGBContexts(variables?: GetRgbContextsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRgbContextsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetRgbContextsQuery>({ document: GetRgbContextsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetRGBContexts', 'query', variables);
-    },
-    RGBContextOptions(variables?: RgbContextOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RgbContextOptionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RgbContextOptionsQuery>({ document: RgbContextOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'RGBContextOptions', 'query', variables);
-    },
-    GetROI(variables: GetRoiQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRoiQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetRoiQuery>({ document: GetRoiDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetROI', 'query', variables);
-    },
-    GetROIs(variables?: GetRoIsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRoIsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetRoIsQuery>({ document: GetRoIsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetROIs', 'query', variables);
-    },
     Rows(variables: RowsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RowsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RowsQuery>({ document: RowsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'Rows', 'query', variables);
     },
@@ -16083,15 +14888,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GetSnapshot(variables: GetSnapshotQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetSnapshotQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetSnapshotQuery>({ document: GetSnapshotDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetSnapshot', 'query', variables);
-    },
-    GetStage(variables: GetStageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStageQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetStageQuery>({ document: GetStageDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStage', 'query', variables);
-    },
-    GetStages(variables?: GetStagesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetStagesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetStagesQuery>({ document: GetStagesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetStages', 'query', variables);
-    },
-    StageOptions(variables?: StageOptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<StageOptionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StageOptionsQuery>({ document: StageOptionsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'StageOptions', 'query', variables);
     },
     GetTable(variables: GetTableQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTableQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetTableQuery>({ document: GetTableDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetTable', 'query', variables);
@@ -16107,27 +14903,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GetTableDatasets(variables?: GetTableDatasetsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTableDatasetsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetTableDatasetsQuery>({ document: GetTableDatasetsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetTableDatasets', 'query', variables);
-    },
-    GetRGBView(variables: GetRgbViewQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRgbViewQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetRgbViewQuery>({ document: GetRgbViewDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'GetRGBView', 'query', variables);
-    },
-    SearchRGBViews(variables?: SearchRgbViewsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SearchRgbViewsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SearchRgbViewsQuery>({ document: SearchRgbViewsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'SearchRGBViews', 'query', variables);
-    },
-    ActiveImageViews(variables: ActiveImageViewsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ActiveImageViewsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ActiveImageViewsQuery>({ document: ActiveImageViewsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ActiveImageViews', 'query', variables);
-    },
-    ListFileViews(variables: ListFileViewsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ListFileViewsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ListFileViewsQuery>({ document: ListFileViewsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'ListFileViews', 'query', variables);
-    },
-    WatchImages(variables?: WatchImagesSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchImagesSubscription> {
-      return withWrapper((wrappedRequestHeaders) => client.request<WatchImagesSubscription>({ document: WatchImagesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchImages', 'subscription', variables);
-    },
-    WatchRois(variables: WatchRoisSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchRoisSubscription> {
-      return withWrapper((wrappedRequestHeaders) => client.request<WatchRoisSubscription>({ document: WatchRoisDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchRois', 'subscription', variables);
-    },
-    WatchTransformationViews(variables: WatchTransformationViewsSubscriptionVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<WatchTransformationViewsSubscription> {
-      return withWrapper((wrappedRequestHeaders) => client.request<WatchTransformationViewsSubscription>({ document: WatchTransformationViewsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'WatchTransformationViews', 'subscription', variables);
     }
   };
 }

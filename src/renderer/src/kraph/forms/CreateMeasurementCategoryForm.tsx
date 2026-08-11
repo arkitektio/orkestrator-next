@@ -239,7 +239,7 @@ const TForm = (props: { graph?: string; identifier?: string }) => {
               />
               <StructureDescriptorFields
                 prefix="source"
-                identifierDescription="Schema identifier of the structure being measured (e.g. '@mikro/roi')"
+                identifierDescription="Schema identifier of the structure being measured (e.g. '@mikro/adataset')"
                 showAdvanced={showAdvanced}
               />
               <EntityDescriptorFields

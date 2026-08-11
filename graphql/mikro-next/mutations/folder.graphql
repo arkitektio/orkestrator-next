@@ -1,67 +1,79 @@
-mutation CreateDataset($input: CreateDatasetInput!) {
-  createDataset(input: $input) {
+mutation CreateFolder($input: CreateFolderInput!) {
+  createFolder(input: $input) {
     id
     name
   }
 }
 
-mutation UpdateDataset($id: ID!, $name: String!) {
-  updateDataset(input: { id: $id, name: $name }) {
+mutation UpdateFolder($id: ID!, $name: String!) {
+  updateFolder(input: { id: $id, name: $name }) {
     id
     name
   }
 }
 
-mutation PinDataset($id: ID!, $pin: Boolean!) {
-  pinDataset(input: { id: $id, pin: $pin }) {
-    ...Dataset
+mutation PinFolder($id: ID!, $pin: Boolean!) {
+  pinFolder(input: { id: $id, pin: $pin }) {
+    ...Folder
   }
 }
 
-mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
-  putDatasetsInDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
+mutation PutFoldersInFolder($selfs: [ID!]!, $other: ID!) {
+  putFoldersInFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
   }
 }
 
-mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseDatasetsFromDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
+mutation ReleaseFoldersFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseFoldersFromFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
   }
 }
 
-mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
-  putImagesInDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
+mutation PutFilesInFolder($selfs: [ID!]!, $other: ID!) {
+  putFilesInFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
   }
 }
 
-mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseImagesFromDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
+mutation ReleaseFilesFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseFilesFromFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
   }
 }
 
-mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
-  putFilesInDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
-  }
-}
-
-mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseFilesFromDataset(input: { selfs: $selfs, other: $other }) {
-    ...Dataset
-  }
-}
-
-mutation RevertDataset($dataset: ID!, $history: ID!) {
-  revertDataset(input: { id: $dataset, historyId: $history }) {
+mutation RevertFolder($folder: ID!, $history: ID!) {
+  revertFolder(input: { id: $folder, historyId: $history }) {
     id
     name
     description
   }
 }
 
-mutation DeleteDataset($id: ID!) {
-  deleteDataset(input: { id: $id })
+mutation DeleteFolder($id: ID!) {
+  deleteFolder(input: { id: $id })
+}
+
+mutation PutADatasetsInFolder($selfs: [ID!]!, $other: ID!) {
+  putADatasetsInFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
+  }
+}
+
+mutation ReleaseADatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseADatasetsFromFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
+  }
+}
+
+mutation PutTableDatasetsInFolder($selfs: [ID!]!, $other: ID!) {
+  putTableDatasetsInFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
+  }
+}
+
+mutation ReleaseTableDatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseTableDatasetsFromFolder(input: { selfs: $selfs, other: $other }) {
+    ...Folder
+  }
 }

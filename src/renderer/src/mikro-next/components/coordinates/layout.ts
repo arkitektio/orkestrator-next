@@ -10,9 +10,10 @@ import { DESIRED_EDGE_LENGTH, NODE_DIAMETER } from "./nodeSize";
 // left-to-right layering this used to draw imposed an order the schema does not
 // have.
 //
-// Stress ignores node sizes, which is exactly why every node is the same circle
-// (see nodeSize.ts): one rest length comfortably above one diameter, and
-// nothing can land on anything. DisCo wraps it so a depth-bounded walk that
+// Stress ignores node sizes, which is exactly why every node claims the same
+// square footprint (see nodeSize.ts) whatever size circle it draws inside it:
+// one rest length comfortably above one footprint, and nothing can land on
+// anything. DisCo wraps it so a depth-bounded walk that
 // leaves an island packs it against the rest rather than stranding it. Verified
 // headlessly at this rest length: zero overlaps, and stable across runs.
 export const LAYOUT_OPTIONS = {

@@ -1,7 +1,27 @@
-query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
+# The contents of one folder, as one heterogeneous page.
+#
+# Every member of `FolderChild` is selected EXCEPT the legacy `Image` — it is
+# gone from the UI, and a folder that still holds images simply does not show
+# them. The explorer skips any `__typename` it does not know rather than
+# rendering an empty row, so a future union member degrades gracefully too.
+#
+# `MeshCollection` and `AnnotationCollection` have no detail route yet, so they
+# are selected thin (id + name) and render as unlinked rows: better a visible
+# item than a silently missing one.
+query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: FolderChildrenFilter) {
   children(parent: $id, pagination: $pagination, filters: $filters) {
     ...ListFile
-    ...ListImage
-    ...ListDataset
+    ...ListFolder
+    ...ListADataset
+    ...ListTableDataset
+    # A mesh collection carries no name — it is identified by its version.
+    ... on MeshCollection {
+      id
+      version
+    }
+    ... on AnnotationCollection {
+      id
+      name
+    }
   }
 }

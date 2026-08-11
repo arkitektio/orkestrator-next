@@ -3,7 +3,7 @@ query Members {
     user {
       sub
     }
-    datasets(pagination: { limit: 3 }, filters: { parentless: true }) {
+    folders(pagination: { limit: 3 }, filters: { parentless: true }) {
       id
       name
     }

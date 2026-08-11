@@ -6,7 +6,7 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { MikroDataset } from "@/linkers";
+import { OmeroArkImage } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
@@ -15,7 +15,7 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
   return (
     <PageLayout
       title={data?.image?.name || "Image"}
-      pageActions={<MikroDataset.Actions object={data?.image} />}
+      pageActions={<OmeroArkImage.Actions object={data?.image} />}
       sidebars={
         <Sidebars>
           <Sidebars.Tab label="Comments">

@@ -10,14 +10,18 @@
       "ImageAccessor",
       "LabelAccessor"
     ],
-    "DatasetImageFile": [
-      "Dataset",
-      "File",
-      "Image"
-    ],
     "FileLinkContainer": [
       "ADataset",
       "AnnotationCollection",
+      "MeshCollection",
+      "TableDataset"
+    ],
+    "FolderChild": [
+      "ADataset",
+      "AnnotationCollection",
+      "File",
+      "Folder",
+      "Image",
       "MeshCollection",
       "TableDataset"
     ],
@@ -126,7 +130,6 @@
       "CoordinateAnchor",
       "CoordinateSystem",
       "DataArray",
-      "Dataset",
       "DerivedView",
       "Era",
       "Experiment",
@@ -134,6 +137,7 @@
       "File",
       "FileLink",
       "FileView",
+      "Folder",
       "HistogramView",
       "IdentityTransformation",
       "Image",

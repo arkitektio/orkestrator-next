@@ -102,7 +102,7 @@ describe("buildDeleteAction — multi selection", () => {
     await run(deleteScenes, service, {
       left: [
         structure("@mikro/scene", "1"),
-        structure("@mikro/image", "9"),
+        structure("@mikro/folder", "9"),
         structure("@mikro/scene", "2"),
       ],
       isCommand: false,

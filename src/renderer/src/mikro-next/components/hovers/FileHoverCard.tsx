@@ -1,13 +1,6 @@
-import { MikroImage } from "@/linkers";
 import { Object } from "@/types";
 import { useGetFileQuery } from "../../api/graphql";
-import {
-  HoverRow,
-  HoverSectionLabel,
-  HoverShell,
-  HoverSkeleton,
-  HoverThumb,
-} from "./HoverShell";
+import { HoverRow, HoverShell, HoverSkeleton } from "./HoverShell";
 
 // Source - https://stackoverflow.com/q/10420352 (CC BY-SA 4.0)
 function getReadableFileSizeString(fileSizeInBytes: number) {
@@ -41,11 +34,6 @@ export const FileHoverCard = ({ object }: { object: Object }) => {
 
   const file = data.file;
 
-  // Images that were created from (parsed out of) this file, via its file views.
-  const derivedImages = Array.from(
-    new Map(file.views.map((view) => [view.image.id, view.image])).values(),
-  ).slice(0, 6);
-
   return (
     <HoverShell title={file.name} subtitle="File">
       <div className="flex flex-col gap-1">
@@ -58,34 +46,10 @@ export const FileHoverCard = ({ object }: { object: Object }) => {
         {file.contentType && (
           <HoverRow label="Type" value={file.contentType} />
         )}
-        <HoverRow label="Series" value={file.views.length} />
         {/* No "Origins" row: `File.origins` is gone from the mikro schema. */}
         <HoverRow label="Organization" value={file.organization.slug} />
       </div>
 
-      {derivedImages.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <HoverSectionLabel>Images from this file</HoverSectionLabel>
-          <div className="grid grid-cols-3 gap-1.5">
-            {derivedImages.map((image) => (
-              <MikroImage.DetailLink
-                key={image.id}
-                object={image}
-                className="group/thumb flex flex-col gap-1"
-              >
-                <HoverThumb
-                  media={image.latestSnapshot?.store}
-                  alt={image.name}
-                  className="h-14 w-full rounded group-hover/thumb:ring-1 group-hover/thumb:ring-primary transition-all"
-                />
-                <span className="text-[10px] leading-tight line-clamp-1 text-muted-foreground">
-                  {image.name}
-                </span>
-              </MikroImage.DetailLink>
-            ))}
-          </div>
-        </div>
-      )}
     </HoverShell>
   );
 };

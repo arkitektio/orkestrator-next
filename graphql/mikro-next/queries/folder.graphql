@@ -1,15 +1,15 @@
-query GetDataset($id: ID!) {
-  dataset(id: $id) {
-    ...Dataset
+query GetFolder($id: ID!) {
+  folder(id: $id) {
+    ...Folder
   }
 }
 
-query GetDatasets(
-  $filters: DatasetFilter
+query GetFolders(
+  $filters: FolderFilter
   $pagination: OffsetPaginationInput
-  $ordering: [DatasetOrder!]
+  $ordering: [FolderOrder!]
 ) {
-  datasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListDataset
+  folders(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListFolder
   }
 }

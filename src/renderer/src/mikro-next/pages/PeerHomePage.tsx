@@ -12,9 +12,9 @@ import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { Database } from "lucide-react";
 import { parseAsBoolean, parseAsIsoDateTime, useQueryState } from "nuqs";
 import { usePeerHomePageQuery } from "../api/graphql";
-import DatasetList from "../components/lists/DatasetList";
+import FolderList from "../components/lists/FolderList";
 import FileList from "../components/lists/FileList";
-import ImageList from "../components/lists/ImageList";
+import ADatasetList from "../components/lists/ADatasetList";
 import { PeerStatisticsSidebar } from "../components/sidebars/PeerStatisticsSidebar";
 
 
@@ -93,11 +93,11 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
           </CardDescription>
         </CardHeader>
 
-        <ImageList
+        <ADatasetList
           filters={{ notDerived: parentless ? true : undefined, owner: id, ...temporalFilter }}
         />
         <Separator className="my-4" />
-        <DatasetList
+        <FolderList
           filters={{ parentless: parentless ? true : undefined, owner: id, ...temporalFilter }}
         />
         <Separator className="my-4" />

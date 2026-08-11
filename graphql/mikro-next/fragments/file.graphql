@@ -4,13 +4,6 @@ fragment File on File {
   store {
     ...BigFileStore
   }
-  views(pagination: $viewPagination) {
-    id
-    seriesIdentifier
-    image {
-      ...ListImage
-    }
-  }
   provenanceEntries {
     ...ProvenanceEntry
   }

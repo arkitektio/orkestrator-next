@@ -4,35 +4,37 @@ import {
   CreateSceneFromCoordinateSystemDocument,
   CreateSceneFromCoordinateSystemMutation,
   CreateSceneFromCoordinateSystemMutationVariables,
-  DeleteDatasetDocument,
+  DeleteFolderDocument,
   DeleteFileDocument,
-  DeleteImageDocument,
-  DeleteRoiDocument,
   DeleteSceneDocument,
   GetADatasetIntrinsicSystemDocument,
   GetADatasetIntrinsicSystemQuery,
   GetADatasetIntrinsicSystemQueryVariables,
   GetCoordinateSystemDocument,
-  GetDatasetDocument,
+  GetFolderDocument,
   GetScenesDocument,
-  GetDatasetQuery,
-  GetDatasetQueryVariables,
-  PutDatasetsInDatasetDocument,
-  PutDatasetsInDatasetMutation,
-  PutDatasetsInDatasetMutationVariables,
-  PutFilesInDatasetMutation,
-  PutFilesInDatasetMutationVariables,
-  PutImagesInDatasetDocument,
-  PutFilesInDatasetDocument,
-  PutImagesInDatasetMutation,
-  PutImagesInDatasetMutationVariables,
+  GetFolderQuery,
+  GetFolderQueryVariables,
+  PutFoldersInFolderDocument,
+  PutFoldersInFolderMutation,
+  PutFoldersInFolderMutationVariables,
+  PutFilesInFolderMutation,
+  PutFilesInFolderMutationVariables,
+  PutFilesInFolderDocument,
+  PutADatasetsInFolderDocument,
+  PutADatasetsInFolderMutation,
+  PutADatasetsInFolderMutationVariables,
+  PutTableDatasetsInFolderDocument,
+  PutTableDatasetsInFolderMutation,
+  PutTableDatasetsInFolderMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { linkBuilder } from "@/providers/smart/builder";
 import {
+  Boxes,
   Clapperboard,
   File,
   FolderInput,
-  Images,
+  Table2,
   Layers,
   Pencil,
   Ruler,
@@ -319,22 +321,22 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       );
     },
   },
-  'update-mikro-dataset': {
-    title: 'Rename / Update Dataset',
-    description: 'Open the update dialog for this dataset',
+  'update-mikro-folder': {
+    title: 'Rename / Update Folder',
+    description: 'Open the update dialog for this folder',
     icon: Pencil,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/dataset' },
+      { type: 'identifier', identifier: '@mikro/folder' },
       { type: 'nopartner' },
     ],
-    collections: ['dataset'],
+    collections: ['folder'],
     execute: async ({ state, services, dialog }) => {
-      const selectedDataset = state.left.find(
-        (item) => item.identifier === '@mikro/dataset',
+      const selectedFolder = state.left.find(
+        (item) => item.identifier === '@mikro/folder',
       );
 
-      if (!selectedDataset?.object?.id) {
-        throw new Error('No dataset selected for Rename / Update Dataset action');
+      if (!selectedFolder?.object?.id) {
+        throw new Error('No folder selected for Rename / Update Folder action');
       }
 
       const mikro = services.mikro;
@@ -343,32 +345,23 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       }
 
       const { data } = await mikro.client.query<
-        GetDatasetQuery,
-        GetDatasetQueryVariables
+        GetFolderQuery,
+        GetFolderQueryVariables
       >({
-        query: GetDatasetDocument,
+        query: GetFolderDocument,
         variables: {
-          id: selectedDataset.object.id,
+          id: selectedFolder.object.id,
         },
         fetchPolicy: 'network-only',
       });
 
-      if (!data?.dataset) {
-        throw new Error('Unable to load dataset for update dialog');
+      if (!data?.folder) {
+        throw new Error('Unable to load folder for update dialog');
       }
 
-      dialog.openDialog('updatedataset', { dataset: data.dataset });
+      dialog.openDialog('updatefolder', { folder: data.folder });
     },
   },
-  'delete-mikro-image': buildDeleteAction<typeof Arkitekt>({
-    title: 'Delete Image',
-    identifier: '@mikro/image',
-    description: 'Delete the image',
-    pinned: true,
-    service: 'mikro',
-    typename: 'Image',
-    mutation: DeleteImageDocument
-  }),
   'delete-mikro-file': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete File',
     identifier: '@mikro/file',
@@ -377,30 +370,46 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     typename: 'File',
     mutation: DeleteFileDocument
   }),
-  'delete-mikro-roi': buildDeleteAction<typeof Arkitekt>({
-    title: 'Delete Roi',
-    identifier: '@mikro/roi',
-    description: 'Delete the roi',
-    service: 'mikro',
-    typename: 'ROI',
-    mutation: DeleteRoiDocument
-  }),
-  move_to_dataset: {
-    description: 'Move dataset to a dataset',
-    title: 'Move to Dataset',
+  // The move seen from the thing being moved, rather than from the container it
+  // is dropped on: `move_files_to_dataset` below needs a folder page to drag
+  // onto, so a file opened on its own had no way to be filed anywhere.
+  'move-file-to-folder': {
+    title: 'Move to Folder',
+    description: 'File this into a folder',
     icon: FolderInput,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/dataset' },
-      { type: 'partner', partner: '@mikro/dataset' }
+      { type: 'identifier', identifier: '@mikro/file' },
+      { type: 'nopartner' },
     ],
-    collections: ['dataet'],
+    collections: ['file'],
+    execute: async ({ state, dialog }) => {
+      const files = state.left
+        .filter((item) => item.identifier === '@mikro/file')
+        .map((item) => item.object.id)
+
+      if (files.length === 0) {
+        throw new Error('No files selected for Move to Folder action')
+      }
+
+      dialog.openDialog('movetofolder', { files }, { className: 'max-w-lg' })
+    },
+  },
+  move_folders_to_folder: {
+    description: 'File folders into this folder',
+    title: 'Move to Folder',
+    icon: FolderInput,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/folder' },
+      { type: 'partner', partner: '@mikro/folder' }
+    ],
+    collections: ['folder'],
     execute: async ({ state, services }) => {
       if (!state.right || state.right.length === 0) {
-        throw new Error('No partner provided for Move to Dataset action')
+        throw new Error('No partner provided for Move to Folder action')
       }
-      const datasets = state.left.filter((item) => item.identifier === '@mikro/dataset')
-      if (datasets.length === 0) {
-        throw new Error('No datasets selected for Move to Dataset action')
+      const folders = state.left.filter((item) => item.identifier === '@mikro/folder')
+      if (folders.length === 0) {
+        throw new Error('No folders selected for Move to Folder action')
       }
 
       const mikro = services.mikro
@@ -412,39 +421,39 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
 
       const inside = state.left.at(0)
       if (!inside) {
-        throw new Error('No inside item found for Move to Dataset action')
+        throw new Error('No inside item found for Move to Folder action')
       }
-      if (inside.identifier !== '@mikro/dataset') {
-        throw new Error('Inside item must be a dataset for Move to Dataset action')
+      if (inside.identifier !== '@mikro/folder') {
+        throw new Error('Inside item must be a folder for Move to Folder action')
       }
 
 
-      await client.mutate<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>({
-        mutation: PutDatasetsInDatasetDocument,
+      await client.mutate<PutFoldersInFolderMutation, PutFoldersInFolderMutationVariables>({
+        mutation: PutFoldersInFolderDocument,
         variables: {
-          selfs: datasets.map((i) => i.object.id),
-          other: inside.object.id // Assuming 'inside' is the dataset where images will be moved
+          selfs: folders.map((i) => i.object.id),
+          other: inside.object.id
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((d) => ({ typename: "Dataset", id: d.object.id })))
+        refetchQueries: getRefetchableQueriesForEntities(client, folders.map((d) => ({ typename: "Folder", id: d.object.id })))
       })
     }
   },
-  move_images_to_dataset: {
-    description: 'Move images to a dataset',
-    title: 'Move Images to Dataset',
-    icon: Images,
+  move_adatasets_to_folder: {
+    description: 'File array datasets into this folder',
+    title: 'Move Datasets to Folder',
+    icon: Boxes,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/dataset' },
-      { type: 'partner', partner: '@mikro/image' }
+      { type: 'identifier', identifier: '@mikro/folder' },
+      { type: 'partner', partner: '@mikro/adataset' }
     ],
-    collections: ['dataset'],
+    collections: ['folder'],
     execute: async ({ state, services }) => {
       if (!state.right || state.right.length === 0) {
-        throw new Error('No partner provided for Move to Dataset action')
+        throw new Error('No partner provided for Move Datasets to Folder action')
       }
-      const images = state.right.filter((item) => item.identifier === '@mikro/image')
-      if (images.length === 0) {
-        throw new Error('No images selected for Move to Dataset action')
+      const datasets = state.right.filter((item) => item.identifier === '@mikro/adataset')
+      if (datasets.length === 0) {
+        throw new Error('No datasets selected for Move Datasets to Folder action')
       }
 
       const mikro = services.mikro
@@ -456,41 +465,81 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
 
       const inside = state.left.at(0)
       if (!inside) {
-        throw new Error('No inside item found for Move to Dataset action')
+        throw new Error('No inside item found for Move Datasets to Folder action')
       }
-      if (inside.identifier !== '@mikro/dataset') {
-        throw new Error('Inside item must be a dataset for Move to Dataset action')
+      if (inside.identifier !== '@mikro/folder') {
+        throw new Error('Inside item must be a folder for Move Datasets to Folder action')
       }
 
-      await client.mutate<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>({
-        mutation: PutImagesInDatasetDocument,
+      await client.mutate<PutADatasetsInFolderMutation, PutADatasetsInFolderMutationVariables>({
+        mutation: PutADatasetsInFolderDocument,
         variables: {
-          selfs: images.map((i) => i.object.id),
-          other: inside.object.id // Assuming 'inside' is the dataset where images will be moved
+          selfs: datasets.map((i) => i.object.id),
+          other: inside.object.id
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, images.map((f) => ({ typename: "Image", id: f.object.id })))
+        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((f) => ({ typename: "ADataset", id: f.object.id })))
      })
-
-
-
     }
   },
-  move_files_to_dataset: {
-    description: 'Move files to a dataset',
-    title: 'Move Files to Dataset',
+  move_tabledatasets_to_folder: {
+    description: 'File table datasets into this folder',
+    title: 'Move Tables to Folder',
+    icon: Table2,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/folder' },
+      { type: 'partner', partner: '@mikro/tabledataset' }
+    ],
+    collections: ['folder'],
+    execute: async ({ state, services }) => {
+      if (!state.right || state.right.length === 0) {
+        throw new Error('No partner provided for Move Tables to Folder action')
+      }
+      const tables = state.right.filter((item) => item.identifier === '@mikro/tabledataset')
+      if (tables.length === 0) {
+        throw new Error('No tables selected for Move Tables to Folder action')
+      }
+
+      const mikro = services.mikro
+      if (!mikro) {
+        throw new Error('Mikro service is not available')
+      }
+
+      const client = mikro.client
+
+      const inside = state.left.at(0)
+      if (!inside) {
+        throw new Error('No inside item found for Move Tables to Folder action')
+      }
+      if (inside.identifier !== '@mikro/folder') {
+        throw new Error('Inside item must be a folder for Move Tables to Folder action')
+      }
+
+      await client.mutate<PutTableDatasetsInFolderMutation, PutTableDatasetsInFolderMutationVariables>({
+        mutation: PutTableDatasetsInFolderDocument,
+        variables: {
+          selfs: tables.map((i) => i.object.id),
+          other: inside.object.id
+        },
+        refetchQueries: getRefetchableQueriesForEntities(client, tables.map((f) => ({ typename: "TableDataset", id: f.object.id })))
+     })
+    }
+  },
+  move_files_to_folder: {
+    description: 'File files into this folder',
+    title: 'Move Files to Folder',
     icon: File,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/dataset' },
+      { type: 'identifier', identifier: '@mikro/folder' },
       { type: 'partner', partner: '@mikro/file' }
     ],
-    collections: ['dataset'],
+    collections: ['folder'],
     execute: async ({ state, services,  }) => {
       if (!state.right || state.right.length === 0) {
-        throw new Error('No partner provided for Move to Dataset action')
+        throw new Error('No partner provided for Move Files to Folder action')
       }
       const files = state.right.filter((item) => item.identifier === '@mikro/file')
       if (files.length === 0) {
-        throw new Error('No files selected for Move to Dataset action')
+        throw new Error('No files selected for Move Files to Folder action')
       }
 
       const mikro = services.mikro
@@ -502,28 +551,20 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
 
       const inside = state.left.at(0)
       if (!inside) {
-        throw new Error('No inside item found for Move to Dataset action')
+        throw new Error('No inside item found for Move Files to Folder action')
       }
-      if (inside.identifier !== '@mikro/dataset') {
-        throw new Error('Inside item must be a dataset for Move to Dataset action')
+      if (inside.identifier !== '@mikro/folder') {
+        throw new Error('Inside item must be a folder for Move Files to Folder action')
       }
 
-
-
-
-
-      await client.mutate<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>({
-        mutation:   PutFilesInDatasetDocument,
+      await client.mutate<PutFilesInFolderMutation, PutFilesInFolderMutationVariables>({
+        mutation:   PutFilesInFolderDocument,
         variables: {
           selfs: files.map((i) => i.object.id),
-          other: inside.object.id // Assuming 'inside' is the dataset where files will be moved
+          other: inside.object.id
         },
         refetchQueries: getRefetchableQueriesForEntities(client, files.map((f) => ({ typename: "File", id: f.object.id })))
       })
-
-
-
-
     }
   },
   'delete-mikro-scene': buildDeleteAction<typeof Arkitekt>({
@@ -534,12 +575,12 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     typename: 'Scene',
     mutation: DeleteSceneDocument
   }),
-  'delete-mikro-dataset': buildDeleteAction<typeof Arkitekt>({
-    title: 'Delete Dataset',
-    identifier: '@mikro/dataset',
-    description: 'Delete the dataset',
+  'delete-mikro-folder': buildDeleteAction<typeof Arkitekt>({
+    title: 'Delete Folder',
+    identifier: '@mikro/folder',
+    description: 'Delete the folder',
     service: 'mikro',
-    typename: 'Dataset',
-    mutation: DeleteDatasetDocument
+    typename: 'Folder',
+    mutation: DeleteFolderDocument
   })
 } as const

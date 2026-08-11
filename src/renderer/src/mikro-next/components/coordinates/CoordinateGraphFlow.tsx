@@ -14,14 +14,14 @@ import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React from "react";
 import CoordinateSystemNode, {
-  OCCUPANCY_DOT,
   OCCUPANCY_LABEL,
+  OCCUPANCY_SWATCH,
   Occupancy,
 } from "./CoordinateSystemNode";
 import { facingHandles, sourceHandleId, targetHandleId } from "./handles";
 import { LAYOUT_OPTIONS } from "./layout";
 import { NODE_DIAMETER, NODE_SIZE } from "./nodeSize";
-import ResidentNode, { RESIDENT_COLOR } from "./ResidentNode";
+import ResidentNode, { RESIDENT_SWATCH } from "./ResidentNode";
 import { describeTransformation, GraphEdge, GraphNode } from "./types";
 
 export type CoordinateGraph = GetCoordinateGraphQuery["coordinateGraph"];
@@ -44,10 +44,29 @@ const marker = {
 
 const transformationStyle = { stroke: "currentColor", strokeWidth: 1.5 };
 
+// An identity is the one edge that says the two spaces ARE the same space under
+// two names — nothing moves across it, and a chain that crosses it has not
+// really gone anywhere. That deserves to be readable from across the graph
+// rather than by reading a label, so it is the only coloured, heavy line in a
+// picture of thin grey ones. `--chart-4` directly: the design tokens are
+// complete `oklch()` values, so they can be handed to `stroke` as they are (the
+// same reason `hsl(var(--…))` is wrong here).
+const IDENTITY_COLOR = "var(--chart-4)";
+
+const identityStyle = { stroke: IDENTITY_COLOR, strokeWidth: 3 };
+
+// The arrowhead cannot inherit the line: React Flow hoists each distinct marker
+// spec into one shared `<defs>` entry, so `currentColor` inside it resolves
+// against the SVG wrapper's colour, not against the edge that references it. An
+// identity edge therefore carries its own marker, with the colour spelled out.
+const identityMarker = { ...marker, color: IDENTITY_COLOR };
+
 // An assumed map must be visible without reading the label — the schema is
 // emphatic about it — and an unmappable one is not a step the geometry can
-// travel through at all.
-const assumedStyle = { ...transformationStyle, strokeDasharray: "5 4" };
+// travel through at all. Composed onto whatever the edge already is rather than
+// replacing it: validity is about whether the map HOLDS, identity is about what
+// the map IS, and an assumed identity is both at once.
+const DOUBTED = { strokeDasharray: "5 4" };
 
 // Residency is not a map. It is drawn as the faintest possible tie so the eye
 // reads the transformation chain first and "who lives here" second.
@@ -120,6 +139,8 @@ const buildGraph = (
 
     const unmappable = transformation.__typename === "UnmappableTransformation";
     const assumed = transformation.validity === PlacementValidity.Unknown;
+    const identity = transformation.__typename === "IdentityTransformation";
+    const base = identity ? identityStyle : transformationStyle;
 
     edges.push({
       id: transformation.id,
@@ -131,19 +152,25 @@ const buildGraph = (
       // React Flow draws the label on the line itself, which is all a
       // transformation needs to say from across the graph. The rest — axes,
       // validity, a composite's children — is the edge table's job.
-      label: describeTransformation(transformation),
+      // The one label that is not just what the map does: `≡` says "the same
+      // space" in one glyph, and an identity has no numbers to show anyway.
+      label: identity ? "≡ identity" : describeTransformation(transformation),
       labelBgPadding: [4, 2] as [number, number],
       labelBgBorderRadius: 4,
-      labelBgStyle: { fill: "var(--background)", fillOpacity: 0.85 },
+      // Fully opaque, like the nodes: a chip you can see the line through is a
+      // chip with a stroke drawn across its text.
+      labelBgStyle: { fill: "var(--background)", fillOpacity: 1 },
       // `fill` explicitly, paired with the chip's `--background`. React Flow's
       // default for the label is `fill: inherit`, and nothing up the SVG chain
       // sets one — so it lands on SVG's initial black, which is invisible on a
       // dark chip. `currentColor` would not fix it either: that resolves to the
       // wrapper's muted-foreground, which is chosen to contrast with the PAGE,
       // and this text sits on the chip.
-      labelStyle: { fontSize: 10, fill: "var(--foreground)" },
-      style: unmappable || assumed ? assumedStyle : transformationStyle,
-      markerEnd: unmappable ? undefined : marker,
+      labelStyle: identity
+        ? { fontSize: 10, fill: IDENTITY_COLOR, fontWeight: 700 }
+        : { fontSize: 10, fill: "var(--foreground)" },
+      style: unmappable || assumed ? { ...base, ...DOUBTED } : base,
+      markerEnd: unmappable ? undefined : identity ? identityMarker : marker,
     });
   }
 
@@ -162,15 +189,25 @@ const Legend = ({
   dropped: number;
 }) => (
   <div className="flex max-w-[440px] flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-foreground backdrop-blur">
-    {(Object.keys(OCCUPANCY_DOT) as Occupancy[]).map((occupancy) => (
+    {/* Each swatch is its node in miniature — the ring for a space, the small
+        solid disc for a resident — so the key teaches the same shape language
+        the canvas uses rather than a parallel one made of dots. */}
+    {(Object.keys(OCCUPANCY_SWATCH) as Occupancy[]).map((occupancy) => (
       <span key={occupancy} className="flex items-center gap-1">
-        <span className={`h-2 w-2 rounded-full ${OCCUPANCY_DOT[occupancy]}`} />
+        <span className={OCCUPANCY_SWATCH[occupancy]} />
         {OCCUPANCY_LABEL[occupancy]}
       </span>
     ))}
     <span className="flex items-center gap-1">
-      <span className={`h-2 w-2 rounded-full ${RESIDENT_COLOR}`} />
+      <span className={RESIDENT_SWATCH} />
       resident
+    </span>
+    <span className="flex items-center gap-1">
+      <span
+        className="h-0 w-4 border-t-[3px]"
+        style={{ borderColor: IDENTITY_COLOR }}
+      />
+      identity — the same space
     </span>
     <span className="flex items-center gap-1">
       <span className="h-0 w-4 border-t-2 border-dashed border-muted-foreground/60" />

@@ -1,10 +1,9 @@
 mutation from_file_like(
   $file: FileLike!
   $name: String!
-  $dataset: ID
-  $viewPagination: OffsetPaginationInput
+  $folder: ID
 ) {
-  fromFileLike(input: { file: $file, fileName: $name, dataset: $dataset }) {
+  fromFileLike(input: { file: $file, fileName: $name, folder: $folder }) {
     ...File
   }
 }

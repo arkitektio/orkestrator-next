@@ -184,7 +184,7 @@ class PerfMonitor {
 
     if (this.frames.length >= MAX_FRAMES) {
       this.truncated = true;
-      // eslint-disable-next-line no-console
+       
       console.warn(
         `[perfMonitor] recording auto-stopped at ${MAX_FRAMES} frames (cap reached)`,
       );

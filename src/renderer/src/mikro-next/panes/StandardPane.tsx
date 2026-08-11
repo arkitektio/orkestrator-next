@@ -7,16 +7,15 @@ import { Separator } from '@/components/ui/separator'
 import { PaneLink, SidePaneGroup } from '@/components/ui/sidepane'
 import { Toggle } from '@/components/ui/toggle'
 import { JustUsername } from '@/lok-next/components/UserAvatar'
-import { CubeIcon } from '@radix-ui/react-icons'
 import { useDebounce } from '@uidotdev/usehooks'
-import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, Image, PenTool } from 'lucide-react'
+import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, PenTool } from 'lucide-react'
 import * as React from 'react'
 import { NavLink } from 'react-router-dom'
 import { GlobalSearchQueryVariables, useGlobalSearchQuery, useMembersQuery } from '../api/graphql'
 import { ADATASET_SPECS, adatasetSpecLink } from '../specs'
-import DatasetCard from '../components/cards/DatasetCard'
+import ADatasetCard from '../components/cards/ADatasetCard'
 import FileCard from '../components/cards/FileCard'
-import ImageCard from '../components/cards/ImageCard'
+import FolderCard from '../components/cards/FolderCard'
 
 export const NavigationPane = () => {
   const { data, error } = useMembersQuery()
@@ -35,10 +34,6 @@ export const NavigationPane = () => {
         </SidePaneGroup>
 
         <SidePaneGroup title="Data">
-          <PaneLink to="/mikro/images" className="flex gap-3 w-full hover:text-primary">
-            <Image className="h-4 w-4" />
-            Images
-          </PaneLink>
           <PaneLink to="/mikro/adatasets" className="flex gap-3 w-full hover:text-primary">
             <Grid3x3 className="h-4 w-4" />
             Array Datasets
@@ -55,21 +50,13 @@ export const NavigationPane = () => {
             <Axis3d className="h-4 w-4" />
             Table Datasets
           </PaneLink>
-          <PaneLink to="/mikro/stages" className="flex gap-3 w-full hover:text-primary">
-            <CubeIcon className="h-4 w-4" />
-            Stages
-          </PaneLink>
-          <PaneLink to="/mikro/rois" className="flex gap-3 w-full hover:text-primary">
-            <CubeIcon className="h-4 w-4" />
-            Rois
-          </PaneLink>
           <PaneLink to="/mikro/annotations" className="flex gap-3 w-full hover:text-primary">
             <PenTool className="h-4 w-4" />
             Annotations
           </PaneLink>
-          <PaneLink to="/mikro/datasets" className="flex gap-3 w-full hover:text-primary">
+          <PaneLink to="/mikro/folders" className="flex gap-3 w-full hover:text-primary">
             <Folder className="h-4 w-4" />
-            Datasets
+            Folders
           </PaneLink>
           <PaneLink to="/mikro/files" className="flex gap-3 w-full hover:text-primary">
             <File className="h-4 w-4" />
@@ -120,14 +107,14 @@ export const NavigationPane = () => {
                 </DroppableNavLink>
               }
             >
-              {i.datasets.map((dataset) => (
+              {i.folders.map((folder) => (
                 <DroppableNavLink
-                  to={`/mikro/datasets/${dataset.id}`}
-                  key={dataset.id}
+                  to={`/mikro/folders/${folder.id}`}
+                  key={folder.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <Folder className="h-4 w-4" />
-                  {dataset.name}
+                  {folder.name}
                 </DroppableNavLink>
               ))}
             </SidePaneGroup>
@@ -141,17 +128,17 @@ export const NavigationPane = () => {
 
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState('')
-  const [noImages, setNoImages] = React.useState(false)
+  const [noAdatasets, setNoAdatasets] = React.useState(false)
   const [noFiles, setNoFiles] = React.useState(false)
-  const [noDatasets, setNoDatasets] = React.useState(false)
+  const [noFolders, setNoFolders] = React.useState(false)
 
   const debouncedSearch = useDebounce(search, 300)
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    noImages,
+    noAdatasets,
     noFiles,
-    noDatasets,
+    noFolders,
     pagination: {
       limit: 10
     }
@@ -161,7 +148,7 @@ const Pane: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     refetch(variables)
-  }, [debouncedSearch, noImages, noFiles])
+  }, [debouncedSearch, noAdatasets, noFiles, noFolders])
 
   const searchBar = (
     <div className="w-full flex flex-row">
@@ -183,23 +170,23 @@ const Pane: React.FunctionComponent = () => {
         <PopoverContent>
           <div className="flex flex-col gap-2">
             <Toggle
-              label="No Images"
-              name="noImages"
-              pressed={noImages}
-              onPressedChange={setNoImages}
+              label="No Datasets"
+              name="noAdatasets"
+              pressed={noAdatasets}
+              onPressedChange={setNoAdatasets}
             >
-              Exclude Images
+              Exclude Datasets
             </Toggle>
             <Toggle label="No Files" name="noFiles" pressed={noFiles} onPressedChange={setNoFiles}>
               Exclude Files
             </Toggle>
             <Toggle
-              label="No Datasets"
-              name="noDatasets"
-              pressed={noDatasets}
-              onPressedChange={setNoDatasets}
+              label="No Folders"
+              name="noFolders"
+              pressed={noFolders}
+              onPressedChange={setNoFolders}
             >
-              Exclude Datasets
+              Exclude Folders
             </Toggle>
           </div>
         </PopoverContent>
@@ -213,14 +200,14 @@ const Pane: React.FunctionComponent = () => {
         <NavigationPane />
       ) : (
         <div className="h-full">
-          <ListRender array={data?.images}>
-            {(item, i) => <ImageCard item={item} key={i} />}
+          <ListRender array={data?.adatasets}>
+            {(item, i) => <ADatasetCard item={item} key={i} />}
           </ListRender>
           <ListRender array={data?.files}>
             {(item, i) => <FileCard item={item} key={i} />}
           </ListRender>
-          <ListRender array={data?.datasets}>
-            {(item, i) => <DatasetCard item={item} key={i} />}
+          <ListRender array={data?.folders}>
+            {(item, i) => <FolderCard item={item} key={i} />}
           </ListRender>
         </div>
       )}

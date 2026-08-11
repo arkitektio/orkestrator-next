@@ -126,7 +126,7 @@ export function useAttributesAt(
         });
       });
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [service, inputKey, instant]);
 
   return state;

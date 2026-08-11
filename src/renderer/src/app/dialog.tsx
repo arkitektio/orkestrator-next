@@ -29,10 +29,9 @@ import { UpdateServiceInstanceForm } from "@/lok-next/forms/UpdateServiceInstanc
 import { AddLayerForm } from "@/mikro-next/forms/AddLayerForm";
 import { CalibrateForm } from "@/mikro-next/forms/CalibrateForm";
 import { RegisterForm } from "@/mikro-next/forms/RegisterForm";
-import { CreateDatasetForm as CreateMikroDatasetForm } from "@/mikro-next/forms/CreateDatasetForm";
-import { UpdateDatasetForm } from "@/mikro-next/forms/UpdateDatasetForm";
-import { UpdateImageForm } from "@/mikro-next/forms/UpdateImageForm";
-import { UpdateStageForm } from "@/mikro-next/forms/UpdateStageForm";
+import { CreateFolderForm as CreateMikroFolderForm } from "@/mikro-next/forms/CreateFolderForm";
+import { MoveToFolderForm } from "@/mikro-next/forms/MoveToFolderForm";
+import { UpdateFolderForm } from "@/mikro-next/forms/UpdateFolderForm";
 import { CreateDatasetForm as CreateOmeroDatasetForm } from "@/omero-ark/forms/CreateDatasetForm";
 import { CreateProjectForm } from "@/omero-ark/forms/CreateProjectForm";
 import { CreateWorkspaceForm } from "@/reaktion/components/forms/CreateWorkspaceForm";
@@ -89,8 +88,7 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   addlayer: AddLayerForm,
   register: RegisterForm,
   calibrate: CalibrateForm,
-  createmikrodataset: CreateMikroDatasetForm,
-  updateimage: UpdateImageForm,
-  updatedataset: UpdateDatasetForm,
-  updatestage: UpdateStageForm,
+  createmikrofolder: CreateMikroFolderForm,
+  movetofolder: MoveToFolderForm,
+  updatefolder: UpdateFolderForm,
 });

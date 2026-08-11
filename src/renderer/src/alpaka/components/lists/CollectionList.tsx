@@ -1,5 +1,4 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
 
 import {
   ProviderFilter,
@@ -25,9 +24,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.chromaCollections}
       title={
-        <MikroDataset.ListLink className="flex-0">
+        <div className="flex-0">
           Chroma Collections
-        </MikroDataset.ListLink>
+        </div>
       }
       refetch={refetch}
     >

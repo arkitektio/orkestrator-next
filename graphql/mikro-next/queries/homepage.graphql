@@ -1,6 +1,6 @@
 query HomePage {
-  images: images(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
-    ...ListImage
+  adatasets: adatasets(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
+    ...ListADataset
   }
 
   files: files(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
@@ -9,12 +9,12 @@ query HomePage {
 }
 
 query PeerHomePage($id: ID!) {
-  images: images(
+  adatasets: adatasets(
     pagination: { limit: 1 }
     filters: { owner: $id }
     ordering: [{ createdAt: DESC }]
   ) {
-    ...ListImage
+    ...ListADataset
   }
 
   files: files(
@@ -27,6 +27,9 @@ query PeerHomePage($id: ID!) {
 }
 
 
+# Still the legacy `imagesStats` — it is the only aggregate the schema exposes
+# (there is no `adatasetsStats`), so the statistics sidebars keep this one
+# Image-shaped dependency until the backend offers a replacement.
 query HomePageStats{
   imagesStats(filters: {
     owner: null

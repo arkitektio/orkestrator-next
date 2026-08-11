@@ -1,4 +1,4 @@
-query GetFile($id: ID!, $viewPagination: OffsetPaginationInput = { limit: 5, offset: 0 }) {
+query GetFile($id: ID!) {
   file(id: $id) {
     ...File
   }

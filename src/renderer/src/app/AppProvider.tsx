@@ -102,7 +102,7 @@ import { BuiltinDashboardWidgets } from "@/providers/dashboard/widgets/BuiltinDa
 import { RekuestDashboardWidgets } from "@/providers/dashboard/widgets/RekuestDashboardWidgets";
 import { MikroDashboardWidgets } from "@/providers/dashboard/widgets/MikroDashboardWidgets";
 import { LatestTasksDashboardWidget } from "@/providers/dashboard/widgets/LatestTasksDashboardWidget";
-import { LatestImagesDashboardWidget } from "@/providers/dashboard/widgets/LatestImagesDashboardWidget";
+import { LatestADatasetsDashboardWidget } from "@/providers/dashboard/widgets/LatestADatasetsDashboardWidget";
 
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
@@ -139,7 +139,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <Toaster />
                                     <Guard.Mikro unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <MikroDashboardWidgets />
-                                      <LatestImagesDashboardWidget />
+                                      <LatestADatasetsDashboardWidget />
                                     </Guard.Mikro>
                                     <BackNavigationErrorCatcher>
                                       {children}

@@ -45,6 +45,11 @@ type ADataset {
   The files written out of this dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles`
   """
   exports(filters: FileLinkFilter): [FileLink!]!
+
+  """
+  The folder this dataset is filed in. Organisational only: it says where a user keeps this dataset, never where the data sits in space -- that is `intrinsicSystem` and the edges out of it
+  """
+  folder: Folder
   id: ID!
 
   """
@@ -120,6 +125,12 @@ input ADatasetFilter {
   """
   derivedFrom: ID
   description: StrFilterLookup
+
+  """Filter by the folder this dataset is filed in"""
+  folder: ID
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
 
   """
   Filter to datasets whose intrinsic coordinate system carries every one of these axis types, e.g. [TIME, CHANNEL]. The raw form of `spec`, for the types no spec names: COORDINATE, DISPLACEMENT, INDEX
@@ -641,6 +652,11 @@ type AnnotationCollection {
   The files written out of this annotation collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles`
   """
   exports(filters: FileLinkFilter): [FileLink!]!
+
+  """
+  The folder this annotation collection is filed in. Organisational only: distinct from `scene`, which says which drawing surface minted it, and from `coordinateSystem`, which says where its shapes are drawn
+  """
+  folder: Folder
   id: ID!
   name: String!
 
@@ -699,6 +715,12 @@ input AnnotationCollectionFilter {
   Filter by the dataset the shapes are drawn over, following the derivation edge
   """
   dataset: ID
+
+  """Filter by the folder this annotation collection is filed in"""
+  folder: ID
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
   id: ID
 
   """Filter by list of IDs"""
@@ -1501,15 +1523,15 @@ input CameraStateInput {
   projectionScale: Float = null
 }
 
-"""Input for changing an existing dataset's name or parent"""
-input ChangeDatasetInput {
-  """The ID of the dataset to change"""
+"""Input for changing an existing folder's name or parent"""
+input ChangeFolderInput {
+  """The ID of the folder to change"""
   id: ID!
 
-  """The name of the dataset"""
+  """The name of the folder"""
   name: String!
 
-  """The ID of the parent dataset to nest this dataset under"""
+  """The ID of the parent folder to nest this folder under"""
   parent: ID = null
 }
 
@@ -1659,7 +1681,6 @@ enum ChildrenOrderDirection {
 enum ChildrenOrderField {
   CREATED_AT
   NAME
-  UPDATED_AT
 }
 
 input ChildrenPaginationInput {
@@ -2146,6 +2167,7 @@ input CreateADatasetInput {
   axes: [AxisInput!]!
   data: ArrayLike!
   derivedFrom: [DerivedFromInput!] = null
+  folder: ID = null
   name: String!
   scales: [ScaleInput!]!
   sourceFiles: [SourceFileInput!] = null
@@ -2175,6 +2197,7 @@ input CreateAnnotationCollectionInput {
   axes: [AxisInput!]!
   derivedFrom: [DerivedFromInput!] = null
   description: String = null
+  folder: ID = null
   name: String!
   sourceFiles: [SourceFileInput!] = null
 }
@@ -2227,12 +2250,12 @@ input CreateCoordinateSystemInput {
   registrations: [RegistrationPathInput!]! = []
 }
 
-"""Input for creating a new dataset to organize images and files"""
-input CreateDatasetInput {
-  """The name of the dataset"""
+"""Input for creating a new folder to organize images and files"""
+input CreateFolderInput {
+  """The name of the folder"""
   name: String!
 
-  """The ID of the parent dataset to nest this dataset under"""
+  """The ID of the parent folder to nest this folder under"""
   parent: ID = null
 }
 
@@ -2292,6 +2315,7 @@ input CreateMeshCollectionInput {
   catalog: ParquetLike!
   derivedFrom: [DerivedFromInput!] = null
   encoding: Any = null
+  folder: ID = null
   geometry: [ParquetLike!] = null
   grid: Any = null
   provenanceMetadata: Any = null
@@ -2476,6 +2500,7 @@ input CreateTableDatasetInput {
   data: ParquetLike!
   derivedFrom: [DerivedFromInput!] = null
   description: String = null
+  folder: ID = null
   keyedBy: [KeyedByInput!] = null
   name: String!
   sourceFiles: [SourceFileInput!] = null
@@ -2570,38 +2595,6 @@ input DataArrayOrder @oneOf {
 }
 
 """
-A dataset is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro.
-"""
-type Dataset {
-  children(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
-  createdAt: DateTime!
-
-  """The task this dataset was created through, if any"""
-  createdThrough: Task
-
-  """The assigner of the creating task, if any"""
-  createdThroughBy: User
-  creator: User
-  description: String
-  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
-  id: ID!
-  images(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
-  isDefault: Boolean!
-  name: String!
-  parent: Dataset
-  pinned: Boolean!
-
-  """Provenance entries for this dataset"""
-  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-  tags: [String!]!
-}
-
-input DatasetChildrenFilter {
-  search: String = null
-  showChildren: Boolean = null
-}
-
-"""
 The fields a DATASET derivation reads. Published for codegen; the wire type is the flat DerivedFromInput
 """
 input DatasetDerivedFromInput {
@@ -2619,68 +2612,6 @@ input DatasetExportOfInput {
   kind: FileLinkContainerKind! = DATASET
   seriesIdentifier: String = null
   valueRelation: ValueRelation = null
-}
-
-input DatasetFilter {
-  AND: DatasetFilter
-  DISTINCT: Boolean
-  NOT: DatasetFilter
-  OR: DatasetFilter
-
-  """Filter by the sub of the user that assigned the creating task"""
-  assignedBy: ID
-
-  """Filter for items created after this datetime"""
-  createdAfter: DateTime
-
-  """Filter for items created before this datetime"""
-  createdBefore: DateTime
-
-  """
-  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
-  """
-  createdThrough: ID
-
-  """
-  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
-  """
-  createdThroughBy: ID
-
-  """Filter by the rekuest task id the item was created through"""
-  createdThroughTask: String
-  description: StrFilterLookup
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  isDefault: Boolean
-  name: StrFilterLookup
-
-  """Filter by the creator's subject ID"""
-  owner: ID
-
-  """Filter by the parent dataset (list the children of a dataset)"""
-  parent: ID
-
-  """Filter for datasets with (true) or without (false) a parent"""
-  parentless: Boolean
-
-  """Filter by whether the current user has pinned the item"""
-  pinned: Boolean
-
-  """Search by name (full-text search)"""
-  search: String
-
-  """Filter by tag names"""
-  tags: [String!]
-}
-
-union DatasetImageFile = Dataset | File | Image
-
-input DatasetOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  name: Ordering
 }
 
 """Date with time (isoformat)"""
@@ -2727,12 +2658,6 @@ input DeleteDataArrayInput {
   id: ID!
 }
 
-"""Input for deleting a dataset by ID"""
-input DeleteDatasetInput {
-  """The ID of the dataset to delete"""
-  id: ID!
-}
-
 """Input for deleting an era by ID"""
 input DeleteEraInput {
   """The ID of the era to delete"""
@@ -2742,6 +2667,12 @@ input DeleteEraInput {
 """Input for deleting a file by ID"""
 input DeleteFileInput {
   """The ID of the file to delete"""
+  id: ID!
+}
+
+"""Input for deleting a folder by ID"""
+input DeleteFolderInput {
+  """The ID of the folder to delete"""
   id: ID!
 }
 
@@ -3546,12 +3477,6 @@ input FileFilter {
   """Filter by the rekuest task id the item was created through"""
   createdThroughTask: String
 
-  """Filter by the dataset this file belongs to"""
-  dataset: ID
-
-  """Filter by a list of dataset IDs"""
-  datasets: [ID!]
-
   """
   Filter to the files written out of this container -- the OME-TIFF a dataset was exported to. The opposite direction from `sourceOf`
   """
@@ -3561,6 +3486,12 @@ input FileFilter {
   Filter by file extension, case-insensitively and with the leading dot optional: `czi`, `.czi` and `CZI` are the same request, and `ome.tiff` matches only the double extension. A normalizing convenience over `name: {iEndsWith: ".czi"}`, which is still there if you want the raw lookup
   """
   extension: String
+
+  """Filter by the folder this file belongs to"""
+  folder: ID
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
 
   """
   Filter by whether any unstructured metadata has been attached to the file
@@ -4000,6 +3931,114 @@ input FloatFilterLookup {
 }
 
 """
+A folder is a collection of images and files. It mimics the concept of a folder in a file system and is the top-level container for organising data in mikro.
+"""
+type Folder {
+  """The array datasets filed in this folder"""
+  adatasets(filters: ADatasetFilter, ordering: [ADatasetOrder!]! = [], pagination: OffsetPaginationInput): [ADataset!]!
+
+  """The annotation collections filed in this folder"""
+  annotationCollections(filters: AnnotationCollectionFilter, ordering: [AnnotationCollectionOrder!]! = [], pagination: OffsetPaginationInput): [AnnotationCollection!]!
+  children(filters: FolderFilter, ordering: [FolderOrder!]! = [], pagination: OffsetPaginationInput): [Folder!]!
+  createdAt: DateTime!
+
+  """The task this folder was created through, if any"""
+  createdThrough: Task
+
+  """The assigner of the creating task, if any"""
+  createdThroughBy: User
+  creator: User
+  description: String
+  files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
+  id: ID!
+  images(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
+  isDefault: Boolean!
+
+  """The mesh collections filed in this folder"""
+  meshCollections(filters: MeshCollectionFilter, pagination: OffsetPaginationInput): [MeshCollection!]!
+  name: String!
+  parent: Folder
+  pinned: Boolean!
+
+  """Provenance entries for this folder"""
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """The table datasets filed in this folder"""
+  tableDatasets(filters: TableDatasetFilter, ordering: [TableDatasetOrder!]! = [], pagination: OffsetPaginationInput): [TableDataset!]!
+  tags: [String!]!
+}
+
+"""
+Anything filed in a folder: a sub-folder, an image, a file, or one of the four containers
+"""
+union FolderChild = ADataset | AnnotationCollection | File | Folder | Image | MeshCollection | TableDataset
+
+input FolderChildrenFilter {
+  search: String = null
+  showChildren: Boolean = null
+}
+
+input FolderFilter {
+  AND: FolderFilter
+  DISTINCT: Boolean
+  NOT: FolderFilter
+  OR: FolderFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  description: StrFilterLookup
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+  isDefault: Boolean
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Filter by the parent folder (list the children of a folder)"""
+  parent: ID
+
+  """Filter for folders with (true) or without (false) a parent"""
+  parentless: Boolean
+
+  """Filter by whether the current user has pinned the item"""
+  pinned: Boolean
+
+  """Search by name (full-text search)"""
+  search: String
+
+  """Filter by tag names"""
+  tags: [String!]
+}
+
+input FolderOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
 The `FourByFourMatrix` scalar type represents a matrix values as specified by
 """
 scalar FourByFourMatrix
@@ -4023,14 +4062,14 @@ input FromArrayLikeInput {
   """Optional list of channel views"""
   channelViews: [PartialChannelViewInput!] = null
 
-  """Optional dataset ID to associate the image with"""
-  dataset: ID = null
-
   """Optional list of derived views"""
   derivedViews: [PartialDerivedViewInput!] = null
 
   """Optional list of file views"""
   fileViews: [PartialFileViewInput!] = null
+
+  """Optional folder ID to associate the image with"""
+  folder: ID = null
 
   """Optional list of instance mask views"""
   instanceMaskViews: [PartialInstanceMaskViewInput!] = null
@@ -4071,11 +4110,6 @@ input FromArrayLikeInput {
 
 """Input for creating a file record from an uploaded big-file store"""
 input FromFileLike {
-  """
-  The ID of the dataset to put the file in (defaults to the current default dataset)
-  """
-  dataset: ID = null
-
   """The containers this file was written from"""
   exportOf: [ExportOfInput!] = null
 
@@ -4084,6 +4118,11 @@ input FromFileLike {
 
   """The name of the file"""
   fileName: String!
+
+  """
+  The ID of the folder to put the file in (defaults to the current default folder)
+  """
+  folder: ID = null
 }
 
 """Input for creating a table from an uploaded parquet store"""
@@ -4322,9 +4361,6 @@ type Image {
   """Who created this image"""
   creator: User
 
-  """The dataset this image belongs to"""
-  dataset: Dataset
-
   """Views this image was derived from"""
   derivedFromViews: [DerivedView!]!
 
@@ -4339,6 +4375,9 @@ type Image {
 
   """File views relating to source files"""
   fileViews(filters: FileViewFilter, ordering: [FileViewOrder!]! = [], pagination: OffsetPaginationInput): [FileView!]!
+
+  """The folder this image belongs to"""
+  folder: Folder
 
   """The channels of this image"""
   frames: [FrameInfo!]!
@@ -4472,14 +4511,14 @@ input ImageFilter {
 
   """Filter by the rekuest task id the item was created through"""
   createdThroughTask: String
-  dataset: DatasetFilter
-
-  """Filter by a list of dataset IDs"""
-  datasets: [ID!]
   description: StrFilterLookup
 
   """Filter for images converted from this file (through their file views)"""
   file: ID
+  folder: FolderFilter
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
 
   """Filter for images that have (or have no) ROIs"""
   hasRois: Boolean
@@ -5625,7 +5664,7 @@ type MediaUploadGrant {
 A user's membership in an organization, carrying the roles they hold there.
 """
 type Membership {
-  datasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
+  folders(filters: FolderFilter, ordering: [FolderOrder!]! = [], pagination: OffsetPaginationInput): [Folder!]!
   id: ID!
   isActive: Boolean!
   organization: Organization!
@@ -5661,6 +5700,11 @@ type MeshCollection {
   The files written out of this mesh collection: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles`
   """
   exports(filters: FileLinkFilter): [FileLink!]!
+
+  """
+  The folder this mesh collection is filed in. Organisational only: it says where a user keeps this collection, never where the meshes sit in space -- that is `coordinateSystem` and the edges out of it
+  """
+  folder: Folder
 
   """The Parquet stores holding the geometry shards"""
   geometry: [ParquetStore!]!
@@ -5720,6 +5764,12 @@ input MeshCollectionFilter {
   Filter by the dataset the meshes were extracted from, following the derivation edge
   """
   dataset: ID
+
+  """Filter by the folder this mesh collection is filed in"""
+  folder: ID
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
   id: ID
 
   """Filter by list of IDs"""
@@ -5944,14 +5994,14 @@ type Mutation {
   """
   createCoordinateSystem(input: CreateCoordinateSystemInput!): CoordinateSystem!
 
-  """Create a new dataset to organize data"""
-  createDataset(input: CreateDatasetInput!): Dataset!
-
   """Create a new era for temporal organization"""
   createEra(input: EraInput!): Era!
 
   """Create a new view for file data"""
   createFileView(input: FileViewInput!): FileView!
+
+  """Create a new folder to organize data"""
+  createFolder(input: CreateFolderInput!): Folder!
 
   """Create a new view for histogram data"""
   createHistogramView(input: HistogramViewInput!): HistogramView!
@@ -6127,14 +6177,14 @@ type Mutation {
   """Delete an existing data array"""
   deleteDataArray(input: DeleteDataArrayInput!): ID!
 
-  """Delete an existing dataset"""
-  deleteDataset(input: DeleteDatasetInput!): ID!
-
   """Delete an existing era"""
   deleteEra(input: DeleteEraInput!): ID!
 
   """Delete an existing file"""
   deleteFile(input: DeleteFileInput!): ID!
+
+  """Delete an existing folder"""
+  deleteFolder(input: DeleteFolderInput!): ID!
 
   """Delete an existing histogram view"""
   deleteHistogramView(input: DeleteViewInput!): ID!
@@ -6215,8 +6265,8 @@ type Mutation {
   """Ensure a camera exists, creating if needed"""
   ensureCamera(input: CameraInput!): Camera!
 
-  """Create a new dataset to organize data"""
-  ensureDataset(input: CreateDatasetInput!): Dataset!
+  """Create a new folder to organize data"""
+  ensureFolder(input: CreateFolderInput!): Folder!
 
   """Ensure an instrument exists, creating if needed"""
   ensureInstrument(input: InstrumentInput!): Instrument!
@@ -6256,11 +6306,11 @@ type Mutation {
   """Pin a camera for quick access"""
   pinCamera(input: PinCameraInput!): Camera!
 
-  """Pin a dataset for quick access"""
-  pinDataset(input: PinDatasetInput!): Dataset!
-
   """Pin an era for quick access"""
   pinEra(input: PinEraInput!): Era!
+
+  """Pin a folder for quick access"""
+  pinFolder(input: PinFolderInput!): Folder!
 
   """Pin an image for quick access"""
   pinImage(input: PinImageInput!): Image!
@@ -6292,26 +6342,58 @@ type Mutation {
   """Pin a view collection for quick access"""
   pinViewCollection(input: PinViewCollectionInput!): ViewCollection!
 
-  """Add datasets as children of another dataset"""
-  putDatasetsInDataset(input: AssociateInput!): Dataset!
+  """File array datasets in a folder"""
+  putADatasetsInFolder(input: AssociateInput!): Folder!
 
-  """Add files to a dataset"""
-  putFilesInDataset(input: AssociateInput!): Dataset!
+  """File annotation collections in a folder"""
+  putAnnotationCollectionsInFolder(input: AssociateInput!): Folder!
 
-  """Add images to a dataset"""
-  putImagesInDataset(input: AssociateInput!): Dataset!
+  """Add files to a folder"""
+  putFilesInFolder(input: AssociateInput!): Folder!
 
-  """Relate an image to a dataset"""
-  relateToDataset(id: ID!, other: ID!): Image!
+  """Add folders as children of another folder"""
+  putFoldersInFolder(input: AssociateInput!): Folder!
 
-  """Remove datasets from being children of another dataset"""
-  releaseDatasetsFromDataset(input: DesociateInput!): Dataset!
+  """Add images to a folder"""
+  putImagesInFolder(input: AssociateInput!): Folder!
 
-  """Remove files from a dataset"""
-  releaseFilesFromDataset(input: DesociateInput!): Dataset!
+  """File mesh collections in a folder"""
+  putMeshCollectionsInFolder(input: AssociateInput!): Folder!
 
-  """Remove images from a dataset"""
-  releaseImagesFromDataset(input: DesociateInput!): Dataset!
+  """File table datasets in a folder"""
+  putTableDatasetsInFolder(input: AssociateInput!): Folder!
+
+  """Relate an image to a folder"""
+  relateToFolder(id: ID!, other: ID!): Image!
+
+  """
+  Unfile array datasets from a folder. They are not deleted, only unfiled
+  """
+  releaseADatasetsFromFolder(input: DesociateInput!): Folder!
+
+  """
+  Unfile annotation collections from a folder. They are not deleted, only unfiled
+  """
+  releaseAnnotationCollectionsFromFolder(input: DesociateInput!): Folder!
+
+  """Remove files from a folder"""
+  releaseFilesFromFolder(input: DesociateInput!): Folder!
+
+  """Remove folders from being children of another folder"""
+  releaseFoldersFromFolder(input: DesociateInput!): Folder!
+
+  """Remove images from a folder"""
+  releaseImagesFromFolder(input: DesociateInput!): Folder!
+
+  """
+  Unfile mesh collections from a folder. They are not deleted, only unfiled
+  """
+  releaseMeshCollectionsFromFolder(input: DesociateInput!): Folder!
+
+  """
+  Unfile table datasets from a folder. They are not deleted, only unfiled
+  """
+  releaseTableDatasetsFromFolder(input: DesociateInput!): Folder!
 
   """Request temporary S3 read credentials for a big file"""
   requestBigfileAccess(input: RequestBigFileAccessInput!): BigFileAccessGrant!
@@ -6352,8 +6434,8 @@ type Mutation {
   """Request an upload grant for a Zarr store"""
   requestZarrUpload(input: RequestZarrUploadInput!): ZarrUploadGrant!
 
-  """Revert dataset to a previous version"""
-  revertDataset(input: RevertInput!): Dataset!
+  """Revert folder to a previous version"""
+  revertFolder(input: RevertInput!): Folder!
 
   """
   Nominate the scene to open for a dataset, and take its thumbnail from. Null clears it
@@ -6381,8 +6463,8 @@ type Mutation {
   """
   updateCoordinateSystem(input: UpdateCoordinateSystemInput!): CoordinateSystem!
 
-  """Update dataset metadata"""
-  updateDataset(input: ChangeDatasetInput!): Dataset!
+  """Update folder metadata"""
+  updateFolder(input: ChangeFolderInput!): Folder!
 
   """Update an existing image's metadata"""
   updateImage(input: UpdateImageInput!): Image!
@@ -7929,18 +8011,18 @@ input PinCameraInput {
   pin: Boolean!
 }
 
-"""Input for pinning or unpinning a dataset for quick access"""
-input PinDatasetInput {
-  """The ID of the dataset to pin or unpin"""
+"""Input for pinning or unpinning an era for quick access"""
+input PinEraInput {
+  """The ID of the era to pin or unpin"""
   id: ID!
 
   """True to pin, false to unpin"""
   pin: Boolean!
 }
 
-"""Input for pinning or unpinning an era for quick access"""
-input PinEraInput {
-  """The ID of the era to pin or unpin"""
+"""Input for pinning or unpinning a folder for quick access"""
+input PinFolderInput {
+  """The ID of the folder to pin or unpin"""
   id: ID!
 
   """True to pin, false to unpin"""
@@ -8424,8 +8506,8 @@ type Query {
     image: ID!
   ): [ChannelInfo!]!
 
-  """List the child datasets of a dataset"""
-  children(filters: DatasetChildrenFilter = null, order: ChildrenOrder = null, pagination: ChildrenPaginationInput = null, parent: ID!): [DatasetImageFile!]!
+  """List the child folders of a folder"""
+  children(filters: FolderChildrenFilter = null, order: ChildrenOrder = null, pagination: ChildrenPaginationInput = null, parent: ID!): [FolderChild!]!
 
   """List continuous scan views (recording scan directions)"""
   continousScanViews(filters: ContinousScanViewFilter, pagination: OffsetPaginationInput): [ContinousScanView!]!
@@ -8446,15 +8528,6 @@ type Query {
 
   """List data arrays (the multiscale zarr arrays backing array datasets)"""
   dataArrays(filters: DataArrayFilter, ordering: [DataArrayOrder!]! = [], pagination: OffsetPaginationInput): [DataArray!]!
-
-  """Get a single dataset by ID"""
-  dataset(
-    """The unique identifier of an object"""
-    id: ID!
-  ): Dataset!
-
-  """List datasets (folder-like collections of images, files and tables)"""
-  datasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
 
   """
   Get generic key-value descriptors for an object identified by identifier and ID
@@ -8491,6 +8564,15 @@ type Query {
 
   """List files (raw microscopy files such as .czi or .ome.tiff)"""
   files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
+
+  """Get a single folder by ID"""
+  folder(
+    """The unique identifier of an object"""
+    id: ID!
+  ): Folder!
+
+  """List folders (collections of images, files and tables)"""
+  folders(filters: FolderFilter, ordering: [FolderOrder!]! = [], pagination: OffsetPaginationInput): [Folder!]!
 
   """Returns a single image by ID"""
   image(
@@ -8581,14 +8663,14 @@ type Query {
   """List multi well plates"""
   multiWellPlates(filters: MultiWellPlateFilter, ordering: [MultiWellPlateOrder!]! = [], pagination: OffsetPaginationInput): [MultiWellPlate!]!
 
-  """List datasets created by the current user"""
-  mydatasets(filters: DatasetFilter, ordering: [DatasetOrder!]! = [], pagination: OffsetPaginationInput): [Dataset!]!
-
   """List eras created by the current user"""
   myeras(filters: EraFilter, ordering: [EraOrder!]! = [], pagination: OffsetPaginationInput): [Era!]!
 
   """List files created by the current user"""
   myfiles(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
+
+  """List folders created by the current user"""
+  myfolders(filters: FolderFilter, ordering: [FolderOrder!]! = [], pagination: OffsetPaginationInput): [Folder!]!
 
   """List images created by the current user"""
   myimages(filters: ImageFilter, ordering: [ImageOrder!]! = [], pagination: OffsetPaginationInput): [Image!]!
@@ -9357,12 +9439,12 @@ A piece of data living in a coordinate system. Data belongs to a space; the spac
 """
 union Resident = ADataset | AnnotationCollection | DataArray | Lens | MeshCollection | TableDataset
 
-"""Input for reverting a dataset to a previous history revision"""
+"""Input for reverting a folder to a previous history revision"""
 input RevertInput {
-  """The ID of the provenance history entry to revert the dataset to"""
+  """The ID of the provenance history entry to revert the folder to"""
   historyId: ID!
 
-  """The ID of the dataset to revert"""
+  """The ID of the folder to revert"""
   id: ID!
 }
 
@@ -10339,10 +10421,10 @@ type Subscription {
   affineTransformationViews(stage: ID!): AffineTransformationViewEvent!
 
   """Subscribe to real-time file updates"""
-  files(dataset: ID = null): FileEvent!
+  files(folder: ID = null): FileEvent!
 
   """Subscribe to real-time image updates"""
-  images(dataset: ID = null): ImageEvent!
+  images(folder: ID = null): ImageEvent!
 
   """Subscribe to real-time ROI updates"""
   rois(image: ID!): RoiEvent!
@@ -10473,6 +10555,11 @@ type TableDataset {
   The files written out of this table dataset: an OME-TIFF export, a rendered snapshot registered as a file. The mirror of `sourceFiles`
   """
   exports(filters: FileLinkFilter): [FileLink!]!
+
+  """
+  The folder this table dataset is filed in. Organisational only: it says where a user keeps this table, never where its rows sit in space -- that is `coordinateSystem` and the edges out of it
+  """
+  folder: Folder
   id: ID!
   name: String!
 
@@ -10574,6 +10661,12 @@ input TableDatasetFilter {
   dataset: ID
   description: StrFilterLookup
 
+  """Filter by the folder this table dataset is filed in"""
+  folder: ID
+
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
+
   """Filter to tables that declare a column of this role, e.g. TRACK_ID"""
   hasColumnRole: TableColumnRole
   id: ID
@@ -10628,11 +10721,11 @@ input TableFilter {
   """Filter by the rekuest task id the item was created through"""
   createdThroughTask: String
 
-  """Filter by the dataset this table belongs to"""
-  dataset: ID
+  """Filter by the folder this table belongs to"""
+  folder: ID
 
-  """Filter by a list of dataset IDs"""
-  datasets: [ID!]
+  """Filter by a list of folder IDs"""
+  folders: [ID!]
   id: ID
 
   """Filter by list of IDs"""
@@ -11951,7 +12044,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | Dataset | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

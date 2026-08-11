@@ -1,5 +1,0 @@
-query GetLightpathView($id: ID!) {
-  lightpathView(id: $id) {
-    ...LightpathView
-  }
-}

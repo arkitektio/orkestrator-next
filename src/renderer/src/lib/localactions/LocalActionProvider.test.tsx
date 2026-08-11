@@ -104,7 +104,7 @@ describe("getActionsForState — onroute (reads window.location)", () => {
 
   it("does not match a route absent from the pathname", () => {
     const registry = { a: action([{ type: "onroute", route: "graph" }]) };
-    window.history.pushState({}, "", "/mikro/images");
+    window.history.pushState({}, "", "/mikro/folders");
     expect(getActionsForState(registry, state())).toHaveLength(0);
   });
 });

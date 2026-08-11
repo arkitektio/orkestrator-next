@@ -7,9 +7,6 @@ fragment Accessor on Accessor {
 
 fragment LabelAccessor on LabelAccessor {
   ...Accessor
-  maskView {
-    id
-  }
 }
 
 fragment ImageAccessor on ImageAccessor {

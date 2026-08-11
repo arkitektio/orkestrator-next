@@ -1,8 +1,5 @@
 fragment MultiWellPlate on MultiWellPlate {
   id
-  views {
-    ...WellPositionView
-  }
   name
 }
 

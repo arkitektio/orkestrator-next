@@ -123,7 +123,7 @@ const resolveValueRange = (
   const explicitMin = parse(phasor.transfer.min);
   const explicitMax = parse(phasor.transfer.max);
 
-  let defaultMin = 0;
+  const defaultMin = 0;
   let defaultMax = 1;
   if (scale.omega !== null) {
     const turn = (2 * Math.PI) / scale.omega;

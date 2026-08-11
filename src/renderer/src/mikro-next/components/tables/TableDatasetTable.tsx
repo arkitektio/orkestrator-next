@@ -2,6 +2,8 @@
 
 import {
   type ColumnDef,
+  type OnChangeFn,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -20,6 +22,7 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -40,10 +43,11 @@ import { cn } from "@/lib/utils";
 
 import {
   type DuckDbColumnFilters,
+  rowsToCsv,
   useDuckDbTable,
 } from "./useDuckDbTable";
 
-type Item = Record<string, unknown>;
+export type Item = Record<string, unknown>;
 
 type TableDatasetColumn = TableDatasetFragment["columns"][number];
 
@@ -58,6 +62,89 @@ const formatCellValue = (value: unknown) => {
 
   return String(value);
 };
+
+// Rows arrive one DuckDB page at a time and carry no server-side identity, so a
+// selection has to be keyed by the values themselves. A positional key would
+// make a row picked on page 1 come back selected on page 2, and re-sorting
+// would move the selection onto whichever row landed in that slot. Rows that
+// are byte-identical do share a key and therefore toggle together — which is
+// the only honest answer for rows nothing can tell apart.
+export const resolveRowKey = (row: Item, columnNames: string[]) => {
+  if (typeof row.id === "string") {
+    return row.id;
+  }
+
+  return columnNames
+    .map((columnName) => JSON.stringify(row[columnName] ?? null))
+    .join("\u0001");
+};
+
+// Keys the table can switch *on* always belong to the current page, so their
+// record is in `pageRowsByKey`; keys it leaves untouched belong to other pages
+// and keep the record captured when they were picked. Anything it switches off
+// is dropped, record and all.
+export const mergeRowSelection = (
+  current: Record<string, Item>,
+  next: RowSelectionState,
+  pageRowsByKey: Record<string, Item>,
+): Record<string, Item> =>
+  Object.entries(next).reduce<Record<string, Item>>(
+    (accumulated, [key, isSelected]) => {
+      if (!isSelected) {
+        return accumulated;
+      }
+
+      const row = current[key] ?? pageRowsByKey[key];
+
+      if (row) {
+        accumulated[key] = row;
+      }
+
+      return accumulated;
+    },
+    {},
+  );
+
+// A table of numbers is here to be read, so the checkboxes stay out of the way
+// until the pointer (or the keyboard) asks for them: hidden by default, faded
+// in on the row under the cursor, and held visible for as long as the box is
+// ticked. The column keeps its width either way, so revealing one does not
+// shift the numbers sideways mid-read.
+const SELECT_REVEAL_CLASSES =
+  "border-gray-500 bg-background opacity-0 ring-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100";
+
+const createSelectColumn = (): ColumnDef<Item> => ({
+  id: "select",
+  header: ({ table }) => {
+    const someSelected =
+      table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected();
+
+    return (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all rows on this page"
+        className={cn(SELECT_REVEAL_CLASSES, someSelected && "opacity-100")}
+      />
+    );
+  },
+  cell: ({ row }) => (
+    <Checkbox
+      checked={row.getIsSelected()}
+      onCheckedChange={(value) => row.toggleSelected(!!value)}
+      aria-label="Select row"
+      className={cn(
+        SELECT_REVEAL_CLASSES,
+        row.getIsSelected() && "opacity-100",
+      )}
+    />
+  ),
+  enableSorting: false,
+  enableHiding: false,
+});
 
 const createIndexColumn = (rowIndexOffset: number): ColumnDef<Item> => ({
   id: "index",
@@ -128,6 +215,7 @@ const calculateColumns = (
   },
 ): ColumnDef<Item>[] => {
   const calculatedColumns: ColumnDef<Item>[] = [
+    createSelectColumn(),
     createIndexColumn(options.rowIndexOffset),
   ];
 
@@ -187,6 +275,13 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [exporting, setExporting] = React.useState(false);
+  // The selection stores the row *data*, not just its key: a row selected on
+  // page 1 is gone from `rows` by the time the user hits export on page 4, and
+  // there is no id to re-query it by. Keeping the record means a selection
+  // export is a client-side write with no second trip to DuckDB.
+  const [selectedRows, setSelectedRows] = React.useState<Record<string, Item>>(
+    {},
+  );
 
   const { rows, totalRowCount, loading, error, exportAsCsv } = useDuckDbTable({
     table: props.table,
@@ -239,6 +334,53 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
     ],
   );
 
+  const columnNames = React.useMemo(
+    () => props.table.columns.map((column) => column.name),
+    [props.table.columns],
+  );
+
+  const pageRowsByKey = React.useMemo(() => {
+    const map: Record<string, Item> = {};
+
+    rows.forEach((row) => {
+      map[resolveRowKey(row, columnNames)] = row;
+    });
+
+    return map;
+  }, [columnNames, rows]);
+
+  const rowSelection = React.useMemo<RowSelectionState>(
+    () =>
+      Object.fromEntries(Object.keys(selectedRows).map((key) => [key, true])),
+    [selectedRows],
+  );
+
+  const handleRowSelectionChange = React.useCallback<
+    OnChangeFn<RowSelectionState>
+  >(
+    (updater) => {
+      setSelectedRows((current) => {
+        const currentSelection: RowSelectionState = Object.fromEntries(
+          Object.keys(current).map((key) => [key, true]),
+        );
+        const next =
+          typeof updater === "function" ? updater(currentSelection) : updater;
+
+        return mergeRowSelection(current, next, pageRowsByKey);
+      });
+    },
+    [pageRowsByKey],
+  );
+
+  const selectedRowList = React.useMemo(
+    () => Object.values(selectedRows),
+    [selectedRows],
+  );
+
+  const clearSelection = React.useCallback(() => {
+    setSelectedRows({});
+  }, []);
+
   const clearGlobalSearch = React.useCallback(() => {
     setSearch("");
   }, []);
@@ -250,6 +392,7 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
   React.useEffect(() => {
     setSearch("");
     setSorting([]);
+    setSelectedRows({});
   }, [props.table.id]);
 
   const pageCount = Math.max(1, Math.ceil(totalRowCount / pagination.pageSize));
@@ -268,16 +411,18 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
     manualPagination: true,
     manualSorting: true,
     onPaginationChange: setPagination,
-    getRowId: (row, index) =>
-      typeof row.id === "string" ? row.id : `${pagination.pageIndex}:${index}`,
+    getRowId: (row) => resolveRowKey(row, columnNames),
+    enableRowSelection: true,
     state: {
       sorting,
       columnVisibility,
       pagination,
+      rowSelection,
     },
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: handleRowSelectionChange,
   });
 
   const visibleExportColumns = React.useMemo(
@@ -285,14 +430,13 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
       props.table.columns
         .map((column) => column.name)
         .filter((columnName) => table.getColumn(columnName)?.getIsVisible()),
-    [props.table.columns, table],
+    // `table` is a stable instance, so hiding a column would not otherwise
+    // recompute this and the export would carry the column it just lost.
+    [columnVisibility, props.table.columns, table],
   );
 
-  const handleExportCsv = React.useCallback(async () => {
-    setExporting(true);
-
-    try {
-      const csv = await exportAsCsv(visibleExportColumns);
+  const downloadCsv = React.useCallback(
+    (csv: string, suffix = "") => {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -301,15 +445,30 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
         .replace(/^_+|_+$/g, "");
 
       link.href = url;
-      link.download = `${safeName || "tabledataset"}_${new Date().toISOString().split("T")[0]}.csv`;
+      link.download = `${safeName || "tabledataset"}${suffix}_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+    },
+    [props.table.name],
+  );
+
+  const handleExportCsv = React.useCallback(async () => {
+    setExporting(true);
+
+    try {
+      downloadCsv(await exportAsCsv(visibleExportColumns));
     } finally {
       setExporting(false);
     }
-  }, [exportAsCsv, props.table.name, visibleExportColumns]);
+  }, [downloadCsv, exportAsCsv, visibleExportColumns]);
+
+  // No query for this one — the picked rows are already in memory, and going
+  // back to DuckDB could not reproduce a selection that spans pages anyway.
+  const handleExportSelectionCsv = React.useCallback(() => {
+    downloadCsv(rowsToCsv(selectedRowList, visibleExportColumns), "_selection");
+  }, [downloadCsv, selectedRowList, visibleExportColumns]);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -343,8 +502,25 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
           disabled={loading || exporting || totalRowCount === 0}
         >
           <ArrowDownToLine className="mr-2 h-4 w-4" />
-          {exporting ? "Exporting..." : "Export as CSV"}
+          {exporting
+            ? "Exporting..."
+            : selectedRowList.length
+              ? "Export all rows"
+              : "Export as CSV"}
         </Button>
+
+        {/* Only worth a control once there is a selection to export — an always
+            visible button that is disabled most of the time reads as broken. */}
+        {selectedRowList.length ? (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleExportSelectionCsv}
+          >
+            <ArrowDownToLine className="mr-2 h-4 w-4" />
+            Export {selectedRowList.length} selected
+          </Button>
+        ) : null}
 
         <DropdownMenu>
           <DropdownMenuTrigger>
@@ -377,7 +553,7 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
         <Table className="flex-grow">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="group/row">
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder
@@ -400,7 +576,11 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
               </TableRow>
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="group/row"
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -426,8 +606,27 @@ export const TableDatasetTable = (props: { table: TableDatasetFragment }) => {
       </div>
 
       <div className="flex flex-initial items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          Showing {pageStart}-{pageEnd} of {totalRowCount} rows.
+        <div className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Showing {pageStart}-{pageEnd} of {totalRowCount} rows.
+          </span>
+          {/* Selections survive paging, so the count has to be visible from any
+              page — otherwise rows picked earlier are exported unannounced. */}
+          {selectedRowList.length ? (
+            <>
+              <span className="text-foreground">
+                {selectedRowList.length} row(s) selected.
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2"
+                onClick={clearSelection}
+              >
+                Clear
+              </Button>
+            </>
+          ) : null}
         </div>
         <div className="space-x-2">
           <Button

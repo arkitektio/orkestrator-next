@@ -293,6 +293,23 @@ const escapeCsvValue = (value: unknown) => {
   return text;
 };
 
+// Shared by the hook's own full-table export and by callers that already hold
+// the rows they want to write (a selection kept in component state), so both
+// paths quote and order cells identically.
+export const rowsToCsv = (
+  rows: Record<string, unknown>[],
+  columns: string[],
+) => {
+  const headerRow = columns
+    .map((columnName) => escapeCsvValue(columnName))
+    .join(",");
+  const csvRows = rows.map((row) =>
+    columns.map((columnName) => escapeCsvValue(row[columnName])).join(","),
+  );
+
+  return [headerRow, ...csvRows].join("\n");
+};
+
 const buildHistogramQuery = (
   table: DuckDbParquetSource,
   parquetUrl: string,
@@ -448,12 +465,7 @@ export const useDuckDbTable = ({
         selectedColumns?.filter((columnName) => availableColumns.has(columnName)) ??
         table.columns.map((column) => column.name);
 
-      const headerRow = exportColumns.map((columnName) => escapeCsvValue(columnName)).join(",");
-      const csvRows = exportRows.map((row) =>
-        exportColumns.map((columnName) => escapeCsvValue(row[columnName])).join(","),
-      );
-
-      return [headerRow, ...csvRows].join("\n");
+      return rowsToCsv(exportRows, exportColumns);
     },
     [columnFilters, search, sorting, table, withDuckDbConnection],
   );

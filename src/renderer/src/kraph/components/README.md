@@ -14,11 +14,10 @@ This document describes the refactored component architecture for the `TinyStruc
 #### `ProtectedTinyStructureBox`
 - **Location**: `src/kraph/boxes/TinyStructureBox.tsx`
 - **Purpose**: Main logic component that orchestrates data fetching and user interactions
-- **Dependencies**: `KnowledgeViewCarousel`, `MeasurementDialog`, `useMeasurementDialog`
+- **Dependencies**: `KnowledgeViewCarousel`
 - **Key Features**:
   - Fetches knowledge views data
   - Handles structure connections
-  - Manages measurement dialog state
   - Coordinates component interactions
 
 ### UI Components
@@ -58,39 +57,11 @@ This document describes the refactored component architecture for the `TinyStruc
   - Two connection options: simple and with measurement
   - Consistent button styling and layout
 
-#### `MeasurementDialog`
-- **Location**: `src/kraph/components/MeasurementDialog.tsx`
-- **Purpose**: Modal dialog for creating measurement connections
-- **Props**:
-  - `open`: Dialog open state
-  - `onOpenChange`: Dialog state change callback
-  - `selectedGraph`: Currently selected graph ID
-  - `selectedGraphName`: Display name of selected graph
-  - `identifier`: Structure identifier
-  - `object`: Structure object
-  - `onSuccess`: Success callback
-- **Features**:
-  - Tabbed interface (existing vs new categories)
-  - Graph-filtered measurement category search
-  - Entity search and selection
-  - Form validation and submission
-  - Automatic category creation
-
-### Custom Hooks
-
-#### `useMeasurementDialog`
-- **Location**: `src/kraph/hooks/useMeasurementDialog.ts`
-- **Purpose**: Manages measurement dialog state and interactions
-- **Returns**:
-  - `selectedGraph`: Currently selected graph ID
-  - `showMeasurementDialog`: Dialog visibility state
-  - `handleConnectWithMeasurement`: Function to open dialog with graph
-  - `closeMeasurementDialog`: Function to close dialog and reset state
-  - `setShowMeasurementDialog`: Direct state setter
-- **Benefits**:
-  - Encapsulates dialog logic
-  - Reusable across components
-  - Clean state management
+> **Removed:** `MeasurementDialog`, `AddMeasurementForm` and the
+> `useMeasurementDialog` hook were deleted when the backend dropped the
+> `createMeasurement` mutation. Measurements are now recorded as supporting
+> evidence on `createNaturalEvent` / `createProtocolEvent`; there is currently
+> no UI for that.
 
 ## Benefits of Refactoring
 
@@ -145,10 +116,7 @@ src/kraph/
 ├── components/
 │   ├── KnowledgeViewCarousel.tsx     # Carousel component
 │   ├── KnowledgeViewCard.tsx         # Individual card component
-│   ├── StructureConnectionActions.tsx # Action buttons
-│   └── MeasurementDialog.tsx         # Measurement modal
-└── hooks/
-    └── useMeasurementDialog.ts       # Dialog state management
+│   └── StructureConnectionActions.tsx # Action buttons
 ```
 
 ## Testing Strategy

@@ -3,64 +3,19 @@ import { CommandItem } from "@/components/ui/command";
 import {
   ListMaterializedMeasurementEdgeFragment,
   ListMaterializedStructureRelationEdgeFragment,
-  ListRelationCategoryFragment,
-  useCreateRelationMutation,
   useCreateStructureRelationMutation,
   useEnsureStructureMutation,
   useListGraphsQuery,
   useListMaterializedMeasurementsQuery,
   useListMaterializedStructureRelationEdgesQuery,
-  useListRelationCategoryQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
 import { CommandGroup } from "cmdk";
-import { GitBranchPlus, Link2, Network, PlusCircle, Ruler } from "lucide-react";
+import { GitBranchPlus, Network, Ruler, Search } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
-
-export const EntityRelateButton = (props: {
-  relation: ListRelationCategoryFragment;
-  left: Structure[];
-  right: Structure[];
-  children: React.ReactNode;
-}) => {
-  const [createRelation] = useCreateRelationMutation();
-
-  const handleRelationCreation = async () => {
-    for (const left of props.left) {
-      for (const right of props.right) {
-        try {
-          await createRelation({
-            variables: {
-              input: {
-                sourceId: left.object.id,
-                targetId: right.object.id,
-                category: props.relation.id,
-              },
-            },
-          });
-          toast.success("Relation created successfully!");
-        } catch (error) {
-          toast.error(
-            error instanceof Error ? error.message : "Failed to create relation",
-          );
-        }
-      }
-    }
-  };
-
-  return (
-    <CommandActionRow
-      value={props.relation.label}
-      onSelect={handleRelationCreation}
-      title={props.relation.label}
-      description={props.relation.description}
-      icon={Link2}
-    />
-  );
-};
 
 export const StructureRelateButton = (props: {
   materializedEdge: ListMaterializedStructureRelationEdgeFragment;
@@ -128,6 +83,9 @@ export const StructureRelateButton = (props: {
   );
 };
 
+// NOTE: With `createMeasurement` gone from the backend the `setasmeasurement`
+// dialog can only browse the candidate entities, so this row is labelled for
+// what it actually does rather than promising a write.
 export const CreateMeasurementButton = (props: {
   edge: ListMaterializedMeasurementEdgeFragment;
   left: PassDownProps;
@@ -144,64 +102,10 @@ export const CreateMeasurementButton = (props: {
           edge: props.edge,
         }, { size: "large" });
       }}
-      title={<div className="font-light">measures {props.edge.edge.label} for {props.edge.target.label}</div>}
+      title={<div className="font-light">browse {props.edge.target.label} for {props.edge.edge.label}</div>}
       description={props.edge.graph.name}
-      icon={Ruler}
+      icon={Search}
     />
-  );
-};
-
-export const EntityRelationActions = (props: PassDownProps) => {
-  const firstPartner = props.partners?.at(0);
-  const firstObject = props.objects.at(0);
-  const dialog = useDialog();
-
-  const { data, error } = useListRelationCategoryQuery({
-    variables: {
-      filters: {
-        search: props.filter && props.filter !== "" ? props.filter : undefined,
-      },
-    },
-    fetchPolicy: "network-only",
-  });
-
-  if (!firstPartner || !firstObject) {
-    return null;
-  }
-
-  return (
-    <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><Link2 className="h-3.5 w-3.5" /><span>Relate Entities</span></span>}
-    >
-      {data?.relationCategories.map((relation) => (
-        <EntityRelateButton
-          relation={relation}
-          right={props.partners || []}
-          left={props.objects}
-          key={relation.id}
-        >
-          {relation.label}
-        </EntityRelateButton>
-      ))}
-      {error && (
-        <CommandItem value="error" className="flex-1">
-          <span className="text-red-500">Error: {error.message}</span>
-        </CommandItem>
-      )}
-      <CommandItem
-        value="no-relation"
-        onSelect={() =>
-          dialog.openDialog("createnewrelation", {
-            left: props.objects,
-            right: props.partners || [],
-          })
-        }
-        className="flex-1"
-      >
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Create new Relation
-      </CommandItem>
-    </CommandGroup>
   );
 };
 
@@ -349,11 +253,17 @@ export const ApplicableRelations = (props: PassDownProps) => {
     return <ApplicableMeasurements {...props} />;
   }
 
+  // NOTE: The backend removed `createRelation` / `updateRelation`, so
+  // entity <-> entity relations can no longer be created directly — they are
+  // now derived from the role mappings of `createNaturalEvent` /
+  // `createProtocolEvent`. Rather than offer an entry that always fails, the
+  // entity <-> entity case has no applicable actions until an event-based
+  // path exists. `createStructureRelation` is unaffected (below).
   if (
     firstPartner?.identifier === "@kraph/entity" &&
     firstObject?.identifier === "@kraph/entity"
   ) {
-    return <EntityRelationActions {...props} />;
+    return null;
   }
 
   return <StructureRelationActions {...props} />;

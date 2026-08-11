@@ -1,0 +1,3 @@
+mutation DeleteADataset($id: ID!) {
+  deleteADataset(input: { id: $id })
+}

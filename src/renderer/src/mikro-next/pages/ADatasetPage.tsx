@@ -4,6 +4,7 @@ import { MikroADataset } from '@/linkers'
 import { useCallback, useState } from 'react'
 import { useGetADatasetQuery, useGetSceneQuery } from '../api/graphql'
 import { DatasetBackdrop } from '../components/adataset/DatasetBackdrop'
+import { MoveToFolderButton } from '../components/folder/MoveToFolderButton'
 import { DatasetTitleOverlay } from '../components/adataset/DatasetTitleOverlay'
 import { Scene } from '../components/scene/Scene'
 import { DatasetInfoSidebar } from '../components/sidebars/DatasetInfoSidebar'
@@ -49,6 +50,17 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
       variant="black"
       overlay
       actions={<MikroADataset.Actions object={dataset} />}
+      pageActions={
+        <div className="flex items-center gap-2">
+          {/* `folder` is nullable and the null is meaningful — a dataset nobody
+              filed reads "Unfiled", which is not the same as not knowing. */}
+          <MoveToFolderButton
+            subject={{ kind: "adataset", ids: [dataset.id] }}
+            currentFolder={dataset.folder ?? null}
+          />
+          <MikroADataset.ObjectButton object={dataset} />
+        </div>
+      }
       additionalSidebars={
         <>
           <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>

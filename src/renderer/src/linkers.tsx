@@ -564,11 +564,6 @@ export const MikroScene = buildSmart(
   "mikro/scenes",
   { name: "Scene" },
 );
-export const MikroTable = buildSmart(
-  "@mikro/table",
-  "mikro/tables",
-  { name: "Table" },
-);
 export const MikroTableDataset = buildSmart(
   "@mikro/tabledataset",
   "mikro/tabledatasets",

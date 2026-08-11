@@ -54,6 +54,13 @@ fragment ADataset on ADataset {
   # What the dataset structurally is. On the list fragment for the card badges;
   # here because the detail page's Info panel leads with the same tags.
   spec
+  # Where a user keeps this dataset. Organisational only — it says nothing about
+  # where the data sits in space, which is `intrinsicSystem` and the edges out
+  # of it. Null for a dataset nobody filed.
+  folder {
+    id
+    name
+  }
   # The structural pixel grid: the space ROIs resolve against and every level
   # and lens maps into.
   intrinsicSystem {

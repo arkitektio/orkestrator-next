@@ -777,8 +777,8 @@ input CreateGraphTableQueryThroughBuilderInput {
   """
   name: String = null
 
-  """The Cypher query string that defines this graph query"""
-  query: String!
+  """Ignored; the query is generated from the builder arguments"""
+  query: String = null
 }
 
 """Input for creating a new measurement definition in the graph schema"""
@@ -828,21 +828,6 @@ input CreateMeasurementDefinitionInput {
 
   """Target entity type(s)"""
   target: EntityDescriptorInput!
-}
-
-"""Input for creating a new measurement edge"""
-input CreateMeasurementInput {
-  """The unique ID of the measurement category"""
-  category: String!
-
-  """The ID of the source entity/structure"""
-  sourceId: String!
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
-
-  """The ID of the target entity/structure"""
-  targetId: String!
 }
 
 """Input for creating a new metric definition in the graph schema"""
@@ -1143,23 +1128,6 @@ input CreateRelationDefinitionInput {
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!]! = []
-}
-
-"""
-Input for creating a new relation between two entities with supporting evidence
-"""
-input CreateRelationInput {
-  """The unique ID of the structure this metric is associated with"""
-  category: String!
-
-  """The ID of the source entity/structure"""
-  sourceId: String!
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
-
-  """The ID of the target entity/structure"""
-  targetId: String!
 }
 
 """Input for creating a scatter plot"""
@@ -2456,18 +2424,6 @@ input GraphNodesQueryOrder @oneOf {
   label: Ordering
 }
 
-"""Result of linking a structure to an entity"""
-type GraphNodesRender {
-  """The graph rendered by this query"""
-  graph: Graph!
-
-  """The graph name used for this render"""
-  graphName: String!
-
-  """The graph query used for this render"""
-  query: GraphNodesQuery!
-}
-
 input GraphOrder @oneOf {
   id: Ordering
   name: Ordering
@@ -2534,24 +2490,6 @@ type GraphPathQuery implements GraphQuery {
 
   """List of node categories for which this query is relevant"""
   relevantFor: [NodeCategory!]!
-}
-
-"""Result of linking a structure to an entity"""
-type GraphPathRender implements PathLike {
-  """The graph name used for this render"""
-  edges: [Edge!]!
-
-  """The graph rendered by this query"""
-  graph: Graph!
-
-  """The graph name used for this render"""
-  graphName: String!
-
-  """The graph name used for this render"""
-  nodes: [Node!]!
-
-  """The graph query used for this render"""
-  query: GraphPathQuery!
 }
 
 """Base interface for entity categories/schemas"""
@@ -3518,9 +3456,6 @@ type Mutation {
   """Create or update a graph table query using builder arguments"""
   createGraphTableQueryThroughBuilder(input: CreateGraphTableQueryThroughBuilderInput!): GraphTableQuery!
 
-  """Create a new measurement in the graph"""
-  createMeasurement(input: CreateMeasurementInput!): Measurement!
-
   """Create a new measurement category/schema in the graph"""
   createMeasurementCategory(input: CreateMeasurementDefinitionInput!): MeasurementCategory!
 
@@ -3550,9 +3485,6 @@ type Mutation {
 
   """Create a new protocol event category/schema in the graph"""
   createProtocolEventCategory(input: CreateProtocolEventDefinitionInput!): ProtocolEventCategory!
-
-  """Create a new relation in the graph"""
-  createRelation(input: CreateRelationInput!): Relation!
 
   """Create a new relation category/schema in the graph"""
   createRelationCategory(input: CreateRelationDefinitionInput!): RelationCategory!
@@ -3721,9 +3653,6 @@ type Mutation {
   """Update the visual configuration of a graph in the graph engine"""
   updateGraphVisual(input: UpdateGraphVisualInput!): Graph!
 
-  """Update an existing measurement in the graph"""
-  updateMeasurement(input: UpdateMeasurementInput!): Measurement!
-
   """Update an existing measurement category/schema in the graph"""
   updateMeasurementCategory(input: UpdateMeasurementDefinitionInput!): MeasurementCategory!
 
@@ -3753,9 +3682,6 @@ type Mutation {
 
   """Update an existing protocol event category/schema in the graph"""
   updateProtocolEventCategory(input: UpdateProtocolEventDefinitionInput!): ProtocolEventCategory!
-
-  """Update an existing relation in the graph"""
-  updateRelation(input: UpdateRelationInput!): Relation!
 
   """Update an existing relation category/schema in the graph"""
   updateRelationCategory(input: UpdateRelationDefinitionInput!): RelationCategory!
@@ -4317,15 +4243,6 @@ type OutputParticipation implements Edge {
 
   """Global ID of the target/right node"""
   targetId: String!
-}
-
-"""Base interface for graph render results"""
-interface PathLike {
-  """Edges in the path"""
-  edges: [Edge!]!
-
-  """Nodes in the path"""
-  nodes: [Node!]!
 }
 
 """Input for creating a new structure"""
@@ -4930,15 +4847,6 @@ type Query {
   """List relations for a relation category"""
   relations(filters: RelationFilter = null, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null, relationCategoryId: ID!): [Relation!]!
 
-  """Render results for a graph nodes query"""
-  renderGraphNodes(filters: RenderGraphNodesFilter = null, order: RenderGraphNodesOrder = null, pagination: RenderGraphNodesPagination = null, query: ID!): GraphNodesRender!
-
-  """Render results for a graph pairs query"""
-  renderGraphPairs(filters: RenderGraphPathFilter = null, order: RenderGraphPathOrder = null, pagination: RenderGraphPathPagination = null, query: ID!): GraphPathRender!
-
-  """Render results for a graph path query"""
-  renderGraphPath(filters: RenderGraphPathFilter = null, order: RenderGraphPathOrder = null, pagination: RenderGraphPathPagination = null, query: ID!): GraphPathRender
-
   """Render results for a graph table query"""
   renderGraphTable(filters: RenderGraphTableFilter = null, order: RenderGraphTableOrder = null, pagination: RenderGraphTablePagination = null, query: ID!): GraphTableRender
 
@@ -5273,45 +5181,6 @@ type RelationShadowLink implements Node {
 
   """Tags associated with this node"""
   tags: [String!]!
-}
-
-"""Filters for querying node lists"""
-input RenderGraphNodesFilter {
-  key: String!
-  operator: String!
-  value: String!
-}
-
-"""Ordering options for querying node lists"""
-input RenderGraphNodesOrder {
-  direction: String! = "asc"
-  key: String!
-}
-
-"""Pagination options for querying node lists"""
-input RenderGraphNodesPagination {
-  limit: Int!
-  offset: Int!
-}
-
-"""Filters for querying node lists"""
-input RenderGraphPathFilter {
-  key: String = null
-  operator: String = null
-  search: String = null
-  value: String = null
-}
-
-"""Ordering options for querying node lists"""
-input RenderGraphPathOrder {
-  direction: String! = "asc"
-  key: String!
-}
-
-"""Pagination options for querying node lists"""
-input RenderGraphPathPagination {
-  limit: Int!
-  offset: Int!
 }
 
 """Filters for querying node lists"""
@@ -6357,21 +6226,6 @@ input UpdateMeasurementDefinitionInput {
   target: EntityDescriptorInput!
 }
 
-"""Input for updating an existing measurement edge"""
-input UpdateMeasurementInput {
-  """The ID of the measurement to update"""
-  id: String!
-
-  """The ID of the source entity/structure"""
-  sourceId: String!
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
-
-  """The ID of the target entity/structure"""
-  targetId: String!
-}
-
 """Input for updating an existing metric definition in the graph schema"""
 input UpdateMetricDefinitionInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
@@ -6676,21 +6530,6 @@ input UpdateRelationDefinitionInput {
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!]! = []
-}
-
-"""Input for updating an existing relation"""
-input UpdateRelationInput {
-  """The ID of the relation to update"""
-  id: String!
-
-  """The ID of the source entity/structure"""
-  sourceId: String!
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
-
-  """The ID of the target entity/structure"""
-  targetId: String!
 }
 
 """Input for updating a scatter plot"""

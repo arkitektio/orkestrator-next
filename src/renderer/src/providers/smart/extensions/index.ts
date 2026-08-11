@@ -14,8 +14,6 @@ import {
 	ApplicableMeasurements as KraphApplicableMeasurements,
 	ApplicableRelations as KraphApplicableRelations,
 	CreateMeasurementButton as KraphCreateMeasurementButton,
-	EntityRelateButton as KraphEntityRelateButton,
-	EntityRelationActions as KraphEntityRelationActions,
 	MeasurementActions as KraphMeasurementActions,
 	StructureRelateButton as KraphStructureRelateButton,
 	StructureRelationActions as KraphStructureRelationActions,
@@ -56,8 +54,6 @@ export const LocalActionCommand = LocalActionCommandComponent;
 export const ApplicableMeasurements = KraphApplicableMeasurements;
 export const ApplicableRelations = KraphApplicableRelations;
 export const CreateMeasurementButton = KraphCreateMeasurementButton;
-export const EntityRelateButton = KraphEntityRelateButton;
-export const EntityRelationActions = KraphEntityRelationActions;
 export const MeasurementActions = KraphMeasurementActions;
 export const StructureRelateButton = KraphStructureRelateButton;
 export const StructureRelationActions = KraphStructureRelationActions;

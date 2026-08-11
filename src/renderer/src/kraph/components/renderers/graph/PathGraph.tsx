@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  GraphPathRenderFragment,
-  RenderGraphPathFilter,
-  useRenderGraphPathQuery
-} from "@/kraph/api/graphql.js";
+import { PathEdgeFragment, PathNodeFragment } from "@/kraph/api/graphql.js";
 import {
   ReactFlow,
   ReactFlowInstance,
@@ -34,8 +29,19 @@ import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
 
+/**
+ * The backend removed the `GraphPathRender` type, so there is no generated
+ * fragment for a whole path any more. The viewer only ever needed the node and
+ * edge lists, so it is typed structurally off the surviving `PathNode` /
+ * `PathEdge` fragments.
+ */
+export type Path = {
+  nodes: readonly PathNodeFragment[];
+  edges: readonly PathEdgeFragment[];
+};
+
 export type Props = {
-  path: GraphPathRenderFragment;
+  path: Path;
   root?: string;
   options?: ViewOptions;
 };
@@ -89,7 +95,7 @@ const stressLayout = {
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 };
 
-const hashPash = (path: GraphPathRenderFragment): string => {
+const hashPash = (path: Path): string => {
   return JSON.stringify(path);
 };
 
@@ -193,61 +199,16 @@ export const PathGraph = (props: Props) => {
   );
 };
 
-export const RenderGraphPath = (props: {
+// NOTE: The backend removed the `renderGraphPath` query (and the
+// `GraphPathRender` type it returned), so a `NodePathQuery` can no longer be
+// fetched. `PathGraph` itself still works and is kept ready for whatever query
+// replaces it — only the fetching wrapper is an unavailable placeholder, in
+// line with `renderers/pairs/Pairs.tsx`.
+export const RenderGraphPath = (_props: {
   graphQueryId: string;
   options?: ViewOptions;
-}) => {
-  const [search, setSearch] = React.useState<string>("");
-
-  // Prepare GraphQL variables
-  const filters: RenderGraphPathFilter = {
-    search: search || undefined,
-  };
-
-  const { data, loading, error } = useRenderGraphPathQuery({
-    variables: {
-      id: props.graphQueryId,
-      filters,
-    },
-  });
-
-  // Extract the Path from the response
-  const path = data?.renderGraphPath;
-
-  // Handle search with debouncing
-  const debouncedSetSearch = React.useCallback(
-    React.useMemo(() => {
-      let timeoutId: NodeJS.Timeout;
-      return (value: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          setSearch(value);
-        }, 300);
-      };
-    }, []),
-    [],
-  );
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div className="w-full h-full">
-      {!props.options?.minimal && (
-        <div className="flex items-center py-4 gap-2">
-          <Input
-            placeholder="Search path..."
-            onChange={(event) => debouncedSetSearch(event.target.value)}
-            className="max-w-sm w-full bg-background"
-          />
-        </div>
-      )}
-      {path && <PathGraph path={path} options={props.options} />}
-    </div>
-  );
-};
+}) => (
+  <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground p-4">
+    Path view is not available.
+  </div>
+);

@@ -12,27 +12,27 @@ import {
 import { Ordering, useGetFoldersQuery } from "@/mikro-next/api/graphql";
 import { Check, FolderInput, Search } from "lucide-react";
 import { toast } from "sonner";
-import { useFolderMove } from "./useFolderMove";
+import { describeSubject, useFolderMove, type FolderMoveSubject } from "./useFolderMove";
 
 /** How many folders the quick list offers before "Browse all folders…". */
 const RECENT_LIMIT = 5;
 
 export type MoveToFolderButtonProps = {
-  /** The files this button moves. */
-  files: string[];
+  /** What this button files. */
+  subject: FolderMoveSubject;
   /**
-   * The folder they sit in now, shown as a badge on the trigger.
+   * The folder it sits in now, shown as a badge on the trigger.
    *
-   * `undefined` means *unknown* and draws no badge — which is what every caller
-   * passes today, because the mikro schema exposes no folder field on `File`
-   * (only `FileFilter.folder`, so the relation exists but cannot be read back).
+   * `undefined` means *unknown* and draws no badge — which is what a file page
+   * passes, because mikro exposes no folder field on `File` (only
+   * `FileFilter.folder`, so the relation exists but cannot be read back).
    * `null` is the different, knowable claim "in no folder".
    */
   currentFolder?: { id: string; name: string } | null;
 };
 
 /**
- * Move files into a folder, in one click for the common case.
+ * Move something into a folder, in one click for the common case.
  *
  * The dropdown lists the newest folders — most work happens in something made
  * recently — and hands off to the searchable picker dialog for everything else.
@@ -40,11 +40,11 @@ export type MoveToFolderButtonProps = {
  * {@link useFolderMove}.
  */
 export const MoveToFolderButton = ({
-  files,
+  subject,
   currentFolder,
 }: MoveToFolderButtonProps) => {
   const { openDialog } = useDialog();
-  const { putFilesInFolder, moveOptions, loading } = useFolderMove();
+  const { move, loading } = useFolderMove();
 
   // Newest first. Not scoped to the current user: mikro filters `owner` by the
   // creator's *sub*, which nothing in the client can supply — lok's `me` carries
@@ -57,15 +57,9 @@ export const MoveToFolderButton = ({
     },
   });
 
-  const move = (folder: { id: string; name: string }) => {
-    putFilesInFolder(moveOptions(files, folder.id))
-      .then(() =>
-        toast.success(
-          files.length > 1
-            ? `${files.length} files moved to ${folder.name}`
-            : `Moved to ${folder.name}`,
-        ),
-      )
+  const moveTo = (folder: { id: string; name: string }) => {
+    move(subject, folder.id)
+      .then(() => toast.success(`Moved to ${folder.name}`))
       .catch((e: Error) => toast.error("Could not move: " + e.message));
   };
 
@@ -76,7 +70,7 @@ export const MoveToFolderButton = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          disabled={loading || files.length === 0}
+          disabled={loading || subject.ids.length === 0}
           className="flex items-center gap-2 shadow-sm"
         >
           <FolderInput className="h-4 w-4" />
@@ -90,7 +84,7 @@ export const MoveToFolderButton = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          Recent folders
+          Move {describeSubject(subject)} to
         </DropdownMenuLabel>
         {folders.map((folder) => {
           const isCurrent = folder.id === currentFolder?.id;
@@ -98,7 +92,7 @@ export const MoveToFolderButton = ({
             <DropdownMenuItem
               key={folder.id}
               disabled={isCurrent}
-              onSelect={() => move({ id: folder.id, name: folder.name })}
+              onSelect={() => moveTo({ id: folder.id, name: folder.name })}
               className="flex items-center justify-between gap-2"
             >
               <span className="truncate">{folder.name}</span>
@@ -116,7 +110,7 @@ export const MoveToFolderButton = ({
           onSelect={() =>
             openDialog(
               "movetofolder",
-              { files, currentFolder: currentFolder?.id ?? null },
+              { subject, currentFolder: currentFolder?.id ?? null },
               { className: "max-w-lg" },
             )
           }

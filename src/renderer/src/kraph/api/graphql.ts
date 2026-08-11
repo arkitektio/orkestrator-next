@@ -679,8 +679,8 @@ export type CreateGraphTableQueryThroughBuilderInput = {
   key: Scalars['String']['input'];
   /** Human-readable name for this graph query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** The Cypher query string that defines this graph query */
-  query: Scalars['String']['input'];
+  /** Ignored; the query is generated from the builder arguments */
+  query?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for creating a new measurement definition in the graph schema */
@@ -713,18 +713,6 @@ export type CreateMeasurementDefinitionInput = {
   tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: EntityDescriptorInput;
-};
-
-/** Input for creating a new measurement edge */
-export type CreateMeasurementInput = {
-  /** The unique ID of the measurement category */
-  category: Scalars['String']['input'];
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
 };
 
 /** Input for creating a new metric definition in the graph schema */
@@ -929,18 +917,6 @@ export type CreateRelationDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
   tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for creating a new relation between two entities with supporting evidence */
-export type CreateRelationInput = {
-  /** The unique ID of the structure this metric is associated with */
-  category: Scalars['String']['input'];
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
 };
 
 /** Input for creating a scatter plot */
@@ -2071,17 +2047,6 @@ export type GraphNodesQueryOrder =
   { id: Ordering; label?: never; }
   |  { id?: never; label: Ordering; };
 
-/** Result of linking a structure to an entity */
-export type GraphNodesRender = {
-  __typename?: 'GraphNodesRender';
-  /** The graph rendered by this query */
-  graph: Graph;
-  /** The graph name used for this render */
-  graphName: Scalars['String']['output'];
-  /** The graph query used for this render */
-  query: GraphNodesQuery;
-};
-
 export type GraphOrder =
   { id: Ordering; name?: never; }
   |  { id?: never; name: Ordering; };
@@ -2135,21 +2100,6 @@ export type GraphPathQuery = GraphQuery & {
   label: Scalars['String']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
-};
-
-/** Result of linking a structure to an entity */
-export type GraphPathRender = PathLike & {
-  __typename?: 'GraphPathRender';
-  /** The graph name used for this render */
-  edges: Array<Edge>;
-  /** The graph rendered by this query */
-  graph: Graph;
-  /** The graph name used for this render */
-  graphName: Scalars['String']['output'];
-  /** The graph name used for this render */
-  nodes: Array<Node>;
-  /** The graph query used for this render */
-  query: GraphPathQuery;
 };
 
 /** Base interface for entity categories/schemas */
@@ -2994,8 +2944,6 @@ export type Mutation = {
   createGraphTableQuery: GraphTableQuery;
   /** Create or update a graph table query using builder arguments */
   createGraphTableQueryThroughBuilder: GraphTableQuery;
-  /** Create a new measurement in the graph */
-  createMeasurement: Measurement;
   /** Create a new measurement category/schema in the graph */
   createMeasurementCategory: MeasurementCategory;
   /** Create a new metric in the graph */
@@ -3016,8 +2964,6 @@ export type Mutation = {
   createProtocolEvent: ProtocolEvent;
   /** Create a new protocol event category/schema in the graph */
   createProtocolEventCategory: ProtocolEventCategory;
-  /** Create a new relation in the graph */
-  createRelation: Relation;
   /** Create a new relation category/schema in the graph */
   createRelationCategory: RelationCategory;
   /** Create a scatter plot */
@@ -3128,8 +3074,6 @@ export type Mutation = {
   updateGraphTableQuery: GraphTableQuery;
   /** Update the visual configuration of a graph in the graph engine */
   updateGraphVisual: Graph;
-  /** Update an existing measurement in the graph */
-  updateMeasurement: Measurement;
   /** Update an existing measurement category/schema in the graph */
   updateMeasurementCategory: MeasurementCategory;
   /** Update an existing metric in the graph */
@@ -3150,8 +3094,6 @@ export type Mutation = {
   updateProtocolEvent: ProtocolEvent;
   /** Update an existing protocol event category/schema in the graph */
   updateProtocolEventCategory: ProtocolEventCategory;
-  /** Update an existing relation in the graph */
-  updateRelation: Relation;
   /** Update an existing relation category/schema in the graph */
   updateRelationCategory: RelationCategory;
   /** Update a scatter plot */
@@ -3354,12 +3296,6 @@ export type MutationCreateGraphTableQueryThroughBuilderArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationCreateMeasurementArgs = {
-  input: CreateMeasurementInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationCreateMeasurementCategoryArgs = {
   input: CreateMeasurementDefinitionInput;
 };
@@ -3416,12 +3352,6 @@ export type MutationCreateProtocolEventArgs = {
 /** Graph Engine Mutations */
 export type MutationCreateProtocolEventCategoryArgs = {
   input: CreateProtocolEventDefinitionInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateRelationArgs = {
-  input: CreateRelationInput;
 };
 
 
@@ -3756,12 +3686,6 @@ export type MutationUpdateGraphVisualArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationUpdateMeasurementArgs = {
-  input: UpdateMeasurementInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationUpdateMeasurementCategoryArgs = {
   input: UpdateMeasurementDefinitionInput;
 };
@@ -3818,12 +3742,6 @@ export type MutationUpdateProtocolEventArgs = {
 /** Graph Engine Mutations */
 export type MutationUpdateProtocolEventCategoryArgs = {
   input: UpdateProtocolEventDefinitionInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationUpdateRelationArgs = {
-  input: UpdateRelationInput;
 };
 
 
@@ -4315,14 +4233,6 @@ export type OutputParticipation = Edge & {
   targetId: Scalars['String']['output'];
 };
 
-/** Base interface for graph render results */
-export type PathLike = {
-  /** Edges in the path */
-  edges: Array<Edge>;
-  /** Nodes in the path */
-  nodes: Array<Node>;
-};
-
 /** Input for creating a new structure */
 export type PinNodeInput = {
   /** The ID of the structure category/type to create */
@@ -4789,12 +4699,6 @@ export type Query = {
   relationCategoryStats: RelationCategoryStats;
   /** List relations for a relation category */
   relations: Array<Relation>;
-  /** Render results for a graph nodes query */
-  renderGraphNodes: GraphNodesRender;
-  /** Render results for a graph pairs query */
-  renderGraphPairs: GraphPathRender;
-  /** Render results for a graph path query */
-  renderGraphPath?: Maybe<GraphPathRender>;
   /** Render results for a graph table query */
   renderGraphTable?: Maybe<GraphTableRender>;
   /** Show a single saved scatter plot by ID */
@@ -5289,30 +5193,6 @@ export type QueryRelationsArgs = {
 };
 
 
-export type QueryRenderGraphNodesArgs = {
-  filters?: InputMaybe<RenderGraphNodesFilter>;
-  order?: InputMaybe<RenderGraphNodesOrder>;
-  pagination?: InputMaybe<RenderGraphNodesPagination>;
-  query: Scalars['ID']['input'];
-};
-
-
-export type QueryRenderGraphPairsArgs = {
-  filters?: InputMaybe<RenderGraphPathFilter>;
-  order?: InputMaybe<RenderGraphPathOrder>;
-  pagination?: InputMaybe<RenderGraphPathPagination>;
-  query: Scalars['ID']['input'];
-};
-
-
-export type QueryRenderGraphPathArgs = {
-  filters?: InputMaybe<RenderGraphPathFilter>;
-  order?: InputMaybe<RenderGraphPathOrder>;
-  pagination?: InputMaybe<RenderGraphPathPagination>;
-  query: Scalars['ID']['input'];
-};
-
-
 export type QueryRenderGraphTableArgs = {
   filters?: InputMaybe<RenderGraphTableFilter>;
   order?: InputMaybe<RenderGraphTableOrder>;
@@ -5647,45 +5527,6 @@ export type RelationShadowLink = Node & {
   reifies: Relation;
   /** Tags associated with this node */
   tags: Array<Scalars['String']['output']>;
-};
-
-/** Filters for querying node lists */
-export type RenderGraphNodesFilter = {
-  key: Scalars['String']['input'];
-  operator: Scalars['String']['input'];
-  value: Scalars['String']['input'];
-};
-
-/** Ordering options for querying node lists */
-export type RenderGraphNodesOrder = {
-  direction?: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-};
-
-/** Pagination options for querying node lists */
-export type RenderGraphNodesPagination = {
-  limit: Scalars['Int']['input'];
-  offset: Scalars['Int']['input'];
-};
-
-/** Filters for querying node lists */
-export type RenderGraphPathFilter = {
-  key?: InputMaybe<Scalars['String']['input']>;
-  operator?: InputMaybe<Scalars['String']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  value?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Ordering options for querying node lists */
-export type RenderGraphPathOrder = {
-  direction?: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-};
-
-/** Pagination options for querying node lists */
-export type RenderGraphPathPagination = {
-  limit: Scalars['Int']['input'];
-  offset: Scalars['Int']['input'];
 };
 
 /** Filters for querying node lists */
@@ -6536,18 +6377,6 @@ export type UpdateMeasurementDefinitionInput = {
   target: EntityDescriptorInput;
 };
 
-/** Input for updating an existing measurement edge */
-export type UpdateMeasurementInput = {
-  /** The ID of the measurement to update */
-  id: Scalars['String']['input'];
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
-};
-
 /** Input for updating an existing metric definition in the graph schema */
 export type UpdateMetricDefinitionInput = {
   /** Optional RGBA color for this node role (e.g. [255, 0, 0, 128]) */
@@ -6752,18 +6581,6 @@ export type UpdateRelationDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
   tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for updating an existing relation */
-export type UpdateRelationInput = {
-  /** The ID of the relation to update */
-  id: Scalars['String']['input'];
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
 };
 
 /** Input for updating a scatter plot */
@@ -7238,8 +7055,6 @@ export type EdgeQueryFragment = EdgeQuery_EdgePairsQuery_Fragment | EdgeQuery_Ed
 
 export type EdgeTableQueryFragment = { __typename?: 'EdgeTableQuery', id: string, label: string, description?: string | null, columns: Array<{ __typename?: 'Column', key: string, valueKind?: ValueKind | null, label?: string | null, kind: ColumnKind, description?: string | null, categoryKey?: string | null, searchable: boolean, isIdForKey?: string | null, preferHidden: boolean }>, builderArgs?: { __typename?: 'BuilderArgs', matchPaths?: Array<{ __typename?: 'MatchPath', nodes: Array<string>, relations: Array<string>, relationDirections?: Array<boolean> | null, title?: string | null, color?: Array<number> | null, optional: boolean }> | null, whereClauses?: Array<{ __typename?: 'WhereClause', path: string, node?: string | null, property: string, operator: WhereOperator, value: string }> | null, returnStatements?: Array<{ __typename?: 'ReturnStatement', path: string, property?: string | null, node?: string | null }> | null } | null, graph: { __typename?: 'Graph', id: string, name: string } };
 
-export type GraphPathRenderFragment = { __typename?: 'GraphPathRender', query: { __typename?: 'GraphPathQuery', graph: { __typename?: 'Graph', id: string, ageName: string } }, nodes: Array<{ __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'MeasurementShadowLink', id: string, label: string } | { __typename?: 'Metric', id: string, value: any, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'NaturalEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }, richProperties: Array<{ __typename?: 'RichProperty', value?: any | null }> } | { __typename?: 'RelationShadowLink', id: string, label: string } | { __typename?: 'Structure', id: string, label: string, category: { __typename?: 'StructureCategory', id: string, label: string } } | { __typename?: 'StructureRelationShadowLink', id: string, label: string }>, edges: Array<{ __typename?: 'Assertion', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> };
-
 type BaseGraphQuery_GraphNodesQuery_Fragment = { __typename?: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } };
 
 type BaseGraphQuery_GraphPairsQuery_Fragment = { __typename?: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } };
@@ -7585,13 +7400,6 @@ export type DeleteScatterPlotMutationVariables = Exact<{
 
 export type DeleteScatterPlotMutation = { __typename?: 'Mutation', deleteScatterPlot: string };
 
-export type CreateMeasurementMutationVariables = Exact<{
-  input: CreateMeasurementInput;
-}>;
-
-
-export type CreateMeasurementMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Measurement', category: { __typename?: 'MeasurementCategory', id: string, label: string } } };
-
 export type CreateMetricMutationVariables = Exact<{
   input: CreateMetricInput;
 }>;
@@ -7676,13 +7484,6 @@ export type UpdateProtocolEventMutationVariables = Exact<{
 
 export type UpdateProtocolEventMutation = { __typename?: 'Mutation', updateProtocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string }, graph: { __typename?: 'Graph', id: string } } };
 
-export type CreateRelationMutationVariables = Exact<{
-  input: CreateRelationInput;
-}>;
-
-
-export type CreateRelationMutation = { __typename?: 'Mutation', createRelation: { __typename?: 'Relation', category: { __typename?: 'RelationCategory', id: string, label: string } } };
-
 export type DeleteRelationMutationVariables = Exact<{
   id: Scalars['GraphID']['input'];
 }>;
@@ -7696,13 +7497,6 @@ export type ArchiveRelationMutationVariables = Exact<{
 
 
 export type ArchiveRelationMutation = { __typename?: 'Mutation', archiveRelation: { __typename?: 'Relation', category: { __typename?: 'RelationCategory', id: string, label: string } } };
-
-export type UpdateRelationMutationVariables = Exact<{
-  input: UpdateRelationInput;
-}>;
-
-
-export type UpdateRelationMutation = { __typename?: 'Mutation', updateRelation: { __typename?: 'Relation', category: { __typename?: 'RelationCategory', id: string, label: string } } };
 
 export type CreateEntityCategoryMutationVariables = Exact<{
   input: CreateEntityDefinitionInput;
@@ -8049,16 +7843,6 @@ export type ListGraphTableQueriesQueryVariables = Exact<{
 
 
 export type ListGraphTableQueriesQuery = { __typename?: 'Query', graphTableQueries: Array<{ __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
-
-export type RenderGraphPathQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-  filters?: InputMaybe<RenderGraphPathFilter>;
-  pagination?: InputMaybe<RenderGraphPathPagination>;
-  order?: InputMaybe<RenderGraphPathOrder>;
-}>;
-
-
-export type RenderGraphPathQuery = { __typename?: 'Query', renderGraphPath?: { __typename?: 'GraphPathRender', query: { __typename?: 'GraphPathQuery', graph: { __typename?: 'Graph', id: string, ageName: string } }, nodes: Array<{ __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'MeasurementShadowLink', id: string, label: string } | { __typename?: 'Metric', id: string, value: any, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'NaturalEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, measuredTo: any, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }, richProperties: Array<{ __typename?: 'RichProperty', value?: any | null }> } | { __typename?: 'RelationShadowLink', id: string, label: string } | { __typename?: 'Structure', id: string, label: string, category: { __typename?: 'StructureCategory', id: string, label: string } } | { __typename?: 'StructureRelationShadowLink', id: string, label: string }>, edges: Array<{ __typename?: 'Assertion', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string, label: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | null };
 
 export type RenderGraphTableQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8773,189 +8557,6 @@ export const DetailNodeFragmentDoc = gql`
   }
 }
     ${NodeFragmentDoc}`;
-export const ListNodeFragmentDoc = gql`
-    fragment ListNode on Node {
-  id
-  label
-}
-    `;
-export const MediaUploadGrantFragmentDoc = gql`
-    fragment MediaUploadGrant on MediaUploadGrant {
-  accessKey
-  secretKey
-  sessionToken
-  path
-  key
-  bucket
-  expiresIn
-  maxBytes
-  store
-}
-    `;
-export const MediaAccessGrantFragmentDoc = gql`
-    fragment MediaAccessGrant on MediaAccessGrant {
-  accessKey
-  secretKey
-  sessionToken
-  expiresIn
-  region
-  path
-  key
-  bucket
-}
-    `;
-export const BaseEdgeFragmentDoc = gql`
-    fragment BaseEdge on Edge {
-  id
-  sourceId
-  targetId
-}
-    `;
-export const MeasurementFragmentDoc = gql`
-    fragment Measurement on Measurement {
-  category {
-    id
-    label
-  }
-}
-    `;
-export const RelationFragmentDoc = gql`
-    fragment Relation on Relation {
-  category {
-    id
-    label
-  }
-}
-    `;
-export const StructureRelationFragmentDoc = gql`
-    fragment StructureRelation on StructureRelation {
-  id
-  sourceId
-  targetId
-  source {
-    id
-    label
-  }
-  target {
-    id
-    label
-  }
-  category {
-    id
-    label
-  }
-}
-    `;
-export const EdgeFragmentDoc = gql`
-    fragment Edge on Edge {
-  sourceId
-  targetId
-  ...BaseEdge
-  ...Measurement
-  ...Relation
-  ...StructureRelation
-}
-    ${BaseEdgeFragmentDoc}
-${MeasurementFragmentDoc}
-${RelationFragmentDoc}
-${StructureRelationFragmentDoc}`;
-export const ListEdgeQueryFragmentDoc = gql`
-    fragment ListEdgeQuery on EdgeQuery {
-  id
-  label
-  description
-  graph {
-    id
-    name
-  }
-  __typename
-}
-    `;
-export const BaseEdgeQueryFragmentDoc = gql`
-    fragment BaseEdgeQuery on EdgeQuery {
-  id
-  label
-  description
-  graph {
-    id
-    name
-  }
-}
-    `;
-export const ColumnFragmentDoc = gql`
-    fragment Column on Column {
-  key
-  valueKind
-  label
-  kind
-  description
-  categoryKey
-  searchable
-  isIdForKey
-  preferHidden
-}
-    `;
-export const MatchPathFragmentDoc = gql`
-    fragment MatchPath on MatchPath {
-  nodes
-  relations
-  relationDirections
-  title
-  color
-  optional
-}
-    `;
-export const WhereClauseFragmentDoc = gql`
-    fragment WhereClause on WhereClause {
-  path
-  node
-  property
-  operator
-  value
-}
-    `;
-export const ReturnStatementFragmentDoc = gql`
-    fragment ReturnStatement on ReturnStatement {
-  path
-  property
-  node
-}
-    `;
-export const BuilderArgsFragmentDoc = gql`
-    fragment BuilderArgs on BuilderArgs {
-  matchPaths {
-    ...MatchPath
-  }
-  whereClauses {
-    ...WhereClause
-  }
-  returnStatements {
-    ...ReturnStatement
-  }
-}
-    ${MatchPathFragmentDoc}
-${WhereClauseFragmentDoc}
-${ReturnStatementFragmentDoc}`;
-export const EdgeTableQueryFragmentDoc = gql`
-    fragment EdgeTableQuery on EdgeTableQuery {
-  ...BaseEdgeQuery
-  columns {
-    ...Column
-  }
-  builderArgs {
-    ...BuilderArgs
-  }
-}
-    ${BaseEdgeQueryFragmentDoc}
-${ColumnFragmentDoc}
-${BuilderArgsFragmentDoc}`;
-export const EdgeQueryFragmentDoc = gql`
-    fragment EdgeQuery on EdgeQuery {
-  ...BaseEdgeQuery
-  ...EdgeTableQuery
-}
-    ${BaseEdgeQueryFragmentDoc}
-${EdgeTableQueryFragmentDoc}`;
 export const PathActivityFragmentDoc = gql`
     fragment PathActivity on Activity {
   id
@@ -9101,6 +8702,92 @@ ${PathMetricFragmentDoc}
 ${PathRelationShadowLinkFragmentDoc}
 ${PathStructureRelationShadowLinkFragmentDoc}
 ${PathMeasurementRelationShadowLinkFragmentDoc}`;
+export const ListNodeFragmentDoc = gql`
+    fragment ListNode on Node {
+  id
+  label
+}
+    `;
+export const MediaUploadGrantFragmentDoc = gql`
+    fragment MediaUploadGrant on MediaUploadGrant {
+  accessKey
+  secretKey
+  sessionToken
+  path
+  key
+  bucket
+  expiresIn
+  maxBytes
+  store
+}
+    `;
+export const MediaAccessGrantFragmentDoc = gql`
+    fragment MediaAccessGrant on MediaAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  path
+  key
+  bucket
+}
+    `;
+export const BaseEdgeFragmentDoc = gql`
+    fragment BaseEdge on Edge {
+  id
+  sourceId
+  targetId
+}
+    `;
+export const MeasurementFragmentDoc = gql`
+    fragment Measurement on Measurement {
+  category {
+    id
+    label
+  }
+}
+    `;
+export const RelationFragmentDoc = gql`
+    fragment Relation on Relation {
+  category {
+    id
+    label
+  }
+}
+    `;
+export const StructureRelationFragmentDoc = gql`
+    fragment StructureRelation on StructureRelation {
+  id
+  sourceId
+  targetId
+  source {
+    id
+    label
+  }
+  target {
+    id
+    label
+  }
+  category {
+    id
+    label
+  }
+}
+    `;
+export const EdgeFragmentDoc = gql`
+    fragment Edge on Edge {
+  sourceId
+  targetId
+  ...BaseEdge
+  ...Measurement
+  ...Relation
+  ...StructureRelation
+}
+    ${BaseEdgeFragmentDoc}
+${MeasurementFragmentDoc}
+${RelationFragmentDoc}
+${StructureRelationFragmentDoc}`;
 export const PathMeasurementFragmentDoc = gql`
     fragment PathMeasurement on Measurement {
   id
@@ -9176,23 +8863,103 @@ ${PathAssertionFragmentDoc}
 ${PathDescriptionFragmentDoc}
 ${PathInputParticipationFragmentDoc}
 ${PathOutputParticipationFragmentDoc}`;
-export const GraphPathRenderFragmentDoc = gql`
-    fragment GraphPathRender on GraphPathRender {
-  query {
-    graph {
-      id
-      ageName
-    }
+export const ListEdgeQueryFragmentDoc = gql`
+    fragment ListEdgeQuery on EdgeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
   }
-  nodes {
-    ...PathNode
-  }
-  edges {
-    ...PathEdge
+  __typename
+}
+    `;
+export const BaseEdgeQueryFragmentDoc = gql`
+    fragment BaseEdgeQuery on EdgeQuery {
+  id
+  label
+  description
+  graph {
+    id
+    name
   }
 }
-    ${PathNodeFragmentDoc}
-${PathEdgeFragmentDoc}`;
+    `;
+export const ColumnFragmentDoc = gql`
+    fragment Column on Column {
+  key
+  valueKind
+  label
+  kind
+  description
+  categoryKey
+  searchable
+  isIdForKey
+  preferHidden
+}
+    `;
+export const MatchPathFragmentDoc = gql`
+    fragment MatchPath on MatchPath {
+  nodes
+  relations
+  relationDirections
+  title
+  color
+  optional
+}
+    `;
+export const WhereClauseFragmentDoc = gql`
+    fragment WhereClause on WhereClause {
+  path
+  node
+  property
+  operator
+  value
+}
+    `;
+export const ReturnStatementFragmentDoc = gql`
+    fragment ReturnStatement on ReturnStatement {
+  path
+  property
+  node
+}
+    `;
+export const BuilderArgsFragmentDoc = gql`
+    fragment BuilderArgs on BuilderArgs {
+  matchPaths {
+    ...MatchPath
+  }
+  whereClauses {
+    ...WhereClause
+  }
+  returnStatements {
+    ...ReturnStatement
+  }
+}
+    ${MatchPathFragmentDoc}
+${WhereClauseFragmentDoc}
+${ReturnStatementFragmentDoc}`;
+export const EdgeTableQueryFragmentDoc = gql`
+    fragment EdgeTableQuery on EdgeTableQuery {
+  ...BaseEdgeQuery
+  columns {
+    ...Column
+  }
+  builderArgs {
+    ...BuilderArgs
+  }
+}
+    ${BaseEdgeQueryFragmentDoc}
+${ColumnFragmentDoc}
+${BuilderArgsFragmentDoc}`;
+export const EdgeQueryFragmentDoc = gql`
+    fragment EdgeQuery on EdgeQuery {
+  ...BaseEdgeQuery
+  ...EdgeTableQuery
+}
+    ${BaseEdgeQueryFragmentDoc}
+${EdgeTableQueryFragmentDoc}`;
 export const BaseGraphQueryFragmentDoc = gql`
     fragment BaseGraphQuery on GraphQuery {
   id
@@ -10387,39 +10154,6 @@ export function useDeleteScatterPlotMutation(baseOptions?: ApolloReactHooks.Muta
 export type DeleteScatterPlotMutationHookResult = ReturnType<typeof useDeleteScatterPlotMutation>;
 export type DeleteScatterPlotMutationResult = Apollo.MutationResult<DeleteScatterPlotMutation>;
 export type DeleteScatterPlotMutationOptions = Apollo.BaseMutationOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
-export const CreateMeasurementDocument = gql`
-    mutation CreateMeasurement($input: CreateMeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Measurement
-  }
-}
-    ${MeasurementFragmentDoc}`;
-export type CreateMeasurementMutationFn = Apollo.MutationFunction<CreateMeasurementMutation, CreateMeasurementMutationVariables>;
-
-/**
- * __useCreateMeasurementMutation__
- *
- * To run a mutation, you first call `useCreateMeasurementMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateMeasurementMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createMeasurementMutation, { data, loading, error }] = useCreateMeasurementMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateMeasurementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMeasurementMutation, CreateMeasurementMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMeasurementMutation, CreateMeasurementMutationVariables>(CreateMeasurementDocument, options);
-      }
-export type CreateMeasurementMutationHookResult = ReturnType<typeof useCreateMeasurementMutation>;
-export type CreateMeasurementMutationResult = Apollo.MutationResult<CreateMeasurementMutation>;
-export type CreateMeasurementMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementMutation, CreateMeasurementMutationVariables>;
 export const CreateMetricDocument = gql`
     mutation CreateMetric($input: CreateMetricInput!) {
   createMetric(input: $input) {
@@ -10810,39 +10544,6 @@ export function useUpdateProtocolEventMutation(baseOptions?: ApolloReactHooks.Mu
 export type UpdateProtocolEventMutationHookResult = ReturnType<typeof useUpdateProtocolEventMutation>;
 export type UpdateProtocolEventMutationResult = Apollo.MutationResult<UpdateProtocolEventMutation>;
 export type UpdateProtocolEventMutationOptions = Apollo.BaseMutationOptions<UpdateProtocolEventMutation, UpdateProtocolEventMutationVariables>;
-export const CreateRelationDocument = gql`
-    mutation CreateRelation($input: CreateRelationInput!) {
-  createRelation(input: $input) {
-    ...Relation
-  }
-}
-    ${RelationFragmentDoc}`;
-export type CreateRelationMutationFn = Apollo.MutationFunction<CreateRelationMutation, CreateRelationMutationVariables>;
-
-/**
- * __useCreateRelationMutation__
- *
- * To run a mutation, you first call `useCreateRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateRelationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createRelationMutation, { data, loading, error }] = useCreateRelationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationMutation, CreateRelationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRelationMutation, CreateRelationMutationVariables>(CreateRelationDocument, options);
-      }
-export type CreateRelationMutationHookResult = ReturnType<typeof useCreateRelationMutation>;
-export type CreateRelationMutationResult = Apollo.MutationResult<CreateRelationMutation>;
-export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<CreateRelationMutation, CreateRelationMutationVariables>;
 export const DeleteRelationDocument = gql`
     mutation DeleteRelation($id: GraphID!) {
   deleteRelation(input: {id: $id})
@@ -10907,39 +10608,6 @@ export function useArchiveRelationMutation(baseOptions?: ApolloReactHooks.Mutati
 export type ArchiveRelationMutationHookResult = ReturnType<typeof useArchiveRelationMutation>;
 export type ArchiveRelationMutationResult = Apollo.MutationResult<ArchiveRelationMutation>;
 export type ArchiveRelationMutationOptions = Apollo.BaseMutationOptions<ArchiveRelationMutation, ArchiveRelationMutationVariables>;
-export const UpdateRelationDocument = gql`
-    mutation UpdateRelation($input: UpdateRelationInput!) {
-  updateRelation(input: $input) {
-    ...Relation
-  }
-}
-    ${RelationFragmentDoc}`;
-export type UpdateRelationMutationFn = Apollo.MutationFunction<UpdateRelationMutation, UpdateRelationMutationVariables>;
-
-/**
- * __useUpdateRelationMutation__
- *
- * To run a mutation, you first call `useUpdateRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateRelationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateRelationMutation, { data, loading, error }] = useUpdateRelationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRelationMutation, UpdateRelationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRelationMutation, UpdateRelationMutationVariables>(UpdateRelationDocument, options);
-      }
-export type UpdateRelationMutationHookResult = ReturnType<typeof useUpdateRelationMutation>;
-export type UpdateRelationMutationResult = Apollo.MutationResult<UpdateRelationMutation>;
-export type UpdateRelationMutationOptions = Apollo.BaseMutationOptions<UpdateRelationMutation, UpdateRelationMutationVariables>;
 export const CreateEntityCategoryDocument = gql`
     mutation CreateEntityCategory($input: CreateEntityDefinitionInput!) {
   createEntityCategory(input: $input) {
@@ -12565,49 +12233,6 @@ export function useListGraphTableQueriesLazyQuery(baseOptions?: ApolloReactHooks
 export type ListGraphTableQueriesQueryHookResult = ReturnType<typeof useListGraphTableQueriesQuery>;
 export type ListGraphTableQueriesLazyQueryHookResult = ReturnType<typeof useListGraphTableQueriesLazyQuery>;
 export type ListGraphTableQueriesQueryResult = Apollo.QueryResult<ListGraphTableQueriesQuery, ListGraphTableQueriesQueryVariables>;
-export const RenderGraphPathDocument = gql`
-    query RenderGraphPath($id: ID!, $filters: RenderGraphPathFilter, $pagination: RenderGraphPathPagination, $order: RenderGraphPathOrder) {
-  renderGraphPath(
-    query: $id
-    filters: $filters
-    pagination: $pagination
-    order: $order
-  ) {
-    ...GraphPathRender
-  }
-}
-    ${GraphPathRenderFragmentDoc}`;
-
-/**
- * __useRenderGraphPathQuery__
- *
- * To run a query within a React component, call `useRenderGraphPathQuery` and pass it any options that fit your needs.
- * When your component renders, `useRenderGraphPathQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useRenderGraphPathQuery({
- *   variables: {
- *      id: // value for 'id'
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useRenderGraphPathQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RenderGraphPathQuery, RenderGraphPathQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RenderGraphPathQuery, RenderGraphPathQueryVariables>(RenderGraphPathDocument, options);
-      }
-export function useRenderGraphPathLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RenderGraphPathQuery, RenderGraphPathQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RenderGraphPathQuery, RenderGraphPathQueryVariables>(RenderGraphPathDocument, options);
-        }
-export type RenderGraphPathQueryHookResult = ReturnType<typeof useRenderGraphPathQuery>;
-export type RenderGraphPathLazyQueryHookResult = ReturnType<typeof useRenderGraphPathLazyQuery>;
-export type RenderGraphPathQueryResult = Apollo.QueryResult<RenderGraphPathQuery, RenderGraphPathQueryVariables>;
 export const RenderGraphTableDocument = gql`
     query RenderGraphTable($id: ID!, $filters: RenderGraphTableFilter, $pagination: RenderGraphTablePagination, $order: RenderGraphTableOrder) {
   renderGraphTable(

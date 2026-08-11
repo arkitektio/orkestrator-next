@@ -27,7 +27,6 @@ import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
 import { InstrumentDisplay } from "@/mikro-next/displays/InstrumentDisplay";
 import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
-import { TableDisplay } from "@/mikro-next/displays/TableDisplay";
 import { TableDatasetDisplay } from "@/mikro-next/displays/TableDatasetDisplay";
 
 // Import your display components here
@@ -43,7 +42,6 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@mikro/scene": SceneDisplay,
     "@mikro/snapshot": SnapshotDisplay,
     "@mikro/folder": FolderDisplay,
-    "@mikro/table": TableDisplay,
     "@mikro/tabledataset": TableDatasetDisplay,
     "@mikro/instrument": InstrumentDisplay,
     // elektro

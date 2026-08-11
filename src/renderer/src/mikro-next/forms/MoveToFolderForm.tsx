@@ -1,4 +1,4 @@
-import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
+import { useDialog } from "@/app/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   DialogDescription,
@@ -6,21 +6,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useFolderMove } from "@/mikro-next/components/folder/useFolderMove";
+import {
+  describeSubject,
+  useFolderMove,
+  type FolderMoveSubject,
+} from "@/mikro-next/components/folder/useFolderMove";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useGetFoldersQuery } from "../api/graphql";
 
-/**
- * Pick the folder to move files into.
- *
- * Only files are movable: `putFilesInFolder` is the mutation behind it, and
- * there is no equivalent for array datasets (`ADataset`), which carry no folder
- * membership at all.
- */
+/** Pick the folder to file files or array datasets into. */
 export type MoveToFolderFormProps = {
-  /** The files to move. */
-  files: string[];
-  /** The folder they sit in now, when known — it is marked and unclickable. */
+  /** What is being moved. */
+  subject: FolderMoveSubject;
+  /** The folder it sits in now, when known — marked and unclickable. */
   currentFolder?: string | null;
 };
 
@@ -29,7 +28,8 @@ const FOLDER_LIMIT = 20;
 export const MoveToFolderForm = (props: MoveToFolderFormProps) => {
   const [search, setSearch] = useState("");
   const [pending, setPending] = useState<string>();
-  const { putFilesInFolder, moveOptions } = useFolderMove();
+  const { closeDialog } = useDialog();
+  const { move: moveTo } = useFolderMove();
 
   const { data, loading } = useGetFoldersQuery({
     variables: {
@@ -38,18 +38,15 @@ export const MoveToFolderForm = (props: MoveToFolderFormProps) => {
     },
   });
 
-  const submit = useGraphQLDialog(putFilesInFolder, {
-    successMessage:
-      props.files.length > 1
-        ? `${props.files.length} files moved`
-        : "File moved",
-  });
-
-  const move = (folder: string) => {
-    setPending(folder);
-    submit(moveOptions(props.files, folder)).finally(() =>
-      setPending(undefined),
-    );
+  const move = (folder: { id: string; name: string }) => {
+    setPending(folder.id);
+    moveTo(props.subject, folder.id)
+      .then(() => {
+        toast.success(`Moved to ${folder.name}`);
+        closeDialog();
+      })
+      .catch((e: Error) => toast.error("Could not move: " + e.message))
+      .finally(() => setPending(undefined));
   };
 
   const folders = data?.folders ?? [];
@@ -59,9 +56,7 @@ export const MoveToFolderForm = (props: MoveToFolderFormProps) => {
       <DialogHeader>
         <DialogTitle>Move to Folder</DialogTitle>
         <DialogDescription>
-          {props.files.length > 1
-            ? `Move ${props.files.length} files into a folder`
-            : "Move this file into a folder"}
+          Move {describeSubject(props.subject)} into a folder
         </DialogDescription>
       </DialogHeader>
       <div className="mt-2 flex flex-col gap-2">
@@ -78,7 +73,7 @@ export const MoveToFolderForm = (props: MoveToFolderFormProps) => {
               disabled={
                 pending !== undefined || folder.id === props.currentFolder
               }
-              onClick={() => move(folder.id)}
+              onClick={() => move({ id: folder.id, name: folder.name })}
               className="flex w-full items-center justify-between gap-2 rounded border border-input p-2 text-left transition-colors hover:bg-accent disabled:opacity-50"
             >
               <div className="min-w-0">

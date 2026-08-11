@@ -292,8 +292,8 @@ const TransferEditor = ({
 };
 
 /**
- * The opacity / invert / categorical knobs — advanced transfer controls kept out
- * of the default histogram-first view. Rendered inside the channel's "Advanced"
+ * The opacity / invert knobs — advanced transfer controls kept out of the
+ * default histogram-first view. Rendered inside the channel's "Advanced"
  * disclosure alongside the intensity source fields.
  */
 const AdvancedTransferControls = ({
@@ -323,10 +323,6 @@ const AdvancedTransferControls = ({
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground">Invert</span>
         <Switch checked={!!transfer.invert} onCheckedChange={(v) => set({ invert: v })} />
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-muted-foreground">Categorical</span>
-        <Switch checked={!!transfer.categorical} onCheckedChange={(v) => set({ categorical: v })} />
       </div>
     </>
   );
@@ -388,8 +384,8 @@ const ChannelNodeEditor = ({
             layer={layer}
           />
 
-          {/* Intensity source + opacity/invert/categorical are advanced knobs,
-              hidden by default to keep the histogram the focus. */}
+          {/* Intensity source + opacity/invert are advanced knobs, hidden by
+              default to keep the histogram the focus. */}
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}

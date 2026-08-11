@@ -2,15 +2,18 @@ import type { LayerState } from "../../core/layerModel";
 
 /**
  * What kind of data an image layer paints — the layer list's color code.
- * Derived from the render graph, never stored: a phasor node makes it FLIM, a
- * categorical primary transfer makes it a label map, several channel sources
- * make it multichannel, anything else is a plain image.
+ * Derived from the render graph, never stored: a phasor node makes it FLIM,
+ * several channel sources make it multichannel, anything else is a plain image.
+ *
+ * "Labels" used to be derived here from a `transfer.categorical` flag. That flag
+ * no longer exists — a label map is its own `LabelLayer` type now, so the flavor
+ * comes from the layer's `__typename` rather than from its render graph. The
+ * badge is wired up when `LabelLayer` joins `LayerState`.
  */
 export type LayerFlavor = "FLIM" | "Labels" | "Multichannel" | "Image";
 
 export const layerFlavor = (layer: LayerState): LayerFlavor => {
   if (layer.phasors.length > 0) return "FLIM";
-  if (layer.channels[0]?.transfer?.categorical) return "Labels";
   if (layer.channels.length > 1) return "Multichannel";
   return "Image";
 };

@@ -34,6 +34,7 @@
     "Layer": [
       "AnnotationLayer",
       "ImageLayer",
+      "LabelLayer",
       "MeshLayer",
       "PointLayer",
       "TrackLayer"
@@ -146,6 +147,7 @@
       "InstanceMaskView",
       "Instrument",
       "LabelAccessor",
+      "LabelLayer",
       "LabelView",
       "Lens",
       "LightPath",

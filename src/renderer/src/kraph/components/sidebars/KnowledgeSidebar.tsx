@@ -111,9 +111,7 @@ export const GraphKnowledgeView = (props: {
             {hasConnections && (
               <ConnectableAs
                 identifier={props.identifier}
-                structure={data?.structureByIdentifier.id || ""}
                 graphId={props.graph.id}
-                onConnect={refetch}
               />
             )}
           </div>
@@ -121,9 +119,7 @@ export const GraphKnowledgeView = (props: {
             <div className="mt-4">
               <ConnectableAs
                 identifier={props.identifier}
-                structure={data?.structureByIdentifier.id || ""}
                 graphId={props.graph.id}
-                onConnect={refetch}
                 variant="inline"
               />
             </div>

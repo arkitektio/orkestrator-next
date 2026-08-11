@@ -74,9 +74,10 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       title={file.name}
       pageActions={
         <div className="flex items-center gap-2">
-          {/* No `currentFolder`: `File` exposes no folder field, so the badge
-              stays dark until the schema can answer where this file sits. */}
-          <MoveToFolderButton files={[file.id]} />
+          {/* No `currentFolder`: `File` is the one filable type with no `folder`
+              field, so the badge stays dark until the schema can answer where
+              this file sits. Moving works regardless. */}
+          <MoveToFolderButton subject={{ kind: "file", ids: [file.id] }} />
           <Button
             onClick={() => {
               startDownload(file.name, async ({ id, signal }) => {

@@ -1,5 +1,0 @@
-mutation CreateMeasurement($input: CreateMeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Measurement
-  }
-}

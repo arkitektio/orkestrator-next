@@ -13,23 +13,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   ListMaterializedMeasurementEdgeFragment,
-  useCreateMeasurementMutation,
-  useCreateStructureMutation,
   useListEntitiesQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Activity, CircleDot } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
+// NOTE: The backend removed `createMeasurement` without a replacement —
+// structure -> entity measurements are now expressed as supporting evidence on
+// `createNaturalEvent` / `createProtocolEvent`, which needs an event category
+// and role mapping this dialog has no source for. Browsing the candidate
+// entities still works (`entities` and the materialized edges are unchanged),
+// so the dialog is kept read-only until an attach path exists again.
 export const SetAsMeasurement = (props: {
   left: Structure[];
   edge: ListMaterializedMeasurementEdgeFragment;
 }) => {
   const { closeDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 300);
   const source = props.left[0];
 
@@ -42,66 +44,6 @@ export const SetAsMeasurement = (props: {
       },
     },
   });
-
-  const [createStructure] = useCreateStructureMutation({
-    onCompleted: (data) => {
-      console.log("Structure created:", data);
-    },
-    onError: (error) => {
-      console.error("Error creating structure:", error);
-      toast.error("Failed to create structure");
-    },
-  });
-
-  const [createMeasurement] = useCreateMeasurementMutation({
-    onCompleted: () => {
-      toast.success("Measurement created successfully");
-      closeDialog();
-    },
-    onError: (error) => {
-      console.error("Error creating measurement:", error);
-      toast.error("Failed to create measurement");
-    },
-  });
-
-  const onClickEntity = async (entityId: string) => {
-    setIsLoading(true);
-    try {
-      if (!source?.object?.id) {
-        throw new Error("Missing source structure id");
-      }
-
-      const s = await createStructure({
-        variables: {
-          input: {
-            category: props.edge.source.id,
-            object: source.object.id,
-            graph: props.edge.graph.id,
-          },
-        },
-      });
-
-      if (!s.data) {
-        toast.error("Failed to create structure");
-        return;
-      }
-
-      await createMeasurement({
-        variables: {
-          input: {
-            sourceId: s.data.createStructure.id,
-            targetId: entityId,
-            category: props.edge.edge.id,
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Error setting entity as measurement:", error);
-      toast.error("Failed to set entity as measurement");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -116,7 +58,8 @@ export const SetAsMeasurement = (props: {
               Set As Measurement
             </h2>
             <p className="text-sm text-muted-foreground">
-              Choose an entity from {props.edge.target.label} to attach to this structure.
+              Browse the entities of {props.edge.target.label} for this
+              structure. Attaching a measurement is currently unavailable.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -155,7 +98,7 @@ export const SetAsMeasurement = (props: {
 
       <ScrollArea className="flex-1 px-6 pb-6">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {loading || isLoading ? (
+          {loading ? (
             <div className="col-span-full flex items-center justify-center rounded-lg border border-dashed py-12">
               <div className="text-sm text-muted-foreground">Loading entities...</div>
             </div>
@@ -171,11 +114,7 @@ export const SetAsMeasurement = (props: {
             </div>
           ) : (
             data.entities.map((entity) => (
-              <Card
-                key={entity.id}
-                className="cursor-pointer border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/30"
-                onClick={() => onClickEntity(entity.id)}
-              >
+              <Card key={entity.id} className="border-border/70">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -186,7 +125,9 @@ export const SetAsMeasurement = (props: {
                         </CardDescription>
                       )}
                     </div>
-                    <Badge variant="outline" className="shrink-0">Select</Badge>
+                    <Badge variant="outline" className="shrink-0">
+                      {props.edge.target.label}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>

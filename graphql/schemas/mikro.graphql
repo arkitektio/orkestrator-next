@@ -74,6 +74,11 @@ type ADataset {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
+  Whether every downsampled level of this pyramid was built by a method that only ever returns a value already present in the input -- NEAREST or MODE. Only meaningful when the values are object ids, and only *reportable* rather than enforceable: `createADataset` refuses a non-compliant pyramid on a dataset already declared CATEGORIZED, but a mask can be declared a mask afterwards, by the `keyedBy` FIELD edge authored when its object table is created -- and by then the levels exist. False means the levels above 0 hold ids that were interpolated into existence and belong to no object; treat level 0 as the only trustworthy one. Null when no level says how it was made, which is not the same as compliant. True for an unpyramided dataset: there is nothing that could be wrong
+  """
+  pyramidIsLabelCompliant: Boolean
+
+  """
   The scenes this dataset is rendered in, reached through its lenses' layers. Derived, never stored: a scene is a composition and this is a fact of the graph, so there is no dataset-to-scene column that could disagree with it. A scene shows this dataset once a layer over one of its lenses is composed there -- typically by staging one of its spaces with createSceneFromCoordinateSystem
   """
   scenes: [Scene!]!
@@ -2278,14 +2283,13 @@ input CreateIntensityLayerInput {
 }
 
 """
-Create a label layer that renders an instance / segmentation map, mapping discrete integer labels to distinct colors
+Create a label layer that renders an instance / segmentation map: an array whose values are discrete object ids
 """
 input CreateLabelLayerInput {
-  intensityAxis: String = null
-  intensityIndex: Int = 0
   lens: ID!
   opacity: Float = null
   order: Int = null
+  render: LabelRenderInput = null
   scene: ID!
   visible: Boolean = null
 }
@@ -2565,6 +2569,11 @@ type DataArray {
   coordinateSystem: CoordinateSystem
   id: ID!
   level: Int!
+
+  """
+  How this level's voxels were computed from the level above it. Null for level 0, which was downsampled from nothing, and null for a level whose writer did not say. Over a dataset whose values are object ids only NEAREST and MODE are honest -- see `ADataset.pyramidIsLabelCompliant`
+  """
+  scaleMethod: ScaleMethod
   shape: [Int!]!
   store: ZarrStore!
 
@@ -4850,10 +4859,108 @@ type LabelAccessor implements Accessor {
 }
 
 """
+Color objects by a column of the table this mask's FIELD edge keys into. The table is named, never the join: which of its columns holds row identity is already declared there, and the edge that makes the lookup possible is already in the coordinate graph
+"""
+type LabelColorBy {
+  classColors: JSON
+  colormap: ColorMap
+  column: String!
+  table: ID!
+}
+
+"""
+Color objects by a column of the table this mask's FIELD edge keys into, instead of by hashing their id
+"""
+input LabelColorByInput {
+  classColors: JSON = null
+  colormap: ColorMap = null
+  column: String!
+  table: ID!
+}
+
+"""
 Input type for a label, which specifies a label to associate with a coordinate anchor or an image
 """
 input LabelInput {
   label: String!
+}
+
+"""
+A layer that renders array (lens) data whose values are discrete object ids -- a segmentation or an instance map. It shares the image layer's source and the same coordinate-graph placement, and none of its render settings: contrast limits, gamma, colormaps and intensity projections are all meaningless over ids.
+"""
+type LabelLayer implements Layer {
+  blending: Blending!
+  id: ID!
+  kind: LayerKind!
+
+  """
+  How this layer's object ids become color: the hashing, the transparent background id, contour-or-fill, the selection, and any `colorBy`
+  """
+  labelRender: LabelRender
+  lens: Lens!
+
+  """
+  Per pyramid level, the path from that level's voxel grid to this scene's world system -- the same multiscale placement an image layer exposes. A level's path is null when the dataset is not registered into the scene
+  """
+  levelPaths: [LevelPlacement!]!
+  opacity: Float!
+  order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  """
+  pathToWorld: [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
+  """
+  placement: PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the two reasons a NONE layer has
+  """
+  placementInvariance: TransformInvariance!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity: PlacementValidity!
+  scene: Scene!
+  visible: Boolean!
+}
+
+"""
+How a label layer's discrete object ids become color. Not a transfer function and not a node graph: a label map has one source, no compositing tree, and none of an intensity image's vocabulary -- contrast limits, gamma and colormaps are all meaningless over ids
+"""
+type LabelRender {
+  background: Int!
+  colorBy: LabelColorBy
+  contour: Boolean!
+  contourWidth: Float
+  intensityAxis: String
+  intensityIndex: Int!
+  opacity: Float
+  seed: Int!
+  selected: [Int!]!
+  selectionColor: [Int!]
+  showUnselected: Boolean!
+}
+
+"""
+How a label layer's discrete object ids become color. Every field is optional; omitted ones keep their current value on an update, and take their default on a create
+"""
+input LabelRenderInput {
+  background: Int = null
+  colorBy: LabelColorByInput = null
+  contour: Boolean = null
+  contourWidth: Float = null
+  intensityAxis: String = null
+  intensityIndex: Int = null
+  opacity: Float = null
+  seed: Int = null
+  selected: [Int!] = null
+  selectionColor: [Int!] = null
+  showUnselected: Boolean = null
 }
 
 """
@@ -5086,6 +5193,11 @@ enum LayerKind {
   """
   IMAGE
 
+  """
+  A label layer rendering array (lens) data whose values are discrete object ids -- a segmentation or instance map. It shares the image layer's source but none of its render settings: contrast limits, gamma, colormaps and intensity projections are all meaningless over ids, and what it carries instead is an id-to-color hashing, a transparent background id, contour-or-fill, a selection, and an optional `colorBy` dereferencing the FIELD edge that keys the mask's pixels to a table of objects.
+  """
+  LABEL
+
   """A mesh layer rendering a 3D surface reconstruction."""
   MESH
 
@@ -5103,6 +5215,7 @@ enum LayerKind {
 enum LayerKindChoices {
   ANNOTATION
   IMAGE
+  LABEL
   MESH
   POINT
   TRACK
@@ -5874,11 +5987,17 @@ type ModelChange {
   """The field that was changed."""
   field: String!
 
-  """The new value of the field."""
+  """The new value of the field, rendered as text."""
   newValue: String
 
-  """The old value of the field."""
+  """The new value of the field, preserving its native JSON type."""
+  newValueJson: JSON
+
+  """The old value of the field, rendered as text."""
   oldValue: String
+
+  """The old value of the field, preserving its native JSON type."""
+  oldValueJson: JSON
 }
 
 """
@@ -6018,9 +6137,9 @@ type Mutation {
   createIntensityLayer(input: CreateIntensityLayerInput!): ImageLayer!
 
   """
-  Create a label layer that renders an instance / segmentation map of discrete labels
+  Create a label layer that renders an instance / segmentation map -- an array whose values are discrete object ids. Its own layer kind, not an image layer: ids take a hashed colour, a transparent background value and an optional `colorBy` over the table they key into, and none of an image's contrast limits, gamma or colormaps
   """
-  createLabelLayer(input: CreateLabelLayerInput!): ImageLayer!
+  createLabelLayer(input: CreateLabelLayerInput!): LabelLayer!
 
   """Create a new view for label data"""
   createLabelView(input: LabelViewInput!): LabelView!
@@ -6468,6 +6587,11 @@ type Mutation {
 
   """Update an existing image's metadata"""
   updateImage(input: UpdateImageInput!): Image!
+
+  """
+  Update a label layer's render settings -- the selection, contour, hashing seed or `colorBy`. A patch: what is not sent keeps its current value
+  """
+  updateLabelLayer(input: UpdateLabelLayerInput!): LabelLayer!
 
   """
   Update an existing layer's lens, scene, affine transformation, and colormap settings
@@ -9679,17 +9803,56 @@ type SampleStep {
 }
 
 """
-Input type for one pyramid level: the array backing it. Its scale is derived from its actual shape, never supplied
+Input type for one pyramid level: the array backing it, and how it was downsampled. Its scale factor is derived from its actual shape, never supplied
 """
 input ScaleInput {
   """The array-like object to create the image from"""
   array: ArrayLike!
   level: Int!
+  scaleMethod: ScaleMethod = null
+}
+
+"""
+How a pyramid level's voxels were computed from the level above it. Stated, never derived -- nothing about two arrays says whether one was averaged or picked out of the other -- and it matters because over an array of object ids only NEAREST and MODE are allowed: every other method returns numbers that were not in the input, and an invented id is an object that does not exist.
+"""
+enum ScaleMethod {
+  """
+  The mean over the source window -- the usual image-pyramid default, and the usual way a mask pyramid gets silently ruined.
+  """
+  AREA
 
   """
-  The method used to create the scale, e.g. 'nearest', 'bilinear', 'bicubic'. Recorded as provenance on the level's transformation
+  Cubic interpolation. Invents intermediate values, and overshoots past the input range at edges.
   """
-  scaleMethod: String = null
+  CUBIC
+
+  """A Gaussian-weighted average over the source window."""
+  GAUSSIAN
+
+  """
+  Linear interpolation over the source window. Invents intermediate values, so never over ids.
+  """
+  LINEAR
+
+  """
+  The maximum of the source window. Returns a real value, but over ids it biases every boundary toward whichever object sorts higher, so it is not label-safe either.
+  """
+  MAX
+
+  """
+  The minimum of the source window. Not label-safe, for the mirror of MAX's reason.
+  """
+  MIN
+
+  """
+  The most frequent value in the source window. Label-safe, and the better of the two for a mask -- it keeps the object that actually dominates the window rather than whichever one the sampling grid happens to land on.
+  """
+  MODE
+
+  """
+  One source voxel, carried through unchanged. Label-safe: the value was already there.
+  """
+  NEAREST
 }
 
 """
@@ -11034,7 +11197,6 @@ type TrackLayer implements Layer {
 How a single channel's intensities are mapped to color before compositing
 """
 type TransferFunction {
-  categorical: Boolean
   climMax: Float
   climMin: Float
   color: [Int!]
@@ -11048,7 +11210,6 @@ type TransferFunction {
 Transfer-function settings for a channel source in a layer render graph
 """
 input TransferFunctionInput {
-  categorical: Boolean = null
   climMax: Float = null
   climMin: Float = null
   color: [Int!] = null
@@ -11500,6 +11661,17 @@ input UpdateImageInput {
 
   """Tags to add to the image"""
   tags: [String!] = null
+}
+
+"""
+Update a label layer's render settings. Every field is a patch: what is not sent keeps its current value
+"""
+input UpdateLabelLayerInput {
+  id: ID!
+  opacity: Float = null
+  order: Int = null
+  render: LabelRenderInput = null
+  visible: Boolean = null
 }
 
 """Input type for creating an image from an array-like object"""
@@ -12044,7 +12216,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelLayer | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

@@ -72,9 +72,6 @@
       "NodePathQuery",
       "NodeTableQuery"
     ],
-    "PathLike": [
-      "GraphPathRender"
-    ],
     "Plottable": [
       "EdgeTableQuery",
       "GraphTableQuery",

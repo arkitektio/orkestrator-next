@@ -8,7 +8,7 @@ import { PaneLink, SidePaneGroup } from '@/components/ui/sidepane'
 import { Toggle } from '@/components/ui/toggle'
 import { JustUsername } from '@/lok-next/components/UserAvatar'
 import { useDebounce } from '@uidotdev/usehooks'
-import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, PenTool } from 'lucide-react'
+import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, PenTool, Table2 } from 'lucide-react'
 import * as React from 'react'
 import { NavLink } from 'react-router-dom'
 import { GlobalSearchQueryVariables, useGlobalSearchQuery, useMembersQuery } from '../api/graphql'
@@ -42,12 +42,8 @@ export const NavigationPane = () => {
             <Axis3d className="h-4 w-4" />
             Coordinate Systems
           </PaneLink>
-          <PaneLink to="/mikro/tables" className="flex gap-3 w-full hover:text-primary">
-            <Home className="h-4 w-4" />
-            Tables
-          </PaneLink>
           <PaneLink to="/mikro/tabledatasets" className="flex gap-3 w-full hover:text-primary">
-            <Axis3d className="h-4 w-4" />
+            <Table2 className="h-4 w-4" />
             Table Datasets
           </PaneLink>
           <PaneLink to="/mikro/annotations" className="flex gap-3 w-full hover:text-primary">

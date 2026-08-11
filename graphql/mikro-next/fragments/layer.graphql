@@ -6,7 +6,33 @@ fragment TransferFunction on TransferFunction {
   gamma
   opacity
   invert
-  categorical
+}
+
+# Not a TransferFunction: a label map has one source, no compositing tree, and
+# none of an intensity image's vocabulary. `background` is the id painted fully
+# transparent; `seed` seeds the id->color hash; `colorBy` dereferences the FIELD
+# edge keying this mask's pixels to a table of objects (see `attributePlans`).
+fragment LabelColorBy on LabelColorBy {
+  table
+  column
+  colormap
+  classColors
+}
+
+fragment LabelRender on LabelRender {
+  intensityAxis
+  intensityIndex
+  seed
+  background
+  opacity
+  contour
+  contourWidth
+  selected
+  selectionColor
+  showUnselected
+  colorBy {
+    ...LabelColorBy
+  }
 }
 
 fragment ChannelSourceNode on ChannelSourceNode {
@@ -146,6 +172,18 @@ fragment SceneLayer on Layer {
     # placement lands (COORDINATE_SYSTEMS.md §3.1).
     renderGraph {
       ...LayerRenderGraph
+    }
+  }
+  # Shares ImageLayer's source (a Lens over an array) and none of its render
+  # settings: clim, gamma, colormaps and projections are all meaningless over
+  # object ids. `labelRender` carries what replaces them. `levelPaths` is
+  # omitted for the same reason as on ImageLayer above.
+  ... on LabelLayer {
+    lens {
+      ...SceneLens
+    }
+    labelRender {
+      ...LabelRender
     }
   }
   # A whole collection, not one shape: the styling that used to sit on the

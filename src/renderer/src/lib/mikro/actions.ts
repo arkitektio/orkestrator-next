@@ -4,6 +4,7 @@ import {
   CreateSceneFromCoordinateSystemDocument,
   CreateSceneFromCoordinateSystemMutation,
   CreateSceneFromCoordinateSystemMutationVariables,
+  DeleteADatasetDocument,
   DeleteFolderDocument,
   DeleteFileDocument,
   DeleteSceneDocument,
@@ -383,15 +384,44 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     ],
     collections: ['file'],
     execute: async ({ state, dialog }) => {
-      const files = state.left
+      const ids = state.left
         .filter((item) => item.identifier === '@mikro/file')
         .map((item) => item.object.id)
 
-      if (files.length === 0) {
+      if (ids.length === 0) {
         throw new Error('No files selected for Move to Folder action')
       }
 
-      dialog.openDialog('movetofolder', { files }, { className: 'max-w-lg' })
+      dialog.openDialog(
+        'movetofolder',
+        { subject: { kind: 'file', ids } },
+        { className: 'max-w-lg' },
+      )
+    },
+  },
+  'move-adataset-to-folder': {
+    title: 'Move to Folder',
+    description: 'File this dataset into a folder',
+    icon: FolderInput,
+    conditions: [
+      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'nopartner' },
+    ],
+    collections: ['adataset'],
+    execute: async ({ state, dialog }) => {
+      const ids = state.left
+        .filter((item) => item.identifier === '@mikro/adataset')
+        .map((item) => item.object.id)
+
+      if (ids.length === 0) {
+        throw new Error('No datasets selected for Move to Folder action')
+      }
+
+      dialog.openDialog(
+        'movetofolder',
+        { subject: { kind: 'adataset', ids } },
+        { className: 'max-w-lg' },
+      )
     },
   },
   move_folders_to_folder: {
@@ -574,6 +604,15 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     service: 'mikro',
     typename: 'Scene',
     mutation: DeleteSceneDocument
+  }),
+  'delete-mikro-adataset': buildDeleteAction<typeof Arkitekt>({
+    title: 'Delete Dataset',
+    identifier: '@mikro/adataset',
+    description:
+      'Delete the array dataset, its pyramid levels and the store behind them',
+    service: 'mikro',
+    typename: 'ADataset',
+    mutation: DeleteADatasetDocument
   }),
   'delete-mikro-folder': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Folder',

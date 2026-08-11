@@ -38,7 +38,6 @@ export type TransferFn = {
   gamma: number | null;
   opacity: number | null;
   invert: boolean | null;
-  categorical: boolean | null;
 };
 
 export type ChannelRenderNode = {
@@ -167,7 +166,6 @@ const DEFAULT_TRANSFER: TransferFn = {
   gamma: null,
   opacity: null,
   invert: null,
-  categorical: null,
 };
 
 const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): TransferFn => ({
@@ -178,7 +176,6 @@ const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): Transf
   gamma: transfer?.gamma ?? null,
   opacity: transfer?.opacity ?? null,
   invert: transfer?.invert ?? null,
-  categorical: transfer?.categorical ?? null,
 });
 
 const parseCursor = (cursor: Partial<PhasorCursorDef>): PhasorCursorDef => ({
@@ -399,7 +396,6 @@ const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
   gamma: transfer.gamma,
   opacity: transfer.opacity,
   invert: transfer.invert,
-  categorical: transfer.categorical,
 });
 
 const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({

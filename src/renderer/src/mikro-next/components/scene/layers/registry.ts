@@ -4,7 +4,7 @@ import { ImagePlaneLayer } from "./image/ImagePlaneLayer";
 import { ImageVolumeLayer } from "./image/ImageVolumeLayer";
 import { MeshCollectionLayer } from "./mesh/MeshCollectionLayer";
 import { AnnotationLayerRenderer } from "./annotation/AnnotationLayer";
-import { PointLayerRenderer, TrackLayerRenderer } from "./stubs";
+import { LabelLayerRenderer, PointLayerRenderer, TrackLayerRenderer } from "./stubs";
 
 export type LayerRendererProps = { layerId: string };
 
@@ -20,6 +20,7 @@ export type LayerRenderers = {
  */
 export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRenderers> = {
   ImageLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
+  LabelLayer: { Layer2D: LabelLayerRenderer, Layer3D: LabelLayerRenderer },
   AnnotationLayer: { Layer2D: AnnotationLayerRenderer, Layer3D: AnnotationLayerRenderer },
   PointLayer: { Layer2D: PointLayerRenderer, Layer3D: PointLayerRenderer },
   TrackLayer: { Layer2D: TrackLayerRenderer, Layer3D: TrackLayerRenderer },

@@ -27,7 +27,6 @@ const channel = (
     gamma: null,
     opacity: null,
     invert: null,
-    categorical: null,
   },
 });
 

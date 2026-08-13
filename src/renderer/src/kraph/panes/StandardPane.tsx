@@ -6,7 +6,7 @@ import {
   KraphEntityCategory,
   KraphProtocolEventCategory,
   KraphRelationCategory,
-  KraphStructureCategory
+  KraphStructureKind
 } from "@/linkers";
 import {
   CatIcon,
@@ -52,7 +52,7 @@ export const NavigationPane = () => {
 
         <SidePaneGroup title="Categories">
           <PaneLink
-            to="/kraph/structurecategories"
+            to="/kraph/structurekinds"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <BsRecord className="h-4 w-4" />
@@ -94,7 +94,7 @@ export const NavigationPane = () => {
             Structure Relations
           </PaneLink>
           <PaneLink
-            to="/kraph/metriccategories"
+            to="/kraph/metrickinds"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <PiNumberCircleEight className="h-4 w-4" />
@@ -137,20 +137,20 @@ export const NavigationPane = () => {
             ))}
           </>
         )}
-        {data?.structureCategories && data.structureCategories.length > 0 && (
+        {data?.structureKinds && data.structureKinds.length > 0 && (
           <>
             <div className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4">
-              Pinned Structures
+              Recent Structure Kinds
             </div>
-            {data.structureCategories.map((i) => (
+            {data.structureKinds.map((i) => (
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground" key={i.id}>
-                <KraphStructureCategory.DetailLink
+                <KraphStructureKind.DetailLink
                   object={i}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
                   {i.identifier}
-                </KraphStructureCategory.DetailLink>
+                </KraphStructureKind.DetailLink>
               </div>
             ))}
           </>

@@ -13,7 +13,7 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
   return (
     <KraphMetric.ModelPage
       object={{ id: data.metric.id }}
-      title={data?.metric.category.label}
+      title={data?.metric.kind?.label || data?.metric.kind?.key || data?.metric.key || "Metric"}
       sidebars={
         <Sidebars>
           <Sidebars.Tab label="Comments">
@@ -35,11 +35,11 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.metric.category.label}
+            {data.metric.kind?.label || data.metric.kind?.key || data.metric.key}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground"></p>
           <p className="mt-3 text-xl text-muted-foreground">
-            <Badge>{data.metric.category.label}</Badge>
+            <Badge>{data.metric.kind?.key || data.metric.key}</Badge>
           </p>
         </div>
       </KraphEntity.Drop>

@@ -3,7 +3,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { GetEntityDocument, PropertyDefinitionFragment, useSetEntityPropertyMutation, ValueKind } from "@/kraph/api/graphql";
+import { GetEntityDocument, PropertyDefinitionFragment, useUpdateEntityMutation, ValueKind } from "@/kraph/api/graphql";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,18 +19,19 @@ export const PropertyEditor = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const [setEntityProperty, { loading }] = useSetEntityPropertyMutation({
+  const [updateEntity, { loading }] = useUpdateEntityMutation({
     refetchQueries: [{ query: GetEntityDocument, variables: { id: entityId } }],
   });
 
   const handleSave = async () => {
     try {
-      await setEntityProperty({
+      // `setEntityProperty` was removed from the schema. Manual edits are now
+      // recorded as sticky properties, which override the derived value.
+      await updateEntity({
         variables: {
           input: {
-            entityId: entityId,
-            key: definition.key,
-            value: currentValue !== null ? String(currentValue) : null,
+            id: entityId,
+            stickyProperties: [{ key: definition.key, value: currentValue }],
           },
         },
       });
@@ -131,7 +132,7 @@ export const PropertyEditor = ({
           <div className="space-y-2">
             <h4 className="font-medium leading-none">{definition.label || definition.key}</h4>
             <p className="text-sm text-muted-foreground">
-              {definition.description || "Update property value"}
+              {definition.description || "Set this property manually. Manual values override the derived value."}
             </p>
           </div>
           {renderInput()}

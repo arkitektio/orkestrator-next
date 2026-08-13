@@ -4,9 +4,9 @@ query GetStructure($id: GraphID!) {
   }
 }
 
-query SearchStructures($id: ID!, $search: String, $values: [GraphID!]) {
+query SearchStructures($id: ID, $search: String, $values: [GraphID!]) {
   options: structures(
-    structureCategoryId: $id
+    structureKindId: $id
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
@@ -29,15 +29,31 @@ query GetInformedStructure(
   }
 }
 
-
-
 query ListStructures(
-  $id: ID!
+  $id: ID
   $filters: StructureFilter
   $pagination: StructurePaginationInput
   $ordering: [StructureOrder!]
 ) {
-  structures(structureCategoryId: $id, filters: $filters, pagination: $pagination, ordering: $ordering) {
+  structures(structureKindId: $id, filters: $filters, pagination: $pagination, ordering: $ordering) {
     ...ListStructure
+  }
+}
+
+query InformingStructures($entityId: String!) {
+  informingStructures(entityId: $entityId) {
+    ...ListStructure
+  }
+}
+
+query MetricsForStructure($structureId: GraphID!) {
+  metricsForStructure(structureId: $structureId) {
+    ...ListMetric
+  }
+}
+
+query MeasurementsForAssertion($assertionId: GraphID!) {
+  measurementsForAssertion(assertionId: $assertionId) {
+    ...ListMetric
   }
 }

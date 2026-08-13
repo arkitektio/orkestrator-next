@@ -31,6 +31,7 @@ import { useState } from "react";
 import { AggregationFunction, DerivationType } from "../../api/graphql";
 import { DataTypeSelector } from "./DataTypeSelector";
 import {
+  buildDerivationRule,
   DEFAULT_AGGREGATION,
   DEFAULT_DERIVATION,
   isValidMachineKey,
@@ -322,11 +323,11 @@ export function PropertyInspector({
                         onValueChange={(aggregation) =>
                           onUpdate({
                             derivation: property.derivation || DEFAULT_DERIVATION,
-                            rule: {
+                            rule: buildDerivationRule({
                               ...property.rule,
                               aggregation:
                                 aggregation as AggregationFunction,
-                            },
+                            }),
                           })
                         }
                       >

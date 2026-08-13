@@ -1,26 +1,24 @@
-fragment MetricCategory on MetricCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
-  ageName
+fragment MetricKind on MetricKind {
+  id
+  key
   label
-  valueKind
   description
-  image {
-    presignedUrl
-  }
-  tags {
+  purl
+  color
+  valueKind
+  structureKind {
     id
-    name
+    identifier
   }
-  pinned
+  createdAt
 }
 
-fragment ListMetricCategory on MetricCategory {
-  ...BaseListCategory
-  ...BaseNodeCategory
+fragment ListMetricKind on MetricKind {
+  id
+  key
   label
   valueKind
-  structureCategory {
+  structureKind {
     id
     identifier
   }

@@ -44,8 +44,9 @@ fragment PathActivity on Activity {
 fragment PathStructure on Structure {
   id
   label
-  category {
+  kind {
     id
+    identifier
     label
   }
 }

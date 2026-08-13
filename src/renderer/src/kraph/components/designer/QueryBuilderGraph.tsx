@@ -784,26 +784,7 @@ export const QueryBuilderGraph = ({
           node.id;
         const cleanedLabel = toSnakeCase(rawLabel);
 
-        // Always add metric values for metric nodes to keep measurements accessible
-        if (node.type === "metriccategory") {
-          const hasValueColumn = returnColumns.some(
-            (col) => col.nodeId === nodeId && col.property === "value",
-          );
-
-          if (!hasValueColumn) {
-            newReturnColumns.push({
-              nodeId,
-              property: "value",
-              alias: cleanedLabel,
-            });
-          }
-          // Skip generating metric IDs – handled for structures/entities below
-        }
-
-        if (
-          node.type === "structurecategory" ||
-          node.type === "entitycategory"
-        ) {
+        if (node.type === "entitycategory") {
           const hasIdColumn = returnColumns.some(
             (col) => col.nodeId === nodeId && col.property === "id",
           );
@@ -1084,12 +1065,8 @@ export const QueryBuilderGraph = ({
     const nodeType = node.type;
 
     // Map node types to property configurations
-    if (nodeType === 'structurecategory') {
-      return NODE_PROPERTIES.Structure;
-    } else if (nodeType === 'entitycategory') {
+    if (nodeType === 'entitycategory') {
       return NODE_PROPERTIES.Entity;
-    } else if (nodeType === 'metriccategory') {
-      return NODE_PROPERTIES.Metric;
     }
 
     return NODE_PROPERTIES.default;

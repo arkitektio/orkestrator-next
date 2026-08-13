@@ -5,14 +5,8 @@ fragment Graph on Graph {
   name
   description
   ageName
-  structureCategories {
-    ...ListStructureCategory
-  }
   entityCategories {
     ...ListEntityCategory
-  }
-  metricCategories {
-    ...ListMetricCategory
   }
   protocolEventCategories {
     ...ListProtocolEventCategory

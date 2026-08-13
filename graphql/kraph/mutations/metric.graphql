@@ -4,10 +4,6 @@ mutation CreateMetric($input: CreateMetricInput!) {
   }
 }
 
-mutation DeleteMetric($id: String!) {
-  deleteMetric(input: { id: $id })
-}
-
 mutation ArchiveMetric($id: String!) {
   archiveMetric(input: { id: $id }) {
     ...Metric

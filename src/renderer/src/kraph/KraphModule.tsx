@@ -12,8 +12,8 @@ import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
-import MetricCategoriesPage from "./pages/MetricCategoriesPage";
-import MetricCategoryPage from "./pages/MetricCategoryPage";
+import MetricKindsPage from "./pages/MetricKindsPage";
+import MetricKindPage from "./pages/MetricKindPage";
 import MetricPage from "./pages/MetricPage";
 import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 import NaturalEventCategoryPage from "./pages/NaturalEventCategoryPage";
@@ -25,11 +25,11 @@ import RelationCategoriesPage from "./pages/RelationCategoriesPage";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
 import RelationPage from "./pages/RelationPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
-import StructureCategoriesPage from "./pages/StructureCategoriesPage";
+import StructureKindsPage from "./pages/StructureKindsPage";
 import {
   default as ExpressionPage,
-  default as StructureCategoryPage,
-} from "./pages/StructureCategoryPage";
+  default as StructureKindPage,
+} from "./pages/StructureKindPage";
 import StructurePage from "./pages/StructurePage";
 import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
 import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
@@ -75,8 +75,8 @@ export const KraphModule: React.FC<Props> = () => {
             element={<StuctureRelationCategoryPage />}
           />
           <Route
-            path="structurecategories"
-            element={<StructureCategoriesPage />}
+            path="structurekinds"
+            element={<StructureKindsPage />}
           />
           <Route
             path="measurementcategories"
@@ -94,13 +94,13 @@ export const KraphModule: React.FC<Props> = () => {
             path="protocoleventcategories"
             element={<ProtocolEventCategoriesPage />}
           />
-          <Route path="metriccategories" element={<MetricCategoriesPage />} />
+          <Route path="metrickinds" element={<MetricKindsPage />} />
 
           <Route
-            path="structurecategories/:id"
-            element={<StructureCategoryPage />}
+            path="structurekinds/:id"
+            element={<StructureKindPage />}
           />
-          <Route path="metriccategories/:id" element={<MetricCategoryPage />} />
+          <Route path="metrickinds/:id" element={<MetricKindPage />} />
           <Route
             path="relationcategories/:id"
             element={<RelationCategoryPage />}

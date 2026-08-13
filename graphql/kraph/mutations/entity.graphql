@@ -25,15 +25,3 @@ mutation ArchiveEntity($id: GraphID!) {
     ...Entity
   }
 }
-
-
-mutation DeleteEntity($id: GraphID!) {
-  deleteEntity(input: {id: $id})
-}
-
-
-mutation SetEntityProperty($input: SetEntityPropertyInput!) {
-  setEntityProperty(input: $input){
-    ...Entity
-  }
-}

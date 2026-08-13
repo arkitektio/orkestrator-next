@@ -1,17 +1,9 @@
-mutation CreateStructureCategory($input: CreateStructureDefinitionInput!) {
-  createStructureCategory(input: $input) {
-    ...StructureCategory
+mutation UpdateStructureKind($input: UpdateStructureDefinitionInput!) {
+  updateStructureKind(input: $input) {
+    ...StructureKind
   }
 }
 
-mutation UpdateStructureCategory($input: UpdateStructureDefinitionInput!) {
-  updateStructureCategory(input: $input) {
-    ...StructureCategory
-  }
+mutation DeleteStructureKind($id: String!) {
+  deleteStructureKind(input: { id: $id })
 }
-
-mutation DeleteStructureCategory($id: String!) {
-  deleteStructureCategory(input: { id: $id })
-}
-
-# Compare this snippet from graphql/kraph/mutations/structure_category.graphql:

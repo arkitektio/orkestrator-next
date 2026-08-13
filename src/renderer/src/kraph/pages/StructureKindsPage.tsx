@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialog-button";
-import { KraphEntityCategory, KraphStructureCategory } from "@/linkers";
+import { KraphEntityCategory, KraphStructureKind } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import StructureCategoryList from "../components/lists/StructureCategoryList";
+import StructureKindList from "../components/lists/StructureKindList";
 
 export type IRepresentationScreenProps = {};
 
@@ -12,7 +12,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <KraphStructureCategory.ListPage
+    <KraphStructureKind.ListPage
       title="Structure Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -47,9 +47,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           <Card className="w-full h-full flex-row relative"></Card>
         </div>
 
-        <StructureCategoryList pagination={{ limit: 30 }} />
+        <StructureKindList pagination={{ limit: 30 }} />
       </div>
-    </KraphStructureCategory.ListPage>
+    </KraphStructureKind.ListPage>
   );
 };
 

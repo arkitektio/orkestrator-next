@@ -1,10 +1,13 @@
-# NOTE: `createRelation` / `updateRelation` were removed from the kraph schema.
-# Entity <-> entity relations are no longer created directly; they are derived
-# from events (createNaturalEvent / createProtocolEvent role mappings). Only
-# delete/archive remain on existing relations.
+mutation CreateRelation($input: CreateRelationInput!) {
+  createRelation(input: $input) {
+    ...Relation
+  }
+}
 
-mutation DeleteRelation($id: GraphID!) {
-  deleteRelation(input: { id: $id })
+mutation UpdateRelation($input: UpdateRelationInput!) {
+  updateRelation(input: $input) {
+    ...Relation
+  }
 }
 
 mutation ArchiveRelation($id: GraphID!) {

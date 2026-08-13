@@ -32,20 +32,18 @@ export const StructureRelateButton = (props: {
         const left = await createStructure({
           variables: {
             input: {
-              object: object.object,
+              object: object.object.id,
               identifier: object.identifier,
-              graph: props.materializedEdge.graph.id,
-            } as never,
+            },
           },
         });
 
         const right = await createStructure({
           variables: {
             input: {
-              object: props.right.object,
+              object: props.right.object.id,
               identifier: props.right.identifier,
-              graph: props.materializedEdge.graph.id,
-            } as never,
+            },
           },
         });
 

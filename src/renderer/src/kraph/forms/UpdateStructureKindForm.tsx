@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,35 +6,24 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  StructureCategoryFragment,
-  UpdateStructureCategoryMutationVariables,
-  useCreateGraphTagInlineMutation,
-  useSearchTagsLazyQuery,
-  useUpdateStructureCategoryMutation,
+  StructureKindFragment,
+  UpdateStructureKindMutationVariables,
+  useUpdateStructureKindMutation,
 } from "../api/graphql";
 
 
-const TForm = (props: { structureCategory: StructureCategoryFragment }) => {
-  const [update] = useUpdateStructureCategoryMutation({
-    refetchQueries: ["GetGraph"],
+const TForm = (props: { structureKind: StructureKindFragment }) => {
+  const [update] = useUpdateStructureKindMutation({
+    refetchQueries: ["ListStructureKinds", "ListMetricKinds"],
   });
 
   const dialog = useGraphQlFormDialog(update);
 
-  const form = useForm<UpdateStructureCategoryMutationVariables["input"]>({
+  const form = useForm<UpdateStructureKindMutationVariables["input"]>({
     defaultValues: {
-      id: props.structureCategory.id,
-      description: props.structureCategory.description,
-      tags: props.structureCategory.tags.map((tag) => tag.id),
-    },
-  });
-
-  const [searchTags] = useSearchTagsLazyQuery();
-
-  const [createTag] = useCreateGraphTagInlineMutation({
-    variables: {
-      graph: props.structureCategory.graph.id,
-      input: "",
+      id: props.structureKind.id,
+      label: props.structureKind.label,
+      description: props.structureKind.description,
     },
   });
 
@@ -55,6 +43,11 @@ const TForm = (props: { structureCategory: StructureCategoryFragment }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
+              <StringField
+                label="Label"
+                name="label"
+                description="A human readable name for this kind"
+              />
               <ParagraphField
                 label="Description"
                 name="description"
@@ -64,13 +57,6 @@ const TForm = (props: { structureCategory: StructureCategoryFragment }) => {
                 label="PURL"
                 name="purl"
                 description="What is the PURL of this expression?"
-              />
-              <GraphQLCreatableListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
-                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.structureCategory.graph.id } })}
               />
             </div>
           </div>

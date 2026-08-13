@@ -74,6 +74,10 @@ fragment PathRelation on Relation {
 fragment PathAssertion on Assertion {
   id
   label
+  subject
+  actionName
+  appId
+  assertedAt
 }
 fragment PathDescription on Description {
   id

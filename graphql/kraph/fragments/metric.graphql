@@ -1,27 +1,35 @@
 fragment Metric on Metric {
   id
-  category {
+  kind {
     id
+    key
     label
     description
   }
+  key
   value
+  unit
 }
 
 fragment ListMetric on Metric {
   id
   value
   label
+  key
+  unit
+  kind {
+    id
+    key
+    label
+  }
 }
 
 fragment PathMetric on Metric {
   ...ListMetric
-  category {
+  kind {
     id
+    key
     label
-    image {
-      presignedUrl
-    }
   }
   value
 }

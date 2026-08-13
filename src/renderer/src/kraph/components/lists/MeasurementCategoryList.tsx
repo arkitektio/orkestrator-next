@@ -1,14 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { KraphMetricCategory } from "@/linkers";
+import { KraphMetricKind } from "@/linkers";
 import {
-  MetricCategoryFilter,
+  MetricKindFilter,
   OffsetPaginationInput,
   useListMeasurmentCategoryQuery,
 } from "../../api/graphql";
 import MeasurementCategoryCard from "../cards/MeasurementCategoryCard";
 
 export type Props = {
-  filters?: MetricCategoryFilter;
+  filters?: MetricKindFilter;
   pagination?: OffsetPaginationInput;
 };
 
@@ -22,9 +22,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.measurementCategories}
       title={
-        <KraphMetricCategory.ListLink className="flex-0">
+        <KraphMetricKind.ListLink className="flex-0">
           Metric Categories
-        </KraphMetricCategory.ListLink>
+        </KraphMetricKind.ListLink>
       }
       refetch={refetch}
     >

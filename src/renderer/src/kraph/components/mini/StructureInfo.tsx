@@ -56,7 +56,6 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
                   input: {
                     identifier: props.identifier,
                     object: props.object,
-                    graph: props.graph.id,
                   },
                 },
               });

@@ -62,7 +62,6 @@ export const GraphKnowledgeView = (props: {
               input: {
                 object: props.object.id,
                 identifier: props.identifier,
-                graph: props.graph.id,
               },
             },
           })

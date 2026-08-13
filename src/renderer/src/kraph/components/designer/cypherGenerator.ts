@@ -68,18 +68,12 @@ function getRelationshipType(edge: MyEdge): string {
   const role = edge.data && 'role' in edge.data ? edge.data.role : undefined
 
   switch (edge.type) {
-    case 'measurement':
-      return ageName || 'MEASURED_BY'
     case 'relation':
       return ageName || 'RELATED_TO'
-    case 'structure_relation':
-      return 'STRUCTURE_RELATION'
     case 'reagentrole':
       return role || 'PARTICIPATES'
     case 'entityrole':
       return role || 'PARTICIPATES'
-    case 'describe':
-      return 'DESCRIBES'
     default:
       return ageName || 'CONNECTED_TO'
   }
@@ -549,9 +543,6 @@ export function generateGraphQueryInput(
 
     // Generate a column for each occurrence
     matchingMappings.forEach((mapping) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodeData = node.data as any
-
       // Determine column kind based on property
       let columnKind = ColumnKind.Value
       let valueType: ValueKind = ValueKind.String
@@ -565,11 +556,6 @@ export function generateGraphQueryInput(
         columnKind = ColumnKind.Value
       } else if (col.property === 'label' || col.property === 'identifier') {
         columnKind = ColumnKind.Value
-      }
-
-      // Try to infer ValueKind if it's a metric node
-      if (node.type === 'metriccategory' && nodeData?.valueKind) {
-        valueType = nodeData.valueKind as ValueKind
       }
 
       // Use variable name when multiple occurrences, otherwise use alias or variable_property

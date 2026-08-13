@@ -32,6 +32,12 @@ export type DeleteActionParams<
   description?: string;
   icon?: Action<TAppOrServices>["icon"];
   pinned?: Action<TAppOrServices>["pinned"];
+  /**
+   * Wording for the confirm dialog and error copy. Kraph instances are an
+   * append-only log — they can only be archived, never deleted — so the
+   * "cannot be undone" phrasing has to be suppressible.
+   */
+  verb?: { present: string; past: string; reversible?: boolean };
 };
 
 export const buildDeleteAction = <
@@ -78,18 +84,23 @@ export const buildDeleteAction = <
       return;
     }
 
+    const verb = params.verb ?? { present: "Delete", past: "Deleted" };
+    const permanence = verb.reversible
+      ? ""
+      : " This action cannot be undone.";
+
     if (!modifiers.ctrlKey) {
       const itemCount = targets.length;
       const confirmed = await confirm({
         title:
           itemCount > 1
-            ? `Delete ${itemCount} items?`
+            ? `${verb.present} ${itemCount} items?`
             : params.title,
         description:
           itemCount > 1
-            ? `You are about to delete ${itemCount} selected items. This action cannot be undone. To skip this dialog, hold Ctrl when doing it.`
-            : `${params.description || "Delete the selected item"} This action cannot be undone. To skip this dialog, hold Ctrl when doing it.`,
-        confirmLabel: "Delete",
+            ? `You are about to ${verb.present.toLowerCase()} ${itemCount} selected items.${permanence} To skip this dialog, hold Ctrl when doing it.`
+            : `${params.description || `${verb.present} the selected item`}${permanence} To skip this dialog, hold Ctrl when doing it.`,
+        confirmLabel: verb.present,
         cancelLabel: "Keep",
         destructive: true,
       });
@@ -99,7 +110,7 @@ export const buildDeleteAction = <
       }
     }
 
-    // Delete every target, isolating failures so one bad mutation never aborts
+    // Act on every target, isolating failures so one bad mutation never aborts
     // the rest of the batch.
     const failures: { id: string; error: unknown }[] = [];
     let done = 0;
@@ -118,7 +129,7 @@ export const buildDeleteAction = <
         }
       } catch (error) {
         failures.push({ id, error });
-        console.error(`Failed to delete ${identifier} ${id}`, error);
+        console.error(`Failed to ${verb.present.toLowerCase()} ${identifier} ${id}`, error);
       } finally {
         done += 1;
         onProgress(Math.round((done / targets.length) * 100));
@@ -128,9 +139,9 @@ export const buildDeleteAction = <
     service.cache.gc();
 
     if (failures.length > 0) {
-      const deleted = targets.length - failures.length;
+      const succeeded = targets.length - failures.length;
       throw new Error(
-        `Deleted ${deleted} of ${targets.length} — ${failures.length} failed.`,
+        `${verb.past} ${succeeded} of ${targets.length} — ${failures.length} failed.`,
       );
     }
 

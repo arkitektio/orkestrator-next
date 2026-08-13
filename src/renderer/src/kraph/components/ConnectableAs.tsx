@@ -54,7 +54,7 @@ const ConnectableCategoryList = ({
               </div>
             </div>
             <div className="shrink-0 text-xs text-muted-foreground">
-              Connecting unavailable
+              Select a target entity to connect
             </div>
           </div>
         </div>
@@ -69,13 +69,14 @@ export type ConnectableAsProps = {
   variant?: "dialog" | "inline";
 };
 
-// NOTE: The backend removed `createMeasurement` without a replacement, so a
-// structure can no longer be connected to an entity from here — measurements
-// are now recorded as supporting evidence on `createNaturalEvent` /
-// `createProtocolEvent`, which needs an event category and role mapping this
-// component has no source for. `materializedMeasurementEdges` is unchanged, so
-// the connectable targets are still listed; only the connect / create-new
-// actions are gone until an attach path exists again.
+// NOTE: `createMeasurement(input: {sourceId, targetId, category})` is back on
+// the schema, so connecting is expressible again — but it needs a concrete
+// target *Entity*, while `materializedMeasurementEdges` only yields the target
+// EntityCategory (`edge.target`). Wiring the connect action back up therefore
+// needs an entity picker per row (`SearchEntities` + `CreateEntityInline` over
+// `edge.target.id`) plus the source structure id threaded in from
+// `KnowledgeSidebar`'s `structureByIdentifier`. Until that picker exists the
+// rows stay read-only.
 export const ConnectableAs = ({
   identifier,
   graphId,

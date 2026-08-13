@@ -25,7 +25,7 @@ export default (props: { entity: EntityFragment }) => {
 
   const { data } = useGetGraphQuery({
     variables: {
-      id: props.entity.graph.id,
+      id: props.entity.graph?.id ?? "",
     },
   });
 
@@ -39,7 +39,7 @@ RETURN id(n), n.__created_at`,
       description: "No Description",
       name: "New Step",
       key: "new_step",
-      graph: props.entity.graph.id,
+      graph: props.entity.graph?.id ?? "",
       columnInput: [
         {
           key: "id",

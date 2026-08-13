@@ -65,7 +65,7 @@ import {
   WhereOperator,
   useEntityNodesQuery,
   useGetEntityQuery,
-  useSetEntityPropertyMutation
+  useUpdateEntityMutation
 } from "@/kraph/api/graphql";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
 import { KraphMeasurement, KraphNaturalEvent, KraphNode, KraphProtocolEvent } from "@/linkers";
@@ -107,7 +107,19 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [setNodeProperty] = useSetEntityPropertyMutation()
+  const [updateEntity] = useUpdateEntityMutation();
+
+  // `setEntityProperty` was removed from the schema; manual edits are now
+  // recorded as sticky properties, which override the derived value.
+  const setNodeProperty = (value: unknown) =>
+    updateEntity({
+      variables: {
+        input: {
+          id: nodeId,
+          stickyProperties: [{ key: propertyDefinition.key, value }],
+        },
+      },
+    });
 
   const [editingValue, setEditingValue] = React.useState(value);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -115,43 +127,19 @@ const EditableCell = ({
   const handleBlur = () => {
     setIsEditing(false);
     if (editingValue !== value) {
-      setNodeProperty({
-        variables: {
-          input: {
-            entityId: nodeId,
-            key: propertyDefinition.key,
-            value: editingValue,
-          },
-        },
-      });
+      setNodeProperty(editingValue);
     }
   }
 
   const onDateChange = (newValue: Date | undefined) => {
     if (!newValue) return;
-    setNodeProperty({
-      variables: {
-        input: {
-          entityId: nodeId,
-          key: propertyDefinition.key,
-          value: newValue.toISOString(),
-        },
-      },
-    });
+    setNodeProperty(newValue.toISOString());
     setIsEditing(false);
   };
 
   const handleBooleanChange = (checked: boolean) => {
     setEditingValue(checked);
-    setNodeProperty({
-      variables: {
-        input: {
-          entityId: nodeId,
-          key: propertyDefinition.key,
-          value: String(checked),
-        },
-      },
-    });
+    setNodeProperty(checked);
   }
 
   const renderEditWidget = () => {

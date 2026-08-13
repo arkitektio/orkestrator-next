@@ -1,6 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphMetric
 } from "@/linkers";
@@ -10,7 +8,6 @@ import { Handles } from "../components/Handles";
 import { MetricNode } from "../types";
 
 const TNode = memo(({ data, id, selected }: NodeProps<MetricNode>) => {
-  const resolve = useResolve();
 
   return (
     <>
@@ -26,19 +23,12 @@ const TNode = memo(({ data, id, selected }: NodeProps<MetricNode>) => {
           className={`h-full w-full rounded-md border-l-8 border-orange-500 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-2 ring-orange-500 shadow-lg" : ""}`}
           style={{ zIndex: 10 }}
         >
-          {data.category.image?.presignedUrl && (
-            <Image
-              src={resolve(data.category.image.presignedUrl)}
-              style={{ filter: "brightness(0.5)" }}
-              className="object-cover h-full w-full"
-            />
-          )}
           <div className="absolute inset-0 z-10 flex items-center justify-center flex-col p-3">
             <KraphMetric.DetailLink
               object={{ id: data.id }}
               className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
             >
-              {data.category.label}
+              {data.kind?.label || data.kind?.key || data.key}
             </KraphMetric.DetailLink>
             <div className="mt-2 text-3xl font-extrabold text-orange-600 dark:text-orange-400 bg-background/90 px-3 py-1 rounded backdrop-blur-sm shadow-sm">
               {data.value}

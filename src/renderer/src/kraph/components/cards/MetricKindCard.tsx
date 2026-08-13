@@ -1,40 +1,30 @@
 import { Card } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { ListMetricCategoryFragment } from "@/kraph/api/graphql";
-import { KraphMetricCategory } from "@/linkers";
+import { ListMetricKindFragment } from "@/kraph/api/graphql";
+import { KraphMetricKind } from "@/linkers";
 
 interface Props {
-  item: ListMetricCategoryFragment;
+  item: ListMetricKindFragment;
 }
 
 const TheCard = ({ item }: Props) => {
-  const s3resolve = useResolve();
 
   return (
-    <KraphMetricCategory.Smart object={item}>
+    <KraphMetricKind.Smart object={item}>
       <Card className="px-2 py-2 aspect-square transition-all ease-in-out duration-200 truncate relative">
-        {item?.image?.presignedUrl && (
-          <Image
-            src={s3resolve(item?.image.presignedUrl)}
-            style={{ filter: "brightness(0.2)" }}
-            className="z-3 object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
-          />
-        )}
         <div className="p-3 h-full w-full absolute top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-col break-all overflow-y-hidden">
-          <KraphMetricCategory.DetailLink
+          <KraphMetricKind.DetailLink
             className={({ isActive } /*  */) =>
               "z-10 font-bold text-md mb-2 cursor-pointer " +
               (isActive ? "text-primary-300" : "")
             }
             object={item}
           >
-            {item?.label} {item.valueKind && `(${item.valueKind})`}
-          </KraphMetricCategory.DetailLink>
-          <p className="text-sm text-muted-foreground">{item?.description}</p>
+            {item?.label || item?.key} {item.valueKind && `(${item.valueKind})`}
+          </KraphMetricKind.DetailLink>
+          <p className="text-sm text-muted-foreground">{item?.structureKind?.identifier}</p>
         </div>
       </Card>
-    </KraphMetricCategory.Smart>
+    </KraphMetricKind.Smart>
   );
 };
 

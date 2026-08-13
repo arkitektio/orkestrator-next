@@ -1,15 +1,9 @@
-mutation CreateMetricCategory($input: CreateMetricDefinitionInput!) {
-  createMetricCategory(input: $input) {
-    ...MetricCategory
+mutation UpdateMetricKind($input: UpdateMetricDefinitionInput!) {
+  updateMetricKind(input: $input) {
+    ...MetricKind
   }
 }
 
-mutation UpdateMetricCategory($input: UpdateMetricDefinitionInput!) {
-  updateMetricCategory(input: $input) {
-    ...MetricCategory
-  }
-}
-
-mutation DeleteMetricCategory($id: String!) {
-  deleteMetricCategory(input: { id: $id})
+mutation DeleteMetricKind($id: String!) {
+  deleteMetricKind(input: { id: $id })
 }

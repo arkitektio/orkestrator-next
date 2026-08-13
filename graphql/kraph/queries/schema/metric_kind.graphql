@@ -1,24 +1,24 @@
-query GetMetricCategory($id: ID!) {
-  metricCategory(id: $id) {
-    ...MetricCategory
+query GetMetricKind($id: ID!) {
+  metricKind(id: $id) {
+    ...MetricKind
   }
 }
 
-query ListMetricCategory(
-  $filters: MetricCategoryFilter
-  $pagination: OffsetPaginationInput
-) {
-  metricCategories(filters: $filters, pagination: $pagination) {
-    ...ListMetricCategory
-  }
-}
-
-query SearchMetricCategory($search: String, $values: [ID!]) {
-  options: metricCategories(
+query SearchMetricKinds($search: String, $values: [ID!]) {
+  options: metricKinds(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
     value: id
-    label: label
+    label: key
+  }
+}
+
+query ListMetricKinds(
+  $filters: MetricKindFilter
+  $pagination: StructurePaginationInput
+) {
+  metricKinds(filters: $filters, pagination: $pagination) {
+    ...ListMetricKind
   }
 }

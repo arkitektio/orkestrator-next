@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Timestamp from "react-timestamp";
 import { useGetEntityQuery } from "../api/graphql";
+import { InformingStructures } from "../components/InformingStructures";
 import { PropertyEditor } from "../components/PropertyEditor";
 import { PropertyRenderer } from "../components/PropertyRenderer";
 
@@ -56,6 +57,9 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
         <Sidebars>
           <Sidebars.Tab label="Comments">
             <KraphEntity.Komments object={{ id: data.entity.id }} />
+          </Sidebars.Tab>
+          <Sidebars.Tab label="Evidence">
+            <InformingStructures entityId={data.entity.id} />
           </Sidebars.Tab>
         </Sidebars>
       }

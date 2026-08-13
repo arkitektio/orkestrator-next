@@ -7,20 +7,20 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphStructureCategory
+  KraphStructureKind
 } from "@/linkers";
 import {
-  useGetStructureCategoryQuery,
-  useUpdateStructureCategoryMutation,
+  useGetStructureKindQuery,
+  useUpdateStructureKindMutation,
 } from "../api/graphql";
-import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
+import UpdateStructureKindForm from "../forms/UpdateStructureKindForm";
 import StructureList from "../components/renderers/lists/StructureList";
 
 const Page =  asDetailQueryRoute(
-  useGetStructureCategoryQuery,
+  useGetStructureKindQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateStructureCategoryMutation();
+    const [update] = useUpdateStructureKindMutation();
 
     const resolve = useResolve();
 
@@ -30,7 +30,7 @@ const Page =  asDetailQueryRoute(
         await update({
           variables: {
             input: {
-              id: data.structureCategory.id,
+              id: data.structureKind.id,
               image: response,
             },
           },
@@ -39,52 +39,31 @@ const Page =  asDetailQueryRoute(
       }
     };
 
-    const pin = async () => {
-      await update({
-        variables: {
-          input: {
-            id: data.structureCategory.id,
-            pin: !data.structureCategory.pinned,
-          },
-        },
-      });
-      await refetch();
-    };
-
     return (
-      <KraphStructureCategory.ModelPage
-        object={{ id: data.structureCategory.id }}
-        title={data?.structureCategory.identifier}
+      <KraphStructureKind.ModelPage
+        object={{ id: data.structureKind.id }}
+        title={data?.structureKind.identifier}
         sidebars={
           <Sidebars>
             <Sidebars.Tab label="Comments">
-              <KraphStructureCategory.Komments
-                object={{ id: data.structureCategory.id }}
+              <KraphStructureKind.Komments
+                object={{ id: data.structureKind.id }}
               />
             </Sidebars.Tab>
           </Sidebars>
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <Button
-              onClick={() => {
-                pin();
-              }}
-              className="w-full"
-              variant="outline"
-            >
-              {data.structureCategory.pinned ? "Unpin" : "Pin"}
-            </Button>
-            <KraphStructureCategory.ObjectButton
-              object={{ id: data.structureCategory.id }}
+            <KraphStructureKind.ObjectButton
+              object={{ id: data.structureKind.id }}
             />
 
             <FormSheet
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}
             >
-              <UpdateStructureCategoryForm
-                structureCategory={data.structureCategory}
+              <UpdateStructureKindForm
+                structureKind={data.structureKind}
               />
             </FormSheet>
           </div>
@@ -93,16 +72,16 @@ const Page =  asDetailQueryRoute(
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.structureCategory.identifier}
+              {data.structureKind.identifier}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.structureCategory.description}
+              {data.structureKind.description}
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
-            {data.structureCategory?.image?.presignedUrl && (
+            {data.structureKind?.image?.presignedUrl && (
               <Image
-                src={resolve(data.structureCategory?.image.presignedUrl)}
+                src={resolve(data.structureKind?.image.presignedUrl)}
                 style={{ filter: "brightness(0.7)" }}
                 className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
               />
@@ -112,10 +91,10 @@ const Page =  asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
             <div className="flex-grow w-full">
-            <StructureList category={data.structureCategory}/>
+            <StructureList kind={data.structureKind}/>
           </div>
 
-      </KraphStructureCategory.ModelPage>
+      </KraphStructureKind.ModelPage>
     );
   },
 );

@@ -3,9 +3,10 @@ import { DisplayWidget } from "@/command/Menu";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
-import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
+import { KraphStructure, KraphStructureKind } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
+import { MetricsForStructure } from "../components/MetricsForStructure";
 
 const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
   return (
@@ -34,9 +35,9 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            <KraphStructureCategory.DetailLink object={{ id: data.structure.category.id }} className="font-light text-muted-foreground">
-              {data.structure.category.identifier}
-            </KraphStructureCategory.DetailLink>{" "}{data.structure.object}
+            <KraphStructureKind.DetailLink object={{ id: data.structure.kindId }} className="font-light text-muted-foreground">
+              {data.structure.kind?.identifier || data.structure.identifier}
+            </KraphStructureKind.DetailLink>{" "}{data.structure.object}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
             {data.structure.label}
@@ -51,29 +52,8 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
         </Card>
       </KraphStructure.Drop>
 
-      <div>
-        {data.structure.metrics?.map((metric) => (
-          <div key={metric.id} className="px-6">
-            <span className="font-semibold">{metric.category.label}:</span>{" "}
-            {metric.value}
-          </div>
-        ))}
-      </div>
+      <MetricsForStructure structureId={data.structure.id} />
 
-      <div className="flex flex-row p-6">
-        {data.structure.category.relevantNodeQueries.map((query) => (
-          <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">
-            <KraphNodeQuery.DetailLink
-              object={{ id: query.id }}
-              className="w-full"
-              subroute="view"
-              subobject={data.structure.id}
-            >
-              {query.label}
-            </KraphNodeQuery.DetailLink>
-          </Card>
-        ))}
-      </div>
     </KraphStructure.ModelPage>
   );
 });

@@ -52,11 +52,15 @@ type Activity implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -92,12 +96,6 @@ enum AggregationFunction {
 
 """The `AnyScalar` scalar type represents an arbitrary JSON-like value"""
 scalar AnyScalar
-
-"""Input for archiving a category tag"""
-input ArchiveCategoryTagInput {
-  """The category tag ID"""
-  id: String!
-}
 
 """Input for archiving an edge pairs query"""
 input ArchiveEdgePairsQueryInput {
@@ -197,12 +195,6 @@ input ArchiveRelationInput {
   id: GraphID!
 }
 
-"""Input for archiving a scatter plot"""
-input ArchiveScatterPlotInput {
-  """The database ID of the scatter plot to archive"""
-  id: Int!
-}
-
 """Input for deleting an existing structure"""
 input ArchiveStructureInput {
   """The ID of the structure to archive"""
@@ -219,11 +211,20 @@ input ArchiveStructureRelationInput {
 An assertion edge linking provenance activity to asserted graph artifacts
 """
 type Assertion implements Edge {
+  """Human-readable name of the action that produced this assertion"""
+  actionName: String
+
+  """Which application made the claim"""
+  appId: String
+
+  """When the claim was made — belief time, the axis `as_of` filters on"""
+  assertedAt: DateTime
+
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -233,6 +234,9 @@ type Assertion implements Edge {
 
   """Global ID of the source/left node"""
   sourceId: String!
+
+  """Who made the claim — a user id, or an automated agent"""
+  subject: String
 
   """Global ID of the target/right node"""
   targetId: String!
@@ -527,6 +531,13 @@ enum ColumnKind {
   EDGE
   NODE
   VALUE
+}
+
+enum ConflictPolicy {
+  COMBINE
+  FLAG
+  LATEST_TOOL
+  SUBJECT_PRIORITY
 }
 
 """Input for creating a category tag"""
@@ -830,56 +841,39 @@ input CreateMeasurementDefinitionInput {
   target: EntityDescriptorInput!
 }
 
-"""Input for creating a new metric definition in the graph schema"""
-input CreateMetricDefinitionInput {
-  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
-  color: [Int!] = null
+"""Input for creating a new measurement edge"""
+input CreateMeasurementInput {
+  """The unique ID of the measurement category"""
+  category: String!
 
-  """Description of this node role"""
-  description: String = null
+  """The ID of the source entity/structure"""
+  sourceId: String!
 
-  """The graph id this metric will belong to"""
-  graph: String!
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
 
-  """Optional media store ID for an image representing this node role"""
-  image: String = null
-
-  """The label of the node participating in the event"""
-  key: String!
-
-  """
-  Optional human-readable label for this node role (defaults to 'key' if not provided)
-  """
-  label: String = null
-
-  """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
-
-  """Whether to pin this node role in the UI"""
-  pin: Boolean = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
-  """The label of the describing structure to read from"""
-  structure: String!
-
-  """
-  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
-  """
-  tags: [String!]! = []
-
-  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
-  valueKind: PropertyType!
+  """The ID of the target entity/structure"""
+  targetId: String!
 }
 
 """Input for creating a new metric"""
 input CreateMetricInput {
+  confidence: Float = null
+  confidenceType: String = null
   key: String!
 
   """The unique ID of the structure this metric is associated with"""
   structure: GraphID!
+
+  """Unix epoch time in milliseconds"""
+  timestamp: Int = null
+  unit: String = null
   value: AnyScalar!
+
+  """
+  What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded.
+  """
+  valueKind: PropertyType!
 }
 
 """Input for creating a new natural event definition in the graph schema"""
@@ -1130,6 +1124,23 @@ input CreateRelationDefinitionInput {
   tags: [String!]! = []
 }
 
+"""
+Input for creating a new relation between two entities with supporting evidence
+"""
+input CreateRelationInput {
+  """The unique ID of the structure this metric is associated with"""
+  category: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
 """Input for creating a scatter plot"""
 input CreateScatterPlotInput {
   """Optional column key used for point color"""
@@ -1172,53 +1183,10 @@ input CreateScatterPlotInput {
   yIdColumn: String = null
 }
 
-"""Input for creating a new structure definition in the graph schema"""
-input CreateStructureDefinitionInput {
-  """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
-  color: [Int!] = null
-
-  """Description of this node role"""
-  description: String = null
-
-  """The graph id this structure will belong to"""
-  graph: String!
-
-  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
-  identifier: String!
-
-  """Optional media store ID for an image representing this node role"""
-  image: String = null
-
-  """The label of the node participating in the event"""
-  key: String!
-
-  """
-  Optional human-readable label for this node role (defaults to 'key' if not provided)
-  """
-  label: String = null
-
-  """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
-
-  """Whether to pin this node role in the UI"""
-  pin: Boolean = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
-  """
-  Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
-  """
-  tags: [String!]! = []
-}
-
 """Input for creating a new entity category/type in the graph schema"""
 input CreateStructureInput {
-  """The ID of the structure category/type to create"""
-  category: String!
-
-  """The graph id this structure will belong to"""
-  graph: String!
+  """The structure identifier, e.g. '@mikro/roi'"""
+  identifier: String!
 
   """List of measurements associated with this structure"""
   metrics: [MetricInput!]! = []
@@ -1331,12 +1299,6 @@ input DeleteEntityDefinitionInput {
   id: ID!
 }
 
-"""Input for deleting an existing entity"""
-input DeleteEntityInput {
-  """The ID of the entity to delete"""
-  id: GraphID!
-}
-
 """Input for deleting a graph"""
 input DeleteGraphInput {
   """The ID of the graph to delete"""
@@ -1369,21 +1331,9 @@ input DeleteMeasurementDefinitionInput {
   id: String!
 }
 
-"""Input for deleting an existing measurement edge"""
-input DeleteMeasurementInput {
-  """The ID of the measurement to delete"""
-  id: String!
-}
-
 """Input for deleting an existing metric definition in the graph schema"""
 input DeleteMetricDefinitionInput {
   """The ID of the entity category to delete"""
-  id: String!
-}
-
-"""Input for deleting an existing metric"""
-input DeleteMetricInput {
-  """The ID of the metric to delete"""
   id: String!
 }
 
@@ -1392,12 +1342,6 @@ Input for deleting an existing natural event definition in the graph schema
 """
 input DeleteNaturalEventDefinitionInput {
   """The ID of the event category to delete"""
-  id: String!
-}
-
-"""Input for deleting an existing natural event instance"""
-input DeleteNaturalEventInput {
-  """The ID of the natural event to delete"""
   id: String!
 }
 
@@ -1427,22 +1371,10 @@ input DeleteProtocolEventDefinitionInput {
   id: String!
 }
 
-"""Input for deleting an existing protocol event instance"""
-input DeleteProtocolEventInput {
-  """The ID of the protocol event to delete"""
-  id: String!
-}
-
 """Input for deleting an existing relation definition in the graph schema"""
 input DeleteRelationDefinitionInput {
   """The ID of the relation category to delete"""
   id: String!
-}
-
-"""Input for deleting an existing relation"""
-input DeleteRelationInput {
-  """The ID of the metric to delete"""
-  id: GraphID!
 }
 
 """Input for deleting a scatter plot"""
@@ -1459,12 +1391,6 @@ input DeleteStructureDefinitionInput {
   id: String!
 }
 
-"""Input for deleting an existing structure"""
-input DeleteStructureInput {
-  """The ID of the structure to delete"""
-  id: GraphID!
-}
-
 """
 Input for deleting an existing structure relation definition in the graph schema
 """
@@ -1473,22 +1399,34 @@ input DeleteStructureRelationDefinitionInput {
   id: String!
 }
 
-"""Input for deleting an existing structure relation"""
-input DeleteStructureRelationInput {
-  """The ID of the structure relation to delete"""
-  id: String!
-}
-
 """A derivation rule in the graph schema"""
 type DerivationRule {
   """Aggregation function (MEAN, SUM, MAX, MIN, COUNT, etc.)"""
   aggregation: AggregationFunction
+
+  """
+  How to resolve disagreement between subjects. COMBINE folds everything together.
+  """
+  conflictPolicy: ConflictPolicy!
 
   """The property key on the source node"""
   key: String
 
   """The label of the describing structure to read from"""
   sourceNode: String
+
+  """
+  Which value kind of the source key to read, when the key has terms in more than one. Distinct from the property's own `value_kind`, which is the aggregation's result type: COUNT yields INT over STRING sources. Leave unset when the key is unambiguous. INT and FLOAT are read together either way.
+  """
+  sourceValueKind: ValueKind
+
+  """
+  Subjects in descending order of trust, for PRIORITY_LATEST. The first subject with any measurement wins; subjects not listed are considered only if none of the listed ones have measured.
+  """
+  subjectPriority: [String!]!
+
+  """App ids in descending order of trust, for LATEST_ASSERTION_TOOL."""
+  toolPriority: [String!]!
 }
 
 """Configuration for property derivation rules"""
@@ -1496,11 +1434,29 @@ input DerivationRuleInput {
   """Aggregation function (MEAN, SUM, MAX, MIN, COUNT, etc.)"""
   aggregation: AggregationFunction = null
 
+  """
+  How to resolve disagreement between subjects. COMBINE folds everything together.
+  """
+  conflictPolicy: ConflictPolicy! = COMBINE
+
   """The property key on the source node"""
   key: String = null
 
   """The label of the describing structure to read from"""
   sourceNode: String = null
+
+  """
+  Which value kind of the source key to read, when the key has terms in more than one. Distinct from the property's own `value_kind`, which is the aggregation's result type: COUNT yields INT over STRING sources. Leave unset when the key is unambiguous. INT and FLOAT are read together either way.
+  """
+  sourceValueKind: ValueKind = null
+
+  """
+  Subjects in descending order of trust, for PRIORITY_LATEST. The first subject with any measurement wins; subjects not listed are considered only if none of the listed ones have measured.
+  """
+  subjectPriority: [String!]! = []
+
+  """App ids in descending order of trust, for LATEST_ASSERTION_TOOL."""
+  toolPriority: [String!]! = []
 }
 
 enum DerivationType {
@@ -1515,8 +1471,8 @@ type Description implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -1542,8 +1498,8 @@ interface Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -1736,10 +1692,7 @@ input EdgeTableQueryOrder @oneOf {
 
 """Input for creating a new entity category/type in the graph schema"""
 input EnsureStructureInput {
-  """The graph id this structure will belong to"""
-  graph: String!
-
-  """The unique identifier for this structure"""
+  """The structure identifier, e.g. '@mikro/roi'"""
   identifier: String!
 
   """List of measurements associated with this structure"""
@@ -1763,11 +1716,15 @@ type Entity implements Node & VersionedNode {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -1798,7 +1755,7 @@ type Entity implements Node & VersionedNode {
   """The timestamp when this entity was materialized (unix ms)"""
   pinned: Boolean!
 
-  """List of the current derived properties for this entity"""
+  """The current derived properties for this entity"""
   properties: AnyScalar!
 
   """The source entity of this relation"""
@@ -2280,9 +2237,6 @@ type Graph {
   """List of measurement categories/schemas defined in this graph"""
   measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
 
-  """List of metric categories/schemas defined in this graph"""
-  metricCategories(filters: MetricCategoryFilter, ordering: [MetricCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MetricCategory!]!
-
   """Name of the graph"""
   name: String!
 
@@ -2306,9 +2260,6 @@ type Graph {
 
   """List of relation categories/schemas defined in this graph"""
   relationCategories(filters: RelationCategoryFilter, ordering: [RelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [RelationCategory!]!
-
-  """List of structure categories/schemas defined in this graph"""
-  structureCategories(filters: StructureCategoryFilter, ordering: [StructureCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureCategory!]!
 
   """List of structure relation categories/schemas defined in this graph"""
   structureRelationCategories(filters: StructureRelationCategoryFilter, ordering: [StructureRelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureRelationCategory!]!
@@ -2490,6 +2441,12 @@ type GraphPathQuery implements GraphQuery {
 
   """List of node categories for which this query is relevant"""
   relevantFor: [NodeCategory!]!
+
+  """The node category this path starts from"""
+  sourceCategory: NodeCategory
+
+  """The node category this path ends at"""
+  targetCategory: NodeCategory
 }
 
 """Base interface for entity categories/schemas"""
@@ -2617,8 +2574,8 @@ type InputParticipation implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -2646,6 +2603,18 @@ type InputParticipation implements Edge {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""Input for linking a structure to an entity"""
+input LinkStructureInput {
+  """Composite ID of the entity this structure informs"""
+  entityId: String!
+
+  """Structure identifier, e.g. '@mikro/roi'"""
+  structureIdentifier: String!
+
+  """Structure object ID"""
+  structureObject: String!
+}
 
 """Input type for creating a new graph"""
 type MatchPath {
@@ -2695,13 +2664,18 @@ input MatchPathInput {
 
 """A materialized edge representing a relationship in the graph"""
 type MaterializedEdge {
+  """The edge category this edge was derived from"""
   edge: EdgeCategory!
   graph: Graph!
 
   """Database ID of the edge"""
   id: ID!
-  source: NodeCategory!
-  target: NodeCategory!
+
+  """The source category, for edges that start at one"""
+  source: NodeCategory
+
+  """The target category, for edges that end at one"""
+  target: NodeCategory
 }
 
 input MaterializedEdgeFilter {
@@ -2730,12 +2704,17 @@ input MaterializedEdgeOrder @oneOf {
 
 """A materialized edge representing a relationship in the graph"""
 type MaterializedMeasurementEdge {
+  """The measurement category this edge was derived from"""
   edge: MeasurementCategory!
   graph: Graph!
 
   """Database ID of the edge"""
   id: ID!
-  source: StructureCategory!
+
+  """The source structure kind"""
+  source: StructureKind!
+
+  """The target entity category"""
   target: EntityCategory!
 }
 
@@ -2768,12 +2747,17 @@ input MaterializedMeasurementEdgeOrder @oneOf {
 
 """A materialized edge representing a relationship in the graph"""
 type MaterializedRelationEdge {
-  edge: StructureRelationCategory!
+  """The relation category this edge was derived from"""
+  edge: RelationCategory!
   graph: Graph!
 
   """Database ID of the edge"""
   id: ID!
+
+  """The source entity category"""
   source: EntityCategory!
+
+  """The target entity category"""
   target: EntityCategory!
 }
 
@@ -2803,13 +2787,18 @@ input MaterializedRelationEdgeOrder @oneOf {
 
 """A materialized edge representing a relationship in the graph"""
 type MaterializedStructureRelationEdge {
+  """The structure relation category this edge was derived from"""
   edge: StructureRelationCategory!
   graph: Graph!
 
   """Database ID of the edge"""
   id: ID!
-  source: StructureCategory!
-  target: StructureCategory!
+
+  """The source structure kind"""
+  source: StructureKind!
+
+  """The target structure kind"""
+  target: StructureKind!
 }
 
 input MaterializedStructureRelationEdgeFilter {
@@ -2844,8 +2833,8 @@ type Measurement implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -2954,7 +2943,7 @@ input MeasurementCategoryFilter {
   """Filter by list of IDs"""
   search: String
 
-  """Filter by list of IDs"""
+  """Filter by the structure identifier this measurement's source selects"""
   sourceIdentifier: String
 }
 
@@ -3076,11 +3065,15 @@ type MeasurementShadowLink implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -3152,11 +3145,14 @@ type MediaUploadGrant {
 
 """A metric node representing computed values"""
 type Metric implements Node {
-  """The source entity of this relation"""
-  category: MetricCategory!
+  """When this measurement was claimed"""
+  assertedAt: DateTime
 
-  """Category ID linking to MetricCategory model"""
-  categoryId: String
+  """How confident the source is in this measurement"""
+  confidence: Float
+
+  """What kind of confidence this is"""
+  confidenceType: String
 
   """External ID if set"""
   externalId: String
@@ -3164,14 +3160,27 @@ type Metric implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
+
+  """The measurement key"""
+  key: String
+
+  """The organization's term for this kind of measurement"""
+  kind: MetricKind
+
+  """ID of the metric kind this instantiates"""
+  kindId: String
 
   """
   The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
@@ -3181,139 +3190,20 @@ type Metric implements Node {
   """Local ID if set"""
   localId: String
 
+  """When the world was observed"""
+  measuredAt: DateTime
+
   """The timestamp when this entity was materialized (unix ms)"""
   pinned: Boolean!
 
   """Tags associated with this node"""
   tags: [String!]!
 
+  """Unit of measurement, where the source gave one"""
+  unit: String
+
   """The metric value"""
   value: AnyScalar!
-}
-
-"""A metric category/schema definition"""
-type MetricCategory implements Category & NodeCategory {
-  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
-  ageName: String!
-
-  """Color as RGBA list (0-255)"""
-  color: [Int!]
-
-  """Description of the category"""
-  description: String
-
-  """The graph this category belongs to"""
-  graph: Graph!
-
-  """ID of the graph this category belongs to"""
-  graphId: ID!
-
-  """Height for visualization (optional)"""
-  height: Float
-
-  """Database ID of the category"""
-  id: ID!
-
-  """An image representing this category, for visualization purposes"""
-  image: MediaStore
-
-  """
-  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
-  """
-  key: String!
-
-  """Label/name of the category"""
-  label: String!
-
-  """The graph this category belongs to"""
-  pinned: Boolean!
-
-  """X coordinate"""
-  positionX: Float
-
-  """Y coordinate"""
-  positionY: Float
-
-  """Z coordinate (optional)"""
-  positionZ: Float
-
-  """Persistent URL for this category"""
-  purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
-
-  """List of relevant queries that use this category as input"""
-  relevantQueries: [GraphQuery!]!
-
-  """
-  The structure category/schema this metric is relevant for, if applicable
-  """
-  structureCategory: StructureCategory!
-
-  """List of tags associated with this category"""
-  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
-
-  """
-  What type of value, (taking from the universe) 'QUANTITATIVE', 'QUALITATIVE', 'BOOLEAN'
-  """
-  valueKind: ValueKind!
-
-  """Width for visualization (optional)"""
-  width: Float
-}
-
-"""Numeric/aggregatable fields of MetricCategory"""
-enum MetricCategoryField {
-  CREATED_AT
-}
-
-input MetricCategoryFilter {
-  AND: MetricCategoryFilter
-  DISTINCT: Boolean
-  NOT: MetricCategoryFilter
-  OR: MetricCategoryFilter
-  graph: GraphFilter
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  label: String
-
-  """Filter by list of IDs"""
-  pinned: Boolean
-
-  """Filter by list of IDs"""
-  search: String
-
-  """Filter by list of IDs"""
-  valueKind: ValueKind
-}
-
-input MetricCategoryOrder @oneOf {
-  id: Ordering
-  instanceKind: Ordering
-  label: Ordering
-}
-
-type MetricCategoryStats {
-  """Average value"""
-  avg(field: MetricCategoryField!): Float
-
-  """Total number of items in the selection"""
-  count: Int!
-
-  """Count of distinct values"""
-  distinctCount(field: MetricCategoryField!): Int!
-
-  """Maximum value"""
-  max(field: MetricCategoryField!): Float
-
-  """Minimum value"""
-  min(field: MetricCategoryField!): Float
-
-  """Sum of values"""
-  sum(field: MetricCategoryField!): Float
 }
 
 """Filter options for querying metrics"""
@@ -3333,8 +3223,100 @@ input MetricFilter {
 
 """Input for creating a new natural event definition in the graph schema"""
 input MetricInput {
+  confidence: Float = null
+  confidenceType: String = null
   key: String!
+
+  """Unix epoch time in milliseconds"""
+  timestamp: Int = null
+  unit: String = null
   value: AnyScalar!
+
+  """
+  What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded.
+  """
+  valueKind: PropertyType!
+}
+
+"""A kind of measurement that can be made about a structure kind"""
+type MetricKind {
+  """Display colour as RGBA"""
+  color: [Int!]
+
+  """When this organization first saw this kind"""
+  createdAt: DateTime!
+
+  """What this measurement is"""
+  description: String
+
+  """Database ID of the kind"""
+  id: ID!
+
+  """The measurement key, e.g. 'vector_length'"""
+  key: String!
+
+  """Human-readable name"""
+  label: String
+
+  """Persistent URL, where this corresponds to a published term"""
+  purl: String
+
+  """The kind of structure this measurement describes"""
+  structureKind: StructureKind!
+
+  """What type of value this measurement carries"""
+  valueKind: ValueKind!
+}
+
+"""Numeric/aggregatable fields of MetricKind"""
+enum MetricKindField {
+  CREATED_AT
+}
+
+input MetricKindFilter {
+  AND: MetricKindFilter
+  DISTINCT: Boolean
+  NOT: MetricKindFilter
+  OR: MetricKindFilter
+
+  """Filter by list of IDs"""
+  ids: [ID!] = null
+
+  """Search label and key"""
+  search: String = null
+
+  """Filter by the structure kind this describes"""
+  structureKind: ID
+
+  """Filter by the kind of value this measurement carries"""
+  valueKind: ValueKind
+}
+
+input MetricKindOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  key: Ordering
+  label: Ordering
+}
+
+type MetricKindStats {
+  """Average value"""
+  avg(field: MetricKindField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: MetricKindField!): Int!
+
+  """Maximum value"""
+  max(field: MetricKindField!): Float
+
+  """Minimum value"""
+  min(field: MetricKindField!): Float
+
+  """Sum of values"""
+  sum(field: MetricKindField!): Float
 }
 
 """Ordering options for metric queries"""
@@ -3363,9 +3345,6 @@ input MetricPaginationInput {
 
 """Graph Engine Mutations"""
 type Mutation {
-  """Archive an existing category tag in the graph"""
-  archiveCategoryTag(input: ArchiveCategoryTagInput!): CategoryTag!
-
   """Archive an edge pairs query"""
   archiveEdgePairsQuery(input: ArchiveEdgePairsQueryInput!): ID!
 
@@ -3414,9 +3393,6 @@ type Mutation {
   """Archive a relation in the graph (soft delete)"""
   archiveRelation(input: ArchiveRelationInput!): Relation!
 
-  """Archive a scatter plot"""
-  archiveScatterPlot(input: ArchiveScatterPlotInput!): ID!
-
   """Archive a structure in the graph (soft delete)"""
   archiveStructure(input: ArchiveStructureInput!): Structure!
 
@@ -3456,14 +3432,16 @@ type Mutation {
   """Create or update a graph table query using builder arguments"""
   createGraphTableQueryThroughBuilder(input: CreateGraphTableQueryThroughBuilderInput!): GraphTableQuery!
 
+  """
+  Assert that a structure measures an entity, under a measurement category
+  """
+  createMeasurement(input: CreateMeasurementInput!): Measurement!
+
   """Create a new measurement category/schema in the graph"""
   createMeasurementCategory(input: CreateMeasurementDefinitionInput!): MeasurementCategory!
 
   """Create a new metric in the graph"""
   createMetric(input: CreateMetricInput!): Metric!
-
-  """Create a new metric category/schema in the graph"""
-  createMetricCategory(input: CreateMetricDefinitionInput!): MetricCategory!
 
   """Create a new natural event in the graph"""
   createNaturalEvent(input: CreateNaturalEventInput!): NaturalEvent!
@@ -3486,6 +3464,9 @@ type Mutation {
   """Create a new protocol event category/schema in the graph"""
   createProtocolEventCategory(input: CreateProtocolEventDefinitionInput!): ProtocolEventCategory!
 
+  """Assert a relation between two entities in the graph"""
+  createRelation(input: CreateRelationInput!): Relation!
+
   """Create a new relation category/schema in the graph"""
   createRelationCategory(input: CreateRelationDefinitionInput!): RelationCategory!
 
@@ -3494,9 +3475,6 @@ type Mutation {
 
   """Create a new structure in the graph"""
   createStructure(input: CreateStructureInput!): Structure!
-
-  """Create a new structure category/schema in the graph"""
-  createStructureCategory(input: CreateStructureDefinitionInput!): StructureCategory!
 
   """Create a new structure relation in the graph"""
   createStructureRelation(input: CreateStructureRelationInput!): StructureRelation!
@@ -3516,9 +3494,6 @@ type Mutation {
   """Delete an edge table query"""
   deleteEdgeTableQuery(input: DeleteEdgeTableQueryInput!): ID!
 
-  """Delete an entity from the graph"""
-  deleteEntity(input: DeleteEntityInput!): GraphID!
-
   """Delete an entity category/schema from the graph"""
   deleteEntityCategory(input: DeleteEntityDefinitionInput!): ID!
 
@@ -3534,20 +3509,11 @@ type Mutation {
   """Delete a graph table query"""
   deleteGraphTableQuery(input: DeleteGraphTableQueryInput!): ID!
 
-  """Delete a measurement from the graph"""
-  deleteMeasurement(input: DeleteMeasurementInput!): GraphID!
-
   """Delete a measurement category/schema from the graph"""
   deleteMeasurementCategory(input: DeleteMeasurementDefinitionInput!): ID!
 
-  """Delete a metric from the graph"""
-  deleteMetric(input: DeleteMetricInput!): GraphID!
-
-  """Delete a metric category/schema from the graph"""
-  deleteMetricCategory(input: DeleteMetricDefinitionInput!): ID!
-
-  """Delete a natural event from the graph"""
-  deleteNaturalEvent(input: DeleteNaturalEventInput!): GraphID!
+  """Retire a metric kind and the measurements recorded under it"""
+  deleteMetricKind(input: DeleteMetricDefinitionInput!): ID!
 
   """Delete a natural event category/schema from the graph"""
   deleteNaturalEventCategory(input: DeleteNaturalEventDefinitionInput!): ID!
@@ -3561,14 +3527,8 @@ type Mutation {
   """Delete a node table query"""
   deleteNodeTableQuery(input: DeleteNodeTableQueryInput!): ID!
 
-  """Delete a protocol event from the graph"""
-  deleteProtocolEvent(input: DeleteProtocolEventInput!): GraphID!
-
   """Delete a protocol event category/schema from the graph"""
   deleteProtocolEventCategory(input: DeleteProtocolEventDefinitionInput!): ID!
-
-  """Delete a relation from the graph"""
-  deleteRelation(input: DeleteRelationInput!): GraphID!
 
   """Delete a relation category/schema from the graph"""
   deleteRelationCategory(input: DeleteRelationDefinitionInput!): ID!
@@ -3576,14 +3536,8 @@ type Mutation {
   """Delete a scatter plot"""
   deleteScatterPlot(input: DeleteScatterPlotInput!): ID!
 
-  """Delete a structure from the graph"""
-  deleteStructure(input: DeleteStructureInput!): GraphID!
-
-  """Delete a structure category/schema from the graph"""
-  deleteStructureCategory(input: DeleteStructureDefinitionInput!): ID!
-
-  """Delete a structure relation from the graph"""
-  deleteStructureRelation(input: DeleteStructureRelationInput!): GraphID!
+  """Retire a structure kind and the evidence recorded under it"""
+  deleteStructureKind(input: DeleteStructureDefinitionInput!): ID!
 
   """Delete a structure relation category/schema from the graph"""
   deleteStructureRelationCategory(input: DeleteStructureRelationDefinitionInput!): ID!
@@ -3602,6 +3556,9 @@ type Mutation {
   """Finalize a Zarr upload after the client has written the object"""
   finishZarrUpload(input: FinishZarrUploadInput!): ZarrStore!
 
+  """Assert that a structure is evidence for an entity"""
+  linkStructureToEntity(input: LinkStructureInput!): Structure!
+
   """Pin a node in the UI for a user"""
   pinNode(input: PinNodeInput!): Node!
 
@@ -3616,9 +3573,6 @@ type Mutation {
 
   """Request an upload grant for a Zarr store"""
   requestZarrUpload(input: RequestZarrUploadInput!): ZarrUploadGrant!
-
-  """Set a property on an existing entity in the graph"""
-  setEntityProperty(input: SetEntityPropertyInput!): Entity!
 
   """Update an existing category tag in the graph"""
   updateCategoryTag(input: UpdateCategoryTagInput!): CategoryTag!
@@ -3659,8 +3613,8 @@ type Mutation {
   """Update an existing metric in the graph"""
   updateMetric(input: UpdateMetricInput!): Metric!
 
-  """Update an existing metric category/schema in the graph"""
-  updateMetricCategory(input: UpdateMetricDefinitionInput!): MetricCategory!
+  """Update a metric kind's label, description or colour"""
+  updateMetricKind(input: UpdateMetricDefinitionInput!): MetricKind!
 
   """Update an existing natural event in the graph"""
   updateNaturalEvent(input: UpdateNaturalEventInput!): NaturalEvent!
@@ -3683,6 +3637,9 @@ type Mutation {
   """Update an existing protocol event category/schema in the graph"""
   updateProtocolEventCategory(input: UpdateProtocolEventDefinitionInput!): ProtocolEventCategory!
 
+  """Replace a relation with a new assertion, archiving the old one"""
+  updateRelation(input: UpdateRelationInput!): Relation!
+
   """Update an existing relation category/schema in the graph"""
   updateRelationCategory(input: UpdateRelationDefinitionInput!): RelationCategory!
 
@@ -3692,8 +3649,8 @@ type Mutation {
   """Update an existing structure in the graph"""
   updateStructure(input: UpdateStructureInput!): Structure!
 
-  """Update an existing structure category/schema in the graph"""
-  updateStructureCategory(input: UpdateStructureDefinitionInput!): StructureCategory!
+  """Update a structure kind's label, description or colour"""
+  updateStructureKind(input: UpdateStructureDefinitionInput!): StructureKind!
 
   """Update an existing structure relation in the graph"""
   updateStructureRelation(input: UpdateStructureRelationInput!): StructureRelation!
@@ -3716,11 +3673,15 @@ type NaturalEvent implements Event & Node & VersionedNode {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -3932,11 +3893,15 @@ interface Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -4220,8 +4185,8 @@ type OutputParticipation implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -4247,11 +4212,8 @@ type OutputParticipation implements Edge {
 
 """Input for creating a new structure"""
 input PinNodeInput {
-  """The ID of the structure category/type to create"""
-  category: String!
-
-  """The graph id this structure will belong to"""
-  graph: String!
+  """The structure identifier, e.g. '@mikro/roi'"""
+  identifier: String!
 
   """List of measurements associated with this structure"""
   metrics: [MetricInput!]! = []
@@ -4396,11 +4358,15 @@ type ProtocolEvent implements Event & Node & VersionedNode {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -4706,6 +4672,9 @@ type Query {
   """List all graphs in the graph engine"""
   graphs(filters: GraphFilter, ordering: [GraphOrder!]! = [], pagination: OffsetPaginationInput): [Graph!]!
 
+  """List the structures that are evidence for an entity"""
+  informingStructures(entityId: String!): [Structure!]!
+
   """Get an input participation edge by composite graph ID"""
   inputParticipation(id: GraphID!): InputParticipation!
 
@@ -4751,20 +4720,26 @@ type Query {
   """List measurements for a measurement category"""
   measurements(filters: MeasurementFilter = null, measurementCategoryId: ID!, ordering: [MeasurementOrder!] = null, pagination: MeasurementPaginationInput = null): [Measurement!]!
 
+  """List every metric recorded under one assertion"""
+  measurementsForAssertion(assertionId: GraphID!): [Metric!]!
+
   """Get a metric by ID"""
   metric(metricId: GraphID!): Metric!
 
-  """List all metric categories/schemas"""
-  metricCategories(filters: MetricCategoryFilter, ordering: [MetricCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MetricCategory!]!
+  """Get one metric kind by ID"""
+  metricKind(id: ID!): MetricKind!
 
-  """Get a single metric category/schema by ID"""
-  metricCategory(id: ID!): MetricCategory!
+  """Aggregated metric-kind stats"""
+  metricKindStats(filters: MetricKindFilter = null): MetricKindStats!
 
-  """Get aggregated metric-category stats with optional filters"""
-  metricCategoryStats(filters: MetricCategoryFilter = null): MetricCategoryStats!
+  """List the organization's metric kinds"""
+  metricKinds(filters: MetricKindFilter = null, ordering: [MetricKindOrder!] = null, pagination: StructurePaginationInput = null): [MetricKind!]!
 
   """List metrics for a metric category"""
   metrics(filters: MetricFilter = null, metricCategoryId: ID!, ordering: [MetricOrder!] = null, pagination: MetricPaginationInput = null): [Metric!]!
+
+  """List every un-retracted metric describing a structure"""
+  metricsForStructure(structureId: GraphID!): [Metric!]!
 
   """Get a natural event by composite graph ID"""
   naturalEvent(id: GraphID!): NaturalEvent!
@@ -4862,14 +4837,14 @@ type Query {
   """Get a structure by graph, identifier and object"""
   structureByIdentifier(graph: ID!, identifier: StructureIdentifier!, object: StructureObject!): Structure!
 
-  """List all structure categories/schemas"""
-  structureCategories(filters: StructureCategoryFilter, ordering: [StructureCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureCategory!]!
+  """Get one structure kind by ID"""
+  structureKind(id: ID!): StructureKind!
 
-  """Get a single structure category/schema by ID"""
-  structureCategory(id: ID!): StructureCategory!
+  """Aggregated structure-kind stats"""
+  structureKindStats(filters: StructureKindFilter = null): StructureKindStats!
 
-  """Get aggregated structure-category stats with optional filters"""
-  structureCategoryStats(filters: StructureCategoryFilter = null): StructureCategoryStats!
+  """List the organization's structure kinds"""
+  structureKinds(filters: StructureKindFilter = null, ordering: [StructureKindOrder!] = null, pagination: StructurePaginationInput = null): [StructureKind!]!
 
   """Get a structure relation by composite graph ID"""
   structureRelation(id: GraphID!): StructureRelation!
@@ -4887,13 +4862,13 @@ type Query {
   structureRelations(filters: StructureRelationFilter = null, ordering: [StructureRelationOrder!] = null, pagination: StructureRelationPaginationInput = null, structureRelationCategoryId: ID!): [StructureRelation!]!
 
   """List structures with optional filters, ordering, and pagination"""
-  structures(filters: StructureFilter = null, ordering: [StructureOrder!] = null, pagination: StructurePaginationInput = null, structureCategoryId: ID!): [Structure!]!
+  structures(filters: StructureFilter = null, ordering: [StructureOrder!] = null, pagination: StructurePaginationInput = null, structureKindId: ID = null): [Structure!]!
 }
 
 """Input for creating a new metric"""
 input RecordMetricInput {
-  """The graph id this metric will belong to"""
-  graph: String!
+  confidence: Float = null
+  confidenceType: String = null
 
   """The schema identifier for this metric (e.g. '@mikro/roi_volume')"""
   identifier: String!
@@ -4901,10 +4876,14 @@ input RecordMetricInput {
 
   """The unique ID of the object this metric references"""
   object: String!
+
+  """Unix epoch time in milliseconds"""
+  timestamp: Int = null
+  unit: String = null
   value: AnyScalar!
 
   """
-  The kind of value this metric represents (e.g. 'float', 'integer', 'string', etc.)
+  What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded.
   """
   valueKind: PropertyType!
 }
@@ -4920,8 +4899,8 @@ type Relation implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -5156,11 +5135,15 @@ type RelationShadowLink implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -5255,6 +5238,9 @@ input ReturnStatementInput {
 
 """A rich property with metadata from schema and graph"""
 type RichProperty {
+  """The assertions whose measurements contribute to this value"""
+  contributingAssertions: [Assertion!]!
+
   """The property key/name"""
   definition: PropertyDefinition
 
@@ -5263,6 +5249,18 @@ type RichProperty {
 
   """The timestamp when this property was last derived (unix ms)"""
   key: String
+
+  """When the earliest contributing measurement was observed"""
+  measuredFrom: DateTime
+
+  """When the latest contributing measurement was observed"""
+  measuredTo: DateTime
+
+  """How many measurements contribute to this value"""
+  nEvidence: Int
+
+  """Spread of the contributing measurements (max - min), where numeric"""
+  spread: Float
 
   """
   Supporting evidence for this property, in form of metrics derived from observations/measurements
@@ -5384,43 +5382,35 @@ input SequenceMappingInput {
   sequence: String!
 }
 
-"""Input for ensuring an entity exists with a given global ID"""
-input SetEntityPropertyInput {
-  """The ID of the entity to update"""
-  entityId: GraphID!
-
-  """The property key to set"""
-  key: String!
-
-  """The value to set for this property"""
-  value: JSON!
-}
-
 """A structure that provides evidence for entities"""
 type Structure implements Node {
-  """The graph this node belongs to"""
-  category: StructureCategory!
-
-  """Category ID linking to StructureCategory model"""
-  categoryId: String!
-
   """External ID if set"""
   externalId: String
 
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
 
   """Schema identifier (e.g. '@mikro/roi')"""
   identifier: StructureIdentifier!
+
+  """The organization's term for this kind of structure"""
+  kind: StructureKind
+
+  """ID of the structure kind this instantiates"""
+  kindId: String!
 
   """
   The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
@@ -5443,138 +5433,20 @@ type Structure implements Node {
   tags: [String!]!
 }
 
-"""A structure category/schema definition"""
-type StructureCategory implements Category & NodeCategory {
-  """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
-  ageName: String!
-
-  """Color as RGBA list (0-255)"""
-  color: [Int!]
-
-  """Description of the category"""
-  description: String
-
-  """The graph this category belongs to"""
-  graph: Graph!
-
-  """ID of the graph this category belongs to"""
-  graphId: ID!
-
-  """Height for visualization (optional)"""
-  height: Float
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The identifier for this structure category, which is used to link structures to entities (e.g. 'Cell', 'ROI', 'Tissue')
-  """
-  identifier: String!
-
-  """An image representing this category, for visualization purposes"""
-  image: MediaStore
-
-  """
-  The unique key/identifier for this category, used for linking to entities or structures (e.g. 'Cell', 'ROI')
-  """
-  key: String!
-
-  """Label/name of the category"""
-  label: String!
-
-  """The graph this category belongs to"""
-  pinned: Boolean!
-
-  """X coordinate"""
-  positionX: Float
-
-  """Y coordinate"""
-  positionY: Float
-
-  """Z coordinate (optional)"""
-  positionZ: Float
-
-  """Persistent URL for this category"""
-  purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
-
-  """List of relevant queries that use this category as input"""
-  relevantQueries: [GraphQuery!]!
-
-  """List of tags associated with this category"""
-  tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
-
-  """Width for visualization (optional)"""
-  width: Float
-}
-
-"""Numeric/aggregatable fields of StructureCategory"""
-enum StructureCategoryField {
-  CREATED_AT
-}
-
-input StructureCategoryFilter {
-  AND: StructureCategoryFilter
-  DISTINCT: Boolean
-  NOT: StructureCategoryFilter
-  OR: StructureCategoryFilter
-  graph: GraphFilter
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-  label: String
-
-  """Filter by list of IDs"""
-  matchesDescriptor: StructureDescriptorInput
-
-  """Filter by list of IDs"""
-  pinned: Boolean
-
-  """Filter by list of IDs"""
-  search: String
-}
-
-input StructureCategoryOrder @oneOf {
-  id: Ordering
-  instanceKind: Ordering
-  label: Ordering
-}
-
-type StructureCategoryStats {
-  """Average value"""
-  avg(field: StructureCategoryField!): Float
-
-  """Total number of items in the selection"""
-  count: Int!
-
-  """Count of distinct values"""
-  distinctCount(field: StructureCategoryField!): Int!
-
-  """Maximum value"""
-  max(field: StructureCategoryField!): Float
-
-  """Minimum value"""
-  min(field: StructureCategoryField!): Float
-
-  """Sum of values"""
-  sum(field: StructureCategoryField!): Float
-}
-
 """Input type for creating a new graph query"""
 type StructureDescriptor {
   """Default category to link to if no entities match the filters"""
   defaultCategoryKey: String
 
-  """Filter by entity key/label"""
+  """REMOVED — structure kinds have no key. Use `identifiers`."""
   keys: [String!]
 
-  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  """
+  REMOVED — structure kinds carry no ontology references. Use `identifiers`.
+  """
   ontotologyTerms: [String!]
 
-  """Filter by tags on the entity"""
+  """REMOVED — structure kinds carry no tags. Use `identifiers`."""
   tags: [String!]
 }
 
@@ -5585,16 +5457,18 @@ input StructureDescriptorInput {
   """Default category to link to if no entities match the filters"""
   defaultCategoryKey: String = null
 
-  """Optional structure identifier to filter by (e.g. '@mikro/roi')"""
+  """Structure identifiers to filter by (e.g. '@mikro/roi')"""
   identifiers: [String!] = null
 
-  """Filter by entity key/label"""
+  """REMOVED — structure kinds have no key. Use `identifiers`."""
   keys: [String!] = null
 
-  """Filter by ontology references on the entity (format: 'PREFIX:TERM_ID')"""
+  """
+  REMOVED — structure kinds carry no ontology references. Use `identifiers`.
+  """
   ontotologyTerms: [String!] = null
 
-  """Filter by tags on the entity"""
+  """REMOVED — structure kinds carry no tags. Use `identifiers`."""
   tags: [String!] = null
 }
 
@@ -5617,6 +5491,84 @@ input StructureFilter {
 The `StructureIdentifier` scalar type represents a structure identifier (e.g. '@mikro/roi')
 """
 scalar StructureIdentifier
+
+"""A kind of external datum this organization knows about"""
+type StructureKind {
+  """Display colour as RGBA"""
+  color: [Int!]
+
+  """When this organization first saw this kind"""
+  createdAt: DateTime!
+
+  """What this kind of datum is"""
+  description: String
+
+  """Database ID of the kind"""
+  id: ID!
+
+  """The structure identifier, e.g. '@mikro/roi'"""
+  identifier: String!
+
+  """Illustrative image, if any"""
+  image: MediaStore
+
+  """Human-readable name"""
+  label: String
+
+  """Persistent URL, where this corresponds to a published term"""
+  purl: String
+}
+
+"""Numeric/aggregatable fields of StructureKind"""
+enum StructureKindField {
+  CREATED_AT
+}
+
+input StructureKindFilter {
+  AND: StructureKindFilter
+  DISTINCT: Boolean
+  NOT: StructureKindFilter
+  OR: StructureKindFilter
+
+  """Filter by structure identifiers"""
+  identifiers: [String!]
+
+  """Filter by list of IDs"""
+  ids: [ID!] = null
+
+  """Filter by whether the kind matches a descriptor"""
+  matchesDescriptor: StructureDescriptorInput
+
+  """Search label and identifier"""
+  search: String = null
+}
+
+input StructureKindOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  identifier: Ordering
+  label: Ordering
+}
+
+type StructureKindStats {
+  """Average value"""
+  avg(field: StructureKindField!): Float
+
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Count of distinct values"""
+  distinctCount(field: StructureKindField!): Int!
+
+  """Maximum value"""
+  max(field: StructureKindField!): Float
+
+  """Minimum value"""
+  min(field: StructureKindField!): Float
+
+  """Sum of values"""
+  sum(field: StructureKindField!): Float
+}
 
 """
 The `StructureObject` scalar type represents a structure object (e.g 1) on a specific identifier)
@@ -5671,8 +5623,8 @@ type StructureRelation implements Edge {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
 
   """Composite ID for edge lookup"""
   id: String!
@@ -5901,11 +5853,15 @@ type StructureRelationShadowLink implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -6268,10 +6224,22 @@ input UpdateMetricDefinitionInput {
 
 """Input for updating an existing metric"""
 input UpdateMetricInput {
+  confidence: Float = null
+  confidenceType: String = null
+
   """The ID of the metric to update"""
   id: String!
   key: String!
+
+  """Unix epoch time in milliseconds"""
+  timestamp: Int = null
+  unit: String = null
   value: AnyScalar!
+
+  """
+  What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded.
+  """
+  valueKind: PropertyType!
 }
 
 """
@@ -6532,6 +6500,21 @@ input UpdateRelationDefinitionInput {
   tags: [String!]! = []
 }
 
+"""Input for updating an existing relation"""
+input UpdateRelationInput {
+  """The ID of the relation to update"""
+  id: String!
+
+  """The ID of the source entity/structure"""
+  sourceId: String!
+
+  """List of evidence structures with measurements"""
+  supportingEvidence: [StructureReferenceInput!]! = []
+
+  """The ID of the target entity/structure"""
+  targetId: String!
+}
+
 """Input for updating a scatter plot"""
 input UpdateScatterPlotInput {
   """Optional column key used for point color"""
@@ -6715,11 +6698,15 @@ interface VersionedNode implements Node {
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
-  """The graph this node belongs to"""
-  graph: Graph!
+  """
+  The graph this node belongs to, or null for organization-scoped evidence
+  """
+  graph: Graph
 
-  """Local AGE graph ID"""
-  graphId: Int!
+  """
+  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  """
+  graphId: Int
 
   """Composite ID for node lookup"""
   id: String!
@@ -6846,7 +6833,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricCategory | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureCategory | StructureRelationCategory | ZarrStore
+union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | ZarrStore
 
 type _Service {
   sdl: String!

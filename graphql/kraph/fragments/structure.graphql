@@ -3,15 +3,12 @@ fragment Structure on Structure {
   id
   object
   identifier
-  category {
-    ...StructureCategory
+  kindId
+  kind {
+    ...StructureKind
   }
   metrics {
-    id
-    category {
-      label
-    }
-    value
+    ...ListMetric
   }
 }
 
@@ -20,11 +17,11 @@ fragment ListStructure on Structure {
   label
   object
   identifier
-  category {
-    identifier
+  kindId
+  kind {
     id
+    identifier
     label
-    ageName
   }
 }
 
@@ -32,7 +29,9 @@ fragment ListStructure on Structure {
 fragment InformedStructure on Structure {
   ...BaseNode
   id
-  category {
+  object
+  identifier
+  kind {
     id
     identifier
   }
@@ -41,10 +40,6 @@ fragment InformedStructure on Structure {
     name
   }
   metrics {
-    id
-    category {
-      label
-    }
-    value
+    ...ListMetric
   }
 }

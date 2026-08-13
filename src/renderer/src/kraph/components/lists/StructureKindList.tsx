@@ -1,31 +1,31 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { KraphStructureCategory } from "@/linkers";
+import { KraphStructureKind } from "@/linkers";
 import {
   OffsetPaginationInput,
-  StructureCategoryFilter,
-  useListStructureCategoryQuery
+  StructureKindFilter,
+  useListStructureKindsQuery
 } from "../../api/graphql";
-import StructureCategoryCard from "../cards/StructureCategoryCard";
+import StructureKindCard from "../cards/StructureKindCard";
 
 export type Props = {
-  filters?: StructureCategoryFilter;
+  filters?: StructureKindFilter;
   pagination?: OffsetPaginationInput;
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, refetch } = useListStructureCategoryQuery({
+  const { data, refetch } = useListStructureKindsQuery({
     variables: { filters, pagination },
   });
 
   return (
     <ListRender
-      array={data?.structureCategories}
+      array={data?.structureKinds}
       title={
-        <KraphStructureCategory.ListLink className="flex-0">Structure Categories</KraphStructureCategory.ListLink>
+        <KraphStructureKind.ListLink className="flex-0">Structure Categories</KraphStructureKind.ListLink>
       }
       refetch={refetch}
     >
-      {(ex, index) => <StructureCategoryCard key={index} item={ex} />}
+      {(ex, index) => <StructureKindCard key={index} item={ex} />}
     </ListRender>
   );
 };

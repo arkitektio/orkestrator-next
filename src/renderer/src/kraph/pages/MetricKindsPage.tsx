@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { DialogButton } from "@/components/ui/dialog-button";
-import { KraphGraph, KraphMetricCategory } from "@/linkers";
+import { KraphGraph, KraphMetricKind } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import MetricCategoryList from "../components/lists/MetricCategoryList";
+import MetricKindList from "../components/lists/MetricKindList";
 
 export type IRepresentationScreenProps = {};
 
@@ -12,7 +12,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <KraphMetricCategory.ListPage
+    <KraphMetricKind.ListPage
       title="Metric Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -47,9 +47,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           <Card className="w-full h-full flex-row relative"></Card>
         </div>
 
-        <MetricCategoryList pagination={{ limit: 30 }} />
+        <MetricKindList pagination={{ limit: 30 }} />
       </div>
-    </KraphMetricCategory.ListPage>
+    </KraphMetricKind.ListPage>
   );
 };
 

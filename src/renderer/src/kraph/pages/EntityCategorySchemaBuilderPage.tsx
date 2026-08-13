@@ -3,6 +3,7 @@ import { SchemaBuilderPage } from "@/kraph/pages/SchemaBuilderPage";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEntityNodesQuery, useGetEntityCategoryQuery, useUpdateEntityCategoryMutation } from "../api/graphql";
 import {
+  buildDerivationRule,
   DEFAULT_AGGREGATION,
   DEFAULT_DERIVATION,
   PropertyDefinition,
@@ -66,9 +67,9 @@ export function EntityCategorySchemaBuilderPage() {
       description: def.description || undefined,
       valueKind: def.valueKind,
       derivation: DEFAULT_DERIVATION,
-      rule: {
+      rule: buildDerivationRule({
         aggregation: def.rule?.aggregation || DEFAULT_AGGREGATION,
-      },
+      }),
       index: false,
       searchable: false,
     }));

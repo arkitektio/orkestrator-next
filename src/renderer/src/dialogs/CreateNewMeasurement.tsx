@@ -9,7 +9,7 @@ import {
   CreateMeasurementDefinitionInput,
   useCreateMeasurementCategoryMutation,
   useListEntityCategoryQuery,
-  useListStructureCategoryQuery,
+  useListStructureKindsQuery,
 } from "@/kraph/api/graphql";
 import { ageNameify, validateAgeName } from "@/kraph/forms/utils";
 import { Structure } from "@/types";
@@ -87,10 +87,11 @@ export const CreateNewMeasurement = (props: {
   const selectedIdentifiers: string[] = form.watch("source.identifiers") ?? [];
   const selectedEntityKeys: string[] = form.watch("target.keys") ?? [];
 
-  const { data: structureData } = useListStructureCategoryQuery({
+  const { data: structureData } = useListStructureKindsQuery({
     variables: {
       filters: {
-        graph: { id: props.graph },
+        // Structure kinds are organization-scoped, so they are no longer
+        // filterable by graph.
         search: debouncedStructureSearch || undefined,
       },
       pagination: { limit: 50, offset: 0 },
@@ -187,7 +188,7 @@ export const CreateNewMeasurement = (props: {
               )}
               <ScrollArea className="flex-1">
                 <div className="flex flex-col gap-1 pr-2">
-                  {structureData?.structureCategories.map((cat) => {
+                  {structureData?.structureKinds.map((cat) => {
                     const selected = selectedIdentifiers.includes(cat.identifier);
                     return (
                       <button
@@ -215,7 +216,7 @@ export const CreateNewMeasurement = (props: {
                       </button>
                     );
                   })}
-                  {structureData?.structureCategories.length === 0 && (
+                  {structureData?.structureKinds.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">
                       No structure categories found
                     </p>

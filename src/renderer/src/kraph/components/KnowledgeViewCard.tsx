@@ -9,7 +9,7 @@ import { StructureConnectionActions } from "./StructureConnectionActions";
 // removed view-rendering branch dropped, until a replacement query/renderer
 // is designed against the current schema.
 export type KnowledgeView = {
-  structureCategory: { id: string; graph: { id: string; name: string } };
+  structureKind: { id: string; graph: { id: string; name: string } };
   structure?: { id: string; label: string } | null;
 };
 
@@ -25,17 +25,17 @@ export const KnowledgeViewCard = ({
   onConnectWithMeasurement,
 }: KnowledgeViewCardProps) => {
   const handleConnect = () => {
-    onConnect(view.structureCategory.graph.id);
+    onConnect(view.structureKind.graph.id);
   };
 
   const handleConnectWithMeasurement = () => {
-    onConnectWithMeasurement(view.structureCategory.graph.id);
+    onConnectWithMeasurement(view.structureKind.graph.id);
   };
 
   return (
     <Card className="p-3">
       <h3 className="text-scroll font-semibold text-xs">
-        {view.structureCategory.graph.name}
+        {view.structureKind.graph.name}
       </h3>
       {view.structure ? (
         <div className="h-64 text-xs text-muted-foreground">

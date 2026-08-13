@@ -1,11 +1,11 @@
-query GetStructureCategory($id: ID!) {
-  structureCategory(id: $id) {
-    ...StructureCategory
+query GetStructureKind($id: ID!) {
+  structureKind(id: $id) {
+    ...StructureKind
   }
 }
 
-query SearchStructureCategory($search: String, $values: [ID!]) {
-  options: structureCategories(
+query SearchStructureKinds($search: String, $values: [ID!]) {
+  options: structureKinds(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
@@ -14,11 +14,11 @@ query SearchStructureCategory($search: String, $values: [ID!]) {
   }
 }
 
-query ListStructureCategory(
-  $filters: StructureCategoryFilter
-  $pagination: OffsetPaginationInput
+query ListStructureKinds(
+  $filters: StructureKindFilter
+  $pagination: StructurePaginationInput
 ) {
-  structureCategories(filters: $filters, pagination: $pagination) {
-    ...StructureCategory
+  structureKinds(filters: $filters, pagination: $pagination) {
+    ...ListStructureKind
   }
 }

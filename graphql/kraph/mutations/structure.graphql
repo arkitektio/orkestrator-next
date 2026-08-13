@@ -10,10 +10,6 @@ mutation EnsureStructure($input: EnsureStructureInput!) {
   }
 }
 
-mutation DeleteStructure($id: GraphID!) {
-  deleteStructure(input: { id: $id })
-}
-
 mutation ArchiveStructure($id: GraphID!) {
   archiveStructure(input: { id: $id }) {
     ...Structure
@@ -22,6 +18,12 @@ mutation ArchiveStructure($id: GraphID!) {
 
 mutation UpdateStructure($input: UpdateStructureInput!) {
   updateStructure(input: $input) {
+    ...Structure
+  }
+}
+
+mutation LinkStructureToEntity($input: LinkStructureInput!) {
+  linkStructureToEntity(input: $input) {
     ...Structure
   }
 }

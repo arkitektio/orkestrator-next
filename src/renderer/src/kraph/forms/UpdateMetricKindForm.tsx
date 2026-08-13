@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,31 +6,27 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  MetricCategoryFragment,
-  UpdateMetricCategoryMutationVariables,
-  useSearchTagsLazyQuery,
-  useUpdateMetricCategoryMutation
+  MetricKindFragment,
+  UpdateMetricKindMutationVariables,
+  useUpdateMetricKindMutation
 } from "../api/graphql";
 
 
 
-const TForm = (props: { metricCategory: MetricCategoryFragment }) => {
-  const [update] = useUpdateMetricCategoryMutation({
-    refetchQueries: ["GetGraph"],
+const TForm = (props: { metricKind: MetricKindFragment }) => {
+  const [update] = useUpdateMetricKindMutation({
+    refetchQueries: ["ListStructureKinds", "ListMetricKinds"],
   });
 
   const dialog = useGraphQlFormDialog(update);
 
-  const form = useForm<UpdateMetricCategoryMutationVariables["input"]>({
+  const form = useForm<UpdateMetricKindMutationVariables["input"]>({
     defaultValues: {
-      id: props.metricCategory.id,
-      label: props.metricCategory.label,
-      description: props.metricCategory.description,
-      tags: props.metricCategory.tags.map((tag) => tag.id),
+      id: props.metricKind.id,
+      label: props.metricKind.label,
+      description: props.metricKind.description,
     },
   });
-
-  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -63,12 +58,6 @@ const TForm = (props: { metricCategory: MetricCategoryFragment }) => {
                 label="PURL"
                 name="purl"
                 description="What is the PURL of this expression?"
-              />
-              <GraphQLListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
               />
             </div>
           </div>

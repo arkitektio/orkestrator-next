@@ -334,10 +334,10 @@ export const KraphStructureRelation = buildSmart(
   { name: "Structure Relation" },
 );
 
-export const KraphStructureCategory = buildSmart(
-  "@kraph/structurecategory",
-  "kraph/structurecategories",
-  { name: "Structure Category" },
+export const KraphStructureKind = buildSmart(
+  "@kraph/structurekind",
+  "kraph/structurekinds",
+  { name: "Structure Kind" },
 );
 
 export const KraphNaturalEventCategory = buildSmart(
@@ -352,10 +352,10 @@ export const KraphProtocolEventCategory = buildSmart(
   { name: "Protocol Event Category" },
 );
 
-export const KraphMetricCategory = buildSmart(
-  "@kraph/metriccategory",
-  "kraph/metriccategories",
-  { name: "Metric Category" },
+export const KraphMetricKind = buildSmart(
+  "@kraph/metrickind",
+  "kraph/metrickinds",
+  { name: "Metric Kind" },
 );
 
 export const KraphMeasurementCategory = buildSmart(

@@ -1,0 +1,11 @@
+mutation CreateMeasurement($input: CreateMeasurementInput!) {
+  createMeasurement(input: $input) {
+    ...Measurement
+  }
+}
+
+mutation ArchiveMeasurement($id: String!) {
+  archiveMeasurement(input: { id: $id }) {
+    ...Measurement
+  }
+}

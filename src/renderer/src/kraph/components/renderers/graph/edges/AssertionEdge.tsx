@@ -6,6 +6,7 @@ import {
   useInternalNode,
   type EdgeProps,
 } from "@xyflow/react";
+import { AssertionEvidence } from "../../../AssertionEvidence";
 import { AssertionEdge } from "../types";
 import { getEdgeParams } from "../utils";
 
@@ -72,9 +73,12 @@ const TEdge = ({
           className="p-1 text-xs group nodrag nopan"
         >
           {data?.id && (
-            <KraphStructureRelation.DetailLink object={{ id: data.id }} style={{ pointerEvents: 'all' }}>
-              {data?.label}
-            </KraphStructureRelation.DetailLink>
+            <div className="flex flex-row items-center gap-1">
+              <KraphStructureRelation.DetailLink object={{ id: data.id }} style={{ pointerEvents: 'all' }}>
+                {data?.label}
+              </KraphStructureRelation.DetailLink>
+              <AssertionEvidence assertionId={data.id} />
+            </div>
           )}
         </Card>
       </EdgeLabelRenderer>

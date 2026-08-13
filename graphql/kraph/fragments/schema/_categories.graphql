@@ -36,9 +36,7 @@ fragment BaseEdgeCategory on EdgeCategory {
 }
 
 fragment NodeCategory on NodeCategory {
-  ...StructureCategory
   ...EntityCategory
   ...ProtocolEventCategory
   ...NaturalEventCategory
-  ...MetricCategory
 }

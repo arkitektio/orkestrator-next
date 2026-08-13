@@ -2,24 +2,21 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Button } from "@/components/ui/button";
-import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphMetricCategory } from "@/linkers";
+import { KraphMetricKind } from "@/linkers";
 import {
-  useGetMetricCategoryQuery,
+  useGetMetricKindQuery,
   useUpdateEntityCategoryMutation
 } from "../api/graphql";
-import UpdateMetricCategoryForm from "../forms/UpdateMetricCategoryForm";
+import UpdateMetricKindForm from "../forms/UpdateMetricKindForm";
 
 const Page = asDetailQueryRoute(
-  useGetMetricCategoryQuery,
+  useGetMetricKindQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
     const [update] = useUpdateEntityCategoryMutation();
 
-    const resolve = useResolve();
 
     const createFile = async (file: File) => {
       const response = await uploadFile(file);
@@ -27,7 +24,7 @@ const Page = asDetailQueryRoute(
         await update({
           variables: {
             input: {
-              id: data.metricCategory.id,
+              id: data.metricKind.id,
               image: response,
             },
           },
@@ -37,13 +34,13 @@ const Page = asDetailQueryRoute(
     };
 
     return (
-      <KraphMetricCategory.ModelPage
-        object={{ id: data.metricCategory.id }}
-        title={data?.metricCategory.label}
+      <KraphMetricKind.ModelPage
+        object={{ id: data.metricKind.id }}
+        title={data?.metricKind.label}
         sidebars={
           <Sidebars>
             <Sidebars.Tab label="Comments">
-              <KraphMetricCategory.Komments object={{ id: data.metricCategory.id }} />
+              <KraphMetricKind.Komments object={{ id: data.metricKind.id }} />
             </Sidebars.Tab>
           </Sidebars>
         }
@@ -54,7 +51,7 @@ const Page = asDetailQueryRoute(
               trigger={<Button variant="outline">Edit</Button>}
               onSubmit={() => refetch()}
             >
-              <UpdateMetricCategoryForm metricCategory={data.metricCategory} />
+              <UpdateMetricKindForm metricKind={data.metricKind} />
             </FormSheet>
           </div>
         }
@@ -62,24 +59,15 @@ const Page = asDetailQueryRoute(
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.metricCategory.label}
+              {data.metricKind.label || data.metricKind.key}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.metricCategory.ageName}
+              {data.metricKind.key}
             </p>
-          </div>
-          <div className="w-full h-full flex-row relative">
-            {data.metricCategory?.image?.presignedUrl && (
-              <Image
-                src={resolve(data.metricCategory?.image.presignedUrl)}
-                style={{ filter: "brightness(0.7)" }}
-                className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
-              />
-            )}
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-      </KraphMetricCategory.ModelPage>
+      </KraphMetricKind.ModelPage>
     );
   },
 );

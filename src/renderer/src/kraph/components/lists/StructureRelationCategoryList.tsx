@@ -1,14 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { KraphStructureRelationCategory } from "@/linkers";
 import {
-  MetricCategoryFilter,
+  MetricKindFilter,
   OffsetPaginationInput,
   useListStructureRelationCategoryQuery,
 } from "../../api/graphql";
 import StructureRelationCategoryCard from "../cards/StructureRelationCategoryCard";
 
 export type Props = {
-  filters?: MetricCategoryFilter;
+  filters?: MetricKindFilter;
   pagination?: OffsetPaginationInput;
 };
 

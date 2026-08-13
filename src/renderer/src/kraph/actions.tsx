@@ -1,14 +1,16 @@
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import { Action } from "@/lib/localactions/LocalActionProvider";
+import type { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
   DeleteEntityCategoryDocument,
-  DeleteEntityDocument,
+  ArchiveEntityDocument,
   DeleteGraphDocument,
   DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
+  LinkStructureToEntityDocument,
 } from "./api/graphql";
-import { PlusCircle, Ruler, Workflow } from "lucide-react";
+import { Archive, Link2, PlusCircle, Ruler, Workflow } from "lucide-react";
 
 export const NewEntityAction: Action = {
   title: "Create New Entity",
@@ -38,8 +40,57 @@ export const NewEntityAction: Action = {
   },
 };
 
+export const LinkStructureToEntityAction: Action = {
+  title: "Link Structure to Entity",
+  description: "Record that this structure informs the partner entity",
+  icon: Link2,
+  conditions: [
+    {
+      type: "identifier",
+      identifier: "@kraph/structure",
+    },
+    {
+      type: "pidentifier",
+      identifier: "@kraph/entity",
+    },
+  ],
+  execute: async ({ state, services }) => {
+    const entity = state.right?.[0]?.object;
+    if (!entity || typeof entity.id !== "string") {
+      throw new Error("No entity selected to link this structure to");
+    }
+
+    const client = (services.kraph as unknown as { client: ApolloClient<NormalizedCache> })
+      .client;
+    if (!client) {
+      throw new Error("Kraph service is not available");
+    }
+
+    // Structures are organization-scoped, so they are addressed by their
+    // foreign identifier/object pair rather than by a kraph id.
+    const structures = state.left.filter(
+      (structure) => structure.identifier === "@kraph/structure",
+    );
+
+    for (const structure of structures) {
+      await client.mutate({
+        mutation: LinkStructureToEntityDocument,
+        variables: {
+          input: {
+            structureIdentifier: String(structure.object.identifier ?? structure.identifier),
+            structureObject: String(structure.object.object ?? structure.object.id),
+            entityId: entity.id,
+          },
+        },
+      });
+    }
+  },
+  collections: ["io"],
+};
+
 export const KRAPH_ACTIONS = {
   "create-new-entity": NewEntityAction,
+  "link-structure-to-entity": LinkStructureToEntityAction,
   "delete-kraph-graph": buildDeleteAction({
     title: "Delete Graph",
     identifier: "@kraph/graph",
@@ -81,13 +132,18 @@ export const KRAPH_ACTIONS = {
     mutation: DeleteMeasurementCategoryDocument,
   }),
 
-  "delete-entity": buildDeleteAction({
-    title: "Delete Entity",
+  // Entities are an append-only log: `deleteEntity` no longer exists, so the
+  // action archives instead. Archiving still evicts the entity from the cache
+  // so it drops out of active lists.
+  "archive-entity": buildDeleteAction({
+    title: "Archive Entity",
     identifier: "@kraph/entity",
-    description: "Delete the Entity",
+    description: "Archive the Entity.",
     service: "kraph",
     typename: ["Entity", "Node"],
-    mutation: DeleteEntityDocument,
+    mutation: ArchiveEntityDocument,
+    icon: Archive,
+    verb: { present: "Archive", past: "Archived", reversible: true },
   }),
 
   // Custom Actions
@@ -121,7 +177,7 @@ export const KRAPH_ACTIONS = {
     conditions: [
       {
         type: "identifier",
-        identifier: "@kraph/structurecategory",
+        identifier: "@kraph/structurekind",
       },
       {
         type: "pidentifier",

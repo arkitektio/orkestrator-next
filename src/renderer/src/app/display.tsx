@@ -9,7 +9,7 @@ import { EntityDisplay } from "@/kraph/displays/EntityDisplay";
 import { GraphDisplay } from "@/kraph/displays/GraphDisplay";
 import { MeasurementDisplay } from "@/kraph/displays/MeasurementDisplay";
 import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
-import { MetricCategoryDisplay } from "@/kraph/displays/MetricCategoryDisplay";
+import { MetricKindDisplay } from "@/kraph/displays/MetricKindDisplay";
 import { NaturalEventDisplay } from "@/kraph/displays/NaturalEventDisplay";
 import { NaturalEventCategoryDisplay } from "@/kraph/displays/NaturalEventCategoryDisplay";
 import { ProtocolEventDisplay } from "@/kraph/displays/ProtocolEventDisplay";
@@ -17,7 +17,7 @@ import { ProtocolEventCategoryDisplay } from "@/kraph/displays/ProtocolEventCate
 import { RelationDisplay } from "@/kraph/displays/RelationDisplay";
 import { RelationCategoryDisplay } from "@/kraph/displays/RelationCategoryDisplay";
 import { StructureDisplay } from "@/kraph/displays/StructureDisplay";
-import { StructureCategoryDisplay } from "@/kraph/displays/StructureCategoryDisplay";
+import { StructureKindDisplay } from "@/kraph/displays/StructureKindDisplay";
 import { StructureRelationCategoryDisplay } from "@/kraph/displays/StructureRelationCategoryDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
 import { MessageDisplay } from "@/alpaka/displays/MessageDisplay";
@@ -61,12 +61,12 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     // kraph — categories
     "@kraph/entitycategory": EntityCategoryDisplay,
     "@kraph/metric": MetricDisplay,
-    "@kraph/metriccategory": MetricCategoryDisplay,
+    "@kraph/metrickind": MetricKindDisplay,
     "@kraph/relationcategory": RelationCategoryDisplay,
     "@kraph/structurerelationcategory": StructureRelationCategoryDisplay,
     "@kraph/naturaleventcategory": NaturalEventCategoryDisplay,
     "@kraph/protocoleventcategory": ProtocolEventCategoryDisplay,
-    "@kraph/structurecategory": StructureCategoryDisplay,
+    "@kraph/structurekind": StructureKindDisplay,
     // kabinet
     "@kabinet/pod": PodDisplay,
     // lovekit

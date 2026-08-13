@@ -49,7 +49,6 @@ export const RelateStructures = (props: {
           input: {
             identifier: leftStructure.identifier,
             object: leftStructure.object.id,
-            graph: category.graph.id,
           },
         },
       });
@@ -59,7 +58,6 @@ export const RelateStructures = (props: {
           input: {
             identifier: rightStructure.identifier,
             object: rightStructure.object.id,
-            graph: category.graph.id,
           },
         },
       });

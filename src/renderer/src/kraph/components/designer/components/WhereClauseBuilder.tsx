@@ -32,18 +32,9 @@ interface WhereClauseBuilderProps {
 
 // Property configurations for different node types
 const NODE_PROPERTIES: Record<string, Array<{ property: string; label: string; type: "string" | "number" | "boolean" }>> = {
-  metriccategory: [
-    { property: "value", label: "Label", type: "number" },
-    { property: "ValueKind", label: "Metric Kind", type: "string" },
-    { property: "description", label: "Description", type: "string" },
-  ],
   entitycategory: [
     { property: "label", label: "Label", type: "string" },
     { property: "instanceKind", label: "Instance Kind", type: "string" },
-    { property: "description", label: "Description", type: "string" },
-  ],
-  structurecategory: [
-    { property: "identifier", label: "Identifier", type: "string" },
     { property: "description", label: "Description", type: "string" },
   ],
   protocoleventcategory: [

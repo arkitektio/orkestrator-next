@@ -1,33 +1,22 @@
-fragment StructureCategory on StructureCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
+fragment StructureKind on StructureKind {
+  id
   identifier
-  graph {
-    id
-    name
-  }
-  ageName
+  label
   description
+  purl
+  color
   image {
     presignedUrl
   }
-  pinned
-  tags {
-    id
-    name
-  }
+  createdAt
 }
 
-fragment ListStructureCategory on StructureCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
+fragment ListStructureKind on StructureKind {
+  id
   identifier
+  label
   description
   image {
     presignedUrl
-  }
-  tags {
-    id
-    name
   }
 }

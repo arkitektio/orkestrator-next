@@ -3,3 +3,9 @@ mutation CreateStructureRelation($input: CreateStructureRelationInput!) {
     ...StructureRelation
   }
 }
+
+mutation ArchiveStructureRelation($id: String!) {
+  archiveStructureRelation(input: { id: $id }) {
+    ...StructureRelation
+  }
+}

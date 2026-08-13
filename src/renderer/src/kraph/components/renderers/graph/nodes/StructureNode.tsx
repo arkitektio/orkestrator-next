@@ -27,7 +27,7 @@ const TNode = memo(({ data, id, selected }: NodeProps<StructureNode>) => {
               object={{ id: data.id }}
               className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
             >
-              {data.category.label}
+              {data.kind?.label || data.kind?.identifier}
             </KraphStructure.DetailLink>
           </div>
         </Card>

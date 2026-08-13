@@ -8,7 +8,7 @@ import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphMeasurementCategory,
-  KraphMetricCategory
+  KraphMetricKind
 } from "@/linkers";
 import {
   useGetMeasurmentCategoryQuery,
@@ -46,7 +46,7 @@ const Page = asDetailQueryRoute(
         sidebars={
           <Sidebars>
             <Sidebars.Tab label="Comments">
-              <KraphMetricCategory.Komments
+              <KraphMetricKind.Komments
                 object={{ id: data.measurementCategory.id }}
               />
             </Sidebars.Tab>

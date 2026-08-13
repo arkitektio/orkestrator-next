@@ -9,11 +9,9 @@
     "Category": [
       "EntityCategory",
       "MeasurementCategory",
-      "MetricCategory",
       "NaturalEventCategory",
       "ProtocolEventCategory",
       "RelationCategory",
-      "StructureCategory",
       "StructureRelationCategory"
     ],
     "Edge": [
@@ -62,10 +60,8 @@
     ],
     "NodeCategory": [
       "EntityCategory",
-      "MetricCategory",
       "NaturalEventCategory",
-      "ProtocolEventCategory",
-      "StructureCategory"
+      "ProtocolEventCategory"
     ],
     "NodeQuery": [
       "NodePairsQuery",
@@ -100,7 +96,7 @@
       "MaterializedStructureRelationEdge",
       "MeasurementCategory",
       "MediaStore",
-      "MetricCategory",
+      "MetricKind",
       "NaturalEventCategory",
       "NodePairsQuery",
       "NodePathQuery",
@@ -108,7 +104,7 @@
       "ProtocolEventCategory",
       "RelationCategory",
       "ScatterPlot",
-      "StructureCategory",
+      "StructureKind",
       "StructureRelationCategory",
       "ZarrStore"
     ]

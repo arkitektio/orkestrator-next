@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   EntityCategoryFragment,
   PropertyDefinitionFragment,
-  PropertySet,
   useCreateEntityMutation,
+  useRecordMetricMutation,
   ValueKind,
 } from "@/kraph/api/graphql";
+import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
 import { enUS } from "date-fns/locale";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
@@ -248,13 +249,12 @@ export const CreateEntityWithPropertiesDialog = (props: {
   const [propertyErrors, setPropertyErrors] = useState<Record<string, string>>({});
 
   const [createEntity, { loading }] = useCreateEntityMutation({
-    onCompleted: () => {
-      toast.success("Entity created successfully");
-      closeDialog();
-    },
     onError: (error) => {
       toast.error(`Failed to create entity: ${error.message}`);
     },
+  });
+
+  const [recordMetric] = useRecordMetricMutation({
     refetchQueries: ["EntityNodes", "GetEntityCategory"],
   });
 
@@ -270,26 +270,53 @@ export const CreateEntityWithPropertiesDialog = (props: {
 
     setPropertyErrors({});
 
-    // Serialize properties for GraphQL
-    const properties: PropertySet[] = []
-
-
-    props.category.propertyDefinitions?.forEach((def) => {
-      const value = data.properties[def.key];
-      properties.push({
-        key: def.key,
-        value: serializePropertyValue(value, def.valueKind) as string | number | boolean | null,
-      });
-    });
-
-    await createEntity({
+    // The entity is created bare: properties are derived, so the values typed
+    // here are not part of it. They are recorded afterwards as "itoldyouso"
+    // metrics against the new entity — evidence with no measurement behind it,
+    // which the category's derivation rules then fold into the properties.
+    const created = await createEntity({
       variables: {
         input: {
           entityCategory: props.category.id,
-          stickyProperties: properties,
         },
       },
     });
+
+    const entityId = created.data?.createEntity.id;
+    if (!entityId) return;
+
+    const assertions = (props.category.propertyDefinitions ?? [])
+      .filter((def) => isManuallyAssertable(def.valueKind))
+      .map((def) => ({ def, value: data.properties[def.key] }))
+      .filter(({ value }) => value !== undefined && value !== null && value !== "");
+
+    try {
+      for (const { def, value } of assertions) {
+        await recordMetric({
+          variables: {
+            input: buildItoldyousoMetric({
+              entityId,
+              key: def.key,
+              valueKind: def.valueKind,
+              value: serializePropertyValue(value, def.valueKind),
+              unit: def.unit,
+            }),
+          },
+        });
+      }
+    } catch (error) {
+      // The entity exists either way — say so rather than implying nothing happened.
+      toast.error(
+        `Entity created, but recording its values failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      closeDialog();
+      return;
+    }
+
+    toast.success("Entity created successfully");
+    closeDialog();
   };
 
   return (

@@ -65,8 +65,9 @@ import {
   WhereOperator,
   useEntityNodesQuery,
   useGetEntityQuery,
-  useUpdateEntityMutation
+  useRecordMetricMutation
 } from "@/kraph/api/graphql";
+import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
 import { KraphMeasurement, KraphNaturalEvent, KraphNode, KraphProtocolEvent } from "@/linkers";
 import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Plus, RefreshCw, X } from "lucide-react";
@@ -107,20 +108,24 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [updateEntity] = useUpdateEntityMutation();
+  const [recordMetric] = useRecordMetricMutation();
 
-  // `setEntityProperty` was removed from the schema; manual edits are now
-  // recorded as sticky properties, which override the derived value.
+  // Properties are derived, so a hand-entered value goes in as the weakest
+  // evidence there is: an "itoldyouso" metric with no measurement behind it.
   const setNodeProperty = (value: unknown) =>
-    updateEntity({
+    recordMetric({
       variables: {
-        input: {
-          id: nodeId,
-          stickyProperties: [{ key: propertyDefinition.key, value }],
-        },
+        input: buildItoldyousoMetric({
+          entityId: nodeId,
+          key: propertyDefinition.key,
+          valueKind: propertyDefinition.valueKind,
+          value,
+          unit: propertyDefinition.unit,
+        }),
       },
     });
 
+  const assertable = isManuallyAssertable(propertyDefinition.valueKind);
   const [editingValue, setEditingValue] = React.useState(value);
   const [isEditing, setIsEditing] = React.useState(false);
 
@@ -249,8 +254,19 @@ const EditableCell = ({
         <div className="flex items-center justify-center">
           <Switch
             checked={value}
+            disabled={!assertable}
             onCheckedChange={handleBooleanChange}
           />
+        </div>
+      );
+    }
+
+    // Vector kinds beyond 3D have no metric column, so there is no way to
+    // assert them by hand — those cells stay read-only.
+    if (!assertable) {
+      return (
+        <div className="px-2 py-1.5 min-h-[32px] flex items-center justify-center">
+          {formatDisplayValue(value, kind)}
         </div>
       );
     }

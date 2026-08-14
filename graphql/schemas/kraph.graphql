@@ -97,6 +97,12 @@ enum AggregationFunction {
 """The `AnyScalar` scalar type represents an arbitrary JSON-like value"""
 scalar AnyScalar
 
+"""Input for retracting several claims as one act"""
+input ArchiveClaimsInput {
+  """The evidence IDs of the claims to retract"""
+  ids: [String!]!
+}
+
 """Input for archiving an edge pairs query"""
 input ArchiveEdgePairsQueryInput {
   """The ID of the edge pairs query to archive"""
@@ -181,6 +187,12 @@ input ArchiveNodeTableQueryInput {
   id: ID!
 }
 
+"""Input for retracting one participation claim"""
+input ArchiveParticipationInput {
+  """The evidence ID of the participation claim to retract"""
+  id: String!
+}
+
 """
 Input for archiving (soft deleting) an existing protocol event instance
 """
@@ -205,6 +217,32 @@ input ArchiveStructureInput {
 input ArchiveStructureRelationInput {
   """The ID of the structure relation to archive"""
   id: String!
+}
+
+"""Input for claiming that an entity took part in an event"""
+input AssertParticipationInput {
+  """The ID of the entity that took part"""
+  entity: String!
+
+  """The ID of the event the entity took part in"""
+  event: String!
+
+  """True if the entity went into the event, False if it came out of it"""
+  isInput: Boolean! = true
+
+  """Which role the entity played, as the event's category names it"""
+  role: String!
+}
+
+"""
+Input for claiming that several entities took part in one event, as one act
+"""
+input AssertParticipationsInput {
+  """The event the entities took part in"""
+  event: String!
+
+  """Everyone who took part, and how"""
+  participants: [ParticipantInput!]!
 }
 
 """
@@ -240,6 +278,30 @@ type Assertion implements Edge {
 
   """Global ID of the target/right node"""
   targetId: String!
+}
+
+"""Input for claiming that an entity exists"""
+input AttestEntityInput {
+  """
+  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  """
+  id: String!
+}
+
+"""Input for claiming that a natural event exists"""
+input AttestNaturalEventInput {
+  """
+  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  """
+  id: String!
+}
+
+"""Input for claiming that a protocol event exists"""
+input AttestProtocolEventInput {
+  """
+  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  """
+  id: String!
 }
 
 """Temporary S3 credentials for reading a big file."""
@@ -359,6 +421,11 @@ interface Category {
 
   """List of tags associated with this category"""
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 }
 
 """Input for specifying the position of a node in the graph visualization"""
@@ -433,6 +500,21 @@ type CategoryTagStats {
 
   """Sum of values"""
   sum(field: CategoryTagField!): Float
+}
+
+"""One claim that a node is of a category, inside a batch"""
+input ClassificationInput {
+  """The category being claimed for it"""
+  category: String!
+
+  """The node being classified"""
+  node: String!
+}
+
+"""Input for claiming that several nodes are of a category, as one act"""
+input ClassifyNodesInput {
+  """The claims to record"""
+  classifications: [ClassificationInput!]!
 }
 
 """Input type for defining a graph schema"""
@@ -676,9 +758,6 @@ input CreateEntityDefinitionInput {
 input CreateEntityInput {
   """The ID of the entity category/type to create"""
   entityCategory: String!
-
-  """List of property key-value pairs to associate with this entity"""
-  stickyProperties: [PropertySet!]! = []
 
   """List of evidence structures with measurements"""
   supportingEvidence: [StructureReferenceInput!]! = []
@@ -1261,6 +1340,30 @@ input CreateStructureRelationInput {
   targetId: String!
 }
 
+"""Input for declaring one of the organization's words"""
+input CreateTermInput {
+  """Optional RGBA colour"""
+  color: [Int!] = null
+
+  """What this word means"""
+  description: String = null
+
+  """Optional media store ID for an illustrative image"""
+  image: String = null
+
+  """The word itself, e.g. 'AIS'"""
+  key: String!
+
+  """What sort of thing this word names. Part of its identity."""
+  kind: TermKind!
+
+  """Human-readable name"""
+  label: String = null
+
+  """Persistent URL, where this corresponds to a published ontology term"""
+  purl: String = null
+}
+
 """
 The `CypherLiteral` scalar type represents a raw Cypher query or fragment
 """
@@ -1396,6 +1499,12 @@ Input for deleting an existing structure relation definition in the graph schema
 """
 input DeleteStructureRelationDefinitionInput {
   """The ID of the structure relation category to delete"""
+  id: String!
+}
+
+"""Input for retiring one of the organization's words"""
+input DeleteTermInput {
+  """The ID of the term to delete"""
   id: String!
 }
 
@@ -1846,6 +1955,11 @@ type EntityCategory implements Category & NodeCategory {
   """List of tags associated with this category"""
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
 
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
+
   """Width for visualization (optional)"""
   width: Float
 }
@@ -2089,6 +2203,11 @@ interface EventCategory implements Category & NodeCategory {
 
   """List of tags associated with this category"""
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 
   """Width for visualization (optional)"""
   width: Float
@@ -2918,6 +3037,11 @@ type MeasurementCategory implements Category & EdgeCategory {
 
   """The graph this category belongs to"""
   targetDescriptor: EntityDescriptor!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 }
 
 """Numeric/aggregatable fields of MeasurementCategory"""
@@ -3345,6 +3469,9 @@ input MetricPaginationInput {
 
 """Graph Engine Mutations"""
 type Mutation {
+  """Retract several claims as one act"""
+  archiveClaims(input: ArchiveClaimsInput!): [Edge!]!
+
   """Archive an edge pairs query"""
   archiveEdgePairsQuery(input: ArchiveEdgePairsQueryInput!): ID!
 
@@ -3354,7 +3481,9 @@ type Mutation {
   """Archive an edge table query"""
   archiveEdgeTableQuery(input: ArchiveEdgeTableQueryInput!): ID!
 
-  """Archive an entity in the graph (soft delete)"""
+  """
+  Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays.
+  """
   archiveEntity(input: ArchiveEntityInput!): Entity!
 
   """Archive a graph in the graph engine (soft delete)"""
@@ -3375,7 +3504,7 @@ type Mutation {
   """Archive a metric in the graph (soft delete)"""
   archiveMetric(input: ArchiveMetricInput!): Metric!
 
-  """Archive a natural event in the graph (soft delete)"""
+  """Claim that a natural event no longer stands"""
   archiveNaturalEvent(input: ArchiveNaturalEventInput!): NaturalEvent!
 
   """Archive a node pairs query"""
@@ -3387,7 +3516,10 @@ type Mutation {
   """Archive a node table query"""
   archiveNodeTableQuery(input: ArchiveNodeTableQueryInput!): ID!
 
-  """Archive a protocol event in the graph (soft delete)"""
+  """Retract one claim that an entity took part in an event"""
+  archiveParticipation(input: ArchiveParticipationInput!): Edge!
+
+  """Claim that a protocol event no longer stands"""
   archiveProtocolEvent(input: ArchiveProtocolEventInput!): ProtocolEvent!
 
   """Archive a relation in the graph (soft delete)"""
@@ -3398,6 +3530,32 @@ type Mutation {
 
   """Archive a structure relation in the graph (soft delete)"""
   archiveStructureRelation(input: ArchiveStructureRelationInput!): StructureRelation!
+
+  """
+  Claim that an entity took part in an event, without displacing anyone else's claim
+  """
+  assertParticipation(input: AssertParticipationInput!): Edge!
+
+  """
+  Claim that several entities took part in one event, as one act and one assertion
+  """
+  assertParticipations(input: AssertParticipationsInput!): [Edge!]!
+
+  """
+  Claim that an entity exists, returning it to every projection whose rules admit it
+  """
+  attestEntity(input: AttestEntityInput!): Entity!
+
+  """Claim that a natural event exists"""
+  attestNaturalEvent(input: AttestNaturalEventInput!): NaturalEvent!
+
+  """Claim that a protocol event exists"""
+  attestProtocolEvent(input: AttestProtocolEventInput!): ProtocolEvent!
+
+  """
+  Claim that several nodes are of a category, without displacing anyone else's claim
+  """
+  classifyNodes(input: ClassifyNodesInput!): [Entity!]!
 
   """Create a new category tag in the graph"""
   createCategoryTag(input: CreateCategoryTagInput!): CategoryTag!
@@ -3482,6 +3640,11 @@ type Mutation {
   """Create a new structure relation category/schema in the graph"""
   createStructureRelationCategory(input: CreateStructureRelationDefinitionInput!): StructureRelationCategory!
 
+  """
+  Declare one of the organization's words, or describe one an ingest minted bare
+  """
+  createTerm(input: CreateTermInput!): Term!
+
   """Delete an existing category tag from the graph"""
   deleteCategoryTag(input: DeleteCategoryTagInput!): ID!
 
@@ -3542,6 +3705,9 @@ type Mutation {
   """Delete a structure relation category/schema from the graph"""
   deleteStructureRelationCategory(input: DeleteStructureRelationDefinitionInput!): ID!
 
+  """Retire a word nothing has been claimed under"""
+  deleteTerm(input: DeleteTermInput!): ID!
+
   """
   Ensure a structure exists in the graph, creating it if it does not exist
   """
@@ -3586,9 +3752,6 @@ type Mutation {
   """Update an edge table query"""
   updateEdgeTableQuery(input: UpdateEdgeTableQueryInput!): EdgeTableQuery!
 
-  """Update an existing entity in the graph"""
-  updateEntity(input: UpdateEntityInput!): Entity!
-
   """Update an existing entity category/schema in the graph"""
   updateEntityCategory(input: UpdateEntityDefinitionInput!): EntityCategory!
 
@@ -3616,9 +3779,6 @@ type Mutation {
   """Update a metric kind's label, description or colour"""
   updateMetricKind(input: UpdateMetricDefinitionInput!): MetricKind!
 
-  """Update an existing natural event in the graph"""
-  updateNaturalEvent(input: UpdateNaturalEventInput!): NaturalEvent!
-
   """Update an existing natural event category/schema in the graph"""
   updateNaturalEventCategory(input: UpdateNaturalEventDefinitionInput!): NaturalEventCategory!
 
@@ -3630,9 +3790,6 @@ type Mutation {
 
   """Update a node table query"""
   updateNodeTableQuery(input: UpdateNodeTableQueryInput!): NodeTableQuery!
-
-  """Update an existing protocol event in the graph"""
-  updateProtocolEvent(input: UpdateProtocolEventInput!): ProtocolEvent!
 
   """Update an existing protocol event category/schema in the graph"""
   updateProtocolEventCategory(input: UpdateProtocolEventDefinitionInput!): ProtocolEventCategory!
@@ -3657,6 +3814,11 @@ type Mutation {
 
   """Update an existing structure relation category/schema in the graph"""
   updateStructureRelationCategory(input: UpdateStructureRelationDefinitionInput!): StructureRelationCategory!
+
+  """
+  Update a term's label, description, PURL or colour. Its kind and key are its identity and cannot change.
+  """
+  updateTerm(input: UpdateTermInput!): Term!
 }
 
 """A natural event in the knowledge graph"""
@@ -3791,6 +3953,11 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
 
   """List of tags associated with this category"""
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 
   """Width for visualization (optional)"""
   width: Float
@@ -4210,6 +4377,18 @@ type OutputParticipation implements Edge {
   targetId: String!
 }
 
+"""One entity's part in an event, inside a batch"""
+input ParticipantInput {
+  """The ID of the entity that took part"""
+  entity: String!
+
+  """True if the entity went into the event, False if it came out of it"""
+  isInput: Boolean! = true
+
+  """Which role the entity played, as the event's category names it"""
+  role: String!
+}
+
 """Input for creating a new structure"""
 input PinNodeInput {
   """The structure identifier, e.g. '@mikro/roi'"""
@@ -4324,15 +4503,6 @@ input PropertyOrder {
 
   """The property key to order by"""
   key: String!
-}
-
-"""Input for ensuring an entity exists with a given global ID"""
-input PropertySet {
-  """The property key/label"""
-  key: String!
-
-  """The property value"""
-  value: JSON!
 }
 
 enum PropertyType {
@@ -4476,6 +4646,11 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
 
   """List of tags associated with this category"""
   tags(filters: CategoryTagFilter, ordering: [CategoryTagOrder!]! = [], pagination: OffsetPaginationInput): [CategoryTag!]!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 
   """Width for visualization (optional)"""
   width: Float
@@ -4863,6 +5038,14 @@ type Query {
 
   """List structures with optional filters, ordering, and pagination"""
   structures(filters: StructureFilter = null, ordering: [StructureOrder!] = null, pagination: StructurePaginationInput = null, structureKindId: ID = null): [Structure!]!
+
+  """Get one term by ID"""
+  term(id: ID!): Term!
+
+  """
+  List the organization's vocabulary — the words its evidence is recorded under
+  """
+  terms(filters: TermFilter = null, ordering: [TermOrder!] = null, pagination: StructurePaginationInput = null): [Term!]!
 }
 
 """Input for creating a new metric"""
@@ -4990,6 +5173,11 @@ type RelationCategory implements Category & EdgeCategory {
 
   """The graph this category belongs to"""
   targetDescriptor: EntityDescriptor!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 }
 
 """Numeric/aggregatable fields of RelationCategory"""
@@ -5708,6 +5896,11 @@ type StructureRelationCategory implements Category & EdgeCategory {
 
   """The graph this category belongs to"""
   targetDescriptor: StructureDescriptor!
+
+  """
+  The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims.
+  """
+  term: Term
 }
 
 """Numeric/aggregatable fields of StructureRelationCategory"""
@@ -5890,6 +6083,83 @@ type Subscription {
   graphUpdated(graphId: GraphID!): Graph!
 }
 
+"""A word this organization uses for a kind of thing"""
+type Term {
+  """
+  The categories declaring this term — one per graph that speaks the word
+  """
+  categories: [Category!]!
+
+  """Display colour as RGBA"""
+  color: [Int!]
+
+  """When this organization first used this word"""
+  createdAt: DateTime!
+
+  """What this word means"""
+  description: String
+
+  """Database ID of the term"""
+  id: ID!
+
+  """Illustrative image, if any"""
+  image: MediaStore
+
+  """The word itself, e.g. 'AIS'"""
+  key: String!
+
+  """
+  What sort of thing this word names. Part of its identity, so 'AIS' as an entity and 'AIS' as a relation are two terms.
+  """
+  kind: TermKind!
+
+  """Human-readable name"""
+  label: String
+
+  """Persistent URL, where this corresponds to a published ontology term"""
+  purl: String
+}
+
+input TermFilter {
+  AND: TermFilter
+  DISTINCT: Boolean
+  NOT: TermFilter
+  OR: TermFilter
+
+  """Filter to terms at least one graph declares a category for"""
+  declared: Boolean
+
+  """Filter by list of IDs"""
+  ids: [ID!] = null
+
+  """Filter by the words themselves"""
+  keys: [String!]
+
+  """Filter by what sort of thing the word names"""
+  kinds: [TermKind!]
+
+  """Search key, label and description"""
+  search: String = null
+}
+
+enum TermKind {
+  ENTITY
+  MEASUREMENT
+  NATURAL_EVENT
+  PROTOCOL_EVENT
+  REAGENT
+  RELATION
+  STRUCTURE_RELATION
+}
+
+input TermOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  key: Ordering
+  kind: Ordering
+  label: Ordering
+}
+
 scalar UnixMilliseconds
 
 """Input for updating a category tag"""
@@ -6022,18 +6292,6 @@ input UpdateEntityDefinitionInput {
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!] = null
-}
-
-"""Input for updating an existing entity"""
-input UpdateEntityInput {
-  """The ID of the entity to update"""
-  id: String!
-
-  """List of property key-value pairs to associate with this entity"""
-  stickyProperties: [PropertySet!]! = []
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
 }
 
 """Input for updating an existing graph"""
@@ -6293,24 +6551,6 @@ input UpdateNaturalEventDefinitionInput {
   tags: [String!]! = []
 }
 
-"""Input for updating an existing natural event instance"""
-input UpdateNaturalEventInput {
-  """The ID of the event category/type to create"""
-  eventCategory: String!
-
-  """The ID of the natural event to update"""
-  id: String!
-
-  """List of entity IDs that are inputs to this event"""
-  inputs: [RoleMappingInput!]! = []
-
-  """List of entity IDs that are outputs of this event"""
-  outputs: [RoleMappingInput!]! = []
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
-}
-
 """Input for updating a node pairs query"""
 input UpdateNodePairsQueryInput {
   """Description of this node query"""
@@ -6435,24 +6675,6 @@ input UpdateProtocolEventDefinitionInput {
   Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon')
   """
   tags: [String!]! = []
-}
-
-"""Input for updating an existing protocol event instance"""
-input UpdateProtocolEventInput {
-  """The ID of the event category/type to create"""
-  eventCategory: String!
-
-  """The ID of the protocol event to update"""
-  id: String!
-
-  """List of entity IDs that are inputs to this event"""
-  inputs: [RoleMappingInput!]! = []
-
-  """List of entity IDs that are outputs of this event"""
-  outputs: [RoleMappingInput!]! = []
-
-  """List of evidence structures with measurements"""
-  supportingEvidence: [StructureReferenceInput!]! = []
 }
 
 """Input for updating an existing relation definition in the graph schema"""
@@ -6676,6 +6898,27 @@ input UpdateStructureRelationInput {
   targetId: String!
 }
 
+"""Input for editing how one of the organization's words presents itself"""
+input UpdateTermInput {
+  """Optional RGBA colour"""
+  color: [Int!] = null
+
+  """What this word means"""
+  description: String = null
+
+  """The ID of the term to update"""
+  id: String!
+
+  """Optional media store ID for an illustrative image"""
+  image: String = null
+
+  """Human-readable name"""
+  label: String = null
+
+  """Persistent URL, where this corresponds to a published ontology term"""
+  purl: String = null
+}
+
 enum ValueKind {
   BOOLEAN
   CATEGORY
@@ -6833,7 +7076,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | ZarrStore
+union _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | Term | ZarrStore
 
 type _Service {
   sdl: String!

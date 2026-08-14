@@ -1,5 +1,6 @@
 import { DisplayWidgetProps } from "@/lib/display/registry";
 import { KraphRelationCategory } from "@/linkers";
+import { TermBadge } from "../components/TermBadge";
 import { useGetRelationCategoryQuery } from "../api/graphql";
 
 export const RelationCategoryDisplay = (props: DisplayWidgetProps) => {
@@ -28,6 +29,7 @@ export const RelationCategoryDisplay = (props: DisplayWidgetProps) => {
     <KraphRelationCategory.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3 space-y-1">
         <div className="font-semibold text-sm">{cat.label}</div>
+        <TermBadge term={cat.term} />
         {cat.description && (
           <div className="text-xs text-muted-foreground line-clamp-2">{cat.description}</div>
         )}

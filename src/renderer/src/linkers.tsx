@@ -334,6 +334,12 @@ export const KraphStructureRelation = buildSmart(
   { name: "Structure Relation" },
 );
 
+// A term is the organization's word. Categories declare it per graph, so the
+// term outlives any one graph's view of it.
+export const KraphTerm = buildSmart("@kraph/term", "kraph/terms", {
+  name: "Term",
+});
+
 export const KraphStructureKind = buildSmart(
   "@kraph/structurekind",
   "kraph/structurekinds",

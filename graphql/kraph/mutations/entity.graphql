@@ -4,8 +4,8 @@ mutation CreateEntity($input: CreateEntityInput!) {
   }
 }
 
-mutation UpdateEntity($input: UpdateEntityInput!) {
-  updateEntity(input: $input) {
+mutation AttestEntity($id: String!) {
+  attestEntity(input: { id: $id }) {
     ...Entity
   }
 }

@@ -17,6 +17,7 @@ import { ProtocolEventCategoryDisplay } from "@/kraph/displays/ProtocolEventCate
 import { RelationDisplay } from "@/kraph/displays/RelationDisplay";
 import { RelationCategoryDisplay } from "@/kraph/displays/RelationCategoryDisplay";
 import { StructureDisplay } from "@/kraph/displays/StructureDisplay";
+import { TermDisplay } from "@/kraph/displays/TermDisplay";
 import { StructureKindDisplay } from "@/kraph/displays/StructureKindDisplay";
 import { StructureRelationCategoryDisplay } from "@/kraph/displays/StructureRelationCategoryDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
@@ -67,6 +68,7 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@kraph/naturaleventcategory": NaturalEventCategoryDisplay,
     "@kraph/protocoleventcategory": ProtocolEventCategoryDisplay,
     "@kraph/structurekind": StructureKindDisplay,
+  "@kraph/term": TermDisplay,
     // kabinet
     "@kabinet/pod": PodDisplay,
     // lovekit

@@ -15,3 +15,12 @@ mutation UpdateMetric($input: UpdateMetricInput!) {
     ...Metric
   }
 }
+
+# A hand-entered value is still evidence, just the simplest kind: an
+# "itoldyouso" structure carries no measurement behind it, only the assertion.
+# The backend creates the structure and its measurement edge on demand.
+mutation RecordMetric($input: RecordMetricInput!) {
+  recordMetric(input: $input) {
+    ...Metric
+  }
+}

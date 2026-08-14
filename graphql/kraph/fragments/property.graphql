@@ -1,6 +1,7 @@
 fragment PropertyDefinition on PropertyDefinition {
   key
   valueKind
+  unit
   description
   rule {
     aggregation

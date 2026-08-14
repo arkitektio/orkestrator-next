@@ -106,6 +106,7 @@
       "ScatterPlot",
       "StructureKind",
       "StructureRelationCategory",
+      "Term",
       "ZarrStore"
     ]
   }

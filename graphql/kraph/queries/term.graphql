@@ -1,0 +1,21 @@
+query GetTerm($id: ID!) {
+  term(id: $id) {
+    ...DetailTerm
+  }
+}
+
+query ListTerms($filters: TermFilter, $pagination: StructurePaginationInput) {
+  terms(filters: $filters, pagination: $pagination) {
+    ...ListTerm
+  }
+}
+
+query SearchTerms($search: String, $values: [ID!]) {
+  options: terms(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: key
+  }
+}

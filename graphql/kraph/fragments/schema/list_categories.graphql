@@ -1,5 +1,8 @@
 fragment BaseListCategory on Category {
   id
+  term {
+    ...ListTerm
+  }
   description
   image {
     presignedUrl

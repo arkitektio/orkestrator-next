@@ -10,8 +10,8 @@ mutation ArchiveNaturalEvent($id: String!) {
   }
 }
 
-mutation UpdateNaturalEvent($input: UpdateNaturalEventInput!) {
-  updateNaturalEvent(input: $input) {
+mutation AttestNaturalEvent($id: String!) {
+  attestNaturalEvent(input: { id: $id }) {
     ...NaturalEvent
   }
 }

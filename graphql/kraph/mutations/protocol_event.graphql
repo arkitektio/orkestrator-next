@@ -10,8 +10,8 @@ mutation ArchiveProtocolEvent($id: String!) {
   }
 }
 
-mutation UpdateProtocolEvent($input: UpdateProtocolEventInput!) {
-  updateProtocolEvent(input: $input) {
+mutation AttestProtocolEvent($id: String!) {
+  attestProtocolEvent(input: { id: $id }) {
     ...ProtocolEvent
   }
 }

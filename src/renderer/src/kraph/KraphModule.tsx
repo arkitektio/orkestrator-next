@@ -26,6 +26,8 @@ import RelationCategoryPage from "./pages/RelationCategoryPage";
 import RelationPage from "./pages/RelationPage";
 import ScatterPlotPage from "./pages/ScatterPlotPage";
 import StructureKindsPage from "./pages/StructureKindsPage";
+import TermPage from "./pages/TermPage";
+import TermsPage from "./pages/TermsPage";
 import {
   default as ExpressionPage,
   default as StructureKindPage,
@@ -74,6 +76,7 @@ export const KraphModule: React.FC<Props> = () => {
             path="structurerelationcategories/:id"
             element={<StuctureRelationCategoryPage />}
           />
+          <Route path="terms" element={<TermsPage />} />
           <Route
             path="structurekinds"
             element={<StructureKindsPage />}
@@ -96,6 +99,7 @@ export const KraphModule: React.FC<Props> = () => {
           />
           <Route path="metrickinds" element={<MetricKindsPage />} />
 
+          <Route path="terms/:id" element={<TermPage />} />
           <Route
             path="structurekinds/:id"
             element={<StructureKindPage />}

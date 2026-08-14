@@ -1,0 +1,15 @@
+mutation CreateTerm($input: CreateTermInput!) {
+  createTerm(input: $input) {
+    ...Term
+  }
+}
+
+mutation UpdateTerm($input: UpdateTermInput!) {
+  updateTerm(input: $input) {
+    ...Term
+  }
+}
+
+mutation DeleteTerm($id: String!) {
+  deleteTerm(input: { id: $id })
+}

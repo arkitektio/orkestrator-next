@@ -15,6 +15,7 @@ import {
   Notebook,
   Ruler,
   SparkleIcon,
+  SpellCheck,
 } from "lucide-react";
 import * as React from "react";
 import { BsRecord } from "react-icons/bs";
@@ -40,6 +41,13 @@ export const NavigationPane = () => {
           >
             <Home className="h-4 w-4" />
             Dashboard
+          </PaneLink>
+          <PaneLink
+            to="/kraph/terms"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <SpellCheck className="h-4 w-4" />
+            Terms
           </PaneLink>
           <PaneLink
             to="/kraph/graphs"

@@ -4,13 +4,16 @@ import type { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
   DeleteEntityCategoryDocument,
   ArchiveEntityDocument,
+  AttestEntityDocument,
+  AttestNaturalEventDocument,
+  AttestProtocolEventDocument,
   DeleteGraphDocument,
   DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
   LinkStructureToEntityDocument,
 } from "./api/graphql";
-import { Archive, Link2, PlusCircle, Ruler, Workflow } from "lucide-react";
+import { Archive, Link2, PlusCircle, Ruler, Stamp, Workflow } from "lucide-react";
 
 export const NewEntityAction: Action = {
   title: "Create New Entity",
@@ -88,9 +91,48 @@ export const LinkStructureToEntityAction: Action = {
   collections: ["io"],
 };
 
+// Attesting is the round-trip counterpart of archiving: `archive*` returns the
+// uuid that `attest*` takes back, so a retracted claim can be re-asserted. It
+// does not displace anyone else's claim on the same node.
+const ATTEST_DOCUMENTS = {
+  "@kraph/entity": AttestEntityDocument,
+  "@kraph/naturalevent": AttestNaturalEventDocument,
+  "@kraph/protocolevent": AttestProtocolEventDocument,
+} as const;
+
+export const AttestNodeAction: Action = {
+  title: "Attest",
+  description: "Re-assert that this node stands, without displacing other claims",
+  icon: Stamp,
+  conditions: [
+    {
+      type: "mixture",
+      identifiers: Object.keys(ATTEST_DOCUMENTS),
+    },
+  ],
+  execute: async ({ state, services }) => {
+    const client = (services.kraph as unknown as { client: ApolloClient<NormalizedCache> })
+      .client;
+    if (!client) {
+      throw new Error("Kraph service is not available");
+    }
+
+    for (const node of state.left) {
+      const mutation = ATTEST_DOCUMENTS[node.identifier as keyof typeof ATTEST_DOCUMENTS];
+      if (!mutation) continue;
+      await client.mutate({
+        mutation,
+        variables: { id: String(node.object.id) },
+      });
+    }
+  },
+  collections: ["io"],
+};
+
 export const KRAPH_ACTIONS = {
   "create-new-entity": NewEntityAction,
   "link-structure-to-entity": LinkStructureToEntityAction,
+  "attest-node": AttestNodeAction,
   "delete-kraph-graph": buildDeleteAction({
     title: "Delete Graph",
     identifier: "@kraph/graph",

@@ -1,0 +1,39 @@
+# Claims name the term, not the category row. Asserting does not displace
+# anyone else's claim; archiving retracts yours and leaves the evidence.
+
+mutation AssertParticipation(
+  $event: String!
+  $entity: String!
+  $role: String!
+  $isInput: Boolean!
+) {
+  assertParticipation(
+    input: { event: $event, entity: $entity, role: $role, isInput: $isInput }
+  ) {
+    ...Edge
+  }
+}
+
+mutation AssertParticipations($event: String!, $participants: [ParticipantInput!]!) {
+  assertParticipations(input: { event: $event, participants: $participants }) {
+    ...Edge
+  }
+}
+
+mutation ArchiveParticipation($id: String!) {
+  archiveParticipation(input: { id: $id }) {
+    ...Edge
+  }
+}
+
+mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
+  classifyNodes(input: { classifications: $classifications }) {
+    ...Entity
+  }
+}
+
+mutation ArchiveClaims($ids: [String!]!) {
+  archiveClaims(input: { ids: $ids }) {
+    ...Edge
+  }
+}

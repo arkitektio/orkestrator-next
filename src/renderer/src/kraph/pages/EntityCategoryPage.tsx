@@ -29,7 +29,8 @@ export const Page = asDetailQueryRoute(
     const [quickCreate] = useCreateEntityMutation({
       variables: {
         input: {
-          entityCategory: data.entityCategory.id,
+          // Claims name the word this category declares, not the category row.
+          term: data.entityCategory.term?.key ?? data.entityCategory.key,
         },
       },
       refetchQueries: [{ query: EntityNodesDocument, variables: { entityCategory: data.entityCategory.id } }],

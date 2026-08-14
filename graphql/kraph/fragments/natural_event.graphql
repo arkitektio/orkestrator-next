@@ -9,6 +9,7 @@ fragment NaturalEvent on NaturalEvent {
 
 fragment ListNaturalEvent on NaturalEvent {
   id
+  label
   measuredFrom
   measuredTo
   category {

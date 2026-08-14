@@ -10,7 +10,7 @@ const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data }) => {
   return (
     <KraphStructureRelation.ModelPage
       object={{ id: data?.structureRelation.id }}
-      title={data?.structureRelation.category.label}
+      title={data?.structureRelation.category?.label ?? data?.structureRelation.label}
       sidebars={<KraphStructureRelation.Komments object={{ id: data.structureRelation.id }} />}
       pageActions={
         <div className="flex flex-row gap-2">
@@ -23,7 +23,7 @@ const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data }) => {
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.structureRelation.category.label}
+            {data.structureRelation.category?.label ?? data.structureRelation.label}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground"></p>
           <p className="mt-3 text-xl text-muted-foreground">

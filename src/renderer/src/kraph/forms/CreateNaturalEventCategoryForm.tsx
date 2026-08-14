@@ -2,6 +2,7 @@ import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -30,6 +31,7 @@ const TForm = (props: { graph?: string; onSuccess?: (data: CreateNaturalEventCat
   const form = useForm<CreateProtocolEventCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
+      backfill: false,
     },
   });
 
@@ -79,6 +81,11 @@ const TForm = (props: { graph?: string; onSuccess?: (data: CreateNaturalEventCat
             </div>
           </div>
 
+              <SwitchField
+                label="Draw existing evidence"
+                name="backfill"
+                description="Claims already made under this word are in the organization's evidence base. With this on they are projected into the graph now, instead of waiting for the next reproject — which takes as long as the evidence base is large."
+              />
           <DialogFooter className="mt-2">
             <Button type="submit">Create</Button>
           </DialogFooter>

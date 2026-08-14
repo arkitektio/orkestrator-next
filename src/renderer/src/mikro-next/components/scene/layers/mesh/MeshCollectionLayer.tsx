@@ -118,6 +118,12 @@ const MeshCollectionGroup = ({
   // long as (collection version, grid/encoding contract).
   const manager = useMemo(() => {
     if (!grid) return null;
+    if (collection.geometry.length === 0) {
+      console.warn(
+        `[mesh] collection ${collection.id} (version ${collection.version}) has no geometry ` +
+          `shards — nothing to render. The catalog may have been registered before the shards.`,
+      );
+    }
     const source = new MeshParquetSource(collection.geometry, {
       requestGrant,
       requestRegion,

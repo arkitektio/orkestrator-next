@@ -119,7 +119,7 @@ export const SetAsMeasurement = (props: {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <CardTitle className="truncate text-base">{entity.label}</CardTitle>
-                      {entity.category.label && (
+                      {entity.category?.label && (
                         <CardDescription className="mt-1">
                           {entity.category.label}
                         </CardDescription>

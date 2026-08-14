@@ -14,7 +14,7 @@ export const RelationDisplay = (props: DisplayWidgetProps) => {
   if (props.context === "command") {
     return (
       <KraphRelation.DetailLink object={{ id: props.object }}>
-        <span className="font-medium text-sm">{relation.category.label}</span>
+        <span className="font-medium text-sm">{relation.category?.label ?? relation.label}</span>
       </KraphRelation.DetailLink>
     );
   }
@@ -22,7 +22,7 @@ export const RelationDisplay = (props: DisplayWidgetProps) => {
   return (
     <KraphRelation.DetailLink object={{ id: props.object }}>
       <div className="w-full rounded-lg border border-border/60 bg-card p-3">
-        <div className="font-semibold text-sm">{relation.category.label}</div>
+        <div className="font-semibold text-sm">{relation.category?.label ?? relation.label}</div>
       </div>
     </KraphRelation.DetailLink>
   );

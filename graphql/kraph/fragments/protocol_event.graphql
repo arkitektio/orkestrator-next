@@ -11,6 +11,7 @@ fragment ProtocolEvent on ProtocolEvent {
 
 fragment ListProtocolEvent on ProtocolEvent {
   id
+  label
   measuredFrom
   measuredTo
   category {

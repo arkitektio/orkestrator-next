@@ -16,6 +16,10 @@ fragment ListMaterializedStructureRelationEdge on MaterializedStructureRelationE
   edge {
     label
     id
+    key
+    term {
+      ...ListTerm
+    }
   }
 }
 
@@ -38,5 +42,9 @@ fragment MaterializedStructureRelationEdge on MaterializedStructureRelationEdge 
   edge {
     label
     id
+    key
+    term {
+      ...ListTerm
+    }
   }
 }

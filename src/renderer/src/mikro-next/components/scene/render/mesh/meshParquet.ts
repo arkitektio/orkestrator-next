@@ -73,6 +73,17 @@ export class MeshParquetSource {
     private readonly deps: MeshParquetDeps,
   ) {}
 
+  /**
+   * A collection may legally have NO geometry shards: `geometry` is nullable on
+   * the create input, so the catalog can be registered before the shards land.
+   * Every query path returns empty for that case instead of emitting
+   * `read_parquet([])`, which DuckDB rejects with a function-overload error
+   * that names none of the actual cause.
+   */
+  private get hasNoGeometry(): boolean {
+    return this.geometryStores.length === 0;
+  }
+
   private geometryUrls(): string[] {
     return this.geometryStores.map((store) => `s3://${store.bucket}/${store.key}`);
   }
@@ -142,6 +153,7 @@ export class MeshParquetSource {
 
   /** The per-cell index: one projected aggregate scan, memoized per instance. */
   loadCellIndex(): Promise<MeshCellRecord[]> {
+    if (this.hasNoGeometry) return Promise.resolve([]);
     if (!this.cellIndexPromise) {
       this.cellIndexPromise = this.withConnection(async (connection) => {
         const result = await connection.query(
@@ -167,7 +179,7 @@ export class MeshParquetSource {
 
   /** Batched geometry fetch for one level's planned cells. */
   async fetchCellRows(level: number, cells: readonly number[]): Promise<FetchedGeometryRow[]> {
-    if (cells.length === 0) return [];
+    if (cells.length === 0 || this.hasNoGeometry) return [];
     const cellList = cells.map((cell) => String(cell)).join(", ");
     return this.withConnection(async (connection) => {
       const result = await connection.query(

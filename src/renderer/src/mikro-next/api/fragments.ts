@@ -157,6 +157,7 @@
       "MediaStore",
       "Membership",
       "MeshCollection",
+      "MeshGeometryShard",
       "MeshLayer",
       "MultiWellPlate",
       "Objective",

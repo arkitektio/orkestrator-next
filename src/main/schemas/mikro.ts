@@ -51,6 +51,12 @@ export type Scalars = {
   LabelsLike: { input: any; output: any; }
   /** A spatial length (``"2.5 µm"``, ``"1 mm"``, ``"3 m"``). */
   Length: { input: any; output: any; }
+  /** A reference to an uploaded parquet store holding a mesh collection's **cell catalog**: one row per (level, cell), carrying the exact bounds, the LOD error, the object count and the child mask. It is the spatial index a renderer reads once to plan a frame */
+  MeshCellCatalogLike: { input: any; output: any; }
+  /** A reference to an uploaded parquet store holding one **geometry shard** of a mesh collection: one row per (level, cell), carrying the encoded positions, indices and normals plus the per-object ranges inside them */
+  MeshGeometryLike: { input: any; output: any; }
+  /** A reference to an uploaded parquet store holding a mesh collection's **object catalog**: one row per object, with an ascending `object_id`, its dense `ordinal`, its bounds, and the list of cells that hold it. The inverted index behind isolating or colouring a single object */
+  MeshObjectCatalogLike: { input: any; output: any; }
   /** The `MetricMap` scalar type represents a matrix values as specified by */
   MetricMap: { input: any; output: any; }
   /** The `ParquetLike` scalar type represents a reference to a parquet objected stored previously created by the user on a datalayer */
@@ -1868,15 +1874,18 @@ export type CreateLensInput = {
 /** Input for registering an immutable, versioned mesh collection. The collection gets a coordinate system of its own, and an edge relates it to the space the meshes were extracted from */
 export type CreateMeshCollectionInput = {
   axes: Array<AxisInput>;
-  catalog: Scalars['ParquetLike']['input'];
+  catalog: Scalars['MeshCellCatalogLike']['input'];
   derivedFrom?: InputMaybe<Array<DerivedFromInput>>;
   encoding?: InputMaybe<Scalars['Any']['input']>;
   folder?: InputMaybe<Scalars['ID']['input']>;
   geometry?: InputMaybe<Array<Scalars['ParquetLike']['input']>>;
   grid?: InputMaybe<Scalars['Any']['input']>;
+  objectCatalog?: InputMaybe<Scalars['MeshObjectCatalogLike']['input']>;
   provenanceMetadata?: InputMaybe<Scalars['Any']['input']>;
+  shards?: InputMaybe<Array<MeshGeometryShardInput>>;
   sourceFiles?: InputMaybe<Array<SourceFileInput>>;
   specVersion: Scalars['String']['input'];
+  validateStores?: InputMaybe<Scalars['Boolean']['input']>;
   version: Scalars['String']['input'];
 };
 
@@ -3493,6 +3502,11 @@ export enum HistoryKind {
   Update = 'UPDATE'
 }
 
+/** The fields an IDENTITY member of TransformInput reads -- only the discriminator, the map having no parameters. Published for codegen; the wire type is the flat TransformInput */
+export type IdentityTransformInput = {
+  kind?: CreatableTransformKind;
+};
+
 /** The identity map: input and output coordinates are the same */
 export type IdentityTransformation = Transformation & {
   __typename?: 'IdentityTransformation';
@@ -4451,12 +4465,30 @@ export type LensFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Filter to lenses placeable into this coordinate system: those whose space has a traversable path into it, walking the transformation edges. Takes a *space*, not a scene -- pass `scene.worldCoordinateSystem.id` to ask it of a scene */
-  placeableIn?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter to lenses placeable into a coordinate system: those whose space has a traversable path into it, walking the transformation edges. Takes a *space*, not a scene -- pass `scene.worldCoordinateSystem.id` to ask it of a scene. `derivedOnly` and `asLayer` narrow the answer for a particular picker; with neither, this is the whole set layer creation would accept */
+  placeableIn?: InputMaybe<LensPlaceableFilter>;
 };
+
+/** The kind of layer a lens could source, for narrowing a picker: the two members of `LayerKind` that draw array data. Input-only, and deliberately not `LayerKind` itself -- an annotation, point, track or mesh layer sources from a collection or a table, never from a lens, so four of that enum's members could only ever answer 'no'. */
+export enum LensLayerKind {
+  /** Drawable as an image layer -- which is every lens with an x and a y axis of more than one pixel. It is the renderability gate alone, and deliberately *not* the complement of LABEL: a mask drawn through a render graph is a legitimate thing to want, and `createLayer` does not refuse one. */
+  Image = 'IMAGE',
+  /** Drawable as a label layer: renderable, and derived by an edge declaring CATEGORIZED -- the values became object ids. The same signal `createSceneFromCoordinateSystem` infers a label layer from, asked of a candidate instead of a source, so a picker and a bootstrapped scene cannot disagree about what a label is. */
+  Label = 'LABEL'
+}
 
 export type LensOrder =
   { id: Ordering; };
+
+/** What a lens picker is asking for: a destination space, and optionally which sort of candidate. Structured rather than a bare space id because `derivedOnly` and `asLayer` are qualifications *of* the placeability question -- a lens is not derived or label-shaped in the abstract, it is those things on the way into a particular space */
+export type LensPlaceableFilter = {
+  /** Keep only the lenses that could source a layer of this kind. Both members require the lens to be drawable at all -- an x and a y axis of more than one pixel, the same gate layer creation applies -- and `LABEL` additionally requires a primary derivation declaring CATEGORIZED. Note that *omitting* this applies no renderability gate, so `IMAGE` is a real narrowing rather than a no-op: the unqualified filter answers what is placeable, which is a spatial question, not what is drawable */
+  asLayer?: InputMaybe<LensLayerKind>;
+  /** Keep only the lenses that *needed* a lineage tree to get here: the segmentations, deconvolutions and projections placed by an ancestor's registration. What the space registers directly is dropped, even when it is itself a derived dataset -- it does not need its lineage to be placeable. A narrowing of the candidate list and nothing more: every lens it keeps is one `createLayer` accepts, and every lens it drops is too */
+  derivedOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The space to be placed into. A *space*, not a scene: every scene over one world offers the same candidates, so a scene-shaped argument would ask for more than the answer depends on. Pass `scene.worldCoordinateSystem.id` to ask it of a scene */
+  space: Scalars['ID']['input'];
+};
 
 /** The placement of one pyramid level in a layer's scene: the level and its path to the world system */
 export type LevelPlacement = {
@@ -4815,7 +4847,7 @@ export type MembershipFoldersArgs = {
 /** An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL */
 export type MeshCollection = {
   __typename?: 'MeshCollection';
-  /** The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly */
+  /** The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly. Under spec v2 this is the **cell** catalog -- one row per (level, cell), carrying the exact bounds, the LOD error and the child mask a frustum query needs, so a renderer plans a frame without opening a single geometry file */
   catalog: ParquetStore;
   /** The coordinate system the collection's vertices are expressed in. The collection owns it; `derivedFrom` relates it to the data the meshes were extracted from */
   coordinateSystem: CoordinateSystem;
@@ -4827,11 +4859,15 @@ export type MeshCollection = {
   exports: Array<FileLink>;
   /** The folder this mesh collection is filed in. Organisational only: it says where a user keeps this collection, never where the meshes sit in space -- that is `coordinateSystem` and the edges out of it */
   folder?: Maybe<Folder>;
-  /** The Parquet stores holding the geometry shards */
+  /** (spec v1) The Parquet stores holding the geometry shards. Empty on a v2 collection, which declares `shards` instead -- a bare store cannot say which octree level it holds */
   geometry: Array<ParquetStore>;
   /** The octree grid. Its `cellSize` is in voxels of the coordinate system, so the octree aligns to the label grid the meshes were extracted from */
   grid: Scalars['Any']['output'];
   id: Scalars['ID']['output'];
+  /** (spec v2) The Parquet store holding the **object** catalog -- one row per object, with its bounds and the list of cells that hold it. The inverted index: it answers 'where is segment 4711?' with a set of cell keys instead of a scan. Null on a v1 collection, which has no object catalog */
+  objectCatalog?: Maybe<ParquetStore>;
+  /** (spec v2) The geometry shards, each naming the octree level it holds rows for, finest level first. The level is declared rather than read off the store key because a key is a server-minted opaque id: without this a renderer would have to open every shard to find the level it wants, which is the work the octree partition exists to avoid. Empty on a v1 collection, which lists its stores in `geometry` */
+  shards: Array<MeshGeometryShard>;
   /** The files this mesh collection was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete */
   sourceFiles: Array<FileLink>;
   specVersion: Scalars['String']['output'];
@@ -4889,6 +4925,22 @@ export type MeshCollectionFilter = {
   /** Filter by the creator's subject ID */
   owner?: InputMaybe<Scalars['ID']['input']>;
   version?: InputMaybe<StrFilterLookup>;
+};
+
+/** One Parquet store of a v2 mesh collection's geometry, and the octree level it holds rows for */
+export type MeshGeometryShard = {
+  __typename?: 'MeshGeometryShard';
+  id: Scalars['ID']['output'];
+  /** The octree level this shard holds, 0 being the finest. A level-L cell spans `cellSize * 2^L` voxels */
+  level: Scalars['Int']['output'];
+  /** The Parquet store holding this shard's rows -- one row per (level, cell). Request an access grant from it and read the Parquet directly */
+  store: ParquetStore;
+};
+
+/** One geometry shard of a spec v2 mesh collection: an uploaded Parquet store, and the octree level it holds rows for */
+export type MeshGeometryShardInput = {
+  level: Scalars['Int']['input'];
+  store: Scalars['MeshGeometryLike']['input'];
 };
 
 /** A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene. */
@@ -10976,7 +11028,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelLayer | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
+export type _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelLayer | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshGeometryShard | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RgbContext | RgbView | Roi | RoiView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';

@@ -71,7 +71,7 @@ export const RelateStructures = (props: {
           input: {
             sourceId: left.data.ensureStructure.id,
             targetId: right.data.ensureStructure.id,
-            category: category.id,
+            term: category.term?.key ?? category.key,
           },
         },
       });

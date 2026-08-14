@@ -137,7 +137,7 @@ texture limit (2048 under ANGLE). In 2D the z payload only doubles when the z
 page grid itself exceeds the limit — otherwise 3000-slice stacks force
 pointless fat slabs (pitfall P1).
 
-### 2.4 Page table (`core/octree/pageTableLayout.ts`, `render/bricks/gpu/pageTableTexture.ts`)
+### 2.4 Page table (`core/octree/pageTableLayout.ts`, `render/bricks/pageTableTexture.ts`)
 
 One packed `RGBA8UI` `Data3DTexture` per (layer, mode). **All pyramid levels
 live in this single texture**, stacked along one axis with per-level
@@ -151,7 +151,7 @@ consumes **no atlas slot**; its fill value is encoded 8-bit into the R channel
 (raw value, see pitfall P11). CPU `Uint8Array` mirrors per level with dirty
 flags; dirty levels are re-uploaded whole (they are tiny).
 
-### 2.5 Brick atlas + slot LRU (`render/bricks/gpu/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
+### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
 
 One `Data3DTexture` per (layer, mode), format `R8` or `R32F` only — the zarr
 worker emits only `Uint8Array` or `Float32Array` (uint16 is promoted). Slot
@@ -396,7 +396,7 @@ Keep the two in sync when touching either.
 | Coordinate graph | `core/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
 | Mesh layers | `render/mesh/` (Parquet/DuckDB cell streaming, own README + `meshCore.test.ts`) |
 | Drivers | `managers/nodePlanTracker.ts`, `managers/brickResidency.ts`, `managers/BrickSystemProvider.tsx`, started from `managers/VisibilityManager.tsx` |
-| GPU | `render/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
+| GPU | `render/bricks/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `layers/bricks/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
 | Materials | `layers/bricks/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
 | Registry entries | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
@@ -499,7 +499,7 @@ than reporting the exact-but-not-rendered raw value. Encode/decode live in
 `core/octree/brickEncoding.ts`; tested in `core/octree/brickEncoding.test.ts`.
 
 **Atlas format must mirror the worker's promotion, not the dtype string.**
-`atlasKindForDtype` (`render/bricks/gpu/brickAtlas.ts`) picks R8 only for unsigned
+`atlasKindForDtype` (`render/bricks/brickAtlas.ts`) picks R8 only for unsigned
 8-bit and R32F for everything else — matching the codec worker's DEFAULT-fidelity
 promotion (`lib/zarr/runner/codec-worker.ts`: only `Uint8Array` stays uint8, all
 else → `Float32Array`). An earlier `dtype.includes("8")` test wrongly routed
@@ -744,7 +744,7 @@ Consequences and contracts:
 - **Backend internals are isolated in `render/gpu/sceneRenderer.ts`** (device,
   texture handles, `maxTextureDimension3D`, GPU identity for the quality
   governor). Nothing else may touch `renderer.backend`.
-- **Uploads** (`render/bricks/gpu/texSubImage3d.ts`):
+- **Uploads** (`render/bricks/texSubImage3d.ts`):
   `device.queue.writeTexture` partial 3D writes — no alignment constraints, no
   unpack state (P3 is obsolete). Uninitialized texture → full `needsUpdate`
   re-spec from the CPU backing mirror.

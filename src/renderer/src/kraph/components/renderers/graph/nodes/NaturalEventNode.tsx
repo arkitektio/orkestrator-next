@@ -26,9 +26,9 @@ const TNode = memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
             }`}
           style={{ zIndex: 10 }}
         >
-          {data.category.image?.presignedUrl && (
+          {data.category?.image?.presignedUrl && (
             <Image
-              src={resolve(data.category.image.presignedUrl)}
+              src={resolve(data.category.image!.presignedUrl)}
               style={{ filter: "brightness(0.5)" }}
               className="object-cover h-full w-full"
             />
@@ -38,7 +38,7 @@ const TNode = memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
               object={{ id: data.id }}
               className="font-bold text-lg text-center block text-foreground bg-background/90 px-3 py-1 rounded backdrop-blur-sm hover:underline shadow-sm"
             >
-              {data.category.label}
+              {data.category?.label ?? data.label}
             </KraphProtocolEventCategory.DetailLink>
           </div>
         </Card>

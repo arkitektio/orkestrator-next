@@ -504,11 +504,13 @@ type CategoryTagStats {
 
 """One claim that a node is of a category, inside a batch"""
 input ClassificationInput {
-  """The category being claimed for it"""
-  category: String!
-
   """The node being classified"""
   node: String!
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for claiming that several nodes are of a category, as one act"""
@@ -711,6 +713,11 @@ input CreateEdgeTableQueryInput {
 
 """Input for creating a new entity definition in the graph schema"""
 input CreateEntityDefinitionInput {
+  """
+  Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
+  """
+  backfill: Boolean! = false
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -756,15 +763,22 @@ input CreateEntityDefinitionInput {
 
 """Input for creating a new entity"""
 input CreateEntityInput {
-  """The ID of the entity category/type to create"""
-  entityCategory: String!
-
   """List of evidence structures with measurements"""
   supportingEvidence: [StructureReferenceInput!]! = []
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for creating a new graph from a schema definition"""
 input CreateGraphInput {
+  """
+  Draw the evidence this graph's words already admit. A graph is a view over the organization's evidence, so a new one can be a view over history: with this on, every node and edge already claimed under a word this schema declares is projected as the graph is created. Off by default because the work is proportional to the organization's evidence and happens before this mutation returns.
+  """
+  backfill: Boolean! = false
+
   """The complete graph schema definition"""
   definition: GraphDefinitionInput
 
@@ -922,9 +936,6 @@ input CreateMeasurementDefinitionInput {
 
 """Input for creating a new measurement edge"""
 input CreateMeasurementInput {
-  """The unique ID of the measurement category"""
-  category: String!
-
   """The ID of the source entity/structure"""
   sourceId: String!
 
@@ -933,6 +944,11 @@ input CreateMeasurementInput {
 
   """The ID of the target entity/structure"""
   targetId: String!
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for creating a new metric"""
@@ -957,6 +973,11 @@ input CreateMetricInput {
 
 """Input for creating a new natural event definition in the graph schema"""
 input CreateNaturalEventDefinitionInput {
+  """
+  Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
+  """
+  backfill: Boolean! = false
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -1006,9 +1027,6 @@ input CreateNaturalEventDefinitionInput {
 
 """Input for creating a new natural event instance"""
 input CreateNaturalEventInput {
-  """The ID of the natural event category/type to create"""
-  eventCategory: String!
-
   """List of entity IDs that are inputs to this event"""
   inputs: [RoleMappingInput!]! = []
 
@@ -1017,6 +1035,11 @@ input CreateNaturalEventInput {
 
   """List of evidence structures with measurements"""
   supportingEvidence: [StructureReferenceInput!]! = []
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for creating a new node pairs query"""
@@ -1093,6 +1116,11 @@ input CreateNodeTableQueryInput {
 
 """Input for creating a new protocol event definition in the graph schema"""
 input CreateProtocolEventDefinitionInput {
+  """
+  Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
+  """
+  backfill: Boolean! = false
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -1145,9 +1173,6 @@ input CreateProtocolEventDefinitionInput {
 
 """Input for creating a new protocol event instance"""
 input CreateProtocolEventInput {
-  """The ID of the protocol event category/type to create"""
-  eventCategory: String!
-
   """List of entity IDs that are inputs to this event"""
   inputs: [RoleMappingInput!]! = []
 
@@ -1156,10 +1181,20 @@ input CreateProtocolEventInput {
 
   """List of evidence structures with measurements"""
   supportingEvidence: [StructureReferenceInput!]! = []
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for creating a new relation definition in the graph schema"""
 input CreateRelationDefinitionInput {
+  """
+  Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
+  """
+  backfill: Boolean! = false
+
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -1207,9 +1242,6 @@ input CreateRelationDefinitionInput {
 Input for creating a new relation between two entities with supporting evidence
 """
 input CreateRelationInput {
-  """The unique ID of the structure this metric is associated with"""
-  category: String!
-
   """The ID of the source entity/structure"""
   sourceId: String!
 
@@ -1218,6 +1250,11 @@ input CreateRelationInput {
 
   """The ID of the target entity/structure"""
   targetId: String!
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for creating a scatter plot"""
@@ -1327,9 +1364,6 @@ input CreateStructureRelationDefinitionInput {
 
 """Input for creating a new structure relation"""
 input CreateStructureRelationInput {
-  """The unique ID of the structure relation category"""
-  category: String!
-
   """The ID of the source entity/structure"""
   sourceId: String!
 
@@ -1338,6 +1372,11 @@ input CreateStructureRelationInput {
 
   """The ID of the target entity/structure"""
   targetId: String!
+
+  """
+  The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
+  """
+  term: String!
 }
 
 """Input for declaring one of the organization's words"""
@@ -1652,6 +1691,9 @@ interface EdgeCategory {
 
 """Base interface for graph schemas"""
 type EdgePairsQuery implements EdgeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -1683,6 +1725,9 @@ input EdgePairsQueryFilter {
   NOT: EdgePairsQueryFilter
   OR: EdgePairsQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -1697,6 +1742,9 @@ input EdgePairsQueryOrder @oneOf {
 
 """Base interface for graph schemas"""
 type EdgePathQuery implements EdgeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -1719,6 +1767,9 @@ input EdgePathQueryFilter {
   NOT: EdgePathQueryFilter
   OR: EdgePathQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -1733,6 +1784,9 @@ input EdgePathQueryOrder @oneOf {
 
 """Base interface for entity categories/schemas"""
 interface EdgeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -1751,6 +1805,9 @@ interface EdgeQuery {
 
 """Base interface for graph schemas"""
 type EdgeTableQuery implements EdgeQuery & Plottable {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """
   If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
   """
@@ -1787,6 +1844,9 @@ input EdgeTableQueryFilter {
   NOT: EdgeTableQueryFilter
   OR: EdgeTableQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -1813,8 +1873,8 @@ input EnsureStructureInput {
 
 """An entity in the knowledge graph with derived properties"""
 type Entity implements Node & VersionedNode {
-  """The graph this node belongs to"""
-  category: EntityCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: EntityCategory
 
   """Category ID linking to EntityCategory model"""
   categoryId: String
@@ -2341,6 +2401,11 @@ type Graph {
   """An image representing this graph, for visualization purposes"""
   image: MediaStore
 
+  """
+  Whether this graph has been archived. Archiving is the reversible alternative to deleting it — a delete destroys every rule for reading the evidence, which survives without them
+  """
+  isArchived: Boolean!
+
   """Label/name of the category"""
   label: String!
 
@@ -2444,6 +2509,9 @@ input GraphFilter {
 
   """Filter by list of IDs"""
   ids: [ID!]
+
+  """Only archived graphs, or only live ones. Omitted shows both"""
+  isArchived: Boolean
   name: String
 
   """Filter by list of IDs"""
@@ -2457,6 +2525,9 @@ scalar GraphID
 
 """Base interface for graph schemas"""
 type GraphNodesQuery implements GraphQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -2482,6 +2553,9 @@ input GraphNodesQueryFilter {
   NOT: GraphNodesQueryFilter
   OR: GraphNodesQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -2501,6 +2575,9 @@ input GraphOrder @oneOf {
 
 """Base interface for graph schemas"""
 type GraphPairsQuery implements GraphQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -2532,6 +2609,9 @@ input GraphPairsQueryFilter {
   NOT: GraphPairsQueryFilter
   OR: GraphPairsQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -2546,6 +2626,9 @@ input GraphPairsQueryOrder @oneOf {
 
 """Base interface for graph schemas"""
 type GraphPathQuery implements GraphQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -2570,6 +2653,9 @@ type GraphPathQuery implements GraphQuery {
 
 """Base interface for entity categories/schemas"""
 interface GraphQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -2608,6 +2694,9 @@ type GraphStats {
 
 """Base interface for graph schemas"""
 type GraphTableQuery implements GraphQuery & Plottable {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """
   If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
   """
@@ -2643,6 +2732,9 @@ input GraphTableQueryFilter {
   DISTINCT: Boolean
   NOT: GraphTableQueryFilter
   OR: GraphTableQueryFilter
+
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
 
   """Filter by list of IDs"""
   ids: [ID!]
@@ -2946,8 +3038,8 @@ input MaterializedStructureRelationEdgeOrder @oneOf {
 
 """A natural event category/schema definition"""
 type Measurement implements Edge {
-  """The graph this node belongs to"""
-  category: MeasurementCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: MeasurementCategory
 
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
@@ -3823,8 +3915,8 @@ type Mutation {
 
 """A natural event in the knowledge graph"""
 type NaturalEvent implements Event & Node & VersionedNode {
-  """The source entity of this relation"""
-  category: NaturalEventCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: NaturalEventCategory
 
   """Category ID linking to NaturalEventCategory model"""
   categoryId: String
@@ -4168,6 +4260,9 @@ input NodePaginationInput {
 
 """Base interface for graph schemas"""
 type NodePairsQuery implements NodeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -4199,6 +4294,9 @@ input NodePairsQueryFilter {
   NOT: NodePairsQueryFilter
   OR: NodePairsQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -4213,6 +4311,9 @@ input NodePairsQueryOrder @oneOf {
 
 """Base interface for graph schemas"""
 type NodePathQuery implements NodeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -4235,6 +4336,9 @@ input NodePathQueryFilter {
   NOT: NodePathQueryFilter
   OR: NodePathQueryFilter
 
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
+
   """Filter by list of IDs"""
   ids: [ID!]
 
@@ -4249,6 +4353,9 @@ input NodePathQueryOrder @oneOf {
 
 """Base interface for entity categories/schemas"""
 interface NodeQuery {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """Description of the category"""
   description: String
 
@@ -4267,6 +4374,9 @@ interface NodeQuery {
 
 """Base interface for graph schemas"""
 type NodeTableQuery implements NodeQuery & Plottable {
+  """Whether this saved query has been archived"""
+  archived: Boolean!
+
   """
   If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
   """
@@ -4302,6 +4412,9 @@ input NodeTableQueryFilter {
   DISTINCT: Boolean
   NOT: NodeTableQueryFilter
   OR: NodeTableQueryFilter
+
+  """Only archived queries, or only live ones. Omitted shows both"""
+  archived: Boolean
 
   """Filter by list of IDs"""
   ids: [ID!]
@@ -4516,8 +4629,8 @@ enum PropertyType {
 
 """A protocol event in the graph"""
 type ProtocolEvent implements Event & Node & VersionedNode {
-  """The source entity of this relation"""
-  category: ProtocolEventCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: ProtocolEventCategory
 
   """Category ID linking to ProtocolEventCategory model"""
   categoryId: String
@@ -5073,8 +5186,8 @@ input RecordMetricInput {
 
 """A relation edge between two entities"""
 type Relation implements Edge {
-  """The graph this node belongs to"""
-  category: RelationCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: RelationCategory
 
   """When this relation was created"""
   createdAt: DateTime
@@ -5799,8 +5912,8 @@ input StructureReferenceInput {
 
 """A relation edge between two structures"""
 type StructureRelation implements Edge {
-  """The graph this node belongs to"""
-  category: StructureRelationCategory!
+  """How the view this was read through draws it, if any view does"""
+  category: StructureRelationCategory
 
   """Category ID linking to StructureRelationCategory model"""
   categoryId: String

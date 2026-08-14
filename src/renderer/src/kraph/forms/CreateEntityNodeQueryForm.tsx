@@ -21,6 +21,11 @@ import { buildCypherSchemaFromGraph } from "../components/renderers/utils";
 // that could target Path/Pairs view kinds has been removed from the schema,
 // so the kind selector has been dropped here.
 export default (props: { entity: EntityFragment }) => {
+  // The seeded Cypher matches on the category's AGE label. An entity whose
+  // word this graph declares no category for has no label to match on, so
+  // there is no query to seed.
+  const category = props.entity.category;
+
   const [add] = useCreateNodeTableQueryMutation();
 
   const { data } = useGetGraphQuery({
@@ -33,7 +38,7 @@ export default (props: { entity: EntityFragment }) => {
 
   const form = useForm<CreateNodeTableQueryMutationVariables["input"]>({
     defaultValues: {
-      query: `MATCH (n:${props.entity.category.ageName})
+      query: `MATCH (n:${category?.ageName ?? ""})
 WHERE id(n) = %s
 RETURN id(n), n.__created_at`,
       description: "No Description",
@@ -65,6 +70,15 @@ RETURN id(n), n.__created_at`,
     control: form.control,
     name: "columnInput",
   });
+
+  if (!category) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        This graph declares no category for this entity's word, so there is no
+        label to match on. Declare a category for it here to build a query.
+      </div>
+    );
+  }
 
   return (
     <>

@@ -20,6 +20,7 @@ fragment Entity on Entity {
   properties
   measuredBy {
     id
+    label
     category {
       label
     }

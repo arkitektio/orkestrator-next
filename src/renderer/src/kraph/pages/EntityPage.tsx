@@ -50,7 +50,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
       object={{ id: data.entity.id }}
       title={<>
         <div className="flex flex-row">
-          {data.entity.category.label} <div className="ml-2 text-md font-light">{data.entity.label}</div>
+          {data.entity.category?.label ?? data.entity.label} <div className="ml-2 text-md font-light">{data.entity.label}</div>
         </div>
       </>}
       sidebars={
@@ -80,34 +80,36 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
 
 
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex flex-row truncate ellipsis">
-            {data.entity.category.label} <div className="ml-2 text-md font-light">{data.entity.label}</div>
+            {data.entity.category?.label ?? data.entity.label} <div className="ml-2 text-md font-light">{data.entity.label}</div>
           </h1>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Database className="h-4 w-4" /> Metadata
             </h3>
             <div className="grid gap-4 pl-2">
-              <div className="grid gap-1">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Category
-                </span>
-                <KraphEntityCategory.DetailLink
-                  object={{ id: data.entity.category.id }}
-                  className="text-sm font-medium hover:underline"
-                >
-                  {data.entity.category.label}
-                </KraphEntityCategory.DetailLink>
-              </div>
+              {data.entity.category && (
+                <div className="grid gap-1">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Category
+                  </span>
+                  <KraphEntityCategory.DetailLink
+                    object={{ id: data.entity.category.id }}
+                    className="text-sm font-medium hover:underline"
+                  >
+                    {data.entity.category.label}
+                  </KraphEntityCategory.DetailLink>
+                </div>
+              )}
             </div>
           </div>
 
-          {(data.entity.category.propertyDefinitions?.length ?? 0) > 0 ? (
+          {(data.entity.category?.propertyDefinitions?.length ?? 0) > 0 ? (
             <>
               <Separator />
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Properties</h3>
                 <div className="grid gap-2 pl-2">
-                  {data.entity.category.propertyDefinitions?.map((def) => {
+                  {data.entity.category?.propertyDefinitions?.map((def) => {
                     const prop = data.entity.richProperties.find(
                       (p) => p.key === def.key,
                     );
@@ -185,7 +187,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {measurement.category.label}
+                            {measurement.category?.label ?? measurement.label}
                           </span>
                           {measurement.source.__typename == "Structure" && (
                             <span className="text-xs text-muted-foreground">
@@ -226,7 +228,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                               object={{ id: subjected.target.id }}
                               className="font-medium hover:underline block"
                             >
-                              {subjected.target.category.label}
+                              {subjected.target.category?.label ?? subjected.target.label}
                             </KraphProtocolEvent.DetailLink>
                             <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                               <Calendar className="h-3 w-3" />
@@ -265,7 +267,7 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
                             object={{ id: targeted.source.id }}
                             className="font-medium hover:underline block"
                           >
-                            {targeted.source.category.label}
+                            {targeted.source.category?.label ?? targeted.source.label}
                           </KraphProtocolEvent.DetailLink>
                           <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                             <Calendar className="h-3 w-3" />

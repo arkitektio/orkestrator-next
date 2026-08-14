@@ -56,7 +56,9 @@ export const StructureRelateButton = (props: {
             input: {
               sourceId: left.data.ensureStructure.id,
               targetId: right.data.ensureStructure.id,
-              category: props.materializedEdge.edge.id,
+              term:
+                props.materializedEdge.edge.term?.key ??
+                props.materializedEdge.edge.key,
             },
           },
         });

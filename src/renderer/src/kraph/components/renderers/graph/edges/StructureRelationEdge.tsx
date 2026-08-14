@@ -61,7 +61,7 @@ const TEdge = ({
       <BaseEdge
         path={path}
         markerEnd={markerEnd}
-        label={data?.category.label}
+        label={data?.category?.label ?? data?.label}
       />
       <EdgeLabelRenderer>
         <Card
@@ -73,7 +73,7 @@ const TEdge = ({
         >
           {data?.id && (
             <KraphStructureRelation.DetailLink object={{ id: data.id }} style={{ pointerEvents: 'all' }}>
-              {data?.category.label}
+              {data?.category?.label ?? data?.label}
             </KraphStructureRelation.DetailLink>
           )}
         </Card>

@@ -60,7 +60,9 @@ export default (props: {
             dialog({
               variables: {
                 input: {
-                  eventCategory: props.protocolEventCategory.id,
+                  term:
+                    props.protocolEventCategory.term?.key ??
+                    props.protocolEventCategory.key,
                   inputs: props.protocolEventCategory.inputs.map((role) => ({
                     entityId: data.map[role.role],
                     role: role.role,

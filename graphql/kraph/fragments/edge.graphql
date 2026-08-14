@@ -5,6 +5,8 @@ fragment BaseEdge on Edge {
 }
 
 fragment Measurement on Measurement {
+  id
+  label
   category {
     id
     label
@@ -12,6 +14,8 @@ fragment Measurement on Measurement {
 }
 
 fragment Relation on Relation {
+  id
+  label
   category {
     id
     label
@@ -20,6 +24,7 @@ fragment Relation on Relation {
 
 fragment StructureRelation on StructureRelation {
   id
+  label
   sourceId
   targetId
   source {

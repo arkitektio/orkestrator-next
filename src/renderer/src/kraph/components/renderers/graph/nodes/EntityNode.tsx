@@ -17,9 +17,9 @@ const TNode = memo(({ data, id, selected }: NodeProps<EntityNode>) => {
         className={`h-full w-full rounded-xl border-4 border-emerald-500 bg-card overflow-hidden shadow-sm transition-all ${selected ? "ring-4 ring-emerald-300 shadow-lg" : ""}`}
         style={{ zIndex: 10 }}
       >
-        {data.category.image?.presignedUrl && (
+        {data.category?.image?.presignedUrl && (
           <Image
-            src={resolve(data.category.image.presignedUrl)}
+            src={resolve(data.category.image!.presignedUrl)}
             style={{ filter: "brightness(0.5)" }}
             className="object-cover h-full w-full"
           />
@@ -31,7 +31,7 @@ const TNode = memo(({ data, id, selected }: NodeProps<EntityNode>) => {
           >
             {data.label}
           </KraphEntity.DetailLink>
-          {data.category.label}
+          {data.category?.label ?? data.label}
         </div>
       </Card>
     </>

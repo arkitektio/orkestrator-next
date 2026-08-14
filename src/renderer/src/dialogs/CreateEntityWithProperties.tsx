@@ -277,7 +277,8 @@ export const CreateEntityWithPropertiesDialog = (props: {
     const created = await createEntity({
       variables: {
         input: {
-          entityCategory: props.category.id,
+          // Claims name the word, not the category row.
+          term: props.category.term?.key ?? props.category.key,
         },
       },
     });

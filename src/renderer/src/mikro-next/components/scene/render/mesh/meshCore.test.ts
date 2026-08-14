@@ -12,6 +12,7 @@ import {
 } from "./meshPlanner";
 import { decodeGeometryRow } from "./meshDecode";
 import { LruByteCache } from "./lruByteCache";
+import { MeshParquetSource } from "./meshParquet";
 
 const GRID = parseMeshGrid({ cellSize: [64, 64, 64], levels: 5, sortKey: "MORTON" })!;
 
@@ -318,5 +319,26 @@ describe("LruByteCache", () => {
     expect(evicted.sort()).toEqual(["a", "b"]);
     expect(cache.size).toBe(0);
     expect(cache.bytes).toBe(0);
+  });
+});
+
+describe("MeshParquetSource with no geometry shards", () => {
+  // `geometry` is nullable on the create input, so a catalog can be registered
+  // before the shards land. Without a guard the SQL becomes `read_parquet([])`,
+  // which DuckDB rejects with a function-overload error naming none of the
+  // actual cause.
+  const failIfCalled = {
+    requestGrant: () => Promise.reject(new Error("must not request a grant")),
+    requestRegion: () => Promise.reject(new Error("must not request a region")),
+  };
+
+  it("reports an empty cell index without touching DuckDB or the grant API", async () => {
+    const source = new MeshParquetSource([], failIfCalled);
+    await expect(source.loadCellIndex()).resolves.toEqual([]);
+  });
+
+  it("returns no rows for a plan that still names cells", async () => {
+    const source = new MeshParquetSource([], failIfCalled);
+    await expect(source.fetchCellRows(0, [1, 2, 3])).resolves.toEqual([]);
   });
 });

@@ -2951,8 +2951,8 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "category",
-            "description": "The category being claimed for it",
+            "name": "node",
+            "description": "The node being classified",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2967,8 +2967,8 @@
             "deprecationReason": null
           },
           {
-            "name": "node",
-            "description": "The node being classified",
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3817,6 +3817,22 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "backfill",
+            "description": "Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "Optional RGBA color for this node role (e.g. [255, 0, 0, 128])",
             "type": {
@@ -4037,22 +4053,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "entityCategory",
-            "description": "The ID of the entity category/type to create",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "supportingEvidence",
             "description": "List of evidence structures with measurements",
             "type": {
@@ -4075,6 +4075,22 @@
             "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -4088,6 +4104,22 @@
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "backfill",
+            "description": "Draw the evidence this graph's words already admit. A graph is a view over the organization's evidence, so a new one can be a view over history: with this on, every node and edge already claimed under a word this schema declares is projected as the graph is created. Off by default because the work is proportional to the organization's evidence and happens before this mutation returns.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "definition",
             "description": "The complete graph schema definition",
@@ -4809,22 +4841,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "category",
-            "description": "The unique ID of the measurement category",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "sourceId",
             "description": "The ID of the source entity/structure",
             "type": {
@@ -4867,6 +4883,22 @@
           {
             "name": "targetId",
             "description": "The ID of the target entity/structure",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -5016,6 +5048,22 @@
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "backfill",
+            "description": "Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "color",
             "description": "Optional RGBA color for this node role (e.g. [255, 0, 0, 128])",
@@ -5289,22 +5337,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "eventCategory",
-            "description": "The ID of the natural event category/type to create",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "inputs",
             "description": "List of entity IDs that are inputs to this event",
             "type": {
@@ -5373,6 +5405,22 @@
               }
             },
             "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -5713,6 +5761,22 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "backfill",
+            "description": "Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "Optional RGBA color for this node role (e.g. [255, 0, 0, 128])",
             "type": {
@@ -6001,22 +6065,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "eventCategory",
-            "description": "The ID of the protocol event category/type to create",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "inputs",
             "description": "List of entity IDs that are inputs to this event",
             "type": {
@@ -6087,6 +6135,22 @@
             "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -6100,6 +6164,22 @@
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "backfill",
+            "description": "Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "color",
             "description": "Optional RGBA color for this node role (e.g. [255, 0, 0, 128])",
@@ -6321,22 +6401,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "category",
-            "description": "The unique ID of the structure this metric is associated with",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "sourceId",
             "description": "The ID of the source entity/structure",
             "type": {
@@ -6379,6 +6443,22 @@
           {
             "name": "targetId",
             "description": "The ID of the target entity/structure",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6905,22 +6985,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "category",
-            "description": "The unique ID of the structure relation category",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "sourceId",
             "description": "The ID of the source entity/structure",
             "type": {
@@ -6963,6 +7027,22 @@
           {
             "name": "targetId",
             "description": "The ID of the target entity/structure",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8444,6 +8524,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "description",
             "description": "Description of the category",
             "args": [],
@@ -8639,6 +8735,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -8717,6 +8825,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -8869,6 +8993,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -8947,6 +9083,22 @@
         "description": "Base interface for entity categories/schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -9059,6 +9211,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "builderArgs",
             "description": "If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters",
@@ -9292,6 +9460,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -9440,16 +9620,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The graph this node belongs to",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "EntityCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "EntityCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -12563,6 +12739,22 @@
             "deprecationReason": null
           },
           {
+            "name": "isArchived",
+            "description": "Whether this graph has been archived. Archiving is the reversible alternative to deleting it — a delete destroys every rule for reading the evidence, which survives without them",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "label",
             "description": "Label/name of the category",
             "args": [],
@@ -13698,6 +13890,18 @@
             "deprecationReason": null
           },
           {
+            "name": "isArchived",
+            "description": "Only archived graphs, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "name",
             "description": null,
             "type": {
@@ -13755,6 +13959,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -13923,6 +14143,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -14037,6 +14269,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -14233,6 +14481,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -14311,6 +14571,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -14437,6 +14713,22 @@
         "description": "Base interface for entity categories/schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -14732,6 +15024,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "builderArgs",
             "description": "If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters",
             "args": [],
@@ -14957,6 +15265,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "GraphTableQueryFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -16683,16 +17003,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The graph this node belongs to",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "MeasurementCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "MeasurementCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -23568,16 +23884,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The source entity of this relation",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "NaturalEventCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "NaturalEventCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -25473,6 +25785,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "description",
             "description": "Description of the category",
             "args": [],
@@ -25668,6 +25996,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -25746,6 +26086,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -25898,6 +26254,18 @@
             "deprecationReason": null
           },
           {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": "Filter by list of IDs",
             "type": {
@@ -25976,6 +26344,22 @@
         "description": "Base interface for entity categories/schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "description",
             "description": "Description of the category",
@@ -26088,6 +26472,22 @@
         "description": "Base interface for graph schemas",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "archived",
+            "description": "Whether this saved query has been archived",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "builderArgs",
             "description": "If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters",
@@ -26314,6 +26714,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "NodeTableQueryFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "archived",
+            "description": "Only archived queries, or only live ones. Omitted shows both",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -27415,16 +27827,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The source entity of this relation",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ProtocolEventCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "ProtocolEventCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -33931,16 +34339,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The graph this node belongs to",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "RelationCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "RelationCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -37992,16 +38396,12 @@
         "fields": [
           {
             "name": "category",
-            "description": "The graph this node belongs to",
+            "description": "How the view this was read through draws it, if any view does",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "StructureRelationCategory",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "StructureRelationCategory",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

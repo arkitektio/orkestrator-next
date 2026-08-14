@@ -19,3 +19,66 @@ query SearchTerms($search: String, $values: [ID!]) {
     label: key
   }
 }
+
+# Claims name a word, so the pickers search term *keys*, not ids — the key is
+# what goes on the wire. A term's identity is (kind, key), so each kind gets its
+# own search: `GraphQLCreatableSearchField` has no way to pass a filter through.
+query SearchEntityTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [ENTITY] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}
+
+query SearchProtocolEventTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [PROTOCOL_EVENT] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}
+
+query SearchNaturalEventTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [NATURAL_EVENT] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}
+
+query SearchRelationTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [RELATION] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}
+
+query SearchStructureRelationTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [STRUCTURE_RELATION] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}
+
+query SearchMeasurementTerms($search: String, $values: [String!]) {
+  options: terms(
+    filters: { search: $search, keys: $values, kinds: [MEASUREMENT] }
+    pagination: { limit: 10 }
+  ) {
+    value: key
+    label: key
+  }
+}

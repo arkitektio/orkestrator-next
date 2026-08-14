@@ -2,6 +2,7 @@ import { useDialog } from "@/app/dialog";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
 import { Editor } from "@/components/plate-ui/editor";
 import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
@@ -69,6 +70,7 @@ export const TForm = (props: { graph: string }) => {
     {
       defaultValues: {
         graph: props.graph,
+        backfill: false,
         label: "No Label",
         description: "Description",
         inputs: [],
@@ -127,6 +129,11 @@ export const TForm = (props: { graph: string }) => {
               name={`description`}
               label="Description"
               description="Which description for the protocol"
+            />
+            <SwitchField
+              label="Draw existing evidence"
+              name="backfill"
+              description="Project claims already made under this word into the graph now, instead of waiting for the next reproject."
             />
           </div>
           <Button type="submit" variant={"default"}>

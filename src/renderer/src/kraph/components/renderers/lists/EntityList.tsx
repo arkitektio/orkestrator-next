@@ -440,7 +440,7 @@ export const RowEntity = ({
           >
             <Card className="p-2 flex flex-col flex-1 h-32 w-32 truncate">
 
-              <pre>{measurement.category.label}</pre>
+              <pre>{measurement.category?.label ?? measurement.label}</pre>
               <DisplayWidget
                 identifier={measurement.source.identifier}
                 object={measurement.source.object}
@@ -469,7 +469,7 @@ export const RowEntity = ({
                   object={{ id: participation.target.id }}
                   className={"text-xl font-bold"}
                 >
-                  {participation.target.category.label}
+                  {participation.target.category?.label ?? participation.target.label}
                 </KraphProtocolEvent.DetailLink>
                 <div className="text-sm text-muted-foreground flex flex-row gap-2">
                   {participation.target.measuredFrom && (
@@ -512,7 +512,7 @@ export const RowEntity = ({
                   object={{ id: resulted.source.id }}
                   className={"text-xl font-bold"}
                 >
-                  {resulted.source.category.label}
+                  {resulted.source.category?.label ?? resulted.source.label}
                 </KraphNaturalEvent.DetailLink>
                 <div className="text-sm text-muted-foreground flex flex-row gap-2">
                   {resulted.source.measuredFrom && (

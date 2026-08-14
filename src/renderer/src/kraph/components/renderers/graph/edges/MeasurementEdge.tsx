@@ -60,7 +60,7 @@ const TEdge = ({
       <BaseEdge
         path={path}
         markerEnd={markerEnd}
-        label={data?.category.label}
+        label={data?.category?.label ?? data?.label}
         color="#ff00ff"
       />
       <EdgeLabelRenderer>
@@ -71,7 +71,7 @@ const TEdge = ({
           }}
           className="p-3 text-xs group nodrag nopan"
         >
-          {data?.category.label}
+          {data?.category?.label ?? data?.label}
         </Card>
       </EdgeLabelRenderer>
     </>

@@ -10,9 +10,11 @@ mutation AttestEntity($id: String!) {
   }
 }
 
-mutation CreateEntityInline($category: String!) {
+# Claims name the organization's word, not a category row: typing a word that
+# has not been used before creates it.
+mutation CreateEntityInline($term: String!) {
   result: createEntity(input: {
-    entityCategory: $category
+    term: $term
   }) {
     value: id
     label: label

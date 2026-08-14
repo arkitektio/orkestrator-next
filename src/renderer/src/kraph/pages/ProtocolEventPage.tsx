@@ -44,16 +44,18 @@ const Page = asDetailQueryRoute(
         >
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.protocolEvent.category.label}
+              {data.protocolEvent.category?.label ?? data.protocolEvent.label}
             </h1>
 
             <p className="mt-3 text-xl text-muted-foreground"></p>
             <p className="mt-3 text-xl text-muted-foreground">
-              <KraphProtocolEventCategory.DetailLink
-                object={{ id: data.protocolEvent.category.id }}
-              >
-                {data.protocolEvent.category.label}
-              </KraphProtocolEventCategory.DetailLink>
+              {data.protocolEvent.category && (
+                <KraphProtocolEventCategory.DetailLink
+                  object={{ id: data.protocolEvent.category.id }}
+                >
+                  {data.protocolEvent.category.label}
+                </KraphProtocolEventCategory.DetailLink>
+              )}
             </p>
           </div>
         </KraphEntity.Drop>

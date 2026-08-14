@@ -1,6 +1,7 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import {
   Accordion,
   AccordionContent,
@@ -295,6 +296,7 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
   const form = useForm<CreateEntityCategoryFormValues>({
     defaultValues: {
       ...props,
+      backfill: false,
     },
   });
 
@@ -395,6 +397,11 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
             </div>
           </div>
 
+              <SwitchField
+                label="Draw existing evidence"
+                name="backfill"
+                description="Claims already made under this word are in the organization's evidence base. With this on they are projected into the graph now, instead of waiting for the next reproject — which takes as long as the evidence base is large."
+              />
           <DialogFooter className="mt-2">
             <Button type="submit">Create</Button>
           </DialogFooter>

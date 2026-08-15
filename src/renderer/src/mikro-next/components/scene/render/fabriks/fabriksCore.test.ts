@@ -16,6 +16,7 @@ import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow 
 import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
 import { objectRange, positionStride, indexStride } from "./fabriksDecode";
 import { FabriksCollection, type FabriksTransport } from "./fabriksCollection";
+import { FabriksCollectionManager } from "./fabriksManager";
 import { LruByteCache } from "./lruByteCache";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
@@ -327,6 +328,107 @@ describe("FabriksCollection against fixtures written by fabriks itself", () => {
       getRange: async () => new Uint8Array(),
     };
     await expect(FabriksCollection.open(empty)).rejects.toThrow(/interrupted write/);
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("FabriksCollectionManager against the raw fixture", () => {
+  const VIEW = {
+    frustum: null,
+    cameraPosition: [100, 100, 200] as [number, number, number],
+    focalPixels: 540,
+  };
+
+  const openManager = async () => {
+    const collection = await FabriksCollection.open(fixtureTransport("raw"));
+    const manager = new FabriksCollectionManager({
+      collection,
+      voxelToWorld: new THREE.Matrix4(),
+      loadDecoder: async () => null, // the raw fixture's codec is NONE
+      onInvalidate: () => {},
+    });
+    await manager.ensureIndex();
+    return manager;
+  };
+
+  /** The drain is fire-and-forget; poll until it reports itself complete. */
+  const drained = async (manager: FabriksCollectionManager) => {
+    for (let i = 0; i < 200; i++) {
+      if (manager.buildDebugReport().stats.completeMs > 0) return;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    throw new Error("drain did not complete");
+  };
+
+  it("plans, streams and mounts every planned cell, with the stats to prove it", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    const report = manager.buildDebugReport();
+    expect(report.lastPlan).not.toBeNull();
+    expect(report.mountedCells).toBe(report.lastPlan!.cellCount);
+    expect(report.stats.plans).toBe(1);
+    expect(report.stats.decodedCells).toBe(report.lastPlan!.cellCount);
+    expect(report.stats.streamMs).toBeGreaterThan(0);
+    expect(report.stats.buildMs).toBeGreaterThan(0);
+    expect(report.cache.cells).toBe(report.lastPlan!.cellCount);
+    expect(report.cache.bytes).toBeGreaterThan(0);
+    expect(report.catalog!.cells).toBeGreaterThan(0);
+    manager.dispose();
+  });
+
+  it("freeze ignores settles and a thaw replays the newest one", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    expect(manager.buildDebugReport().stats.plans).toBe(1);
+
+    manager.setPlanConfig({ frozen: true });
+    manager.updatePlan({ ...VIEW, focalPixels: 5400 });
+    expect(manager.buildDebugReport().stats.plans).toBe(1); // ignored
+
+    manager.setPlanConfig({ frozen: false }); // replays the recorded settle
+    expect(manager.buildDebugReport().stats.plans).toBe(2);
+    manager.dispose();
+  });
+
+  it("a pixel-budget change replans immediately against the last settle", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    const fine = manager.buildDebugReport().lastPlan!;
+
+    // A huge budget must coarsen the plan without waiting for a camera move.
+    manager.setPlanConfig({ pixelBudget: 1000 });
+    const coarse = manager.buildDebugReport().lastPlan!;
+    expect(manager.buildDebugReport().stats.plans).toBe(2);
+    expect(coarse.cellCount).toBeLessThan(fine.cellCount);
+    manager.dispose();
+  });
+
+  it("the cell-box overlay is one LineSegments that survives reconciliation", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    manager.setShowCellBoxes(true);
+    const overlays = () =>
+      manager.group.children.filter((child) => child.name === "__fabriks-cell-boxes__");
+    expect(overlays()).toHaveLength(1);
+    expect(overlays()[0]).toBeInstanceOf(THREE.LineSegments);
+
+    // A replan reconciles cells but must never sweep the overlay away, and
+    // the report's mountedCells must not count it.
+    manager.updatePlan({ ...VIEW, focalPixels: 100 });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(overlays()).toHaveLength(1);
+    const report = manager.buildDebugReport();
+    expect(manager.group.children.length).toBe(report.mountedCells + 1);
+
+    manager.setShowCellBoxes(false);
+    expect(overlays()).toHaveLength(0);
+    manager.dispose();
   });
 });
 

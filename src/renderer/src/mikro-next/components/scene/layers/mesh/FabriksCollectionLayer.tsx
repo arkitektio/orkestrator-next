@@ -11,6 +11,7 @@ import { buildVolumeVoxelToWorld } from "../../core/octree/voxelFrame";
 import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 import { affineToMatrix4 } from "../../core/worldTransform";
 import { useSceneStore } from "../../store/sceneStore";
+import { useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
 import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
@@ -104,8 +105,35 @@ const FabriksCollectionGroup = ({
   const imageLayers = useSceneStore((s) => s.layers);
   const transformContext = useSceneStore((s) => s.transformContext);
   const viewApi = useViewStoreApi();
+  const viewerApi = useViewerStoreApi();
   const datalayer = useDatalayerEndpoint();
   const client = useMikro();
+
+  // Streaming-cadence stats → debug-only `meshVersion`, throttled here so the
+  // manager stays cadence-blind and the store sees at most ~8 writes/s.
+  const onStatsChanged = useMemo(() => {
+    let last = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const bump = () => {
+      last = performance.now();
+      viewerApi.getState().bumpMeshVersion();
+    };
+    return () => {
+      const elapsed = performance.now() - last;
+      if (elapsed >= 120) {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        bump();
+      } else if (!timer) {
+        timer = setTimeout(() => {
+          timer = null;
+          bump();
+        }, 120 - elapsed);
+      }
+    };
+  }, [viewerApi]);
 
   const matrix = useMemo(
     () => resolveCollectionMatrix(layer, collection, imageLayers, transformContext),
@@ -139,12 +167,25 @@ const FabriksCollectionGroup = ({
         return MeshoptDecoder;
       },
       onInvalidate: invalidate,
+      onStatsChanged,
     });
     // The world-space cell index is built from `matrix`, so a placement change
     // rebuilds the manager rather than silently planning against stale boxes.
-  }, [opened, matrix, invalidate]);
+  }, [opened, matrix, invalidate, onStatsChanged]);
 
   useEffect(() => () => manager?.dispose(), [manager]);
+
+  // Debug registration: DebugPanel reads stats and steers the planner through
+  // this handle — the mesh twin of registerBrickSystem.
+  useEffect(() => {
+    if (!manager) return;
+    const { registerMeshSystem, bumpMeshVersion } = viewerApi.getState();
+    registerMeshSystem(layer.id, manager);
+    bumpMeshVersion();
+    return () => {
+      viewerApi.getState().registerMeshSystem(layer.id, null);
+    };
+  }, [manager, viewerApi, layer.id]);
 
   useEffect(() => {
     manager?.setMaterialConfig({
@@ -184,7 +225,9 @@ const FabriksCollectionGroup = ({
         // An object of world size s at distance d covers s·focalPixels/d px.
         focalPixels = (0.5 * viewportSize.height) / Math.tan(0.5 * cameraPose.fovY);
       }
-      manager.updatePlan({ frustum, cameraPosition, focalPixels, pixelBudget: 1 });
+      // Budgets (pixelBudget, maxCells) live in the manager's plan config so
+      // the debug panel can steer them between settles.
+      manager.updatePlan({ frustum, cameraPosition, focalPixels });
     };
 
     manager

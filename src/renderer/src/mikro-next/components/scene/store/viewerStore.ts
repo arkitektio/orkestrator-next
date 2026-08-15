@@ -35,6 +35,7 @@ export type { LayerViewRange } from "../core/visibility";
 import type { LayerViewRange } from "../core/visibility";
 import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
+import type { FabriksCollectionManager } from "../render/fabriks/fabriksManager";
 
 import { probeAfterPinChange } from "../core/probe/probeTargeting";
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
@@ -161,6 +162,14 @@ export interface ViewerState {
   /** Handle to the brick residency manager (owned by BrickSystemProvider). */
   brickSystem: BrickResidencyManager | null;
   registerBrickSystem: (manager: BrickResidencyManager | null) => void;
+  /** Per-MeshLayer fabriks managers (owned by FabriksCollectionLayer), for
+   * debug consumers — the mesh twin of `brickSystem`. */
+  meshSystems: Record<string, FabriksCollectionManager>;
+  registerMeshSystem: (layerId: string, manager: FabriksCollectionManager | null) => void;
+  /** Bumped (throttled by the layer) as mesh cells plan/stream. STREAMING
+   * cadence — only debug consumers may subscribe (P17), like `residencyVersion`. */
+  meshVersion: number;
+  bumpMeshVersion: () => void;
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
@@ -252,6 +261,16 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     bumpPoolsVersion: () => set((state) => ({ poolsVersion: state.poolsVersion + 1 })),
     brickSystem: null,
     registerBrickSystem: (manager) => set({ brickSystem: manager }),
+    meshSystems: {},
+    registerMeshSystem: (layerId, manager) =>
+      set((state) => {
+        const meshSystems = { ...state.meshSystems };
+        if (manager) meshSystems[layerId] = manager;
+        else delete meshSystems[layerId];
+        return { meshSystems };
+      }),
+    meshVersion: 0,
+    bumpMeshVersion: () => set((state) => ({ meshVersion: state.meshVersion + 1 })),
     register: (ref) => set((state) => ({
       trackables: new Set(state.trackables).add(ref),
     })),

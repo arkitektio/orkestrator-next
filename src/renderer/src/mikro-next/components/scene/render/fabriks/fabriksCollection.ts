@@ -29,9 +29,26 @@ import { toBytes, toNumber, toNumberArray } from "./rowValues";
 /** Reads a whole object. Separate from the ranged read: catalogs are read whole. */
 export type ObjectReader = (path: string) => Promise<Uint8Array>;
 
+/**
+ * Request counters a transport may keep, mutated in place (P17: no store
+ * writes at streaming cadence — debug consumers read them at their own pace).
+ * `fetchMs` is a CONCURRENT SUM like the brick stats' fetchMs: overlapping
+ * requests each contribute their full duration, so it overstates wall time.
+ * Optional so test transports over a fixture directory owe nothing.
+ */
+export type FabriksTransportStats = {
+  gets: number;
+  rangeGets: number;
+  bytesFetched: number;
+  fetchMs: number;
+  cacheHits: number;
+  errors: number;
+};
+
 export type FabriksTransport = {
   get: ObjectReader;
   getRange: RangeReader;
+  stats?: FabriksTransportStats;
 };
 
 const GEOMETRY_COLUMNS = [
@@ -205,6 +222,11 @@ export class FabriksCollection {
     const part = new ParquetPart(entry.path, entry.bytes, this.transport.getRange);
     this.parts.set(entry.path, part);
     return part;
+  }
+
+  /** The transport's request counters, when it keeps them (S3 does; fixtures need not). */
+  transportStats(): FabriksTransportStats | null {
+    return this.transport.stats ?? null;
   }
 
   /** Drop cached footers. The manifest and catalogs stay. */

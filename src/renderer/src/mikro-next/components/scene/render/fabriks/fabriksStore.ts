@@ -2,7 +2,7 @@ import type { AbsolutePath } from "@zarrita/storage";
 import { CredentialRotation, type S3FetchConfigRefresher } from "@/lib/zarr/store/credentialRotation";
 import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import { LruByteCache } from "./lruByteCache";
-import type { FabriksTransport } from "./fabriksCollection";
+import type { FabriksTransport, FabriksTransportStats } from "./fabriksCollection";
 
 /**
  * Authenticated reads of a fabriks prefix: whole objects for the manifest and
@@ -36,6 +36,15 @@ export type FabriksStoreOptions = {
 };
 
 export class FabriksStore implements FabriksTransport {
+  readonly stats: FabriksTransportStats = {
+    gets: 0,
+    rangeGets: 0,
+    bytesFetched: 0,
+    fetchMs: 0,
+    cacheHits: 0,
+    errors: 0,
+  };
+
   private readonly rotation: CredentialRotation;
   private readonly cache: LruByteCache<Uint8Array>;
   private readonly inFlight = new Map<string, Promise<Uint8Array>>();
@@ -59,17 +68,32 @@ export class FabriksStore implements FabriksTransport {
     // never invalidate a byte we already hold.
     const key = range ? `${path}:${range.start}-${range.end}` : `${path}:full`;
     const cached = this.cache.get(key);
-    if (cached) return Promise.resolve(cached);
+    if (cached) {
+      this.stats.cacheHits++;
+      return Promise.resolve(cached);
+    }
 
     const existing = this.inFlight.get(key);
-    if (existing) return existing;
+    if (existing) {
+      this.stats.cacheHits++;
+      return existing;
+    }
 
+    this.stats.gets++;
+    if (range) this.stats.rangeGets++;
+    const startedAt = performance.now();
     const request = this.fetch(path, range)
       .then((bytes) => {
+        this.stats.bytesFetched += bytes.byteLength;
         this.cache.set(key, bytes, bytes.byteLength);
         return bytes;
       })
+      .catch((error: unknown) => {
+        this.stats.errors++;
+        throw error;
+      })
       .finally(() => {
+        this.stats.fetchMs += performance.now() - startedAt;
         this.inFlight.delete(key);
       });
 

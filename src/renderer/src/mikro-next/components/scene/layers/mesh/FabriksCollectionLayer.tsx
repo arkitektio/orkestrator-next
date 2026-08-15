@@ -12,31 +12,31 @@ import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 import { affineToMatrix4 } from "../../core/worldTransform";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewStoreApi } from "../../store/viewStore";
-import { MailleCollection } from "../../render/maille/mailleCollection";
-import { MailleCollectionManager } from "../../render/maille/mailleManager";
-import { mailleAxisOrder, openMailleCollection } from "../../render/maille/mailleSource";
+import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
+import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
+import { fabriksAxisOrder, openFabriksCollection } from "../../render/fabriks/fabriksSource";
 
 /**
- * MeshLayer renderer: a maille collection — a self-describing prefix of
+ * MeshLayer renderer: a fabriks collection — a self-describing prefix of
  * Parquet files — streamed by row group and anchored to a coordinate system in
  * the scene's transform graph.
  *
  * The React layer owns only lifecycle, transform resolution and the settle
- * cadence. Planning and streaming live in `MailleCollectionManager`
+ * cadence. Planning and streaming live in `FabriksCollectionManager`
  * (imperative — no React re-render per batch, OCTREE_RENDERER.md P17), the
- * read plan in `MailleCollection`, and the byte contract in `mailleDecode`.
+ * read plan in `FabriksCollection`, and the byte contract in `fabriksDecode`.
  */
 
 type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }>;
 type MeshCollectionRef = NonNullable<MeshLayerVariant["collection"]>;
 
-export const MailleCollectionLayer = ({ layerId }: { layerId: string }) => {
+export const FabriksCollectionLayer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) =>
     s.sceneLayers.find((candidate) => candidate.id === layerId),
   );
   if (!layer || layer.__typename !== "MeshLayer") return null;
   if (!layer.collection || layer.visible === false) return null;
-  return <MailleCollectionGroup layer={layer} collection={layer.collection} />;
+  return <FabriksCollectionGroup layer={layer} collection={layer.collection} />;
 };
 
 /**
@@ -46,10 +46,10 @@ export const MailleCollectionLayer = ({ layerId }: { layerId: string }) => {
  * centering/y-flip exactly, so meshes and labels overlap by construction.
  * Fallback: compose the layer's own server-resolved `pathToWorld`.
  *
- * **Axis slots.** maille addresses vertex components by POSITION and says
+ * **Axis slots.** fabriks addresses vertex components by POSITION and says
  * nothing about which physical axis a slot is, so a collection cut from
  * (z, y, x) data is entirely consistent — and would render transposed if we
- * assumed the coordinate system's own axis order. `MailleStore.axes` states
+ * assumed the coordinate system's own axis order. `FabriksStore.axes` states
  * the mapping, and it is the only trustworthy source for it; the last-three
  * convention is the fallback for a store that does not.
  */
@@ -74,26 +74,26 @@ const resolveCollectionMatrix = (
   const names = axes.map((axis) => axis.name);
   // Components are slots: slot 0 is the vertex's first component, which is the
   // matrix's x. The store names them in that order when it can.
-  const declared = mailleAxisOrder(collection.store);
+  const declared = fabriksAxisOrder(collection.store);
   const spatial = declared
     ? [declared[0], declared[1], declared[2]]
     : [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
   if (!declared) {
     console.warn(
-      `[maille] store ${collection.store.id} declares no axis order; assuming the coordinate ` +
+      `[fabriks] store ${collection.store.id} declares no axis order; assuming the coordinate ` +
         `system's last three axes map to vertex components 0, 1, 2. A collection written in a ` +
         `different component order will render transposed.`,
     );
   }
   const composed = composePlacementPath(layer.pathToWorld, transformContext, spatial, names);
   console.warn(
-    `[maille] collection ${collection.id}: no image layer shares CS ${csId}; ` +
+    `[fabriks] collection ${collection.id}: no image layer shares CS ${csId}; ` +
       `rendering via the layer's pathToWorld (uncentered relative to image layers)`,
   );
   return affineToMatrix4(composed);
 };
 
-const MailleCollectionGroup = ({
+const FabriksCollectionGroup = ({
   layer,
   collection,
 }: {
@@ -112,18 +112,18 @@ const MailleCollectionGroup = ({
     [layer, collection, imageLayers, transformContext],
   );
 
-  // Opening reads maille.json and nothing else; the catalogs come with the
+  // Opening reads fabriks.json and nothing else; the catalogs come with the
   // first plan. Collections are immutable per version, so the open survives as
   // long as (collection, version).
-  const [opened, setOpened] = useState<MailleCollection | null>(null);
+  const [opened, setOpened] = useState<FabriksCollection | null>(null);
   useEffect(() => {
     if (!datalayer) return; // no endpoint configured: nothing to read from
     let cancelled = false;
-    openMailleCollection(collection, client, datalayer)
+    openFabriksCollection(collection, client, datalayer)
       .then((next) => {
         if (!cancelled) setOpened(next);
       })
-      .catch((error) => console.error(`[maille] cannot open collection ${collection.id}:`, error));
+      .catch((error) => console.error(`[fabriks] cannot open collection ${collection.id}:`, error));
     return () => {
       cancelled = true;
     };
@@ -131,7 +131,7 @@ const MailleCollectionGroup = ({
 
   const manager = useMemo(() => {
     if (!opened) return null;
-    return new MailleCollectionManager({
+    return new FabriksCollectionManager({
       collection: opened,
       voxelToWorld: matrix,
       loadDecoder: async () => {
@@ -190,7 +190,7 @@ const MailleCollectionGroup = ({
     manager
       .ensureIndex()
       .then(plan)
-      .catch((error) => console.error("[maille] failed to load the cell catalog:", error));
+      .catch((error) => console.error("[fabriks] failed to load the cell catalog:", error));
 
     const unsubscribe = viewApi.subscribe((state, prev) => {
       if (prev.cameraMoving && !state.cameraMoving) plan();

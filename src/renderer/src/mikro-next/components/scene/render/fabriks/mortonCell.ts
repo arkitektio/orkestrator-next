@@ -1,7 +1,7 @@
 /**
  * Morton (Z-order) cell addressing for mesh-collection octrees.
  *
- * CONTRACT (the client half of `maille/octree.py`): a cell's `cell` column is
+ * CONTRACT (the client half of `fabriks/octree.py`): a cell's `cell` column is
  * the Morton interleave of its (x, y, z) cell-grid coordinates ON ITS OWN
  * LEVEL's grid, with x in the least-significant bit position:
  * bit 0 = x₀, bit 1 = y₀, bit 2 = z₀, bit 3 = x₁, …

@@ -24,7 +24,7 @@ import { affineToMatrix4 } from "./worldTransform";
  *    layers render in `affine ∘ centering(lens.shape, y-flip)` — each layer
  *    centers itself on the origin. Until the tracked scene-root frame
  *    normalization lands there is no global three ⇄ world µm map, so we adopt
- *    the SAME convention `layers/mesh/MailleCollectionLayer.tsx`
+ *    the SAME convention `layers/mesh/FabriksCollectionLayer.tsx`
  *    (`resolveCollectionMatrix`) already uses for meshes: resolve the frame
  *    against ONE reference image layer. Exact for that layer, and identity
  *    once §4 deletes per-layer centering.

@@ -33,11 +33,11 @@ fragment MediaStore on MediaStore {
 }
 
 
-# A maille store is a PREFIX, not an object: one tree holding `maille.json`,
+# A fabriks store is a PREFIX, not an object: one tree holding `fabriks.json`,
 # both catalogs and every octree level. The server reads the manifest at
 # registration and mirrors it here, so a client has the grid, the encoding and
 # every file's length before it touches S3.
-fragment MailleStore on MailleStore {
+fragment FabriksStore on FabriksStore {
   id
   key
   bucket

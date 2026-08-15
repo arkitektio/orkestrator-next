@@ -2,10 +2,10 @@ import type { AbsolutePath } from "@zarrita/storage";
 import { CredentialRotation, type S3FetchConfigRefresher } from "@/lib/zarr/store/credentialRotation";
 import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
 import { LruByteCache } from "./lruByteCache";
-import type { MailleTransport } from "./mailleCollection";
+import type { FabriksTransport } from "./fabriksCollection";
 
 /**
- * Authenticated reads of a maille prefix: whole objects for the manifest and
+ * Authenticated reads of a fabriks prefix: whole objects for the manifest and
  * catalogs, byte RANGES for Parquet footers and row groups.
  *
  * Built directly on `fetchS3Path` rather than on `ConfiguredS3Store`, for two
@@ -29,18 +29,18 @@ import type { MailleTransport } from "./mailleCollection";
 /** Bytes of range/whole-object responses held per collection. */
 const DEFAULT_CACHE_BYTES = 64 * 1024 * 1024;
 
-export type MailleStoreOptions = {
+export type FabriksStoreOptions = {
   config: S3FetchConfig;
   refreshConfig?: S3FetchConfigRefresher;
   maxCacheBytes?: number;
 };
 
-export class MailleStore implements MailleTransport {
+export class FabriksStore implements FabriksTransport {
   private readonly rotation: CredentialRotation;
   private readonly cache: LruByteCache<Uint8Array>;
   private readonly inFlight = new Map<string, Promise<Uint8Array>>();
 
-  constructor(options: MailleStoreOptions) {
+  constructor(options: FabriksStoreOptions) {
     this.rotation = new CredentialRotation(options.config, options.refreshConfig ?? null);
     this.cache = new LruByteCache<Uint8Array>(options.maxCacheBytes ?? DEFAULT_CACHE_BYTES, () => {
       /* plain bytes: nothing to dispose */
@@ -98,7 +98,7 @@ export class MailleStore implements MailleTransport {
     }
 
     if (!response.ok) {
-      throw new Error(`maille read of ${path} failed: ${response.status} ${response.statusText}`);
+      throw new Error(`fabriks read of ${path} failed: ${response.status} ${response.statusText}`);
     }
 
     const body = new Uint8Array(await response.arrayBuffer());

@@ -12,8 +12,8 @@ testing, so nobody re-learns it).
 
 Sibling documents: `COORDINATE_SYSTEMS.md` — how the RFC-5 coordinate-system
 graph (server edges → client-composed `LayerState.affineMatrix`, per-level
-scales from `toParent`) feeds this renderer; `render/maille/README.md` — the
-mesh-collection renderer (maille prefix, Parquet row-group streaming) built on
+scales from `toParent`) feeds this renderer; `render/fabriks/README.md` — the
+mesh-collection renderer (fabriks prefix, Parquet row-group streaming) built on
 the same graph and the same planning discipline; `CINEMATIC_MODE.md` — an **unimplemented
 proposal** for lit (shaded) volume rendering, which leans on §2.3's 1-voxel
 brick border to take a gradient without extra page-table walks.
@@ -394,7 +394,7 @@ Keep the two in sync when touching either.
 | --- | --- |
 | Pure core | `core/octree/{levelGeometry, brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling, voxelFrame}.ts` (each with a `.test.ts`) |
 | Coordinate graph | `core/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
-| Mesh layers | `render/maille/` (maille prefix, row-group streaming, own README + `mailleCore.test.ts`) |
+| Mesh layers | `render/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
 | Drivers | `managers/nodePlanTracker.ts`, `managers/brickResidency.ts`, `managers/BrickSystemProvider.tsx`, started from `managers/VisibilityManager.tsx` |
 | GPU | `render/bricks/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
 | Shaders | `layers/bricks/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |

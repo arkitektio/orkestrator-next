@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import type { MailleManifest } from "./mailleManifest";
-import { rootLevel } from "./mailleManifest";
+import type { FabriksManifest } from "./fabriksManifest";
+import { rootLevel } from "./fabriksManifest";
 import { toNumber, toNumberOrNull, toTriple } from "./rowValues";
 
 /**
@@ -19,10 +19,10 @@ import { toNumber, toNumberOrNull, toTriple } from "./rowValues";
  *    `list<struct<>>` column.
  */
 
-export const mailleCellKey = (level: number, cell: number): string => `${level}:${cell}`;
+export const fabriksCellKey = (level: number, cell: number): string => `${level}:${cell}`;
 
 /** One row of the cell catalog, in the collection's own voxel space. */
-export type MailleCellRow = {
+export type FabriksCellRow = {
   level: number;
   cell: number;
   vertexCount: number;
@@ -40,7 +40,7 @@ export type MailleCellRow = {
 };
 
 /** A catalog row with the world-space quantities the planner actually uses. */
-export type MailleCellEntry = MailleCellRow & {
+export type FabriksCellEntry = FabriksCellRow & {
   key: string;
   worldMin: [number, number, number];
   worldMax: [number, number, number];
@@ -48,16 +48,16 @@ export type MailleCellEntry = MailleCellRow & {
   worldLodError: number;
 };
 
-export type MailleCellIndex = {
-  cells: readonly MailleCellEntry[];
-  byKey: ReadonlyMap<string, MailleCellEntry>;
+export type FabriksCellIndex = {
+  cells: readonly FabriksCellEntry[];
+  byKey: ReadonlyMap<string, FabriksCellEntry>;
   /** The cells the descent starts from, coarsest level present. */
-  roots: readonly MailleCellEntry[];
+  roots: readonly FabriksCellEntry[];
   /** Levels carrying geometry, ascending. */
   levels: readonly number[];
 };
 
-export type MailleObjectEntry = {
+export type FabriksObjectEntry = {
   objectId: number;
   /** Dense 0-based rank — the LUT index, and what the vertices carry. */
   ordinal: number;
@@ -95,13 +95,13 @@ const scratchBox = new THREE.Box3();
  * the catalog — repeated only when the layer matrix changes, which is a
  * registration edit, not a frame event.
  */
-export function buildMailleCellIndex(
-  rows: readonly MailleCellRow[],
-  manifest: MailleManifest,
+export function buildFabriksCellIndex(
+  rows: readonly FabriksCellRow[],
+  manifest: FabriksManifest,
   voxelToWorld: THREE.Matrix4,
-): MailleCellIndex {
+): FabriksCellIndex {
   const errorScale = maxAxisScale(voxelToWorld);
-  const cells = rows.map((row): MailleCellEntry => {
+  const cells = rows.map((row): FabriksCellEntry => {
     scratchBox.min.set(row.bboxMin[0], row.bboxMin[1], row.bboxMin[2]);
     scratchBox.max.set(row.bboxMax[0], row.bboxMax[1], row.bboxMax[2]);
     // applyMatrix4 on a Box3 transforms all eight corners and re-bounds them,
@@ -109,7 +109,7 @@ export function buildMailleCellIndex(
     scratchBox.applyMatrix4(voxelToWorld);
     return {
       ...row,
-      key: mailleCellKey(row.level, row.cell),
+      key: fabriksCellKey(row.level, row.cell),
       worldMin: [scratchBox.min.x, scratchBox.min.y, scratchBox.min.z],
       worldMax: [scratchBox.max.x, scratchBox.max.y, scratchBox.max.z],
       worldLodError: row.lodError * errorScale,
@@ -123,7 +123,7 @@ export function buildMailleCellIndex(
   if (roots.length === 0 && cells.length > 0) {
     const coarsest = levels[levels.length - 1];
     console.warn(
-      `[maille] no cells at root level ${root}; descending from level ${coarsest} instead.`,
+      `[fabriks] no cells at root level ${root}; descending from level ${coarsest} instead.`,
     );
     roots = cells.filter((entry) => entry.level === coarsest);
   }
@@ -133,7 +133,7 @@ export function buildMailleCellIndex(
 
 /** Cells holding a piece of one object, for isolation and picking. */
 export const cellsForObject = (
-  object: MailleObjectEntry,
+  object: FabriksObjectEntry,
   level?: number,
 ): { level: number; cell: number }[] =>
   level === undefined ? object.cells : object.cells.filter((ref) => ref.level === level);
@@ -156,7 +156,7 @@ export const OBJECT_CATALOG_COLUMNS = [
 ];
 
 /** One raw cell-catalog row → the typed voxel-space shape. */
-export function parseCellRow(row: Record<string, unknown>): MailleCellRow {
+export function parseCellRow(row: Record<string, unknown>): FabriksCellRow {
   return {
     level: toNumber(row.level, "level"),
     cell: toNumber(row.cell, "cell"),
@@ -181,7 +181,7 @@ export function parseCellRow(row: Record<string, unknown>): MailleCellRow {
  * `cells` is the format's only `list<struct<>>`, and the struct's `cell` is an
  * INT64, so both the list and its members need unwrapping.
  */
-export function parseObjectRow(row: Record<string, unknown>): MailleObjectEntry {
+export function parseObjectRow(row: Record<string, unknown>): FabriksObjectEntry {
   const raw = Array.isArray(row.cells) ? row.cells : [];
   return {
     objectId: toNumber(row.object_id, "object_id"),

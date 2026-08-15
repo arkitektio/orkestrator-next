@@ -130,7 +130,7 @@ function canonicalQueryString(url: URL): string {
  * and the request comes back 403 with nothing to say why.
  *
  * This went unnoticed for as long as every signed path was a zarr chunk
- * (`c/0/0/0`, `zarr.json` — unreserved throughout). A maille prefix is
+ * (`c/0/0/0`, `zarr.json` — unreserved throughout). A fabriks prefix is
  * hive-partitioned, so its very first geometry read is `level=0/part-….parquet`.
  *
  * Segments are decoded before re-encoding so an already-escaped pathname is not

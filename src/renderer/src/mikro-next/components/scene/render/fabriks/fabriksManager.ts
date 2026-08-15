@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import { LruByteCache } from "./lruByteCache";
-import { buildMailleCellIndex, type MailleCellIndex, type MailleCellRow } from "./mailleCatalogs";
-import type { MailleCollection } from "./mailleCollection";
-import type { MeshoptDecoderLike } from "./mailleDecode";
-import { groupByRowGroup, planMailleCells, type MaillePlanInput } from "./maillePlanner";
+import { buildFabriksCellIndex, type FabriksCellIndex, type FabriksCellRow } from "./fabriksCatalogs";
+import type { FabriksCollection } from "./fabriksCollection";
+import type { MeshoptDecoderLike } from "./fabriksDecode";
+import { groupByRowGroup, planFabriksCells, type FabriksPlanInput } from "./fabriksPlanner";
 
 /**
- * Imperative orchestration of one maille collection: plan → fetch → decode →
+ * Imperative orchestration of one fabriks collection: plan → fetch → decode →
  * scene-graph reconciliation.
  *
  * Deliberately NOT a React component (mirroring `BrickResidencyManager`): the
@@ -28,36 +28,36 @@ import { groupByRowGroup, planMailleCells, type MaillePlanInput } from "./maille
 const DEFAULT_CACHE_BYTES = 192 * 1024 * 1024;
 const DEFAULT_MAX_CELLS = 2048;
 
-export type MailleMaterialConfig = {
+export type FabriksMaterialConfig = {
   color: readonly number[] | null | undefined;
   wireframe: boolean;
   opacity: number;
 };
 
-export type MaillePlanView = Pick<
-  MaillePlanInput,
+export type FabriksPlanView = Pick<
+  FabriksPlanInput,
   "frustum" | "cameraPosition" | "focalPixels" | "pixelBudget"
 >;
 
-export class MailleCollectionManager {
+export class FabriksCollectionManager {
   /** Mounted by the React layer via `<primitive>`; children managed here. */
   readonly group = new THREE.Group();
 
   private readonly material: THREE.MeshStandardMaterial;
   private readonly cache: LruByteCache<THREE.Mesh>;
-  private index: MailleCellIndex | null = null;
+  private index: FabriksCellIndex | null = null;
   private planned = new Map<string, string>();
   private previousKeys: ReadonlySet<string> = new Set();
   private decoderPromise: Promise<MeshoptDecoderLike | null> | null = null;
   /** Bumped per plan; a drain whose generation is stale abandons its work. */
   private generation = 0;
   private draining = false;
-  private pendingView: MaillePlanView | null = null;
+  private pendingView: FabriksPlanView | null = null;
   private disposed = false;
 
   constructor(
     private readonly opts: {
-      collection: MailleCollection;
+      collection: FabriksCollection;
       /** Voxel → world for this layer; the index is built in world space. */
       voxelToWorld: THREE.Matrix4;
       loadDecoder: () => Promise<MeshoptDecoderLike | null>;
@@ -79,7 +79,7 @@ export class MailleCollectionManager {
     );
   }
 
-  setMaterialConfig({ color, wireframe, opacity }: MailleMaterialConfig): void {
+  setMaterialConfig({ color, wireframe, opacity }: FabriksMaterialConfig): void {
     if (color && color.length >= 3) {
       this.material.color.setRGB(color[0] / 255, color[1] / 255, color[2] / 255);
     }
@@ -92,15 +92,15 @@ export class MailleCollectionManager {
   /** Load the spatial index. One whole-file read; no geometry is opened. */
   async ensureIndex(): Promise<void> {
     if (this.index || this.disposed) return;
-    const rows: MailleCellRow[] = await this.opts.collection.loadCellCatalog();
+    const rows: FabriksCellRow[] = await this.opts.collection.loadCellCatalog();
     if (this.disposed) return;
-    this.index = buildMailleCellIndex(rows, this.opts.collection.manifest, this.opts.voxelToWorld);
+    this.index = buildFabriksCellIndex(rows, this.opts.collection.manifest, this.opts.voxelToWorld);
   }
 
-  updatePlan(view: MaillePlanView): void {
+  updatePlan(view: FabriksPlanView): void {
     if (!this.index || this.disposed) return;
 
-    const plan = planMailleCells({
+    const plan = planFabriksCells({
       index: this.index,
       maxCells: this.opts.maxCells ?? DEFAULT_MAX_CELLS,
       previousKeys: this.previousKeys,
@@ -157,7 +157,7 @@ export class MailleCollectionManager {
             decoded = await this.opts.collection.readFetchGroup(group, decoder);
           } catch (error) {
             console.error(
-              `[maille] failed to read level ${group.level} part ${group.part} row group ${group.rowGroup}:`,
+              `[fabriks] failed to read level ${group.level} part ${group.part} row group ${group.rowGroup}:`,
               error,
             );
             continue;
@@ -169,7 +169,7 @@ export class MailleCollectionManager {
             geometry.setAttribute("position", new THREE.BufferAttribute(cell.positions, 3));
             geometry.setAttribute("objectOrdinal", new THREE.BufferAttribute(cell.objectOrdinals, 1));
             geometry.setIndex(new THREE.BufferAttribute(cell.indices, 1));
-            // maille carries no normals column — the surface is watertight per
+            // fabriks carries no normals column — the surface is watertight per
             // cell, so computing them here is the intended path, not a fallback.
             geometry.computeVertexNormals();
 

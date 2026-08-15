@@ -1,14 +1,14 @@
 import { decompress as zstdDecompress } from "fzstd";
-import type { MailleEncoding } from "./mailleManifest";
-import type { VoxelBox } from "./mailleGrid";
+import type { FabriksEncoding } from "./fabriksManifest";
+import type { VoxelBox } from "./fabriksGrid";
 
 /**
  * Geometry-row decoding: Parquet BLOB columns → renderable typed arrays.
  * Pure and renderer-free so the whole byte contract is unit-testable against
- * fixtures written by maille itself; the scene layer only wraps the output in
+ * fixtures written by fabriks itself; the scene layer only wraps the output in
  * a `BufferGeometry`.
  *
- * ## The row contract (client half of `maille/codecs/`)
+ * ## The row contract (client half of `fabriks/codecs/`)
  *
  *   level                  INT32   octree level, 0 = finest
  *   cell                   INT64   Morton code on that level's grid
@@ -47,12 +47,12 @@ import type { VoxelBox } from "./mailleGrid";
  */
 
 /** Bytes per vertex in the encoded positions blob, by codec. */
-export const positionStride = (codec: MailleEncoding["codec"]): number => (codec === "MESHOPT" ? 8 : 6);
+export const positionStride = (codec: FabriksEncoding["codec"]): number => (codec === "MESHOPT" ? 8 : 6);
 
 /** Bytes per index in the encoded indices blob. */
-export const indexStride = (indices: MailleEncoding["indices"]): number => (indices === "UINT16" ? 2 : 4);
+export const indexStride = (indices: FabriksEncoding["indices"]): number => (indices === "UINT16" ? 2 : 4);
 
-export type MailleGeometryRow = {
+export type FabriksGeometryRow = {
   level: number;
   cell: number;
   positions: Uint8Array;
@@ -118,7 +118,7 @@ const alignedCopy = (bytes: Uint8Array): ArrayBuffer => {
  */
 const decompressBlob = (
   blob: Uint8Array,
-  compression: MailleEncoding["compression"],
+  compression: FabriksEncoding["compression"],
   expectedBytes: number,
   what: string,
 ): Uint8Array => {
@@ -134,8 +134,8 @@ const decompressBlob = (
 };
 
 const decodePositions = (
-  row: MailleGeometryRow,
-  encoding: MailleEncoding,
+  row: FabriksGeometryRow,
+  encoding: FabriksEncoding,
   gridBox: VoxelBox,
   decoder: MeshoptDecoderLike | null,
 ): Float32Array => {
@@ -179,8 +179,8 @@ const decodePositions = (
 };
 
 const decodeIndices = (
-  row: MailleGeometryRow,
-  encoding: MailleEncoding,
+  row: FabriksGeometryRow,
+  encoding: FabriksEncoding,
   decoder: MeshoptDecoderLike | null,
 ): Uint32Array | Uint16Array => {
   const count = row.indexCount;
@@ -214,7 +214,7 @@ const decodeIndices = (
 };
 
 /** Per-vertex object ordinals, expanded from the objects' start offsets. */
-const expandOrdinals = (row: MailleGeometryRow): Float32Array => {
+const expandOrdinals = (row: FabriksGeometryRow): Float32Array => {
   const out = new Float32Array(row.vertexCount);
   for (let k = 0; k < row.objectOrdinals.length; k++) {
     const { start, end } = objectRange(row.objectVertexOffsets, k, row.vertexCount);
@@ -225,8 +225,8 @@ const expandOrdinals = (row: MailleGeometryRow): Float32Array => {
 
 /** Decode one geometry row into voxel-space arrays. Throws on a malformed row. */
 export function decodeGeometryRow(
-  row: MailleGeometryRow,
-  encoding: MailleEncoding,
+  row: FabriksGeometryRow,
+  encoding: FabriksEncoding,
   gridBox: VoxelBox,
   decoder: MeshoptDecoderLike | null,
 ): DecodedCell {

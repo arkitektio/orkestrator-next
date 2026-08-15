@@ -1,5 +1,5 @@
 {
-  "specVersion": "4",
+  "specVersion": "1",
   "grid": {
     "cellSize": [
       64,
@@ -12,7 +12,7 @@
   "encoding": {
     "positions": "UINT16_QUANTIZED_PER_CELL",
     "indices": "UINT32",
-    "codec": "MESHOPT",
+    "codec": "NONE",
     "compression": "NONE",
     "boundary": "LOCKED",
     "decimation": "QUARTER"
@@ -28,7 +28,7 @@
   "files": {
     "cells": {
       "path": "catalog/cells.parquet",
-      "bytes": 6282
+      "bytes": 6296
     },
     "objects": {
       "path": "catalog/objects.parquet",
@@ -38,21 +38,21 @@
       "0": [
         {
           "path": "level=0/part-00000.parquet",
-          "bytes": 52572,
-          "rowGroups": 4
+          "bytes": 132963,
+          "rowGroups": 8
         }
       ],
       "1": [
         {
           "path": "level=1/part-00000.parquet",
-          "bytes": 14355,
-          "rowGroups": 1
+          "bytes": 36700,
+          "rowGroups": 2
         }
       ],
       "2": [
         {
           "path": "level=2/part-00000.parquet",
-          "bytes": 9133,
+          "bytes": 15267,
           "rowGroups": 1
         }
       ]

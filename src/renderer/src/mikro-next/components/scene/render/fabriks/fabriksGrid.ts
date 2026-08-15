@@ -1,5 +1,5 @@
 import { decodeMorton3 } from "./mortonCell";
-import type { MailleGrid } from "./mailleManifest";
+import type { FabriksGrid } from "./fabriksManifest";
 
 /**
  * The cell → box arithmetic, and the octree descent.
@@ -18,7 +18,7 @@ import type { MailleGrid } from "./mailleManifest";
 export type VoxelBox = { min: [number, number, number]; max: [number, number, number] };
 
 /** How many voxels a cell spans per component at `level`. */
-export const cellExtent = (grid: MailleGrid, level: number): [number, number, number] => {
+export const cellExtent = (grid: FabriksGrid, level: number): [number, number, number] => {
   const scale = 2 ** level;
   return [grid.cellSize[0] * scale, grid.cellSize[1] * scale, grid.cellSize[2] * scale];
 };
@@ -27,9 +27,9 @@ export const cellExtent = (grid: MailleGrid, level: number): [number, number, nu
  * The GRID box of a cell — the dequantization frame, half-open.
  *
  * Components are slots 0/1/2 in the vertex order, not named axes (see
- * `MailleGrid.cellSize`).
+ * `FabriksGrid.cellSize`).
  */
-export function cellGridBox(grid: MailleGrid, level: number, cell: number): VoxelBox {
+export function cellGridBox(grid: FabriksGrid, level: number, cell: number): VoxelBox {
   const coords = decodeMorton3(cell);
   const extent = cellExtent(grid, level);
   const min: [number, number, number] = [
@@ -45,7 +45,7 @@ export function cellGridBox(grid: MailleGrid, level: number, cell: number): Voxe
  *
  * With component 0 in the least-significant bit, the eight children of code
  * `c` are exactly `8c … 8c+7`, and the octant index is `dx | dy<<1 | dz<<2` —
- * so descent needs no Morton decode at all. `mailleCore.test.ts` asserts that
+ * so descent needs no Morton decode at all. `fabriksCore.test.ts` asserts that
  * identity against `encodeMorton3` rather than trusting it.
  */
 export const mortonChildren = (cell: number): number[] =>

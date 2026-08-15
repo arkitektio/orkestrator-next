@@ -3,8 +3,8 @@ import {
   type S3FetchConfig,
 } from "@/lib/zarr/runner/s3-request";
 import {
-  RequestGeneralMailleAccessDocument,
-  RequestGeneralMailleAccessMutation,
+  RequestGeneralFabriksAccessDocument,
+  RequestGeneralFabriksAccessMutation,
   RequestGeneralZarrAccessDocument,
   RequestGeneralZarrAccessMutation,
 } from "@/mikro-next/api/graphql";
@@ -14,16 +14,16 @@ import type { GeneralZarrAccessGrant, MikroClient } from "@/lib/zarr/store/types
  * Which datalayer credential a caller wants.
  *
  * A general grant is bucket-wide, so one covers every store of its kind — but
- * the KINDS are separate mutations issuing separate credentials, and a maille
+ * the KINDS are separate mutations issuing separate credentials, and a fabriks
  * prefix cannot be read with a zarr grant. Hence a kind rather than a single
  * cache: a second kind must not clobber the first.
  */
-export type AccessKind = "zarr" | "maille";
+export type AccessKind = "zarr" | "fabriks";
 
 /**
  * The one general-credentials round-trip per kind, shared by every consumer
  * that opens datalayer stores imperatively (scene store creation, the
- * attribute pipeline's foreign-array opens, maille collections). Imperative
+ * attribute pipeline's foreign-array opens, fabriks collections). Imperative
  * `client.mutate` — no hook mounts, so the Guard.Mikro obligation stays on the
  * calling host.
  */
@@ -31,15 +31,15 @@ export async function requestGeneralAccess(
   client: MikroClient,
   kind: AccessKind = "zarr",
 ): Promise<GeneralZarrAccessGrant> {
-  if (kind === "maille") {
+  if (kind === "fabriks") {
     const access = (await client.mutate({
-      mutation: RequestGeneralMailleAccessDocument,
+      mutation: RequestGeneralFabriksAccessDocument,
       variables: { input: {} },
-    })) as { data?: RequestGeneralMailleAccessMutation };
+    })) as { data?: RequestGeneralFabriksAccessMutation };
 
-    const credentials = access.data?.requestGeneralMailleAccess;
+    const credentials = access.data?.requestGeneralFabriksAccess;
     if (!credentials) {
-      throw new Error("Failed to obtain general maille access credentials");
+      throw new Error("Failed to obtain general fabriks access credentials");
     }
     // Same shape as the zarr grant — bucket-wide credentials either way — so
     // `buildS3FetchConfig` consumes both without knowing which it was handed.
@@ -103,7 +103,7 @@ type ProviderState = { current: DatedGrant | null; inFlight: Promise<DatedGrant>
  * grant and one refresh — a scene with eight stores hitting expiry at the same
  * instant issues a single mutation, not eight.
  *
- * Keyed by kind as well as client so a maille grant and a zarr grant coexist
+ * Keyed by kind as well as client so a fabriks grant and a zarr grant coexist
  * instead of evicting each other.
  */
 const providers = new WeakMap<MikroClient, Map<AccessKind, ProviderState>>();

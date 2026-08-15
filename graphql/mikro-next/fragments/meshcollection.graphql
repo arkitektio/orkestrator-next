@@ -1,5 +1,5 @@
 # A MeshCollection is a DATASET, not a shape: the API node carries version,
-# coordinate system and the maille STORE — one prefix holding `maille.json`,
+# coordinate system and the fabriks STORE — one prefix holding `fabriks.json`,
 # both catalogs and every octree level. The individual meshes are ROWS in the
 # Parquet files under that prefix, reached client-side by row group. There is
 # deliberately no `meshes(...)` field to paginate.
@@ -14,7 +14,7 @@ fragment MeshCollection on MeshCollection {
     ...CoordinateSystem
   }
   store {
-    ...MailleStore
+    ...FabriksStore
   }
   grid
   encoding

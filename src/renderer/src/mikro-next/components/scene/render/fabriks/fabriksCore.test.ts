@@ -5,23 +5,23 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
 import {
-  MailleFormatError,
+  FabriksFormatError,
   levelParts,
-  parseMailleManifest,
+  parseFabriksManifest,
   rootLevel,
-} from "./mailleManifest";
-import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent } from "./mailleGrid";
+} from "./fabriksManifest";
+import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent } from "./fabriksGrid";
 import { encodeMorton3, decodeMorton3, meshCellKey } from "./mortonCell";
-import { buildMailleCellIndex, maxAxisScale, parseCellRow, type MailleCellRow } from "./mailleCatalogs";
-import { groupByRowGroup, planMailleCells, screenError } from "./maillePlanner";
-import { objectRange, positionStride, indexStride } from "./mailleDecode";
-import { MailleCollection, type MailleTransport } from "./mailleCollection";
+import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow } from "./fabriksCatalogs";
+import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
+import { objectRange, positionStride, indexStride } from "./fabriksDecode";
+import { FabriksCollection, type FabriksTransport } from "./fabriksCollection";
 import { LruByteCache } from "./lruByteCache";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
 
 /** A transport over a fixture directory — the same seam S3 plugs into. */
-const fixtureTransport = (variant: string): MailleTransport => {
+const fixtureTransport = (variant: string): FabriksTransport => {
   const root = join(FIXTURES, variant);
   return {
     async get(path) {
@@ -35,13 +35,13 @@ const fixtureTransport = (variant: string): MailleTransport => {
 };
 
 const RAW_MANIFEST = JSON.parse(
-  await readFile(join(FIXTURES, "raw", "maille.json"), "utf8"),
+  await readFile(join(FIXTURES, "raw", "fabriks.json"), "utf8"),
 ) as Record<string, unknown>;
 
 // --------------------------------------------------------------------------
-describe("mailleManifest", () => {
+describe("fabriksManifest", () => {
   it("parses the fixture the real writer produced", () => {
-    const manifest = parseMailleManifest(RAW_MANIFEST);
+    const manifest = parseFabriksManifest(RAW_MANIFEST);
     expect(manifest.specVersion).toBeTruthy();
     expect(manifest.grid.cellSize).toEqual([64, 64, 32]);
     expect(manifest.grid.levels).toBe(3);
@@ -54,32 +54,32 @@ describe("mailleManifest", () => {
   });
 
   it("records the spec version without gating on it", () => {
-    // The label is in flux between the writer and the deployment while both
-    // describe identical trees, so refusing on it would reject readable data.
-    // `encoding` is the check that actually protects decoding.
-    for (const version of ["1", "4", "9"]) {
-      expect(parseMailleManifest({ ...RAW_MANIFEST, specVersion: version }).specVersion).toBe(version);
+    // The writer and the deployment are both at 1 and every change so far
+    // landed inside it, so the label carries no decision. `encoding` is the
+    // check that actually protects decoding.
+    for (const version of ["1", "2", "9"]) {
+      expect(parseFabriksManifest({ ...RAW_MANIFEST, specVersion: version }).specVersion).toBe(version);
     }
   });
 
   it("refuses an encoding missing a key instead of defaulting it", () => {
     const { codec: _dropped, ...rest } = RAW_MANIFEST.encoding as Record<string, unknown>;
-    expect(() => parseMailleManifest({ ...RAW_MANIFEST, encoding: rest })).toThrow(/omits codec/);
+    expect(() => parseFabriksManifest({ ...RAW_MANIFEST, encoding: rest })).toThrow(/omits codec/);
   });
 
   it("refuses MESHOPT paired with ZSTD, which is undecodable", () => {
     const encoding = { ...(RAW_MANIFEST.encoding as object), codec: "MESHOPT", compression: "ZSTD" };
-    expect(() => parseMailleManifest({ ...RAW_MANIFEST, encoding })).toThrow(/cannot be decoded/);
+    expect(() => parseFabriksManifest({ ...RAW_MANIFEST, encoding })).toThrow(/cannot be decoded/);
   });
 
   it("refuses a manifest whose files name no levels, because we cannot list a prefix", () => {
     const files = { ...(RAW_MANIFEST.files as object), levels: undefined };
-    expect(() => parseMailleManifest({ ...RAW_MANIFEST, files })).toThrow(/cannot list/);
+    expect(() => parseFabriksManifest({ ...RAW_MANIFEST, files })).toThrow(/cannot list/);
   });
 
   it("accepts a bare path string as a file entry", () => {
     const files = { ...(RAW_MANIFEST.files as Record<string, unknown>), cells: "catalog/cells.parquet" };
-    const manifest = parseMailleManifest({ ...RAW_MANIFEST, files });
+    const manifest = parseFabriksManifest({ ...RAW_MANIFEST, files });
     expect(manifest.cells).toEqual({ path: "catalog/cells.parquet", bytes: null, rowGroups: null });
   });
 });
@@ -126,9 +126,9 @@ describe("morton cells and the octree", () => {
 });
 
 // --------------------------------------------------------------------------
-describe("mailleDecode arithmetic", () => {
+describe("fabriksDecode arithmetic", () => {
   it("uses stride 6 for raw blobs and 8 for meshopt", () => {
-    // The single most consequential number in the port: maille writes three
+    // The single most consequential number in the port: fabriks writes three
     // bare uint16 (6 B), and only pads to 8 under meshopt's stride rule.
     expect(positionStride("NONE")).toBe(6);
     expect(positionStride("MESHOPT")).toBe(8);
@@ -137,7 +137,7 @@ describe("mailleDecode arithmetic", () => {
   });
 
   it("treats offsets as START offsets of length n, not n+1 fenceposts", () => {
-    // maille writes [0, 17, 32] for three objects in a 48-vertex cell — the
+    // fabriks writes [0, 17, 32] for three objects in a 48-vertex cell — the
     // last object's end is the total, not a further entry.
     const offsets = [0, 17, 32];
     expect(objectRange(offsets, 0, 48)).toEqual({ start: 0, end: 17 });
@@ -148,8 +148,8 @@ describe("mailleDecode arithmetic", () => {
 
 // --------------------------------------------------------------------------
 describe("world-space cell index", () => {
-  const manifest = parseMailleManifest(RAW_MANIFEST);
-  const row = (over: Partial<MailleCellRow>): MailleCellRow => ({
+  const manifest = parseFabriksManifest(RAW_MANIFEST);
+  const row = (over: Partial<FabriksCellRow>): FabriksCellRow => ({
     level: 2, cell: 0, vertexCount: 10, indexCount: 30,
     bboxMin: [0, 0, 0], bboxMax: [10, 10, 10],
     lodError: 2, objectCount: 1, childMask: 0,
@@ -163,25 +163,25 @@ describe("world-space cell index", () => {
 
   it("transforms boxes and scales lodError into world units", () => {
     const matrix = new THREE.Matrix4().makeScale(1, 1, 5);
-    const index = buildMailleCellIndex([row({})], manifest, matrix);
+    const index = buildFabriksCellIndex([row({})], manifest, matrix);
     expect(index.cells[0].worldMax).toEqual([10, 10, 50]);
     // A voxel error of 2 is worth 10 world units along the tall axis.
     expect(index.cells[0].worldLodError).toBe(10);
   });
 
   it("falls back to the coarsest level present when the declared root is empty", () => {
-    const index = buildMailleCellIndex([row({ level: 1, cell: 3 })], manifest, new THREE.Matrix4());
+    const index = buildFabriksCellIndex([row({ level: 1, cell: 3 })], manifest, new THREE.Matrix4());
     expect(index.roots.map((entry) => entry.level)).toEqual([1]);
   });
 });
 
 // --------------------------------------------------------------------------
-describe("maillePlanner", () => {
-  const manifest = parseMailleManifest(RAW_MANIFEST);
+describe("fabriksPlanner", () => {
+  const manifest = parseFabriksManifest(RAW_MANIFEST);
   const identity = new THREE.Matrix4();
 
   /** A two-level pyramid: one root with two children that carry geometry. */
-  const rows: MailleCellRow[] = [
+  const rows: FabriksCellRow[] = [
     { level: 1, cell: 0, vertexCount: 40, indexCount: 120, bboxMin: [0, 0, 0], bboxMax: [128, 128, 64],
       lodError: 8, objectCount: 2, childMask: 0b0000_0011, part: 0, rowGroup: 0, blobBytes: 400 },
     { level: 0, cell: 0, vertexCount: 30, indexCount: 90, bboxMin: [0, 0, 0], bboxMax: [64, 64, 32],
@@ -189,16 +189,16 @@ describe("maillePlanner", () => {
     { level: 0, cell: 1, vertexCount: 30, indexCount: 90, bboxMin: [64, 0, 0], bboxMax: [128, 64, 32],
       lodError: 0.1, objectCount: 1, childMask: 0, part: 0, rowGroup: 1, blobBytes: 300 },
   ];
-  const index = buildMailleCellIndex(rows, manifest, identity);
+  const index = buildFabriksCellIndex(rows, manifest, identity);
   const base = {
     index, frustum: null, focalPixels: 540, pixelBudget: 1, maxCells: 64,
   } as const;
 
   it("keeps a far region coarse and refines a near one", () => {
-    const far = planMailleCells({ ...base, cameraPosition: [64, 64, 100_000] });
+    const far = planFabriksCells({ ...base, cameraPosition: [64, 64, 100_000] });
     expect(far.cells.map((c) => c.level)).toEqual([1]);
 
-    const near = planMailleCells({ ...base, cameraPosition: [64, 64, 100] });
+    const near = planFabriksCells({ ...base, cameraPosition: [64, 64, 100] });
     expect(near.cells.map((c) => c.level).sort()).toEqual([0, 0]);
   });
 
@@ -208,7 +208,7 @@ describe("maillePlanner", () => {
   });
 
   it("degrades to a coarser cell rather than dropping geometry when out of budget", () => {
-    const plan = planMailleCells({ ...base, cameraPosition: [64, 64, 100], maxCells: 1 });
+    const plan = planFabriksCells({ ...base, cameraPosition: [64, 64, 100], maxCells: 1 });
     // The region is still covered — just coarsely. A dropped cell would be a
     // hole in a surface, which reads as corruption rather than a lower setting.
     expect(plan.cells).toHaveLength(1);
@@ -217,8 +217,8 @@ describe("maillePlanner", () => {
   });
 
   it("keeps a coarse cell where the pyramid has no finer geometry", () => {
-    const sparse = buildMailleCellIndex([{ ...rows[0], childMask: 0 }], manifest, identity);
-    const plan = planMailleCells({ ...base, index: sparse, cameraPosition: [64, 64, 100] });
+    const sparse = buildFabriksCellIndex([{ ...rows[0], childMask: 0 }], manifest, identity);
+    const plan = planFabriksCells({ ...base, index: sparse, cameraPosition: [64, 64, 100] });
     expect(plan.cells.map((c) => c.key)).toEqual(["1:0"]);
   });
 
@@ -226,14 +226,14 @@ describe("maillePlanner", () => {
     const away = new THREE.Frustum().setFromProjectionMatrix(
       new THREE.Matrix4().makeTranslation(1e6, 1e6, 1e6),
     );
-    expect(planMailleCells({ ...base, frustum: away, cameraPosition: [0, 0, 0] }).cells).toHaveLength(0);
+    expect(planFabriksCells({ ...base, frustum: away, cameraPosition: [0, 0, 0] }).cells).toHaveLength(0);
   });
 
   it("holds a level inside the hysteresis band so a settled camera cannot flap", () => {
     // Camera placed so the root sits just inside the refine threshold.
     const root = index.byKey.get("1:0")!;
     const eye: [number, number, number] = [64, 64, 64 + root.worldLodError * 540];
-    const wasDrawn = planMailleCells({ ...base, cameraPosition: eye, previousKeys: new Set(["1:0"]) });
+    const wasDrawn = planFabriksCells({ ...base, cameraPosition: eye, previousKeys: new Set(["1:0"]) });
     expect(wasDrawn.cells.map((c) => c.key)).toEqual(["1:0"]);
   });
 
@@ -248,17 +248,17 @@ describe("maillePlanner", () => {
 });
 
 // --------------------------------------------------------------------------
-describe("MailleCollection against fixtures written by maille itself", () => {
+describe("FabriksCollection against fixtures written by fabriks itself", () => {
   for (const variant of ["raw", "zstd", "meshopt"] as const) {
     it(`opens, plans and decodes the ${variant} collection`, async () => {
-      const collection = await MailleCollection.open(fixtureTransport(variant));
+      const collection = await FabriksCollection.open(fixtureTransport(variant));
       expect(collection.manifest.specVersion).toBeTruthy();
 
       const rows = await collection.loadCellCatalog();
       expect(rows.length).toBeGreaterThan(0);
-      const index = buildMailleCellIndex(rows, collection.manifest, new THREE.Matrix4());
+      const index = buildFabriksCellIndex(rows, collection.manifest, new THREE.Matrix4());
 
-      const plan = planMailleCells({
+      const plan = planFabriksCells({
         index, frustum: null, cameraPosition: [100, 100, 200],
         focalPixels: 540, pixelBudget: 1, maxCells: 512,
       });
@@ -305,7 +305,7 @@ describe("MailleCollection against fixtures written by maille itself", () => {
   }
 
   it("reads the object catalog's list<struct<>> inverted index", async () => {
-    const collection = await MailleCollection.open(fixtureTransport("raw"));
+    const collection = await FabriksCollection.open(fixtureTransport("raw"));
     const objects = await collection.loadObjectCatalog();
     // The fixture's sparse instance ids, written through unchanged.
     expect([...objects.keys()].sort((a, b) => a - b)).toEqual([3, 7, 11, 42, 108, 4711]);
@@ -322,11 +322,11 @@ describe("MailleCollection against fixtures written by maille itself", () => {
   });
 
   it("reports a prefix with no manifest as an interrupted write", async () => {
-    const empty: MailleTransport = {
+    const empty: FabriksTransport = {
       get: async () => { throw new Error("404"); },
       getRange: async () => new Uint8Array(),
     };
-    await expect(MailleCollection.open(empty)).rejects.toThrow(/interrupted write/);
+    await expect(FabriksCollection.open(empty)).rejects.toThrow(/interrupted write/);
   });
 });
 

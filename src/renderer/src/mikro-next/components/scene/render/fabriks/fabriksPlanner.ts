@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { maskedChildren } from "./mailleGrid";
-import { mailleCellKey, type MailleCellEntry, type MailleCellIndex } from "./mailleCatalogs";
+import { maskedChildren } from "./fabriksGrid";
+import { fabriksCellKey, type FabriksCellEntry, type FabriksCellIndex } from "./fabriksCatalogs";
 
 /**
  * Which cells to draw, at which level — the question the whole format exists
@@ -29,7 +29,7 @@ import { mailleCellKey, type MailleCellEntry, type MailleCellIndex } from "./mai
  *
  * `lodError` and the catalog's boxes are in VOXELS, and voxels are not world
  * units — with a 5× z-step, planning in voxel space is wrong by 5× in exactly
- * the direction that matters. So `buildMailleCellIndex` transforms the boxes
+ * the direction that matters. So `buildFabriksCellIndex` transforms the boxes
  * to world AABBs once at load and scales `lodError` by the matrix's max axis
  * scale (the conservative choice: an LOD error is a scalar under an
  * anisotropic map, and its worst-case world magnitude is the max axis scale).
@@ -43,8 +43,8 @@ import { mailleCellKey, type MailleCellEntry, type MailleCellIndex } from "./mai
  * as a lower setting.
  */
 
-export type MaillePlanInput = {
-  index: MailleCellIndex;
+export type FabriksPlanInput = {
+  index: FabriksCellIndex;
   /** Camera frustum in WORLD space; null disables culling. */
   frustum: THREE.Frustum | null;
   /** Camera position in WORLD space; null plans without a camera. */
@@ -64,9 +64,9 @@ export type MaillePlanInput = {
   previousKeys?: ReadonlySet<string>;
 };
 
-export type MaillePlan = {
+export type FabriksPlan = {
   /** Selected cells, at mixed levels, near-first. */
-  cells: MailleCellEntry[];
+  cells: FabriksCellEntry[];
   totalIndices: number;
   /** Regions left coarser than the budget wanted (never dropped). */
   coarsenedRegions: number;
@@ -76,7 +76,7 @@ export type MaillePlan = {
 /**
  * Margin a cell must clear before it changes level (~15%).
  *
- * maille's own planner has none, but this one runs at camera-SETTLE cadence:
+ * fabriks's own planner has none, but this one runs at camera-SETTLE cadence:
  * a camera parked on the budget threshold would otherwise flip a region
  * between levels — and refetch it — on consecutive plans. A cell that was
  * selected last time is stickier; one that was not has to clear a higher bar
@@ -84,7 +84,7 @@ export type MaillePlan = {
  */
 export const LOD_HYSTERESIS = 1.15;
 
-const EMPTY_PLAN: MaillePlan = {
+const EMPTY_PLAN: FabriksPlan = {
   cells: [],
   totalIndices: 0,
   coarsenedRegions: 0,
@@ -93,7 +93,7 @@ const EMPTY_PLAN: MaillePlan = {
 
 const scratchBox = new THREE.Box3();
 
-const boxDistance = (entry: MailleCellEntry, eye: readonly [number, number, number]): number => {
+const boxDistance = (entry: FabriksCellEntry, eye: readonly [number, number, number]): number => {
   let sum = 0;
   for (const axis of [0, 1, 2] as const) {
     const outside = Math.max(entry.worldMin[axis] - eye[axis], eye[axis] - entry.worldMax[axis], 0);
@@ -102,7 +102,7 @@ const boxDistance = (entry: MailleCellEntry, eye: readonly [number, number, numb
   return Math.sqrt(sum);
 };
 
-const inFrustum = (entry: MailleCellEntry, frustum: THREE.Frustum | null): boolean => {
+const inFrustum = (entry: FabriksCellEntry, frustum: THREE.Frustum | null): boolean => {
   if (!frustum) return true;
   scratchBox.min.set(entry.worldMin[0], entry.worldMin[1], entry.worldMin[2]);
   scratchBox.max.set(entry.worldMax[0], entry.worldMax[1], entry.worldMax[2]);
@@ -117,7 +117,7 @@ const inFrustum = (entry: MailleCellEntry, frustum: THREE.Frustum | null): boole
  * forever — hence the explicit `Infinity`, which always refines.
  */
 export function screenError(
-  entry: MailleCellEntry,
+  entry: FabriksCellEntry,
   eye: readonly [number, number, number],
   focalPixels: number,
 ): number {
@@ -129,21 +129,21 @@ export function screenError(
 /**
  * Plan a frame from the cell catalog alone.
  *
- * Breadth-first by level rather than maille's max-heap: levels are bounded by
+ * Breadth-first by level rather than fabriks's max-heap: levels are bounded by
  * pyramid depth (≤ ~10), so a per-level pass is exact and needs no heap. The
  * result is a complete covering at mixed levels by construction.
  */
-export function planMailleCells(input: MaillePlanInput): MaillePlan {
+export function planFabriksCells(input: FabriksPlanInput): FabriksPlan {
   const { index, frustum } = input;
   const roots = index.roots.filter((entry) => inFrustum(entry, frustum));
   if (roots.length === 0) return EMPTY_PLAN;
 
   const eye = input.cameraPosition;
-  const selected: MailleCellEntry[] = [];
+  const selected: FabriksCellEntry[] = [];
   let coarsenedRegions = 0;
 
   /** Is this cell's error small enough to stop here? */
-  const goodEnough = (entry: MailleCellEntry): boolean => {
+  const goodEnough = (entry: FabriksCellEntry): boolean => {
     if (entry.level === 0) return true; // nothing finer exists
     if (input.errorBudget !== undefined) return entry.worldLodError <= input.errorBudget;
     if (!eye) return false;
@@ -156,15 +156,15 @@ export function planMailleCells(input: MaillePlanInput): MaillePlan {
 
   let frontier = roots;
   while (frontier.length > 0) {
-    const next: MailleCellEntry[] = [];
+    const next: FabriksCellEntry[] = [];
     for (const entry of frontier) {
       if (goodEnough(entry)) {
         selected.push(entry);
         continue;
       }
       const children = maskedChildren(entry.cell, entry.childMask)
-        .map((code) => index.byKey.get(mailleCellKey(entry.level - 1, code)))
-        .filter((child): child is MailleCellEntry => child !== undefined)
+        .map((code) => index.byKey.get(fabriksCellKey(entry.level - 1, code)))
+        .filter((child): child is FabriksCellEntry => child !== undefined)
         .filter((child) => inFrustum(child, frustum));
 
       if (children.length === 0) {
@@ -212,15 +212,15 @@ export function planMailleCells(input: MaillePlanInput): MaillePlan {
  * Cells whose locator is null (a legal, hand-written manifest) are grouped
  * under `rowGroup: null`, which the fetcher reads as "this part, whole".
  */
-export type MailleFetchGroup = {
+export type FabriksFetchGroup = {
   level: number;
   part: number | null;
   rowGroup: number | null;
-  cells: MailleCellEntry[];
+  cells: FabriksCellEntry[];
 };
 
-export function groupByRowGroup(cells: readonly MailleCellEntry[]): MailleFetchGroup[] {
-  const groups = new Map<string, MailleFetchGroup>();
+export function groupByRowGroup(cells: readonly FabriksCellEntry[]): FabriksFetchGroup[] {
+  const groups = new Map<string, FabriksFetchGroup>();
   for (const entry of cells) {
     const key = `${entry.level}:${entry.part ?? "?"}:${entry.rowGroup ?? "?"}`;
     const group = groups.get(key);

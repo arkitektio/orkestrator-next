@@ -7,8 +7,8 @@ import duckdbMvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.
 /**
  * The renderer's ONE DuckDB-WASM instance, shared by every parquet consumer:
  * the tables UI and the attribute lookup engine. (The scene's mesh collections
- * left this path: maille addresses Parquet by row group, which SQL cannot do —
- * see `scene/render/maille/README.md`.) Deliberate app-lifetime singletons — the
+ * left this path: fabriks addresses Parquet by row group, which SQL cannot do —
+ * see `scene/render/fabriks/README.md`.) Deliberate app-lifetime singletons — the
  * WASM VM and its Web Worker are created once and never terminated (consumers
  * mount/unmount frequently and re-instantiating WASM each time is expensive);
  * per-query connections are opened and closed by callers.

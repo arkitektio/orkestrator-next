@@ -96,7 +96,7 @@ export class ParquetPart {
    *
    * `utf8: false` is NOT optional. hyparquet defaults it to true, and its
    * conversion treats any bare BYTE_ARRAY as a string — which is exactly what
-   * maille's `positions` and `indices` are. Leaving the default on turns every
+   * fabriks's `positions` and `indices` are. Leaving the default on turns every
    * geometry blob into mojibake with no error anywhere.
    */
   async readRows(

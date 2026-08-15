@@ -23,7 +23,7 @@ import { useSceneStore } from "../../store/sceneStore";
 type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }>;
 
 /** `store.counts` is the manifest's own tally, mirrored by the API. */
-type MailleCounts = { objects?: number; cellsPerLevel?: number[] };
+type FabriksCounts = { objects?: number; cellsPerLevel?: number[] };
 
 const formatCount = (value: number): string =>
   value >= 1_000_000
@@ -48,7 +48,7 @@ export const MeshLayerCard = memo(
 
     const collection = layer.collection;
     const store = collection?.store;
-    const counts = (store?.counts ?? {}) as MailleCounts;
+    const counts = (store?.counts ?? {}) as FabriksCounts;
     const grid = (store?.grid ?? {}) as { cellSize?: number[]; levels?: number };
     const encoding = (store?.encoding ?? {}) as { codec?: string; compression?: string };
     const cellsPerLevel = counts.cellsPerLevel ?? [];
@@ -115,7 +115,7 @@ export const MeshLayerCard = memo(
             )}
             {encoding.codec && encoding.codec !== "NONE" && <Badge>{encoding.codec}</Badge>}
             {store.specVersion && (
-              <Badge title="maille spec version">maille v{store.specVersion}</Badge>
+              <Badge title="fabriks spec version">fabriks v{store.specVersion}</Badge>
             )}
           </div>
         )}

@@ -50,7 +50,7 @@ describe("canonical URI encoding", () => {
     // The regression this file exists for. `URL` leaves `=` literal in
     // `pathname`, but SigV4 — and S3 on the other side — require every byte
     // outside the unreserved set percent-encoded. Signing the literal produced
-    // a 403 on the first maille geometry read (`level=0/part-00000.parquet`)
+    // a 403 on the first fabriks geometry read (`level=0/part-00000.parquet`)
     // while every zarr chunk path, being unreserved throughout, was unaffected.
     const calls = captureRequest();
 
@@ -78,7 +78,7 @@ describe("canonical URI encoding", () => {
 
 describe("ranged reads", () => {
   it("carries a Range header into the signature, not just the request", async () => {
-    // maille reads Parquet footers and row groups by byte span. If `Range`
+    // fabriks reads Parquet footers and row groups by byte span. If `Range`
     // were sent unsigned, S3 would reject the request it was actually given.
     const calls = captureRequest();
     await fetchS3Path(config(), "/catalog/cells.parquet" as AbsolutePath, {
@@ -100,8 +100,8 @@ describe("ranged reads", () => {
 
 describe("resolveStoreUrl", () => {
   it("resolves a key under a prefix, adding the separator the prefix omits", () => {
-    const url = resolveStoreUrl("https://gateway.example/bucket/prefix", "/maille.json" as AbsolutePath);
-    expect(url.href).toBe("https://gateway.example/bucket/prefix/maille.json");
+    const url = resolveStoreUrl("https://gateway.example/bucket/prefix", "/fabriks.json" as AbsolutePath);
+    expect(url.href).toBe("https://gateway.example/bucket/prefix/fabriks.json");
   });
 
   it("keeps a hive segment literal on the wire", () => {

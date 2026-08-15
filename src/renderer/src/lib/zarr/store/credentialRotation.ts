@@ -26,7 +26,7 @@ export type S3FetchConfigRefresher = (options: { forceRefresh?: boolean }) => Pr
  *    that just failed, so retrying without forcing past it retries the same
  *    failure.
  *
- * `ConfiguredS3Store` and the maille transport both drive this; `s3Store.test.ts`
+ * `ConfiguredS3Store` and the fabriks transport both drive this; `s3Store.test.ts`
  * covers it end to end.
  */
 export class CredentialRotation {

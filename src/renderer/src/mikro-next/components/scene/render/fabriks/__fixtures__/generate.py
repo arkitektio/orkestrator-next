@@ -1,4 +1,4 @@
-"""Deterministic small maille collections for the TS reader's tests.
+"""Deterministic small fabriks collections for the TS reader's tests.
 
 Three variants so every decode branch has a real-writer oracle:
   raw    : codec NONE,    compression NONE   (the default path)
@@ -9,7 +9,7 @@ Three variants so every decode branch has a real-writer oracle:
 otherwise the (part, row_group) locator is untested.
 """
 import json, shutil, sys, pathlib
-import numpy as np, trimesh, maille
+import numpy as np, trimesh, fabriks
 
 ROOT = pathlib.Path(sys.argv[1])
 if ROOT.exists():
@@ -32,8 +32,8 @@ VARIANTS = {
 summary = {}
 for name, kwargs in VARIANTS.items():
     out = ROOT / name
-    manifest = maille.write_meshes(
-        demo_objects(), maille.DirectoryStore(str(out)), prefix="",
+    manifest = fabriks.write_meshes(
+        demo_objects(), fabriks.DirectoryStore(str(out)), prefix="",
         cell_size=(64, 64, 32), levels=3,
         row_group_bytes=8192,      # force multiple row groups per part
         **kwargs,

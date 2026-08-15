@@ -3,18 +3,18 @@ import {
   OBJECT_CATALOG_COLUMNS,
   parseCellRow,
   parseObjectRow,
-  type MailleCellRow,
-  type MailleObjectEntry,
-} from "./mailleCatalogs";
-import { decodeGeometryRow, type MailleGeometryRow, type MeshoptDecoderLike } from "./mailleDecode";
-import { cellGridBox } from "./mailleGrid";
-import { levelParts, MANIFEST_NAME, parseMailleManifest, type MailleFileEntry, type MailleManifest } from "./mailleManifest";
-import type { MailleFetchGroup } from "./maillePlanner";
+  type FabriksCellRow,
+  type FabriksObjectEntry,
+} from "./fabriksCatalogs";
+import { decodeGeometryRow, type FabriksGeometryRow, type MeshoptDecoderLike } from "./fabriksDecode";
+import { cellGridBox } from "./fabriksGrid";
+import { levelParts, MANIFEST_NAME, parseFabriksManifest, type FabriksFileEntry, type FabriksManifest } from "./fabriksManifest";
+import type { FabriksFetchGroup } from "./fabriksPlanner";
 import { ParquetPart, type RangeReader } from "./parquetPart";
 import { toBytes, toNumber, toNumberArray } from "./rowValues";
 
 /**
- * One maille collection: the manifest, the catalogs, and the open parts.
+ * One fabriks collection: the manifest, the catalogs, and the open parts.
  *
  * This owns the READ PLAN — which file, which row group, which columns — and
  * nothing else. It knows nothing about three.js, the scene graph or React, so
@@ -29,7 +29,7 @@ import { toBytes, toNumber, toNumberArray } from "./rowValues";
 /** Reads a whole object. Separate from the ranged read: catalogs are read whole. */
 export type ObjectReader = (path: string) => Promise<Uint8Array>;
 
-export type MailleTransport = {
+export type FabriksTransport = {
   get: ObjectReader;
   getRange: RangeReader;
 };
@@ -48,7 +48,7 @@ const GEOMETRY_COLUMNS = [
 ];
 
 /** A geometry row keyed for lookup, before decode. */
-const parseGeometryRow = (row: Record<string, unknown>): MailleGeometryRow => ({
+const parseGeometryRow = (row: Record<string, unknown>): FabriksGeometryRow => ({
   level: toNumber(row.level, "level"),
   cell: toNumber(row.cell, "cell"),
   positions: toBytes(row.positions, "positions"),
@@ -61,13 +61,13 @@ const parseGeometryRow = (row: Record<string, unknown>): MailleGeometryRow => ({
   objectIndexOffsets: toNumberArray(row.object_index_offsets, "object_index_offsets"),
 });
 
-export class MailleCollection {
+export class FabriksCollection {
   private readonly parts = new Map<string, ParquetPart>();
-  private objectsPromise: Promise<Map<number, MailleObjectEntry>> | null = null;
+  private objectsPromise: Promise<Map<number, FabriksObjectEntry>> | null = null;
 
   private constructor(
-    readonly manifest: MailleManifest,
-    private readonly transport: MailleTransport,
+    readonly manifest: FabriksManifest,
+    private readonly transport: FabriksTransport,
   ) {}
 
   /**
@@ -77,7 +77,7 @@ export class MailleCollection {
    * WRITE, not for an empty collection — the manifest lands after every file
    * it names — so it is reported as such rather than as zero geometry.
    */
-  static async open(transport: MailleTransport): Promise<MailleCollection> {
+  static async open(transport: FabriksTransport): Promise<FabriksCollection> {
     let bytes: Uint8Array;
     try {
       bytes = await transport.get(MANIFEST_NAME);
@@ -87,25 +87,25 @@ export class MailleCollection {
           `is an interrupted write rather than a collection. (${String(error)})`,
       );
     }
-    const manifest = parseMailleManifest(JSON.parse(new TextDecoder().decode(bytes)));
-    return new MailleCollection(manifest, transport);
+    const manifest = parseFabriksManifest(JSON.parse(new TextDecoder().decode(bytes)));
+    return new FabriksCollection(manifest, transport);
   }
 
   /**
    * Open with a manifest already in hand.
    *
-   * The API mirrors `maille.json` onto the store node — the server read it at
+   * The API mirrors `fabriks.json` onto the store node — the server read it at
    * registration, so it describes what was actually written — which means the
    * first thing a layer needs costs no S3 round trip at all. Same validation
-   * either way: the mirrored object goes through `parseMailleManifest`, so a
+   * either way: the mirrored object goes through `parseFabriksManifest`, so a
    * server that mirrors something this reader cannot read is still refused.
    */
-  static fromMirroredManifest(raw: unknown, transport: MailleTransport): MailleCollection {
-    return new MailleCollection(parseMailleManifest(raw), transport);
+  static fromMirroredManifest(raw: unknown, transport: FabriksTransport): FabriksCollection {
+    return new FabriksCollection(parseFabriksManifest(raw), transport);
   }
 
   /** The spatial index. One whole-file read; the planner needs nothing else. */
-  async loadCellCatalog(): Promise<MailleCellRow[]> {
+  async loadCellCatalog(): Promise<FabriksCellRow[]> {
     const rows = await this.readCatalog(this.manifest.cells, CELL_CATALOG_COLUMNS);
     return rows.map(parseCellRow);
   }
@@ -117,7 +117,7 @@ export class MailleCollection {
    * carries the format's only `list<struct<>>`, and a collection with millions
    * of objects should not pay for it before something asks about identity.
    */
-  loadObjectCatalog(): Promise<Map<number, MailleObjectEntry>> {
+  loadObjectCatalog(): Promise<Map<number, FabriksObjectEntry>> {
     if (!this.objectsPromise) {
       this.objectsPromise = this.readCatalog(this.manifest.objects, OBJECT_CATALOG_COLUMNS)
         .then((rows) => new Map(rows.map(parseObjectRow).map((entry) => [entry.objectId, entry])))
@@ -130,7 +130,7 @@ export class MailleCollection {
   }
 
   private async readCatalog(
-    entry: MailleFileEntry,
+    entry: FabriksFileEntry,
     columns: string[],
   ): Promise<Record<string, unknown>[]> {
     // Catalogs are read whole — they are small, and every row is wanted — so
@@ -151,7 +151,7 @@ export class MailleCollection {
    * whole, which is correct and merely slow — so it warns.
    */
   async readFetchGroup(
-    group: MailleFetchGroup,
+    group: FabriksFetchGroup,
     decoder: MeshoptDecoderLike | null,
   ): Promise<Map<string, ReturnType<typeof decodeGeometryRow>>> {
     const partIndex = group.part ?? 0;
@@ -166,7 +166,7 @@ export class MailleCollection {
     let rows: Record<string, unknown>[];
     if (group.rowGroup === null) {
       console.warn(
-        `[maille] ${entry.path} has no row-group locator for these cells; reading the part whole ` +
+        `[fabriks] ${entry.path} has no row-group locator for these cells; reading the part whole ` +
           `(${entry.bytes ?? "unknown"} bytes).`,
       );
       rows = await part.readRows(GEOMETRY_COLUMNS);
@@ -192,7 +192,7 @@ export class MailleCollection {
    * is then the row group alone, which is the asymmetry the format's row-group
    * sizing is chosen against.
    */
-  private openPart(entry: MailleFileEntry): ParquetPart {
+  private openPart(entry: FabriksFileEntry): ParquetPart {
     const existing = this.parts.get(entry.path);
     if (existing) return existing;
     if (entry.bytes === null) {

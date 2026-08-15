@@ -7,9 +7,9 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
-  CreateEntityMutationVariables,
+  AssertEntityExistsMutationVariables,
   GetEntityCategoryDocument,
-  useCreateEntityMutation,
+  useAssertEntityExistsMutation,
   useCreateEntityTermInlineMutation,
   useGetEntityCategoryQuery,
   useSearchEntityTermsLazyQuery,
@@ -27,7 +27,7 @@ const TForm = (props: { category?: string }) => {
 
   const seededTerm = data?.entityCategory.term?.key ?? data?.entityCategory.key;
 
-  const [add] = useCreateEntityMutation({
+  const [add] = useAssertEntityExistsMutation({
     refetchQueries: props.category
       ? [{ query: GetEntityCategoryDocument, variables: { id: props.category } }]
       : [],
@@ -38,7 +38,7 @@ const TForm = (props: { category?: string }) => {
 
   const { closeDialog } = useDialog();
 
-  const form = useForm<CreateEntityMutationVariables["input"]>({
+  const form = useForm<AssertEntityExistsMutationVariables["input"]>({
     defaultValues: { term: "" },
   });
 

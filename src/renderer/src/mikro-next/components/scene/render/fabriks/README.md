@@ -21,7 +21,7 @@ MeshLayer.collection  ──►  fabriksSource.openFabriksCollection()
         │
         ▼
 FabriksCollectionLayer.tsx ── resolveCollectionMatrix()
-        │                     (anchor image layer's frame, else graph compose)
+        │                     (graph compose of the layer's pathToWorld — nothing else)
         │  camera SETTLE (vanilla viewStore subscription — never per frame)
         ▼
 FabriksCollectionManager.updatePlan()
@@ -41,10 +41,12 @@ FabriksCollectionManager.updatePlan()
                   decodeGeometryRow()   BLOB → dequantized Float32 positions,
                         │               Uint32 indices, per-vertex ordinals
                         ▼
-                  BufferGeometry per cell (normals computed — fabriks has none)
-                        │
+                  BufferGeometry per cell (no normals by default — the
+                        │                  material shades flat by derivatives;
+                        │                  bounds come from the catalog)
                         ├─ LruByteCache (plan-protected, evict → dispose)
-                        └─ group.add + invalidate()   (demand frameloop)
+                        └─ ONE BatchedMesh per collection (fabriksBatch.ts)
+                             + invalidate()   (demand frameloop)
 ```
 
 ## Module boundaries (one concern per file)
@@ -62,6 +64,7 @@ FabriksCollectionManager.updatePlan()
 | `fabriksPlanner.ts` | which cells at which level; row-group grouping | fetching, drawing |
 | `fabriksCollection.ts` | the read plan: which file, which row group, which columns | three, React |
 | `fabriksSource.ts` | API node → prefix + credentials | everything above |
+| `fabriksBatch.ts` | the BatchedMesh: capacity, slots, compaction | plans, fetching, caches |
 | `fabriksManager.ts` | THREE objects, reconcile, abort generation | React, HTTP, bytes |
 | `FabriksCollectionLayer.tsx` | lifecycle, transforms, settle cadence | everything above's internals |
 
@@ -86,6 +89,14 @@ the render path.
 - **Fetch by ROW GROUP, not by cell.** A row group is the smallest thing a
   reader can fetch and a plan routinely puts several cells in one, so
   `groupByRowGroup` dedupes before any I/O.
+- **One ranged GET per row group.** hyparquet slices per column chunk and a
+  geometry row group has ten columns, so the raw reader would pay ten small
+  authenticated round trips per group. `ParquetPart.readRowGroup` prefetches
+  the group's whole byte span (column chunks of one row group are contiguous)
+  and serves hyparquet's slices from it.
+- **A few row groups in flight.** The drain runs `CONCURRENT_FETCHES` workers
+  pulling from one near-first cursor: priority order is preserved, round trips
+  overlap instead of summing, and every worker checks the plan generation.
 - **Range reads are signed.** `fetchS3Path` folds caller headers into the SigV4
   canonical headers, so a `Range` header is covered by the signature. A gateway
   that answers 200 to a ranged request is detected (no `Content-Range`) and
@@ -99,6 +110,33 @@ the render path.
   at all — it decoded and mounted the whole superseded batch.)
 - **The object catalog is lazy.** Nothing needs it to draw; it carries the
   format's only `list<struct<>>`, and identity questions are rare.
+- **A placement change never rebuilds the manager.** The layer keeps its matrix
+  VALUE-stable (identity churn from unrelated store writes used to rebuild the
+  manager and refetch every cell), and `setVoxelToWorld` rebuilds only the
+  world-space index from kept catalog rows — the caches hold voxel-space
+  geometry and survive any placement.
+- **No normals by default.** `computeVertexNormals` was the largest main-thread
+  cost on the streaming path and per-cell smooth normals seam at cell borders;
+  the material shades flat via screen-space derivatives instead (a debug-panel
+  toggle restores smooth). Bounding volumes come from the catalog's boxes, not
+  a walk over positions.
+- **One render object per collection.** Mounted cells live in a single
+  `THREE.BatchedMesh` (`fabriksBatch.ts`): on the WebGPU backend that is one
+  pipeline + bind group with a per-range draw loop and PER-INSTANCE frustum
+  culling from the analytic bounds, where per-cell `Mesh` objects cost a
+  render object, a bind group and a render-list sort entry each. BatchedMesh's
+  allocator only appends — deleted ranges return via `optimize()` or a
+  capacity rebuild, both owned by `fabriksBatch.ts`. The per-cell path
+  survives behind the panel's `batched` toggle as the A/B fallback.
+- **Two plan budgets.** `maxCells` caps cell count; `maxIndices` caps what the
+  cells weigh. Both coarsen, never drop. `pixelBudget` and the budgets are
+  runtime knobs (`setPlanConfig`), steered from the debug panel between
+  settles.
+- **Everything is instrumented.** `FabriksStore` counts requests,
+  `FabriksCollectionManager.stats` times plan/stream/build, and
+  `buildDebugReport()` feeds the DebugPanel's "Fabriks Mesh" section and the
+  copy-able octree debug report (`fabriks` key) — the
+  `BrickResidencyManager` idiom.
 
 ## Client-side decisions the format leaves open
 

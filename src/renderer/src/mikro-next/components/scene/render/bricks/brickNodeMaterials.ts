@@ -919,10 +919,12 @@ export function createPlaneNodeMaterial(
   material.depthTest = false;
 
   material.fragmentNode = Fn(() => {
-    // Quad uv → base voxel space (voxel y grows downward).
+    // Quad uv → base voxel space. Corner-anchored, no flip: voxel row 0 is at
+    // uv.y = 0 (COORDINATE_SYSTEMS.md "Coordinate conventions" — any raster
+    // y-down convention is the server's to express in the transforms).
     const baseVoxel = vec3(
       uv().x.mul(uBaseShape.x),
-      oneMinus(uv().y).mul(uBaseShape.y),
+      uv().y.mul(uBaseShape.y),
       uSlabBaseZ,
     ).toVar("pxBaseVoxel");
 
@@ -1146,10 +1148,12 @@ export function createVolumeNodeMaterial(
   );
   const vDirection = varying(positionGeometry.sub(vOrigin), "vDirection");
 
-  // Unit-box local ([-0.5,0.5], y up) → base voxel (y down).
+  // Unit-box local ([-0.5,0.5]) → base voxel. Corner-anchored, no flip: the
+  // mesh is positioned so group-local spans [0..shape], and this map only
+  // undoes the unit-box parameterization (COORDINATE_SYSTEMS.md conventions).
   const toBaseVoxel = Fn(([p]: any[]) => {
     const q = vec3(p);
-    return vec3(q.x.add(0.5), float(0.5).sub(q.y), q.z.add(0.5)).mul(uBaseShape);
+    return vec3(q.x.add(0.5), q.y.add(0.5), q.z.add(0.5)).mul(uBaseShape);
   });
 
   const desiredLevelAt = Fn(([baseVoxel, cameraBase]: any[]) => {

@@ -65,7 +65,7 @@ import {
   WhereOperator,
   useEntityNodesQuery,
   useGetEntityQuery,
-  useRecordMetricMutation
+  useAssertMetricValueMutation
 } from "@/kraph/api/graphql";
 import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
 import { calculateDuration } from "@/kraph/pages/EntityPage";
@@ -108,12 +108,12 @@ const EditableCell = ({
   propertyDefinition: PropertyDefinitionFragment;
 }) => {
 
-  const [recordMetric] = useRecordMetricMutation();
+  const [assertMetricValue] = useAssertMetricValueMutation();
 
   // Properties are derived, so a hand-entered value goes in as the weakest
   // evidence there is: an "itoldyouso" metric with no measurement behind it.
   const setNodeProperty = (value: unknown) =>
-    recordMetric({
+    assertMetricValue({
       variables: {
         input: buildItoldyousoMetric({
           entityId: nodeId,

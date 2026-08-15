@@ -1,6 +1,5 @@
 import { useDialog } from "@/app/dialog";
 import { ChoicesField } from "@/components/fields/ChoicesField";
-import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { SwitchField } from "@/components/fields/SwitchField";
@@ -15,8 +14,6 @@ import {
   DerivationType,
   EntityCategoryFragment,
   UpdateEntityCategoryMutationVariables,
-  useCreateGraphTagInlineMutation,
-  useSearchTagsLazyQuery,
   useUpdateEntityCategoryMutation,
   ValueKind,
 } from "../api/graphql";
@@ -40,7 +37,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
       id: props.entityCategory.id,
       label: props.entityCategory.label,
       description: props.entityCategory.description,
-      tags: props.entityCategory.tags.map((tag) => tag.id),
       propertyDefinitions: props.entityCategory.propertyDefinitions.map(
         (def) => ({
           key: def.key,
@@ -60,15 +56,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
   });
 
   const watchedPropertyDefinitions = form.watch("propertyDefinitions");
-
-  const [searchTags] = useSearchTagsLazyQuery();
-
-  const [createTag] = useCreateGraphTagInlineMutation({
-    variables: {
-      graph: props.entityCategory.graph.id,
-      input: "",
-    },
-  });
 
   return (
     <>
@@ -101,13 +88,6 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <GraphQLCreatableListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
-                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.entityCategory.graph.id } })}
               />
             </div>
 

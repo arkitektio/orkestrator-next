@@ -14,7 +14,6 @@ import {
   useCreateRelationCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
 } from "../api/graphql";
 
 
@@ -34,7 +33,6 @@ export const TForm = (props: { graph?: string }) => {
     },
   });
 
-  const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const [search] = useSearchGraphsLazyQuery();
@@ -86,12 +84,6 @@ export const TForm = (props: { graph?: string }) => {
                   />
                   <div className="col-span-2 flex-col gap-1 flex">
                     <GraphQLSearchField
-                      name={`sourceDefinition.tagFilters`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
-                    <GraphQLSearchField
                       name={`sourceDefinition.categoryFilters`}
                       label="Category Filters"
                       searchQuery={searchEntityCategory}
@@ -99,12 +91,6 @@ export const TForm = (props: { graph?: string }) => {
                     />
                   </div>
                   <div className="col-span-2 flex-col gap-1 flex">
-                    <GraphQLSearchField
-                      name={`targetDefinition.tagFilters`}
-                      label="Tag Filters"
-                      searchQuery={searchTags}
-                      description="Filters for the entity's tags."
-                    />
                     <GraphQLSearchField
                       name={`targetDefinition.categoryFilters`}
                       label="Category Filters"

@@ -479,9 +479,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     const shape = baseLevel.spatialShape;
     const clampIndex = (norm: number, extent: number) =>
       Math.max(0, Math.min(extent - 1, Math.floor(norm * extent)));
+    // Shader lockstep with `toBaseVoxel`: unit-box local → corner-anchored
+    // voxel, no flip.
     const voxelIndex: [number, number, number] = [
       clampIndex(localPos[0] + 0.5, shape[0]),
-      clampIndex(0.5 - localPos[1], shape[1]),
+      clampIndex(localPos[1] + 0.5, shape[1]),
       clampIndex(localPos[2] + 0.5, shape[2]),
     ];
     // One all-channels read at the hit voxel (per hit, not per march step).
@@ -663,10 +665,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           probing, annotation placement and selection keep working, and
           `computeSceneVisibility` still measures this layer's own box for the
           planner. Only the rasterization is dropped, which is the whole point. */}
+      {/* Corner-anchored: the unit box is offset by half its size so group-
+          local spans [0..shape] and voxel v renders at exactly affine(v) —
+          COORDINATE_SYSTEMS.md "Coordinate conventions". */}
       <mesh
         key={pool.structureSignature}
         ref={meshRef}
         scale={volumeSize}
+        position={[volumeSize[0] / 2, volumeSize[1] / 2, volumeSize[2] / 2]}
         renderOrder={1}
         visible={isPrimary}
       >
@@ -676,7 +682,11 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       </mesh>
 
       {isDebug && (
-        <mesh scale={volumeSize} renderOrder={2}>
+        <mesh
+          scale={volumeSize}
+          position={[volumeSize[0] / 2, volumeSize[1] / 2, volumeSize[2] / 2]}
+          renderOrder={2}
+        >
           <boxGeometry args={[1, 1, 1]} />
           <meshBasicMaterial color="#155e75" opacity={0.06} transparent={true} depthWrite={false} />
         </mesh>

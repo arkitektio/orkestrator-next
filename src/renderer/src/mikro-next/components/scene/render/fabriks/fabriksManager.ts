@@ -1,8 +1,16 @@
 import * as THREE from "three";
+import type { MeshStandardNodeMaterial } from "three/webgpu";
 import { LruByteCache } from "./lruByteCache";
+import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
+import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
+import {
+  DEFAULT_INSTANCE_COLORMAP,
+  type FabriksInstanceColormap,
+} from "./instanceColormaps";
 import { buildFabriksCellIndex, type FabriksCellEntry, type FabriksCellIndex, type FabriksCellRow } from "./fabriksCatalogs";
 import type { FabriksCollection, FabriksTransportStats } from "./fabriksCollection";
 import type { MeshoptDecoderLike } from "./fabriksDecode";
+import { cellGridBox } from "./fabriksGrid";
 import { groupByRowGroup, planFabriksCells, type FabriksPlanInput } from "./fabriksPlanner";
 
 /**
@@ -31,14 +39,26 @@ import { groupByRowGroup, planFabriksCells, type FabriksPlanInput } from "./fabr
 
 const DEFAULT_CACHE_BYTES = 192 * 1024 * 1024;
 const DEFAULT_MAX_CELLS = 2048;
+/** 5M triangles. `maxCells` caps cell COUNT; this caps what they weigh. */
+const DEFAULT_MAX_INDICES = 15_000_000;
+/**
+ * Row groups in flight at once. Sequential fetching made wall time the SUM of
+ * round trips; a handful in parallel hides most of the latency while decode
+ * (still main-thread) naturally paces the pipeline. Workers pull groups from
+ * one near-first cursor, so priority order is preserved.
+ */
+const CONCURRENT_FETCHES = 4;
 
 /** The debug overlay's child name; the reconcile loop must never treat it as a cell. */
 const CELL_BOXES_NAME = "__fabriks-cell-boxes__";
 
 export type FabriksMaterialConfig = {
+  /** An explicit uniform color OPTS OUT of instance coloring. */
   color: readonly number[] | null | undefined;
   wireframe: boolean;
   opacity: number;
+  /** Which instance colormap to color by; defaults to the standard one. */
+  instanceColormap?: FabriksInstanceColormap;
 };
 
 /** Camera-derived inputs per plan. Budgets live in `FabriksPlanConfig`. */
@@ -53,6 +73,8 @@ export type FabriksPlanConfig = {
   pixelBudget: number;
   /** Cap on planned cells. Exhausting it coarsens; it never drops a region. */
   maxCells: number;
+  /** Cap on the plan's total index count; exhausting it coarsens likewise. */
+  maxIndices: number;
   /** Ignore camera settles (the last plan keeps rendering) — for inspecting a
    * plan from other angles without replanning it away. */
   frozen: boolean;
@@ -60,13 +82,13 @@ export type FabriksPlanConfig = {
 
 /**
  * Counters over the manager's lifetime, mutated in place — never a store
- * write at streaming cadence (P17). All `…Ms` are main-thread sums; `streamMs`
- * brackets `readFetchGroup` (network + parse + decode together — the
- * transport's own `fetchMs` isolates the network share), `buildMs` brackets
- * BufferGeometry assembly and `normalsMs` the `computeVertexNormals` share of
- * it. `completeMs` is the wall clock from a plan to its last mounted cell —
- * the mesh twin of the brick stats' `timeToSharpMs`, and the number to judge
- * streaming by.
+ * write at streaming cadence (P17). `streamMs` brackets `readFetchGroup`
+ * (network + parse + decode together — the transport's own `fetchMs` isolates
+ * the network share) and is a CONCURRENT SUM across the parallel fetchers, so
+ * it overstates wall time; `buildMs` brackets BufferGeometry assembly and
+ * `normalsMs` the `computeVertexNormals` share of it. `completeMs` is the
+ * wall clock from a plan to its last mounted cell — the mesh twin of the
+ * brick stats' `timeToSharpMs`, and the number to judge streaming by.
  */
 export type FabriksManagerStats = {
   plans: number;
@@ -79,6 +101,9 @@ export type FabriksManagerStats = {
   /** Drains stopped by a superseding replan (or disposal) mid-work. */
   abortedDrains: number;
   completeMs: number;
+  /** World-space index rebuilds from a placement change. More than a handful
+   * means something is churning matrices that should be value-stable. */
+  indexRebuilds: number;
 };
 
 /** One plan's shape, kept for the debug panel after the plan itself is consumed. */
@@ -104,10 +129,26 @@ export class FabriksCollectionManager {
     fetchErrors: 0,
     abortedDrains: 0,
     completeMs: 0,
+    indexRebuilds: 0,
   };
 
-  private readonly material: THREE.MeshStandardMaterial;
-  private readonly cache: LruByteCache<THREE.Mesh>;
+  private readonly material: MeshStandardNodeMaterial;
+  /** Decoded cell geometries, owned here: mounting never transfers ownership
+   * (the batch copies; the mesh path shares), so eviction is the ONE place a
+   * geometry is disposed. */
+  private readonly cache: LruByteCache<THREE.BufferGeometry>;
+  /** All mounted cells as one BatchedMesh — one render object instead of one
+   * per cell. The unbatched path below is the A/B fallback. */
+  private readonly batch: FabriksBatchRenderer;
+  private batching = true;
+  /** The unbatched path's per-cell meshes (share cache-owned geometries). */
+  private readonly mountedMeshes = new Map<string, THREE.Mesh>();
+  /** Voxel → world for this layer, updated in place via `setVoxelToWorld`. */
+  private readonly voxelToWorld = new THREE.Matrix4();
+  /** Catalog rows, kept so a placement change rebuilds the world-space index
+   * without re-reading the catalog — and without touching the caches, whose
+   * geometry is in VOXEL space and survives any placement. */
+  private catalogRows: FabriksCellRow[] | null = null;
   private index: FabriksCellIndex | null = null;
   private planned = new Map<string, string>();
   private plannedEntries: readonly FabriksCellEntry[] = [];
@@ -125,12 +166,16 @@ export class FabriksCollectionManager {
   private planStartedAt = 0;
   private showCellBoxes = false;
   private cellBoxes: THREE.LineSegments | null = null;
+  /** Derivative (per-face) normals: no normals computed or uploaded at all.
+   * The default — `computeVertexNormals` was the largest main-thread cost on
+   * the streaming path, and per-cell smooth normals seam at cell borders. */
+  private flatNormals = true;
+  /** The colormap currently baked into the material (null = uniform color). */
+  private appliedColormap: FabriksInstanceColormap | null = DEFAULT_INSTANCE_COLORMAP;
 
   constructor(
     private readonly opts: {
       collection: FabriksCollection;
-      /** Voxel → world for this layer; the index is built in world space. */
-      voxelToWorld: THREE.Matrix4;
       loadDecoder: () => Promise<MeshoptDecoderLike | null>;
       onInvalidate: () => void;
       /** Streaming-cadence stats signal for debug consumers; throttle at the
@@ -144,32 +189,119 @@ export class FabriksCollectionManager {
     this.planConfig = {
       pixelBudget: 1,
       maxCells: opts.maxCells ?? DEFAULT_MAX_CELLS,
+      maxIndices: DEFAULT_MAX_INDICES,
       frozen: false,
     };
-    this.material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0.72, 0.72, 0.76),
-      roughness: 0.85,
-      metalness: 0.0,
-      side: THREE.DoubleSide,
-    });
-    this.cache = new LruByteCache<THREE.Mesh>(
+    // Node material, instance-colored by `objectOrdinal` by default; the
+    // flat-normals default is baked in there too (fabriksMaterial.ts).
+    this.material = createFabriksMaterial();
+    this.cache = new LruByteCache<THREE.BufferGeometry>(
       opts.maxCacheBytes ?? DEFAULT_CACHE_BYTES,
-      (_key, mesh) => this.disposeMesh(mesh),
+      (key, geometry) => {
+        // three never disposes GPU buffers for you, and a streaming layer is
+        // exactly the unbounded leak OCTREE_RENDERER.md P13 warns about.
+        this.unmountCell(key);
+        geometry.dispose();
+      },
     );
+    this.batch = new FabriksBatchRenderer(this.material, (next) => {
+      this.group.add(next); // the batch removes its predecessor itself
+      this.opts.onInvalidate();
+    });
   }
 
-  setMaterialConfig({ color, wireframe, opacity }: FabriksMaterialConfig): void {
-    if (color && color.length >= 3) {
+  setMaterialConfig({ color, wireframe, opacity, instanceColormap }: FabriksMaterialConfig): void {
+    // Coloring mode: instance colors (objectOrdinal palette) by DEFAULT; a
+    // layer that declares an explicit materialColor opts into that uniform.
+    const uniformColor = Boolean(color && color.length >= 3);
+    if (uniformColor && color) {
       this.material.color.setRGB(color[0] / 255, color[1] / 255, color[2] / 255);
     }
+    const targetColormap = uniformColor ? null : (instanceColormap ?? DEFAULT_INSTANCE_COLORMAP);
+    const coloringChanged = targetColormap !== this.appliedColormap;
+    if (coloringChanged) {
+      setInstanceColoring(this.material, targetColormap);
+      this.appliedColormap = targetColormap;
+    }
+
+    // `needsUpdate` only on real pipeline-state flips: under the WebGPU node
+    // system it can recompile the material, so an opacity slider must not set
+    // it per tick. Color and opacity are uniforms and need nothing.
+    const transparent = opacity < 1;
+    const pipelineChanged =
+      coloringChanged ||
+      this.material.wireframe !== wireframe ||
+      this.material.transparent !== transparent;
     this.material.wireframe = wireframe;
     this.material.opacity = opacity;
-    this.material.transparent = opacity < 1;
-    this.material.needsUpdate = true;
+    this.material.transparent = transparent;
+    if (pipelineChanged) this.material.needsUpdate = true;
+  }
+
+  /**
+   * The layer's placement, applied without disruption: the group matrix moves,
+   * the world-space index is rebuilt from the kept catalog rows, and the plan
+   * re-runs — but the byte and geometry caches survive untouched, because the
+   * geometry itself is in voxel space. (This used to rebuild the entire
+   * manager, which turned any placement-adjacent store change into a full
+   * refetch.) A value-equal matrix is a no-op.
+   */
+  setVoxelToWorld(matrix: THREE.Matrix4): void {
+    if (this.disposed || this.voxelToWorld.equals(matrix)) return;
+    this.voxelToWorld.copy(matrix);
+    this.group.matrix.copy(matrix);
+    this.group.matrixWorldNeedsUpdate = true;
+    if (this.catalogRows) {
+      this.index = buildFabriksCellIndex(
+        this.catalogRows,
+        this.opts.collection.manifest,
+        this.voxelToWorld,
+      );
+      this.stats.indexRebuilds++;
+      if (!this.planConfig.frozen && this.lastView) this.runPlan(this.lastView);
+    }
+    this.opts.onInvalidate();
+  }
+
+  getFlatNormals(): boolean {
+    return this.flatNormals;
+  }
+
+  /**
+   * Flat (derivative) vs smooth (computed) normals. The cached geometries are
+   * brought in line either way — smooth retrofits normals (a smooth material
+   * with no normal attribute shades flat regardless), flat DELETES them (the
+   * batch's fixed attribute layout must match what future decodes carry) —
+   * and a batch in use rebuilds under the new layout.
+   */
+  setFlatNormals(flat: boolean): void {
+    if (this.flatNormals === flat) return;
+    this.flatNormals = flat;
+    this.material.flatShading = flat;
+    this.material.needsUpdate = true; // legitimate: the normal path changes
+    if (flat) {
+      this.cache.forEach((geometry) => {
+        if (geometry.getAttribute("normal")) geometry.deleteAttribute("normal");
+      });
+    } else {
+      const start = performance.now();
+      this.cache.forEach((geometry) => {
+        if (!geometry.getAttribute("normal")) geometry.computeVertexNormals();
+      });
+      this.stats.normalsMs += performance.now() - start;
+    }
+    if (this.batching) this.batch.refresh();
+    this.opts.onInvalidate();
+    this.opts.onStatsChanged?.();
   }
 
   getPlanConfig(): Readonly<FabriksPlanConfig> {
     return this.planConfig;
+  }
+
+  /** The instance colormap in effect, or null when a uniform color is. */
+  getAppliedColormap(): FabriksInstanceColormap | null {
+    return this.appliedColormap;
   }
 
   /**
@@ -185,7 +317,8 @@ export class FabriksCollectionManager {
     const thawed = previous.frozen && !this.planConfig.frozen;
     const changed =
       this.planConfig.pixelBudget !== previous.pixelBudget ||
-      this.planConfig.maxCells !== previous.maxCells;
+      this.planConfig.maxCells !== previous.maxCells ||
+      this.planConfig.maxIndices !== previous.maxIndices;
     if ((thawed || changed) && !this.planConfig.frozen && this.lastView) {
       this.runPlan(this.lastView);
     }
@@ -207,7 +340,8 @@ export class FabriksCollectionManager {
     if (this.index || this.disposed) return;
     const rows: FabriksCellRow[] = await this.opts.collection.loadCellCatalog();
     if (this.disposed) return;
-    this.index = buildFabriksCellIndex(rows, this.opts.collection.manifest, this.opts.voxelToWorld);
+    this.catalogRows = rows;
+    this.index = buildFabriksCellIndex(rows, this.opts.collection.manifest, this.voxelToWorld);
   }
 
   updatePlan(view: FabriksPlanView): void {
@@ -226,6 +360,7 @@ export class FabriksCollectionManager {
     const plan = planFabriksCells({
       index,
       maxCells: this.planConfig.maxCells,
+      maxIndices: this.planConfig.maxIndices,
       pixelBudget: this.planConfig.pixelBudget,
       previousKeys: this.previousKeys,
       ...view,
@@ -244,16 +379,29 @@ export class FabriksCollectionManager {
     };
     this.cache.protect(this.planned.keys());
 
-    // Drop no-longer-planned cells from the scene; they stay cached. The
-    // debug overlay is not a cell and never reconciles away.
-    for (const child of [...this.group.children]) {
-      if (child === this.cellBoxes) continue;
-      if (!this.planned.has(child.name)) this.group.remove(child);
+    // Room for the whole plan up front, so no rebuild lands mid-drain.
+    if (this.batching) {
+      let vertices = 0;
+      let indices = 0;
+      for (const cell of plan.cells) {
+        vertices += cell.vertexCount;
+        indices += cell.indexCount;
+      }
+      this.batch.ensureCapacity(
+        Math.ceil((plan.cells.length + 1) * 1.2),
+        Math.ceil(vertices * 1.2),
+        Math.ceil(indices * 1.2),
+      );
+    }
+    // Drop no-longer-planned cells from the scene; they stay cached.
+    for (const key of [...this.mountedKeys()]) {
+      if (!this.planned.has(key)) this.unmountCell(key);
     }
     // Mount already-decoded cells instantly.
     for (const key of this.planned.keys()) {
+      if (this.isMounted(key)) continue;
       const cached = this.cache.get(key);
-      if (cached && cached.parent !== this.group) this.group.add(cached);
+      if (cached) this.mountCell(key, cached);
     }
     this.rebuildCellBoxes();
     this.stats.plans++;
@@ -293,51 +441,35 @@ export class FabriksCollectionManager {
           : null;
         if (this.isStale(generation)) return this.abandon();
 
-        // Near-first: `missing` preserves the plan's ordering, so the closest
-        // cell's row group is fetched first.
-        for (const group of groupByRowGroup(missing)) {
-          if (this.isStale(generation)) return this.abandon();
-          const streamStart = performance.now();
-          let decoded;
-          try {
-            decoded = await this.opts.collection.readFetchGroup(group, decoder);
-          } catch (error) {
-            this.stats.fetchErrors++;
-            this.opts.onStatsChanged?.();
-            console.error(
-              `[fabriks] failed to read level ${group.level} part ${group.part} row group ${group.rowGroup}:`,
-              error,
-            );
-            continue;
+        // Near-first, a few in flight: `missing` preserves the plan's
+        // ordering and the workers pull from one shared cursor, so the
+        // closest cell's row group is still requested first — but round trips
+        // overlap instead of summing.
+        const groups = groupByRowGroup(missing);
+        const failed: typeof groups = [];
+        let cursor = 0;
+        const worker = async (): Promise<void> => {
+          while (!this.isStale(generation)) {
+            const next = cursor++;
+            if (next >= groups.length) return;
+            const group = groups[next];
+            if (!(await this.streamGroup(group, decoder, generation))) failed.push(group);
           }
-          this.stats.streamMs += performance.now() - streamStart;
+        };
+        await Promise.all(
+          Array.from({ length: Math.min(CONCURRENT_FETCHES, groups.length) }, worker),
+        );
+        if (this.isStale(generation)) return this.abandon();
+
+        // One retry round for transiently-failed groups (an expired-grant 403
+        // heals on the forced rotation the failure triggered). A group that
+        // fails twice stays a hole ONLY until the next replan — its cells are
+        // uncached, so any settle refetches them.
+        for (const group of failed) {
           if (this.isStale(generation)) return this.abandon();
-
-          const buildStart = performance.now();
-          for (const [key, cell] of decoded) {
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute("position", new THREE.BufferAttribute(cell.positions, 3));
-            geometry.setAttribute("objectOrdinal", new THREE.BufferAttribute(cell.objectOrdinals, 1));
-            geometry.setIndex(new THREE.BufferAttribute(cell.indices, 1));
-            // fabriks carries no normals column — the surface is watertight per
-            // cell, so computing them here is the intended path, not a fallback.
-            const normalsStart = performance.now();
-            geometry.computeVertexNormals();
-            this.stats.normalsMs += performance.now() - normalsStart;
-
-            const mesh = new THREE.Mesh(geometry, this.material);
-            mesh.name = key;
-            mesh.matrixAutoUpdate = false;
-            this.cache.set(key, mesh, cell.bytes);
-            // Mount only if still planned: a replan may have raced this fetch,
-            // and the cache absorbs the result either way.
-            if (this.planned.has(key)) this.group.add(mesh);
-          }
-          this.stats.buildMs += performance.now() - buildStart;
-          this.stats.decodedCells += decoded.size;
-          this.opts.onInvalidate();
-          this.opts.onStatsChanged?.();
+          await this.streamGroup(group, decoder, generation);
         }
+        if (this.isStale(generation)) return this.abandon();
         this.stats.completeMs = performance.now() - this.planStartedAt;
         this.opts.onStatsChanged?.();
       }
@@ -346,9 +478,116 @@ export class FabriksCollectionManager {
     }
   }
 
+  /** Fetch, decode and mount one row group's worth of planned cells.
+   * Returns false on a fetch/decode failure (the drain retries once). */
+  private async streamGroup(
+    group: ReturnType<typeof groupByRowGroup>[number],
+    decoder: MeshoptDecoderLike | null,
+    generation: number,
+  ): Promise<boolean> {
+    const streamStart = performance.now();
+    let decoded;
+    try {
+      decoded = await this.opts.collection.readFetchGroup(group, decoder);
+    } catch (error) {
+      this.stats.fetchErrors++;
+      this.opts.onStatsChanged?.();
+      console.error(
+        `[fabriks] failed to read level ${group.level} part ${group.part} row group ${group.rowGroup}:`,
+        error,
+      );
+      return false;
+    }
+    this.stats.streamMs += performance.now() - streamStart;
+    if (this.isStale(generation)) return true;
+
+    const buildStart = performance.now();
+    for (const [key, cell] of decoded) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(cell.positions, 3));
+      geometry.setAttribute("objectOrdinal", new THREE.BufferAttribute(cell.objectOrdinals, 1));
+      geometry.setIndex(new THREE.BufferAttribute(cell.indices, 1));
+      // fabriks carries no normals column. Flat (derivative) shading needs
+      // none at all; smooth shading computes them here.
+      if (!this.flatNormals) {
+        const normalsStart = performance.now();
+        geometry.computeVertexNormals();
+        this.stats.normalsMs += performance.now() - normalsStart;
+      }
+      this.applyAnalyticBounds(geometry, key);
+
+      this.cache.set(key, geometry, cell.bytes);
+      // Mount only if still planned: a replan may have raced this fetch, and
+      // the cache absorbs the result either way.
+      if (this.planned.has(key) && !this.isMounted(key)) this.mountCell(key, geometry);
+    }
+    this.stats.buildMs += performance.now() - buildStart;
+    this.stats.decodedCells += decoded.size;
+    this.opts.onInvalidate();
+    this.opts.onStatsChanged?.();
+    return true;
+  }
+
   /** A drain from a superseded plan stops rather than mounting stale work. */
   private isStale(generation: number): boolean {
     return this.disposed || generation !== this.generation;
+  }
+
+  getBatching(): boolean {
+    return this.batching;
+  }
+
+  /** A/B switch: one BatchedMesh (default) vs one Mesh per cell. Remounts the
+   * current plan's cached cells into the chosen path; nothing refetches. */
+  setBatching(batching: boolean): void {
+    if (this.batching === batching || this.disposed) return;
+    for (const key of [...this.mountedKeys()]) this.unmountCell(key);
+    if (!batching) this.batch.dispose();
+    this.batching = batching;
+    for (const key of this.planned.keys()) {
+      const cached = this.cache.get(key);
+      if (cached) this.mountCell(key, cached);
+    }
+    this.opts.onInvalidate();
+    this.opts.onStatsChanged?.();
+  }
+
+  private mountedKeys(): IterableIterator<string> {
+    return this.batching ? this.batch.keys() : this.mountedMeshes.keys();
+  }
+
+  private isMounted(key: string): boolean {
+    return this.batching ? this.batch.has(key) : this.mountedMeshes.has(key);
+  }
+
+  private mountCell(key: string, geometry: THREE.BufferGeometry): void {
+    if (this.batching) {
+      // The batch's attribute layout is fixed, so the geometry must match the
+      // CURRENT normals mode even if it was decoded under the other one.
+      if (this.flatNormals) {
+        if (geometry.getAttribute("normal")) geometry.deleteAttribute("normal");
+      } else if (!geometry.getAttribute("normal")) {
+        const start = performance.now();
+        geometry.computeVertexNormals();
+        this.stats.normalsMs += performance.now() - start;
+      }
+      this.batch.mount(key, geometry);
+      return;
+    }
+    const mesh = new THREE.Mesh(geometry, this.material);
+    mesh.name = key;
+    mesh.matrixAutoUpdate = false;
+    this.group.add(mesh);
+    this.mountedMeshes.set(key, mesh);
+  }
+
+  private unmountCell(key: string): void {
+    if (this.batch.has(key)) this.batch.unmount(key);
+    const mesh = this.mountedMeshes.get(key);
+    if (mesh) {
+      mesh.removeFromParent();
+      this.mountedMeshes.delete(key);
+    }
   }
 
   private abandon(): void {
@@ -359,20 +598,23 @@ export class FabriksCollectionManager {
   /** One paste-able snapshot for DebugPanel and the octree debug report. */
   buildDebugReport(): {
     planConfig: FabriksPlanConfig;
+    flatNormals: boolean;
     stats: FabriksManagerStats;
     lastPlan: FabriksPlanSummary | null;
     mountedCells: number;
     cache: { cells: number; bytes: number };
+    batch: FabriksBatchStats | null;
     transport: FabriksTransportStats | null;
     catalog: { cells: number; levels: number[]; roots: number } | null;
   } {
-    const overlay = this.cellBoxes ? 1 : 0;
     return {
       planConfig: { ...this.planConfig },
+      flatNormals: this.flatNormals,
       stats: { ...this.stats },
       lastPlan: this.lastPlan ? { ...this.lastPlan, byLevel: { ...this.lastPlan.byLevel } } : null,
-      mountedCells: this.group.children.length - (this.cellBoxes?.parent === this.group ? overlay : 0),
+      mountedCells: this.batching ? this.batch.count : this.mountedMeshes.size,
       cache: { cells: this.cache.size, bytes: this.cache.bytes },
+      batch: this.batching ? this.batch.stats() : null,
       transport: this.opts.collection.transportStats(),
       catalog: this.index
         ? {
@@ -387,6 +629,29 @@ export class FabriksCollectionManager {
   private ensureDecoder(): Promise<MeshoptDecoderLike | null> {
     if (!this.decoderPromise) this.decoderPromise = this.opts.loadDecoder();
     return this.decoderPromise;
+  }
+
+  /**
+   * Bounding volumes from the catalog, not from the vertices. three would
+   * otherwise walk every position on first frustum test — per cell, on the
+   * main thread. The catalog's box is exact up to quantization, so it is
+   * expanded by one quantization step of the cell's grid box.
+   */
+  private applyAnalyticBounds(geometry: THREE.BufferGeometry, key: string): void {
+    const entry = this.index?.byKey.get(key);
+    if (!entry) return;
+    const grid = cellGridBox(this.opts.collection.manifest.grid, entry.level, entry.cell);
+    const box = new THREE.Box3(
+      new THREE.Vector3(...entry.bboxMin),
+      new THREE.Vector3(...entry.bboxMax),
+    );
+    for (const axis of [0, 1, 2] as const) {
+      const step = (grid.max[axis] - grid.min[axis]) / 65535;
+      box.min.setComponent(axis, box.min.getComponent(axis) - step);
+      box.max.setComponent(axis, box.max.getComponent(axis) + step);
+    }
+    geometry.boundingBox = box;
+    geometry.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
   }
 
   /**
@@ -443,17 +708,12 @@ export class FabriksCollectionManager {
     this.group.add(this.cellBoxes);
   }
 
-  private disposeMesh(mesh: THREE.Mesh): void {
-    // three never disposes GPU buffers for you, and a streaming layer is
-    // exactly the unbounded leak OCTREE_RENDERER.md P13 warns about.
-    mesh.geometry.dispose();
-    mesh.removeFromParent();
-  }
-
   dispose(): void {
     this.disposed = true;
     this.generation++;
-    this.cache.clear();
+    this.cache.clear(); // evictions unmount and dispose every geometry
+    this.batch.dispose();
+    this.mountedMeshes.clear();
     if (this.cellBoxes) {
       this.cellBoxes.geometry.dispose();
       (this.cellBoxes.material as THREE.Material).dispose();

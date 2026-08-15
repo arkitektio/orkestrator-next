@@ -1,5 +1,5 @@
 import { parquetMetadataAsync, parquetRead } from "hyparquet";
-import type { AsyncBuffer, FileMetaData } from "hyparquet";
+import type { AsyncBuffer, FileMetaData, RowGroup } from "hyparquet";
 import { decompress as zstdDecompress } from "fzstd";
 
 /**
@@ -8,8 +8,14 @@ import { decompress as zstdDecompress } from "fzstd";
  *
  * This is where the format's locator pays off. A cell catalog row names the
  * `(part, rowGroup)` holding a cell, so a frame costs one footer per part
- * touched — cached for the life of the reader — plus the column chunks of the
- * row groups it actually needs. Not the level, and not the part.
+ * touched — cached for the life of the reader — plus ONE ranged read per row
+ * group it actually needs. Not the level, not the part, and not a read per
+ * column chunk: hyparquet slices per column chunk, and a fabriks geometry row
+ * group has ten columns, so handing it the raw ranged reader would turn one
+ * 512 KiB row group into ten small authenticated round trips. `readRowGroup`
+ * therefore prefetches the group's whole byte span — column chunks of one row
+ * group are contiguous by construction — and serves hyparquet's slices from
+ * that buffer.
  *
  * The footer is why `byteLength` is a constructor argument rather than
  * something discovered: it sits at the END of the file, our store speaks
@@ -48,14 +54,44 @@ export function asyncBufferFor(path: string, byteLength: number, read: RangeRead
   };
 }
 
+/**
+ * The half-open byte span holding every column chunk of one row group.
+ *
+ * A chunk starts at its dictionary page when it has one, else its first data
+ * page. Some writers record `dictionary_page_offset: 0` to mean "none" — a
+ * dictionary at offset 0 is impossible (the file starts with the `PAR1`
+ * magic), so zero and offsets past the data page are ignored, the same guard
+ * arrow-rs uses.
+ */
+export function rowGroupByteSpan(group: RowGroup): { start: number; end: number } {
+  let start = Number.POSITIVE_INFINITY;
+  let end = 0;
+  for (const column of group.columns) {
+    const meta = column.meta_data;
+    if (!meta) continue;
+    const dataStart = Number(meta.data_page_offset);
+    const dictionary = meta.dictionary_page_offset;
+    const chunkStart =
+      dictionary !== undefined && Number(dictionary) > 0 && Number(dictionary) < dataStart
+        ? Number(dictionary)
+        : dataStart;
+    start = Math.min(start, chunkStart);
+    end = Math.max(end, chunkStart + Number(meta.total_compressed_size));
+  }
+  if (!Number.isFinite(start) || end <= start) {
+    throw new Error("A row group's column chunks carry no metadata; its bytes cannot be located.");
+  }
+  return { start, end };
+}
+
 export class ParquetPart {
   private metadataPromise: Promise<FileMetaData> | null = null;
   private readonly file: AsyncBuffer;
 
   constructor(
     readonly path: string,
-    byteLength: number,
-    read: RangeReader,
+    private readonly byteLength: number,
+    private readonly read: RangeReader,
   ) {
     this.file = asyncBufferFor(path, byteLength, read);
   }
@@ -103,10 +139,44 @@ export class ParquetPart {
     columns: string[],
     range?: { rowStart: number; rowEnd: number },
   ): Promise<Record<string, unknown>[]> {
+    return this.readWith(this.file, columns, range);
+  }
+
+  /**
+   * Read exactly the rows of one row group, with ONE ranged read for its
+   * bytes: the group's span is prefetched whole and hyparquet's per-column
+   * slices are served from it. A slice outside the span (there should be
+   * none — the footer is already parsed) falls through to the ranged reader.
+   */
+  async readRowGroup(rowGroup: number, columns: string[]): Promise<Record<string, unknown>[]> {
+    const meta = await this.metadata();
+    const range = await this.rowRange(rowGroup);
+    const span = rowGroupByteSpan(meta.row_groups[rowGroup]);
+    const prefetched = await this.read(this.path, span.start, span.end);
+    const file: AsyncBuffer = {
+      byteLength: this.byteLength,
+      slice: async (start: number, end?: number): Promise<ArrayBuffer> => {
+        const stop = end ?? this.byteLength;
+        if (start >= span.start && stop <= span.end) {
+          const out = new ArrayBuffer(Math.max(0, stop - start));
+          new Uint8Array(out).set(prefetched.subarray(start - span.start, stop - span.start));
+          return out;
+        }
+        return this.file.slice(start, stop);
+      },
+    };
+    return this.readWith(file, columns, range);
+  }
+
+  private async readWith(
+    file: AsyncBuffer,
+    columns: string[],
+    range?: { rowStart: number; rowEnd: number },
+  ): Promise<Record<string, unknown>[]> {
     const metadata = await this.metadata();
     let rows: Record<string, unknown>[] = [];
     await parquetRead({
-      file: this.file,
+      file,
       metadata,
       columns,
       compressors: PARQUET_COMPRESSORS,
@@ -118,10 +188,5 @@ export class ParquetPart {
       },
     });
     return rows;
-  }
-
-  /** Read exactly the rows of one row group. */
-  async readRowGroup(rowGroup: number, columns: string[]): Promise<Record<string, unknown>[]> {
-    return this.readRows(columns, await this.rowRange(rowGroup));
   }
 }

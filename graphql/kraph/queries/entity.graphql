@@ -4,6 +4,14 @@ query GetEntity($id: GraphID!) {
   }
 }
 
+# The category an entity was claimed under — enough to decide which relation
+# categories apply between two entities, without pulling the whole entity.
+query GetListEntity($id: GraphID!) {
+  entity(id: $id) {
+    ...ListEntity
+  }
+}
+
 query SearchEntities($category: ID!, $search: String, $values: [GraphID!], ) {
   options: entities(
     entityCategoryId: $category,
@@ -18,5 +26,36 @@ query SearchEntities($category: ID!, $search: String, $values: [GraphID!], ) {
 query ListEntities($entityCategoryId: ID!, $filters: EntityFilter, $pagination: EntityPaginationInput) {
   entities(entityCategoryId: $entityCategoryId, filters: $filters, pagination: $pagination) {
     ...ListEntity
+  }
+}
+
+# Linking needs a concrete entity, and entities are graph-scoped: the same word
+# declared by two graphs is two rows holding two entities. So the picker drills
+# down — the categories declaring the word first, then what each one holds.
+query SearchLinkableCategories($search: String) {
+  entityCategories(
+    filters: { search: $search }
+    pagination: { limit: 20 }
+  ) {
+    id
+    label
+    graph {
+      id
+      name
+    }
+    term {
+      key
+    }
+  }
+}
+
+query SearchLinkableEntities($category: ID!, $search: String) {
+  entities(
+    entityCategoryId: $category
+    filters: { search: $search }
+    pagination: { limit: 20 }
+  ) {
+    ...ListEntity
+    externalId
   }
 }

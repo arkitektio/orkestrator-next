@@ -7,11 +7,6 @@ fragment BaseCategory on Category {
     ...Term
   }
   key
-  tags {
-    id
-    name
-    description
-  }
   purl
   relevantQueries {
     ...ListGraphQuery

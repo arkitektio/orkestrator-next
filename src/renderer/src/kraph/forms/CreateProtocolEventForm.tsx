@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import {
   ProtocolEventCategoryFragment,
-  useCreateProtocolEventMutation,
+  useAssertProtocolEventExistsMutation,
 } from "../api/graphql";
 
 type EventRole = ProtocolEventCategoryFragment["inputs"][number];
@@ -38,7 +38,7 @@ export default (props: {
   protocolEventCategory: ProtocolEventCategoryFragment;
   rolemap: { [key: string]: any };
 }) => {
-  const [add] = useCreateProtocolEventMutation();
+  const [add] = useAssertProtocolEventExistsMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

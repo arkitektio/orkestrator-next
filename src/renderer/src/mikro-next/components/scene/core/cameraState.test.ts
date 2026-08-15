@@ -52,47 +52,25 @@ const makeFrame = (camera: THREE.Camera, target = new THREE.Vector3()): CameraFr
 });
 
 describe("buildSceneToWorldMatrix", () => {
-  // shape [z, y, x] = [10, 20, 30] → centering translates (-15, +10, -5) and
-  // flips y. With an identity affine the frame map is the centering's inverse.
-  it("undoes the layer centering and y-flip", () => {
-    const matrix = buildSceneToWorldMatrix(makeLayer({}));
-    const world = new THREE.Vector3(0, 0, 0).applyMatrix4(matrix);
-    expect(world.x).toBeCloseTo(15);
-    expect(world.y).toBeCloseTo(10);
-    expect(world.z).toBeCloseTo(5);
-  });
-
-  it("flips the y direction rather than only offsetting it", () => {
-    const matrix = buildSceneToWorldMatrix(makeLayer({}));
-    const world = new THREE.Vector3(1, 4, 2).applyMatrix4(matrix);
-    expect(world.x).toBeCloseTo(16);
-    expect(world.y).toBeCloseTo(6); // 10 - 4, not 10 + 4
-    expect(world.z).toBeCloseTo(7);
-  });
-
-  // A zero extent removes the centering TRANSLATION but not the y-flip: the
-  // flip is a convention of the frame, not a function of the layer's size.
-  // Only §4's normalization (which deletes per-layer centering outright) makes
-  // this map the identity.
-  it("reduces to the y-flip alone for a layer with no extent to centre", () => {
-    const matrix = buildSceneToWorldMatrix(makeLayer({ shape: [0, 0, 0] }));
-    const world = new THREE.Vector3(3, 4, 5).applyMatrix4(matrix);
-    expect(world.toArray()).toEqual([3, -4, 5]);
-  });
-
-  it("carries the layer affine's scale into world units", () => {
-    // A 2× isotropic scale: world µm are twice the (uncentered) voxel index.
-    const affine = [
-      [2, 0, 0, 0],
-      [0, 2, 0, 0],
-      [0, 0, 2, 0],
-      [0, 0, 0, 1],
-    ];
-    const matrix = buildSceneToWorldMatrix(makeLayer({ affineMatrix: affine }));
-    const world = new THREE.Vector3(0, 0, 0).applyMatrix4(matrix);
-    expect(world.x).toBeCloseTo(30);
-    expect(world.y).toBeCloseTo(20);
-    expect(world.z).toBeCloseTo(10);
+  // Corner-anchored frames (COORDINATE_SYSTEMS.md "Coordinate conventions"):
+  // layers render at their plain affine, so three-space IS world µm and the
+  // frame map is identity — whatever the layer's shape or affine.
+  it("is the identity — three-space is world space", () => {
+    for (const layer of [
+      makeLayer({}),
+      makeLayer({ shape: [0, 0, 0] }),
+      makeLayer({
+        affineMatrix: [
+          [2, 0, 0, 0],
+          [0, 2, 0, 0],
+          [0, 0, 2, 0],
+          [0, 0, 0, 1],
+        ],
+      }),
+    ]) {
+      const world = new THREE.Vector3(1, 4, 2).applyMatrix4(buildSceneToWorldMatrix(layer));
+      expect(world.toArray()).toEqual([1, 4, 2]);
+    }
   });
 });
 
@@ -155,16 +133,17 @@ describe("captureCameraState", () => {
 
   it("writes the target in world µm under the world's axis names", () => {
     const camera = new THREE.OrthographicCamera();
-    const state = captureCameraState(makeFrame(camera), "2D", scene);
-    expect(state.position).toMatchObject({ x: 15, y: 10, z: 5 });
+    // Identity frame map: the three-space target IS the world position.
+    const state = captureCameraState(makeFrame(camera, new THREE.Vector3(4, -7, 2)), "2D", scene);
+    expect(state.position).toMatchObject({ x: 4, y: -7 });
   });
 
   it("carries the collapsed dim selections in the same map", () => {
     const camera = new THREE.OrthographicCamera();
-    const state = captureCameraState(makeFrame(camera), "2D", scene, {
+    const state = captureCameraState(makeFrame(camera, new THREE.Vector3(4, 0, 0)), "2D", scene, {
       dimSelections: { t: 7 },
     });
-    expect(state.position).toMatchObject({ x: 15, t: 7 });
+    expect(state.position).toMatchObject({ x: 4, t: 7 });
   });
 
   // In the flat view z is the SLICE, not the camera target: an ortho camera
@@ -177,8 +156,10 @@ describe("captureCameraState", () => {
 
   it("takes z from the camera target in 3D, ignoring the slice", () => {
     const camera = new THREE.PerspectiveCamera(45, 4 / 3, 0.1, 1000);
-    const state = captureCameraState(makeFrame(camera), "3D", scene, { currentZ: 42 });
-    expect(state.position).toMatchObject({ z: 5 });
+    const state = captureCameraState(makeFrame(camera, new THREE.Vector3(0, 0, 9)), "3D", scene, {
+      currentZ: 42,
+    });
+    expect(state.position).toMatchObject({ z: 9 });
   });
 
   // A 2D-authored stop must not claim a volumetric orientation it never had.
@@ -268,10 +249,10 @@ describe("resolveTargetForState", () => {
   it("keeps the current value for an axis the pose does not name", () => {
     const camera = new THREE.OrthographicCamera();
     const current = new THREE.Vector3(1, 2, 3);
-    const state = { position: { x: 15 } }; // world x 15 → three x 0
+    const state = { position: { x: 15 } }; // world x 15 → three x 15 (identity)
 
     const resolved = resolveTargetForState(state, makeFrame(camera, current), scene);
-    expect(resolved.x).toBeCloseTo(0);
+    expect(resolved.x).toBeCloseTo(15);
     expect(resolved.y).toBeCloseTo(2);
     expect(resolved.z).toBeCloseTo(3);
   });
@@ -310,7 +291,7 @@ describe("applyCameraState", () => {
 
   it("places a perspective camera at the distance its scale asks for", () => {
     const state = {
-      position: { x: 15, y: 10, z: 5 }, // → three (0, 0, 0)
+      position: { x: 0, y: 0, z: 0 }, // → three (0, 0, 0) — identity frame
       crossSectionOrientation: null,
       crossSectionScale: null,
       projectionOrientation: [0, 0, 0, 1],
@@ -333,7 +314,7 @@ describe("applyCameraState", () => {
     const target = new THREE.Vector3();
     applyCameraState(
       {
-        position: { x: 15, y: 0, z: 5 },
+        position: { x: 15, y: 10, z: 5 },
         crossSectionOrientation: null,
         crossSectionScale: null,
         projectionOrientation: null,

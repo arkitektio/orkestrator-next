@@ -4,10 +4,10 @@ import { computeSceneVisibility, sameViewRanges, sameVisibleIds } from "./visibi
 import type { LayerState } from "./layerModel";
 
 /**
- * Scene under test: a 100x50 voxel 2D image layer with identity affine. Per
- * the renderer's layout convention the layer occupies world
- * x ∈ [-50, 50], y ∈ [-25, 25], centered at the origin with +y up, while
- * voxel indices run x ∈ [0, 100] left→right and y ∈ [0, 50] top→bottom.
+ * Scene under test: a 100x50 voxel 2D image layer with identity affine.
+ * Corner-anchored (COORDINATE_SYSTEMS.md "Coordinate conventions"): the layer
+ * occupies world x ∈ [0, 100], y ∈ [0, 50], and voxel indices ARE the local
+ * coordinates — no centering, no flip.
  */
 const LAYER_ID = "layer-1";
 
@@ -23,7 +23,11 @@ const makeLayer = (): LayerState =>
   }) as unknown as LayerState;
 
 const makeTrackable = () => {
+  // A unit-centered box offset by half its size — the brick layers' mesh
+  // arrangement — so its world box spans [0,100]×[0,50].
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 50, 1));
+  mesh.position.set(50, 25, 0);
+  mesh.updateMatrixWorld(true);
   return { kind: "layer", id: LAYER_ID, ref: { current: mesh } };
 };
 
@@ -40,7 +44,7 @@ const makeProjScreenMatrix = (cx: number, cy: number, halfW: number, halfH: numb
 describe("computeSceneVisibility", () => {
   it("reports the full voxel extent when the whole layer is in view", () => {
     const { visibleIds, ranges } = computeSceneVisibility({
-      projScreenMatrix: makeProjScreenMatrix(0, 0, 100, 50),
+      projScreenMatrix: makeProjScreenMatrix(50, 25, 100, 50),
       viewportSize: { width: 200, height: 100 }, // 1 px per world unit
       trackables: [makeTrackable()],
       layers: [makeLayer()],
@@ -55,33 +59,33 @@ describe("computeSceneVisibility", () => {
   });
 
   it("maps a right-half view to the upper voxel x range", () => {
-    // Camera over world x ∈ [25, 125]; layer ends at world x = 50.
+    // Camera over world x ∈ [50, 150]; layer ends at world x = 100.
     const { ranges } = computeSceneVisibility({
-      projScreenMatrix: makeProjScreenMatrix(75, 0, 50, 50),
+      projScreenMatrix: makeProjScreenMatrix(100, 25, 50, 50),
       viewportSize: { width: 100, height: 100 },
       trackables: [makeTrackable()],
       layers: [makeLayer()],
     });
 
-    expect(ranges[LAYER_ID].xRange).toEqual([75, 100]);
+    expect(ranges[LAYER_ID].xRange).toEqual([50, 100]);
   });
 
-  it("maps the world TOP half to LOW voxel y indices (y flip)", () => {
-    // Camera over world y ∈ [0, 50]; layer's top edge is world y = 25.
+  it("maps world y directly to voxel y — corner-anchored, no flip", () => {
+    // Camera over world y ∈ [25, 75]; layer's top edge is world y = 50.
     const { ranges } = computeSceneVisibility({
-      projScreenMatrix: makeProjScreenMatrix(0, 25, 100, 25),
+      projScreenMatrix: makeProjScreenMatrix(50, 50, 100, 25),
       viewportSize: { width: 200, height: 50 },
       trackables: [makeTrackable()],
       layers: [makeLayer()],
     });
 
-    expect(ranges[LAYER_ID].yRange).toEqual([0, 25]);
+    expect(ranges[LAYER_ID].yRange).toEqual([25, 50]);
   });
 
   it("reports screen pixels per voxel via the viewport size", () => {
     // Same world window rendered into a double-size viewport -> 2 px/voxel.
     const { ranges } = computeSceneVisibility({
-      projScreenMatrix: makeProjScreenMatrix(0, 0, 100, 50),
+      projScreenMatrix: makeProjScreenMatrix(50, 25, 100, 50),
       viewportSize: { width: 400, height: 200 },
       trackables: [makeTrackable()],
       layers: [makeLayer()],

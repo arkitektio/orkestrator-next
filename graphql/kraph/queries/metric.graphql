@@ -4,19 +4,10 @@ query GetMetric($id: GraphID!) {
   }
 }
 
-query SearchMetrics($category: ID!, $search: String, $values: [GraphID!]) {
-  options: metrics( # Updated from structures to metrics
-    metricCategoryId: $category,
-    filters: { search: $search, ids: $values }
-    pagination: { limit: 10 }
-  ) {
-    value: id
-    label: label
-  }
-}
-
-query ListMetrics($category: ID!, $filters: MetricFilter, $pagination: MetricPaginationInput, $ordering: [MetricOrder!]) {
-  metrics(metricCategoryId: $category, filters: $filters, pagination: $pagination, ordering: $ordering) {
+# Metrics are now listed by kind only — the server dropped the filter, ordering
+# and pagination arguments, so narrowing happens client-side.
+query ListMetrics($kind: ID!) {
+  metrics(metricKindId: $kind) {
     ...ListMetric
   }
 }

@@ -1,19 +1,15 @@
 import {
   PathActivityFragment,
-  PathAssertionFragment,
   PathDescriptionFragment,
   PathEntityFragment,
   PathInputParticipationFragment,
   PathMeasurementFragment,
-  PathMeasurementRelationShadowLinkFragment,
   PathMetricFragment,
   PathNaturalEventFragment,
   PathOutputParticipationFragment,
   PathProtocolEventFragment,
   PathRelationFragment,
-  PathRelationShadowLinkFragment,
   PathStructureFragment,
-  PathStructureRelationShadowLinkFragment,
   StructureRelationFragment
 } from "@/kraph/api/graphql";
 import { Edge, Node } from "@xyflow/react";
@@ -28,13 +24,8 @@ export type ProtocolEventNode = Node<
   "ProtocolEvent"
 >;
 export type ActivityNode = Node<PathActivityFragment, "Activity">;
-export type RelationShadowLinkNode = Node<PathRelationShadowLinkFragment, "RelationShadowLink">;
-export type StructureRelationShadowLinkNode = Node<PathStructureRelationShadowLinkFragment, "StructureRelationShadowLink">;
-export type MeasurementShadowLinkNode = Node<PathMeasurementRelationShadowLinkFragment, "MeasurementShadowLink">;
-
 
 export type DescriptionEdge = Edge<PathDescriptionFragment, "Description">;
-export type AssertionEdge = Edge<PathAssertionFragment, "Assertion">;
 export type MeasurementEdge = Edge<PathMeasurementFragment, "Measurement">;
 export type RelationEdge = Edge<PathRelationFragment, "Relation">;
 export type StructureRelationEdge = Edge<StructureRelationFragment, "StructureRelation">;
@@ -47,20 +38,19 @@ export type PathNode =
   | NaturalEventNode
   | MetricNode
   | ProtocolEventNode
-  | ActivityNode
-  | RelationShadowLinkNode
-  | StructureRelationShadowLinkNode
-  | MeasurementShadowLinkNode;
+  | ActivityNode;
 
 export type PathEdgeData = PathEdge["data"];
 export type PathNodeData = PathNode["data"];
 
+// An assertion is no longer an edge — it is the act behind a claim, returned by
+// the mutation that records it and carried on `XAssertion.assertion`. Likewise
+// the shadow-link nodes are gone: a claim's per-graph rendering now comes back
+// as `NodeDrawing` / `EdgeDrawing`.
 export type PathEdge =
   | MeasurementEdge
   | RelationEdge
   | StructureRelationEdge
-  | AssertionEdge
   | InputParticipationEdge
   | OutputParticipationEdge
   | DescriptionEdge;
-

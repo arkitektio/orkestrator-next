@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { nodeBaseBox } from "../core/octree/nodeAddress";
-import { buildVolumeVoxelToWorld } from "../core/octree/voxelFrame";
+import { buildAffineMatrix } from "../core/worldTransform";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
 
@@ -54,7 +54,7 @@ export function BrickResidencyOverlay() {
         byLevel.set(brick.level, bucket);
       }
 
-      const matrix = buildVolumeVoxelToWorld(layer);
+      const matrix = buildAffineMatrix(layer);
       const segments = [...byLevel.entries()].flatMap(([level, entries]) =>
         [false, true].flatMap((empty) => {
           const subset = entries.filter((e) => e.empty === empty);

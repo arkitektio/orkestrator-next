@@ -8,7 +8,7 @@ import { PropertyType, ValueKind } from "@/kraph/api/graphql";
  * it, recorded against an "itoldyouso" structure standing for the entity.
  *
  * The backend materializes that structure and its measurement edge on demand,
- * so recording is a single `recordMetric` call.
+ * so recording is a single `assertMetricValue` call.
  */
 export const ITOLDYOUSO_IDENTIFIER = "@kraph/itoldyouso";
 
@@ -19,7 +19,7 @@ export const itoldyousoRef = (entityId: string) => ({
 });
 
 /**
- * `recordMetric` takes a `PropertyType`, which is coarser than the
+ * `assertMetricValue` takes a `PropertyType`, which is coarser than the
  * `ValueKind` a property definition is declared with — it names the column the
  * value lands in. Vector kinds other than 3D have no column, so they cannot be
  * asserted by hand.
@@ -66,7 +66,7 @@ export const coerceMetricValue = (value: unknown, kind: ValueKind) => {
   }
 };
 
-/** Build the `RecordMetricInput` for asserting `key = value` on an entity. */
+/** Build the `AssertMetricValueInput` for asserting `key = value` on an entity. */
 export const buildItoldyousoMetric = (args: {
   entityId: string;
   key: string;

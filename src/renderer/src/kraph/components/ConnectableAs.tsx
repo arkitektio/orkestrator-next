@@ -69,14 +69,11 @@ export type ConnectableAsProps = {
   variant?: "dialog" | "inline";
 };
 
-// NOTE: `createMeasurement(input: {sourceId, targetId, category})` is back on
-// the schema, so connecting is expressible again — but it needs a concrete
-// target *Entity*, while `materializedMeasurementEdges` only yields the target
-// EntityCategory (`edge.target`). Wiring the connect action back up therefore
-// needs an entity picker per row (`SearchEntities` + `CreateEntityInline` over
-// `edge.target.id`) plus the source structure id threaded in from
-// `KnowledgeSidebar`'s `structureByIdentifier`. Until that picker exists the
-// rows stay read-only.
+// NOTE: these rows are a read-only survey of what this structure *could* be
+// measured against. Actually recording one needs a concrete target Entity,
+// while `materializedMeasurementEdges` only yields the target EntityCategory
+// (`edge.target`) — that picking step lives in the `setasmeasurement` dialog,
+// which ensures the source structure and calls `assertMeasurementExists`.
 export const ConnectableAs = ({
   identifier,
   graphId,

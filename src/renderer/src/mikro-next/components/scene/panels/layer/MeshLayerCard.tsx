@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Box, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Box, Eye, EyeOff, Grid3x3, Trash2 } from "lucide-react";
 import { memo } from "react";
 import type { SceneLayerFragment } from "@/mikro-next/api/graphql";
-import { useSceneStore } from "../../store/sceneStore";
+import {
+  DEFAULT_INSTANCE_COLORMAP,
+  INSTANCE_COLORMAPS,
+} from "../../render/fabriks/instanceColormaps";
+import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
 
 /**
  * A compact card for a `MeshLayer` in the Layers panel.
@@ -20,7 +24,8 @@ import { useSceneStore } from "../../store/sceneStore";
  * persist.
  */
 
-type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }>;
+type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }> &
+  MeshLayerSessionState;
 
 /** `store.counts` is the manifest's own tally, mirrored by the API. */
 type FabriksCounts = { objects?: number; cellsPerLevel?: number[] };
@@ -73,6 +78,23 @@ export const MeshLayerCard = memo(
           <Button
             variant="ghost"
             size="icon"
+            className={`h-5 w-5 shrink-0 ${
+              layer.wireframe ? "text-sky-300" : "text-white/50 hover:text-white/90"
+            }`}
+            // Session-local: there is no updateMeshLayer to persist it to.
+            title={
+              layer.wireframe
+                ? "Solid surface (this session only)"
+                : "Wireframe (this session only)"
+            }
+            onClick={() => patchSceneLayer(layer.id, { wireframe: !layer.wireframe })}
+          >
+            <Grid3x3 className="h-3 w-3" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-5 w-5 shrink-0 text-white/50 hover:text-white/90"
             // Session-local: there is no updateMeshLayer to persist it to.
             title={hidden ? "Show (this session only)" : "Hide (this session only)"}
@@ -93,6 +115,32 @@ export const MeshLayerCard = memo(
             </Button>
           )}
         </div>
+
+        {/* Instance colormap — session-local. Shown only while no explicit
+            materialColor opts the layer into a uniform color; instance
+            coloring by objectOrdinal is the default. */}
+        {!layer.materialColor && (
+          <div className="flex flex-wrap items-center gap-1 border-t border-white/5 px-2 py-1">
+            <span className="shrink-0 text-[9px] text-white/40">colors</span>
+            {INSTANCE_COLORMAPS.map((name) => {
+              const active = (layer.instanceColormap ?? DEFAULT_INSTANCE_COLORMAP) === name;
+              return (
+                <button
+                  key={name}
+                  title={`Color instances with the "${name}" palette (this session only)`}
+                  className={`rounded border px-1 py-px text-[9px] transition-colors ${
+                    active
+                      ? "border-sky-400/50 bg-sky-400/10 text-sky-200"
+                      : "border-white/10 text-white/50 hover:text-white/80"
+                  }`}
+                  onClick={() => patchSceneLayer(layer.id, { instanceColormap: name })}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* What the collection actually is, read off the store's mirrored
             manifest — so this costs no request and cannot disagree with what

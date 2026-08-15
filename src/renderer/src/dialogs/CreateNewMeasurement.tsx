@@ -27,16 +27,12 @@ const normalizeInput = (
   source: {
     ...data.source,
     identifiers: data.source.identifiers?.length ? data.source.identifiers : undefined,
-    keys: data.source.keys?.length ? data.source.keys : undefined,
-    tags: data.source.tags?.length ? data.source.tags : undefined,
-    ontotologyTerms: data.source.ontotologyTerms?.length ? data.source.ontotologyTerms : undefined,
     defaultCategoryKey: data.source.defaultCategoryKey || undefined,
   },
   target: {
     ...data.target,
     keys: data.target.keys?.length ? data.target.keys : undefined,
-    tags: data.target.tags?.length ? data.target.tags : undefined,
-    ontotologyTerms: data.target.ontotologyTerms?.length ? data.target.ontotologyTerms : undefined,
+    ontologyTerms: data.target.ontologyTerms?.length ? data.target.ontologyTerms : undefined,
     defaultCategoryKey: data.target.defaultCategoryKey || undefined,
   },
 });
@@ -70,15 +66,11 @@ export const CreateNewMeasurement = (props: {
       description: "",
       source: {
         identifiers: props.left.map((s) => s.identifier),
-        keys: [],
-        tags: [],
-        ontotologyTerms: [],
         defaultCategoryKey: "",
       },
       target: {
         keys: [],
-        tags: [],
-        ontotologyTerms: [],
+        ontologyTerms: [],
         defaultCategoryKey: "",
       },
     },

@@ -1,5 +1,10 @@
 # Claims name the term, not the category row. Asserting does not displace
-# anyone else's claim; archiving retracts yours and leaves the evidence.
+# anyone else's claim; retracting withdraws yours and leaves the evidence.
+#
+# Every claim mutation now answers with the *act* — the assertion — alongside
+# what it recorded, plus the drawings: the per-graph views that render the
+# claim. An empty `drawings` is an ordinary answer, not a failure: a view that
+# declares no category for the word simply does not draw it.
 
 mutation AssertParticipation(
   $event: String!
@@ -10,30 +15,64 @@ mutation AssertParticipation(
   assertParticipation(
     input: { event: $event, entity: $entity, role: $role, isInput: $isInput }
   ) {
-    ...Edge
+    assertion {
+      ...Assertion
+    }
+    participation {
+      ...Edge
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
 
 mutation AssertParticipations($event: String!, $participants: [ParticipantInput!]!) {
   assertParticipations(input: { event: $event, participants: $participants }) {
-    ...Edge
+    assertion {
+      ...Assertion
+    }
+    edges {
+      ...Edge
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
 
-mutation ArchiveParticipation($id: String!) {
-  archiveParticipation(input: { id: $id }) {
-    ...Edge
+mutation RetractParticipation($id: String!) {
+  retractParticipation(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    participation {
+      ...Edge
+    }
   }
 }
 
 mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
   classifyNodes(input: { classifications: $classifications }) {
-    ...Entity
+    assertion {
+      ...Assertion
+    }
+    nodes {
+      ...Node
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-mutation ArchiveClaims($ids: [String!]!) {
-  archiveClaims(input: { ids: $ids }) {
-    ...Edge
+mutation RetractClaims($ids: [String!]!) {
+  retractClaims(input: { ids: $ids }) {
+    assertion {
+      ...Assertion
+    }
+    edges {
+      ...Edge
+    }
   }
 }

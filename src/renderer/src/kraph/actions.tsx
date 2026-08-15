@@ -3,7 +3,7 @@ import { Action } from "@/lib/localactions/LocalActionProvider";
 import type { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
   DeleteEntityCategoryDocument,
-  ArchiveEntityDocument,
+  RetractEntityDocument,
   AttestEntityDocument,
   AttestNaturalEventDocument,
   AttestProtocolEventDocument,
@@ -13,7 +13,7 @@ import {
   DeleteProtocolEventCategoryDocument,
   LinkStructureToEntityDocument,
 } from "./api/graphql";
-import { Archive, Link2, PlusCircle, Ruler, Stamp, Workflow } from "lucide-react";
+import { Link2, PlusCircle, Ruler, Stamp, Undo2, Workflow } from "lucide-react";
 
 export const NewEntityAction: Action = {
   title: "Create New Entity",
@@ -174,18 +174,20 @@ export const KRAPH_ACTIONS = {
     mutation: DeleteMeasurementCategoryDocument,
   }),
 
-  // Entities are an append-only log: `deleteEntity` no longer exists, so the
-  // action archives instead. Archiving still evicts the entity from the cache
-  // so it drops out of active lists.
-  "archive-entity": buildDeleteAction({
-    title: "Archive Entity",
+  // Entities are an append-only log: nothing is deleted. Retracting withdraws
+  // *your* claim — anyone else's claim on the same word stands, and the
+  // evidence behind it stays in the log. The entity is still evicted from the
+  // cache so it drops out of active lists.
+  "retract-entity": buildDeleteAction({
+    title: "Retract Claim",
     identifier: "@kraph/entity",
-    description: "Archive the Entity.",
+    description:
+      "Withdraw your claim on this entity. Other subjects' claims and the evidence behind them are untouched.",
     service: "kraph",
     typename: ["Entity", "Node"],
-    mutation: ArchiveEntityDocument,
-    icon: Archive,
-    verb: { present: "Archive", past: "Archived", reversible: true },
+    mutation: RetractEntityDocument,
+    icon: Undo2,
+    verb: { present: "Retract", past: "Retracted", reversible: true },
   }),
 
   // Custom Actions

@@ -8,10 +8,6 @@ fragment BaseListCategory on Category {
     presignedUrl
   }
   key
-  tags {
-    id
-    name
-  }
   ageName
 
 }

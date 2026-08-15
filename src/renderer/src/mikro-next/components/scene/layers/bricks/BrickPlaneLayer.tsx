@@ -271,10 +271,6 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       zSelection = { start: zIndex, step: 1, length: 1 };
     }
 
-    const totalX = shapeX * scaleX;
-    const totalY = shapeY * scaleY;
-    const totalZ = shapeZ * scaleZ;
-
     const width = xSelection.length * xSelection.step * scaleX;
     const height = ySelection.length * ySelection.step * scaleY;
     const depth = zSelection.length * zSelection.step * scaleZ;
@@ -284,10 +280,11 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       xSelection,
       ySelection,
       zSelection,
+      // Corner-anchored group-local: the sliced box's CENTER in [0..total].
       volumePosition: [
-        xSelection.start * scaleX + width / 2 - totalX / 2,
-        -(ySelection.start * scaleY + height / 2 - totalY / 2),
-        zSelection.start * scaleZ + depth / 2 - totalZ / 2,
+        xSelection.start * scaleX + width / 2,
+        ySelection.start * scaleY + height / 2,
+        zSelection.start * scaleZ + depth / 2,
       ],
       volumeSize: [width, height, depth],
     };
@@ -312,17 +309,14 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       if (!probeContext) return;
 
       // QUAD-PARITY mapping (createPlaneNodeMaterial): the rendered plane is
-      // a CENTERED totalX×totalY quad showing the FULL base array,
-      // `baseVoxel = (u·shapeX, (1−v)·shapeY)` — NOT a slice-anchored box.
-      // The previous math normalized against `volumePosition` (the quad's
-      // CENTER, not a corner), which rejected everything left of / below the
-      // center — only the upper-right quadrant ever probed — and compressed
-      // the voxel mapping 2× inside it.
+      // a corner-anchored totalX×totalY quad showing the FULL base array,
+      // `baseVoxel = (u·shapeX, v·shapeY)` — group-local spans [0..total], so
+      // uv is just the normalized group-local position.
       const base = pool.geometry.levels[0];
       const totalX = base.spatialShape[0] * base.scale[0];
       const totalY = base.spatialShape[1] * base.scale[1];
-      const u = points.local.x / totalX + 0.5;
-      const v = points.local.y / totalY + 0.5;
+      const u = points.local.x / totalX;
+      const v = points.local.y / totalY;
 
       if (u < 0 || u > 1 || v < 0 || v > 1) {
         if (currentProbe?.layerId === layer.id) {
@@ -347,9 +341,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       const baseZ = Math.round(
         resolveVoxelIndex(0.5, probeContext.zSelection) * level.scale[2],
       );
+      // Shader lockstep with the plane material's `baseVoxel`: no flip.
       const voxelIndex: [number, number, number] = [
         Math.min(baseShape[0] - 1, Math.floor(clampedU * baseShape[0])),
-        Math.min(baseShape[1] - 1, Math.floor((1 - clampedV) * baseShape[1])),
+        Math.min(baseShape[1] - 1, Math.floor(clampedV * baseShape[1])),
         Math.max(0, Math.min(baseShape[2] - 1, baseZ)),
       ];
 
@@ -444,7 +439,15 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         );
       }}
     >
-      <mesh key={pool.structureSignature} scale={[totalX, totalY, 1]} renderOrder={1}>
+      {/* Corner-anchored: the unit quad is offset by half its size so group-
+          local spans [0..shape] and voxel v renders at exactly affine(v) —
+          COORDINATE_SYSTEMS.md "Coordinate conventions". */}
+      <mesh
+        key={pool.structureSignature}
+        scale={[totalX, totalY, 1]}
+        position={[totalX / 2, totalY / 2, 0]}
+        renderOrder={1}
+      >
         <planeGeometry args={[1, 1]} />
         {/* TSL node material — see brickNodeMaterials.ts (WGSL + GLSL). */}
         <primitive object={bundle.material} attach="material" />

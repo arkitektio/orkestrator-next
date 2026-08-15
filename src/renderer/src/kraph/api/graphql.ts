@@ -89,12 +89,10 @@ export type Activity = Node & {
   label: Scalars['String']['output'];
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
   /** User/subject who performed the activity */
   subject?: Maybe<Scalars['String']['output']>;
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
 };
 
 export enum AggregationFunction {
@@ -107,12 +105,6 @@ export enum AggregationFunction {
   Range = 'RANGE',
   Sum = 'SUM'
 }
-
-/** Input for retracting several claims as one act */
-export type ArchiveClaimsInput = {
-  /** The evidence IDs of the claims to retract */
-  ids: Array<Scalars['String']['input']>;
-};
 
 /** Input for archiving an edge pairs query */
 export type ArchiveEdgePairsQueryInput = {
@@ -130,12 +122,6 @@ export type ArchiveEdgePathQueryInput = {
 export type ArchiveEdgeTableQueryInput = {
   /** The ID of the edge table query to archive */
   id: Scalars['ID']['input'];
-};
-
-/** Input for recalculating an entity's derived properties */
-export type ArchiveEntityInput = {
-  /** The ID of the entity to archive */
-  id: Scalars['GraphID']['input'];
 };
 
 /** Input for archiving a graph */
@@ -162,24 +148,6 @@ export type ArchiveGraphTableQueryInput = {
   id: Scalars['ID']['input'];
 };
 
-/** Input for archiving an existing measurement edge */
-export type ArchiveMeasurementInput = {
-  /** The ID of the measurement to archive */
-  id: Scalars['String']['input'];
-};
-
-/** Input for archiving an existing metric */
-export type ArchiveMetricInput = {
-  /** The ID of the metric to archive */
-  id: Scalars['String']['input'];
-};
-
-/** Input for archiving (soft deleting) an existing natural event instance */
-export type ArchiveNaturalEventInput = {
-  /** The ID of the natural event to archive */
-  id: Scalars['String']['input'];
-};
-
 /** Input for archiving a node pairs query */
 export type ArchiveNodePairsQueryInput = {
   /** The ID of the node pairs query to archive */
@@ -198,34 +166,68 @@ export type ArchiveNodeTableQueryInput = {
   id: Scalars['ID']['input'];
 };
 
-/** Input for retracting one participation claim */
-export type ArchiveParticipationInput = {
-  /** The evidence ID of the participation claim to retract */
-  id: Scalars['String']['input'];
+/** Input for creating a new entity */
+export type AssertEntityExistsInput = {
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
 };
 
-/** Input for archiving (soft deleting) an existing protocol event instance */
-export type ArchiveProtocolEventInput = {
-  /** The ID of the protocol event to archive */
-  id: Scalars['String']['input'];
+/** Input for creating a new measurement edge */
+export type AssertMeasurementExistsInput = {
+  /** The ID of the source entity/structure */
+  sourceId: Scalars['String']['input'];
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The ID of the target entity/structure */
+  targetId: Scalars['String']['input'];
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
 };
 
-/** Input for archiving an existing relation */
-export type ArchiveRelationInput = {
-  /** The ID of the relation to archive */
-  id: Scalars['GraphID']['input'];
+/** Input for creating a new metric */
+export type AssertMetricValueForStructureInput = {
+  confidence?: InputMaybe<Scalars['Float']['input']>;
+  confidenceType?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  /** The unique ID of the structure this metric is associated with */
+  structure: Scalars['GraphID']['input'];
+  /** Unix epoch time in milliseconds */
+  timestamp?: InputMaybe<Scalars['Int']['input']>;
+  unit?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['AnyScalar']['input'];
+  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
+  valueKind: PropertyType;
 };
 
-/** Input for deleting an existing structure */
-export type ArchiveStructureInput = {
-  /** The ID of the structure to archive */
-  id: Scalars['GraphID']['input'];
+/** Input for creating a new metric */
+export type AssertMetricValueInput = {
+  confidence?: InputMaybe<Scalars['Float']['input']>;
+  confidenceType?: InputMaybe<Scalars['String']['input']>;
+  /** The schema identifier for this metric (e.g. '@mikro/roi_volume') */
+  identifier: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  /** The unique ID of the object this metric references */
+  object: Scalars['String']['input'];
+  /** Unix epoch time in milliseconds */
+  timestamp?: InputMaybe<Scalars['Int']['input']>;
+  unit?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['AnyScalar']['input'];
+  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
+  valueKind: PropertyType;
 };
 
-/** Input for archiving an existing structure relation */
-export type ArchiveStructureRelationInput = {
-  /** The ID of the structure relation to archive */
-  id: Scalars['String']['input'];
+/** Input for creating a new natural event instance */
+export type AssertNaturalEventExistsInput = {
+  /** List of entity IDs that are inputs to this event */
+  inputs?: Array<RoleMappingInput>;
+  /** List of entity IDs that are outputs of this event */
+  outputs?: Array<RoleMappingInput>;
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
 };
 
 /** Input for claiming that an entity took part in an event */
@@ -248,29 +250,73 @@ export type AssertParticipationsInput = {
   participants: Array<ParticipantInput>;
 };
 
-/** An assertion edge linking provenance activity to asserted graph artifacts */
-export type Assertion = Edge & {
+/** Input for creating a new protocol event instance */
+export type AssertProtocolEventExistsInput = {
+  /** List of entity IDs that are inputs to this event */
+  inputs?: Array<RoleMappingInput>;
+  /** List of entity IDs that are outputs of this event */
+  outputs?: Array<RoleMappingInput>;
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
+};
+
+/** Input for creating a new relation between two entities with supporting evidence */
+export type AssertRelationExistsInput = {
+  /** The ID of the source entity/structure */
+  sourceId: Scalars['String']['input'];
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The ID of the target entity/structure */
+  targetId: Scalars['String']['input'];
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
+};
+
+/** Input for claiming that an external datum exists */
+export type AssertStructureExistsInput = {
+  /** The structure identifier, e.g. '@mikro/roi' */
+  identifier: Scalars['String']['input'];
+  /** List of measurements associated with this structure */
+  metrics?: Array<MetricInput>;
+  /** The unique ID of the object this structure references */
+  object: Scalars['String']['input'];
+  /** The ID of the user for whom to set this pin. If not provided, will default to the user making the request. */
+  user?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new structure relation */
+export type AssertStructureRelationExistsInput = {
+  /** The ID of the source entity/structure */
+  sourceId: Scalars['String']['input'];
+  /** List of evidence structures with measurements */
+  supportingEvidence?: Array<StructureReferenceInput>;
+  /** The ID of the target entity/structure */
+  targetId: Scalars['String']['input'];
+  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
+  term: Scalars['String']['input'];
+};
+
+/** Who claimed something, with what tool, and when — one row of the append-only log */
+export type Assertion = {
   __typename?: 'Assertion';
+  /** Which action within that application made the claim */
+  actionId?: Maybe<Scalars['String']['output']>;
   /** Human-readable name of the action that produced this assertion */
   actionName?: Maybe<Scalars['String']['output']>;
   /** Which application made the claim */
   appId?: Maybe<Scalars['String']['output']>;
   /** When the claim was made — belief time, the axis `as_of` filters on */
-  assertedAt?: Maybe<Scalars['DateTime']['output']>;
-  /** Global identifier in format 'graph_name:graph_id' */
-  globalId: Scalars['GlobalID']['output'];
-  /** Local AGE graph ID, or null for edges that have no projection */
-  graphId?: Maybe<Scalars['Int']['output']>;
-  /** Composite ID for edge lookup */
-  id: Scalars['String']['output'];
-  /** The edge label/type */
-  label: Scalars['String']['output'];
-  /** Global ID of the source/left node */
-  sourceId: Scalars['String']['output'];
-  /** Who made the claim — a user id, or an automated agent */
-  subject?: Maybe<Scalars['String']['output']>;
-  /** Global ID of the target/right node */
-  targetId: Scalars['String']['output'];
+  assertedAt: Scalars['DateTime']['output'];
+  /** The assertion's durable identity */
+  id: Scalars['ID']['output'];
+  /** When the claim was durably stored — arrival time. Never equal to assertedAt, and for debugging ingest rather than for answering questions */
+  recordedAt: Scalars['DateTime']['output'];
+  /** Position in the organization-spanning log. Monotonic, assigned by the database, and the order a replay runs in */
+  seq: Scalars['Int']['output'];
+  /** Who made the claim — a user id, or the identity of an automated agent */
+  subject: Scalars['String']['output'];
 };
 
 /** Input for claiming that an entity exists */
@@ -397,18 +443,8 @@ export type Category = {
   purl?: Maybe<Scalars['String']['output']>;
   /** List of relevant queries that use this category as input */
   relevantQueries: Array<GraphQuery>;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
-};
-
-
-/** Base interface for structure categories/schemas */
-export type CategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Input for specifying the position of a node in the graph visualization */
@@ -423,79 +459,6 @@ export type CategoryNodePositionInput = {
   positionY: Scalars['Float']['input'];
   /** Optional width for the node (for visualization purposes) */
   width?: InputMaybe<Scalars['Float']['input']>;
-};
-
-/** Base interface for graph nodes representing entities */
-export type CategoryTag = {
-  __typename?: 'CategoryTag';
-  /** Description of the category tag */
-  description?: Maybe<Scalars['String']['output']>;
-  /** Database ID of the category tag */
-  id: Scalars['ID']['output'];
-  /** Name of the category tag */
-  name: Scalars['String']['output'];
-};
-
-/** Numeric/aggregatable fields of CategoryTag */
-export enum CategoryTagField {
-  CreatedAt = 'CREATED_AT'
-}
-
-export type CategoryTagFilter = {
-  AND?: InputMaybe<CategoryTagFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<CategoryTagFilter>;
-  OR?: InputMaybe<CategoryTagFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Filter by list of IDs */
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CategoryTagOrder =
-  { id: Ordering; name?: never; }
-  |  { id?: never; name: Ordering; };
-
-export type CategoryTagStats = {
-  __typename?: 'CategoryTagStats';
-  /** Average value */
-  avg?: Maybe<Scalars['Float']['output']>;
-  /** Total number of items in the selection */
-  count: Scalars['Int']['output'];
-  /** Count of distinct values */
-  distinctCount: Scalars['Int']['output'];
-  /** Maximum value */
-  max?: Maybe<Scalars['Float']['output']>;
-  /** Minimum value */
-  min?: Maybe<Scalars['Float']['output']>;
-  /** Sum of values */
-  sum?: Maybe<Scalars['Float']['output']>;
-};
-
-
-export type CategoryTagStatsAvgArgs = {
-  field: CategoryTagField;
-};
-
-
-export type CategoryTagStatsDistinctCountArgs = {
-  field: CategoryTagField;
-};
-
-
-export type CategoryTagStatsMaxArgs = {
-  field: CategoryTagField;
-};
-
-
-export type CategoryTagStatsMinArgs = {
-  field: CategoryTagField;
-};
-
-
-export type CategoryTagStatsSumArgs = {
-  field: CategoryTagField;
 };
 
 /** One claim that a node is of a category, inside a batch */
@@ -578,18 +541,6 @@ export enum ConflictPolicy {
   SubjectPriority = 'SUBJECT_PRIORITY'
 }
 
-/** Input for creating a category tag */
-export type CreateCategoryTagInput = {
-  /** Optional category tag description */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The graph ID this category tag belongs to */
-  graph: Scalars['String']['input'];
-  /** Optional human-readable name */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Unique tag value within the graph */
-  value: Scalars['String']['input'];
-};
-
 /** Input for creating a new edge pairs query */
 export type CreateEdgePairsQueryInput = {
   /** Description of this edge query */
@@ -598,8 +549,6 @@ export type CreateEdgePairsQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this edge query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this edge query */
@@ -614,8 +563,6 @@ export type CreateEdgePathQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this edge query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this edge query */
@@ -632,8 +579,6 @@ export type CreateEdgeTableQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this edge query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this edge query */
@@ -648,7 +593,7 @@ export type CreateEntityDefinitionInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** Description of this node role */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The graph id this entitiy will beong to */
+  /** The graph id this entity will belong to */
   graph: Scalars['String']['input'];
   /** Optional media store ID for an image representing this node role */
   image?: InputMaybe<Scalars['String']['input']>;
@@ -666,16 +611,6 @@ export type CreateEntityDefinitionInput = {
   propertyDefinitions?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for creating a new entity */
-export type CreateEntityInput = {
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
 };
 
 /** Input for creating a new graph from a schema definition */
@@ -722,8 +657,6 @@ export type CreateGraphPathQueryInput = {
 export type CreateGraphTableQueryInput = {
   /** Definitions for the columns returned by this graph query */
   columnInput?: Array<ColumnInput>;
-  /** The Cypher query string that defines this graph query. Can include parameter placeholders (e.g. $param) for dynamic filtering */
-  cypher: Scalars['String']['input'];
   /** Description of this graph query */
   description?: InputMaybe<Scalars['String']['input']>;
   /** The graph id this table query will belong to */
@@ -780,37 +713,8 @@ export type CreateMeasurementDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: StructureDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: EntityDescriptorInput;
-};
-
-/** Input for creating a new measurement edge */
-export type CreateMeasurementInput = {
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
-};
-
-/** Input for creating a new metric */
-export type CreateMetricInput = {
-  confidence?: InputMaybe<Scalars['Float']['input']>;
-  confidenceType?: InputMaybe<Scalars['String']['input']>;
-  key: Scalars['String']['input'];
-  /** The unique ID of the structure this metric is associated with */
-  structure: Scalars['GraphID']['input'];
-  /** Unix epoch time in milliseconds */
-  timestamp?: InputMaybe<Scalars['Int']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['AnyScalar']['input'];
-  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
-  valueKind: PropertyType;
 };
 
 /** Input for creating a new natural event definition in the graph schema */
@@ -843,20 +747,6 @@ export type CreateNaturalEventDefinitionInput = {
   properties?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for creating a new natural event instance */
-export type CreateNaturalEventInput = {
-  /** List of entity IDs that are inputs to this event */
-  inputs?: Array<RoleMappingInput>;
-  /** List of entity IDs that are outputs of this event */
-  outputs?: Array<RoleMappingInput>;
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
 };
 
 /** Input for creating a new node pairs query */
@@ -867,8 +757,6 @@ export type CreateNodePairsQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this node query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this node query */
@@ -883,8 +771,6 @@ export type CreateNodePathQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this node query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this node query */
@@ -901,8 +787,6 @@ export type CreateNodeTableQueryInput = {
   graph: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
   key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
   /** Human-readable name for this node query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
   /** The Cypher query string that defines this node query */
@@ -941,20 +825,6 @@ export type CreateProtocolEventDefinitionInput = {
   protocol: Scalars['String']['input'];
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for creating a new protocol event instance */
-export type CreateProtocolEventInput = {
-  /** List of entity IDs that are inputs to this event */
-  inputs?: Array<RoleMappingInput>;
-  /** List of entity IDs that are outputs of this event */
-  outputs?: Array<RoleMappingInput>;
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
 };
 
 /** Input for creating a new relation definition in the graph schema */
@@ -965,7 +835,7 @@ export type CreateRelationDefinitionInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** Description of this node role */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The graph id this entitiy will beong to */
+  /** The graph id this entity will belong to */
   graph: Scalars['String']['input'];
   /** Optional media store ID for an image representing this node role */
   image?: InputMaybe<Scalars['String']['input']>;
@@ -983,20 +853,6 @@ export type CreateRelationDefinitionInput = {
   propertyDefinitions?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
-};
-
-/** Input for creating a new relation between two entities with supporting evidence */
-export type CreateRelationInput = {
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
 };
 
 /** Input for creating a scatter plot */
@@ -1029,16 +885,6 @@ export type CreateScatterPlotInput = {
   yIdColumn?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Input for creating a new entity category/type in the graph schema */
-export type CreateStructureInput = {
-  /** The structure identifier, e.g. '@mikro/roi' */
-  identifier: Scalars['String']['input'];
-  /** List of measurements associated with this structure */
-  metrics?: Array<MetricInput>;
-  /** The unique ID of the object this structure references */
-  object: Scalars['String']['input'];
-};
-
 /** Input for creating a new structure relation definition in the graph schema */
 export type CreateStructureRelationDefinitionInput = {
   /** Relation cardinality */
@@ -1047,7 +893,7 @@ export type CreateStructureRelationDefinitionInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** Description of this node role */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The graph id this entitiy will beong to */
+  /** The graph id this entity will belong to */
   graph: Scalars['String']['input'];
   /** Optional media store ID for an image representing this node role */
   image?: InputMaybe<Scalars['String']['input']>;
@@ -1065,22 +911,8 @@ export type CreateStructureRelationDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: StructureDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: StructureDescriptorInput;
-};
-
-/** Input for creating a new structure relation */
-export type CreateStructureRelationInput = {
-  /** The ID of the source entity/structure */
-  sourceId: Scalars['String']['input'];
-  /** List of evidence structures with measurements */
-  supportingEvidence?: Array<StructureReferenceInput>;
-  /** The ID of the target entity/structure */
-  targetId: Scalars['String']['input'];
-  /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
-  term: Scalars['String']['input'];
 };
 
 /** Input for declaring one of the organization's words */
@@ -1099,12 +931,6 @@ export type CreateTermInput = {
   label?: InputMaybe<Scalars['String']['input']>;
   /** Persistent URL, where this corresponds to a published ontology term */
   purl?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Input for deleting a category tag */
-export type DeleteCategoryTagInput = {
-  /** The category tag ID */
-  id: Scalars['String']['input'];
 };
 
 /** Input for deleting an edge pairs query */
@@ -1271,7 +1097,7 @@ export enum DerivationType {
   Rollup = 'ROLLUP'
 }
 
-/** A natural event category/schema definition */
+/** An INFORMS claim: a structure that is evidence for a node */
 export type Description = Edge & {
   __typename?: 'Description';
   /** Global identifier in format 'graph_name:graph_id' */
@@ -1282,12 +1108,12 @@ export type Description = Edge & {
   id: Scalars['String']['output'];
   /** The edge label/type */
   label: Scalars['String']['output'];
-  /** The graph this node belongs to */
-  source: Metric;
+  /** The structure that is evidence here */
+  source: Structure;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
-  target: Structure;
+  /** The entity this structure is evidence for */
+  target: Entity;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
 };
@@ -1328,12 +1154,23 @@ export type EdgeCategory = {
   relevantEdgeQueries: Array<EdgeQuery>;
 };
 
+/** One view that draws a claimed edge, and how it draws it */
+export type EdgeDrawing = {
+  __typename?: 'EdgeDrawing';
+  /** The category this view draws the claim under. A participation names the *event's* category, which is a node category — hence the base interface rather than EdgeCategory */
+  category: Category;
+  /** The edge as this view holds it */
+  edge: Edge;
+  /** The view this drawing belongs to */
+  graph: Graph;
+};
+
 /** Base interface for graph schemas */
 export type EdgePairsQuery = EdgeQuery & {
   __typename?: 'EdgePairsQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** Optional edge category/schema to filter pairs by */
   edgeCategory?: Maybe<EdgeCategory>;
@@ -1341,8 +1178,12 @@ export type EdgePairsQuery = EdgeQuery & {
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
   /** The source node category/schema to query */
@@ -1373,14 +1214,18 @@ export type EdgePathQuery = EdgeQuery & {
   __typename?: 'EdgePathQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -1406,14 +1251,18 @@ export type EdgePathQueryOrder =
 export type EdgeQuery = {
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
-  /** Database ID of the category */
+  /** Database ID of this saved query */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -1427,13 +1276,15 @@ export type EdgeTableQuery = EdgeQuery & Plottable & {
   builderArgs?: Maybe<BuilderArgs>;
   /** List of columns to return in the table query result */
   columns: Array<Column>;
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
   /** The Cypher query to execute for this table query */
   query: Scalars['CypherLiteral']['output'];
@@ -1460,7 +1311,18 @@ export type EdgeTableQueryOrder =
   { id: Ordering; label?: never; }
   |  { id?: never; label: Ordering; };
 
-/** Input for creating a new entity category/type in the graph schema */
+/** An assertion about several edges made as one act, and everywhere they are now drawn */
+export type EdgesAssertion = {
+  __typename?: 'EdgesAssertion';
+  /** The single claim covering the whole batch */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<EdgeDrawing>;
+  /** The claims this act was about, each as its own kind */
+  edges: Array<Edge>;
+};
+
+/** Input for getting the structure for an external datum, creating it if new */
 export type EnsureStructureInput = {
   /** The structure identifier, e.g. '@mikro/roi' */
   identifier: Scalars['String']['input'];
@@ -1468,6 +1330,8 @@ export type EnsureStructureInput = {
   metrics?: Array<MetricInput>;
   /** The unique ID of the object this structure references */
   object: Scalars['String']['input'];
+  /** The ID of the user for whom to set this pin. If not provided, will default to the user making the request. */
+  user?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** An entity in the knowledge graph with derived properties */
@@ -1493,15 +1357,13 @@ export type Entity = Node & VersionedNode & {
   label: Scalars['String']['output'];
   /** Timestamp when properties were last derived (unix ms) */
   lastDerived?: Maybe<Scalars['UnixMilliseconds']['output']>;
-  /** External object ID this entity references */
-  lifecycle?: Maybe<Scalars['String']['output']>;
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
   /** The source entity of this relation */
   measuredBy: Array<Measurement>;
   /** The source entity of this relation */
   participatedIn: Array<InputParticipation>;
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
   /** The current derived properties for this entity */
   properties: Scalars['AnyScalar']['output'];
@@ -1511,12 +1373,21 @@ export type Entity = Node & VersionedNode & {
   richProperties: Array<RichProperty>;
   /** Schema version used to derive properties */
   schemaVersion: Scalars['String']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
   /** When this entity became valid */
   validFrom?: Maybe<Scalars['DateTime']['output']>;
   /** When this entity stopped being valid */
   validTo?: Maybe<Scalars['DateTime']['output']>;
+};
+
+/** An assertion about an entity, and everywhere that entity is now drawn */
+export type EntityAssertion = {
+  __typename?: 'EntityAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<NodeDrawing>;
+  /** The entity as the log has it: its identity and the word it was claimed under. Derived properties are per-view and live on each drawing */
+  entity: Entity;
 };
 
 /** An entity category/schema definition */
@@ -1562,8 +1433,6 @@ export type EntityCategory = Category & NodeCategory & {
   relevantNodeQueries: Array<NodeQuery>;
   /** List of relevant queries that use this category as input */
   relevantQueries: Array<GraphQuery>;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
   /** Width for visualization (optional) */
@@ -1576,14 +1445,6 @@ export type EntityCategoryEntitiesArgs = {
   filters?: InputMaybe<EntityFilter>;
   ordering?: InputMaybe<Array<EntityOrder>>;
   pagination?: InputMaybe<EntityPaginationInput>;
-};
-
-
-/** An entity category/schema definition */
-export type EntityCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of EntityCategory */
@@ -1677,8 +1538,6 @@ export type EntityDefinitionInput = {
   propertyDefinitions?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 /** Input type for creating a new graph query */
@@ -1689,23 +1548,17 @@ export type EntityDescriptor = {
   /** Filter by entity key/label */
   keys?: Maybe<Array<Scalars['String']['output']>>;
   /** Filter by ontology references on the entity (format: 'PREFIX:TERM_ID') */
-  ontotologyTerms?: Maybe<Array<Scalars['String']['output']>>;
-  /** Filter by tags on the entity */
-  tags?: Maybe<Array<Scalars['String']['output']>>;
+  ontologyTerms?: Maybe<Array<Scalars['String']['output']>>;
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** Filters that select which entity categories a descriptor matches */
 export type EntityDescriptorInput = {
   /** Default category to link to if no entities match the filters */
   defaultCategoryKey?: InputMaybe<Scalars['String']['input']>;
   /** Filter by entity key/label */
   keys?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** The list of ontology terms associated with this entity descriptor */
-  ontologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter by ontology references on the entity (format: 'PREFIX:TERM_ID') */
-  ontotologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** Filter by tags on the entity */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  ontologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 /** Filter options for querying entities */
@@ -1788,20 +1641,10 @@ export type EventCategory = {
   relevantNodeQueries: Array<NodeQuery>;
   /** List of relevant queries that use this category as input */
   relevantQueries: Array<GraphQuery>;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
   /** Width for visualization (optional) */
   width?: Maybe<Scalars['Float']['output']>;
-};
-
-
-/** Base interface for event categories/schemas */
-export type EventCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Definition of an event type in the graph schema */
@@ -1830,8 +1673,6 @@ export type EventDefinitionInput = {
   properties?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 export enum EventKind {
@@ -1852,7 +1693,7 @@ export type EventRole = {
   role: Scalars['String']['output'];
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** One declared role on an event category */
 export type EventRoleInput = {
   /** Optional filters to apply when linking entities to structures for this role */
   descriptor: EntityDescriptorInput;
@@ -1879,7 +1720,7 @@ export type FinishZarrUploadInput = {
   valid?: Scalars['Boolean']['input'];
 };
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type Graph = {
   __typename?: 'Graph';
   /** The name of the graph as used in AGE (e.g. 'CellGraph') */
@@ -1928,12 +1769,10 @@ export type Graph = {
   relationCategories: Array<RelationCategory>;
   /** List of structure relation categories/schemas defined in this graph */
   structureRelationCategories: Array<StructureRelationCategory>;
-  /** List of tags associated with this category */
-  tags: Array<Scalars['String']['output']>;
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphEntityCategoriesArgs = {
   filters?: InputMaybe<EntityCategoryFilter>;
   ordering?: Array<EntityCategoryOrder>;
@@ -1941,7 +1780,7 @@ export type GraphEntityCategoriesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphMaterializedEdgesArgs = {
   filters?: InputMaybe<MaterializedEdgeFilter>;
   ordering?: Array<MaterializedEdgeOrder>;
@@ -1949,7 +1788,7 @@ export type GraphMaterializedEdgesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphMaterializedRelationEdgesArgs = {
   filters?: InputMaybe<MaterializedRelationEdgeFilter>;
   ordering?: Array<MaterializedRelationEdgeOrder>;
@@ -1957,7 +1796,7 @@ export type GraphMaterializedRelationEdgesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphMaterializedStructureRelationEdgesArgs = {
   filters?: InputMaybe<MaterializedStructureRelationEdgeFilter>;
   ordering?: Array<MaterializedStructureRelationEdgeOrder>;
@@ -1965,7 +1804,7 @@ export type GraphMaterializedStructureRelationEdgesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphMeasurementCategoriesArgs = {
   filters?: InputMaybe<MeasurementCategoryFilter>;
   ordering?: Array<MeasurementCategoryOrder>;
@@ -1973,7 +1812,7 @@ export type GraphMeasurementCategoriesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphNaturalEventCategoriesArgs = {
   filters?: InputMaybe<NaturalEventCategoryFilter>;
   ordering?: Array<NaturalEventCategoryOrder>;
@@ -1981,7 +1820,7 @@ export type GraphNaturalEventCategoriesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphProtocolEventCategoriesArgs = {
   filters?: InputMaybe<ProtocolEventCategoryFilter>;
   ordering?: Array<ProtocolEventCategoryOrder>;
@@ -1989,7 +1828,7 @@ export type GraphProtocolEventCategoriesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphRelationCategoriesArgs = {
   filters?: InputMaybe<RelationCategoryFilter>;
   ordering?: Array<RelationCategoryOrder>;
@@ -1997,14 +1836,14 @@ export type GraphRelationCategoriesArgs = {
 };
 
 
-/** Base interface for graph schemas */
+/** One view over the organization's evidence log */
 export type GraphStructureRelationCategoriesArgs = {
   filters?: InputMaybe<StructureRelationCategoryFilter>;
   ordering?: Array<StructureRelationCategoryOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/** Input for creating a new graph from a schema definition */
+/** A complete graph schema definition */
 export type GraphDefinitionInput = {
   /** The graph extensions containing all type definitions */
   extensions: GraphExtensionsInput;
@@ -2014,7 +1853,7 @@ export type GraphDefinitionInput = {
   systemVersion?: Scalars['String']['input'];
 };
 
-/** Input for creating a new graph from a schema definition */
+/** The categories a graph schema declares */
 export type GraphExtensionsInput = {
   /** Entity definitions */
   entities?: Array<EntityDefinitionInput>;
@@ -2064,16 +1903,20 @@ export type GraphNodesQuery = GraphQuery & {
   __typename?: 'GraphNodesQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
   /** The node category/schema to query */
   nodeCategory: NodeCategory;
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -2104,7 +1947,7 @@ export type GraphPairsQuery = GraphQuery & {
   __typename?: 'GraphPairsQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** Optional edge category/schema to filter pairs by */
   edgeCategory?: Maybe<EdgeCategory>;
@@ -2112,8 +1955,12 @@ export type GraphPairsQuery = GraphQuery & {
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
   /** The source node category/schema to query */
@@ -2144,14 +1991,18 @@ export type GraphPathQuery = GraphQuery & {
   __typename?: 'GraphPathQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
   /** The node category this path starts from */
@@ -2160,18 +2011,39 @@ export type GraphPathQuery = GraphQuery & {
   targetCategory?: Maybe<NodeCategory>;
 };
 
+export type GraphPathQueryFilter = {
+  AND?: InputMaybe<GraphPathQueryFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<GraphPathQueryFilter>;
+  OR?: InputMaybe<GraphPathQueryFilter>;
+  /** Only archived queries, or only live ones. Omitted shows both */
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Full-text search over label and description */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GraphPathQueryOrder =
+  { id: Ordering; label?: never; }
+  |  { id?: never; label: Ordering; };
+
 /** Base interface for entity categories/schemas */
 export type GraphQuery = {
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
-  /** Database ID of the category */
+  /** Database ID of this saved query */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -2226,13 +2098,15 @@ export type GraphTableQuery = GraphQuery & Plottable & {
   builderArgs?: Maybe<BuilderArgs>;
   /** List of columns to return in the table query result */
   columns: Array<Column>;
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
   /** The Cypher query to execute for this table query */
   query: Scalars['CypherLiteral']['output'];
@@ -2255,7 +2129,7 @@ export type GraphTableQueryFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Input for creating a new graph from a schema definition */
+/** A saved table query over a graph */
 export type GraphTableQueryInput = {
   /** Description of this graph query */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -2271,7 +2145,7 @@ export type GraphTableQueryOrder =
   { id: Ordering; label?: never; }
   |  { id?: never; label: Ordering; };
 
-/** Result of linking a structure to an entity */
+/** A rendered table result for a saved graph table query */
 export type GraphTableRender = {
   __typename?: 'GraphTableRender';
   /** The graph rendered by this query */
@@ -2284,7 +2158,7 @@ export type GraphTableRender = {
   rows: Array<Scalars['AnyScalar']['output']>;
 };
 
-/** A natural event category/schema definition */
+/** A claim that an entity went into an event */
 export type InputParticipation = Edge & {
   __typename?: 'InputParticipation';
   /** Global identifier in format 'graph_name:graph_id' */
@@ -2295,13 +2169,13 @@ export type InputParticipation = Edge & {
   id: Scalars['String']['output'];
   /** The edge label/type */
   label: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The role the entity played going in */
   role: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The entity that took part */
   source: Entity;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The event the entity went into */
   target: Event;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
@@ -2484,7 +2358,7 @@ export type MaterializedStructureRelationEdgeFilter = {
 export type MaterializedStructureRelationEdgeOrder =
   { id: Ordering; };
 
-/** A natural event category/schema definition */
+/** A MEASUREMENT claim: a structure measuring an entity */
 export type Measurement = Edge & {
   __typename?: 'Measurement';
   /** How the view this was read through draws it, if any view does */
@@ -2501,14 +2375,25 @@ export type Measurement = Edge & {
   measuredFrom?: Maybe<Scalars['DateTime']['output']>;
   /** When this relation stopped being valid according to the evidence */
   measuredTo?: Maybe<Scalars['DateTime']['output']>;
-  /** The graph this node belongs to */
+  /** The structure that does the measuring */
   source: Structure;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The entity being measured */
   target: Entity;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
+};
+
+/** An assertion about a measurement. Drawings are always empty: a measurement has no AGE edge at all */
+export type MeasurementAssertion = {
+  __typename?: 'MeasurementAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Always empty, and structurally so: nothing projects a measurement to an AGE edge */
+  drawings: Array<EdgeDrawing>;
+  /** The measurement as the log has it */
+  measurement: Measurement;
 };
 
 /** A measurement category/schema definition */
@@ -2546,20 +2431,10 @@ export type MeasurementCategory = Category & EdgeCategory & {
   relevantQueries: Array<GraphQuery>;
   /** The graph this category belongs to */
   sourceDescriptor: StructureDescriptor;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The graph this category belongs to */
   targetDescriptor: EntityDescriptor;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
-};
-
-
-/** A measurement category/schema definition */
-export type MeasurementCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of MeasurementCategory */
@@ -2630,7 +2505,7 @@ export type MeasurementCategoryStatsSumArgs = {
   field: MeasurementCategoryField;
 };
 
-/** Input for creating a new graph from a schema definition */
+/** Declares a measurement category in a graph schema */
 export type MeasurementDefinitionInput = {
   /** Relation cardinality */
   cardinality?: Cardinality;
@@ -2654,8 +2529,6 @@ export type MeasurementDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: StructureDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: EntityDescriptorInput;
 };
@@ -2690,31 +2563,6 @@ export type MeasurementPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   /** Number of items to skip */
   offset?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** A structure that provides evidence for entities */
-export type MeasurementShadowLink = Node & {
-  __typename?: 'MeasurementShadowLink';
-  /** External ID if set */
-  externalId?: Maybe<Scalars['String']['output']>;
-  /** Global identifier in format 'graph_name:graph_id' */
-  globalId: Scalars['GlobalID']['output'];
-  /** The graph this node belongs to, or null for organization-scoped evidence */
-  graph?: Maybe<Graph>;
-  /** Local AGE graph ID, or null for evidence rows that are not projected into a graph */
-  graphId?: Maybe<Scalars['Int']['output']>;
-  /** Composite ID for node lookup */
-  id: Scalars['String']['output'];
-  /** The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1') */
-  label: Scalars['String']['output'];
-  /** Local ID if set */
-  localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
-  pinned: Scalars['Boolean']['output'];
-  /** Schema identifier (e.g. '@mikro/roi') */
-  reifies: Measurement;
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
 };
 
 /** Temporary S3 credentials for reading a media object. */
@@ -2807,29 +2655,24 @@ export type Metric = Node & {
   localId?: Maybe<Scalars['String']['output']>;
   /** When the world was observed */
   measuredAt?: Maybe<Scalars['DateTime']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
   /** Unit of measurement, where the source gave one */
   unit?: Maybe<Scalars['String']['output']>;
   /** The metric value */
   value: Scalars['AnyScalar']['output'];
 };
 
-/** Filter options for querying metrics */
-export type MetricFilter = {
-  /** Filter metrics that have a specific property */
-  hasProperty?: InputMaybe<Scalars['String']['input']>;
-  /** Filter by specific metric IDs */
-  ids?: InputMaybe<Array<Scalars['GraphID']['input']>>;
-  /** Filter metrics that match specific property conditions */
-  matches?: InputMaybe<Array<PropertyMatch>>;
-  /** Full-text search over metric properties */
-  search?: InputMaybe<Scalars['String']['input']>;
+/** An assertion about a metric — a measured value about a structure */
+export type MetricAssertion = {
+  __typename?: 'MetricAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** The metric this act was about */
+  metric: Metric;
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** One measured value about a structure */
 export type MetricInput = {
   confidence?: InputMaybe<Scalars['Float']['input']>;
   confidenceType?: InputMaybe<Scalars['String']['input']>;
@@ -2932,39 +2775,15 @@ export type MetricKindStatsSumArgs = {
   field: MetricKindField;
 };
 
-/** Ordering options for metric queries */
-export type MetricOrder = {
-  /** Order by metric category */
-  category?: InputMaybe<Ordering>;
-  /** Order by creation timestamp */
-  createdAt?: InputMaybe<Ordering>;
-  /** Order by metric ID */
-  id?: InputMaybe<Ordering>;
-  /** Order by a specific property value */
-  property?: InputMaybe<PropertyOrder>;
-};
-
-/** Pagination options for querying metrics */
-export type MetricPaginationInput = {
-  /** Maximum number of items to return */
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  /** Number of items to skip */
-  offset?: InputMaybe<Scalars['Int']['input']>;
-};
-
 /** Graph Engine Mutations */
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Retract several claims as one act */
-  archiveClaims: Array<Edge>;
   /** Archive an edge pairs query */
   archiveEdgePairsQuery: Scalars['ID']['output'];
   /** Archive an edge path query */
   archiveEdgePathQuery: Scalars['ID']['output'];
   /** Archive an edge table query */
   archiveEdgeTableQuery: Scalars['ID']['output'];
-  /** Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays. */
-  archiveEntity: Entity;
   /** Archive a graph in the graph engine (soft delete) */
   archiveGraph: Graph;
   /** Archive a graph pairs query */
@@ -2973,50 +2792,48 @@ export type Mutation = {
   archiveGraphPathQuery: Scalars['ID']['output'];
   /** Archive a graph table query */
   archiveGraphTableQuery: Scalars['ID']['output'];
-  /** Archive a measurement in the graph (soft delete) */
-  archiveMeasurement: Measurement;
-  /** Archive a metric in the graph (soft delete) */
-  archiveMetric: Metric;
-  /** Claim that a natural event no longer stands */
-  archiveNaturalEvent: NaturalEvent;
   /** Archive a node pairs query */
   archiveNodePairsQuery: Scalars['ID']['output'];
   /** Archive a node path query */
   archiveNodePathQuery: Scalars['ID']['output'];
   /** Archive a node table query */
   archiveNodeTableQuery: Scalars['ID']['output'];
-  /** Retract one claim that an entity took part in an event */
-  archiveParticipation: Edge;
-  /** Claim that a protocol event no longer stands */
-  archiveProtocolEvent: ProtocolEvent;
-  /** Archive a relation in the graph (soft delete) */
-  archiveRelation: Relation;
-  /** Archive a structure in the graph (soft delete) */
-  archiveStructure: Structure;
-  /** Archive a structure relation in the graph (soft delete) */
-  archiveStructureRelation: StructureRelation;
+  /** Claim that an entity exists, under one of the organization's words. Returns the assertion and every view that draws it — empty when no view declares the word, which is an ordinary outcome */
+  assertEntityExists: EntityAssertion;
+  /** Assert that a structure measures an entity, under one of the organization's words. Drawings are always empty: a measurement has no AGE edge */
+  assertMeasurementExists: MeasurementAssertion;
+  /** Record a measurement, creating the structure it describes if this is its first sight. One assertion covers both */
+  assertMetricValue: MetricAssertion;
+  /** Record a measurement against a structure that already exists, named by its evidence id */
+  assertMetricValueForStructure: MetricAssertion;
+  /** Claim that a natural event happened, under one of the organization's words */
+  assertNaturalEventExists: NaturalEventAssertion;
   /** Claim that an entity took part in an event, without displacing anyone else's claim */
-  assertParticipation: Edge;
+  assertParticipation: ParticipationAssertion;
   /** Claim that several entities took part in one event, as one act and one assertion */
-  assertParticipations: Array<Edge>;
+  assertParticipations: EdgesAssertion;
+  /** Claim that a protocol step happened, under one of the organization's words */
+  assertProtocolEventExists: ProtocolEventAssertion;
+  /** Assert a relation between two entities, under one of the organization's words */
+  assertRelationExists: RelationAssertion;
+  /** Claim that an external datum exists and is worth pointing at. Idempotent by (identifier, object) */
+  assertStructureExists: StructureAssertion;
+  /** Assert a relation between two structures. Drawings are always empty: neither endpoint has a vertex */
+  assertStructureRelationExists: StructureRelationAssertion;
   /** Claim that an entity exists, returning it to every projection whose rules admit it */
-  attestEntity: Entity;
+  attestEntity: EntityAssertion;
   /** Claim that a natural event exists */
-  attestNaturalEvent: NaturalEvent;
+  attestNaturalEvent: NaturalEventAssertion;
   /** Claim that a protocol event exists */
-  attestProtocolEvent: ProtocolEvent;
-  /** Claim that several nodes are of a category, without displacing anyone else's claim */
-  classifyNodes: Array<Entity>;
-  /** Create a new category tag in the graph */
-  createCategoryTag: CategoryTag;
+  attestProtocolEvent: ProtocolEventAssertion;
+  /** Claim that several nodes are of a word, without displacing anyone else's claim. One act, one assertion */
+  classifyNodes: NodesAssertion;
   /** Create an edge pairs query */
   createEdgePairsQuery: EdgePairsQuery;
   /** Create an edge path query */
   createEdgePathQuery: EdgePathQuery;
   /** Create an edge table query */
   createEdgeTableQuery: EdgeTableQuery;
-  /** Create a new entity in the graph */
-  createEntity: Entity;
   /** Create a new entity category/schema in the graph */
   createEntityCategory: EntityCategory;
   /** Create a new graph in the graph engine */
@@ -3029,14 +2846,8 @@ export type Mutation = {
   createGraphTableQuery: GraphTableQuery;
   /** Create or update a graph table query using builder arguments */
   createGraphTableQueryThroughBuilder: GraphTableQuery;
-  /** Assert that a structure measures an entity, under a measurement category */
-  createMeasurement: Measurement;
   /** Create a new measurement category/schema in the graph */
   createMeasurementCategory: MeasurementCategory;
-  /** Create a new metric in the graph */
-  createMetric: Metric;
-  /** Create a new natural event in the graph */
-  createNaturalEvent: NaturalEvent;
   /** Create a new natural event category/schema in the graph */
   createNaturalEventCategory: NaturalEventCategory;
   /** Create a node pairs query */
@@ -3045,26 +2856,16 @@ export type Mutation = {
   createNodePathQuery: NodePathQuery;
   /** Create a node table query */
   createNodeTableQuery: NodeTableQuery;
-  /** Create a new protocol event in the graph */
-  createProtocolEvent: ProtocolEvent;
   /** Create a new protocol event category/schema in the graph */
   createProtocolEventCategory: ProtocolEventCategory;
-  /** Assert a relation between two entities in the graph */
-  createRelation: Relation;
   /** Create a new relation category/schema in the graph */
   createRelationCategory: RelationCategory;
   /** Create a scatter plot */
   createScatterPlot: ScatterPlot;
-  /** Create a new structure in the graph */
-  createStructure: Structure;
-  /** Create a new structure relation in the graph */
-  createStructureRelation: StructureRelation;
   /** Create a new structure relation category/schema in the graph */
   createStructureRelationCategory: StructureRelationCategory;
   /** Declare one of the organization's words, or describe one an ingest minted bare */
   createTerm: Term;
-  /** Delete an existing category tag from the graph */
-  deleteCategoryTag: Scalars['ID']['output'];
   /** Delete an edge pairs query */
   deleteEdgePairsQuery: Scalars['ID']['output'];
   /** Delete an edge path query */
@@ -3105,28 +2906,44 @@ export type Mutation = {
   deleteStructureRelationCategory: Scalars['ID']['output'];
   /** Retire a word nothing has been claimed under */
   deleteTerm: Scalars['ID']['output'];
-  /** Ensure a structure exists in the graph, creating it if it does not exist */
-  ensureStructure: Structure;
+  /** Get the structure for an external datum, creating it if this is the first sight of it */
+  ensureStructure: StructureAssertion;
   /** Finalize a big file upload after the client has written the object */
-  finishBigfileUpload: BigFileStore;
+  finishBigFileUpload: BigFileStore;
   /** Finalize a media upload after the client has written the object */
   finishMediaUpload: MediaStore;
   /** Finalize a Zarr upload after the client has written the object */
   finishZarrUpload: ZarrStore;
   /** Assert that a structure is evidence for an entity */
-  linkStructureToEntity: Structure;
-  /** Pin a node in the UI for a user */
-  pinNode: Node;
-  /** Record a metric, auto-creating structure when allowed */
-  recordMetric: Metric;
+  linkStructureToEntity: StructureAssertion;
   /** Request an upload grant for a big file store */
-  requestBigfileUpload: BigFileUploadGrant;
+  requestBigFileUpload: BigFileUploadGrant;
   /** Upload media and return a URL for access */
   requestMediaUpload: MediaUploadGrant;
   /** Request an upload grant for a Zarr store */
   requestZarrUpload: ZarrUploadGrant;
-  /** Update an existing category tag in the graph */
-  updateCategoryTag: CategoryTag;
+  /** Retract several claims as one act */
+  retractClaims: EdgesAssertion;
+  /** Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays. */
+  retractEntity: EntityAssertion;
+  /** Retract a measurement assertion without destroying it */
+  retractMeasurement: MeasurementAssertion;
+  /** Retract a measurement without destroying it. It stays readable, because a derived value that dropped it still has to be explainable */
+  retractMetric: MetricAssertion;
+  /** Claim that a natural event no longer stands */
+  retractNaturalEvent: NaturalEventAssertion;
+  /** Retract one claim that an entity took part in an event. The edge survives while another claim still states it */
+  retractParticipation: ParticipationAssertion;
+  /** Claim that a protocol event no longer stands */
+  retractProtocolEvent: ProtocolEventAssertion;
+  /** Retract a relation assertion without destroying it. The edge survives wherever another live assertion still states the same proposition */
+  retractRelation: RelationAssertion;
+  /** Claim that a structure should no longer be pointed at. The row and its metrics survive */
+  retractStructure: StructureAssertion;
+  /** Retract a structure relation assertion without destroying it */
+  retractStructureRelation: StructureRelationAssertion;
+  /** Correct a measurement by retracting it and asserting a new one. The returned metric has a new id: it is a new row, not an edited one */
+  supersedeMetricValue: MetricAssertion;
   /** Update an edge pairs query */
   updateEdgePairsQuery: EdgePairsQuery;
   /** Update an edge path query */
@@ -3147,8 +2964,6 @@ export type Mutation = {
   updateGraphVisual: Graph;
   /** Update an existing measurement category/schema in the graph */
   updateMeasurementCategory: MeasurementCategory;
-  /** Update an existing metric in the graph */
-  updateMetric: Metric;
   /** Update a metric kind's label, description or colour */
   updateMetricKind: MetricKind;
   /** Update an existing natural event category/schema in the graph */
@@ -3161,28 +2976,22 @@ export type Mutation = {
   updateNodeTableQuery: NodeTableQuery;
   /** Update an existing protocol event category/schema in the graph */
   updateProtocolEventCategory: ProtocolEventCategory;
-  /** Replace a relation with a new assertion, archiving the old one */
-  updateRelation: Relation;
+  /** Replace a relation with a new assertion, retracting the old one. Two assertions are recorded; the result reports the one that made the relation now standing */
+  updateRelation: RelationAssertion;
   /** Update an existing relation category/schema in the graph */
   updateRelationCategory: RelationCategory;
   /** Update a scatter plot */
   updateScatterPlot: ScatterPlot;
-  /** Update an existing structure in the graph */
-  updateStructure: Structure;
+  /** Append metrics to an existing structure. Its (identifier, object) is immutable */
+  updateStructure: StructureAssertion;
   /** Update a structure kind's label, description or colour */
   updateStructureKind: StructureKind;
-  /** Update an existing structure relation in the graph */
-  updateStructureRelation: StructureRelation;
+  /** Replace a structure relation, keeping the old assertion on the record */
+  updateStructureRelation: StructureRelationAssertion;
   /** Update an existing structure relation category/schema in the graph */
   updateStructureRelationCategory: StructureRelationCategory;
   /** Update a term's label, description, PURL or colour. Its kind and key are its identity and cannot change. */
   updateTerm: Term;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationArchiveClaimsArgs = {
-  input: ArchiveClaimsInput;
 };
 
 
@@ -3201,12 +3010,6 @@ export type MutationArchiveEdgePathQueryArgs = {
 /** Graph Engine Mutations */
 export type MutationArchiveEdgeTableQueryArgs = {
   input: ArchiveEdgeTableQueryInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationArchiveEntityArgs = {
-  input: ArchiveEntityInput;
 };
 
 
@@ -3235,24 +3038,6 @@ export type MutationArchiveGraphTableQueryArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveMeasurementArgs = {
-  input: ArchiveMeasurementInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationArchiveMetricArgs = {
-  input: ArchiveMetricInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationArchiveNaturalEventArgs = {
-  input: ArchiveNaturalEventInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationArchiveNodePairsQueryArgs = {
   input: ArchiveNodePairsQueryInput;
 };
@@ -3271,32 +3056,32 @@ export type MutationArchiveNodeTableQueryArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveParticipationArgs = {
-  input: ArchiveParticipationInput;
+export type MutationAssertEntityExistsArgs = {
+  input: AssertEntityExistsInput;
 };
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveProtocolEventArgs = {
-  input: ArchiveProtocolEventInput;
+export type MutationAssertMeasurementExistsArgs = {
+  input: AssertMeasurementExistsInput;
 };
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveRelationArgs = {
-  input: ArchiveRelationInput;
+export type MutationAssertMetricValueArgs = {
+  input: AssertMetricValueInput;
 };
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveStructureArgs = {
-  input: ArchiveStructureInput;
+export type MutationAssertMetricValueForStructureArgs = {
+  input: AssertMetricValueForStructureInput;
 };
 
 
 /** Graph Engine Mutations */
-export type MutationArchiveStructureRelationArgs = {
-  input: ArchiveStructureRelationInput;
+export type MutationAssertNaturalEventExistsArgs = {
+  input: AssertNaturalEventExistsInput;
 };
 
 
@@ -3309,6 +3094,30 @@ export type MutationAssertParticipationArgs = {
 /** Graph Engine Mutations */
 export type MutationAssertParticipationsArgs = {
   input: AssertParticipationsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationAssertProtocolEventExistsArgs = {
+  input: AssertProtocolEventExistsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationAssertRelationExistsArgs = {
+  input: AssertRelationExistsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationAssertStructureExistsArgs = {
+  input: AssertStructureExistsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationAssertStructureRelationExistsArgs = {
+  input: AssertStructureRelationExistsInput;
 };
 
 
@@ -3337,12 +3146,6 @@ export type MutationClassifyNodesArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationCreateCategoryTagArgs = {
-  input: CreateCategoryTagInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationCreateEdgePairsQueryArgs = {
   input: CreateEdgePairsQueryInput;
 };
@@ -3357,12 +3160,6 @@ export type MutationCreateEdgePathQueryArgs = {
 /** Graph Engine Mutations */
 export type MutationCreateEdgeTableQueryArgs = {
   input: CreateEdgeTableQueryInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateEntityArgs = {
-  input: CreateEntityInput;
 };
 
 
@@ -3403,26 +3200,8 @@ export type MutationCreateGraphTableQueryThroughBuilderArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationCreateMeasurementArgs = {
-  input: CreateMeasurementInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationCreateMeasurementCategoryArgs = {
   input: CreateMeasurementDefinitionInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateMetricArgs = {
-  input: CreateMetricInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateNaturalEventArgs = {
-  input: CreateNaturalEventInput;
 };
 
 
@@ -3451,20 +3230,8 @@ export type MutationCreateNodeTableQueryArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationCreateProtocolEventArgs = {
-  input: CreateProtocolEventInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationCreateProtocolEventCategoryArgs = {
   input: CreateProtocolEventDefinitionInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateRelationArgs = {
-  input: CreateRelationInput;
 };
 
 
@@ -3481,18 +3248,6 @@ export type MutationCreateScatterPlotArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationCreateStructureArgs = {
-  input: CreateStructureInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationCreateStructureRelationArgs = {
-  input: CreateStructureRelationInput;
-};
-
-
-/** Graph Engine Mutations */
 export type MutationCreateStructureRelationCategoryArgs = {
   input: CreateStructureRelationDefinitionInput;
 };
@@ -3501,12 +3256,6 @@ export type MutationCreateStructureRelationCategoryArgs = {
 /** Graph Engine Mutations */
 export type MutationCreateTermArgs = {
   input: CreateTermInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationDeleteCategoryTagArgs = {
-  input: DeleteCategoryTagInput;
 };
 
 
@@ -3637,7 +3386,7 @@ export type MutationEnsureStructureArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationFinishBigfileUploadArgs = {
+export type MutationFinishBigFileUploadArgs = {
   input: FinishBigFileUploadInput;
 };
 
@@ -3661,19 +3410,7 @@ export type MutationLinkStructureToEntityArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationPinNodeArgs = {
-  input: PinNodeInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationRecordMetricArgs = {
-  input: RecordMetricInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationRequestBigfileUploadArgs = {
+export type MutationRequestBigFileUploadArgs = {
   input: RequestBigFileUploadInput;
 };
 
@@ -3691,8 +3428,68 @@ export type MutationRequestZarrUploadArgs = {
 
 
 /** Graph Engine Mutations */
-export type MutationUpdateCategoryTagArgs = {
-  input: UpdateCategoryTagInput;
+export type MutationRetractClaimsArgs = {
+  input: RetractClaimsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractEntityArgs = {
+  input: RetractEntityInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractMeasurementArgs = {
+  input: RetractMeasurementInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractMetricArgs = {
+  input: RetractMetricInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractNaturalEventArgs = {
+  input: RetractNaturalEventInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractParticipationArgs = {
+  input: RetractParticipationInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractProtocolEventArgs = {
+  input: RetractProtocolEventInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractRelationArgs = {
+  input: RetractRelationInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractStructureArgs = {
+  input: RetractStructureInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractStructureRelationArgs = {
+  input: RetractStructureRelationInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationSupersedeMetricValueArgs = {
+  input: SupersedeMetricValueInput;
 };
 
 
@@ -3753,12 +3550,6 @@ export type MutationUpdateGraphVisualArgs = {
 /** Graph Engine Mutations */
 export type MutationUpdateMeasurementCategoryArgs = {
   input: UpdateMeasurementDefinitionInput;
-};
-
-
-/** Graph Engine Mutations */
-export type MutationUpdateMetricArgs = {
-  input: UpdateMetricInput;
 };
 
 
@@ -3868,15 +3659,13 @@ export type NaturalEvent = Event & Node & VersionedNode & {
   label: Scalars['String']['output'];
   /** Timestamp when properties were last derived (unix ms) */
   lastDerived?: Maybe<Scalars['UnixMilliseconds']['output']>;
-  /** External object ID this entity references */
-  lifecycle?: Maybe<Scalars['String']['output']>;
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
   /** List of the current derived properties for this event */
   measuredFrom: Scalars['DateTime']['output'];
   /** The source entity of this relation */
   measuredTo: Scalars['DateTime']['output'];
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
   /** List of the current derived properties for this entity */
   properties: Scalars['AnyScalar']['output'];
@@ -3884,8 +3673,17 @@ export type NaturalEvent = Event & Node & VersionedNode & {
   richProperties: Array<RichProperty>;
   /** Schema version used to derive properties */
   schemaVersion: Scalars['String']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
+};
+
+/** An assertion about a natural event, and everywhere it is now drawn */
+export type NaturalEventAssertion = {
+  __typename?: 'NaturalEventAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<NodeDrawing>;
+  /** The event as the log has it */
+  naturalEvent: NaturalEvent;
 };
 
 /** A relation category/schema definition */
@@ -3931,20 +3729,10 @@ export type NaturalEventCategory = Category & EventCategory & NodeCategory & {
   relevantNodeQueries: Array<NodeQuery>;
   /** List of relevant queries that use this category as input */
   relevantQueries: Array<GraphQuery>;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
   /** Width for visualization (optional) */
   width?: Maybe<Scalars['Float']['output']>;
-};
-
-
-/** A relation category/schema definition */
-export type NaturalEventCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of NaturalEventCategory */
@@ -4062,10 +3850,8 @@ export type Node = {
   label: Scalars['String']['output'];
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
 };
 
 /** Base interface for graph schemas */
@@ -4094,6 +3880,17 @@ export type NodeCategory = {
   relevantNodeQueries: Array<NodeQuery>;
   /** Width for visualization (optional) */
   width?: Maybe<Scalars['Float']['output']>;
+};
+
+/** One view that draws a claimed node, and how it draws it */
+export type NodeDrawing = {
+  __typename?: 'NodeDrawing';
+  /** The category this view draws the claim under — what the word means here */
+  category: Category;
+  /** The view this drawing belongs to */
+  graph: Graph;
+  /** The node as this view holds it, with the properties this view derives. Its graph and label are true here, which they cannot be on a result that stands for every view at once */
+  node: Node;
 };
 
 /** Filter options for querying nodes */
@@ -4133,7 +3930,7 @@ export type NodePairsQuery = NodeQuery & {
   __typename?: 'NodePairsQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** Optional edge category/schema to filter pairs by */
   edgeCategory?: Maybe<EdgeCategory>;
@@ -4141,8 +3938,12 @@ export type NodePairsQuery = NodeQuery & {
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
   /** The source node category/schema to query */
@@ -4173,14 +3974,18 @@ export type NodePathQuery = NodeQuery & {
   __typename?: 'NodePathQuery';
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -4206,14 +4011,18 @@ export type NodePathQueryOrder =
 export type NodeQuery = {
   /** Whether this saved query has been archived */
   archived: Scalars['Boolean']['output'];
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
-  /** Database ID of the category */
+  /** Database ID of this saved query */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
+  /** The Cypher this query runs */
+  query: Scalars['CypherLiteral']['output'];
   /** List of node categories for which this query is relevant */
   relevantFor: Array<NodeCategory>;
 };
@@ -4227,13 +4036,15 @@ export type NodeTableQuery = NodeQuery & Plottable & {
   builderArgs?: Maybe<BuilderArgs>;
   /** List of columns to return in the table query result */
   columns: Array<Column>;
-  /** Description of the category */
+  /** Description of this query */
   description?: Maybe<Scalars['String']['output']>;
   /** The graph this query belongs to */
   graph: Graph;
   /** Database ID of the category */
   id: Scalars['ID']['output'];
-  /** Label/name of the category */
+  /** The key this query is referenced and pinned by, unique within its graph */
+  key: Scalars['String']['output'];
+  /** Human-readable name for this query */
   label: Scalars['String']['output'];
   /** The Cypher query to execute for this table query */
   query: Scalars['CypherLiteral']['output'];
@@ -4260,6 +4071,17 @@ export type NodeTableQueryOrder =
   { id: Ordering; label?: never; }
   |  { id?: never; label: Ordering; };
 
+/** An assertion about several nodes made as one act, and everywhere they are now drawn */
+export type NodesAssertion = {
+  __typename?: 'NodesAssertion';
+  /** The single claim covering the whole batch. One act by one actor is one assertion, which is why this is not a list */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<NodeDrawing>;
+  /** The nodes this act was about, each as its own kind */
+  nodes: Array<Node>;
+};
+
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
@@ -4274,7 +4096,7 @@ export type OntologyReference = {
   termId: Scalars['String']['output'];
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** A reference to a published ontology term */
 export type OntologyReferenceInput = {
   /** The ontology prefix (e.g. 'OBI'). Must be defined in graph prefixes. */
   prefix: Scalars['String']['input'];
@@ -4291,7 +4113,7 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
-/** A natural event category/schema definition */
+/** A claim that an entity came out of an event */
 export type OutputParticipation = Edge & {
   __typename?: 'OutputParticipation';
   /** Global identifier in format 'graph_name:graph_id' */
@@ -4302,13 +4124,13 @@ export type OutputParticipation = Edge & {
   id: Scalars['String']['output'];
   /** The edge label/type */
   label: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The role the entity played coming out */
   role: Scalars['String']['output'];
-  /** The graph this node belongs to */
-  source: NaturalEvent;
+  /** The event the entity came out of */
+  source: Event;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The entity that came out */
   target: Entity;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
@@ -4324,14 +4146,15 @@ export type ParticipantInput = {
   role: Scalars['String']['input'];
 };
 
-/** Input for creating a new structure */
-export type PinNodeInput = {
-  /** The structure identifier, e.g. '@mikro/roi' */
-  identifier: Scalars['String']['input'];
-  /** List of measurements associated with this structure */
-  metrics?: Array<MetricInput>;
-  /** The unique ID of the object this structure references */
-  object: Scalars['String']['input'];
+/** An assertion about one participation, and everywhere it is now drawn */
+export type ParticipationAssertion = {
+  __typename?: 'ParticipationAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<EdgeDrawing>;
+  /** The participation claim, as an input or an output depending on which side it names */
+  participation: Edge;
 };
 
 /** Base interface for plottable queries */
@@ -4398,7 +4221,7 @@ export type PropertyMatch = {
   key: Scalars['String']['input'];
   /** The operator to use */
   operator: WhereOperator;
-  /** THe value to filter agains */
+  /** The value to filter against */
   value: Scalars['String']['input'];
 };
 
@@ -4442,15 +4265,13 @@ export type ProtocolEvent = Event & Node & VersionedNode & {
   label: Scalars['String']['output'];
   /** Timestamp when properties were last derived (unix ms) */
   lastDerived?: Maybe<Scalars['UnixMilliseconds']['output']>;
-  /** External object ID this entity references */
-  lifecycle?: Maybe<Scalars['String']['output']>;
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
   /** List of the current derived properties for this event */
   measuredFrom: Scalars['DateTime']['output'];
   /** The source entity of this relation */
   measuredTo: Scalars['DateTime']['output'];
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
   /** List of the current derived properties for this entity */
   properties: Scalars['AnyScalar']['output'];
@@ -4458,8 +4279,17 @@ export type ProtocolEvent = Event & Node & VersionedNode & {
   richProperties: Array<RichProperty>;
   /** Schema version used to derive properties */
   schemaVersion: Scalars['String']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
+};
+
+/** An assertion about a protocol event, and everywhere it is now drawn */
+export type ProtocolEventAssertion = {
+  __typename?: 'ProtocolEventAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<NodeDrawing>;
+  /** The event as the log has it */
+  protocolEvent: ProtocolEvent;
 };
 
 /** A relation category/schema definition */
@@ -4505,20 +4335,10 @@ export type ProtocolEventCategory = Category & EventCategory & NodeCategory & {
   relevantNodeQueries: Array<NodeQuery>;
   /** List of relevant queries that use this category as input */
   relevantQueries: Array<GraphQuery>;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
   /** Width for visualization (optional) */
   width?: Maybe<Scalars['Float']['output']>;
-};
-
-
-/** A relation category/schema definition */
-export type ProtocolEventCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of ProtocolEventCategory */
@@ -4628,14 +4448,6 @@ export type Query = {
   activities: Array<Activity>;
   /** Get an activity node by composite graph ID */
   activity: Activity;
-  /** Get an assertion edge by composite graph ID */
-  assertion: Assertion;
-  /** List assertion edges in a graph */
-  assertions: Array<Assertion>;
-  /** Get aggregated category-tag stats with optional filters */
-  categoryTagStats: CategoryTagStats;
-  /** List all category tags */
-  categoryTags: Array<CategoryTag>;
   /** Get a description edge by composite graph ID */
   description: Description;
   /** List description edges in a graph */
@@ -4676,6 +4488,10 @@ export type Query = {
   graphPairsQueries: Array<GraphPairsQuery>;
   /** Show a single saved graph pairs query by ID */
   graphPairsQuery: GraphPairsQuery;
+  /** Show all saved graph path queries */
+  graphPathQueries: Array<GraphPathQuery>;
+  /** Show a single saved graph path query by ID */
+  graphPathQuery: GraphPathQuery;
   /** Show all saved graph queries */
   graphQueries: Array<GraphQuery>;
   /** Show a single saved graph query by ID */
@@ -4720,8 +4536,6 @@ export type Query = {
   measurementCategoryStats: MeasurementCategoryStats;
   /** List measurements for a measurement category */
   measurements: Array<Measurement>;
-  /** List every metric recorded under one assertion */
-  measurementsForAssertion: Array<Metric>;
   /** Get a metric by ID */
   metric: Metric;
   /** Get one metric kind by ID */
@@ -4730,8 +4544,10 @@ export type Query = {
   metricKindStats: MetricKindStats;
   /** List the organization's metric kinds */
   metricKinds: Array<MetricKind>;
-  /** List metrics for a metric category */
+  /** List every un-retracted metric recorded under one metric kind */
   metrics: Array<Metric>;
+  /** List every metric recorded under one assertion */
+  metricsForAssertion: Array<Metric>;
   /** List every un-retracted metric describing a structure */
   metricsForStructure: Array<Metric>;
   /** Get a natural event by composite graph ID */
@@ -4816,9 +4632,9 @@ export type Query = {
   structureRelations: Array<StructureRelation>;
   /** List structures with optional filters, ordering, and pagination */
   structures: Array<Structure>;
-  /** Get one term by ID */
+  /** Get one of the organization's words by ID */
   term: Term;
-  /** List the organization's vocabulary — the words its evidence is recorded under */
+  /** List the organization's words — its vocabulary, independent of any graph */
   terms: Array<Term>;
 };
 
@@ -4838,31 +4654,6 @@ export type QueryActivitiesArgs = {
 
 export type QueryActivityArgs = {
   id: Scalars['GraphID']['input'];
-};
-
-
-export type QueryAssertionArgs = {
-  id: Scalars['GraphID']['input'];
-};
-
-
-export type QueryAssertionsArgs = {
-  filters?: InputMaybe<RelationFilter>;
-  graph: Scalars['ID']['input'];
-  ordering?: InputMaybe<Array<RelationOrder>>;
-  pagination?: InputMaybe<RelationPaginationInput>;
-};
-
-
-export type QueryCategoryTagStatsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-};
-
-
-export type QueryCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -4975,6 +4766,18 @@ export type QueryGraphPairsQueriesArgs = {
 
 
 export type QueryGraphPairsQueryArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGraphPathQueriesArgs = {
+  filters?: InputMaybe<GraphPathQueryFilter>;
+  ordering?: Array<GraphPathQueryOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryGraphPathQueryArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -5104,11 +4907,6 @@ export type QueryMeasurementsArgs = {
 };
 
 
-export type QueryMeasurementsForAssertionArgs = {
-  assertionId: Scalars['GraphID']['input'];
-};
-
-
 export type QueryMetricArgs = {
   metricId: Scalars['GraphID']['input'];
 };
@@ -5132,10 +4930,12 @@ export type QueryMetricKindsArgs = {
 
 
 export type QueryMetricsArgs = {
-  filters?: InputMaybe<MetricFilter>;
-  metricCategoryId: Scalars['ID']['input'];
-  ordering?: InputMaybe<Array<MetricOrder>>;
-  pagination?: InputMaybe<MetricPaginationInput>;
+  metricKindId: Scalars['ID']['input'];
+};
+
+
+export type QueryMetricsForAssertionArgs = {
+  assertionId: Scalars['GraphID']['input'];
 };
 
 
@@ -5399,23 +5199,6 @@ export type QueryTermsArgs = {
   pagination?: InputMaybe<StructurePaginationInput>;
 };
 
-/** Input for creating a new metric */
-export type RecordMetricInput = {
-  confidence?: InputMaybe<Scalars['Float']['input']>;
-  confidenceType?: InputMaybe<Scalars['String']['input']>;
-  /** The schema identifier for this metric (e.g. '@mikro/roi_volume') */
-  identifier: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  /** The unique ID of the object this metric references */
-  object: Scalars['String']['input'];
-  /** Unix epoch time in milliseconds */
-  timestamp?: InputMaybe<Scalars['Int']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['AnyScalar']['input'];
-  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
-  valueKind: PropertyType;
-};
-
 /** A relation edge between two entities */
 export type Relation = Edge & {
   __typename?: 'Relation';
@@ -5439,14 +5222,25 @@ export type Relation = Edge & {
   properties: Scalars['AnyScalar']['output'];
   /** List of properties derived for this entity */
   richProperties: Array<RichProperty>;
-  /** The graph this node belongs to */
+  /** The entity this relation runs from */
   source: Entity;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The entity this relation runs to */
   target: Entity;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
+};
+
+/** An assertion about a relation, and everywhere that relation is now drawn */
+export type RelationAssertion = {
+  __typename?: 'RelationAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node. */
+  drawings: Array<EdgeDrawing>;
+  /** The relation as the log has it */
+  relation: Relation;
 };
 
 /** A relation category/schema definition */
@@ -5484,20 +5278,10 @@ export type RelationCategory = Category & EdgeCategory & {
   relevantQueries: Array<GraphQuery>;
   /** The graph this category belongs to */
   sourceDescriptor: EntityDescriptor;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The graph this category belongs to */
   targetDescriptor: EntityDescriptor;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
-};
-
-
-/** A relation category/schema definition */
-export type RelationCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of RelationCategory */
@@ -5591,8 +5375,6 @@ export type RelationDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: EntityDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: EntityDescriptorInput;
 };
@@ -5627,31 +5409,6 @@ export type RelationPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   /** Number of items to skip */
   offset?: InputMaybe<Scalars['Int']['input']>;
-};
-
-/** A structure that provides evidence for entities */
-export type RelationShadowLink = Node & {
-  __typename?: 'RelationShadowLink';
-  /** External ID if set */
-  externalId?: Maybe<Scalars['String']['output']>;
-  /** Global identifier in format 'graph_name:graph_id' */
-  globalId: Scalars['GlobalID']['output'];
-  /** The graph this node belongs to, or null for organization-scoped evidence */
-  graph?: Maybe<Graph>;
-  /** Local AGE graph ID, or null for evidence rows that are not projected into a graph */
-  graphId?: Maybe<Scalars['Int']['output']>;
-  /** Composite ID for node lookup */
-  id: Scalars['String']['output'];
-  /** The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1') */
-  label: Scalars['String']['output'];
-  /** Local ID if set */
-  localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
-  pinned: Scalars['Boolean']['output'];
-  /** Schema identifier (e.g. '@mikro/roi') */
-  reifies: Relation;
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
 };
 
 /** Filters for querying node lists */
@@ -5700,6 +5457,66 @@ export type RequestZarrUploadInput = {
   version?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for retracting several claims as one act */
+export type RetractClaimsInput = {
+  /** The evidence IDs of the claims to retract */
+  ids: Array<Scalars['String']['input']>;
+};
+
+/** Input for retracting an entity claim */
+export type RetractEntityInput = {
+  /** The ID of the entity to archive */
+  id: Scalars['GraphID']['input'];
+};
+
+/** Input for archiving an existing measurement edge */
+export type RetractMeasurementInput = {
+  /** The ID of the measurement to archive */
+  id: Scalars['String']['input'];
+};
+
+/** Input for archiving an existing metric */
+export type RetractMetricInput = {
+  /** The ID of the metric to archive */
+  id: Scalars['String']['input'];
+};
+
+/** Input for archiving (soft deleting) an existing natural event instance */
+export type RetractNaturalEventInput = {
+  /** The ID of the natural event to archive */
+  id: Scalars['String']['input'];
+};
+
+/** Input for retracting one participation claim */
+export type RetractParticipationInput = {
+  /** The evidence ID of the participation claim to retract */
+  id: Scalars['String']['input'];
+};
+
+/** Input for archiving (soft deleting) an existing protocol event instance */
+export type RetractProtocolEventInput = {
+  /** The ID of the protocol event to archive */
+  id: Scalars['String']['input'];
+};
+
+/** Input for archiving an existing relation */
+export type RetractRelationInput = {
+  /** The ID of the relation to archive */
+  id: Scalars['GraphID']['input'];
+};
+
+/** Input for deleting an existing structure */
+export type RetractStructureInput = {
+  /** The ID of the structure to archive */
+  id: Scalars['GraphID']['input'];
+};
+
+/** Input for archiving an existing structure relation */
+export type RetractStructureRelationInput = {
+  /** The ID of the structure relation to archive */
+  id: Scalars['String']['input'];
+};
+
 /** Input type for creating a new graph */
 export type ReturnStatement = {
   __typename?: 'ReturnStatement';
@@ -5726,11 +5543,11 @@ export type RichProperty = {
   __typename?: 'RichProperty';
   /** The assertions whose measurements contribute to this value */
   contributingAssertions: Array<Assertion>;
-  /** The property key/name */
+  /** The schema definition this property was derived under */
   definition?: Maybe<PropertyDefinition>;
   /** Local AGE graph ID */
   graphId: Scalars['GraphID']['output'];
-  /** The timestamp when this property was last derived (unix ms) */
+  /** The property key/name */
   key?: Maybe<Scalars['String']['output']>;
   /** When the earliest contributing measurement was observed */
   measuredFrom?: Maybe<Scalars['DateTime']['output']>;
@@ -5746,7 +5563,7 @@ export type RichProperty = {
   value?: Maybe<Scalars['AnyScalar']['output']>;
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** How a participant maps onto a declared event role */
 export type RoleMappingInput = {
   /** The ID of the entity assigned to this role */
   entityId: Scalars['String']['input'];
@@ -5792,7 +5609,7 @@ export type ScatterPlotFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** Input for creating a new graph from a schema definition */
+/** A saved scatter plot over a plottable query */
 export type ScatterPlotInput = {
   /** Optional column key to use for coloring the points */
   colorBy?: InputMaybe<Scalars['String']['input']>;
@@ -5818,13 +5635,13 @@ export type ScatterPlotOrder =
   { id: Ordering; name?: never; }
   |  { id?: never; name: Ordering; };
 
-/** Input for creating a new graph from a schema definition */
+/** A sequence a graph can draw category indices from */
 export type SequenceInput = {
   /** The prefix string (e.g. 'IAZ') */
   prefix: Scalars['String']['input'];
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** How a category draws its index from a sequence */
 export type SequenceMappingInput = {
   /** The property key that will be set with the sequence value */
   property: Scalars['String']['input'];
@@ -5859,10 +5676,17 @@ export type Structure = Node & {
   metrics: Array<Metric>;
   /** External object ID this structure references */
   object: Scalars['String']['output'];
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
+};
+
+/** An assertion about a structure — a pointer to an external datum */
+export type StructureAssertion = {
+  __typename?: 'StructureAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** The structure this act was about */
+  structure: Structure;
 };
 
 /** Input type for creating a new graph query */
@@ -5873,8 +5697,8 @@ export type StructureDescriptor = {
   /** REMOVED — structure kinds have no key. Use `identifiers`. */
   keys?: Maybe<Array<Scalars['String']['output']>>;
   /** REMOVED — structure kinds carry no ontology references. Use `identifiers`. */
-  ontotologyTerms?: Maybe<Array<Scalars['String']['output']>>;
-  /** REMOVED — structure kinds carry no tags. Use `identifiers`. */
+  ontologyTerms?: Maybe<Array<Scalars['String']['output']>>;
+  /** REMOVED — tags are gone, and a structure kind never had them. Use `identifiers`. */
   tags?: Maybe<Array<Scalars['String']['output']>>;
 };
 
@@ -5887,8 +5711,8 @@ export type StructureDescriptorInput = {
   /** REMOVED — structure kinds have no key. Use `identifiers`. */
   keys?: InputMaybe<Array<Scalars['String']['input']>>;
   /** REMOVED — structure kinds carry no ontology references. Use `identifiers`. */
-  ontotologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** REMOVED — structure kinds carry no tags. Use `identifiers`. */
+  ontologyTerms?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** REMOVED — tags are gone, and a structure kind never had them. Use `identifiers`. */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
@@ -6012,7 +5836,7 @@ export type StructurePaginationInput = {
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
-/** Input for creating a new natural event definition in the graph schema */
+/** A reference to a structure by identifier and object */
 export type StructureReferenceInput = {
   /** Schema identifier, e.g. '@mikro/roi' */
   identifier: Scalars['String']['input'];
@@ -6042,14 +5866,25 @@ export type StructureRelation = Edge & {
   measuredFrom?: Maybe<Scalars['DateTime']['output']>;
   /** When this relation stopped being valid according to the evidence */
   measuredTo?: Maybe<Scalars['DateTime']['output']>;
-  /** The graph this node belongs to */
+  /** The structure this relation runs from */
   source: Structure;
   /** Global ID of the source/left node */
   sourceId: Scalars['String']['output'];
-  /** The graph this node belongs to */
+  /** The structure this relation runs to */
   target: Structure;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
+};
+
+/** An assertion about a structure relation. Drawings are always empty: neither endpoint has a vertex */
+export type StructureRelationAssertion = {
+  __typename?: 'StructureRelationAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** Always empty, and structurally so: both endpoints are structures, which have no vertex for an edge to run between */
+  drawings: Array<EdgeDrawing>;
+  /** The structure relation as the log has it */
+  structureRelation: StructureRelation;
 };
 
 /** A relation category/schema definition */
@@ -6087,20 +5922,10 @@ export type StructureRelationCategory = Category & EdgeCategory & {
   relevantQueries: Array<GraphQuery>;
   /** The graph this category belongs to */
   sourceDescriptor: StructureDescriptor;
-  /** List of tags associated with this category */
-  tags: Array<CategoryTag>;
   /** The graph this category belongs to */
   targetDescriptor: StructureDescriptor;
   /** The organization's word this category declares. Claims name the term, not this row — so a category is what the word means *here*, and another graph declaring the same word sees the same claims. */
   term?: Maybe<Term>;
-};
-
-
-/** A relation category/schema definition */
-export type StructureRelationCategoryTagsArgs = {
-  filters?: InputMaybe<CategoryTagFilter>;
-  ordering?: Array<CategoryTagOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Numeric/aggregatable fields of StructureRelationCategory */
@@ -6170,7 +5995,7 @@ export type StructureRelationCategoryStatsSumArgs = {
   field: StructureRelationCategoryField;
 };
 
-/** Input for creating a new graph from a schema definition */
+/** Declares a structure relation category in a graph schema */
 export type StructureRelationDefinitionInput = {
   /** Relation cardinality */
   cardinality?: Cardinality;
@@ -6194,8 +6019,6 @@ export type StructureRelationDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: StructureDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: StructureDescriptorInput;
 };
@@ -6232,31 +6055,6 @@ export type StructureRelationPaginationInput = {
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
-/** A structure that provides evidence for entities */
-export type StructureRelationShadowLink = Node & {
-  __typename?: 'StructureRelationShadowLink';
-  /** External ID if set */
-  externalId?: Maybe<Scalars['String']['output']>;
-  /** Global identifier in format 'graph_name:graph_id' */
-  globalId: Scalars['GlobalID']['output'];
-  /** The graph this node belongs to, or null for organization-scoped evidence */
-  graph?: Maybe<Graph>;
-  /** Local AGE graph ID, or null for evidence rows that are not projected into a graph */
-  graphId?: Maybe<Scalars['Int']['output']>;
-  /** Composite ID for node lookup */
-  id: Scalars['String']['output'];
-  /** The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1') */
-  label: Scalars['String']['output'];
-  /** Local ID if set */
-  localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
-  pinned: Scalars['Boolean']['output'];
-  /** Schema identifier (e.g. '@mikro/roi') */
-  reifies: StructureRelation;
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
-};
-
 /** Graph Engine Subscriptions */
 export type Subscription = {
   __typename?: 'Subscription';
@@ -6268,6 +6066,21 @@ export type Subscription = {
 /** Graph Engine Subscriptions */
 export type SubscriptionGraphUpdatedArgs = {
   graphId: Scalars['GraphID']['input'];
+};
+
+/** Input for updating an existing metric */
+export type SupersedeMetricValueInput = {
+  confidence?: InputMaybe<Scalars['Float']['input']>;
+  confidenceType?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the metric to update */
+  id: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  /** Unix epoch time in milliseconds */
+  timestamp?: InputMaybe<Scalars['Int']['input']>;
+  unit?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['AnyScalar']['input'];
+  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
+  valueKind: PropertyType;
 };
 
 /** A word this organization uses for a kind of thing */
@@ -6329,31 +6142,17 @@ export type TermOrder =
   |  { createdAt?: never; id?: never; key?: never; kind: Ordering; label?: never; }
   |  { createdAt?: never; id?: never; key?: never; kind?: never; label: Ordering; };
 
-/** Input for updating a category tag */
-export type UpdateCategoryTagInput = {
-  /** Updated category tag description */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The category tag ID */
-  id: Scalars['String']['input'];
-  /** Updated human-readable name */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated unique tag value */
-  value?: InputMaybe<Scalars['String']['input']>;
-};
-
 /** Input for updating an edge pairs query */
 export type UpdateEdgePairsQueryInput = {
   /** Description of this edge query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the edge pairs query to update */
+  /** The ID of the edge query to update */
   id: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this edge query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this edge query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this edge query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6361,15 +6160,13 @@ export type UpdateEdgePairsQueryInput = {
 export type UpdateEdgePathQueryInput = {
   /** Description of this edge query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the edge path query to update */
+  /** The ID of the edge query to update */
   id: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this edge query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this edge query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this edge query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6379,15 +6176,13 @@ export type UpdateEdgeTableQueryInput = {
   columnInput?: InputMaybe<Array<ColumnInput>>;
   /** Description of this edge query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the edge table query to update */
+  /** The ID of the edge query to update */
   id: Scalars['String']['input'];
   /** Unique key for this edge query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this edge query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this edge query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this edge query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6415,8 +6210,6 @@ export type UpdateEntityDefinitionInput = {
   propertyDefinitions?: InputMaybe<Array<PropertyDefinitionInput>>;
   /** Sequence mappings for this node */
   sequences?: InputMaybe<Array<SequenceMappingInput>>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 /** Input for updating an existing graph */
@@ -6437,13 +6230,13 @@ export type UpdateGraphInput = {
 export type UpdateGraphPairsQueryInput = {
   /** Description of this graph query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the graph pairs query to update */
+  /** The ID of the graph query to update */
   id: Scalars['String']['input'];
   /** Unique key for this graph query, used for referencing in the UI */
-  key: Scalars['String']['input'];
+  key?: InputMaybe<Scalars['String']['input']>;
   /** Human-readable name for this graph query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this graph query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6451,13 +6244,13 @@ export type UpdateGraphPairsQueryInput = {
 export type UpdateGraphPathQueryInput = {
   /** Description of this graph query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the graph path query to update */
+  /** The ID of the graph query to update */
   id: Scalars['String']['input'];
   /** Unique key for this graph query, used for referencing in the UI */
-  key: Scalars['String']['input'];
+  key?: InputMaybe<Scalars['String']['input']>;
   /** Human-readable name for this graph query (defaults to 'key' if not provided) */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this graph query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6465,8 +6258,6 @@ export type UpdateGraphPathQueryInput = {
 export type UpdateGraphTableQueryInput = {
   /** Definitions for the columns returned by this graph query */
   columnInput?: InputMaybe<Array<ColumnInput>>;
-  /** The Cypher query string that defines this graph query. Can include parameter placeholders (e.g. $param) for dynamic filtering */
-  cypher?: InputMaybe<Scalars['String']['input']>;
   /** Description of this graph query */
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph query to update */
@@ -6513,8 +6304,6 @@ export type UpdateMeasurementDefinitionInput = {
   sequences?: Array<SequenceMappingInput>;
   /** Source entity type(s) */
   source: StructureDescriptorInput;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
   /** Target entity type(s) */
   target: EntityDescriptorInput;
 };
@@ -6541,23 +6330,6 @@ export type UpdateMetricDefinitionInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sequence mappings for this node */
   sequences?: InputMaybe<Array<SequenceMappingInput>>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-/** Input for updating an existing metric */
-export type UpdateMetricInput = {
-  confidence?: InputMaybe<Scalars['Float']['input']>;
-  confidenceType?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the metric to update */
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  /** Unix epoch time in milliseconds */
-  timestamp?: InputMaybe<Scalars['Int']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['AnyScalar']['input'];
-  /** What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded. */
-  valueKind: PropertyType;
 };
 
 /** Input for updating an existing natural event definition in the graph schema */
@@ -6588,23 +6360,19 @@ export type UpdateNaturalEventDefinitionInput = {
   properties?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 /** Input for updating a node pairs query */
 export type UpdateNodePairsQueryInput = {
   /** Description of this node query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the node pairs query to update */
+  /** The ID of the node query to update */
   id: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this node query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this node query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this node query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6612,15 +6380,13 @@ export type UpdateNodePairsQueryInput = {
 export type UpdateNodePathQueryInput = {
   /** Description of this node query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the node path query to update */
+  /** The ID of the node query to update */
   id: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this node query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this node query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this node query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6630,15 +6396,13 @@ export type UpdateNodeTableQueryInput = {
   columnInput?: InputMaybe<Array<ColumnInput>>;
   /** Description of this node query */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the node table query to update */
+  /** The ID of the node query to update */
   id: Scalars['String']['input'];
   /** Unique key for this node query, used for referencing in the UI */
-  key: Scalars['String']['input'];
-  /** The kind/type of the query */
-  kind?: Scalars['String']['input'];
-  /** Human-readable name for this node query (defaults to 'key' if not provided) */
+  key?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable name for this node query */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Updated Cypher query string */
+  /** The Cypher query string that defines this node query */
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6672,8 +6436,6 @@ export type UpdateProtocolEventDefinitionInput = {
   protocol: Scalars['String']['input'];
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 /** Input for updating an existing relation definition in the graph schema */
@@ -6700,8 +6462,6 @@ export type UpdateRelationDefinitionInput = {
   propertyDefinitions?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 /** Input for updating an existing relation */
@@ -6770,8 +6530,6 @@ export type UpdateStructureDefinitionInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sequence mappings for this node */
   sequences?: InputMaybe<Array<SequenceMappingInput>>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 /** Input for updating an existing structure */
@@ -6782,6 +6540,8 @@ export type UpdateStructureInput = {
   metrics?: Array<MetricInput>;
   /** The unique ID of the object this structure references */
   object: Scalars['String']['input'];
+  /** The ID of the user for whom to set this pin. If not provided, will default to the user making the request. */
+  user?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for updating an existing structure relation definition in the graph schema */
@@ -6808,8 +6568,6 @@ export type UpdateStructureRelationDefinitionInput = {
   propertyDefinitions?: Array<PropertyDefinitionInput>;
   /** Sequence mappings for this node */
   sequences?: Array<SequenceMappingInput>;
-  /** Optional tags for this node role (e.g. 'cell_body', 'dendrite', 'axon') */
-  tags?: Array<Scalars['String']['input']>;
 };
 
 /** Input for updating an existing structure relation */
@@ -6870,16 +6628,12 @@ export type VersionedNode = {
   label: Scalars['String']['output'];
   /** Timestamp when properties were last derived (unix ms) */
   lastDerived?: Maybe<Scalars['UnixMilliseconds']['output']>;
-  /** External object ID this entity references */
-  lifecycle?: Maybe<Scalars['String']['output']>;
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
-  /** The timestamp when this entity was materialized (unix ms) */
+  /** Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it */
   pinned: Scalars['Boolean']['output'];
   /** Schema version used to derive properties */
   schemaVersion: Scalars['String']['output'];
-  /** Tags associated with this node */
-  tags: Array<Scalars['String']['output']>;
 };
 
 /** Input type for defining a graph schema */
@@ -6981,7 +6735,7 @@ export type ZarrUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
-export type _Entity = BigFileStore | CategoryTag | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | Term | ZarrStore;
+export type _Entity = Assertion | BigFileStore | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | Term | ZarrStore;
 
 export type _Service = {
   __typename?: '_Service';
@@ -6992,27 +6746,19 @@ type BaseNode_Activity_Fragment = { __typename?: 'Activity', id: string, label: 
 
 type BaseNode_Entity_Fragment = { __typename?: 'Entity', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
-type BaseNode_MeasurementShadowLink_Fragment = { __typename?: 'MeasurementShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
-
 type BaseNode_Metric_Fragment = { __typename?: 'Metric', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
 type BaseNode_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
 type BaseNode_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
-type BaseNode_RelationShadowLink_Fragment = { __typename?: 'RelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
-
 type BaseNode_Structure_Fragment = { __typename?: 'Structure', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
-type BaseNode_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
-
-export type BaseNodeFragment = BaseNode_Activity_Fragment | BaseNode_Entity_Fragment | BaseNode_MeasurementShadowLink_Fragment | BaseNode_Metric_Fragment | BaseNode_NaturalEvent_Fragment | BaseNode_ProtocolEvent_Fragment | BaseNode_RelationShadowLink_Fragment | BaseNode_Structure_Fragment | BaseNode_StructureRelationShadowLink_Fragment;
+export type BaseNodeFragment = BaseNode_Activity_Fragment | BaseNode_Entity_Fragment | BaseNode_Metric_Fragment | BaseNode_NaturalEvent_Fragment | BaseNode_ProtocolEvent_Fragment | BaseNode_Structure_Fragment;
 
 type Node_Activity_Fragment = { __typename?: 'Activity', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
-type Node_Entity_Fragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> };
-
-type Node_MeasurementShadowLink_Fragment = { __typename?: 'MeasurementShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
+type Node_Entity_Fragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> };
 
 type Node_Metric_Fragment = { __typename?: 'Metric', id: string, label: string, key?: string | null, value: any, unit?: string | null, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null };
 
@@ -7020,19 +6766,13 @@ type Node_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: string, lab
 
 type Node_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
 
-type Node_RelationShadowLink_Fragment = { __typename?: 'RelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
-
 type Node_Structure_Fragment = { __typename?: 'Structure', id: string, label: string, object: string, identifier: any, kindId: string, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> };
 
-type Node_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null };
-
-export type NodeFragment = Node_Activity_Fragment | Node_Entity_Fragment | Node_MeasurementShadowLink_Fragment | Node_Metric_Fragment | Node_NaturalEvent_Fragment | Node_ProtocolEvent_Fragment | Node_RelationShadowLink_Fragment | Node_Structure_Fragment | Node_StructureRelationShadowLink_Fragment;
+export type NodeFragment = Node_Activity_Fragment | Node_Entity_Fragment | Node_Metric_Fragment | Node_NaturalEvent_Fragment | Node_ProtocolEvent_Fragment | Node_Structure_Fragment;
 
 type DetailNode_Activity_Fragment = { __typename?: 'Activity', id: string, label: string, graph?: { __typename?: 'Graph', id: string, name: string } | null };
 
-type DetailNode_Entity_Fragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string, name: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> };
-
-type DetailNode_MeasurementShadowLink_Fragment = { __typename?: 'MeasurementShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string, name: string } | null };
+type DetailNode_Entity_Fragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string, name: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> };
 
 type DetailNode_Metric_Fragment = { __typename?: 'Metric', id: string, label: string, key?: string | null, value: any, unit?: string | null, graph?: { __typename?: 'Graph', id: string, name: string } | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null };
 
@@ -7040,19 +6780,9 @@ type DetailNode_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: strin
 
 type DetailNode_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string, name: string } | null };
 
-type DetailNode_RelationShadowLink_Fragment = { __typename?: 'RelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string, name: string } | null };
-
 type DetailNode_Structure_Fragment = { __typename?: 'Structure', id: string, label: string, object: string, identifier: any, kindId: string, graph?: { __typename?: 'Graph', id: string, name: string } | null, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> };
 
-type DetailNode_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string, name: string } | null };
-
-export type DetailNodeFragment = DetailNode_Activity_Fragment | DetailNode_Entity_Fragment | DetailNode_MeasurementShadowLink_Fragment | DetailNode_Metric_Fragment | DetailNode_NaturalEvent_Fragment | DetailNode_ProtocolEvent_Fragment | DetailNode_RelationShadowLink_Fragment | DetailNode_Structure_Fragment | DetailNode_StructureRelationShadowLink_Fragment;
-
-export type PathRelationShadowLinkFragment = { __typename?: 'RelationShadowLink', id: string, label: string };
-
-export type PathStructureRelationShadowLinkFragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string };
-
-export type PathMeasurementRelationShadowLinkFragment = { __typename?: 'MeasurementShadowLink', id: string, label: string };
+export type DetailNodeFragment = DetailNode_Activity_Fragment | DetailNode_Entity_Fragment | DetailNode_Metric_Fragment | DetailNode_NaturalEvent_Fragment | DetailNode_ProtocolEvent_Fragment | DetailNode_Structure_Fragment;
 
 export type PathActivityFragment = { __typename?: 'Activity', id: string, label: string };
 
@@ -7062,27 +6792,19 @@ type PathNode_Activity_Fragment = { __typename?: 'Activity', id: string, label: 
 
 type PathNode_Entity_Fragment = { __typename?: 'Entity', id: string, externalId?: string | null, label: string, category?: { __typename?: 'EntityCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null };
 
-type PathNode_MeasurementShadowLink_Fragment = { __typename?: 'MeasurementShadowLink', id: string, label: string };
-
 type PathNode_Metric_Fragment = { __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null };
 
 type PathNode_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null };
 
 type PathNode_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, richProperties: Array<{ __typename?: 'RichProperty', value?: any | null }> };
 
-type PathNode_RelationShadowLink_Fragment = { __typename?: 'RelationShadowLink', id: string, label: string };
-
 type PathNode_Structure_Fragment = { __typename?: 'Structure', id: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null } | null };
 
-type PathNode_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string };
-
-export type PathNodeFragment = PathNode_Activity_Fragment | PathNode_Entity_Fragment | PathNode_MeasurementShadowLink_Fragment | PathNode_Metric_Fragment | PathNode_NaturalEvent_Fragment | PathNode_ProtocolEvent_Fragment | PathNode_RelationShadowLink_Fragment | PathNode_Structure_Fragment | PathNode_StructureRelationShadowLink_Fragment;
+export type PathNodeFragment = PathNode_Activity_Fragment | PathNode_Entity_Fragment | PathNode_Metric_Fragment | PathNode_NaturalEvent_Fragment | PathNode_ProtocolEvent_Fragment | PathNode_Structure_Fragment;
 
 type ListNode_Activity_Fragment = { __typename?: 'Activity', id: string, label: string };
 
 type ListNode_Entity_Fragment = { __typename?: 'Entity', id: string, label: string };
-
-type ListNode_MeasurementShadowLink_Fragment = { __typename?: 'MeasurementShadowLink', id: string, label: string };
 
 type ListNode_Metric_Fragment = { __typename?: 'Metric', id: string, label: string };
 
@@ -7090,21 +6812,21 @@ type ListNode_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: string,
 
 type ListNode_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string };
 
-type ListNode_RelationShadowLink_Fragment = { __typename?: 'RelationShadowLink', id: string, label: string };
-
 type ListNode_Structure_Fragment = { __typename?: 'Structure', id: string, label: string };
 
-type ListNode_StructureRelationShadowLink_Fragment = { __typename?: 'StructureRelationShadowLink', id: string, label: string };
+export type ListNodeFragment = ListNode_Activity_Fragment | ListNode_Entity_Fragment | ListNode_Metric_Fragment | ListNode_NaturalEvent_Fragment | ListNode_ProtocolEvent_Fragment | ListNode_Structure_Fragment;
 
-export type ListNodeFragment = ListNode_Activity_Fragment | ListNode_Entity_Fragment | ListNode_MeasurementShadowLink_Fragment | ListNode_Metric_Fragment | ListNode_NaturalEvent_Fragment | ListNode_ProtocolEvent_Fragment | ListNode_RelationShadowLink_Fragment | ListNode_Structure_Fragment | ListNode_StructureRelationShadowLink_Fragment;
+export type AssertionFragment = { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number };
+
+export type NodeDrawingFragment = { __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } };
+
+export type EdgeDrawingFragment = { __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } };
 
 export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string };
 
 export type MediaAccessGrantFragment = { __typename?: 'MediaAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, path: string, key: string, bucket: string };
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, bucket: string };
-
-type BaseEdge_Assertion_Fragment = { __typename?: 'Assertion', id: string, sourceId: string, targetId: string };
 
 type BaseEdge_Description_Fragment = { __typename?: 'Description', id: string, sourceId: string, targetId: string };
 
@@ -7118,15 +6840,13 @@ type BaseEdge_Relation_Fragment = { __typename?: 'Relation', id: string, sourceI
 
 type BaseEdge_StructureRelation_Fragment = { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string };
 
-export type BaseEdgeFragment = BaseEdge_Assertion_Fragment | BaseEdge_Description_Fragment | BaseEdge_InputParticipation_Fragment | BaseEdge_Measurement_Fragment | BaseEdge_OutputParticipation_Fragment | BaseEdge_Relation_Fragment | BaseEdge_StructureRelation_Fragment;
+export type BaseEdgeFragment = BaseEdge_Description_Fragment | BaseEdge_InputParticipation_Fragment | BaseEdge_Measurement_Fragment | BaseEdge_OutputParticipation_Fragment | BaseEdge_Relation_Fragment | BaseEdge_StructureRelation_Fragment;
 
 export type MeasurementFragment = { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null };
 
 export type RelationFragment = { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null };
 
 export type StructureRelationFragment = { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
-
-type Edge_Assertion_Fragment = { __typename?: 'Assertion', sourceId: string, targetId: string, id: string };
 
 type Edge_Description_Fragment = { __typename?: 'Description', sourceId: string, targetId: string, id: string };
 
@@ -7140,7 +6860,7 @@ type Edge_Relation_Fragment = { __typename?: 'Relation', sourceId: string, targe
 
 type Edge_StructureRelation_Fragment = { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
 
-export type EdgeFragment = Edge_Assertion_Fragment | Edge_Description_Fragment | Edge_InputParticipation_Fragment | Edge_Measurement_Fragment | Edge_OutputParticipation_Fragment | Edge_Relation_Fragment | Edge_StructureRelation_Fragment;
+export type EdgeFragment = Edge_Description_Fragment | Edge_InputParticipation_Fragment | Edge_Measurement_Fragment | Edge_OutputParticipation_Fragment | Edge_Relation_Fragment | Edge_StructureRelation_Fragment;
 
 export type PathMeasurementFragment = { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null };
 
@@ -7148,15 +6868,11 @@ export type PathStructureRelationFragment = { __typename?: 'StructureRelation', 
 
 export type PathRelationFragment = { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null };
 
-export type PathAssertionFragment = { __typename?: 'Assertion', id: string, label: string, subject?: string | null, actionName?: string | null, appId?: string | null, assertedAt?: any | null };
-
 export type PathDescriptionFragment = { __typename?: 'Description', id: string, label: string };
 
 export type PathInputParticipationFragment = { __typename?: 'InputParticipation', id: string, label: string };
 
 export type PathOutputParticipationFragment = { __typename?: 'OutputParticipation', id: string, label: string };
-
-type PathEdge_Assertion_Fragment = { __typename?: 'Assertion', sourceId: string, targetId: string, id: string, label: string, subject?: string | null, actionName?: string | null, appId?: string | null, assertedAt?: any | null };
 
 type PathEdge_Description_Fragment = { __typename?: 'Description', sourceId: string, targetId: string, id: string, label: string };
 
@@ -7170,9 +6886,15 @@ type PathEdge_Relation_Fragment = { __typename?: 'Relation', sourceId: string, t
 
 type PathEdge_StructureRelation_Fragment = { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
 
-export type PathEdgeFragment = PathEdge_Assertion_Fragment | PathEdge_Description_Fragment | PathEdge_InputParticipation_Fragment | PathEdge_Measurement_Fragment | PathEdge_OutputParticipation_Fragment | PathEdge_Relation_Fragment | PathEdge_StructureRelation_Fragment;
+export type PathEdgeFragment = PathEdge_Description_Fragment | PathEdge_InputParticipation_Fragment | PathEdge_Measurement_Fragment | PathEdge_OutputParticipation_Fragment | PathEdge_Relation_Fragment | PathEdge_StructureRelation_Fragment;
 
-export type EntityFragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> };
+export type EntityFragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> };
+
+type PathEventNode_NaturalEvent_Fragment = { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null };
+
+type PathEventNode_ProtocolEvent_Fragment = { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null };
+
+export type PathEventNodeFragment = PathEventNode_NaturalEvent_Fragment | PathEventNode_ProtocolEvent_Fragment;
 
 export type PathEntityFragment = { __typename?: 'Entity', externalId?: string | null, id: string, label: string, category?: { __typename?: 'EntityCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null };
 
@@ -7300,17 +7022,17 @@ export type ListProtocolEventFragment = { __typename?: 'ProtocolEvent', id: stri
 
 export type PathProtocolEventFragment = { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string, id: string, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, richProperties: Array<{ __typename?: 'RichProperty', value?: any | null }> };
 
-type BaseCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseCategory_StructureRelationCategory_Fragment = { __typename?: 'StructureRelationCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_StructureRelationCategory_Fragment = { __typename?: 'StructureRelationCategory', id: string, key: string, purl?: string | null, ageName: string, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type BaseCategoryFragment = BaseCategory_EntityCategory_Fragment | BaseCategory_MeasurementCategory_Fragment | BaseCategory_NaturalEventCategory_Fragment | BaseCategory_ProtocolEventCategory_Fragment | BaseCategory_RelationCategory_Fragment | BaseCategory_StructureRelationCategory_Fragment;
 
@@ -7330,33 +7052,33 @@ type BaseEdgeCategory_StructureRelationCategory_Fragment = { __typename?: 'Struc
 
 export type BaseEdgeCategoryFragment = BaseEdgeCategory_MeasurementCategory_Fragment | BaseEdgeCategory_RelationCategory_Fragment | BaseEdgeCategory_StructureRelationCategory_Fragment;
 
-type NodeCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+type NodeCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-type NodeCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+type NodeCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-type NodeCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+type NodeCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
 export type NodeCategoryFragment = NodeCategory_EntityCategory_Fragment | NodeCategory_NaturalEventCategory_Fragment | NodeCategory_ProtocolEventCategory_Fragment;
 
-export type EntityCategoryFragment = { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type EntityCategoryFragment = { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListEntityCategoryFragment = { __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type ListEntityCategoryFragment = { __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null };
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null };
 
 export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, pinned: boolean, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null };
 
-type BaseListCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseListCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseListCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_NaturalEventCategory_Fragment = { __typename?: 'NaturalEventCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseListCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_ProtocolEventCategory_Fragment = { __typename?: 'ProtocolEventCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseListCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-type BaseListCategory_StructureRelationCategory_Fragment = { __typename?: 'StructureRelationCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+type BaseListCategory_StructureRelationCategory_Fragment = { __typename?: 'StructureRelationCategory', id: string, description?: string | null, key: string, ageName: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type BaseListCategoryFragment = BaseListCategory_EntityCategory_Fragment | BaseListCategory_MeasurementCategory_Fragment | BaseListCategory_NaturalEventCategory_Fragment | BaseListCategory_ProtocolEventCategory_Fragment | BaseListCategory_RelationCategory_Fragment | BaseListCategory_StructureRelationCategory_Fragment;
 
@@ -7380,11 +7102,11 @@ export type ListMaterializedEdgeFragment = { __typename?: 'MaterializedEdge', id
 
 export type MaterializedEdgeFragment = { __typename?: 'MaterializedEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string } };
 
-export type ListMaterializedMeasurementEdgeFragment = { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null } };
+export type ListMaterializedMeasurementEdgeFragment = { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null } };
 
 export type MaterializedMeasurementEdgeFragment = { __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, target: { __typename?: 'EntityCategory', id: string, key: string } };
 
-export type ListMaterializedRelationEdgeFragment = { __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string } };
+export type ListMaterializedRelationEdgeFragment = { __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string }, edge: { __typename?: 'RelationCategory', id: string, key: string, label: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null } };
 
 export type MaterializedRelationEdgeFragment = { __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string } };
 
@@ -7392,43 +7114,43 @@ export type ListMaterializedStructureRelationEdgeFragment = { __typename?: 'Mate
 
 export type MaterializedStructureRelationEdgeFragment = { __typename?: 'MaterializedStructureRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, target: { __typename?: 'StructureKind', id: string, label?: string | null, identifier: string }, edge: { __typename?: 'StructureRelationCategory', label: string, id: string, key: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null } };
 
-export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type ListMeasurementCategoryWithGraphFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string }, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+export type ListMeasurementCategoryWithGraphFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string }, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type MetricKindFragment = { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, valueKind: ValueKind, createdAt: any, structureKind: { __typename?: 'StructureKind', id: string, identifier: string } };
 
 export type ListMetricKindFragment = { __typename?: 'MetricKind', id: string, key: string, label?: string | null, valueKind: ValueKind, structureKind: { __typename?: 'StructureKind', id: string, identifier: string } };
 
-export type NaturalEventCategoryFragment = { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type NaturalEventCategoryFragment = { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListNaturalEventCategoryFragment = { __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type ListNaturalEventCategoryFragment = { __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ProtocolEventCategoryFragment = { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type ProtocolEventCategoryFragment = { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListProtocolEventCategoryFragment = { __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type ListProtocolEventCategoryFragment = { __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type RelationCategoryFragment = { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type RelationCategoryFragment = { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type EventRoleFragment = { __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } };
+export type EventRoleFragment = { __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } };
 
-export type EntityDescriptorFragment = { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null };
+export type EntityDescriptorFragment = { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null };
 
-export type StructureDescriptorFragment = { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null };
+export type StructureDescriptorFragment = { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null };
 
 export type StructureKindFragment = { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type ListStructureKindFragment = { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type StructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
+export type StructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> };
 
-export type ListStructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+export type ListStructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type ListStructureRelationCategoryWithGraphFragment = { __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string, description?: string | null }, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> };
+export type ListStructureRelationCategoryWithGraphFragment = { __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string, description?: string | null }, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type StructureFragment = { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null };
 
@@ -7458,6 +7180,8 @@ export type TermCategoryFragment = TermCategory_EntityCategory_Fragment | TermCa
 
 export type DetailTermFragment = { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, categories: Array<{ __typename: 'EntityCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'MeasurementCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NaturalEventCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'ProtocolEventCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'RelationCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'StructureRelationCategory', id: string, label: string, description?: string | null, color?: Array<number> | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
+export type AssignableTermFragment = { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, categories: Array<{ __typename?: 'EntityCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'MeasurementCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'NaturalEventCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'ProtocolEventCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'RelationCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'StructureRelationCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } }> };
+
 export type AssertParticipationMutationVariables = Exact<{
   event: Scalars['String']['input'];
   entity: Scalars['String']['input'];
@@ -7466,7 +7190,7 @@ export type AssertParticipationMutationVariables = Exact<{
 }>;
 
 
-export type AssertParticipationMutation = { __typename?: 'Mutation', assertParticipation: { __typename?: 'Assertion', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } };
+export type AssertParticipationMutation = { __typename?: 'Mutation', assertParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type AssertParticipationsMutationVariables = Exact<{
   event: Scalars['String']['input'];
@@ -7474,56 +7198,49 @@ export type AssertParticipationsMutationVariables = Exact<{
 }>;
 
 
-export type AssertParticipationsMutation = { __typename?: 'Mutation', assertParticipations: Array<{ __typename?: 'Assertion', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> };
+export type AssertParticipationsMutation = { __typename?: 'Mutation', assertParticipations: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }>, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
-export type ArchiveParticipationMutationVariables = Exact<{
+export type RetractParticipationMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveParticipationMutation = { __typename?: 'Mutation', archiveParticipation: { __typename?: 'Assertion', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } };
+export type RetractParticipationMutation = { __typename?: 'Mutation', retractParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } } };
 
 export type ClassifyNodesMutationVariables = Exact<{
   classifications: Array<ClassificationInput> | ClassificationInput;
 }>;
 
 
-export type ClassifyNodesMutation = { __typename?: 'Mutation', classifyNodes: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }> };
+export type ClassifyNodesMutation = { __typename?: 'Mutation', classifyNodes: { __typename?: 'NodesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, nodes: Array<{ __typename?: 'Activity', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> } | { __typename?: 'Metric', id: string, label: string, key?: string | null, value: any, unit?: string | null, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } | { __typename?: 'NaturalEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Structure', id: string, label: string, object: string, identifier: any, kindId: string, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> }>, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type ArchiveClaimsMutationVariables = Exact<{
+export type RetractClaimsMutationVariables = Exact<{
   ids: Array<Scalars['String']['input']> | Scalars['String']['input'];
 }>;
 
 
-export type ArchiveClaimsMutation = { __typename?: 'Mutation', archiveClaims: Array<{ __typename?: 'Assertion', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> };
+export type RetractClaimsMutation = { __typename?: 'Mutation', retractClaims: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> } };
 
-export type CreateEntityMutationVariables = Exact<{
-  input: CreateEntityInput;
+export type AssertEntityExistsMutationVariables = Exact<{
+  input: AssertEntityExistsInput;
 }>;
 
 
-export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> } };
+export type AssertEntityExistsMutation = { __typename?: 'Mutation', assertEntityExists: { __typename?: 'EntityAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, entity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
 export type AttestEntityMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type AttestEntityMutation = { __typename?: 'Mutation', attestEntity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> } };
+export type AttestEntityMutation = { __typename?: 'Mutation', attestEntity: { __typename?: 'EntityAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, entity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type CreateEntityInlineMutationVariables = Exact<{
-  term: Scalars['String']['input'];
-}>;
-
-
-export type CreateEntityInlineMutation = { __typename?: 'Mutation', result: { __typename?: 'Entity', value: string, label: string } };
-
-export type ArchiveEntityMutationVariables = Exact<{
+export type RetractEntityMutationVariables = Exact<{
   id: Scalars['GraphID']['input'];
 }>;
 
 
-export type ArchiveEntityMutation = { __typename?: 'Mutation', archiveEntity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> } };
+export type RetractEntityMutation = { __typename?: 'Mutation', retractEntity: { __typename?: 'EntityAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, entity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> } } };
 
 export type CreateGraphTableQueryMutationVariables = Exact<{
   input: CreateGraphTableQueryInput;
@@ -7574,124 +7291,124 @@ export type DeleteScatterPlotMutationVariables = Exact<{
 
 export type DeleteScatterPlotMutation = { __typename?: 'Mutation', deleteScatterPlot: string };
 
-export type CreateMeasurementMutationVariables = Exact<{
-  input: CreateMeasurementInput;
+export type AssertMeasurementExistsMutationVariables = Exact<{
+  input: AssertMeasurementExistsInput;
 }>;
 
 
-export type CreateMeasurementMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } };
+export type AssertMeasurementExistsMutation = { __typename?: 'Mutation', assertMeasurementExists: { __typename?: 'MeasurementAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, measurement: { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } } };
 
-export type ArchiveMeasurementMutationVariables = Exact<{
+export type RetractMeasurementMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveMeasurementMutation = { __typename?: 'Mutation', archiveMeasurement: { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } };
+export type RetractMeasurementMutation = { __typename?: 'Mutation', retractMeasurement: { __typename?: 'MeasurementAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, measurement: { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } } };
 
-export type CreateMetricMutationVariables = Exact<{
-  input: CreateMetricInput;
+export type AssertMetricValueForStructureMutationVariables = Exact<{
+  input: AssertMetricValueForStructureInput;
 }>;
 
 
-export type CreateMetricMutation = { __typename?: 'Mutation', createMetric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } };
+export type AssertMetricValueForStructureMutation = { __typename?: 'Mutation', assertMetricValueForStructure: { __typename?: 'MetricAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, metric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } } };
 
-export type ArchiveMetricMutationVariables = Exact<{
+export type RetractMetricMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveMetricMutation = { __typename?: 'Mutation', archiveMetric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } };
+export type RetractMetricMutation = { __typename?: 'Mutation', retractMetric: { __typename?: 'MetricAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, metric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } } };
 
-export type UpdateMetricMutationVariables = Exact<{
-  input: UpdateMetricInput;
+export type SupersedeMetricValueMutationVariables = Exact<{
+  input: SupersedeMetricValueInput;
 }>;
 
 
-export type UpdateMetricMutation = { __typename?: 'Mutation', updateMetric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } };
+export type SupersedeMetricValueMutation = { __typename?: 'Mutation', supersedeMetricValue: { __typename?: 'MetricAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, metric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } } };
 
-export type RecordMetricMutationVariables = Exact<{
-  input: RecordMetricInput;
+export type AssertMetricValueMutationVariables = Exact<{
+  input: AssertMetricValueInput;
 }>;
 
 
-export type RecordMetricMutation = { __typename?: 'Mutation', recordMetric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } };
+export type AssertMetricValueMutation = { __typename?: 'Mutation', assertMetricValue: { __typename?: 'MetricAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, metric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } } };
 
-export type CreateNaturalEventMutationVariables = Exact<{
-  input: CreateNaturalEventInput;
+export type AssertNaturalEventExistsMutationVariables = Exact<{
+  input: AssertNaturalEventExistsInput;
 }>;
 
 
-export type CreateNaturalEventMutation = { __typename?: 'Mutation', createNaturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null } };
+export type AssertNaturalEventExistsMutation = { __typename?: 'Mutation', assertNaturalEventExists: { __typename?: 'NaturalEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, naturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type ArchiveNaturalEventMutationVariables = Exact<{
+export type RetractNaturalEventMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveNaturalEventMutation = { __typename?: 'Mutation', archiveNaturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null } };
+export type RetractNaturalEventMutation = { __typename?: 'Mutation', retractNaturalEvent: { __typename?: 'NaturalEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, naturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null } } };
 
 export type AttestNaturalEventMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type AttestNaturalEventMutation = { __typename?: 'Mutation', attestNaturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null } };
+export type AttestNaturalEventMutation = { __typename?: 'Mutation', attestNaturalEvent: { __typename?: 'NaturalEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, naturalEvent: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, graph?: { __typename?: 'Graph', id: string } | null }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type CreateProtocolEventMutationVariables = Exact<{
-  input: CreateProtocolEventInput;
+export type AssertProtocolEventExistsMutationVariables = Exact<{
+  input: AssertProtocolEventExistsInput;
 }>;
 
 
-export type CreateProtocolEventMutation = { __typename?: 'Mutation', createProtocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null } };
+export type AssertProtocolEventExistsMutation = { __typename?: 'Mutation', assertProtocolEventExists: { __typename?: 'ProtocolEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, protocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type ArchiveProtocolEventMutationVariables = Exact<{
+export type RetractProtocolEventMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveProtocolEventMutation = { __typename?: 'Mutation', archiveProtocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null } };
+export type RetractProtocolEventMutation = { __typename?: 'Mutation', retractProtocolEvent: { __typename?: 'ProtocolEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, protocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null } } };
 
 export type AttestProtocolEventMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type AttestProtocolEventMutation = { __typename?: 'Mutation', attestProtocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null } };
+export type AttestProtocolEventMutation = { __typename?: 'Mutation', attestProtocolEvent: { __typename?: 'ProtocolEventAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, protocolEvent: { __typename?: 'ProtocolEvent', id: string, measuredFrom: any, label: string, category?: { __typename?: 'ProtocolEventCategory', id: string, label: string } | null, graph?: { __typename?: 'Graph', id: string } | null }, drawings: Array<{ __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } }> } };
 
-export type CreateRelationMutationVariables = Exact<{
-  input: CreateRelationInput;
+export type AssertRelationExistsMutationVariables = Exact<{
+  input: AssertRelationExistsInput;
 }>;
 
 
-export type CreateRelationMutation = { __typename?: 'Mutation', createRelation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } };
+export type AssertRelationExistsMutation = { __typename?: 'Mutation', assertRelationExists: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type UpdateRelationMutationVariables = Exact<{
   input: UpdateRelationInput;
 }>;
 
 
-export type UpdateRelationMutation = { __typename?: 'Mutation', updateRelation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } };
+export type UpdateRelationMutation = { __typename?: 'Mutation', updateRelation: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
-export type ArchiveRelationMutationVariables = Exact<{
+export type RetractRelationMutationVariables = Exact<{
   id: Scalars['GraphID']['input'];
 }>;
 
 
-export type ArchiveRelationMutation = { __typename?: 'Mutation', archiveRelation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } };
+export type RetractRelationMutation = { __typename?: 'Mutation', retractRelation: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } } };
 
 export type CreateEntityCategoryMutationVariables = Exact<{
   input: CreateEntityDefinitionInput;
 }>;
 
 
-export type CreateEntityCategoryMutation = { __typename?: 'Mutation', createEntityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateEntityCategoryMutation = { __typename?: 'Mutation', createEntityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateEntityCategoryMutationVariables = Exact<{
   input: UpdateEntityDefinitionInput;
 }>;
 
 
-export type UpdateEntityCategoryMutation = { __typename?: 'Mutation', updateEntityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateEntityCategoryMutation = { __typename?: 'Mutation', updateEntityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteEntityCategoryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7705,7 +7422,7 @@ export type CreateGraphMutationVariables = Exact<{
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
 
 export type CreateInlineGraphMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -7719,7 +7436,7 @@ export type UpdateGraphVisualMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphVisualMutation = { __typename?: 'Mutation', updateGraphVisual: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
+export type UpdateGraphVisualMutation = { __typename?: 'Mutation', updateGraphVisual: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7733,28 +7450,28 @@ export type ArchiveGraphMutationVariables = Exact<{
 }>;
 
 
-export type ArchiveGraphMutation = { __typename?: 'Mutation', archiveGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
+export type ArchiveGraphMutation = { __typename?: 'Mutation', archiveGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
 
 export type UpdateGraphMutationVariables = Exact<{
   input: UpdateGraphInput;
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
 
 export type CreateMeasurementCategoryMutationVariables = Exact<{
   input: CreateMeasurementDefinitionInput;
 }>;
 
 
-export type CreateMeasurementCategoryMutation = { __typename?: 'Mutation', createMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateMeasurementCategoryMutation = { __typename?: 'Mutation', createMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateMeasurementCategoryMutationVariables = Exact<{
   input: UpdateMeasurementDefinitionInput;
 }>;
 
 
-export type UpdateMeasurementCategoryMutation = { __typename?: 'Mutation', updateMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateMeasurementCategoryMutation = { __typename?: 'Mutation', updateMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteMeasurementCategoryMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7782,14 +7499,14 @@ export type CreateNaturalEventCategoryMutationVariables = Exact<{
 }>;
 
 
-export type CreateNaturalEventCategoryMutation = { __typename?: 'Mutation', createNaturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateNaturalEventCategoryMutation = { __typename?: 'Mutation', createNaturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateNaturalEventCategoryMutationVariables = Exact<{
   input: UpdateNaturalEventDefinitionInput;
 }>;
 
 
-export type UpdateNaturalEventCategoryMutation = { __typename?: 'Mutation', updateNaturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateNaturalEventCategoryMutation = { __typename?: 'Mutation', updateNaturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteNaturalEventCategoryMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7803,14 +7520,14 @@ export type CreateProtocolEventCategoryMutationVariables = Exact<{
 }>;
 
 
-export type CreateProtocolEventCategoryMutation = { __typename?: 'Mutation', createProtocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateProtocolEventCategoryMutation = { __typename?: 'Mutation', createProtocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateProtocolEventCategoryMutationVariables = Exact<{
   input: UpdateProtocolEventDefinitionInput;
 }>;
 
 
-export type UpdateProtocolEventCategoryMutation = { __typename?: 'Mutation', updateProtocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateProtocolEventCategoryMutation = { __typename?: 'Mutation', updateProtocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteProtocolEventCategoryMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7824,14 +7541,14 @@ export type CreateRelationCategoryMutationVariables = Exact<{
 }>;
 
 
-export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateRelationCategoryMutationVariables = Exact<{
   input: UpdateRelationDefinitionInput;
 }>;
 
 
-export type UpdateRelationCategoryMutation = { __typename?: 'Mutation', updateRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateRelationCategoryMutation = { __typename?: 'Mutation', updateRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteRelationCategoryMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7859,14 +7576,14 @@ export type CreateStructureRelationCategoryMutationVariables = Exact<{
 }>;
 
 
-export type CreateStructureRelationCategoryMutation = { __typename?: 'Mutation', createStructureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type CreateStructureRelationCategoryMutation = { __typename?: 'Mutation', createStructureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type UpdateStructureRelationCategoryMutationVariables = Exact<{
   input: UpdateStructureRelationDefinitionInput;
 }>;
 
 
-export type UpdateStructureRelationCategoryMutation = { __typename?: 'Mutation', updateStructureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type UpdateStructureRelationCategoryMutation = { __typename?: 'Mutation', updateStructureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type DeleteStructureRelationCategoryMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -7875,62 +7592,54 @@ export type DeleteStructureRelationCategoryMutationVariables = Exact<{
 
 export type DeleteStructureRelationCategoryMutation = { __typename?: 'Mutation', deleteStructureRelationCategory: string };
 
-export type CreateStructureMutationVariables = Exact<{
-  input: CreateStructureInput;
+export type AssertStructureExistsMutationVariables = Exact<{
+  input: AssertStructureExistsInput;
 }>;
 
 
-export type CreateStructureMutation = { __typename?: 'Mutation', createStructure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } };
+export type AssertStructureExistsMutation = { __typename?: 'Mutation', assertStructureExists: { __typename?: 'StructureAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } } };
 
 export type EnsureStructureMutationVariables = Exact<{
   input: EnsureStructureInput;
 }>;
 
 
-export type EnsureStructureMutation = { __typename?: 'Mutation', ensureStructure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } };
+export type EnsureStructureMutation = { __typename?: 'Mutation', ensureStructure: { __typename?: 'StructureAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } } };
 
-export type ArchiveStructureMutationVariables = Exact<{
+export type RetractStructureMutationVariables = Exact<{
   id: Scalars['GraphID']['input'];
 }>;
 
 
-export type ArchiveStructureMutation = { __typename?: 'Mutation', archiveStructure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } };
+export type RetractStructureMutation = { __typename?: 'Mutation', retractStructure: { __typename?: 'StructureAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } } };
 
 export type UpdateStructureMutationVariables = Exact<{
   input: UpdateStructureInput;
 }>;
 
 
-export type UpdateStructureMutation = { __typename?: 'Mutation', updateStructure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } };
+export type UpdateStructureMutation = { __typename?: 'Mutation', updateStructure: { __typename?: 'StructureAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } } };
 
 export type LinkStructureToEntityMutationVariables = Exact<{
   input: LinkStructureInput;
 }>;
 
 
-export type LinkStructureToEntityMutation = { __typename?: 'Mutation', linkStructureToEntity: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } };
+export type LinkStructureToEntityMutation = { __typename?: 'Mutation', linkStructureToEntity: { __typename?: 'StructureAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structure: { __typename?: 'Structure', id: string, object: string, identifier: any, kindId: string, label: string, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }>, graph?: { __typename?: 'Graph', id: string } | null } } };
 
-export type CreateStructureRelationMutationVariables = Exact<{
-  input: CreateStructureRelationInput;
+export type AssertStructureRelationExistsMutationVariables = Exact<{
+  input: AssertStructureRelationExistsInput;
 }>;
 
 
-export type CreateStructureRelationMutation = { __typename?: 'Mutation', createStructureRelation: { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } };
+export type AssertStructureRelationExistsMutation = { __typename?: 'Mutation', assertStructureRelationExists: { __typename?: 'StructureRelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structureRelation: { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } } };
 
-export type ArchiveStructureRelationMutationVariables = Exact<{
+export type RetractStructureRelationMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type ArchiveStructureRelationMutation = { __typename?: 'Mutation', archiveStructureRelation: { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } };
-
-export type CreateGraphTagInlineMutationVariables = Exact<{
-  graph: Scalars['String']['input'];
-  input: Scalars['String']['input'];
-}>;
-
-
-export type CreateGraphTagInlineMutation = { __typename?: 'Mutation', result: { __typename?: 'CategoryTag', value: string, label: string } };
+export type RetractStructureRelationMutation = { __typename?: 'Mutation', retractStructureRelation: { __typename?: 'StructureRelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, structureRelation: { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } } };
 
 export type CreateTermMutationVariables = Exact<{
   input: CreateTermInput;
@@ -8007,7 +7716,14 @@ export type GetEntityQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> } };
+export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> } };
+
+export type GetListEntityQueryVariables = Exact<{
+  id: Scalars['GraphID']['input'];
+}>;
+
+
+export type GetListEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, category?: { __typename?: 'EntityCategory', id: string, label: string } | null } };
 
 export type SearchEntitiesQueryVariables = Exact<{
   category: Scalars['ID']['input'];
@@ -8027,19 +7743,34 @@ export type ListEntitiesQueryVariables = Exact<{
 
 export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, category?: { __typename?: 'EntityCategory', id: string, label: string } | null }> };
 
+export type SearchLinkableCategoriesQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SearchLinkableCategoriesQuery = { __typename?: 'Query', entityCategories: Array<{ __typename?: 'EntityCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, term?: { __typename?: 'Term', key: string } | null }> };
+
+export type SearchLinkableEntitiesQueryVariables = Exact<{
+  category: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SearchLinkableEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', externalId?: string | null, id: string, label: string, category?: { __typename?: 'EntityCategory', id: string, label: string } | null }> };
+
 export type GlobalSearchQueryVariables = Exact<{
   search: Scalars['String']['input'];
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureKinds: Array<{ __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }> };
+export type GlobalSearchQuery = { __typename?: 'Query', entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureKinds: Array<{ __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }> };
 
 export type GetGraphQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, ageName: string, pinned: boolean, entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }>, relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, queries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', id: string, key: string, bucket: string } | null } };
 
 export type SearchGraphsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8137,20 +7868,8 @@ export type GetMetricQueryVariables = Exact<{
 
 export type GetMetricQuery = { __typename?: 'Query', metric: { __typename?: 'Metric', id: string, key?: string | null, value: any, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } };
 
-export type SearchMetricsQueryVariables = Exact<{
-  category: Scalars['ID']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['GraphID']['input']> | Scalars['GraphID']['input']>;
-}>;
-
-
-export type SearchMetricsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Metric', value: string, label: string }> };
-
 export type ListMetricsQueryVariables = Exact<{
-  category: Scalars['ID']['input'];
-  filters?: InputMaybe<MetricFilter>;
-  pagination?: InputMaybe<MetricPaginationInput>;
-  ordering?: InputMaybe<Array<MetricOrder> | MetricOrder>;
+  kind: Scalars['ID']['input'];
 }>;
 
 
@@ -8177,7 +7896,7 @@ export type GetNodeQueryVariables = Exact<{
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Activity', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> } | { __typename?: 'MeasurementShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Metric', id: string, label: string, key?: string | null, value: any, unit?: string | null, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } | { __typename?: 'NaturalEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'RelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Structure', id: string, label: string, object: string, identifier: any, kindId: string, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> } | { __typename?: 'StructureRelationShadowLink', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } };
+export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Activity', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> } | { __typename?: 'Metric', id: string, label: string, key?: string | null, value: any, unit?: string | null, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null, description?: string | null } | null } | { __typename?: 'NaturalEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, graph?: { __typename?: 'Graph', id: string } | null } | { __typename?: 'Structure', id: string, label: string, object: string, identifier: any, kindId: string, graph?: { __typename?: 'Graph', id: string } | null, kind?: { __typename?: 'StructureKind', id: string, identifier: string, label?: string | null, description?: string | null, purl?: string | null, color?: Array<number> | null, createdAt: any, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, metrics: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> } };
 
 export type SearchNodesQueryVariables = Exact<{
   graph: Scalars['ID']['input'];
@@ -8186,7 +7905,7 @@ export type SearchNodesQueryVariables = Exact<{
 }>;
 
 
-export type SearchNodesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Activity', value: string, label: string } | { __typename?: 'Entity', value: string, label: string } | { __typename?: 'MeasurementShadowLink', value: string, label: string } | { __typename?: 'Metric', value: string, label: string } | { __typename?: 'NaturalEvent', value: string, label: string } | { __typename?: 'ProtocolEvent', value: string, label: string } | { __typename?: 'RelationShadowLink', value: string, label: string } | { __typename?: 'Structure', value: string, label: string } | { __typename?: 'StructureRelationShadowLink', value: string, label: string }> };
+export type SearchNodesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Activity', value: string, label: string } | { __typename?: 'Entity', value: string, label: string } | { __typename?: 'Metric', value: string, label: string } | { __typename?: 'NaturalEvent', value: string, label: string } | { __typename?: 'ProtocolEvent', value: string, label: string } | { __typename?: 'Structure', value: string, label: string }> };
 
 export type ListNodesQueryVariables = Exact<{
   graph: Scalars['ID']['input'];
@@ -8195,7 +7914,7 @@ export type ListNodesQueryVariables = Exact<{
 }>;
 
 
-export type ListNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'MeasurementShadowLink', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'RelationShadowLink', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } | { __typename?: 'StructureRelationShadowLink', id: string, label: string }> };
+export type ListNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string }> };
 
 export type GetProtocolEventQueryVariables = Exact<{
   id: Scalars['GraphID']['input'];
@@ -8234,7 +7953,7 @@ export type GetEntityCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityCategoryQuery = { __typename?: 'Query', entityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetEntityCategoryQuery = { __typename?: 'Query', entityCategory: { __typename?: 'EntityCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, latest: Array<{ __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchEntityCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8251,7 +7970,7 @@ export type ListEntityCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListEntityCategoryQuery = { __typename?: 'Query', entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
+export type ListEntityCategoryQuery = { __typename?: 'Query', entityCategories: Array<{ __typename?: 'EntityCategory', instanceKind?: string | null, label: string, id: string, description?: string | null, key: string, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
 
 export type EntityNodesQueryVariables = Exact<{
   category: Scalars['ID']['input'];
@@ -8303,7 +8022,7 @@ export type ListMaterializedMeasurementsQueryVariables = Exact<{
 }>;
 
 
-export type ListMaterializedMeasurementsQuery = { __typename?: 'Query', materializedMeasurementEdges: Array<{ __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null } }> };
+export type ListMaterializedMeasurementsQuery = { __typename?: 'Query', materializedMeasurementEdges: Array<{ __typename?: 'MaterializedMeasurementEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, target: { __typename?: 'EntityCategory', id: string, key: string, label: string }, source: { __typename?: 'StructureKind', id: string, identifier: string }, edge: { __typename?: 'MeasurementCategory', id: string, key: string, label: string, description?: string | null, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null } }> };
 
 export type GetMaterializedMeasurementEdgeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8319,7 +8038,7 @@ export type ListMaterializedRelationEdgesQueryVariables = Exact<{
 }>;
 
 
-export type ListMaterializedRelationEdgesQuery = { __typename?: 'Query', materializedRelationEdges: Array<{ __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string } }> };
+export type ListMaterializedRelationEdgesQuery = { __typename?: 'Query', materializedRelationEdges: Array<{ __typename?: 'MaterializedRelationEdge', id: string, graph: { __typename?: 'Graph', id: string, name: string }, source: { __typename?: 'EntityCategory', id: string, label: string }, target: { __typename?: 'EntityCategory', id: string, label: string }, edge: { __typename?: 'RelationCategory', id: string, key: string, label: string, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null } }> };
 
 export type GetMaterializedRelationEdgeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8349,7 +8068,7 @@ export type GetMeasurmentCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchMeasurmentCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8365,7 +8084,7 @@ export type ListMeasurmentCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string }, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }> };
+export type ListMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string }, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }> };
 
 export type GetMetricKindQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8395,7 +8114,7 @@ export type GetNaturalEventCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetNaturalEventCategoryQuery = { __typename?: 'Query', naturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetNaturalEventCategoryQuery = { __typename?: 'Query', naturalEventCategory: { __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchNaturalEventCategoriesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8411,14 +8130,14 @@ export type ListNaturalEventCategoriesQueryVariables = Exact<{
 }>;
 
 
-export type ListNaturalEventCategoriesQuery = { __typename?: 'Query', naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
+export type ListNaturalEventCategoriesQuery = { __typename?: 'Query', naturalEventCategories: Array<{ __typename?: 'NaturalEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
 
 export type GetProtocolEventCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetProtocolEventCategoryQuery = { __typename?: 'Query', protocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetProtocolEventCategoryQuery = { __typename?: 'Query', protocolEventCategory: { __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchProtocolEventCategoriesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8434,14 +8153,14 @@ export type ListProtocolEventCategoriesQueryVariables = Exact<{
 }>;
 
 
-export type ListProtocolEventCategoriesQuery = { __typename?: 'Query', protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
+export type ListProtocolEventCategoriesQuery = { __typename?: 'Query', protocolEventCategories: Array<{ __typename?: 'ProtocolEventCategory', label: string, ageName: string, description?: string | null, id: string, key: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, inputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, outputs: Array<{ __typename?: 'EventRole', key: string, role: string, descriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null } }>, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }>, relevantNodeQueries: Array<{ __typename: 'NodePairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodePathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'NodeTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
 
 export type GetRelationCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetRelationCategoryQuery = { __typename?: 'Query', relationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetRelationCategoryQuery = { __typename?: 'Query', relationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchRelationCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8457,7 +8176,7 @@ export type ListRelationCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListRelationCategoryQuery = { __typename?: 'Query', relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }> };
+export type ListRelationCategoryQuery = { __typename?: 'Query', relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, sourceDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'EntityDescriptor', keys?: Array<string> | null, ontologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }> };
 
 export type GetStructureKindQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8487,7 +8206,7 @@ export type GetStructureRelationCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetStructureRelationCategoryQuery = { __typename?: 'Query', structureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string, description?: string | null }>, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
+export type GetStructureRelationCategoryQuery = { __typename?: 'Query', structureRelationCategory: { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, key: string, purl?: string | null, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, graph: { __typename?: 'Graph', id: string }, term?: { __typename?: 'Term', description?: string | null, purl?: string | null, createdAt: any, id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null, relevantQueries: Array<{ __typename: 'GraphNodesQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPairsQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphPathQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename: 'GraphTableQuery', id: string, label: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string } }> } };
 
 export type SearchStructureRelationCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8503,7 +8222,7 @@ export type ListStructureRelationCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListStructureRelationCategoryQuery = { __typename?: 'Query', structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string, description?: string | null }, sourceDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', keys?: Array<string> | null, tags?: Array<string> | null, ontotologyTerms?: Array<string> | null, defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'CategoryTag', id: string, name: string }> }> };
+export type ListStructureRelationCategoryQuery = { __typename?: 'Query', structureRelationCategories: Array<{ __typename?: 'StructureRelationCategory', label: string, id: string, description?: string | null, key: string, ageName: string, graph: { __typename?: 'Graph', id: string, name: string, description?: string | null }, sourceDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, targetDescriptor: { __typename?: 'StructureDescriptor', defaultCategoryKey?: string | null }, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }>, term?: { __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null } | null, image?: { __typename?: 'MediaStore', presignedUrl: string } | null }> };
 
 export type StartPaneQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -8559,12 +8278,12 @@ export type MetricsForStructureQueryVariables = Exact<{
 
 export type MetricsForStructureQuery = { __typename?: 'Query', metricsForStructure: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> };
 
-export type MeasurementsForAssertionQueryVariables = Exact<{
+export type MetricsForAssertionQueryVariables = Exact<{
   assertionId: Scalars['GraphID']['input'];
 }>;
 
 
-export type MeasurementsForAssertionQuery = { __typename?: 'Query', measurementsForAssertion: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> };
+export type MetricsForAssertionQuery = { __typename?: 'Query', metricsForAssertion: Array<{ __typename?: 'Metric', id: string, value: any, label: string, key?: string | null, unit?: string | null, kind?: { __typename?: 'MetricKind', id: string, key: string, label?: string | null } | null }> };
 
 export type GetStructureRelationQueryVariables = Exact<{
   id: Scalars['GraphID']['input'];
@@ -8581,14 +8300,6 @@ export type SearchStructureRelationsQueryVariables = Exact<{
 
 
 export type SearchStructureRelationsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'StructureRelation', value: string, label: string }> };
-
-export type SearchTagsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type SearchTagsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'CategoryTag', value: string, label: string }> };
 
 export type GetTermQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8612,6 +8323,14 @@ export type SearchTermsQueryVariables = Exact<{
 
 
 export type SearchTermsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Term', value: string, label: string }> };
+
+export type SearchAssignableTermsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  kinds?: InputMaybe<Array<TermKind> | TermKind>;
+}>;
+
+
+export type SearchAssignableTermsQuery = { __typename?: 'Query', terms: Array<{ __typename?: 'Term', id: string, kind: TermKind, key: string, label?: string | null, color?: Array<number> | null, categories: Array<{ __typename?: 'EntityCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'MeasurementCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'NaturalEventCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'ProtocolEventCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'RelationCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } } | { __typename?: 'StructureRelationCategory', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string } }> }> };
 
 export type SearchEntityTermsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8683,6 +8402,28 @@ export const PropertyDefinitionFragmentDoc = gql`
   label
 }
     `;
+export const PathEventNodeFragmentDoc = gql`
+    fragment PathEventNode on Event {
+  ... on NaturalEvent {
+    id
+    label
+    measuredFrom
+    measuredTo
+    category {
+      label
+    }
+  }
+  ... on ProtocolEvent {
+    id
+    label
+    measuredFrom
+    measuredTo
+    category {
+      label
+    }
+  }
+}
+    `;
 export const EntityFragmentDoc = gql`
     fragment Entity on Entity {
   ...BaseNode
@@ -8721,42 +8462,20 @@ export const EntityFragmentDoc = gql`
     id
     role
     target {
-      ... on NaturalEvent {
-        id
-        label
-        measuredFrom
-        measuredTo
-        category {
-          label
-        }
-      }
-      ... on ProtocolEvent {
-        id
-        label
-        measuredFrom
-        measuredTo
-        category {
-          label
-        }
-      }
+      ...PathEventNode
     }
   }
   resultedOut {
     id
     role
     source {
-      id
-      label
-      measuredFrom
-      measuredTo
-      category {
-        label
-      }
+      ...PathEventNode
     }
   }
 }
     ${BaseNodeFragmentDoc}
-${PropertyDefinitionFragmentDoc}`;
+${PropertyDefinitionFragmentDoc}
+${PathEventNodeFragmentDoc}`;
 export const StructureKindFragmentDoc = gql`
     fragment StructureKind on StructureKind {
   id
@@ -8935,24 +8654,6 @@ export const PathMetricFragmentDoc = gql`
   value
 }
     ${ListMetricFragmentDoc}`;
-export const PathRelationShadowLinkFragmentDoc = gql`
-    fragment PathRelationShadowLink on RelationShadowLink {
-  id
-  label
-}
-    `;
-export const PathStructureRelationShadowLinkFragmentDoc = gql`
-    fragment PathStructureRelationShadowLink on StructureRelationShadowLink {
-  id
-  label
-}
-    `;
-export const PathMeasurementRelationShadowLinkFragmentDoc = gql`
-    fragment PathMeasurementRelationShadowLink on MeasurementShadowLink {
-  id
-  label
-}
-    `;
 export const PathNodeFragmentDoc = gql`
     fragment PathNode on Node {
   id
@@ -8962,25 +8663,68 @@ export const PathNodeFragmentDoc = gql`
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
-  ...PathRelationShadowLink
-  ...PathStructureRelationShadowLink
-  ...PathMeasurementRelationShadowLink
 }
     ${PathActivityFragmentDoc}
 ${PathStructureFragmentDoc}
 ${PathEntityFragmentDoc}
 ${PathNaturalEventFragmentDoc}
 ${PathProtocolEventFragmentDoc}
-${PathMetricFragmentDoc}
-${PathRelationShadowLinkFragmentDoc}
-${PathStructureRelationShadowLinkFragmentDoc}
-${PathMeasurementRelationShadowLinkFragmentDoc}`;
+${PathMetricFragmentDoc}`;
+export const AssertionFragmentDoc = gql`
+    fragment Assertion on Assertion {
+  id
+  subject
+  appId
+  actionId
+  actionName
+  assertedAt
+  recordedAt
+  seq
+}
+    `;
 export const ListNodeFragmentDoc = gql`
     fragment ListNode on Node {
   id
   label
 }
     `;
+export const NodeDrawingFragmentDoc = gql`
+    fragment NodeDrawing on NodeDrawing {
+  graph {
+    id
+    name
+  }
+  category {
+    id
+    label
+  }
+  node {
+    ...ListNode
+  }
+}
+    ${ListNodeFragmentDoc}`;
+export const BaseEdgeFragmentDoc = gql`
+    fragment BaseEdge on Edge {
+  id
+  sourceId
+  targetId
+}
+    `;
+export const EdgeDrawingFragmentDoc = gql`
+    fragment EdgeDrawing on EdgeDrawing {
+  graph {
+    id
+    name
+  }
+  category {
+    id
+    label
+  }
+  edge {
+    ...BaseEdge
+  }
+}
+    ${BaseEdgeFragmentDoc}`;
 export const MediaUploadGrantFragmentDoc = gql`
     fragment MediaUploadGrant on MediaUploadGrant {
   accessKey
@@ -9004,13 +8748,6 @@ export const MediaAccessGrantFragmentDoc = gql`
   path
   key
   bucket
-}
-    `;
-export const BaseEdgeFragmentDoc = gql`
-    fragment BaseEdge on Edge {
-  id
-  sourceId
-  targetId
 }
     `;
 export const MeasurementFragmentDoc = gql`
@@ -9096,16 +8833,6 @@ export const PathStructureRelationFragmentDoc = gql`
   }
 }
     `;
-export const PathAssertionFragmentDoc = gql`
-    fragment PathAssertion on Assertion {
-  id
-  label
-  subject
-  actionName
-  appId
-  assertedAt
-}
-    `;
 export const PathDescriptionFragmentDoc = gql`
     fragment PathDescription on Description {
   id
@@ -9132,7 +8859,6 @@ export const PathEdgeFragmentDoc = gql`
   ...PathMeasurement
   ...PathRelation
   ...PathStructureRelation
-  ...PathAssertion
   ...PathDescription
   ...PathInputParticipation
   ...PathOutputParticipation
@@ -9141,7 +8867,6 @@ export const PathEdgeFragmentDoc = gql`
 ${PathMeasurementFragmentDoc}
 ${PathRelationFragmentDoc}
 ${PathStructureRelationFragmentDoc}
-${PathAssertionFragmentDoc}
 ${PathDescriptionFragmentDoc}
 ${PathInputParticipationFragmentDoc}
 ${PathOutputParticipationFragmentDoc}`;
@@ -9419,11 +9144,6 @@ export const BaseCategoryFragmentDoc = gql`
     ...Term
   }
   key
-  tags {
-    id
-    name
-    description
-  }
   purl
   relevantQueries {
     ...ListGraphQuery
@@ -9485,8 +9205,7 @@ ${PropertyDefinitionFragmentDoc}`;
 export const EntityDescriptorFragmentDoc = gql`
     fragment EntityDescriptor on EntityDescriptor {
   keys
-  tags
-  ontotologyTerms
+  ontologyTerms
   defaultCategoryKey
 }
     `;
@@ -9561,10 +9280,6 @@ export const BaseListCategoryFragmentDoc = gql`
     presignedUrl
   }
   key
-  tags {
-    id
-    name
-  }
   ageName
 }
     ${ListTermFragmentDoc}`;
@@ -9637,9 +9352,6 @@ ${EntityDescriptorFragmentDoc}
 ${PropertyDefinitionFragmentDoc}`;
 export const StructureDescriptorFragmentDoc = gql`
     fragment StructureDescriptor on StructureDescriptor {
-  keys
-  tags
-  ontotologyTerms
   defaultCategoryKey
 }
     `;
@@ -9784,9 +9496,12 @@ export const ListMaterializedMeasurementEdgeFragmentDoc = gql`
     key
     label
     description
+    term {
+      ...ListTerm
+    }
   }
 }
-    `;
+    ${ListTermFragmentDoc}`;
 export const MaterializedMeasurementEdgeFragmentDoc = gql`
     fragment MaterializedMeasurementEdge on MaterializedMeasurementEdge {
   id
@@ -9819,8 +9534,16 @@ export const ListMaterializedRelationEdgeFragmentDoc = gql`
     id
     label
   }
+  edge {
+    id
+    key
+    label
+    term {
+      ...ListTerm
+    }
+  }
 }
-    `;
+    ${ListTermFragmentDoc}`;
 export const MaterializedRelationEdgeFragmentDoc = gql`
     fragment MaterializedRelationEdge on MaterializedRelationEdge {
   id
@@ -10107,15 +9830,42 @@ export const DetailTermFragmentDoc = gql`
 }
     ${TermFragmentDoc}
 ${TermCategoryFragmentDoc}`;
+export const AssignableTermFragmentDoc = gql`
+    fragment AssignableTerm on Term {
+  id
+  kind
+  key
+  label
+  color
+  categories {
+    id
+    label
+    graph {
+      id
+      name
+    }
+  }
+}
+    `;
 export const AssertParticipationDocument = gql`
     mutation AssertParticipation($event: String!, $entity: String!, $role: String!, $isInput: Boolean!) {
   assertParticipation(
     input: {event: $event, entity: $entity, role: $role, isInput: $isInput}
   ) {
-    ...Edge
+    assertion {
+      ...Assertion
+    }
+    participation {
+      ...Edge
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
-    ${EdgeFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${EdgeFragmentDoc}
+${EdgeDrawingFragmentDoc}`;
 export type AssertParticipationMutationFn = Apollo.MutationFunction<AssertParticipationMutation, AssertParticipationMutationVariables>;
 
 /**
@@ -10148,10 +9898,20 @@ export type AssertParticipationMutationOptions = Apollo.BaseMutationOptions<Asse
 export const AssertParticipationsDocument = gql`
     mutation AssertParticipations($event: String!, $participants: [ParticipantInput!]!) {
   assertParticipations(input: {event: $event, participants: $participants}) {
-    ...Edge
+    assertion {
+      ...Assertion
+    }
+    edges {
+      ...Edge
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
-    ${EdgeFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${EdgeFragmentDoc}
+${EdgeDrawingFragmentDoc}`;
 export type AssertParticipationsMutationFn = Apollo.MutationFunction<AssertParticipationsMutation, AssertParticipationsMutationVariables>;
 
 /**
@@ -10179,46 +9939,62 @@ export function useAssertParticipationsMutation(baseOptions?: ApolloReactHooks.M
 export type AssertParticipationsMutationHookResult = ReturnType<typeof useAssertParticipationsMutation>;
 export type AssertParticipationsMutationResult = Apollo.MutationResult<AssertParticipationsMutation>;
 export type AssertParticipationsMutationOptions = Apollo.BaseMutationOptions<AssertParticipationsMutation, AssertParticipationsMutationVariables>;
-export const ArchiveParticipationDocument = gql`
-    mutation ArchiveParticipation($id: String!) {
-  archiveParticipation(input: {id: $id}) {
-    ...Edge
+export const RetractParticipationDocument = gql`
+    mutation RetractParticipation($id: String!) {
+  retractParticipation(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    participation {
+      ...Edge
+    }
   }
 }
-    ${EdgeFragmentDoc}`;
-export type ArchiveParticipationMutationFn = Apollo.MutationFunction<ArchiveParticipationMutation, ArchiveParticipationMutationVariables>;
+    ${AssertionFragmentDoc}
+${EdgeFragmentDoc}`;
+export type RetractParticipationMutationFn = Apollo.MutationFunction<RetractParticipationMutation, RetractParticipationMutationVariables>;
 
 /**
- * __useArchiveParticipationMutation__
+ * __useRetractParticipationMutation__
  *
- * To run a mutation, you first call `useArchiveParticipationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveParticipationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractParticipationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractParticipationMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveParticipationMutation, { data, loading, error }] = useArchiveParticipationMutation({
+ * const [retractParticipationMutation, { data, loading, error }] = useRetractParticipationMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveParticipationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveParticipationMutation, ArchiveParticipationMutationVariables>) {
+export function useRetractParticipationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractParticipationMutation, RetractParticipationMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveParticipationMutation, ArchiveParticipationMutationVariables>(ArchiveParticipationDocument, options);
+        return ApolloReactHooks.useMutation<RetractParticipationMutation, RetractParticipationMutationVariables>(RetractParticipationDocument, options);
       }
-export type ArchiveParticipationMutationHookResult = ReturnType<typeof useArchiveParticipationMutation>;
-export type ArchiveParticipationMutationResult = Apollo.MutationResult<ArchiveParticipationMutation>;
-export type ArchiveParticipationMutationOptions = Apollo.BaseMutationOptions<ArchiveParticipationMutation, ArchiveParticipationMutationVariables>;
+export type RetractParticipationMutationHookResult = ReturnType<typeof useRetractParticipationMutation>;
+export type RetractParticipationMutationResult = Apollo.MutationResult<RetractParticipationMutation>;
+export type RetractParticipationMutationOptions = Apollo.BaseMutationOptions<RetractParticipationMutation, RetractParticipationMutationVariables>;
 export const ClassifyNodesDocument = gql`
     mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
   classifyNodes(input: {classifications: $classifications}) {
-    ...Entity
+    assertion {
+      ...Assertion
+    }
+    nodes {
+      ...Node
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${EntityFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${NodeFragmentDoc}
+${NodeDrawingFragmentDoc}`;
 export type ClassifyNodesMutationFn = Apollo.MutationFunction<ClassifyNodesMutation, ClassifyNodesMutationVariables>;
 
 /**
@@ -10245,79 +10021,105 @@ export function useClassifyNodesMutation(baseOptions?: ApolloReactHooks.Mutation
 export type ClassifyNodesMutationHookResult = ReturnType<typeof useClassifyNodesMutation>;
 export type ClassifyNodesMutationResult = Apollo.MutationResult<ClassifyNodesMutation>;
 export type ClassifyNodesMutationOptions = Apollo.BaseMutationOptions<ClassifyNodesMutation, ClassifyNodesMutationVariables>;
-export const ArchiveClaimsDocument = gql`
-    mutation ArchiveClaims($ids: [String!]!) {
-  archiveClaims(input: {ids: $ids}) {
-    ...Edge
+export const RetractClaimsDocument = gql`
+    mutation RetractClaims($ids: [String!]!) {
+  retractClaims(input: {ids: $ids}) {
+    assertion {
+      ...Assertion
+    }
+    edges {
+      ...Edge
+    }
   }
 }
-    ${EdgeFragmentDoc}`;
-export type ArchiveClaimsMutationFn = Apollo.MutationFunction<ArchiveClaimsMutation, ArchiveClaimsMutationVariables>;
+    ${AssertionFragmentDoc}
+${EdgeFragmentDoc}`;
+export type RetractClaimsMutationFn = Apollo.MutationFunction<RetractClaimsMutation, RetractClaimsMutationVariables>;
 
 /**
- * __useArchiveClaimsMutation__
+ * __useRetractClaimsMutation__
  *
- * To run a mutation, you first call `useArchiveClaimsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveClaimsMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractClaimsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractClaimsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveClaimsMutation, { data, loading, error }] = useArchiveClaimsMutation({
+ * const [retractClaimsMutation, { data, loading, error }] = useRetractClaimsMutation({
  *   variables: {
  *      ids: // value for 'ids'
  *   },
  * });
  */
-export function useArchiveClaimsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveClaimsMutation, ArchiveClaimsMutationVariables>) {
+export function useRetractClaimsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractClaimsMutation, RetractClaimsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveClaimsMutation, ArchiveClaimsMutationVariables>(ArchiveClaimsDocument, options);
+        return ApolloReactHooks.useMutation<RetractClaimsMutation, RetractClaimsMutationVariables>(RetractClaimsDocument, options);
       }
-export type ArchiveClaimsMutationHookResult = ReturnType<typeof useArchiveClaimsMutation>;
-export type ArchiveClaimsMutationResult = Apollo.MutationResult<ArchiveClaimsMutation>;
-export type ArchiveClaimsMutationOptions = Apollo.BaseMutationOptions<ArchiveClaimsMutation, ArchiveClaimsMutationVariables>;
-export const CreateEntityDocument = gql`
-    mutation CreateEntity($input: CreateEntityInput!) {
-  createEntity(input: $input) {
-    ...Entity
+export type RetractClaimsMutationHookResult = ReturnType<typeof useRetractClaimsMutation>;
+export type RetractClaimsMutationResult = Apollo.MutationResult<RetractClaimsMutation>;
+export type RetractClaimsMutationOptions = Apollo.BaseMutationOptions<RetractClaimsMutation, RetractClaimsMutationVariables>;
+export const AssertEntityExistsDocument = gql`
+    mutation AssertEntityExists($input: AssertEntityExistsInput!) {
+  assertEntityExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${EntityFragmentDoc}`;
-export type CreateEntityMutationFn = Apollo.MutationFunction<CreateEntityMutation, CreateEntityMutationVariables>;
+    ${AssertionFragmentDoc}
+${EntityFragmentDoc}
+${NodeDrawingFragmentDoc}`;
+export type AssertEntityExistsMutationFn = Apollo.MutationFunction<AssertEntityExistsMutation, AssertEntityExistsMutationVariables>;
 
 /**
- * __useCreateEntityMutation__
+ * __useAssertEntityExistsMutation__
  *
- * To run a mutation, you first call `useCreateEntityMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateEntityMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertEntityExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertEntityExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createEntityMutation, { data, loading, error }] = useCreateEntityMutation({
+ * const [assertEntityExistsMutation, { data, loading, error }] = useAssertEntityExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateEntityMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityMutation, CreateEntityMutationVariables>) {
+export function useAssertEntityExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertEntityExistsMutation, AssertEntityExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityMutation, CreateEntityMutationVariables>(CreateEntityDocument, options);
+        return ApolloReactHooks.useMutation<AssertEntityExistsMutation, AssertEntityExistsMutationVariables>(AssertEntityExistsDocument, options);
       }
-export type CreateEntityMutationHookResult = ReturnType<typeof useCreateEntityMutation>;
-export type CreateEntityMutationResult = Apollo.MutationResult<CreateEntityMutation>;
-export type CreateEntityMutationOptions = Apollo.BaseMutationOptions<CreateEntityMutation, CreateEntityMutationVariables>;
+export type AssertEntityExistsMutationHookResult = ReturnType<typeof useAssertEntityExistsMutation>;
+export type AssertEntityExistsMutationResult = Apollo.MutationResult<AssertEntityExistsMutation>;
+export type AssertEntityExistsMutationOptions = Apollo.BaseMutationOptions<AssertEntityExistsMutation, AssertEntityExistsMutationVariables>;
 export const AttestEntityDocument = gql`
     mutation AttestEntity($id: String!) {
   attestEntity(input: {id: $id}) {
-    ...Entity
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${EntityFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${EntityFragmentDoc}
+${NodeDrawingFragmentDoc}`;
 export type AttestEntityMutationFn = Apollo.MutationFunction<AttestEntityMutation, AttestEntityMutationVariables>;
 
 /**
@@ -10344,73 +10146,45 @@ export function useAttestEntityMutation(baseOptions?: ApolloReactHooks.MutationH
 export type AttestEntityMutationHookResult = ReturnType<typeof useAttestEntityMutation>;
 export type AttestEntityMutationResult = Apollo.MutationResult<AttestEntityMutation>;
 export type AttestEntityMutationOptions = Apollo.BaseMutationOptions<AttestEntityMutation, AttestEntityMutationVariables>;
-export const CreateEntityInlineDocument = gql`
-    mutation CreateEntityInline($term: String!) {
-  result: createEntity(input: {term: $term}) {
-    value: id
-    label: label
+export const RetractEntityDocument = gql`
+    mutation RetractEntity($id: GraphID!) {
+  retractEntity(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
   }
 }
-    `;
-export type CreateEntityInlineMutationFn = Apollo.MutationFunction<CreateEntityInlineMutation, CreateEntityInlineMutationVariables>;
+    ${AssertionFragmentDoc}
+${EntityFragmentDoc}`;
+export type RetractEntityMutationFn = Apollo.MutationFunction<RetractEntityMutation, RetractEntityMutationVariables>;
 
 /**
- * __useCreateEntityInlineMutation__
+ * __useRetractEntityMutation__
  *
- * To run a mutation, you first call `useCreateEntityInlineMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateEntityInlineMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractEntityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractEntityMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createEntityInlineMutation, { data, loading, error }] = useCreateEntityInlineMutation({
- *   variables: {
- *      term: // value for 'term'
- *   },
- * });
- */
-export function useCreateEntityInlineMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityInlineMutation, CreateEntityInlineMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityInlineMutation, CreateEntityInlineMutationVariables>(CreateEntityInlineDocument, options);
-      }
-export type CreateEntityInlineMutationHookResult = ReturnType<typeof useCreateEntityInlineMutation>;
-export type CreateEntityInlineMutationResult = Apollo.MutationResult<CreateEntityInlineMutation>;
-export type CreateEntityInlineMutationOptions = Apollo.BaseMutationOptions<CreateEntityInlineMutation, CreateEntityInlineMutationVariables>;
-export const ArchiveEntityDocument = gql`
-    mutation ArchiveEntity($id: GraphID!) {
-  archiveEntity(input: {id: $id}) {
-    ...Entity
-  }
-}
-    ${EntityFragmentDoc}`;
-export type ArchiveEntityMutationFn = Apollo.MutationFunction<ArchiveEntityMutation, ArchiveEntityMutationVariables>;
-
-/**
- * __useArchiveEntityMutation__
- *
- * To run a mutation, you first call `useArchiveEntityMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveEntityMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [archiveEntityMutation, { data, loading, error }] = useArchiveEntityMutation({
+ * const [retractEntityMutation, { data, loading, error }] = useRetractEntityMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveEntityMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveEntityMutation, ArchiveEntityMutationVariables>) {
+export function useRetractEntityMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractEntityMutation, RetractEntityMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveEntityMutation, ArchiveEntityMutationVariables>(ArchiveEntityDocument, options);
+        return ApolloReactHooks.useMutation<RetractEntityMutation, RetractEntityMutationVariables>(RetractEntityDocument, options);
       }
-export type ArchiveEntityMutationHookResult = ReturnType<typeof useArchiveEntityMutation>;
-export type ArchiveEntityMutationResult = Apollo.MutationResult<ArchiveEntityMutation>;
-export type ArchiveEntityMutationOptions = Apollo.BaseMutationOptions<ArchiveEntityMutation, ArchiveEntityMutationVariables>;
+export type RetractEntityMutationHookResult = ReturnType<typeof useRetractEntityMutation>;
+export type RetractEntityMutationResult = Apollo.MutationResult<RetractEntityMutation>;
+export type RetractEntityMutationOptions = Apollo.BaseMutationOptions<RetractEntityMutation, RetractEntityMutationVariables>;
 export const CreateGraphTableQueryDocument = gql`
     mutation CreateGraphTableQuery($input: CreateGraphTableQueryInput!) {
   createGraphTableQuery(input: $input) {
@@ -10638,277 +10412,339 @@ export function useDeleteScatterPlotMutation(baseOptions?: ApolloReactHooks.Muta
 export type DeleteScatterPlotMutationHookResult = ReturnType<typeof useDeleteScatterPlotMutation>;
 export type DeleteScatterPlotMutationResult = Apollo.MutationResult<DeleteScatterPlotMutation>;
 export type DeleteScatterPlotMutationOptions = Apollo.BaseMutationOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
-export const CreateMeasurementDocument = gql`
-    mutation CreateMeasurement($input: CreateMeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Measurement
+export const AssertMeasurementExistsDocument = gql`
+    mutation AssertMeasurementExists($input: AssertMeasurementExistsInput!) {
+  assertMeasurementExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    measurement {
+      ...Measurement
+    }
   }
 }
-    ${MeasurementFragmentDoc}`;
-export type CreateMeasurementMutationFn = Apollo.MutationFunction<CreateMeasurementMutation, CreateMeasurementMutationVariables>;
+    ${AssertionFragmentDoc}
+${MeasurementFragmentDoc}`;
+export type AssertMeasurementExistsMutationFn = Apollo.MutationFunction<AssertMeasurementExistsMutation, AssertMeasurementExistsMutationVariables>;
 
 /**
- * __useCreateMeasurementMutation__
+ * __useAssertMeasurementExistsMutation__
  *
- * To run a mutation, you first call `useCreateMeasurementMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateMeasurementMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertMeasurementExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertMeasurementExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createMeasurementMutation, { data, loading, error }] = useCreateMeasurementMutation({
+ * const [assertMeasurementExistsMutation, { data, loading, error }] = useAssertMeasurementExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateMeasurementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMeasurementMutation, CreateMeasurementMutationVariables>) {
+export function useAssertMeasurementExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertMeasurementExistsMutation, AssertMeasurementExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMeasurementMutation, CreateMeasurementMutationVariables>(CreateMeasurementDocument, options);
+        return ApolloReactHooks.useMutation<AssertMeasurementExistsMutation, AssertMeasurementExistsMutationVariables>(AssertMeasurementExistsDocument, options);
       }
-export type CreateMeasurementMutationHookResult = ReturnType<typeof useCreateMeasurementMutation>;
-export type CreateMeasurementMutationResult = Apollo.MutationResult<CreateMeasurementMutation>;
-export type CreateMeasurementMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementMutation, CreateMeasurementMutationVariables>;
-export const ArchiveMeasurementDocument = gql`
-    mutation ArchiveMeasurement($id: String!) {
-  archiveMeasurement(input: {id: $id}) {
-    ...Measurement
+export type AssertMeasurementExistsMutationHookResult = ReturnType<typeof useAssertMeasurementExistsMutation>;
+export type AssertMeasurementExistsMutationResult = Apollo.MutationResult<AssertMeasurementExistsMutation>;
+export type AssertMeasurementExistsMutationOptions = Apollo.BaseMutationOptions<AssertMeasurementExistsMutation, AssertMeasurementExistsMutationVariables>;
+export const RetractMeasurementDocument = gql`
+    mutation RetractMeasurement($id: String!) {
+  retractMeasurement(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    measurement {
+      ...Measurement
+    }
   }
 }
-    ${MeasurementFragmentDoc}`;
-export type ArchiveMeasurementMutationFn = Apollo.MutationFunction<ArchiveMeasurementMutation, ArchiveMeasurementMutationVariables>;
+    ${AssertionFragmentDoc}
+${MeasurementFragmentDoc}`;
+export type RetractMeasurementMutationFn = Apollo.MutationFunction<RetractMeasurementMutation, RetractMeasurementMutationVariables>;
 
 /**
- * __useArchiveMeasurementMutation__
+ * __useRetractMeasurementMutation__
  *
- * To run a mutation, you first call `useArchiveMeasurementMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveMeasurementMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractMeasurementMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractMeasurementMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveMeasurementMutation, { data, loading, error }] = useArchiveMeasurementMutation({
+ * const [retractMeasurementMutation, { data, loading, error }] = useRetractMeasurementMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveMeasurementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveMeasurementMutation, ArchiveMeasurementMutationVariables>) {
+export function useRetractMeasurementMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractMeasurementMutation, RetractMeasurementMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveMeasurementMutation, ArchiveMeasurementMutationVariables>(ArchiveMeasurementDocument, options);
+        return ApolloReactHooks.useMutation<RetractMeasurementMutation, RetractMeasurementMutationVariables>(RetractMeasurementDocument, options);
       }
-export type ArchiveMeasurementMutationHookResult = ReturnType<typeof useArchiveMeasurementMutation>;
-export type ArchiveMeasurementMutationResult = Apollo.MutationResult<ArchiveMeasurementMutation>;
-export type ArchiveMeasurementMutationOptions = Apollo.BaseMutationOptions<ArchiveMeasurementMutation, ArchiveMeasurementMutationVariables>;
-export const CreateMetricDocument = gql`
-    mutation CreateMetric($input: CreateMetricInput!) {
-  createMetric(input: $input) {
-    ...Metric
+export type RetractMeasurementMutationHookResult = ReturnType<typeof useRetractMeasurementMutation>;
+export type RetractMeasurementMutationResult = Apollo.MutationResult<RetractMeasurementMutation>;
+export type RetractMeasurementMutationOptions = Apollo.BaseMutationOptions<RetractMeasurementMutation, RetractMeasurementMutationVariables>;
+export const AssertMetricValueForStructureDocument = gql`
+    mutation AssertMetricValueForStructure($input: AssertMetricValueForStructureInput!) {
+  assertMetricValueForStructure(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
-    ${MetricFragmentDoc}`;
-export type CreateMetricMutationFn = Apollo.MutationFunction<CreateMetricMutation, CreateMetricMutationVariables>;
+    ${AssertionFragmentDoc}
+${MetricFragmentDoc}`;
+export type AssertMetricValueForStructureMutationFn = Apollo.MutationFunction<AssertMetricValueForStructureMutation, AssertMetricValueForStructureMutationVariables>;
 
 /**
- * __useCreateMetricMutation__
+ * __useAssertMetricValueForStructureMutation__
  *
- * To run a mutation, you first call `useCreateMetricMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateMetricMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertMetricValueForStructureMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertMetricValueForStructureMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createMetricMutation, { data, loading, error }] = useCreateMetricMutation({
+ * const [assertMetricValueForStructureMutation, { data, loading, error }] = useAssertMetricValueForStructureMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMetricMutation, CreateMetricMutationVariables>) {
+export function useAssertMetricValueForStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertMetricValueForStructureMutation, AssertMetricValueForStructureMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMetricMutation, CreateMetricMutationVariables>(CreateMetricDocument, options);
+        return ApolloReactHooks.useMutation<AssertMetricValueForStructureMutation, AssertMetricValueForStructureMutationVariables>(AssertMetricValueForStructureDocument, options);
       }
-export type CreateMetricMutationHookResult = ReturnType<typeof useCreateMetricMutation>;
-export type CreateMetricMutationResult = Apollo.MutationResult<CreateMetricMutation>;
-export type CreateMetricMutationOptions = Apollo.BaseMutationOptions<CreateMetricMutation, CreateMetricMutationVariables>;
-export const ArchiveMetricDocument = gql`
-    mutation ArchiveMetric($id: String!) {
-  archiveMetric(input: {id: $id}) {
-    ...Metric
+export type AssertMetricValueForStructureMutationHookResult = ReturnType<typeof useAssertMetricValueForStructureMutation>;
+export type AssertMetricValueForStructureMutationResult = Apollo.MutationResult<AssertMetricValueForStructureMutation>;
+export type AssertMetricValueForStructureMutationOptions = Apollo.BaseMutationOptions<AssertMetricValueForStructureMutation, AssertMetricValueForStructureMutationVariables>;
+export const RetractMetricDocument = gql`
+    mutation RetractMetric($id: String!) {
+  retractMetric(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
-    ${MetricFragmentDoc}`;
-export type ArchiveMetricMutationFn = Apollo.MutationFunction<ArchiveMetricMutation, ArchiveMetricMutationVariables>;
+    ${AssertionFragmentDoc}
+${MetricFragmentDoc}`;
+export type RetractMetricMutationFn = Apollo.MutationFunction<RetractMetricMutation, RetractMetricMutationVariables>;
 
 /**
- * __useArchiveMetricMutation__
+ * __useRetractMetricMutation__
  *
- * To run a mutation, you first call `useArchiveMetricMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveMetricMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractMetricMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractMetricMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveMetricMutation, { data, loading, error }] = useArchiveMetricMutation({
+ * const [retractMetricMutation, { data, loading, error }] = useRetractMetricMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveMetricMutation, ArchiveMetricMutationVariables>) {
+export function useRetractMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractMetricMutation, RetractMetricMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveMetricMutation, ArchiveMetricMutationVariables>(ArchiveMetricDocument, options);
+        return ApolloReactHooks.useMutation<RetractMetricMutation, RetractMetricMutationVariables>(RetractMetricDocument, options);
       }
-export type ArchiveMetricMutationHookResult = ReturnType<typeof useArchiveMetricMutation>;
-export type ArchiveMetricMutationResult = Apollo.MutationResult<ArchiveMetricMutation>;
-export type ArchiveMetricMutationOptions = Apollo.BaseMutationOptions<ArchiveMetricMutation, ArchiveMetricMutationVariables>;
-export const UpdateMetricDocument = gql`
-    mutation UpdateMetric($input: UpdateMetricInput!) {
-  updateMetric(input: $input) {
-    ...Metric
+export type RetractMetricMutationHookResult = ReturnType<typeof useRetractMetricMutation>;
+export type RetractMetricMutationResult = Apollo.MutationResult<RetractMetricMutation>;
+export type RetractMetricMutationOptions = Apollo.BaseMutationOptions<RetractMetricMutation, RetractMetricMutationVariables>;
+export const SupersedeMetricValueDocument = gql`
+    mutation SupersedeMetricValue($input: SupersedeMetricValueInput!) {
+  supersedeMetricValue(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
-    ${MetricFragmentDoc}`;
-export type UpdateMetricMutationFn = Apollo.MutationFunction<UpdateMetricMutation, UpdateMetricMutationVariables>;
+    ${AssertionFragmentDoc}
+${MetricFragmentDoc}`;
+export type SupersedeMetricValueMutationFn = Apollo.MutationFunction<SupersedeMetricValueMutation, SupersedeMetricValueMutationVariables>;
 
 /**
- * __useUpdateMetricMutation__
+ * __useSupersedeMetricValueMutation__
  *
- * To run a mutation, you first call `useUpdateMetricMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateMetricMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useSupersedeMetricValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSupersedeMetricValueMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateMetricMutation, { data, loading, error }] = useUpdateMetricMutation({
+ * const [supersedeMetricValueMutation, { data, loading, error }] = useSupersedeMetricValueMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useUpdateMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateMetricMutation, UpdateMetricMutationVariables>) {
+export function useSupersedeMetricValueMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<SupersedeMetricValueMutation, SupersedeMetricValueMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateMetricMutation, UpdateMetricMutationVariables>(UpdateMetricDocument, options);
+        return ApolloReactHooks.useMutation<SupersedeMetricValueMutation, SupersedeMetricValueMutationVariables>(SupersedeMetricValueDocument, options);
       }
-export type UpdateMetricMutationHookResult = ReturnType<typeof useUpdateMetricMutation>;
-export type UpdateMetricMutationResult = Apollo.MutationResult<UpdateMetricMutation>;
-export type UpdateMetricMutationOptions = Apollo.BaseMutationOptions<UpdateMetricMutation, UpdateMetricMutationVariables>;
-export const RecordMetricDocument = gql`
-    mutation RecordMetric($input: RecordMetricInput!) {
-  recordMetric(input: $input) {
-    ...Metric
+export type SupersedeMetricValueMutationHookResult = ReturnType<typeof useSupersedeMetricValueMutation>;
+export type SupersedeMetricValueMutationResult = Apollo.MutationResult<SupersedeMetricValueMutation>;
+export type SupersedeMetricValueMutationOptions = Apollo.BaseMutationOptions<SupersedeMetricValueMutation, SupersedeMetricValueMutationVariables>;
+export const AssertMetricValueDocument = gql`
+    mutation AssertMetricValue($input: AssertMetricValueInput!) {
+  assertMetricValue(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...Metric
+    }
   }
 }
-    ${MetricFragmentDoc}`;
-export type RecordMetricMutationFn = Apollo.MutationFunction<RecordMetricMutation, RecordMetricMutationVariables>;
+    ${AssertionFragmentDoc}
+${MetricFragmentDoc}`;
+export type AssertMetricValueMutationFn = Apollo.MutationFunction<AssertMetricValueMutation, AssertMetricValueMutationVariables>;
 
 /**
- * __useRecordMetricMutation__
+ * __useAssertMetricValueMutation__
  *
- * To run a mutation, you first call `useRecordMetricMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRecordMetricMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertMetricValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertMetricValueMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [recordMetricMutation, { data, loading, error }] = useRecordMetricMutation({
+ * const [assertMetricValueMutation, { data, loading, error }] = useAssertMetricValueMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useRecordMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RecordMetricMutation, RecordMetricMutationVariables>) {
+export function useAssertMetricValueMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertMetricValueMutation, AssertMetricValueMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RecordMetricMutation, RecordMetricMutationVariables>(RecordMetricDocument, options);
+        return ApolloReactHooks.useMutation<AssertMetricValueMutation, AssertMetricValueMutationVariables>(AssertMetricValueDocument, options);
       }
-export type RecordMetricMutationHookResult = ReturnType<typeof useRecordMetricMutation>;
-export type RecordMetricMutationResult = Apollo.MutationResult<RecordMetricMutation>;
-export type RecordMetricMutationOptions = Apollo.BaseMutationOptions<RecordMetricMutation, RecordMetricMutationVariables>;
-export const CreateNaturalEventDocument = gql`
-    mutation CreateNaturalEvent($input: CreateNaturalEventInput!) {
-  createNaturalEvent(input: $input) {
-    ...NaturalEvent
+export type AssertMetricValueMutationHookResult = ReturnType<typeof useAssertMetricValueMutation>;
+export type AssertMetricValueMutationResult = Apollo.MutationResult<AssertMetricValueMutation>;
+export type AssertMetricValueMutationOptions = Apollo.BaseMutationOptions<AssertMetricValueMutation, AssertMetricValueMutationVariables>;
+export const AssertNaturalEventExistsDocument = gql`
+    mutation AssertNaturalEventExists($input: AssertNaturalEventExistsInput!) {
+  assertNaturalEventExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    naturalEvent {
+      ...NaturalEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${NaturalEventFragmentDoc}`;
-export type CreateNaturalEventMutationFn = Apollo.MutationFunction<CreateNaturalEventMutation, CreateNaturalEventMutationVariables>;
+    ${AssertionFragmentDoc}
+${NaturalEventFragmentDoc}
+${NodeDrawingFragmentDoc}`;
+export type AssertNaturalEventExistsMutationFn = Apollo.MutationFunction<AssertNaturalEventExistsMutation, AssertNaturalEventExistsMutationVariables>;
 
 /**
- * __useCreateNaturalEventMutation__
+ * __useAssertNaturalEventExistsMutation__
  *
- * To run a mutation, you first call `useCreateNaturalEventMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNaturalEventMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertNaturalEventExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertNaturalEventExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createNaturalEventMutation, { data, loading, error }] = useCreateNaturalEventMutation({
+ * const [assertNaturalEventExistsMutation, { data, loading, error }] = useAssertNaturalEventExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateNaturalEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateNaturalEventMutation, CreateNaturalEventMutationVariables>) {
+export function useAssertNaturalEventExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertNaturalEventExistsMutation, AssertNaturalEventExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateNaturalEventMutation, CreateNaturalEventMutationVariables>(CreateNaturalEventDocument, options);
+        return ApolloReactHooks.useMutation<AssertNaturalEventExistsMutation, AssertNaturalEventExistsMutationVariables>(AssertNaturalEventExistsDocument, options);
       }
-export type CreateNaturalEventMutationHookResult = ReturnType<typeof useCreateNaturalEventMutation>;
-export type CreateNaturalEventMutationResult = Apollo.MutationResult<CreateNaturalEventMutation>;
-export type CreateNaturalEventMutationOptions = Apollo.BaseMutationOptions<CreateNaturalEventMutation, CreateNaturalEventMutationVariables>;
-export const ArchiveNaturalEventDocument = gql`
-    mutation ArchiveNaturalEvent($id: String!) {
-  archiveNaturalEvent(input: {id: $id}) {
-    ...NaturalEvent
+export type AssertNaturalEventExistsMutationHookResult = ReturnType<typeof useAssertNaturalEventExistsMutation>;
+export type AssertNaturalEventExistsMutationResult = Apollo.MutationResult<AssertNaturalEventExistsMutation>;
+export type AssertNaturalEventExistsMutationOptions = Apollo.BaseMutationOptions<AssertNaturalEventExistsMutation, AssertNaturalEventExistsMutationVariables>;
+export const RetractNaturalEventDocument = gql`
+    mutation RetractNaturalEvent($id: String!) {
+  retractNaturalEvent(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    naturalEvent {
+      ...NaturalEvent
+    }
   }
 }
-    ${NaturalEventFragmentDoc}`;
-export type ArchiveNaturalEventMutationFn = Apollo.MutationFunction<ArchiveNaturalEventMutation, ArchiveNaturalEventMutationVariables>;
+    ${AssertionFragmentDoc}
+${NaturalEventFragmentDoc}`;
+export type RetractNaturalEventMutationFn = Apollo.MutationFunction<RetractNaturalEventMutation, RetractNaturalEventMutationVariables>;
 
 /**
- * __useArchiveNaturalEventMutation__
+ * __useRetractNaturalEventMutation__
  *
- * To run a mutation, you first call `useArchiveNaturalEventMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveNaturalEventMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractNaturalEventMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractNaturalEventMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveNaturalEventMutation, { data, loading, error }] = useArchiveNaturalEventMutation({
+ * const [retractNaturalEventMutation, { data, loading, error }] = useRetractNaturalEventMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveNaturalEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveNaturalEventMutation, ArchiveNaturalEventMutationVariables>) {
+export function useRetractNaturalEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractNaturalEventMutation, RetractNaturalEventMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveNaturalEventMutation, ArchiveNaturalEventMutationVariables>(ArchiveNaturalEventDocument, options);
+        return ApolloReactHooks.useMutation<RetractNaturalEventMutation, RetractNaturalEventMutationVariables>(RetractNaturalEventDocument, options);
       }
-export type ArchiveNaturalEventMutationHookResult = ReturnType<typeof useArchiveNaturalEventMutation>;
-export type ArchiveNaturalEventMutationResult = Apollo.MutationResult<ArchiveNaturalEventMutation>;
-export type ArchiveNaturalEventMutationOptions = Apollo.BaseMutationOptions<ArchiveNaturalEventMutation, ArchiveNaturalEventMutationVariables>;
+export type RetractNaturalEventMutationHookResult = ReturnType<typeof useRetractNaturalEventMutation>;
+export type RetractNaturalEventMutationResult = Apollo.MutationResult<RetractNaturalEventMutation>;
+export type RetractNaturalEventMutationOptions = Apollo.BaseMutationOptions<RetractNaturalEventMutation, RetractNaturalEventMutationVariables>;
 export const AttestNaturalEventDocument = gql`
     mutation AttestNaturalEvent($id: String!) {
   attestNaturalEvent(input: {id: $id}) {
-    ...NaturalEvent
+    assertion {
+      ...Assertion
+    }
+    naturalEvent {
+      ...NaturalEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${NaturalEventFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${NaturalEventFragmentDoc}
+${NodeDrawingFragmentDoc}`;
 export type AttestNaturalEventMutationFn = Apollo.MutationFunction<AttestNaturalEventMutation, AttestNaturalEventMutationVariables>;
 
 /**
@@ -10935,79 +10771,105 @@ export function useAttestNaturalEventMutation(baseOptions?: ApolloReactHooks.Mut
 export type AttestNaturalEventMutationHookResult = ReturnType<typeof useAttestNaturalEventMutation>;
 export type AttestNaturalEventMutationResult = Apollo.MutationResult<AttestNaturalEventMutation>;
 export type AttestNaturalEventMutationOptions = Apollo.BaseMutationOptions<AttestNaturalEventMutation, AttestNaturalEventMutationVariables>;
-export const CreateProtocolEventDocument = gql`
-    mutation CreateProtocolEvent($input: CreateProtocolEventInput!) {
-  createProtocolEvent(input: $input) {
-    ...ProtocolEvent
+export const AssertProtocolEventExistsDocument = gql`
+    mutation AssertProtocolEventExists($input: AssertProtocolEventExistsInput!) {
+  assertProtocolEventExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${ProtocolEventFragmentDoc}`;
-export type CreateProtocolEventMutationFn = Apollo.MutationFunction<CreateProtocolEventMutation, CreateProtocolEventMutationVariables>;
+    ${AssertionFragmentDoc}
+${ProtocolEventFragmentDoc}
+${NodeDrawingFragmentDoc}`;
+export type AssertProtocolEventExistsMutationFn = Apollo.MutationFunction<AssertProtocolEventExistsMutation, AssertProtocolEventExistsMutationVariables>;
 
 /**
- * __useCreateProtocolEventMutation__
+ * __useAssertProtocolEventExistsMutation__
  *
- * To run a mutation, you first call `useCreateProtocolEventMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateProtocolEventMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertProtocolEventExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertProtocolEventExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createProtocolEventMutation, { data, loading, error }] = useCreateProtocolEventMutation({
+ * const [assertProtocolEventExistsMutation, { data, loading, error }] = useAssertProtocolEventExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateProtocolEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolEventMutation, CreateProtocolEventMutationVariables>) {
+export function useAssertProtocolEventExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertProtocolEventExistsMutation, AssertProtocolEventExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateProtocolEventMutation, CreateProtocolEventMutationVariables>(CreateProtocolEventDocument, options);
+        return ApolloReactHooks.useMutation<AssertProtocolEventExistsMutation, AssertProtocolEventExistsMutationVariables>(AssertProtocolEventExistsDocument, options);
       }
-export type CreateProtocolEventMutationHookResult = ReturnType<typeof useCreateProtocolEventMutation>;
-export type CreateProtocolEventMutationResult = Apollo.MutationResult<CreateProtocolEventMutation>;
-export type CreateProtocolEventMutationOptions = Apollo.BaseMutationOptions<CreateProtocolEventMutation, CreateProtocolEventMutationVariables>;
-export const ArchiveProtocolEventDocument = gql`
-    mutation ArchiveProtocolEvent($id: String!) {
-  archiveProtocolEvent(input: {id: $id}) {
-    ...ProtocolEvent
+export type AssertProtocolEventExistsMutationHookResult = ReturnType<typeof useAssertProtocolEventExistsMutation>;
+export type AssertProtocolEventExistsMutationResult = Apollo.MutationResult<AssertProtocolEventExistsMutation>;
+export type AssertProtocolEventExistsMutationOptions = Apollo.BaseMutationOptions<AssertProtocolEventExistsMutation, AssertProtocolEventExistsMutationVariables>;
+export const RetractProtocolEventDocument = gql`
+    mutation RetractProtocolEvent($id: String!) {
+  retractProtocolEvent(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
   }
 }
-    ${ProtocolEventFragmentDoc}`;
-export type ArchiveProtocolEventMutationFn = Apollo.MutationFunction<ArchiveProtocolEventMutation, ArchiveProtocolEventMutationVariables>;
+    ${AssertionFragmentDoc}
+${ProtocolEventFragmentDoc}`;
+export type RetractProtocolEventMutationFn = Apollo.MutationFunction<RetractProtocolEventMutation, RetractProtocolEventMutationVariables>;
 
 /**
- * __useArchiveProtocolEventMutation__
+ * __useRetractProtocolEventMutation__
  *
- * To run a mutation, you first call `useArchiveProtocolEventMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveProtocolEventMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractProtocolEventMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractProtocolEventMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveProtocolEventMutation, { data, loading, error }] = useArchiveProtocolEventMutation({
+ * const [retractProtocolEventMutation, { data, loading, error }] = useRetractProtocolEventMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveProtocolEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveProtocolEventMutation, ArchiveProtocolEventMutationVariables>) {
+export function useRetractProtocolEventMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractProtocolEventMutation, RetractProtocolEventMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveProtocolEventMutation, ArchiveProtocolEventMutationVariables>(ArchiveProtocolEventDocument, options);
+        return ApolloReactHooks.useMutation<RetractProtocolEventMutation, RetractProtocolEventMutationVariables>(RetractProtocolEventDocument, options);
       }
-export type ArchiveProtocolEventMutationHookResult = ReturnType<typeof useArchiveProtocolEventMutation>;
-export type ArchiveProtocolEventMutationResult = Apollo.MutationResult<ArchiveProtocolEventMutation>;
-export type ArchiveProtocolEventMutationOptions = Apollo.BaseMutationOptions<ArchiveProtocolEventMutation, ArchiveProtocolEventMutationVariables>;
+export type RetractProtocolEventMutationHookResult = ReturnType<typeof useRetractProtocolEventMutation>;
+export type RetractProtocolEventMutationResult = Apollo.MutationResult<RetractProtocolEventMutation>;
+export type RetractProtocolEventMutationOptions = Apollo.BaseMutationOptions<RetractProtocolEventMutation, RetractProtocolEventMutationVariables>;
 export const AttestProtocolEventDocument = gql`
     mutation AttestProtocolEvent($id: String!) {
   attestProtocolEvent(input: {id: $id}) {
-    ...ProtocolEvent
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
-    ${ProtocolEventFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${ProtocolEventFragmentDoc}
+${NodeDrawingFragmentDoc}`;
 export type AttestProtocolEventMutationFn = Apollo.MutationFunction<AttestProtocolEventMutation, AttestProtocolEventMutationVariables>;
 
 /**
@@ -11034,46 +10896,66 @@ export function useAttestProtocolEventMutation(baseOptions?: ApolloReactHooks.Mu
 export type AttestProtocolEventMutationHookResult = ReturnType<typeof useAttestProtocolEventMutation>;
 export type AttestProtocolEventMutationResult = Apollo.MutationResult<AttestProtocolEventMutation>;
 export type AttestProtocolEventMutationOptions = Apollo.BaseMutationOptions<AttestProtocolEventMutation, AttestProtocolEventMutationVariables>;
-export const CreateRelationDocument = gql`
-    mutation CreateRelation($input: CreateRelationInput!) {
-  createRelation(input: $input) {
-    ...Relation
+export const AssertRelationExistsDocument = gql`
+    mutation AssertRelationExists($input: AssertRelationExistsInput!) {
+  assertRelationExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
-    ${RelationFragmentDoc}`;
-export type CreateRelationMutationFn = Apollo.MutationFunction<CreateRelationMutation, CreateRelationMutationVariables>;
+    ${AssertionFragmentDoc}
+${RelationFragmentDoc}
+${EdgeDrawingFragmentDoc}`;
+export type AssertRelationExistsMutationFn = Apollo.MutationFunction<AssertRelationExistsMutation, AssertRelationExistsMutationVariables>;
 
 /**
- * __useCreateRelationMutation__
+ * __useAssertRelationExistsMutation__
  *
- * To run a mutation, you first call `useCreateRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateRelationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertRelationExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertRelationExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createRelationMutation, { data, loading, error }] = useCreateRelationMutation({
+ * const [assertRelationExistsMutation, { data, loading, error }] = useAssertRelationExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationMutation, CreateRelationMutationVariables>) {
+export function useAssertRelationExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertRelationExistsMutation, AssertRelationExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRelationMutation, CreateRelationMutationVariables>(CreateRelationDocument, options);
+        return ApolloReactHooks.useMutation<AssertRelationExistsMutation, AssertRelationExistsMutationVariables>(AssertRelationExistsDocument, options);
       }
-export type CreateRelationMutationHookResult = ReturnType<typeof useCreateRelationMutation>;
-export type CreateRelationMutationResult = Apollo.MutationResult<CreateRelationMutation>;
-export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<CreateRelationMutation, CreateRelationMutationVariables>;
+export type AssertRelationExistsMutationHookResult = ReturnType<typeof useAssertRelationExistsMutation>;
+export type AssertRelationExistsMutationResult = Apollo.MutationResult<AssertRelationExistsMutation>;
+export type AssertRelationExistsMutationOptions = Apollo.BaseMutationOptions<AssertRelationExistsMutation, AssertRelationExistsMutationVariables>;
 export const UpdateRelationDocument = gql`
     mutation UpdateRelation($input: UpdateRelationInput!) {
   updateRelation(input: $input) {
-    ...Relation
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
-    ${RelationFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${RelationFragmentDoc}
+${EdgeDrawingFragmentDoc}`;
 export type UpdateRelationMutationFn = Apollo.MutationFunction<UpdateRelationMutation, UpdateRelationMutationVariables>;
 
 /**
@@ -11100,39 +10982,45 @@ export function useUpdateRelationMutation(baseOptions?: ApolloReactHooks.Mutatio
 export type UpdateRelationMutationHookResult = ReturnType<typeof useUpdateRelationMutation>;
 export type UpdateRelationMutationResult = Apollo.MutationResult<UpdateRelationMutation>;
 export type UpdateRelationMutationOptions = Apollo.BaseMutationOptions<UpdateRelationMutation, UpdateRelationMutationVariables>;
-export const ArchiveRelationDocument = gql`
-    mutation ArchiveRelation($id: GraphID!) {
-  archiveRelation(input: {id: $id}) {
-    ...Relation
+export const RetractRelationDocument = gql`
+    mutation RetractRelation($id: GraphID!) {
+  retractRelation(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
   }
 }
-    ${RelationFragmentDoc}`;
-export type ArchiveRelationMutationFn = Apollo.MutationFunction<ArchiveRelationMutation, ArchiveRelationMutationVariables>;
+    ${AssertionFragmentDoc}
+${RelationFragmentDoc}`;
+export type RetractRelationMutationFn = Apollo.MutationFunction<RetractRelationMutation, RetractRelationMutationVariables>;
 
 /**
- * __useArchiveRelationMutation__
+ * __useRetractRelationMutation__
  *
- * To run a mutation, you first call `useArchiveRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveRelationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractRelationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractRelationMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveRelationMutation, { data, loading, error }] = useArchiveRelationMutation({
+ * const [retractRelationMutation, { data, loading, error }] = useRetractRelationMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveRelationMutation, ArchiveRelationMutationVariables>) {
+export function useRetractRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractRelationMutation, RetractRelationMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveRelationMutation, ArchiveRelationMutationVariables>(ArchiveRelationDocument, options);
+        return ApolloReactHooks.useMutation<RetractRelationMutation, RetractRelationMutationVariables>(RetractRelationDocument, options);
       }
-export type ArchiveRelationMutationHookResult = ReturnType<typeof useArchiveRelationMutation>;
-export type ArchiveRelationMutationResult = Apollo.MutationResult<ArchiveRelationMutation>;
-export type ArchiveRelationMutationOptions = Apollo.BaseMutationOptions<ArchiveRelationMutation, ArchiveRelationMutationVariables>;
+export type RetractRelationMutationHookResult = ReturnType<typeof useRetractRelationMutation>;
+export type RetractRelationMutationResult = Apollo.MutationResult<RetractRelationMutation>;
+export type RetractRelationMutationOptions = Apollo.BaseMutationOptions<RetractRelationMutation, RetractRelationMutationVariables>;
 export const CreateEntityCategoryDocument = gql`
     mutation CreateEntityCategory($input: CreateEntityDefinitionInput!) {
   createEntityCategory(input: $input) {
@@ -12040,46 +11928,58 @@ export function useDeleteStructureRelationCategoryMutation(baseOptions?: ApolloR
 export type DeleteStructureRelationCategoryMutationHookResult = ReturnType<typeof useDeleteStructureRelationCategoryMutation>;
 export type DeleteStructureRelationCategoryMutationResult = Apollo.MutationResult<DeleteStructureRelationCategoryMutation>;
 export type DeleteStructureRelationCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteStructureRelationCategoryMutation, DeleteStructureRelationCategoryMutationVariables>;
-export const CreateStructureDocument = gql`
-    mutation CreateStructure($input: CreateStructureInput!) {
-  createStructure(input: $input) {
-    ...Structure
+export const AssertStructureExistsDocument = gql`
+    mutation AssertStructureExists($input: AssertStructureExistsInput!) {
+  assertStructureExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
-    ${StructureFragmentDoc}`;
-export type CreateStructureMutationFn = Apollo.MutationFunction<CreateStructureMutation, CreateStructureMutationVariables>;
+    ${AssertionFragmentDoc}
+${StructureFragmentDoc}`;
+export type AssertStructureExistsMutationFn = Apollo.MutationFunction<AssertStructureExistsMutation, AssertStructureExistsMutationVariables>;
 
 /**
- * __useCreateStructureMutation__
+ * __useAssertStructureExistsMutation__
  *
- * To run a mutation, you first call `useCreateStructureMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateStructureMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertStructureExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertStructureExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createStructureMutation, { data, loading, error }] = useCreateStructureMutation({
+ * const [assertStructureExistsMutation, { data, loading, error }] = useAssertStructureExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureMutation, CreateStructureMutationVariables>) {
+export function useAssertStructureExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertStructureExistsMutation, AssertStructureExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureMutation, CreateStructureMutationVariables>(CreateStructureDocument, options);
+        return ApolloReactHooks.useMutation<AssertStructureExistsMutation, AssertStructureExistsMutationVariables>(AssertStructureExistsDocument, options);
       }
-export type CreateStructureMutationHookResult = ReturnType<typeof useCreateStructureMutation>;
-export type CreateStructureMutationResult = Apollo.MutationResult<CreateStructureMutation>;
-export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<CreateStructureMutation, CreateStructureMutationVariables>;
+export type AssertStructureExistsMutationHookResult = ReturnType<typeof useAssertStructureExistsMutation>;
+export type AssertStructureExistsMutationResult = Apollo.MutationResult<AssertStructureExistsMutation>;
+export type AssertStructureExistsMutationOptions = Apollo.BaseMutationOptions<AssertStructureExistsMutation, AssertStructureExistsMutationVariables>;
 export const EnsureStructureDocument = gql`
     mutation EnsureStructure($input: EnsureStructureInput!) {
   ensureStructure(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
-    ${StructureFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${StructureFragmentDoc}`;
 export type EnsureStructureMutationFn = Apollo.MutationFunction<EnsureStructureMutation, EnsureStructureMutationVariables>;
 
 /**
@@ -12106,46 +12006,58 @@ export function useEnsureStructureMutation(baseOptions?: ApolloReactHooks.Mutati
 export type EnsureStructureMutationHookResult = ReturnType<typeof useEnsureStructureMutation>;
 export type EnsureStructureMutationResult = Apollo.MutationResult<EnsureStructureMutation>;
 export type EnsureStructureMutationOptions = Apollo.BaseMutationOptions<EnsureStructureMutation, EnsureStructureMutationVariables>;
-export const ArchiveStructureDocument = gql`
-    mutation ArchiveStructure($id: GraphID!) {
-  archiveStructure(input: {id: $id}) {
-    ...Structure
+export const RetractStructureDocument = gql`
+    mutation RetractStructure($id: GraphID!) {
+  retractStructure(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
-    ${StructureFragmentDoc}`;
-export type ArchiveStructureMutationFn = Apollo.MutationFunction<ArchiveStructureMutation, ArchiveStructureMutationVariables>;
+    ${AssertionFragmentDoc}
+${StructureFragmentDoc}`;
+export type RetractStructureMutationFn = Apollo.MutationFunction<RetractStructureMutation, RetractStructureMutationVariables>;
 
 /**
- * __useArchiveStructureMutation__
+ * __useRetractStructureMutation__
  *
- * To run a mutation, you first call `useArchiveStructureMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveStructureMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractStructureMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractStructureMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveStructureMutation, { data, loading, error }] = useArchiveStructureMutation({
+ * const [retractStructureMutation, { data, loading, error }] = useRetractStructureMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveStructureMutation, ArchiveStructureMutationVariables>) {
+export function useRetractStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractStructureMutation, RetractStructureMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveStructureMutation, ArchiveStructureMutationVariables>(ArchiveStructureDocument, options);
+        return ApolloReactHooks.useMutation<RetractStructureMutation, RetractStructureMutationVariables>(RetractStructureDocument, options);
       }
-export type ArchiveStructureMutationHookResult = ReturnType<typeof useArchiveStructureMutation>;
-export type ArchiveStructureMutationResult = Apollo.MutationResult<ArchiveStructureMutation>;
-export type ArchiveStructureMutationOptions = Apollo.BaseMutationOptions<ArchiveStructureMutation, ArchiveStructureMutationVariables>;
+export type RetractStructureMutationHookResult = ReturnType<typeof useRetractStructureMutation>;
+export type RetractStructureMutationResult = Apollo.MutationResult<RetractStructureMutation>;
+export type RetractStructureMutationOptions = Apollo.BaseMutationOptions<RetractStructureMutation, RetractStructureMutationVariables>;
 export const UpdateStructureDocument = gql`
     mutation UpdateStructure($input: UpdateStructureInput!) {
   updateStructure(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
-    ${StructureFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${StructureFragmentDoc}`;
 export type UpdateStructureMutationFn = Apollo.MutationFunction<UpdateStructureMutation, UpdateStructureMutationVariables>;
 
 /**
@@ -12175,10 +12087,16 @@ export type UpdateStructureMutationOptions = Apollo.BaseMutationOptions<UpdateSt
 export const LinkStructureToEntityDocument = gql`
     mutation LinkStructureToEntity($input: LinkStructureInput!) {
   linkStructureToEntity(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
-    ${StructureFragmentDoc}`;
+    ${AssertionFragmentDoc}
+${StructureFragmentDoc}`;
 export type LinkStructureToEntityMutationFn = Apollo.MutationFunction<LinkStructureToEntityMutation, LinkStructureToEntityMutationVariables>;
 
 /**
@@ -12205,107 +12123,84 @@ export function useLinkStructureToEntityMutation(baseOptions?: ApolloReactHooks.
 export type LinkStructureToEntityMutationHookResult = ReturnType<typeof useLinkStructureToEntityMutation>;
 export type LinkStructureToEntityMutationResult = Apollo.MutationResult<LinkStructureToEntityMutation>;
 export type LinkStructureToEntityMutationOptions = Apollo.BaseMutationOptions<LinkStructureToEntityMutation, LinkStructureToEntityMutationVariables>;
-export const CreateStructureRelationDocument = gql`
-    mutation CreateStructureRelation($input: CreateStructureRelationInput!) {
-  createStructureRelation(input: $input) {
-    ...StructureRelation
+export const AssertStructureRelationExistsDocument = gql`
+    mutation AssertStructureRelationExists($input: AssertStructureRelationExistsInput!) {
+  assertStructureRelationExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    structureRelation {
+      ...StructureRelation
+    }
   }
 }
-    ${StructureRelationFragmentDoc}`;
-export type CreateStructureRelationMutationFn = Apollo.MutationFunction<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
+    ${AssertionFragmentDoc}
+${StructureRelationFragmentDoc}`;
+export type AssertStructureRelationExistsMutationFn = Apollo.MutationFunction<AssertStructureRelationExistsMutation, AssertStructureRelationExistsMutationVariables>;
 
 /**
- * __useCreateStructureRelationMutation__
+ * __useAssertStructureRelationExistsMutation__
  *
- * To run a mutation, you first call `useCreateStructureRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateStructureRelationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssertStructureRelationExistsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssertStructureRelationExistsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createStructureRelationMutation, { data, loading, error }] = useCreateStructureRelationMutation({
+ * const [assertStructureRelationExistsMutation, { data, loading, error }] = useAssertStructureRelationExistsMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateStructureRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>) {
+export function useAssertStructureRelationExistsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssertStructureRelationExistsMutation, AssertStructureRelationExistsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>(CreateStructureRelationDocument, options);
+        return ApolloReactHooks.useMutation<AssertStructureRelationExistsMutation, AssertStructureRelationExistsMutationVariables>(AssertStructureRelationExistsDocument, options);
       }
-export type CreateStructureRelationMutationHookResult = ReturnType<typeof useCreateStructureRelationMutation>;
-export type CreateStructureRelationMutationResult = Apollo.MutationResult<CreateStructureRelationMutation>;
-export type CreateStructureRelationMutationOptions = Apollo.BaseMutationOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
-export const ArchiveStructureRelationDocument = gql`
-    mutation ArchiveStructureRelation($id: String!) {
-  archiveStructureRelation(input: {id: $id}) {
-    ...StructureRelation
+export type AssertStructureRelationExistsMutationHookResult = ReturnType<typeof useAssertStructureRelationExistsMutation>;
+export type AssertStructureRelationExistsMutationResult = Apollo.MutationResult<AssertStructureRelationExistsMutation>;
+export type AssertStructureRelationExistsMutationOptions = Apollo.BaseMutationOptions<AssertStructureRelationExistsMutation, AssertStructureRelationExistsMutationVariables>;
+export const RetractStructureRelationDocument = gql`
+    mutation RetractStructureRelation($id: String!) {
+  retractStructureRelation(input: {id: $id}) {
+    assertion {
+      ...Assertion
+    }
+    structureRelation {
+      ...StructureRelation
+    }
   }
 }
-    ${StructureRelationFragmentDoc}`;
-export type ArchiveStructureRelationMutationFn = Apollo.MutationFunction<ArchiveStructureRelationMutation, ArchiveStructureRelationMutationVariables>;
+    ${AssertionFragmentDoc}
+${StructureRelationFragmentDoc}`;
+export type RetractStructureRelationMutationFn = Apollo.MutationFunction<RetractStructureRelationMutation, RetractStructureRelationMutationVariables>;
 
 /**
- * __useArchiveStructureRelationMutation__
+ * __useRetractStructureRelationMutation__
  *
- * To run a mutation, you first call `useArchiveStructureRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveStructureRelationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRetractStructureRelationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractStructureRelationMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [archiveStructureRelationMutation, { data, loading, error }] = useArchiveStructureRelationMutation({
+ * const [retractStructureRelationMutation, { data, loading, error }] = useRetractStructureRelationMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useArchiveStructureRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ArchiveStructureRelationMutation, ArchiveStructureRelationMutationVariables>) {
+export function useRetractStructureRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractStructureRelationMutation, RetractStructureRelationMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ArchiveStructureRelationMutation, ArchiveStructureRelationMutationVariables>(ArchiveStructureRelationDocument, options);
+        return ApolloReactHooks.useMutation<RetractStructureRelationMutation, RetractStructureRelationMutationVariables>(RetractStructureRelationDocument, options);
       }
-export type ArchiveStructureRelationMutationHookResult = ReturnType<typeof useArchiveStructureRelationMutation>;
-export type ArchiveStructureRelationMutationResult = Apollo.MutationResult<ArchiveStructureRelationMutation>;
-export type ArchiveStructureRelationMutationOptions = Apollo.BaseMutationOptions<ArchiveStructureRelationMutation, ArchiveStructureRelationMutationVariables>;
-export const CreateGraphTagInlineDocument = gql`
-    mutation CreateGraphTagInline($graph: String!, $input: String!) {
-  result: createCategoryTag(input: {graph: $graph, value: $input}) {
-    value: id
-    label: name
-  }
-}
-    `;
-export type CreateGraphTagInlineMutationFn = Apollo.MutationFunction<CreateGraphTagInlineMutation, CreateGraphTagInlineMutationVariables>;
-
-/**
- * __useCreateGraphTagInlineMutation__
- *
- * To run a mutation, you first call `useCreateGraphTagInlineMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateGraphTagInlineMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createGraphTagInlineMutation, { data, loading, error }] = useCreateGraphTagInlineMutation({
- *   variables: {
- *      graph: // value for 'graph'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateGraphTagInlineMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateGraphTagInlineMutation, CreateGraphTagInlineMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateGraphTagInlineMutation, CreateGraphTagInlineMutationVariables>(CreateGraphTagInlineDocument, options);
-      }
-export type CreateGraphTagInlineMutationHookResult = ReturnType<typeof useCreateGraphTagInlineMutation>;
-export type CreateGraphTagInlineMutationResult = Apollo.MutationResult<CreateGraphTagInlineMutation>;
-export type CreateGraphTagInlineMutationOptions = Apollo.BaseMutationOptions<CreateGraphTagInlineMutation, CreateGraphTagInlineMutationVariables>;
+export type RetractStructureRelationMutationHookResult = ReturnType<typeof useRetractStructureRelationMutation>;
+export type RetractStructureRelationMutationResult = Apollo.MutationResult<RetractStructureRelationMutation>;
+export type RetractStructureRelationMutationOptions = Apollo.BaseMutationOptions<RetractStructureRelationMutation, RetractStructureRelationMutationVariables>;
 export const CreateTermDocument = gql`
     mutation CreateTerm($input: CreateTermInput!) {
   createTerm(input: $input) {
@@ -12675,6 +12570,41 @@ export function useGetEntityLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type GetEntityQueryHookResult = ReturnType<typeof useGetEntityQuery>;
 export type GetEntityLazyQueryHookResult = ReturnType<typeof useGetEntityLazyQuery>;
 export type GetEntityQueryResult = Apollo.QueryResult<GetEntityQuery, GetEntityQueryVariables>;
+export const GetListEntityDocument = gql`
+    query GetListEntity($id: GraphID!) {
+  entity(id: $id) {
+    ...ListEntity
+  }
+}
+    ${ListEntityFragmentDoc}`;
+
+/**
+ * __useGetListEntityQuery__
+ *
+ * To run a query within a React component, call `useGetListEntityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetListEntityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetListEntityQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetListEntityQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetListEntityQuery, GetListEntityQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetListEntityQuery, GetListEntityQueryVariables>(GetListEntityDocument, options);
+      }
+export function useGetListEntityLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetListEntityQuery, GetListEntityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetListEntityQuery, GetListEntityQueryVariables>(GetListEntityDocument, options);
+        }
+export type GetListEntityQueryHookResult = ReturnType<typeof useGetListEntityQuery>;
+export type GetListEntityLazyQueryHookResult = ReturnType<typeof useGetListEntityLazyQuery>;
+export type GetListEntityQueryResult = Apollo.QueryResult<GetListEntityQuery, GetListEntityQueryVariables>;
 export const SearchEntitiesDocument = gql`
     query SearchEntities($category: ID!, $search: String, $values: [GraphID!]) {
   options: entities(
@@ -12758,6 +12688,90 @@ export function useListEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type ListEntitiesQueryHookResult = ReturnType<typeof useListEntitiesQuery>;
 export type ListEntitiesLazyQueryHookResult = ReturnType<typeof useListEntitiesLazyQuery>;
 export type ListEntitiesQueryResult = Apollo.QueryResult<ListEntitiesQuery, ListEntitiesQueryVariables>;
+export const SearchLinkableCategoriesDocument = gql`
+    query SearchLinkableCategories($search: String) {
+  entityCategories(filters: {search: $search}, pagination: {limit: 20}) {
+    id
+    label
+    graph {
+      id
+      name
+    }
+    term {
+      key
+    }
+  }
+}
+    `;
+
+/**
+ * __useSearchLinkableCategoriesQuery__
+ *
+ * To run a query within a React component, call `useSearchLinkableCategoriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchLinkableCategoriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchLinkableCategoriesQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useSearchLinkableCategoriesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchLinkableCategoriesQuery, SearchLinkableCategoriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchLinkableCategoriesQuery, SearchLinkableCategoriesQueryVariables>(SearchLinkableCategoriesDocument, options);
+      }
+export function useSearchLinkableCategoriesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLinkableCategoriesQuery, SearchLinkableCategoriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchLinkableCategoriesQuery, SearchLinkableCategoriesQueryVariables>(SearchLinkableCategoriesDocument, options);
+        }
+export type SearchLinkableCategoriesQueryHookResult = ReturnType<typeof useSearchLinkableCategoriesQuery>;
+export type SearchLinkableCategoriesLazyQueryHookResult = ReturnType<typeof useSearchLinkableCategoriesLazyQuery>;
+export type SearchLinkableCategoriesQueryResult = Apollo.QueryResult<SearchLinkableCategoriesQuery, SearchLinkableCategoriesQueryVariables>;
+export const SearchLinkableEntitiesDocument = gql`
+    query SearchLinkableEntities($category: ID!, $search: String) {
+  entities(
+    entityCategoryId: $category
+    filters: {search: $search}
+    pagination: {limit: 20}
+  ) {
+    ...ListEntity
+    externalId
+  }
+}
+    ${ListEntityFragmentDoc}`;
+
+/**
+ * __useSearchLinkableEntitiesQuery__
+ *
+ * To run a query within a React component, call `useSearchLinkableEntitiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchLinkableEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchLinkableEntitiesQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useSearchLinkableEntitiesQuery(baseOptions: ApolloReactHooks.QueryHookOptions<SearchLinkableEntitiesQuery, SearchLinkableEntitiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchLinkableEntitiesQuery, SearchLinkableEntitiesQueryVariables>(SearchLinkableEntitiesDocument, options);
+      }
+export function useSearchLinkableEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLinkableEntitiesQuery, SearchLinkableEntitiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchLinkableEntitiesQuery, SearchLinkableEntitiesQueryVariables>(SearchLinkableEntitiesDocument, options);
+        }
+export type SearchLinkableEntitiesQueryHookResult = ReturnType<typeof useSearchLinkableEntitiesQuery>;
+export type SearchLinkableEntitiesLazyQueryHookResult = ReturnType<typeof useSearchLinkableEntitiesLazyQuery>;
+export type SearchLinkableEntitiesQueryResult = Apollo.QueryResult<SearchLinkableEntitiesQuery, SearchLinkableEntitiesQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String!) {
   entityCategories(filters: {search: $search}, pagination: {limit: 10}) {
@@ -13294,56 +13308,9 @@ export function useGetMetricLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type GetMetricQueryHookResult = ReturnType<typeof useGetMetricQuery>;
 export type GetMetricLazyQueryHookResult = ReturnType<typeof useGetMetricLazyQuery>;
 export type GetMetricQueryResult = Apollo.QueryResult<GetMetricQuery, GetMetricQueryVariables>;
-export const SearchMetricsDocument = gql`
-    query SearchMetrics($category: ID!, $search: String, $values: [GraphID!]) {
-  options: metrics(
-    metricCategoryId: $category
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchMetricsQuery__
- *
- * To run a query within a React component, call `useSearchMetricsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchMetricsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchMetricsQuery({
- *   variables: {
- *      category: // value for 'category'
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useSearchMetricsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<SearchMetricsQuery, SearchMetricsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchMetricsQuery, SearchMetricsQueryVariables>(SearchMetricsDocument, options);
-      }
-export function useSearchMetricsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchMetricsQuery, SearchMetricsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchMetricsQuery, SearchMetricsQueryVariables>(SearchMetricsDocument, options);
-        }
-export type SearchMetricsQueryHookResult = ReturnType<typeof useSearchMetricsQuery>;
-export type SearchMetricsLazyQueryHookResult = ReturnType<typeof useSearchMetricsLazyQuery>;
-export type SearchMetricsQueryResult = Apollo.QueryResult<SearchMetricsQuery, SearchMetricsQueryVariables>;
 export const ListMetricsDocument = gql`
-    query ListMetrics($category: ID!, $filters: MetricFilter, $pagination: MetricPaginationInput, $ordering: [MetricOrder!]) {
-  metrics(
-    metricCategoryId: $category
-    filters: $filters
-    pagination: $pagination
-    ordering: $ordering
-  ) {
+    query ListMetrics($kind: ID!) {
+  metrics(metricKindId: $kind) {
     ...ListMetric
   }
 }
@@ -13361,10 +13328,7 @@ export const ListMetricsDocument = gql`
  * @example
  * const { data, loading, error } = useListMetricsQuery({
  *   variables: {
- *      category: // value for 'category'
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      ordering: // value for 'ordering'
+ *      kind: // value for 'kind'
  *   },
  * });
  */
@@ -15345,41 +15309,41 @@ export function useMetricsForStructureLazyQuery(baseOptions?: ApolloReactHooks.L
 export type MetricsForStructureQueryHookResult = ReturnType<typeof useMetricsForStructureQuery>;
 export type MetricsForStructureLazyQueryHookResult = ReturnType<typeof useMetricsForStructureLazyQuery>;
 export type MetricsForStructureQueryResult = Apollo.QueryResult<MetricsForStructureQuery, MetricsForStructureQueryVariables>;
-export const MeasurementsForAssertionDocument = gql`
-    query MeasurementsForAssertion($assertionId: GraphID!) {
-  measurementsForAssertion(assertionId: $assertionId) {
+export const MetricsForAssertionDocument = gql`
+    query MetricsForAssertion($assertionId: GraphID!) {
+  metricsForAssertion(assertionId: $assertionId) {
     ...ListMetric
   }
 }
     ${ListMetricFragmentDoc}`;
 
 /**
- * __useMeasurementsForAssertionQuery__
+ * __useMetricsForAssertionQuery__
  *
- * To run a query within a React component, call `useMeasurementsForAssertionQuery` and pass it any options that fit your needs.
- * When your component renders, `useMeasurementsForAssertionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useMetricsForAssertionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMetricsForAssertionQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useMeasurementsForAssertionQuery({
+ * const { data, loading, error } = useMetricsForAssertionQuery({
  *   variables: {
  *      assertionId: // value for 'assertionId'
  *   },
  * });
  */
-export function useMeasurementsForAssertionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MeasurementsForAssertionQuery, MeasurementsForAssertionQueryVariables>) {
+export function useMetricsForAssertionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MetricsForAssertionQuery, MetricsForAssertionQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MeasurementsForAssertionQuery, MeasurementsForAssertionQueryVariables>(MeasurementsForAssertionDocument, options);
+        return ApolloReactHooks.useQuery<MetricsForAssertionQuery, MetricsForAssertionQueryVariables>(MetricsForAssertionDocument, options);
       }
-export function useMeasurementsForAssertionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MeasurementsForAssertionQuery, MeasurementsForAssertionQueryVariables>) {
+export function useMetricsForAssertionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MetricsForAssertionQuery, MetricsForAssertionQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MeasurementsForAssertionQuery, MeasurementsForAssertionQueryVariables>(MeasurementsForAssertionDocument, options);
+          return ApolloReactHooks.useLazyQuery<MetricsForAssertionQuery, MetricsForAssertionQueryVariables>(MetricsForAssertionDocument, options);
         }
-export type MeasurementsForAssertionQueryHookResult = ReturnType<typeof useMeasurementsForAssertionQuery>;
-export type MeasurementsForAssertionLazyQueryHookResult = ReturnType<typeof useMeasurementsForAssertionLazyQuery>;
-export type MeasurementsForAssertionQueryResult = Apollo.QueryResult<MeasurementsForAssertionQuery, MeasurementsForAssertionQueryVariables>;
+export type MetricsForAssertionQueryHookResult = ReturnType<typeof useMetricsForAssertionQuery>;
+export type MetricsForAssertionLazyQueryHookResult = ReturnType<typeof useMetricsForAssertionLazyQuery>;
+export type MetricsForAssertionQueryResult = Apollo.QueryResult<MetricsForAssertionQuery, MetricsForAssertionQueryVariables>;
 export const GetStructureRelationDocument = gql`
     query GetStructureRelation($id: GraphID!) {
   structureRelation(id: $id) {
@@ -15457,46 +15421,6 @@ export function useSearchStructureRelationsLazyQuery(baseOptions?: ApolloReactHo
 export type SearchStructureRelationsQueryHookResult = ReturnType<typeof useSearchStructureRelationsQuery>;
 export type SearchStructureRelationsLazyQueryHookResult = ReturnType<typeof useSearchStructureRelationsLazyQuery>;
 export type SearchStructureRelationsQueryResult = Apollo.QueryResult<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>;
-export const SearchTagsDocument = gql`
-    query SearchTags($search: String, $values: [ID!]) {
-  options: categoryTags(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-
-/**
- * __useSearchTagsQuery__
- *
- * To run a query within a React component, call `useSearchTagsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchTagsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useSearchTagsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchTagsQuery, SearchTagsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchTagsQuery, SearchTagsQueryVariables>(SearchTagsDocument, options);
-      }
-export function useSearchTagsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchTagsQuery, SearchTagsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchTagsQuery, SearchTagsQueryVariables>(SearchTagsDocument, options);
-        }
-export type SearchTagsQueryHookResult = ReturnType<typeof useSearchTagsQuery>;
-export type SearchTagsLazyQueryHookResult = ReturnType<typeof useSearchTagsLazyQuery>;
-export type SearchTagsQueryResult = Apollo.QueryResult<SearchTagsQuery, SearchTagsQueryVariables>;
 export const GetTermDocument = gql`
     query GetTerm($id: ID!) {
   term(id: $id) {
@@ -15608,6 +15532,42 @@ export function useSearchTermsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuery
 export type SearchTermsQueryHookResult = ReturnType<typeof useSearchTermsQuery>;
 export type SearchTermsLazyQueryHookResult = ReturnType<typeof useSearchTermsLazyQuery>;
 export type SearchTermsQueryResult = Apollo.QueryResult<SearchTermsQuery, SearchTermsQueryVariables>;
+export const SearchAssignableTermsDocument = gql`
+    query SearchAssignableTerms($search: String, $kinds: [TermKind!]) {
+  terms(filters: {search: $search, kinds: $kinds}, pagination: {limit: 20}) {
+    ...AssignableTerm
+  }
+}
+    ${AssignableTermFragmentDoc}`;
+
+/**
+ * __useSearchAssignableTermsQuery__
+ *
+ * To run a query within a React component, call `useSearchAssignableTermsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchAssignableTermsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchAssignableTermsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      kinds: // value for 'kinds'
+ *   },
+ * });
+ */
+export function useSearchAssignableTermsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchAssignableTermsQuery, SearchAssignableTermsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchAssignableTermsQuery, SearchAssignableTermsQueryVariables>(SearchAssignableTermsDocument, options);
+      }
+export function useSearchAssignableTermsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchAssignableTermsQuery, SearchAssignableTermsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchAssignableTermsQuery, SearchAssignableTermsQueryVariables>(SearchAssignableTermsDocument, options);
+        }
+export type SearchAssignableTermsQueryHookResult = ReturnType<typeof useSearchAssignableTermsQuery>;
+export type SearchAssignableTermsLazyQueryHookResult = ReturnType<typeof useSearchAssignableTermsLazyQuery>;
+export type SearchAssignableTermsQueryResult = Apollo.QueryResult<SearchAssignableTermsQuery, SearchAssignableTermsQueryVariables>;
 export const SearchEntityTermsDocument = gql`
     query SearchEntityTerms($search: String, $values: [String!]) {
   options: terms(

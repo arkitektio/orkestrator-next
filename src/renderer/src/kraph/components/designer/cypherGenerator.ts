@@ -587,7 +587,6 @@ export function generateGraphQueryInput(
     name,
     description: description || `Generated query: ${name}`,
     query,
-    cypher: query,
     columnInput: columns.length > 0 ? columns : undefined
   }
 }

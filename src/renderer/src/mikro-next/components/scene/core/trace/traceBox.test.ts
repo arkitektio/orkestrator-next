@@ -201,20 +201,23 @@ describe("extractTraceValues", () => {
 });
 
 describe("voxelToLayerLocal", () => {
-  it("centres the frame and flips y, matching the probe's own mapping", () => {
-    // A 4x4x4 layer: voxel (0,0,0)'s centre sits at (-1.5, +1.5, -1.5).
-    expect(voxelToLayerLocal([0, 0, 0], [4, 4, 4])).toEqual([-1.5, 1.5, -1.5]);
-    expect(voxelToLayerLocal([3, 3, 3], [4, 4, 4])).toEqual([1.5, -1.5, 1.5]);
+  it("is the voxel centre in the corner-anchored frame — no centering, no flip", () => {
+    // A 4x4x4 layer: voxel (0,0,0)'s centre sits at (0.5, 0.5, 0.5).
+    expect(voxelToLayerLocal([0, 0, 0], [4, 4, 4])).toEqual([0.5, 0.5, 0.5]);
+    expect(voxelToLayerLocal([3, 3, 3], [4, 4, 4])).toEqual([3.5, 3.5, 3.5]);
   });
 
   it("round-trips the probe's voxel→normalized→voxel derivation", () => {
-    // BrickVolumeLayer: voxelIndex[0] = floor((localPos[0] + 0.5) * shape).
+    // BrickVolumeLayer: voxelIndex[i] = floor((unitBoxLocal[i] + 0.5) * shape),
+    // where unitBoxLocal = layerLocal/shape - 0.5 (the mesh is a unit box
+    // offset by half its size).
     const shape: [number, number, number] = [8, 8, 8];
     for (const voxel of [0, 3, 7]) {
       const local = voxelToLayerLocal([voxel, voxel, voxel], shape);
-      const normalized = local[0] / shape[0];
-      expect(Math.floor((normalized + 0.5) * shape[0])).toBe(voxel);
-      expect(Math.floor((0.5 - local[1] / shape[1]) * shape[1])).toBe(voxel);
+      for (const axis of [0, 1, 2] as const) {
+        const unitBoxLocal = local[axis] / shape[axis] - 0.5;
+        expect(Math.floor((unitBoxLocal + 0.5) * shape[axis])).toBe(voxel);
+      }
     }
   });
 });
@@ -243,11 +246,11 @@ describe("layerLocalToVoxel", () => {
   });
 
   it("returns null outside the layer rather than clamping onto its edge", () => {
-    expect(layerLocalToVoxel([100, 0, 0], shape)).toBeNull();
-    expect(layerLocalToVoxel([0, 0, -50], shape)).toBeNull();
+    expect(layerLocalToVoxel([100, 2, 2], shape)).toBeNull();
+    expect(layerLocalToVoxel([2, 2, -50], shape)).toBeNull();
     // Just past the last voxel's centre by more than half a voxel.
     expect(layerLocalToVoxel(voxelToLayerLocal([7, 0, 0], shape), shape)).not.toBeNull();
-    expect(layerLocalToVoxel([shape[0] / 2 + 0.5, 0, 0], shape)).toBeNull();
+    expect(layerLocalToVoxel([shape[0] + 0.5, 2, 2], shape)).toBeNull();
   });
 });
 

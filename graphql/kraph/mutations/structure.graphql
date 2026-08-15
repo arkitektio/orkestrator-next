@@ -1,29 +1,54 @@
-mutation CreateStructure($input: CreateStructureInput!) {
-  createStructure(input: $input) {
-    ...Structure
+mutation AssertStructureExists($input: AssertStructureExistsInput!) {
+  assertStructureExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
 
 mutation EnsureStructure($input: EnsureStructureInput!) {
   ensureStructure(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
 
-mutation ArchiveStructure($id: GraphID!) {
-  archiveStructure(input: { id: $id }) {
-    ...Structure
+mutation RetractStructure($id: GraphID!) {
+  retractStructure(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
 
 mutation UpdateStructure($input: UpdateStructureInput!) {
   updateStructure(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }
 
 mutation LinkStructureToEntity($input: LinkStructureInput!) {
   linkStructureToEntity(input: $input) {
-    ...Structure
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...Structure
+    }
   }
 }

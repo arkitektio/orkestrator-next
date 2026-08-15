@@ -18,6 +18,9 @@ fragment ListMaterializedMeasurementEdge on MaterializedMeasurementEdge {
     key
     label
     description
+    term {
+      ...ListTerm
+    }
   }
 }
 

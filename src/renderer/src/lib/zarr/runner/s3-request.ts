@@ -119,28 +119,42 @@ function canonicalQueryString(url: URL): string {
 }
 
 /**
- * The canonical URI for SigV4: every path segment RFC-3986 encoded, with `/`
- * kept as the separator.
+ * Every path segment RFC-3986 encoded, with `/` kept as the separator, and
+ * decoded first so an already-escaped input is not escaped twice.
  *
  * Encoding the SEGMENTS matters, and it is not what a pathname already gives
- * you. `URL` leaves reserved sub-delimiters — `=`, `+`, `,`, `:`, `@` — literal
- * in `pathname`, but SigV4 requires every byte outside the unreserved set to be
- * percent-encoded, and S3 does the same on its side before comparing. A key
- * containing one therefore signs one way here and another way at the server,
- * and the request comes back 403 with nothing to say why.
- *
- * This went unnoticed for as long as every signed path was a zarr chunk
- * (`c/0/0/0`, `zarr.json` — unreserved throughout). A fabriks prefix is
- * hive-partitioned, so its very first geometry read is `level=0/part-….parquet`.
- *
- * Segments are decoded before re-encoding so an already-escaped pathname is not
- * escaped twice.
+ * you: `URL` leaves reserved sub-delimiters — `=`, `+`, `,`, `:`, `@` —
+ * literal in `pathname`, but SigV4 requires every byte outside the unreserved
+ * set percent-encoded. This went unnoticed for as long as every signed path
+ * was a zarr chunk (`c/0/0/0`, `zarr.json` — unreserved throughout); a
+ * fabriks prefix is hive-partitioned, so its very first geometry read is
+ * `level=0/part-….parquet`.
  */
-function canonicalUri(url: URL): string {
-  return url.pathname
+function strictlyEncodedPath(pathname: string): string {
+  return pathname
     .split('/')
     .map((segment) => encodeRfc3986(decodeURIComponent(segment)))
     .join('/')
+}
+
+/** The canonical URI for SigV4 (see `strictlyEncodedPath`). */
+function canonicalUri(url: URL): string {
+  return strictlyEncodedPath(url.pathname)
+}
+
+/**
+ * Force the WIRE path into exactly the form the canonical request signs.
+ *
+ * The signature is only half the contract: the server recomputes its own
+ * canonical request from the bytes it RECEIVES. MinIO (and AWS's raw-path
+ * comparison) canonicalize from the request path as sent — a literal `=` on
+ * the wire stays a literal `=` in their canonical URI. Signing `%3D` while
+ * sending `=` therefore fails with `SignatureDoesNotMatch` even though our
+ * own canonical form is internally consistent. The wire bytes and the signed
+ * bytes must be the SAME bytes, so the URL is normalized before either.
+ */
+function normalizeWirePath(url: URL): void {
+  url.pathname = strictlyEncodedPath(url.pathname)
 }
 
 function normalizeHeaderValue(value: string): string {
@@ -260,6 +274,8 @@ export async function fetchS3Path(
   init: RequestInit = {},
 ): Promise<Response> {
   const url = resolveStoreUrl(config.baseUrl, path)
+  // Wire bytes == signed bytes, or the server's recomputed signature differs.
+  normalizeWirePath(url)
   return fetch(url, await signRequest(url, config, init))
 }
 

@@ -31,6 +31,9 @@ export type S3FetchConfigRefresher = (options: { forceRefresh?: boolean }) => Pr
  */
 export class CredentialRotation {
   private refreshInFlight: Promise<S3FetchConfig> | null = null;
+  /** Whether the in-flight rotation was FORCED — a forced request must never
+   * settle for a non-forced one it raced (see `rotate`). */
+  private refreshInFlightForced = false;
 
   constructor(
     private config: S3FetchConfig,
@@ -57,9 +60,22 @@ export class CredentialRotation {
     return this.rotate({});
   }
 
-  /** Replace the credentials, once; concurrent callers await the same rotation. */
+  /**
+   * Replace the credentials, once; concurrent callers await the same rotation
+   * — with ONE exception. A FORCED rotation (a 403 just told us the current
+   * grant is bad) must not coalesce into an in-flight NON-forced one: the
+   * non-forced refresher is allowed to re-serve the cached grant, which is by
+   * definition the one that just failed. It chains a forced rotation after
+   * the raced one instead, so the 403's retry always runs on a grant the
+   * provider was made to mint fresh. Forced-into-forced still coalesces.
+   */
   rotate(options: { forceRefresh?: boolean }): Promise<S3FetchConfig> {
-    if (this.refreshInFlight) return this.refreshInFlight;
+    if (this.refreshInFlight) {
+      if (!options.forceRefresh || this.refreshInFlightForced) return this.refreshInFlight;
+      return this.refreshInFlight
+        .catch(() => this.config)
+        .then(() => this.rotate({ forceRefresh: true }));
+    }
     const refresher = this.refresher;
     if (!refresher) return Promise.resolve(this.config);
 
@@ -70,10 +86,14 @@ export class CredentialRotation {
         return config;
       })
       .finally(() => {
-        this.refreshInFlight = null;
+        if (this.refreshInFlight === rotation) {
+          this.refreshInFlight = null;
+          this.refreshInFlightForced = false;
+        }
       });
 
     this.refreshInFlight = rotation;
+    this.refreshInFlightForced = Boolean(options.forceRefresh);
     return rotation;
   }
 

@@ -1,7 +1,7 @@
 import { Plate } from "@udecode/plate-common/react";
 
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { FreeformListField } from "@/components/fields/FreeformListField";
 import { StringField } from "@/components/fields/StringField";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
@@ -24,7 +24,6 @@ import {
   NaturalEventCategoryFragment,
   UpdateNaturalEventCategoryMutationVariables,
   useGetNaturalEventCategoryQuery,
-  useSearchTagsLazyQuery,
   useUpdateNaturalEventCategoryMutation
 } from "../api/graphql";
 
@@ -52,7 +51,7 @@ export function PlateDisplay({ plates }: { plates: any[] }) {
 // Note: the backend no longer stores rich-text `plateChildren` on event
 // categories, and the previous source/target "role" concept (with tag /
 // category filters) has been unified into `inputs` / `outputs: EventRole[]`
-// (each with a `descriptor` supporting only `tags`/`keys`/`ontotologyTerms`/
+// (each with a `descriptor` supporting only `keys`/`ontologyTerms`/
 // `defaultCategoryKey`, no more free-form category filter lists). The rich
 // text editor has therefore been dropped here in favor of a plain role
 // editor bound to the current schema. `kind` is required by the update
@@ -84,9 +83,8 @@ export const RoleDefinitionCreator = ({
         key: role.key,
         role: role.role,
         descriptor: {
-          tags: role.descriptor.tags,
           keys: role.descriptor.keys,
-          ontotologyTerms: role.descriptor.ontotologyTerms,
+          ontologyTerms: role.descriptor.ontologyTerms,
           defaultCategoryKey: role.descriptor.defaultCategoryKey,
         },
       })),
@@ -94,16 +92,13 @@ export const RoleDefinitionCreator = ({
         key: role.key,
         role: role.role,
         descriptor: {
-          tags: role.descriptor.tags,
           keys: role.descriptor.keys,
-          ontotologyTerms: role.descriptor.ontotologyTerms,
+          ontologyTerms: role.descriptor.ontologyTerms,
           defaultCategoryKey: role.descriptor.defaultCategoryKey,
         },
       })),
     },
   });
-
-  const [searchTags] = useSearchTagsLazyQuery();
 
   const sourceArray = useFieldArray({
     control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
@@ -146,11 +141,10 @@ export const RoleDefinitionCreator = ({
                           description="Which role does the entity play?"
                         />
                         <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                          <GraphQLListSearchField
-                            name={`inputs.${index}.descriptor.tags`}
-                            label="Tag Filters"
-                            searchQuery={searchTags}
-                            description="Filters for the entity's tags."
+                          <FreeformListField
+                            name={`inputs.${index}.descriptor.keys`}
+                            label="Category Keys"
+                            description="Entity category keys this role accepts."
                           />
 
                           <Button
@@ -171,7 +165,7 @@ export const RoleDefinitionCreator = ({
                           key: "new",
                           role: "new",
                           descriptor: {
-                            tags: [],
+                            keys: [],
                           },
                         })
                       }
@@ -198,11 +192,10 @@ export const RoleDefinitionCreator = ({
                           description="Which role does the entity play?"
                         />
                         <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                          <GraphQLListSearchField
-                            name={`outputs.${index}.descriptor.tags`}
-                            label="Tag Filters"
-                            searchQuery={searchTags}
-                            description="Filters for the entity's tags."
+                          <FreeformListField
+                            name={`outputs.${index}.descriptor.keys`}
+                            label="Category Keys"
+                            description="Entity category keys this role accepts."
                           />
 
                           <Button
@@ -223,7 +216,7 @@ export const RoleDefinitionCreator = ({
                           key: "new",
                           role: "new",
                           descriptor: {
-                            tags: [],
+                            keys: [],
                           },
                         })
                       }

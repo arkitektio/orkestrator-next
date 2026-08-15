@@ -15,7 +15,6 @@
       "StructureRelationCategory"
     ],
     "Edge": [
-      "Assertion",
       "Description",
       "InputParticipation",
       "Measurement",
@@ -50,13 +49,10 @@
     "Node": [
       "Activity",
       "Entity",
-      "MeasurementShadowLink",
       "Metric",
       "NaturalEvent",
       "ProtocolEvent",
-      "RelationShadowLink",
-      "Structure",
-      "StructureRelationShadowLink"
+      "Structure"
     ],
     "NodeCategory": [
       "EntityCategory",
@@ -79,8 +75,8 @@
       "ProtocolEvent"
     ],
     "_Entity": [
+      "Assertion",
       "BigFileStore",
-      "CategoryTag",
       "EdgePairsQuery",
       "EdgePathQuery",
       "EdgeTableQuery",

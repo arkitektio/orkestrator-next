@@ -2,7 +2,7 @@ import { useDialog } from "@/app/dialog";
 import { Structure } from "@/types";
 import {
   ListStructureRelationCategoryWithGraphFragment,
-  useCreateStructureRelationMutation,
+  useAssertStructureRelationExistsMutation,
   useEnsureStructureMutation,
   useListStructureRelationCategoryQuery
 } from "@/kraph/api/graphql";
@@ -26,7 +26,7 @@ export const RelateStructures = (props: {
     },
   });
 
-  const [createSRelation] = useCreateStructureRelationMutation({
+  const [createSRelation] = useAssertStructureRelationExistsMutation({
     onCompleted: () => {},
     onError: (error) => {
       console.error("Error creating relation:", error);
@@ -69,8 +69,8 @@ export const RelateStructures = (props: {
       await createSRelation({
         variables: {
           input: {
-            sourceId: left.data.ensureStructure.id,
-            targetId: right.data.ensureStructure.id,
+            sourceId: left.data.ensureStructure.structure.id,
+            targetId: right.data.ensureStructure.structure.id,
             term: category.term?.key ?? category.key,
           },
         },

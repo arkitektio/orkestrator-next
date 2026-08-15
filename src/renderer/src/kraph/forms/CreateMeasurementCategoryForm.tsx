@@ -1,12 +1,12 @@
 import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
+import { FreeformListField } from "@/components/fields/FreeformListField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ListSearchField } from "@/components/fields/ListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { AutoDerivedStringField, StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   CreateMeasurementDefinitionInput,
@@ -14,46 +14,6 @@ import {
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
 import { ageNameify, validateAgeName } from "./utils";
-
-const FreeformListField = (props: {
-  name: string;
-  label: string;
-  description: string;
-  placeholder?: string;
-}) => {
-  const search = useCallback(
-    async ({ search, values }: { search?: string; values?: string[] }) => {
-      const options = new Map<string, { label: string; value: string }>();
-
-      values?.forEach((value) => {
-        if (value) {
-          options.set(value, { label: value, value });
-        }
-      });
-
-      const trimmedSearch = search?.trim();
-      if (trimmedSearch) {
-        options.set(trimmedSearch, {
-          label: trimmedSearch,
-          value: trimmedSearch,
-        });
-      }
-
-      return Array.from(options.values());
-    },
-    [],
-  );
-
-  return (
-    <ListSearchField
-      name={props.name}
-      label={props.label}
-      description={props.description}
-      placeholder={props.placeholder}
-      search={search}
-    />
-  );
-};
 
 type StructureDescriptorFieldsProps = {
   prefix: "source";
@@ -74,26 +34,8 @@ const StructureDescriptorFields = ({
         description={identifierDescription ?? "Structure identifiers to match for the source descriptor"}
         placeholder="Add an identifier"
       />
-      <FreeformListField
-        label="Source keys"
-        name={`${prefix}.keys`}
-        description="Structure keys to match for the source descriptor"
-        placeholder="Add a structure key"
-      />
       {showAdvanced && (
         <>
-          <FreeformListField
-            label="Source tags"
-            name={`${prefix}.tags`}
-            description="Tag values to match for the source descriptor"
-            placeholder="Add a tag"
-          />
-          <FreeformListField
-            label="Source ontology terms"
-            name={`${prefix}.ontotologyTerms`}
-            description="Ontology terms to match for the source descriptor"
-            placeholder="Add an ontology term"
-          />
           <StringField
             label="Default source category key"
             name={`${prefix}.defaultCategoryKey`}
@@ -125,13 +67,7 @@ const EntityDescriptorFields = ({
       {showAdvanced && (
         <>
           <FreeformListField
-            name={`${prefix}.tags`}
-            label="Target tag filters"
-            description="Tag values to match for the target descriptor"
-            placeholder="Add a tag"
-          />
-          <FreeformListField
-            name={`${prefix}.ontotologyTerms`}
+            name={`${prefix}.ontologyTerms`}
             label="Target ontology terms"
             description="Ontology terms to match for the target descriptor"
             placeholder="Add an ontology term"
@@ -156,16 +92,12 @@ const normalizeInput = (
   source: {
     ...data.source,
     identifiers: data.source.identifiers?.length ? data.source.identifiers : undefined,
-    keys: data.source.keys?.length ? data.source.keys : undefined,
-    tags: data.source.tags?.length ? data.source.tags : undefined,
-    ontotologyTerms: data.source.ontotologyTerms?.length ? data.source.ontotologyTerms : undefined,
     defaultCategoryKey: data.source.defaultCategoryKey || undefined,
   },
   target: {
     ...data.target,
     keys: data.target.keys?.length ? data.target.keys : undefined,
-    tags: data.target.tags?.length ? data.target.tags : undefined,
-    ontotologyTerms: data.target.ontotologyTerms?.length ? data.target.ontotologyTerms : undefined,
+    ontologyTerms: data.target.ontologyTerms?.length ? data.target.ontologyTerms : undefined,
     defaultCategoryKey: data.target.defaultCategoryKey || undefined,
   },
 });
@@ -188,15 +120,11 @@ const TForm = (props: { graph?: string; identifier?: string }) => {
       description: "",
       source: {
         identifiers: props.identifier ? [props.identifier] : [],
-        keys: [],
-        tags: [],
-        ontotologyTerms: [],
         defaultCategoryKey: "",
       },
       target: {
         keys: [],
-        tags: [],
-        ontotologyTerms: [],
+        ontologyTerms: [],
         defaultCategoryKey: "",
       },
     },

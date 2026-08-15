@@ -84,14 +84,6 @@ function mirroredManifest(node: FabriksStoreFragment): Record<string, unknown> |
   };
 }
 
-/**
- * The collection's axis names in VERTEX COMPONENT order, or null if unstated.
- *
- * fabriks addresses components by position — `cellSize[0]`, `bbox_*_x` — and
- * says nothing about which physical axis a slot is, so a collection cut from
- * (z, y, x) data is entirely consistent and would render transposed if the
- * renderer assumed otherwise. This is the store telling us the mapping, and it
- * is the only trustworthy source for it.
- */
-export const fabriksAxisOrder = (node: FabriksStoreFragment): string[] | null =>
-  node.axes && node.axes.length > 0 ? [...node.axes] : null;
+// The store's axis-order declaration is read by the placement module
+// (`layers/mesh/collectionPlacement.ts` `fabriksAxisOrder`), which stays free
+// of this file's transitive Arkitekt/zarr imports so placement is testable.

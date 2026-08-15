@@ -76,14 +76,6 @@ fragment PathRelation on Relation {
     label
   }
 }
-fragment PathAssertion on Assertion {
-  id
-  label
-  subject
-  actionName
-  appId
-  assertedAt
-}
 fragment PathDescription on Description {
   id
   label
@@ -103,7 +95,6 @@ fragment PathEdge on Edge {
   ...PathMeasurement
   ...PathRelation
   ...PathStructureRelation
-  ...PathAssertion
   ...PathDescription
   ...PathInputParticipation
   ...PathOutputParticipation

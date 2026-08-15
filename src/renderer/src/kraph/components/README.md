@@ -59,9 +59,9 @@ This document describes the refactored component architecture for the `TinyStruc
 
 > **Removed:** `MeasurementDialog`, `AddMeasurementForm` and the
 > `useMeasurementDialog` hook were deleted when the backend dropped the
-> `createMeasurement` mutation. Measurements are now recorded as supporting
-> evidence on `createNaturalEvent` / `createProtocolEvent`; there is currently
-> no UI for that.
+> `createMeasurement` mutation. The replacement is `assertMeasurementExists`,
+> which names the measurement's *term* rather than a category row; the
+> `setasmeasurement` dialog records one against a picked entity.
 
 ## Benefits of Refactoring
 

@@ -34,7 +34,6 @@ import {
   CreateProtocolEventCategoryMutationVariables,
   useCreateProtocolEventCategoryMutation,
   useSearchEntityCategoryLazyQuery,
-  useSearchTagsLazyQuery
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
 
@@ -98,7 +97,6 @@ export const TForm = (props: { graph: string }) => {
     outputs,
   ]);
 
-  const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const sourceArray = useFieldArray({
@@ -217,11 +215,6 @@ export const TForm = (props: { graph: string }) => {
                                               label="Description"
                                             />
                                             <GraphQLListSearchField
-                                              name={`sourceEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
                                               name={`sourceEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                               label="Category Filters"
                                               searchQuery={searchEntityCategory}
@@ -253,7 +246,7 @@ export const TForm = (props: { graph: string }) => {
                                       key: "new_target",
                                       role: "new_target",
                                       descriptor: {
-                                        tags: [],
+                                        keys: [],
                                       },
                                     })
                                   }
@@ -291,11 +284,6 @@ export const TForm = (props: { graph: string }) => {
                                               label="Description"
                                             />
                                             <GraphQLListSearchField
-                                              name={`targetEntityRoles.${index}.categoryDefinition.tagFilters`}
-                                              label="Tag Filters"
-                                              searchQuery={searchTags}
-                                            />
-                                            <GraphQLListSearchField
                                               name={`targetEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                               label="Category Filters"
                                               searchQuery={searchEntityCategory}
@@ -327,7 +315,7 @@ export const TForm = (props: { graph: string }) => {
                                       key: "new_target",
                                       role: "new_target",
                                       descriptor: {
-                                        tags: [],
+                                        keys: [],
                                       },
                                     })
                                   }

@@ -1,35 +1,33 @@
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
-import { SceneLayerFragment } from "@/mikro-next/api/graphql";
 
-import type { LayerState, SceneTransformContext } from "../../core/layerModel";
-import { buildVolumeVoxelToWorld } from "../../core/octree/voxelFrame";
-import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
-import { affineToMatrix4 } from "../../core/worldTransform";
-import { useSceneStore } from "../../store/sceneStore";
+import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
 import { useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
 import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
-import { fabriksAxisOrder, openFabriksCollection } from "../../render/fabriks/fabriksSource";
+import { openFabriksCollection } from "../../render/fabriks/fabriksSource";
+import {
+  resolveCollectionMatrix,
+  type MeshCollectionRef,
+  type MeshLayerVariant,
+} from "./collectionPlacement";
 
 /**
  * MeshLayer renderer: a fabriks collection — a self-describing prefix of
- * Parquet files — streamed by row group and anchored to a coordinate system in
- * the scene's transform graph.
+ * Parquet files — streamed by row group and placed by its own `pathToWorld`
+ * composed through the scene's transform graph, nothing else
+ * (`collectionPlacement.ts`; COORDINATE_SYSTEMS.md "Coordinate conventions").
  *
  * The React layer owns only lifecycle, transform resolution and the settle
  * cadence. Planning and streaming live in `FabriksCollectionManager`
  * (imperative — no React re-render per batch, OCTREE_RENDERER.md P17), the
  * read plan in `FabriksCollection`, and the byte contract in `fabriksDecode`.
  */
-
-type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLayer" }>;
-type MeshCollectionRef = NonNullable<MeshLayerVariant["collection"]>;
 
 export const FabriksCollectionLayer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) =>
@@ -40,69 +38,17 @@ export const FabriksCollectionLayer = ({ layerId }: { layerId: string }) => {
   return <FabriksCollectionGroup layer={layer} collection={layer.collection} />;
 };
 
-/**
- * The collection's voxel→world matrix. Preferred path: an image layer whose
- * pyramid contains the collection's coordinate system (the labels layer the
- * meshes were extracted from) — reusing ITS frame reproduces the image path's
- * centering/y-flip exactly, so meshes and labels overlap by construction.
- * Fallback: compose the layer's own server-resolved `pathToWorld`.
- *
- * **Axis slots.** fabriks addresses vertex components by POSITION and says
- * nothing about which physical axis a slot is, so a collection cut from
- * (z, y, x) data is entirely consistent — and would render transposed if we
- * assumed the coordinate system's own axis order. `FabriksStore.axes` states
- * the mapping, and it is the only trustworthy source for it; the last-three
- * convention is the fallback for a store that does not.
- */
-const resolveCollectionMatrix = (
-  layer: MeshLayerVariant,
-  collection: MeshCollectionRef,
-  imageLayers: readonly LayerState[],
-  transformContext: SceneTransformContext,
-): THREE.Matrix4 => {
-  const csId = collection.coordinateSystem.id;
-  const anchorLayer = imageLayers.find(
-    (imageLayer) =>
-      imageLayer.lens.coordinateSystem?.id === csId ||
-      imageLayer.lens.dataset.intrinsicSystem?.id === csId ||
-      imageLayer.lens.dataset.dataArrays.some(
-        (dataArray) => dataArray.coordinateSystem?.id === csId,
-      ),
-  );
-  if (anchorLayer) return buildVolumeVoxelToWorld(anchorLayer);
-
-  const axes = collection.coordinateSystem.axes ?? [];
-  const names = axes.map((axis) => axis.name);
-  // Components are slots: slot 0 is the vertex's first component, which is the
-  // matrix's x. The store names them in that order when it can.
-  const declared = fabriksAxisOrder(collection.store);
-  const spatial = declared
-    ? [declared[0], declared[1], declared[2]]
-    : [names[names.length - 1], names[names.length - 2], names[names.length - 3]];
-  if (!declared) {
-    console.warn(
-      `[fabriks] store ${collection.store.id} declares no axis order; assuming the coordinate ` +
-        `system's last three axes map to vertex components 0, 1, 2. A collection written in a ` +
-        `different component order will render transposed.`,
-    );
-  }
-  const composed = composePlacementPath(layer.pathToWorld, transformContext, spatial, names);
-  console.warn(
-    `[fabriks] collection ${collection.id}: no image layer shares CS ${csId}; ` +
-      `rendering via the layer's pathToWorld (uncentered relative to image layers)`,
-  );
-  return affineToMatrix4(composed);
-};
+/** The fragment plus the card's session-local render state. */
+type MeshLayerView = MeshLayerVariant & MeshLayerSessionState;
 
 const FabriksCollectionGroup = ({
   layer,
   collection,
 }: {
-  layer: MeshLayerVariant;
+  layer: MeshLayerView;
   collection: MeshCollectionRef;
 }) => {
   const invalidate = useThree((state) => state.invalidate);
-  const imageLayers = useSceneStore((s) => s.layers);
   const transformContext = useSceneStore((s) => s.transformContext);
   const viewApi = useViewStoreApi();
   const viewerApi = useViewerStoreApi();
@@ -135,10 +81,17 @@ const FabriksCollectionGroup = ({
     };
   }, [viewerApi]);
 
-  const matrix = useMemo(
-    () => resolveCollectionMatrix(layer, collection, imageLayers, transformContext),
-    [layer, collection, imageLayers, transformContext],
-  );
+  // VALUE-stable: the memo's inputs churn identity on unrelated store writes,
+  // so a recompute that lands on the same placement must return the SAME
+  // Matrix4 — downstream effects key on it, and a fresh-but-equal instance
+  // used to rebuild the whole manager and refetch every cell.
+  const matrixRef = useRef<THREE.Matrix4 | null>(null);
+  const matrix = useMemo(() => {
+    const next = resolveCollectionMatrix(layer, collection, transformContext);
+    if (matrixRef.current?.equals(next)) return matrixRef.current;
+    matrixRef.current = next;
+    return next;
+  }, [layer, collection, transformContext]);
 
   // Opening reads fabriks.json and nothing else; the catalogs come with the
   // first plan. Collections are immutable per version, so the open survives as
@@ -157,11 +110,13 @@ const FabriksCollectionGroup = ({
     };
   }, [collection, client, datalayer]);
 
+  // Keyed on the OPEN alone. A placement change goes through
+  // `setVoxelToWorld` below — index rebuild and replan, caches untouched —
+  // never through a manager rebuild, which would refetch everything.
   const manager = useMemo(() => {
     if (!opened) return null;
     return new FabriksCollectionManager({
       collection: opened,
-      voxelToWorld: matrix,
       loadDecoder: async () => {
         await MeshoptDecoder.ready;
         return MeshoptDecoder;
@@ -169,11 +124,15 @@ const FabriksCollectionGroup = ({
       onInvalidate: invalidate,
       onStatsChanged,
     });
-    // The world-space cell index is built from `matrix`, so a placement change
-    // rebuilds the manager rather than silently planning against stale boxes.
-  }, [opened, matrix, invalidate, onStatsChanged]);
+  }, [opened, invalidate, onStatsChanged]);
 
   useEffect(() => () => manager?.dispose(), [manager]);
+
+  // Placement, applied before the first plan (effects run in order) and again
+  // on any real change. Value-equal matrices are a no-op inside the manager.
+  useEffect(() => {
+    manager?.setVoxelToWorld(matrix);
+  }, [manager, matrix]);
 
   // Debug registration: DebugPanel reads stats and steers the planner through
   // this handle — the mesh twin of registerBrickSystem.
@@ -192,16 +151,17 @@ const FabriksCollectionGroup = ({
       color: layer.materialColor,
       wireframe: layer.wireframe,
       opacity: layer.opacity,
+      instanceColormap: layer.instanceColormap,
     });
     invalidate();
-  }, [manager, layer.materialColor, layer.wireframe, layer.opacity, invalidate]);
-
-  useEffect(() => {
-    if (!manager) return;
-    manager.group.matrix.copy(matrix);
-    manager.group.matrixWorldNeedsUpdate = true;
-    invalidate();
-  }, [manager, matrix, invalidate]);
+  }, [
+    manager,
+    layer.materialColor,
+    layer.wireframe,
+    layer.opacity,
+    layer.instanceColormap,
+    invalidate,
+  ]);
 
   // Planning cadence: once the cell index is in, plan on mount and on every
   // camera SETTLE — never per camera tick.

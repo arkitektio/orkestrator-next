@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import * as THREE from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   FabriksFormatError,
@@ -15,8 +15,11 @@ import { encodeMorton3, decodeMorton3, meshCellKey } from "./mortonCell";
 import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow } from "./fabriksCatalogs";
 import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
 import { objectRange, positionStride, indexStride } from "./fabriksDecode";
+import { FabriksBatchRenderer } from "./fabriksBatch";
 import { FabriksCollection, type FabriksTransport } from "./fabriksCollection";
 import { FabriksCollectionManager } from "./fabriksManager";
+import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
+import { INSTANCE_COLORMAPS } from "./instanceColormaps";
 import { LruByteCache } from "./lruByteCache";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
@@ -238,6 +241,18 @@ describe("fabriksPlanner", () => {
     expect(wasDrawn.cells.map((c) => c.key)).toEqual(["1:0"]);
   });
 
+  it("coarsens rather than refines past the index budget", () => {
+    // Refining the root swaps its 120 indices for the children's 180; a cap
+    // between the two must keep the root — a complete covering, just coarse.
+    const capped = planFabriksCells({ ...base, cameraPosition: [64, 64, 100], maxIndices: 150 });
+    expect(capped.cells.map((c) => c.key)).toEqual(["1:0"]);
+    expect(capped.coarsenedRegions).toBe(1);
+
+    const roomy = planFabriksCells({ ...base, cameraPosition: [64, 64, 100], maxIndices: 180 });
+    expect(roomy.cells.map((c) => c.level).sort()).toEqual([0, 0]);
+    expect(roomy.coarsenedRegions).toBe(0);
+  });
+
   it("groups planned cells by the row group that holds them", () => {
     const groups = groupByRowGroup([index.byKey.get("0:0")!, index.byKey.get("0:1")!]);
     expect(groups).toHaveLength(2);
@@ -305,6 +320,42 @@ describe("FabriksCollection against fixtures written by fabriks itself", () => {
     });
   }
 
+  it("reads ONE ranged span per row group, not one per column chunk", async () => {
+    let rangeReads = 0;
+    const base = fixtureTransport("raw");
+    const counting: FabriksTransport = {
+      get: base.get,
+      getRange: (path, start, end) => {
+        rangeReads++;
+        return base.getRange(path, start, end);
+      },
+    };
+    const collection = await FabriksCollection.open(counting);
+    const rows = await collection.loadCellCatalog();
+    const index = buildFabriksCellIndex(rows, collection.manifest, new THREE.Matrix4());
+    const plan = planFabriksCells({
+      index, frustum: null, cameraPosition: [100, 100, 200],
+      focalPixels: 540, pixelBudget: 1, maxCells: 512,
+    });
+    const groups = groupByRowGroup(plan.cells);
+
+    // First read out of a part: the footer (one tail read for these small
+    // fixtures) plus the group's span. Ten geometry columns would cost ten
+    // reads if hyparquet's per-column slices hit the wire.
+    rangeReads = 0;
+    await collection.readFetchGroup(groups[0], null);
+    expect(rangeReads).toBeLessThanOrEqual(3);
+
+    // Second group of the SAME part: footer cached, so exactly the span.
+    const sibling = groups.find(
+      (g) => g.level === groups[0].level && g.part === groups[0].part && g.rowGroup !== groups[0].rowGroup,
+    );
+    expect(sibling).toBeDefined(); // the fixtures force multi-row-group parts
+    rangeReads = 0;
+    await collection.readFetchGroup(sibling!, null);
+    expect(rangeReads).toBe(1);
+  });
+
   it("reads the object catalog's list<struct<>> inverted index", async () => {
     const collection = await FabriksCollection.open(fixtureTransport("raw"));
     const objects = await collection.loadObjectCatalog();
@@ -343,7 +394,6 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     const collection = await FabriksCollection.open(fixtureTransport("raw"));
     const manager = new FabriksCollectionManager({
       collection,
-      voxelToWorld: new THREE.Matrix4(),
       loadDecoder: async () => null, // the raw fixture's codec is NONE
       onInvalidate: () => {},
     });
@@ -375,6 +425,53 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     expect(report.cache.cells).toBe(report.lastPlan!.cellCount);
     expect(report.cache.bytes).toBeGreaterThan(0);
     expect(report.catalog!.cells).toBeGreaterThan(0);
+    // Batched by default: the whole plan is ONE render object, and it is
+    // visible only now that it holds geometry.
+    expect(report.batch!.instances).toBe(report.lastPlan!.cellCount);
+    const batches = manager.group.children.filter(
+      (c): c is THREE.BatchedMesh => c instanceof THREE.BatchedMesh,
+    );
+    expect(batches).toHaveLength(1);
+    expect(batches[0].visible).toBe(true);
+    manager.dispose();
+  });
+
+  it("colors by instance by default; an explicit materialColor opts into uniform", async () => {
+    const manager = await openManager();
+    expect(manager.getAppliedColormap()).toBe("hues");
+
+    manager.setMaterialConfig({ color: [255, 0, 0], wireframe: false, opacity: 1 });
+    expect(manager.getAppliedColormap()).toBeNull();
+
+    manager.setMaterialConfig({
+      color: null,
+      wireframe: true,
+      opacity: 1,
+      instanceColormap: "vivid",
+    });
+    expect(manager.getAppliedColormap()).toBe("vivid");
+    manager.dispose();
+  });
+
+  it("the batching toggle remounts from cache in either direction, refetching nothing", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    const decoded = manager.buildDebugReport().stats.decodedCells;
+    const cellCount = manager.buildDebugReport().lastPlan!.cellCount;
+
+    manager.setBatching(false);
+    const meshes = manager.group.children.filter(
+      (c): c is THREE.Mesh => c instanceof THREE.Mesh && !(c instanceof THREE.BatchedMesh),
+    );
+    expect(meshes).toHaveLength(cellCount);
+    expect(manager.buildDebugReport().mountedCells).toBe(cellCount);
+    expect(manager.buildDebugReport().batch).toBeNull();
+
+    manager.setBatching(true);
+    const report = manager.buildDebugReport();
+    expect(report.batch!.instances).toBe(cellCount);
+    expect(report.stats.decodedCells).toBe(decoded); // nothing refetched
     manager.dispose();
   });
 
@@ -407,6 +504,109 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     manager.dispose();
   });
 
+  it("retries a transiently-failed row group once, so a 403 blip leaves no hole", async () => {
+    // Every geometry part's FIRST ranged read fails (the expired-grant 403
+    // shape); the drain's retry round must still mount the full plan.
+    const base = fixtureTransport("raw");
+    const failedOnce = new Set<string>();
+    const flaky: FabriksTransport = {
+      get: base.get,
+      getRange: (path, start, end) => {
+        if (path.startsWith("level=") && !failedOnce.has(path)) {
+          failedOnce.add(path);
+          return Promise.reject(new Error("read failed: 403"));
+        }
+        return base.getRange(path, start, end);
+      },
+    };
+    const collection = await FabriksCollection.open(flaky);
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const manager = new FabriksCollectionManager({
+        collection,
+        loadDecoder: async () => null,
+        onInvalidate: () => {},
+      });
+      await manager.ensureIndex();
+      manager.updatePlan(VIEW);
+      await drained(manager);
+
+      const report = manager.buildDebugReport();
+      expect(report.stats.fetchErrors).toBeGreaterThan(0); // failures happened…
+      expect(report.mountedCells).toBe(report.lastPlan!.cellCount); // …and healed
+      manager.dispose();
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  it("a placement change rebuilds the index and replans but never drops the caches", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    const before = manager.buildDebugReport();
+    expect(before.stats.indexRebuilds).toBe(0);
+
+    // Value-equal placement: a complete no-op, however many times it arrives.
+    manager.setVoxelToWorld(new THREE.Matrix4());
+    expect(manager.buildDebugReport().stats.indexRebuilds).toBe(0);
+    expect(manager.buildDebugReport().stats.plans).toBe(before.stats.plans);
+
+    // A real placement change: index rebuilt, plan re-run — and every cached
+    // cell survives, because geometry is in voxel space.
+    manager.setVoxelToWorld(new THREE.Matrix4().makeScale(1, 1, 5));
+    const after = manager.buildDebugReport();
+    expect(after.stats.indexRebuilds).toBe(1);
+    expect(after.stats.plans).toBe(before.stats.plans + 1);
+    expect(after.cache.cells).toBeGreaterThanOrEqual(before.cache.cells);
+    expect(manager.group.matrix.elements[10]).toBe(5);
+    manager.dispose();
+  });
+
+  it("flat normals by default; the smooth toggle retrofits and rebuilds the batch layout", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    // No normals computed or uploaded — the material shades by derivatives,
+    // and the batch's fixed attribute layout carries none.
+    const batch = () =>
+      manager.group.children.find((c): c is THREE.BatchedMesh => c instanceof THREE.BatchedMesh)!;
+    expect(batch().geometry.getAttribute("normal")).toBeUndefined();
+    expect(manager.buildDebugReport().stats.normalsMs).toBe(0);
+
+    // Smooth: cached geometries gain normals and the batch rebuilds under the
+    // widened layout (a fixed-layout batch cannot absorb a new attribute).
+    manager.setFlatNormals(false);
+    expect(batch().geometry.getAttribute("normal")).toBeDefined();
+    expect(manager.buildDebugReport().stats.normalsMs).toBeGreaterThan(0);
+
+    // Back to flat: normals are DELETED from the cache so future decodes
+    // (which carry none) still match the batch layout.
+    manager.setFlatNormals(true);
+    expect(batch().geometry.getAttribute("normal")).toBeUndefined();
+    manager.dispose();
+  });
+
+  it("the unbatched path shares cache-owned geometry with analytic bounds", async () => {
+    const manager = await openManager();
+    manager.setBatching(false);
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    const meshes = manager.group.children.filter(
+      (c): c is THREE.Mesh => c instanceof THREE.Mesh && !(c instanceof THREE.BatchedMesh),
+    );
+    expect(meshes.length).toBeGreaterThan(0);
+    for (const mesh of meshes) {
+      expect(mesh.geometry.getAttribute("normal")).toBeUndefined();
+      // Bounds come from the catalog, not a walk over the positions.
+      expect(mesh.geometry.boundingBox).not.toBeNull();
+      expect(mesh.geometry.boundingSphere!.radius).toBeGreaterThan(0);
+    }
+    manager.dispose();
+  });
+
   it("the cell-box overlay is one LineSegments that survives reconciliation", async () => {
     const manager = await openManager();
     manager.updatePlan(VIEW);
@@ -424,11 +624,56 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(overlays()).toHaveLength(1);
     const report = manager.buildDebugReport();
-    expect(manager.group.children.length).toBe(report.mountedCells + 1);
+    expect(report.mountedCells).toBe(report.batch!.instances);
 
     manager.setShowCellBoxes(false);
     expect(overlays()).toHaveLength(0);
     manager.dispose();
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("fabriks material coloring", () => {
+  it("colors by instance by default and builds every colormap", () => {
+    const material = createFabriksMaterial();
+    expect(material.colorNode).not.toBeNull(); // instance-colored by default
+    expect(material.flatShading).toBe(true); // derivative normals
+    for (const name of INSTANCE_COLORMAPS) {
+      setInstanceColoring(material, name);
+      expect(material.colorNode).not.toBeNull();
+    }
+    setInstanceColoring(material, null); // uniform: back to material.color
+    expect(material.colorNode).toBeNull();
+    material.dispose();
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("FabriksBatchRenderer", () => {
+  it("stays off the render list while empty", () => {
+    // A BatchedMesh initializes its attributes on the first addGeometry, so
+    // an empty one has no `position` — rendering it makes the WebGPU node
+    // builder warn and compile a junk pipeline every frame.
+    const material = new THREE.MeshStandardMaterial();
+    let mesh: THREE.BatchedMesh | null = null;
+    const batch = new FabriksBatchRenderer(material, (next) => {
+      mesh = next;
+    });
+    batch.ensureCapacity(8, 1024, 1024); // plan-time sizing, nothing mounted
+    expect(mesh!.visible).toBe(false);
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(9), 3));
+    geometry.setIndex(new THREE.BufferAttribute(new Uint32Array([0, 1, 2]), 1));
+    geometry.boundingBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1));
+    geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1);
+    batch.mount("a", geometry);
+    expect(mesh!.visible).toBe(true);
+
+    batch.unmount("a");
+    expect(mesh!.visible).toBe(false);
+    batch.dispose();
+    material.dispose();
   });
 });
 

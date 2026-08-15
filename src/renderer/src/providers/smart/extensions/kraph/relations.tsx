@@ -2,16 +2,20 @@ import { useDialog } from "@/app/dialog";
 import { CommandItem } from "@/components/ui/command";
 import {
   ListMaterializedMeasurementEdgeFragment,
+  ListMaterializedRelationEdgeFragment,
   ListMaterializedStructureRelationEdgeFragment,
-  useCreateStructureRelationMutation,
+  useAssertRelationExistsMutation,
+  useAssertStructureRelationExistsMutation,
   useEnsureStructureMutation,
+  useGetListEntityQuery,
   useListGraphsQuery,
   useListMaterializedMeasurementsQuery,
+  useListMaterializedRelationEdgesQuery,
   useListMaterializedStructureRelationEdgesQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
 import { CommandGroup } from "cmdk";
-import { GitBranchPlus, Network, Ruler, Search } from "lucide-react";
+import { GitBranchPlus, Network, Ruler } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { CommandActionRow } from "../CommandActionRow";
@@ -23,7 +27,7 @@ export const StructureRelateButton = (props: {
   right: Structure;
   children: React.ReactNode;
 }) => {
-  const [createSRelation] = useCreateStructureRelationMutation();
+  const [createSRelation] = useAssertStructureRelationExistsMutation();
   const [createStructure] = useEnsureStructureMutation();
 
   const handleRelationCreation = async () => {
@@ -47,15 +51,15 @@ export const StructureRelateButton = (props: {
           },
         });
 
-        if (!left.data?.ensureStructure.id || !right.data?.ensureStructure.id) {
+        if (!left.data?.ensureStructure.structure.id || !right.data?.ensureStructure.structure.id) {
           throw new Error("Failed to ensure structures for relation creation");
         }
 
         await createSRelation({
           variables: {
             input: {
-              sourceId: left.data.ensureStructure.id,
-              targetId: right.data.ensureStructure.id,
+              sourceId: left.data.ensureStructure.structure.id,
+              targetId: right.data.ensureStructure.structure.id,
               term:
                 props.materializedEdge.edge.term?.key ??
                 props.materializedEdge.edge.key,
@@ -83,9 +87,6 @@ export const StructureRelateButton = (props: {
   );
 };
 
-// NOTE: With `createMeasurement` gone from the backend the `setasmeasurement`
-// dialog can only browse the candidate entities, so this row is labelled for
-// what it actually does rather than promising a write.
 export const CreateMeasurementButton = (props: {
   edge: ListMaterializedMeasurementEdgeFragment;
   left: PassDownProps;
@@ -102,10 +103,120 @@ export const CreateMeasurementButton = (props: {
           edge: props.edge,
         }, { size: "large" });
       }}
-      title={<div className="font-light">browse {props.edge.target.label} for {props.edge.edge.label}</div>}
+      title={<div className="font-light">{props.edge.edge.label} a {props.edge.target.label}</div>}
       description={props.edge.graph.name}
-      icon={Search}
+      icon={Ruler}
     />
+  );
+};
+
+/**
+ * Relating two entities is a claim like any other: it names the word, not a
+ * category row, so both endpoints are entity ids and the term comes off the
+ * materialized edge. No structure has to be ensured first — entities already
+ * are nodes.
+ */
+export const EntityRelateButton = (props: {
+  materializedEdge: ListMaterializedRelationEdgeFragment;
+  source: Structure;
+  target: Structure;
+}) => {
+  const [assertRelation] = useAssertRelationExistsMutation();
+
+  const handleRelationCreation = async () => {
+    try {
+      await assertRelation({
+        variables: {
+          input: {
+            sourceId: props.source.object.id,
+            targetId: props.target.object.id,
+            term:
+              props.materializedEdge.edge.term?.key ??
+              props.materializedEdge.edge.key,
+          },
+        },
+      });
+      toast.success("Relation created successfully!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create relation",
+      );
+    }
+  };
+
+  return (
+    <CommandActionRow
+      value={props.materializedEdge.id}
+      onSelect={handleRelationCreation}
+      title={props.materializedEdge.edge.label}
+      description={props.materializedEdge.graph.name}
+      icon={Network}
+    />
+  );
+};
+
+/**
+ * Which relation categories apply is decided by the two entities' categories,
+ * so both are looked up first. The materialized edges are then narrowed to the
+ * ones whose endpoints match — offering every relation in the organization
+ * would be a list of mostly-inapplicable words.
+ */
+export const EntityRelationActions = (props: PassDownProps) => {
+  const partner = props.partners?.at(0);
+  const object = props.objects.at(0);
+
+  const { data: sourceEntity } = useGetListEntityQuery({
+    variables: { id: object?.object.id ?? "" },
+    skip: !object,
+  });
+  const { data: targetEntity } = useGetListEntityQuery({
+    variables: { id: partner?.object.id ?? "" },
+    skip: !partner,
+  });
+
+  const { data, error } = useListMaterializedRelationEdgesQuery({
+    variables: {
+      filters: {
+        search: props.filter && props.filter !== "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  const sourceCategoryId = sourceEntity?.entity.category?.id;
+  const targetCategoryId = targetEntity?.entity.category?.id;
+
+  const applicable =
+    sourceCategoryId && targetCategoryId
+      ? (data?.materializedRelationEdges ?? []).filter(
+          (edge) =>
+            edge.source.id === sourceCategoryId &&
+            edge.target.id === targetCategoryId,
+        )
+      : [];
+
+  if (!object || !partner) {
+    return null;
+  }
+
+  return (
+    <CommandGroup
+      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Relate</span></span>}
+    >
+      {applicable.map((edge) => (
+        <EntityRelateButton
+          key={edge.id}
+          materializedEdge={edge}
+          source={object}
+          target={partner}
+        />
+      ))}
+      {error && (
+        <CommandItem value="error" className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+    </CommandGroup>
   );
 };
 
@@ -253,17 +364,11 @@ export const ApplicableRelations = (props: PassDownProps) => {
     return <ApplicableMeasurements {...props} />;
   }
 
-  // NOTE: The backend removed `createRelation` / `updateRelation`, so
-  // entity <-> entity relations can no longer be created directly — they are
-  // now derived from the role mappings of `createNaturalEvent` /
-  // `createProtocolEvent`. Rather than offer an entry that always fails, the
-  // entity <-> entity case has no applicable actions until an event-based
-  // path exists. `createStructureRelation` is unaffected (below).
   if (
     firstPartner?.identifier === "@kraph/entity" &&
     firstObject?.identifier === "@kraph/entity"
   ) {
-    return null;
+    return <EntityRelationActions {...props} />;
   }
 
   return <StructureRelationActions {...props} />;

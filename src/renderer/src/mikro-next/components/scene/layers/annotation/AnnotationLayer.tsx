@@ -43,10 +43,10 @@ import { useViewStoreApi } from "../../store/viewStore";
  *
  * The collection — not the scene, and not a dataset — owns the coordinate
  * system the vectors live in, so the layer's server-resolved `pathToWorld` is
- * the one placement question with an answer here. Composing it follows the
- * MeshLayer path (`composePlacementPath` + `affineToMatrix4`); unlike meshes
- * there is no image-layer frame to prefer, because a collection's space is its
- * own rather than a pyramid level of somebody's array.
+ * the one placement question with an answer here. Composing it
+ * (`composePlacementPath` + `affineToMatrix4`) is the universal rule every
+ * layer follows (COORDINATE_SYSTEMS.md §0): the client composes pathToWorld
+ * and nothing else — meshes do exactly the same in `collectionPlacement.ts`.
  *
  * Styling is per-shape: an AnnotationLayer draws a whole collection, so stroke
  * and fill live on each Annotation and are read off the query, not the layer.

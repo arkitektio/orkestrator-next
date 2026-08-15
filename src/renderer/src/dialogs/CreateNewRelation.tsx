@@ -1,7 +1,6 @@
 import { CreatableListSearchField } from "@/components/fields/CreatableListSearchField";
 import { useDialog } from "@/app/dialog";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
@@ -18,7 +17,6 @@ import {
   useCreateInlineGraphMutation,
   useCreateStructureRelationCategoryMutation,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery,
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
 import { Structure } from "@/types";
@@ -78,7 +76,6 @@ export const CreateNewRelation = (props: {
 
   const [searchGraphs] = useSearchGraphsLazyQuery();
   const [createGraph] = useCreateInlineGraphMutation();
-  const [searchTags] = useSearchTagsLazyQuery();
 
   const [createStructureRelationCategory] =
     useCreateStructureRelationCategoryMutation({
@@ -170,31 +167,6 @@ export const CreateNewRelation = (props: {
 
               <Separator />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Source Definition</h4>
-                  <div className="space-y-2">
-                    <GraphQLSearchField
-                      label="Tag Filters"
-                      name="source.tags"
-                      description="Filter source structures by tags"
-                      searchQuery={searchTags}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">Target Definition</h4>
-                  <div className="space-y-2">
-                    <GraphQLSearchField
-                      label="Tag Filters"
-                      name="target.tags"
-                      description="Filter target structures by tags"
-                      searchQuery={searchTags}
-                    />
-                  </div>
-                </div>
-              </div>
             </CollapsibleContent>
           </Collapsible>
 

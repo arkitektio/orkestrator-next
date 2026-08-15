@@ -57,6 +57,11 @@ export class LruByteCache<T> {
     this.protectedKeys = new Set(keys);
   }
 
+  /** Visit every entry without touching recency. */
+  forEach(visit: (value: T, key: string) => void): void {
+    for (const [key, entry] of this.entries) visit(entry.value, key);
+  }
+
   delete(key: string): void {
     const entry = this.entries.get(key);
     if (!entry) return;

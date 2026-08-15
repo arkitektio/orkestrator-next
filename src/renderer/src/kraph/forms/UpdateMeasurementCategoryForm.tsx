@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { useForm } from "react-hook-form";
 import {
   MeasurementCategoryFragment,
   UpdateMeasurementCategoryMutationVariables,
-  useSearchTagsLazyQuery,
   useUpdateMeasurementCategoryMutation
 } from "../api/graphql";
 
@@ -31,11 +29,8 @@ const TForm = (props: {
       description: props.measurementCategory.description,
       source: props.measurementCategory.sourceDescriptor,
       target: props.measurementCategory.targetDescriptor,
-      tags: props.measurementCategory.tags.map((tag) => tag.id),
     },
   });
-
-  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -62,12 +57,6 @@ const TForm = (props: {
                 label="Description"
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <GraphQLListSearchField
-                searchQuery={searchTags}
-                label="Tags"
-                name="tags"
-                description="Search for related entities"
               />
             </div>
           </div>

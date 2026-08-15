@@ -20,7 +20,6 @@ export default memo(({ data, id, selected }: NodeProps<NaturalEventNode>) => {
       <PathNodePresentation
         id={id}
         label={data.label}
-        tags={data.tags.map((tag) => ({ value: tag.name }))}
         className="rounded-lg"
       >
         <KraphProtocolEventCategory.DetailLink object={{ id: data.id }}>

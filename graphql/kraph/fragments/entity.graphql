@@ -35,41 +35,39 @@ fragment Entity on Entity {
     id
     role
     target {
-      ... on NaturalEvent {
-         id
-        label
-        measuredFrom
-        measuredTo
-        category {
-          label
-        }
-      }
-      ... on ProtocolEvent {
-         id
-        label
-        measuredFrom
-        measuredTo
-        category {
-          label
-        }
-      }
-
-      }
+      ...PathEventNode
     }
+  }
   resultedOut {
     id
     role
     source {
-        id
-        label
-        measuredFrom
-        measuredTo
-        category {
-          label
-        }
-      }
+      ...PathEventNode
     }
+  }
+}
 
+# `Event` is a bare interface — only `kind` lives on it — so anything an event
+# actually carries has to be read off the concrete types.
+fragment PathEventNode on Event {
+  ... on NaturalEvent {
+    id
+    label
+    measuredFrom
+    measuredTo
+    category {
+      label
+    }
+  }
+  ... on ProtocolEvent {
+    id
+    label
+    measuredFrom
+    measuredTo
+    category {
+      label
+    }
+  }
 }
 
 fragment PathEntity on Entity {

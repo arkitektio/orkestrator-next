@@ -94,12 +94,13 @@ routine in microscopy, and a raw base-voxel gradient gives visibly wrong normals
 `gPhys = gLvl / (levelScale * baseScale)` — one componentwise divide, one new vec3
 uniform, no matrices.
 
-**C4 — The `toBaseVoxel` y-flip is safe, but only by luck.** N, V and L all live
-in the same base-derived space, so the flip is a reflection applied consistently to
-all three; reflections are orthogonal, so dot products are invariant and diffuse
-and specular are untouched. **This holds only because nothing here uses a cross
-product.** Anyone adding one (a tangent frame, anisotropic shading) must handle the
-flip explicitly.
+**C4 — (historical) the `toBaseVoxel` y-flip and shading.** `toBaseVoxel` no
+longer flips y — frames are corner-anchored with no client-side reflection
+(COORDINATE_SYSTEMS.md §0) — so N, V and L live in an orientation-preserving
+map of world space and dot products are trivially safe. The old caveat stands
+only as a warning template: if a reflection ever re-enters the local→voxel
+map, cross products (tangent frames, anisotropic shading) must handle it
+explicitly; dot-product-only shading survives a consistent reflection.
 
 **C5 — Gate `surfaceness` on the level-voxel gradient, not the physical one.**
 `norm ∈ [0, 1]` over a 1-voxel baseline makes `|gLvl|` roughly dataset-independent;

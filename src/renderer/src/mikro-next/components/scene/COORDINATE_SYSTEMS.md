@@ -10,6 +10,50 @@ same graph).
 
 ---
 
+## 0. Coordinate conventions (settled — do not re-litigate)
+
+The conventions every frame in this renderer is built on. They were settled
+deliberately (2026-08); a change to any of them is a cross-cutting refactor,
+never a local fix.
+
+- **World** is continuous, physical, right-handed, with explicit axis order.
+  A layer's LOCAL frame is continuous and **anchored at the array ORIGIN
+  (corner) — never the center**. The center is a function of shape, so a
+  center-anchored transform is invalidated by anything that changes shape:
+  cropping, adding/dropping a pyramid level, streaming a tile subset,
+  appending a slab. (Center parametrization is the registration OPTIMIZER's
+  business — `T_c·R·T_c⁻¹` conditions fitting well — composed down to an
+  origin-anchored affine for storage.)
+- **Half-voxel**: integer index k uses the CORNER/texture convention
+  internally — voxel k spans `[k, k+1)`, its center is `k + 0.5`. This is
+  what the sampler wants, and it makes pyramid levels EXACT scales (with
+  center-based indexing every level needs a half-voxel-ish translation — a
+  live bug class in the NGFF world). Center-convention formats (NGFF, ITK,
+  NIfTI, DICOM put the origin at the pixel center) are converted at exactly
+  ONE boundary — metadata import/export, which is SERVER-side; this client
+  never parses NGFF transform metadata.
+- **The client composes `pathToWorld` and NOTHING else.** No anchoring one
+  layer to another's frame (layers register to world, never array-to-array),
+  no shape-derived recentering, no client-injected flips. If a y-down raster
+  display convention is wanted, the server expresses it in the image node's
+  index→local / transforms.
+- **Images and meshes are the same kind of citizen.** A mesh has no lattice —
+  a local continuous frame and one transform to world; an image node
+  additionally owns its index→local map privately. Registration edges live
+  only on local→world.
+- **Volume-derived meshes** (marching cubes over a labels array) must go
+  through the IDENTICAL index→physical map as their parent volume — a
+  half-voxel mistake floats the mesh off its isosurface, invariant to LOD.
+
+Concretely in code: voxel `v` of a layer renders at world `affine(v)`
+(`buildAffineMatrix` — the plain composed affine), the brick meshes are unit
+primitives offset by half their size so group-local spans `[0..shape]`, and
+the shader/CPU local→voxel maps carry no flip (`brickNodeMaterials.ts`
+`toBaseVoxel`, the plane material's `baseVoxel`, and their lockstep mirrors in
+the probe/trace/visibility code).
+
+---
+
 ## 1. The model, in three rules
 
 The backend (OME-NGFF RFC-5 aligned) obeys three rules; the renderer's
@@ -141,7 +185,7 @@ have. The migration is an adapter, not a rewrite.
 
 | Derived fact | From | Where | Consumed by |
 | --- | --- | --- | --- |
-| `LayerState.affineMatrix` (voxel→world 4×4, x/y/z rows) | local prefix (`lens.toParent`, level-0 `toParent`) ∘ `pathToWorld` steps | `composeLayerAffine` (`core/transformGraph.ts`), once per scene load in `normalizeLayer` | `worldTransform.buildAffineMatrix`, `voxelFrame.buildVolumeVoxelToWorld`, `nodePlanning` 2D slab inverse, `visibility`, `RoiDrawer` |
+| `LayerState.affineMatrix` (voxel→world 4×4, x/y/z rows) | local prefix (`lens.toParent`, level-0 `toParent`) ∘ `pathToWorld` steps | `composeLayerAffine` (`core/transformGraph.ts`), once per scene load in `normalizeLayer` | `worldTransform.buildAffineMatrix` (the rendered frame — corner-anchored, §0), `nodePlanning` 2D slab inverse, `visibility`, `RoiDrawer` |
 | `LayerState.xAxis/yAxis/zAxis/tAxis/intensityAxis` | `lens.renderAxes` | `normalizeLayer` (`core/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
 | Relative level factors (old `scaleFactors` semantics) | `toParent` pixel scales, `rel = abs_L / abs_0` (a no-op now that level 0 = 1) | `relativeLevelScaleFactors` / `buildLevelSources` (`core/octree/levelGeometry.ts`) | level geometry, plan tracker, residency, pool viability, probe geometry |
 | `spatialUnit` | first SPACE axis of the world CS | `sceneStore` | `ScaleBar` |
@@ -284,30 +328,24 @@ layer field.
 
 ---
 
-## 4. Frames: the centering convention and co-registration
+## 4. Frames: corner-anchored, pathToWorld is the placement
 
-The one place the old world and the new world genuinely differ:
+Every layer renders corner-anchored at its plain affine (§0): voxel `v` of an
+image sits at world `affine(v)`, a mesh coordinate `c` at `pathToWorld(c)`,
+an annotation likewise. Three-space IS world µm — the camera-pose frame map
+(`cameraState.buildSceneToWorldMatrix`) is the identity, camera fit
+(`sceneFit`) pushes the corners of `[0..shape]` through the plain affine, and
+the probe/trace/visibility code reads layer-local coordinates directly as
+voxel indices.
 
-- **Image layers** render in `affine ∘ centering(lens.shape, y-flip)`
-  (`voxelFrame.buildVolumeVoxelToWorld`) — each layer centers itself on the
-  origin. Historically "world" was whatever the layer affine said; now the
-  composed matrix targets the scene's world CS (physical µm), and the
-  centering still rides on top per layer.
-- **Graph-anchored things** (meshes, ROIs from other datasets) composed
-  purely through the graph land UNCENTERED and un-flipped relative to that.
-
-Current resolution (encoded in `layers/mesh/FabriksCollectionLayer.tsx`
-`resolveCollectionMatrix`): a mesh collection first looks for an image layer
-in the scene whose lens/intrinsic-system/pyramid contains its CS — the labels
-layer it was extracted from — and reuses THAT layer's full frame, so meshes
-and labels overlap by construction. Only when no such layer exists does it
-fall back to composing the mesh layer's own `pathToWorld` (warn once).
-
-The real fix is a **scene-root frame normalization**: compose all transforms
-pure (voxel → world µm), apply ONE y-flip + fit matrix on the scene root, and
-delete per-layer centering. That touches `sceneFit`, `probeMath`/`probeWorld`,
-`RoiDrawer`, `ZSliderPanel` and the 2D slab math in lockstep — do it as its
-own change, not as a rider.
+This IS the "scene-root frame normalization" this section used to track: the
+per-layer centering + y-flip frame (`voxelFrame.buildCenteringMatrix` /
+`buildVolumeVoxelToWorld`, both deleted) and the mesh layer's anchor-to-an-
+image-layer hack (`resolveCollectionMatrix`'s old anchor search, deleted) are
+gone. Meshes, annotations and images co-register through the graph alone;
+until the server's transforms encode a y-down raster convention for image
+data, images render un-flipped relative to the old client behavior — a
+data/registration matter, not a client one.
 
 ---
 

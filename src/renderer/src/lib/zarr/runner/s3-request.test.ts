@@ -60,6 +60,16 @@ describe("canonical URI encoding", () => {
     expect(calls).toHaveLength(2);
     // Same object, therefore the same canonical form, therefore one signature.
     expect(signatureOf(calls[0].init)).toBe(signatureOf(calls[1].init));
+
+    // The property that actually prevents SignatureDoesNotMatch: the WIRE
+    // path is the strictly-encoded form the canonical request signs. The
+    // server recomputes its signature from the bytes it receives — a literal
+    // `=` on the wire while `%3D` was signed fails even though our own
+    // canonical form is self-consistent.
+    for (const call of calls) {
+      expect(new URL(call.url).pathname).toContain("/level%3D0/");
+      expect(call.url).not.toContain("level=0");
+    }
   });
 
   it("distinguishes keys that genuinely differ", async () => {

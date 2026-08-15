@@ -3,7 +3,6 @@ import {
   events as createPointerEvents,
   useStore as useThreeStore,
 } from "@react-three/fiber";
-import { SceneGizmo } from "./primitives/SceneGizmo";
 import { useEffect, type ReactNode } from "react";
 import { LongCommitProfiler } from "./core/commitProfiler";
 import { useViewStoreApi } from "./store/viewStore";
@@ -338,13 +337,7 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
               between the scene and hud renders, which under this renderer's
               tone-mapped output path costs a full-screen colour blit every
               frame. See SceneGizmo. */}
-          <SceneGizmo
-            alignment="bottom-right"
-            margin={[100, 100]}
-            labelColor="white"
-            axisHeadScale={1}
-            axisColors={["rgb(78, 78, 78)", "rgb(78, 78, 78)", "rgb(78, 78, 78)"]}
-          />
+
           </LongCommitProfiler>
         </SceneWrapper>
 

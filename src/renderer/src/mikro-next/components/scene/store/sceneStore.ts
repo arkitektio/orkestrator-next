@@ -9,9 +9,23 @@ import {
   type SceneTransformContext,
 } from "../core/layerModel";
 import { planDefaultVolumeLods } from "../core/lodPlanning";
+import type { FabriksInstanceColormap } from "../render/fabriks/instanceColormaps";
 
 // Re-exported for the store's many consumers (the model lives in core/).
 export type { LayerState };
+
+/**
+ * Session-local render state a MESH layer carries beyond its fragment. There
+ * is no `updateMeshLayer` mutation, so — exactly like the card's visibility
+ * toggle — these live for the session and no longer.
+ */
+export type MeshLayerSessionState = {
+  /** Which instance colormap the collection is colored by (default "hues"). */
+  instanceColormap?: FabriksInstanceColormap;
+};
+
+/** A polymorphic scene layer plus its session-local render state. */
+export type SceneLayer = SceneLayerFragment & MeshLayerSessionState;
 
 export interface SceneState {
   /**
@@ -35,7 +49,7 @@ export interface SceneState {
    */
   transformContext: SceneTransformContext;
   /** Raw polymorphic layers (all __typenames), consumed by the render dispatch. */
-  sceneLayers: SceneLayerFragment[];
+  sceneLayers: SceneLayer[];
   /** Normalized image layers only (carry zarr + transfer/render-graph state). */
   layers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
@@ -48,7 +62,7 @@ export interface SceneState {
    * mutation) is typed to return `ImageLayer` and there is no `updateMeshLayer`,
    * so a mesh layer's visibility lives for the session and no longer.
    */
-  patchSceneLayer: (id: string, patch: Partial<SceneLayerFragment>) => void;
+  patchSceneLayer: (id: string, patch: Partial<SceneLayer>) => void;
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {

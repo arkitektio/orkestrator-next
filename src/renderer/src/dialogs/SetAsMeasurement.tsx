@@ -13,19 +13,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   ListMaterializedMeasurementEdgeFragment,
+  useAssertMeasurementExistsMutation,
+  useEnsureStructureMutation,
   useListEntitiesQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Activity, CircleDot } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
-// NOTE: The backend removed `createMeasurement` without a replacement —
-// structure -> entity measurements are now expressed as supporting evidence on
-// `createNaturalEvent` / `createProtocolEvent`, which needs an event category
-// and role mapping this dialog has no source for. Browsing the candidate
-// entities still works (`entities` and the materialized edges are unchanged),
-// so the dialog is kept read-only until an attach path exists again.
+/**
+ * Measuring is a claim: this structure measures that entity, under the word the
+ * measurement category declares. The structure has to exist as a node before it
+ * can be an endpoint, so it is ensured first — `ensureStructure` is idempotent,
+ * so an object already recorded is simply found.
+ */
 export const SetAsMeasurement = (props: {
   left: Structure[];
   edge: ListMaterializedMeasurementEdgeFragment;
@@ -34,6 +37,49 @@ export const SetAsMeasurement = (props: {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const source = props.left[0];
+  const [attaching, setAttaching] = useState<string | null>(null);
+
+  const [ensureStructure] = useEnsureStructureMutation();
+  const [assertMeasurement] = useAssertMeasurementExistsMutation();
+
+  const attach = async (entityId: string) => {
+    if (!source) return;
+    setAttaching(entityId);
+    try {
+      const structure = await ensureStructure({
+        variables: {
+          input: {
+            identifier: source.identifier,
+            object: source.object.id,
+          },
+        },
+      });
+      const sourceId = structure.data?.ensureStructure.structure.id;
+      if (!sourceId) {
+        throw new Error("Could not record the structure being measured");
+      }
+
+      await assertMeasurement({
+        variables: {
+          input: {
+            sourceId,
+            targetId: entityId,
+            term: props.edge.edge.term?.key ?? props.edge.edge.key,
+          },
+        },
+      });
+      toast.success(`Measured as ${props.edge.edge.label}`);
+      closeDialog();
+    } catch (e) {
+      toast.error(
+        `Could not attach measurement: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    } finally {
+      setAttaching(null);
+    }
+  };
 
   const { data, loading } = useListEntitiesQuery({
     variables: {
@@ -58,8 +104,9 @@ export const SetAsMeasurement = (props: {
               Set As Measurement
             </h2>
             <p className="text-sm text-muted-foreground">
-              Browse the entities of {props.edge.target.label} for this
-              structure. Attaching a measurement is currently unavailable.
+              Pick the {props.edge.target.label} this structure measures. The
+              claim names the word, so every graph that declares it holds the
+              measurement.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -130,10 +177,21 @@ export const SetAsMeasurement = (props: {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-2">
                   <div className="font-mono text-xs text-muted-foreground break-all">
                     {entity.id}
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={!source || attaching !== null}
+                    onClick={() => attach(entity.id)}
+                  >
+                    {attaching === entity.id
+                      ? "Measuring…"
+                      : props.edge.edge.label}
+                  </Button>
                 </CardContent>
               </Card>
             ))

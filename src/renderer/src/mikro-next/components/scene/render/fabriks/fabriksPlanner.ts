@@ -60,6 +60,13 @@ export type FabriksPlanInput = {
   errorBudget?: number;
   /** Cap on planned cells. Exhausting it coarsens; it never drops a region. */
   maxCells: number;
+  /**
+   * Cap on the plan's TOTAL index count — the geometry budget `maxCells`
+   * cannot express (cells vary by orders of magnitude in density). Exhausting
+   * it coarsens exactly like `maxCells`: a refinement that would push the
+   * running total over the cap keeps the coarse cell instead.
+   */
+  maxIndices?: number;
   /** The previous plan's selected keys, for hysteresis. */
   previousKeys?: ReadonlySet<string>;
 };
@@ -155,6 +162,10 @@ export function planFabriksCells(input: FabriksPlanInput): FabriksPlan {
   };
 
   let frontier = roots;
+  // Running total under the covering AS IT STANDS: every cell currently in
+  // `selected`, `next` or the unvisited frontier contributes its own count.
+  // Refining an entry swaps its count for its children's sum.
+  let plannedIndices = roots.reduce((sum, entry) => sum + entry.indexCount, 0);
   while (frontier.length > 0) {
     const next: FabriksCellEntry[] = [];
     for (const entry of frontier) {
@@ -173,13 +184,20 @@ export function planFabriksCells(input: FabriksPlanInput): FabriksPlan {
         selected.push(entry);
         continue;
       }
-      if (selected.length + next.length + frontier.length + children.length > input.maxCells) {
+      const childIndices = children.reduce((sum, child) => sum + child.indexCount, 0);
+      const overCells =
+        selected.length + next.length + frontier.length + children.length > input.maxCells;
+      const overIndices =
+        input.maxIndices !== undefined &&
+        plannedIndices - entry.indexCount + childIndices > input.maxIndices;
+      if (overCells || overIndices) {
         // Out of budget: keep the COARSE cell whole rather than refine it. The
         // plan stays a complete covering; only its detail degrades.
         selected.push(entry);
         coarsenedRegions++;
         continue;
       }
+      plannedIndices += childIndices - entry.indexCount;
       next.push(...children);
     }
     frontier = next;

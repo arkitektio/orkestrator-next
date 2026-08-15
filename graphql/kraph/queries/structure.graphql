@@ -52,8 +52,8 @@ query MetricsForStructure($structureId: GraphID!) {
   }
 }
 
-query MeasurementsForAssertion($assertionId: GraphID!) {
-  measurementsForAssertion(assertionId: $assertionId) {
+query MetricsForAssertion($assertionId: GraphID!) {
+  metricsForAssertion(assertionId: $assertionId) {
     ...ListMetric
   }
 }

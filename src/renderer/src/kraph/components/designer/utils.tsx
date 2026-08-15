@@ -78,15 +78,12 @@ export const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   ];
 };
 
+// Tags are gone from the schema, so a descriptor now selects categories by key
+// alone. An empty descriptor still matches everything.
 const buildEntityFilter = (descriptor: EntityDescriptorFragment) => {
   return (cat: ListEntityCategoryFragment) => {
-    if (descriptor.tags && descriptor.tags.length > 0) {
-      return descriptor.tags.some((tag) =>
-        cat.tags.find((t) => t.name == tag),
-      );
-    }
     if (descriptor.keys && descriptor.keys.length > 0) {
-      return descriptor.keys.some(key => key == cat.key);
+      return descriptor.keys.some((key) => key == cat.key);
     }
 
     return true;

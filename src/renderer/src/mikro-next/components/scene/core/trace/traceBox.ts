@@ -222,22 +222,16 @@ export function extractTraceValues(
 /**
  * Level-0 voxel → the layer's LOCAL frame, the one its affine maps to world.
  *
- * That frame is centred on the layer's extent with +y up, which is why this is
- * not simply the voxel index: it mirrors what the volume probe does in reverse
- * (`BrickVolumeLayer.probeFromRay` derives `voxelIndex` from a centred,
- * y-flipped normalized position) and what `computeLayerViewRange` assumes.
- * Voxel centres, so a traced path runs through the middle of its voxels rather
- * than along their corners.
+ * The local frame IS corner-anchored voxel space (COORDINATE_SYSTEMS.md
+ * "Coordinate conventions"), so this is the voxel index at its CENTRE —
+ * voxel k spans [k, k+1), centre k+0.5 — and a traced path runs through the
+ * middle of its voxels rather than along their corners.
  */
 export function voxelToLayerLocal(
   voxel: Voxel,
-  shape: readonly [number, number, number],
+  _shape: readonly [number, number, number],
 ): [number, number, number] {
-  return [
-    voxel[0] + 0.5 - shape[0] / 2,
-    shape[1] / 2 - voxel[1] - 0.5,
-    voxel[2] + 0.5 - shape[2] / 2,
-  ];
+  return [voxel[0] + 0.5, voxel[1] + 0.5, voxel[2] + 0.5];
 }
 
 /**
@@ -251,9 +245,9 @@ export function layerLocalToVoxel(
   shape: readonly [number, number, number],
 ): [number, number, number] | null {
   const voxel: [number, number, number] = [
-    Math.round(local[0] - 0.5 + shape[0] / 2),
-    Math.round(shape[1] / 2 - local[1] - 0.5),
-    Math.round(local[2] - 0.5 + shape[2] / 2),
+    Math.round(local[0] - 0.5),
+    Math.round(local[1] - 0.5),
+    Math.round(local[2] - 0.5),
   ];
   for (let axis = 0; axis < 3; axis += 1) {
     if (voxel[axis] < 0 || voxel[axis] > shape[axis] - 1) return null;

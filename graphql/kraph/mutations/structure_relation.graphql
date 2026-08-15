@@ -1,11 +1,21 @@
-mutation CreateStructureRelation($input: CreateStructureRelationInput!) {
-  createStructureRelation(input: $input) {
-    ...StructureRelation
+mutation AssertStructureRelationExists($input: AssertStructureRelationExistsInput!) {
+  assertStructureRelationExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    structureRelation {
+      ...StructureRelation
+    }
   }
 }
 
-mutation ArchiveStructureRelation($id: String!) {
-  archiveStructureRelation(input: { id: $id }) {
-    ...StructureRelation
+mutation RetractStructureRelation($id: String!) {
+  retractStructureRelation(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    structureRelation {
+      ...StructureRelation
+    }
   }
 }

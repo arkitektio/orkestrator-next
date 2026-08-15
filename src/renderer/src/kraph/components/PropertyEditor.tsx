@@ -3,7 +3,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { GetEntityDocument, PropertyDefinitionFragment, useRecordMetricMutation, ValueKind } from "@/kraph/api/graphql";
+import { GetEntityDocument, PropertyDefinitionFragment, useAssertMetricValueMutation, ValueKind } from "@/kraph/api/graphql";
 import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +20,7 @@ export const PropertyEditor = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
-  const [recordMetric, { loading }] = useRecordMetricMutation({
+  const [assertMetricValue, { loading }] = useAssertMetricValueMutation({
     refetchQueries: [{ query: GetEntityDocument, variables: { id: entityId } }],
   });
 
@@ -31,7 +31,7 @@ export const PropertyEditor = ({
       // Properties are derived, so a manual edit is recorded as the weakest
       // evidence there is: an "itoldyouso" metric with no measurement behind
       // it. The derivation rule folds it in like any other observation.
-      await recordMetric({
+      await assertMetricValue({
         variables: {
           input: buildItoldyousoMetric({
             entityId,

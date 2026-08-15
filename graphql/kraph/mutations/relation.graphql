@@ -1,17 +1,38 @@
-mutation CreateRelation($input: CreateRelationInput!) {
-  createRelation(input: $input) {
-    ...Relation
+mutation AssertRelationExists($input: AssertRelationExistsInput!) {
+  assertRelationExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
 
 mutation UpdateRelation($input: UpdateRelationInput!) {
   updateRelation(input: $input) {
-    ...Relation
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
+    drawings {
+      ...EdgeDrawing
+    }
   }
 }
 
-mutation ArchiveRelation($id: GraphID!) {
-  archiveRelation(input: { id: $id }) {
-    ...Relation
+mutation RetractRelation($id: GraphID!) {
+  retractRelation(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    relation {
+      ...Relation
+    }
   }
 }

@@ -21,12 +21,12 @@ const makeLayer = (opts: {
   }) as unknown as LayerState;
 
 describe("computeSceneWorldBox", () => {
-  it("centers a single identity-affine layer around the origin", () => {
-    // shape [z, y, x] = [20, 50, 100] → world box ±[50, 25, 10] (y-flip is
-    // symmetric around 0, so it does not change the extent).
+  it("anchors a single identity-affine layer at the origin corner", () => {
+    // Corner-anchored: shape [z, y, x] = [20, 50, 100] → world box
+    // [0,0,0]..[100,50,20] — voxel v sits at exactly affine(v).
     const box = computeSceneWorldBox([makeLayer({ shape: [20, 50, 100] })])!;
-    expect(box.min.toArray()).toEqual([-50, -25, -10]);
-    expect(box.max.toArray()).toEqual([50, 25, 10]);
+    expect(box.min.toArray()).toEqual([0, 0, 0]);
+    expect(box.max.toArray()).toEqual([100, 50, 20]);
   });
 
   it("applies affine translation", () => {
@@ -37,9 +37,9 @@ describe("computeSceneWorldBox", () => {
       [0, 0, 0, 1],
     ];
     const box = computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], affineMatrix: affine })])!;
-    // centered z ∈ [-10, 10] then tz = -5 → [-15, 5]
-    expect(box.min.toArray()).toEqual([50, -25, -15]);
-    expect(box.max.toArray()).toEqual([150, 25, 5]);
+    // z ∈ [0, 20] then tz = -5 → [-5, 15]
+    expect(box.min.toArray()).toEqual([100, 0, -5]);
+    expect(box.max.toArray()).toEqual([200, 50, 15]);
   });
 
   it("applies anisotropic affine scale", () => {
@@ -50,12 +50,12 @@ describe("computeSceneWorldBox", () => {
       [0, 0, 0, 1],
     ];
     const box = computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], affineMatrix: affine })])!;
-    expect(box.min.z).toBe(-50);
-    expect(box.max.z).toBe(50);
+    expect(box.min.z).toBe(0);
+    expect(box.max.z).toBe(100);
   });
 
   it("transforms corners individually under rotation (box ≠ naive min/max)", () => {
-    // 90° rotation about z: x' = -y, y' = x → world extents swap.
+    // 90° rotation about z: x' = -y, y' = x → the x extent comes from y.
     const affine = [
       [0, -1, 0, 0],
       [1, 0, 0, 0],
@@ -63,10 +63,10 @@ describe("computeSceneWorldBox", () => {
       [0, 0, 0, 1],
     ];
     const box = computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], affineMatrix: affine })])!;
-    expect(box.min.x).toBeCloseTo(-25, 6);
-    expect(box.max.x).toBeCloseTo(25, 6);
-    expect(box.min.y).toBeCloseTo(-50, 6);
-    expect(box.max.y).toBeCloseTo(50, 6);
+    expect(box.min.x).toBeCloseTo(-50, 6);
+    expect(box.max.x).toBeCloseTo(0, 6);
+    expect(box.min.y).toBeCloseTo(0, 6);
+    expect(box.max.y).toBeCloseTo(100, 6);
   });
 
   it("unions multiple layers", () => {
@@ -80,8 +80,8 @@ describe("computeSceneWorldBox", () => {
       makeLayer({ shape: [20, 50, 100] }),
       makeLayer({ shape: [20, 50, 100], affineMatrix: shifted }),
     ])!;
-    expect(box.min.x).toBe(-50);
-    expect(box.max.x).toBe(250);
+    expect(box.min.x).toBe(0);
+    expect(box.max.x).toBe(300);
   });
 
   it("returns null for no layers or layers without valid spatial axes", () => {
@@ -93,8 +93,22 @@ describe("computeSceneWorldBox", () => {
     const layer = makeLayer({ shape: [50, 100], axisNames: ["y", "x"] });
     (layer as { zAxis: string | null }).zAxis = null;
     const box = computeSceneWorldBox([layer])!;
-    expect(box.min.toArray()).toEqual([-50, -25, 0]);
-    expect(box.max.toArray()).toEqual([50, 25, 0]);
+    expect(box.min.toArray()).toEqual([0, 0, 0]);
+    expect(box.max.toArray()).toEqual([100, 50, 0]);
+  });
+
+  it("maps voxel v to exactly affine(v) — the corner-anchored invariant", () => {
+    // The load-bearing convention (COORDINATE_SYSTEMS.md): no centering, no
+    // flip, nothing between a voxel coordinate and the affine.
+    const affine = [
+      [2, 0, 0, 7],
+      [0, 3, 0, -1],
+      [0, 0, 5, 4],
+      [0, 0, 0, 1],
+    ];
+    const box = computeSceneWorldBox([makeLayer({ shape: [20, 50, 100], affineMatrix: affine })])!;
+    expect(box.min.toArray()).toEqual([2 * 0 + 7, 3 * 0 - 1, 5 * 0 + 4]);
+    expect(box.max.toArray()).toEqual([2 * 100 + 7, 3 * 50 - 1, 5 * 20 + 4]);
   });
 });
 

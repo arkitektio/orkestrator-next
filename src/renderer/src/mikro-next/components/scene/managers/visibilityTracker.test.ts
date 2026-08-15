@@ -35,7 +35,11 @@ const makeStores = () => {
     viewportSize: { width: 200, height: 100 },
   })) as unknown as StoreApi<ViewState>;
 
+  // Corner-anchored: the unit-centered box offset by half its size, so the
+  // layer's world box spans [0,100]×[0,50] (the brick layers' arrangement).
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 50, 1));
+  mesh.position.set(50, 25, 0);
+  mesh.updateMatrixWorld(true);
   const trackable = { kind: "layer" as const, id: LAYER_ID, ref: { current: mesh } };
 
   type ViewerSubset = Pick<

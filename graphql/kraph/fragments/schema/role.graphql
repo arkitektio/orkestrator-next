@@ -9,15 +9,12 @@ fragment EventRole on EventRole {
 
 fragment EntityDescriptor on EntityDescriptor {
   keys
-  tags
-  ontotologyTerms
+  ontologyTerms
   defaultCategoryKey
 }
 
+# A structure kind has no key, no tags and no ontology references — those
+# descriptor fields are tombstones. `identifiers` is what actually selects one.
 fragment StructureDescriptor on StructureDescriptor {
-  keys
-  tags
-  ontotologyTerms
   defaultCategoryKey
 }
-

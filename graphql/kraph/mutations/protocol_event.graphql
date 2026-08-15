@@ -1,17 +1,38 @@
-mutation CreateProtocolEvent($input: CreateProtocolEventInput!) {
-  createProtocolEvent(input: $input) {
-    ...ProtocolEvent
+mutation AssertProtocolEventExists($input: AssertProtocolEventExistsInput!) {
+  assertProtocolEventExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-mutation ArchiveProtocolEvent($id: String!) {
-  archiveProtocolEvent(input: { id: $id }) {
-    ...ProtocolEvent
+mutation RetractProtocolEvent($id: String!) {
+  retractProtocolEvent(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
   }
 }
 
 mutation AttestProtocolEvent($id: String!) {
   attestProtocolEvent(input: { id: $id }) {
-    ...ProtocolEvent
+    assertion {
+      ...Assertion
+    }
+    protocolEvent {
+      ...ProtocolEvent
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }

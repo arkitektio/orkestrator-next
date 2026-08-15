@@ -123,9 +123,9 @@ export function resolveProbeMarkerGeometry(
       return [local.x, local.y, local.z];
     };
 
-    // VOLUME probes: `localPos` is normalized in the box BrickVolumeLayer
-    // actually renders — the FULL base-level extent, centered on the affine
-    // origin, with no slice cropping (`volumeSize = base.spatialShape`).
+    // VOLUME probes: `localPos` is unit-box-normalized ([-0.5, 0.5]) in the
+    // box BrickVolumeLayer actually renders — the FULL corner-anchored
+    // base-level extent, no slice cropping (`volumeSize = base.spatialShape`).
     // Mapping it through the slice-cropped box below would displace the
     // marker off the ray by the crop offset (and by coarse-LOD rounding), so
     // mirror the mesh's own frame instead. The "plane" branch keeps the
@@ -146,9 +146,9 @@ export function resolveProbeMarkerGeometry(
       return {
         affineMatrix,
         markerPosition: worldTruth(affineMatrix) ?? [
-          probe.localPos[0] * totals[0],
-          probe.localPos[1] * totals[1],
-          probe.localPos[2] * totals[2],
+          (probe.localPos[0] + 0.5) * totals[0],
+          (probe.localPos[1] + 0.5) * totals[1],
+          (probe.localPos[2] + 0.5) * totals[2],
         ],
         minAxis: nonZero.length > 0 ? Math.min(...nonZero) : 1,
       };
@@ -165,18 +165,16 @@ export function resolveProbeMarkerGeometry(
     const scaleY = scaleFactors?.[yPos] ?? 1;
     const scaleZ = scaleFactors?.[zPos] ?? 1;
 
-    const totalX = arr.shape[xPos] * scaleX;
-    const totalY = arr.shape[yPos] * scaleY;
-    const totalZ = arr.shape[zPos] * scaleZ;
-
     const width = xSelection.length * xSelection.step * scaleX;
     const height = ySelection.length * ySelection.step * scaleY;
     const depth = zSelection.length * zSelection.step * scaleZ;
 
+    // Corner-anchored group-local: the sliced box's CENTER in [0..total],
+    // mirroring BrickPlaneLayer's resolveProbeGeometryContext.
     const volumePosition: [number, number, number] = [
-      xSelection.start * scaleX + width / 2 - totalX / 2,
-      -(ySelection.start * scaleY + height / 2 - totalY / 2),
-      zSelection.start * scaleZ + depth / 2 - totalZ / 2,
+      xSelection.start * scaleX + width / 2,
+      ySelection.start * scaleY + height / 2,
+      zSelection.start * scaleZ + depth / 2,
     ];
     const volumeSize: [number, number, number] = [width, height, depth];
     const affineMatrix = buildAffineMatrix(layer);

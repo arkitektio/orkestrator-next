@@ -12,6 +12,14 @@ fragment ListMaterializedRelationEdge on MaterializedRelationEdge {
     id
     label
   }
+  edge {
+    id
+    key
+    label
+    term {
+      ...ListTerm
+    }
+  }
 }
 
 

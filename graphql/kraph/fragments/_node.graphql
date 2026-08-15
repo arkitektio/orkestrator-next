@@ -22,21 +22,6 @@ fragment DetailNode on Node {
   }
 }
 
-
-fragment PathRelationShadowLink on RelationShadowLink {
-  id
-  label
-}
-
-fragment PathStructureRelationShadowLink on StructureRelationShadowLink {
-  id
-  label
-}
-
-fragment PathMeasurementRelationShadowLink on MeasurementShadowLink {
-  id
-  label
-}
 fragment PathActivity on Activity {
   id
   label
@@ -61,9 +46,6 @@ fragment PathNode on Node {
   ...PathNaturalEvent
   ...PathProtocolEvent
   ...PathMetric
-  ...PathRelationShadowLink
-  ...PathStructureRelationShadowLink
-  ...PathMeasurementRelationShadowLink
 }
 
 

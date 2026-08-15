@@ -22,7 +22,7 @@ import {
   type LayerNodePlan,
   type NodeCamera,
 } from "../core/octree/nodePlanning";
-import { buildVolumeVoxelToWorld } from "../core/octree/voxelFrame";
+import { buildAffineMatrix } from "../core/worldTransform";
 import type { ModeState } from "../store/modeStore";
 import type { SceneState } from "../store/sceneStore";
 import type { UnplannableLayerInfo, ViewerState } from "../store/viewerStore";
@@ -272,7 +272,9 @@ export function startNodePlanTracking({
 
       let camera: NodeCamera | null = null;
       if (mode === "3D" && viewProjectionMatrix) {
-        const voxelToWorld = buildVolumeVoxelToWorld(layer);
+        // Corner-anchored: voxel v sits at affine(v), so the frustum/camera
+        // math below runs in plain voxel space.
+        const voxelToWorld = buildAffineMatrix(layer);
         scratchVoxelVP.copy(viewProjectionMatrix).multiply(voxelToWorld);
         scratchFrustum.setFromProjectionMatrix(scratchVoxelVP);
         let voxelPosition: [number, number, number] | null = null;

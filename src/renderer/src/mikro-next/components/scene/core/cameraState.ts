@@ -4,8 +4,6 @@ import { AxisType } from "@/mikro-next/api/graphql";
 import type { CameraStateFragment } from "@/mikro-next/api/graphql";
 import type { DisplayMode } from "../store/modeStore";
 import type { LayerState } from "./layerModel";
-import { buildCenteringMatrix } from "./octree/voxelFrame";
-import { affineToMatrix4 } from "./worldTransform";
 
 /**
  * Camera pose ⇄ the server's `CameraState`.
@@ -20,14 +18,11 @@ import { affineToMatrix4 } from "./worldTransform";
  *    dim selections, and an axis the pose does not name is left wherever the
  *    viewer already had it.
  *
- * 2. **Three-space is not world space** (COORDINATE_SYSTEMS.md §4): image
- *    layers render in `affine ∘ centering(lens.shape, y-flip)` — each layer
- *    centers itself on the origin. Until the tracked scene-root frame
- *    normalization lands there is no global three ⇄ world µm map, so we adopt
- *    the SAME convention `layers/mesh/FabriksCollectionLayer.tsx`
- *    (`resolveCollectionMatrix`) already uses for meshes: resolve the frame
- *    against ONE reference image layer. Exact for that layer, and identity
- *    once §4 deletes per-layer centering.
+ * 2. **Three-space IS world space** (COORDINATE_SYSTEMS.md "Coordinate
+ *    conventions"): every layer renders corner-anchored at its plain affine,
+ *    so the three ⇄ world µm frame map is the identity. The `SceneCameraFrame`
+ *    structure is kept (a future scene-root transform would slot in here);
+ *    the matrices it carries are identity.
  */
 
 /** The world-CS axis names three's x / y / z stand for (z null for 2D data). */
@@ -55,23 +50,15 @@ export type SceneCameraFrame = {
 };
 
 /**
- * three-space → world µm for one reference layer.
+ * three-space → world µm.
  *
- * With `A` the layer affine (lens voxels → world µm) and `C` its centering:
- * the layer renders at `three = A·C·v` while world µm is `A·v`, so
- *
- *   world = A·C⁻¹·A⁻¹·three
- *
- * Identity whenever `C` is (i.e. after the §4 normalization).
+ * Identity by construction: layers render corner-anchored at `affine(v)`,
+ * which IS world µm — there is no client-side centering left to invert. The
+ * function survives (rather than inlining identity at the call sites) so a
+ * future scene-root transform has exactly one place to land.
  */
-export const buildSceneToWorldMatrix = (layer: LayerState): THREE.Matrix4 => {
-  const affine = affineToMatrix4(layer.affineMatrix);
-  const centering = buildCenteringMatrix(layer);
-  return affine
-    .clone()
-    .multiply(centering.clone().invert())
-    .multiply(affine.clone().invert());
-};
+export const buildSceneToWorldMatrix = (_layer: LayerState): THREE.Matrix4 =>
+  new THREE.Matrix4();
 
 /**
  * The layer whose frame the scene's poses are expressed in: the first image

@@ -20,6 +20,17 @@ query SearchTerms($search: String, $values: [ID!]) {
   }
 }
 
+# One search for every kind — the kind is a variable, so a picker that knows
+# which sort of word it wants does not need its own query.
+query SearchAssignableTerms($search: String, $kinds: [TermKind!]) {
+  terms(
+    filters: { search: $search, kinds: $kinds }
+    pagination: { limit: 20 }
+  ) {
+    ...AssignableTerm
+  }
+}
+
 # Claims name a word, so the pickers search term *keys*, not ids — the key is
 # what goes on the wire. A term's identity is (kind, key), so each kind gets its
 # own search: `GraphQLCreatableSearchField` has no way to pass a filter through.

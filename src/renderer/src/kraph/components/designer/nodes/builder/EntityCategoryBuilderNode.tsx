@@ -17,7 +17,6 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
       <PathNodePresentation
         id={id}
         label={data.label}
-        tags={data.tags.map((tag) => ({ value: tag.name }))}
       />
     </>
   );

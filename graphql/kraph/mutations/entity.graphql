@@ -1,29 +1,38 @@
-mutation CreateEntity($input: CreateEntityInput!) {
-  createEntity(input: $input) {
-    ...Entity
+mutation AssertEntityExists($input: AssertEntityExistsInput!) {
+  assertEntityExists(input: $input) {
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
 mutation AttestEntity($id: String!) {
   attestEntity(input: { id: $id }) {
-    ...Entity
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
+    drawings {
+      ...NodeDrawing
+    }
   }
 }
 
-# Claims name the organization's word, not a category row: typing a word that
-# has not been used before creates it.
-mutation CreateEntityInline($term: String!) {
-  result: createEntity(input: {
-    term: $term
-  }) {
-    value: id
-    label: label
-  }
-}
-
-
-mutation ArchiveEntity($id: GraphID!) {
-  archiveEntity(input: {id: $id}) {
-    ...Entity
+mutation RetractEntity($id: GraphID!) {
+  retractEntity(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    entity {
+      ...Entity
+    }
   }
 }

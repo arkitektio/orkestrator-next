@@ -73,15 +73,16 @@ describe("resolveProbeMarkerGeometry", () => {
     expect(geometry!.markerPosition[2]).toBeCloseTo(7, 6);
   });
 
-  it("volume probes map localPos through the FULL centered base box", () => {
+  it("volume probes map localPos through the FULL corner-anchored base box", () => {
     const geometry = resolveProbeMarkerGeometry(
       makeLayer([]),
       probe("first-hit"),
       getArrayForStoreId,
     );
     expect(geometry).not.toBeNull();
-    // localPos × base [x=400, y=200, z=100] extents, no slice offset.
-    expect(geometry!.markerPosition).toEqual([0.25 * 400, -0.1 * 200, 0.5 * 100]);
+    // Unit-box localPos + 0.5, × base [x=400, y=200, z=100] extents — the
+    // corner-anchored layer-local position, no slice offset, no flip.
+    expect(geometry!.markerPosition).toEqual([0.75 * 400, 0.4 * 200, 1.0 * 100]);
   });
 
   it("volume probes IGNORE lens slices — the volume mesh renders the full box", () => {
@@ -90,7 +91,7 @@ describe("resolveProbeMarkerGeometry", () => {
       { axis: "y", start: 50, stop: 150, step: 1 },
     ]);
     const geometry = resolveProbeMarkerGeometry(sliced, probe("max"), getArrayForStoreId);
-    expect(geometry!.markerPosition).toEqual([0.25 * 400, -0.1 * 200, 0.5 * 100]);
+    expect(geometry!.markerPosition).toEqual([0.75 * 400, 0.4 * 200, 1.0 * 100]);
   });
 
   it("plane probes keep the slice-aware box (2D localPos is slice-relative)", () => {
@@ -100,8 +101,8 @@ describe("resolveProbeMarkerGeometry", () => {
     );
     const geometry = resolveProbeMarkerGeometry(sliced, probe("plane"), getArrayForStoreId);
     expect(geometry).not.toBeNull();
-    // Sliced x box: width 200 at start 100 in a 400 total → volumePosition x =
-    // 100 + 100 − 200 = 0; marker x = 0 + 0.25 × 200 = 50 (NOT 0.25 × 400).
-    expect(geometry!.markerPosition[0]).toBe(50);
+    // Sliced x box: width 200 at start 100 → corner-anchored volumePosition x
+    // = 100 + 100 = 200; marker x = 200 + 0.25 × 200 = 250 (NOT 0.75 × 400).
+    expect(geometry!.markerPosition[0]).toBe(250);
   });
 });

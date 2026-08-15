@@ -191,7 +191,8 @@ alone under-refines z-dominant views. The shader's per-sample
 keep the two in lockstep.
 
 Culling happens in **layer voxel space**: the world frustum is pulled through
-`buildVolumeVoxelToWorld(layer)⁻¹` so the per-node test is a cheap AABB check
+`buildAffineMatrix(layer)⁻¹` (corner-anchored — voxel v sits at affine(v),
+COORDINATE_SYSTEMS.md §0) so the per-node test is a cheap AABB check
 on the node's voxel box. 2D restricts the DFS to a single z-slab quadtree at
 `resolveLevelZ(level)`.
 
@@ -517,11 +518,12 @@ raw dtype units (e.g. 0..4000 for a uint16 layer, not a normalized 0..1). A
 normalized clim on a uint16 layer collapses to ~0 after `climToUnit` with
 `[0,65535]`. See [[clim-absolute-native-units]].
 
-**P12 — Guard the coordinate frames.** `buildVolumeVoxelToWorld` centers
-x/y/z and flips y (the 3D frame). The 2D slab z is **uncentered**, matching
-legacy `chunkPlanning`. Mixing these up produces plans that look plausible but
-cull/fetch the wrong region. `voxelFrame.ts` documents both; the raymarcher's
-`toBaseVoxel` must stay in lockstep.
+**P12 — Guard the coordinate frames.** Every frame is corner-anchored
+(COORDINATE_SYSTEMS.md §0): voxel v sits at world `affine(v)`, no centering,
+no flip, in 2D and 3D alike. A frame mismatch produces plans that look
+plausible but cull/fetch the wrong region; the raymarcher's `toBaseVoxel` and
+the CPU probe/trace/visibility mirrors must stay in lockstep with the mesh
+arrangement (unit primitives offset by half their size).
 
 **P14 — Ray-step sizing: constant steps make grain, unstable jitter makes
 flicker.** The raymarcher originally used one constant `delta =

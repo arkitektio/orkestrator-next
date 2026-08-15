@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   EntityCategoryFragment,
   PropertyDefinitionFragment,
-  useCreateEntityMutation,
-  useRecordMetricMutation,
+  useAssertEntityExistsMutation,
+  useAssertMetricValueMutation,
   ValueKind,
 } from "@/kraph/api/graphql";
 import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
@@ -248,13 +248,13 @@ export const CreateEntityWithPropertiesDialog = (props: {
   const { form, validateForm } = useCreateEntityForm(props.category);
   const [propertyErrors, setPropertyErrors] = useState<Record<string, string>>({});
 
-  const [createEntity, { loading }] = useCreateEntityMutation({
+  const [assertEntity, { loading }] = useAssertEntityExistsMutation({
     onError: (error) => {
       toast.error(`Failed to create entity: ${error.message}`);
     },
   });
 
-  const [recordMetric] = useRecordMetricMutation({
+  const [assertMetricValue] = useAssertMetricValueMutation({
     refetchQueries: ["EntityNodes", "GetEntityCategory"],
   });
 
@@ -274,7 +274,7 @@ export const CreateEntityWithPropertiesDialog = (props: {
     // here are not part of it. They are recorded afterwards as "itoldyouso"
     // metrics against the new entity — evidence with no measurement behind it,
     // which the category's derivation rules then fold into the properties.
-    const created = await createEntity({
+    const created = await assertEntity({
       variables: {
         input: {
           // Claims name the word, not the category row.
@@ -283,7 +283,7 @@ export const CreateEntityWithPropertiesDialog = (props: {
       },
     });
 
-    const entityId = created.data?.createEntity.id;
+    const entityId = created.data?.assertEntityExists.entity.id;
     if (!entityId) return;
 
     const assertions = (props.category.propertyDefinitions ?? [])
@@ -293,7 +293,7 @@ export const CreateEntityWithPropertiesDialog = (props: {
 
     try {
       for (const { def, value } of assertions) {
-        await recordMetric({
+        await assertMetricValue({
           variables: {
             input: buildItoldyousoMetric({
               entityId,

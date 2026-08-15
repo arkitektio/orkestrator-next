@@ -37,3 +37,23 @@ fragment DetailTerm on Term {
     ...TermCategory
   }
 }
+
+# What a picker needs to decide between words: the word itself and whether any
+# graph declares a category for it. A claim under an undeclared word still
+# stands — it just is not drawn anywhere yet, which is worth knowing *before*
+# claiming rather than after.
+fragment AssignableTerm on Term {
+  id
+  kind
+  key
+  label
+  color
+  categories {
+    id
+    label
+    graph {
+      id
+      name
+    }
+  }
+}

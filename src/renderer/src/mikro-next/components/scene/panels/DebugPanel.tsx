@@ -524,6 +524,8 @@ const FabriksMeshSection = ({
   );
   const [frozen, setFrozen] = useState(() => managers[0]?.getPlanConfig().frozen ?? false);
   const [showBoxes, setShowBoxes] = useState(() => managers[0]?.getShowCellBoxes() ?? false);
+  const [flatNormals, setFlatNormals] = useState(() => managers[0]?.getFlatNormals() ?? true);
+  const [batched, setBatched] = useState(() => managers[0]?.getBatching() ?? true);
 
   const applyPixelBudget = (value: number) => {
     setPixelBudget(value);
@@ -538,6 +540,16 @@ const FabriksMeshSection = ({
     const next = !showBoxes;
     setShowBoxes(next);
     for (const manager of managers) manager.setShowCellBoxes(next);
+  };
+  const toggleFlatNormals = () => {
+    const next = !flatNormals;
+    setFlatNormals(next);
+    for (const manager of managers) manager.setFlatNormals(next);
+  };
+  const toggleBatched = () => {
+    const next = !batched;
+    setBatched(next);
+    for (const manager of managers) manager.setBatching(next);
   };
 
   const mb = (bytes: number) => (bytes / (1024 * 1024)).toFixed(1);
@@ -577,6 +589,20 @@ const FabriksMeshSection = ({
         >
           cell boxes: {showBoxes ? "on" : "off"}
         </button>
+        <button
+          onClick={toggleFlatNormals}
+          title="Flat = derivative (per-face) normals in the shader: no normals computed or uploaded, no lighting seams at cell borders. Off = smooth normals computed per cell on the main thread (the pre-Phase-1 path)."
+          className="px-1 rounded border border-border/50 hover:bg-accent"
+        >
+          flat normals: {flatNormals ? "on" : "off"}
+        </button>
+        <button
+          onClick={toggleBatched}
+          title="All cells in ONE BatchedMesh (one render object, per-instance culling) vs one Mesh per cell (the pre-Phase-4 path). Remounts from cache; nothing refetches."
+          className="px-1 rounded border border-border/50 hover:bg-accent"
+        >
+          batched: {batched ? "on" : "off"}
+        </button>
       </div>
       {Object.entries(systems).map(([layerId, manager]) => {
         const report = manager.buildDebugReport();
@@ -613,6 +639,14 @@ const FabriksMeshSection = ({
               <span className="px-1 rounded border border-border/50">
                 cache {report.cache.cells} / {mb(report.cache.bytes)} MB
               </span>
+              {report.batch && (
+                <span className="px-1 rounded border border-border/50">
+                  batch {(report.batch.usedVertices / 1e6).toFixed(1)}/
+                  {(report.batch.capacityVertices / 1e6).toFixed(1)} Mvtx
+                  {report.batch.rebuilds > 1 ? ` · rebuilt ${report.batch.rebuilds}` : ""}
+                  {report.batch.optimizes > 0 ? ` · packed ${report.batch.optimizes}` : ""}
+                </span>
+              )}
               {transport && (
                 <span className="px-1 rounded border border-border/50">
                   GET {transport.gets} · {mb(transport.bytesFetched)} MB
@@ -643,6 +677,14 @@ const FabriksMeshSection = ({
               {stats.abortedDrains > 0 && (
                 <span className="px-1 rounded border border-border/50">
                   aborted {stats.abortedDrains}
+                </span>
+              )}
+              {/* Placement-change index rebuilds. A steadily climbing count
+                  means something is churning matrices that should be
+                  value-stable — the exact failure Phase 1 removed. */}
+              {stats.indexRebuilds > 1 && (
+                <span className="px-1 rounded border border-amber-500/50 text-amber-300">
+                  rebuilds {stats.indexRebuilds}
                 </span>
               )}
               {(stats.fetchErrors > 0 || (transport?.errors ?? 0) > 0) && (

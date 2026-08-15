@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { resolveAxisIndices } from "./dims";
 import type { LayerState } from "./layerModel";
-import { buildVolumeVoxelToWorld } from "./octree/voxelFrame";
+import { buildAffineMatrix } from "./worldTransform";
 
 /**
  * Metadata-only scene fitting: compute the union world-space bounding box of a
@@ -18,10 +18,10 @@ const PERSPECTIVE_PADDING = 1.3;
 /**
  * Union world-space box of the layers, from metadata alone. Each layer's box
  * is the 8 corners of its base-voxel extent `[0..xMax]×[0..yMax]×[0..zMax]`
- * pushed through `buildVolumeVoxelToWorld` (centering + y-flip + affine — the
- * exact frame the meshes render in). Corners are transformed individually
- * because the affine may rotate or shear. Returns null when no layer
- * contributes a valid spatial extent.
+ * pushed through the plain layer affine — corner-anchored, exactly the frame
+ * the meshes render in (COORDINATE_SYSTEMS.md "Coordinate conventions").
+ * Corners are transformed individually because the affine may rotate or
+ * shear. Returns null when no layer contributes a valid spatial extent.
  */
 export function computeSceneWorldBox(layers: readonly LayerState[]): THREE.Box3 | null {
   const box = new THREE.Box3();
@@ -37,7 +37,7 @@ export function computeSceneWorldBox(layers: readonly LayerState[]): THREE.Box3 
     const zMax = zPos !== -1 ? layer.lens.shape[zPos] ?? 0 : 0;
     if (xMax <= 0 || yMax <= 0) continue;
 
-    const voxelToWorld = buildVolumeVoxelToWorld(layer);
+    const voxelToWorld = buildAffineMatrix(layer);
     for (const cx of [0, xMax]) {
       for (const cy of [0, yMax]) {
         for (const cz of [0, zMax]) {

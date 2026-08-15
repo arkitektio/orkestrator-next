@@ -12,7 +12,7 @@ import { Plus, Settings2 } from "lucide-react";
 import { useNavigate as useNavigateRouter } from "react-router-dom";
 import {
   EntityNodesDocument,
-  useCreateEntityMutation,
+  useAssertEntityExistsMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
@@ -26,7 +26,7 @@ export const Page = asDetailQueryRoute(
     const [update] = useUpdateEntityCategoryMutation();
     const navigateRouter = useNavigateRouter();
 
-    const [quickCreate] = useCreateEntityMutation({
+    const [quickCreate] = useAssertEntityExistsMutation({
       variables: {
         input: {
           // Claims name the word this category declares, not the category row.

@@ -18,6 +18,7 @@ import {
 } from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
+import { MeshLayerCard } from "./layer/MeshLayerCard";
 import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
 
 const formatBytes = (bytes: number): string =>
@@ -175,6 +176,10 @@ export const LayerControlPanel = ({
   perfMonitor.countRender("LayerControlPanel"); // no-op unless a perf recording is armed
   const { openDialog } = useDialog();
   const layers = useSceneStore((s) => s.layers);
+  // Mesh layers are NOT in `layers`: that list is the normalized image
+  // layers (pyramid + render graph). A mesh layer is consumed straight off
+  // the polymorphic fragment, so the panel reads it from there.
+  const sceneLayers = useSceneStore((s) => s.sceneLayers);
   const updateLayer = useSceneStore((s) => s.updateLayer);
   const selectedLayerId = useSelectionStore((s) => s.selectedLayerId);
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
@@ -233,6 +238,18 @@ export const LayerControlPanel = ({
   // position.
   const shownLayers = layers;
 
+  // Listed after the image layers rather than interleaved by `order`: the two
+  // lists are normalized differently, and a stable "images, then meshes" split
+  // beats a merged order that would reshuffle as either side changes.
+  const meshLayers = useMemo(
+    () =>
+      sceneLayers.filter(
+        (layer): layer is Extract<typeof layer, { __typename: "MeshLayer" }> =>
+          layer.__typename === "MeshLayer",
+      ),
+    [sceneLayers],
+  );
+
   // NO auto-expand: unfolding used to be space-derived (`fitsExpanded`), which
   // meant a rail resize could pop every editor open at once — mounting every
   // card's full render-graph editor subtree in a single commit and making
@@ -287,6 +304,9 @@ export const LayerControlPanel = ({
             mates taller. */}
         <div className="grid grid-cols-1 items-start gap-1 @2xl/layers:grid-cols-2 @5xl/layers:grid-cols-3">
           {shownLayers.map(renderRow)}
+          {meshLayers.map((layer) => (
+            <MeshLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
+          ))}
         </div>
 
         <button

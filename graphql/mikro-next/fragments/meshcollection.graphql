@@ -1,7 +1,11 @@
 # A MeshCollection is a DATASET, not a shape: the API node carries version,
-# grid, coordinate system and the Parquet stores; the individual meshes are
-# ROWS in those Parquet files, reached client-side through DuckDB. There is
+# coordinate system and the maille STORE — one prefix holding `maille.json`,
+# both catalogs and every octree level. The individual meshes are ROWS in the
+# Parquet files under that prefix, reached client-side by row group. There is
 # deliberately no `meshes(...)` field to paginate.
+#
+# `grid` and `encoding` are mirrored from the store's own manifest rather than
+# declared through the API, so they describe what was actually written.
 fragment MeshCollection on MeshCollection {
   id
   version
@@ -9,11 +13,8 @@ fragment MeshCollection on MeshCollection {
   coordinateSystem {
     ...CoordinateSystem
   }
-  catalog {
-    ...ParquetStore
-  }
-  geometry {
-    ...ParquetStore
+  store {
+    ...MailleStore
   }
   grid
   encoding

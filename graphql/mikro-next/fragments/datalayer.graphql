@@ -127,3 +127,13 @@ fragment GeneralParquetAccessGrant on GeneralParquetAccessGrant {
   region
   bucket
 }
+
+
+fragment GeneralMailleAccessGrant on GeneralMailleAccessGrant {
+  accessKey
+  secretKey
+  sessionToken
+  expiresIn
+  region
+  bucket
+}

@@ -149,3 +149,73 @@ describe("getGeneralAccess timing", () => {
     vi.useRealTimers();
   });
 });
+
+describe("maille credentials are a separate kind", () => {
+  /**
+   * A client that answers whichever mutation it is given, recording which.
+   * The two kinds are DIFFERENT credentials from different mutations — a zarr
+   * grant does not authorize a maille prefix — so the cache must not let one
+   * satisfy a request for the other.
+   */
+  const dualClient = () => {
+    const issued: string[] = [];
+    let n = 0;
+    const client: MikroClient = {
+      mutate: async (options: { mutation: unknown }) => {
+        n += 1;
+        const doc = JSON.stringify(options.mutation);
+        if (doc.includes("requestGeneralMailleAccess")) {
+          issued.push("maille");
+          return { data: { requestGeneralMailleAccess: grant(`maille-${n}`, 3600) } };
+        }
+        issued.push("zarr");
+        return { data: { requestGeneralZarrAccess: grant(`zarr-${n}`, 3600) } };
+      },
+    };
+    return { client, issued };
+  };
+
+  it("mints a maille grant from the maille mutation, not the zarr one", async () => {
+    const { client, issued } = dualClient();
+    const dated = await getGeneralAccess(client, { kind: "maille" });
+    expect(issued).toEqual(["maille"]);
+    expect(dated.grant.accessKey).toMatch(/^maille-/);
+  });
+
+  it("never hands a zarr grant to a maille caller, or the reverse", async () => {
+    const { client, issued } = dualClient();
+    const zarr = await getGeneralAccess(client);
+    const maille = await getGeneralAccess(client, { kind: "maille" });
+
+    // Two kinds, two round-trips — a shared cache would have made the second free.
+    expect(issued).toEqual(["zarr", "maille"]);
+    expect(zarr.grant.accessKey).toMatch(/^zarr-/);
+    expect(maille.grant.accessKey).toMatch(/^maille-/);
+    expect(zarr.grant.accessKey).not.toBe(maille.grant.accessKey);
+  });
+
+  it("caches each kind independently, so neither evicts the other", async () => {
+    const { client, issued } = dualClient();
+    await getGeneralAccess(client);
+    await getGeneralAccess(client, { kind: "maille" });
+    // Both are cached now: repeats cost nothing, and crucially the maille grant
+    // did not overwrite the zarr one on its way in.
+    const zarrAgain = await getGeneralAccess(client);
+    const mailleAgain = await getGeneralAccess(client, { kind: "maille" });
+
+    expect(issued).toEqual(["zarr", "maille"]);
+    expect(zarrAgain.grant.accessKey).toMatch(/^zarr-/);
+    expect(mailleAgain.grant.accessKey).toMatch(/^maille-/);
+  });
+
+  it("forces a refresh of one kind without disturbing the other", async () => {
+    const { client, issued } = dualClient();
+    const zarr = await getGeneralAccess(client);
+    await getGeneralAccess(client, { kind: "maille" });
+    const refreshed = await getGeneralAccess(client, { kind: "maille", forceRefresh: true });
+
+    expect(issued).toEqual(["zarr", "maille", "maille"]);
+    expect(refreshed.grant.accessKey).not.toBe(zarr.grant.accessKey);
+    expect((await getGeneralAccess(client)).grant.accessKey).toBe(zarr.grant.accessKey);
+  });
+});

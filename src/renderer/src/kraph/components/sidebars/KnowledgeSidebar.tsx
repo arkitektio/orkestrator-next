@@ -1,205 +1,148 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
+import { Form } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import {
-  ListGraphFragment,
+  StructureFragment,
+  useCreateEntityMutation,
+  useCreateEntityTermInlineMutation,
   useEnsureStructureMutation,
-  useGetInformedStructureQuery,
-  useListGraphsQuery,
+  useSearchEntityTermsLazyQuery,
 } from "@/kraph/api/graphql";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
-import { useDialog } from "@/app/dialog";
-import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
-import { MetricsTable } from "../tables/MetricsTable";
 import { Identifier, Object } from "@/types";
-import { ConnectableAs } from "@/kraph/components/ConnectableAs";
-import { PlusCircle } from "lucide-react";
-
+import { Microscope } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { MetricsTable } from "../tables/MetricsTable";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
   object: Object;
 };
 
-export type StructureViewWidgetProps = {
-  graph: ListGraphFragment;
-} & KnowledgeSidebarProps;
+type ClaimFormValues = { term: string };
 
+/**
+ * Claiming is organization-scoped. "This ROI is an AIS" is true of the object,
+ * not of one graph: the claim names a word, and every graph that declares that
+ * word holds it. So there is no graph to choose here and nothing to pin — this
+ * used to be an accordion over pinned graphs, one lookup per graph, which asked
+ * a question the claim does not depend on.
+ *
+ * `createEntity` takes the structure directly as supporting evidence, so a
+ * claim needs no graph, no category and no pre-existing entity or structure.
+ */
+export const KnowledgeSidebar = ({ identifier, object }: KnowledgeSidebarProps) => {
+  // There is no organization-wide read for a structure by identifier + object
+  // (`structureByIdentifier` still takes a graph), so the evidence already
+  // recorded is fetched through the idempotent `ensureStructure` rather than on
+  // mount — viewing an object should not write one.
+  const [structure, setStructure] = useState<StructureFragment | null>(null);
 
+  const [ensureStructure, { loading: loadingEvidence }] =
+    useEnsureStructureMutation();
+  const [createEntity, { loading: claiming }] = useCreateEntityMutation();
+  const [searchTerms] = useSearchEntityTermsLazyQuery();
+  const [createTerm] = useCreateEntityTermInlineMutation();
 
-export const GraphKnowledgeView = (props: {
-  identifier: Identifier;
-  object: Object;
-  graph: ListGraphFragment;
-}) => {
-  const dialog = useDialog();
-  const { data, refetch, error, loading } = useGetInformedStructureQuery({
-    variables: {
-      identifier: props.identifier,
-      object: props.object.id,
-      graph: props.graph.id,
-    },
-  });
+  const form = useForm<ClaimFormValues>({ defaultValues: { term: "" } });
 
-  const [addStructure] = useEnsureStructureMutation({
-    onCompleted: () => refetch(),
-  });
-
-  const hasConnections =
-    (data?.structureByIdentifier?.metrics.length || 0) > 0;
-
-  return (
-    <div className="flex flex-col p-2 h-full">
-      {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
-      {error && <p className="text-red-500 text-xs">Error: {error.message}</p>}
-      {!data?.structureByIdentifier && <div className="flex items-center justify-center"><Button
-        variant="outline"
-        className="w-full"
-        onClick={() =>
-          addStructure({
-            variables: {
-              input: {
-                object: props.object.id,
-                identifier: props.identifier,
-              },
-            },
-          })
-        }
-      >
-        Connect
-      </Button></div>}
-      {data?.structureByIdentifier &&
-        <>
-          <div className="flex flex-row gap-2 mt-4">
-            <ObjectButton
-              objects={[{ identifier: props.identifier, object: props.object }]}
-              className="w-full"
-              partners={[
-                {
-                  identifier: "@kraph/graph",
-                  object: props.graph,
-                },
-              ]}
-              disableKraph={true}
-              expect={["@mikro/metric"]}
-              onDone={() => {
-                refetch();
-              }}
-            >
-              <Button variant="outline" className="w-full">
-                Measure
-              </Button>
-            </ObjectButton>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() =>
-                dialog.openDialog("createnewmeasurement", {
-                  left: [{ identifier: props.identifier, object: props.object }],
-                  right: [],
-                  graph: props.graph.id,
-                })
-              }
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create new measurement
-            </Button>
-
-            {hasConnections && (
-              <ConnectableAs
-                identifier={props.identifier}
-                graphId={props.graph.id}
-              />
-            )}
-          </div>
-          {!hasConnections && (
-            <div className="mt-4">
-              <ConnectableAs
-                identifier={props.identifier}
-                graphId={props.graph.id}
-                variant="inline"
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2 p-2">
-            {data.structureByIdentifier.metrics.length > 0 && <MetricsTable metrics={data?.structureByIdentifier.metrics || []} />}
-          </div>
-        </>}
-    </div>
-  );
-};
-
-const KNOWLEDGE_SIDEBAR_KEY = "knowledge-sidebar-accordion";
-
-export const KnowledgeSidebar = (props: KnowledgeSidebarProps) => {
-  const { data, error } = useListGraphsQuery({
-    variables: {
-      filters: {
-        pinned: true,
-      },
-    },
-  });
-
-  const [openItems, setOpenItems] = useState<string[]>(() => {
-    // Load from local storage on initial render
-    const saved = localStorage.getItem(KNOWLEDGE_SIDEBAR_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [data?.graphs.at(0)?.id || "0"];
-      }
+  const loadEvidence = async () => {
+    try {
+      const result = await ensureStructure({
+        variables: { input: { identifier, object: object.id } },
+      });
+      setStructure(result.data?.ensureStructure ?? null);
+    } catch (e) {
+      toast.error(`Could not load evidence: ${(e as Error).message}`);
     }
-    return [data?.graphs.at(0)?.id || "0"];
-  });
+  };
 
-  // Save to local storage whenever the open items change
-  useEffect(() => {
-    localStorage.setItem(KNOWLEDGE_SIDEBAR_KEY, JSON.stringify(openItems));
-  }, [openItems]);
-
-  if  (error) {
-    return <Empty>
-      <EmptyTitle>Error loading graphs</EmptyTitle>
-      <EmptyDescription>There was an error loading your pinned graphs.</EmptyDescription>
-      <EmptyContent>{error.message}</EmptyContent>
-    </Empty>;
-  }
-
-  if (!data || data.graphs.length === 0) {
-    return <Empty>
-      <EmptyTitle>No pinned graphs</EmptyTitle>
-      <EmptyDescription>There are no graphs that you have pinned for quick access.</EmptyDescription>
-      <EmptyContent>Go to the graphs page to pin some graphs to your knowledge sidebar.</EmptyContent>
-      <Button asChild variant="outline" className="mt-4">
-        <NavLink to="/kraph/graphs">View Graphs</NavLink>
-      </Button>
-
-    </Empty>;
-  }
-
-
-
+  const claim = async ({ term }: ClaimFormValues) => {
+    if (!term) return;
+    try {
+      await createEntity({
+        variables: {
+          input: {
+            term,
+            supportingEvidence: [{ identifier, object: object.id }],
+          },
+        },
+      });
+      toast.success(`Claimed as ${term}`);
+      form.reset({ term: "" });
+      await loadEvidence();
+    } catch (e) {
+      toast.error(`Could not claim: ${(e as Error).message}`);
+    }
+  };
 
   return (
-    <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="h-full p-2 flex border-0" >
-      {data?.graphs.map((g) => (
-        <AccordionItem value={g.id} key={g.id} className="flex-grow border-0 data-open:bg-pane">
-          <AccordionTrigger>{g.name}</AccordionTrigger>
-          <AccordionContent className="flex-grow h-full  p-0 mt-2">
-            {openItems.includes(g.id) && (
-              <GraphKnowledgeView
-                identifier={props.identifier}
-                graph={g}
-                object={props.object}
-              />
-            )}
-          </AccordionContent>
-        </AccordionItem>
-      ))}
+    <div className="flex flex-col h-full p-3 gap-4 overflow-y-auto">
+      <div>
+        <div className="text-sm font-semibold">Claim as</div>
+        <p className="text-xs text-muted-foreground mt-1">
+          The organization's word for what this is. Every graph that declares
+          the word will hold the claim; one that declares no category for it
+          simply will not draw it.
+        </p>
+      </div>
 
-    </Accordion>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(claim)}
+          className="flex flex-col gap-2"
+        >
+          <GraphQLCreatableSearchField
+            name="term"
+            label=""
+            description="Type a new word to claim it."
+            searchQuery={searchTerms}
+            createMutation={createTerm}
+          />
+          <Button type="submit" variant="outline" disabled={claiming}>
+            {claiming ? "Claiming…" : "Claim"}
+          </Button>
+        </form>
+      </Form>
+
+      <Separator />
+
+      <div className="flex flex-row gap-2">
+        <ObjectButton
+          objects={[{ identifier, object }]}
+          className="w-full"
+          disableKraph={true}
+          expect={["@mikro/metric"]}
+          onDone={loadEvidence}
+        >
+          <Button variant="outline" className="w-full">
+            <Microscope className="mr-2 h-4 w-4" />
+            Measure
+          </Button>
+        </ObjectButton>
+      </div>
+
+      {structure ? (
+        structure.metrics.length > 0 ? (
+          <MetricsTable metrics={structure.metrics} />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Nothing has been measured on this yet.
+          </p>
+        )
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={loadEvidence}
+          disabled={loadingEvidence}
+        >
+          {loadingEvidence ? "Loading…" : "Show recorded measurements"}
+        </Button>
+      )}
+    </div>
   );
 };

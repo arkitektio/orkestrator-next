@@ -5,7 +5,7 @@ systems as nodes, transformations as edges), what the client derives from it,
 and every invariant that keeps a voxel on screen where it belongs.
 
 Companion documents: `OCTREE_RENDERER.md` (the brick-pool image renderer this
-feeds), `render/mesh/README.md` (the mesh-collection renderer built on the
+feeds), `render/maille/README.md` (the mesh-collection renderer built on the
 same graph).
 
 ---
@@ -145,7 +145,7 @@ have. The migration is an adapter, not a rewrite.
 | `LayerState.xAxis/yAxis/zAxis/tAxis/intensityAxis` | `lens.renderAxes` | `normalizeLayer` (`core/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
 | Relative level factors (old `scaleFactors` semantics) | `toParent` pixel scales, `rel = abs_L / abs_0` (a no-op now that level 0 = 1) | `relativeLevelScaleFactors` / `buildLevelSources` (`core/octree/levelGeometry.ts`) | level geometry, plan tracker, residency, pool viability, probe geometry |
 | `spatialUnit` | first SPACE axis of the world CS | `sceneStore` | `ScaleBar` |
-| Mesh transforms | `MeshLayer.pathToWorld` via `composePlacementPath` | `core/transformGraph.ts` | `render/mesh/MeshCollectionLayer` |
+| Mesh transforms | `MeshLayer.pathToWorld` via `composePlacementPath` | `core/transformGraph.ts` | `layers/mesh/MailleCollectionLayer` |
 
 Raw-fragment code paths that run BEFORE normalization (`lodPlanning`,
 `renderCost`, `renderGraph.defaultLayerGraph`, `colormap-utils`) read
@@ -296,7 +296,7 @@ The one place the old world and the new world genuinely differ:
 - **Graph-anchored things** (meshes, ROIs from other datasets) composed
   purely through the graph land UNCENTERED and un-flipped relative to that.
 
-Current resolution (v1, encoded in `render/mesh/MeshCollectionLayer.tsx`
+Current resolution (encoded in `layers/mesh/MailleCollectionLayer.tsx`
 `resolveCollectionMatrix`): a mesh collection first looks for an image layer
 in the scene whose lens/intrinsic-system/pyramid contains its CS — the labels
 layer it was extracted from — and reuses THAT layer's full frame, so meshes
@@ -404,7 +404,7 @@ the dim-slider follow-ups in OCTREE_RENDERER.md §2.2.
 | Edge evaluation, `invert4`, placement-path composition (incl. inverted steps), layer prefix detection, unregistered degradation | `core/transformGraph.test.ts` |
 | Pixel-factor and legacy physical-scale level edges, identity/translation edges, fallback | `core/transformGraph.test.ts` ("level scale factors") |
 | Planner/geometry under true factors | `core/octree/nodePlanning.test.ts`, `levelGeometry` coverage via existing octree tests |
-| Mesh cell math, planning, decoding, cache | `render/mesh/meshCore.test.ts` |
+| Mesh cell math, planning, decoding, cache | `render/maille/mailleCore.test.ts` |
 
 The reference scene document (confocal + FLIM + mesh collection) doubles as
 the fixture source — its hand-computed numbers (the 0.325/0.5 µm calibration

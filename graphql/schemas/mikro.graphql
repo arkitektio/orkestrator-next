@@ -2316,18 +2316,11 @@ Input for registering an immutable, versioned mesh collection. The collection ge
 """
 input CreateMeshCollectionInput {
   axes: [AxisInput!]!
-  catalog: MeshCellCatalogLike!
   derivedFrom: [DerivedFromInput!] = null
-  encoding: Any = null
   folder: ID = null
-  geometry: [ParquetLike!] = null
-  grid: Any = null
-  objectCatalog: MeshObjectCatalogLike = null
   provenanceMetadata: Any = null
-  shards: [MeshGeometryShardInput!] = null
   sourceFiles: [SourceFileInput!] = null
-  specVersion: String!
-  validateStores: Boolean = null
+  store: MailleLike!
   version: String!
 }
 
@@ -3904,6 +3897,11 @@ input FinishBigFileUploadInput {
   valid: Boolean! = true
 }
 
+input FinishMailleUploadInput {
+  storeId: String!
+  valid: Boolean! = true
+}
+
 input FinishMediaUploadInput {
   storeId: String!
   valid: Boolean! = true
@@ -4153,6 +4151,17 @@ input FromParquetLike {
 
   """The name of the table"""
   name: String!
+}
+
+"""Temporary S3 credentials for reading the organization's maille stores."""
+type GeneralMailleAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
 }
 
 """Temporary S3 credentials for reading a media object."""
@@ -5616,6 +5625,68 @@ type LookupStep {
 }
 
 """
+Temporary S3 credentials for reading a maille store. Covers the whole prefix, so one grant reads the manifest, both catalogs and every level.
+"""
+type MailleAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""
+A reference to an uploaded **maille store**: one prefix holding `maille.json`, both catalogs and every octree level. Request it with `requestMailleUpload`, write the tree, land the manifest last, then `finishMailleUpload` -- which reads the manifest and refuses a prefix without one. A collection registered this way declares no grid and no encoding: the server reads them from the artifact, so they cannot be stated wrong
+"""
+scalar MailleLike
+
+"""
+A maille collection stored as a prefix of Parquet files behind the S3 datalayer. Its grid and encoding are read from its own manifest, never declared by a caller.
+"""
+type MailleStore {
+  """
+  Get temporary S3 read credentials covering this store's whole prefix -- the manifest, both catalogs and every level, in one grant.
+  """
+  accessGrant(host: String = null): MailleAccessGrant!
+  axes: [String!]
+  bucket: String!
+  counts: JSON
+  encoding: JSON
+  files: JSON
+  grid: JSON
+  id: ID!
+  key: String!
+  path: String!
+  specVersion: String
+}
+
+"""
+Temporary S3 credentials for uploading a maille store. Scoped to the prefix and permitted to read back and delete inside it, because the tree is written incrementally and its manifest lands last.
+"""
+type MailleUploadGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  maxBytes: Int!
+  originalFileName: String
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
+}
+
+"""
 The fields a MAP_AXIS member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input MapAxisTransformInput {
@@ -5831,19 +5902,9 @@ type Membership {
 }
 
 """
-A reference to an uploaded parquet store holding a mesh collection's **cell catalog**: one row per (level, cell), carrying the exact bounds, the LOD error, the object count and the child mask. It is the spatial index a renderer reads once to plan a frame
-"""
-scalar MeshCellCatalogLike
-
-"""
-An immutable, versioned collection of meshes, backed by Parquet stores. Ask the catalog store for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL
+An immutable, versioned collection of meshes, stored as one maille prefix. Ask its `store` for an access grant and query the Parquet directly (e.g. with DuckDB) rather than paginating meshes through GraphQL
 """
 type MeshCollection {
-  """
-  The Parquet store holding the catalog. Request an access grant from it and read the Parquet directly. Under spec v2 this is the **cell** catalog -- one row per (level, cell), carrying the exact bounds, the LOD error and the child mask a frustum query needs, so a renderer plans a frame without opening a single geometry file
-  """
-  catalog: ParquetStore!
-
   """
   The coordinate system the collection's vertices are expressed in. The collection owns it; `derivedFrom` relates it to the data the meshes were extracted from
   """
@@ -5870,31 +5931,21 @@ type MeshCollection {
   folder: Folder
 
   """
-  (spec v1) The Parquet stores holding the geometry shards. Empty on a v2 collection, which declares `shards` instead -- a bare store cannot say which octree level it holds
-  """
-  geometry: [ParquetStore!]!
-
-  """
-  The octree grid. Its `cellSize` is in voxels of the coordinate system, so the octree aligns to the label grid the meshes were extracted from
+  The octree grid, as read from the store's manifest. Its `cellSize` is in voxels, one size per vertex component -- the same order the catalog's bbox columns use, which is not necessarily the coordinate system's axis order
   """
   grid: Any!
   id: ID!
-
-  """
-  (spec v2) The Parquet store holding the **object** catalog -- one row per object, with its bounds and the list of cells that hold it. The inverted index: it answers 'where is segment 4711?' with a set of cell keys instead of a scan. Null on a v1 collection, which has no object catalog
-  """
-  objectCatalog: ParquetStore
-
-  """
-  (spec v2) The geometry shards, each naming the octree level it holds rows for, finest level first. The level is declared rather than read off the store key because a key is a server-minted opaque id: without this a renderer would have to open every shard to find the level it wants, which is the work the octree partition exists to avoid. Empty on a v1 collection, which lists its stores in `geometry`
-  """
-  shards: [MeshGeometryShard!]!
 
   """
   The files this mesh collection was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete
   """
   sourceFiles(filters: FileLinkFilter): [FileLink!]!
   specVersion: String!
+
+  """
+  The **maille store** holding this collection: one prefix with `maille.json`, both catalogs and every octree level. Ask it for a single access grant and you can read all of it -- the manifest, the indexes and the geometry. Its `grid` and `encoding` were read from that manifest rather than declared through this API, so they describe what was actually written. Never null: a collection whose bytes are not addressable is not a collection
+  """
+  store: MailleStore!
   version: String!
 }
 
@@ -5956,36 +6007,6 @@ input MeshCollectionFilter {
 }
 
 """
-A reference to an uploaded parquet store holding one **geometry shard** of a mesh collection: one row per (level, cell), carrying the encoded positions, indices and normals plus the per-object ranges inside them
-"""
-scalar MeshGeometryLike
-
-"""
-One Parquet store of a v2 mesh collection's geometry, and the octree level it holds rows for
-"""
-type MeshGeometryShard {
-  id: ID!
-
-  """
-  The octree level this shard holds, 0 being the finest. A level-L cell spans `cellSize * 2^L` voxels
-  """
-  level: Int!
-
-  """
-  The Parquet store holding this shard's rows -- one row per (level, cell). Request an access grant from it and read the Parquet directly
-  """
-  store: ParquetStore!
-}
-
-"""
-One geometry shard of a spec v2 mesh collection: an uploaded Parquet store, and the octree level it holds rows for
-"""
-input MeshGeometryShardInput {
-  level: Int!
-  store: MeshGeometryLike!
-}
-
-"""
 A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
 """
 type MeshLayer implements Layer {
@@ -6024,11 +6045,6 @@ type MeshLayer implements Layer {
   visible: Boolean!
   wireframe: Boolean!
 }
-
-"""
-A reference to an uploaded parquet store holding a mesh collection's **object catalog**: one row per object, with an ascending `object_id`, its dense `ordinal`, its bounds, and the list of cells that hold it. The inverted index behind isolating or colouring a single object
-"""
-scalar MeshObjectCatalogLike
 
 """Schema for unstructured metadata attached to a file."""
 type MetaSchema {
@@ -6496,6 +6512,11 @@ type Mutation {
   """Finalize a big file upload after the client has written the object"""
   finishBigfileUpload(input: FinishBigFileUploadInput!): BigFileStore!
 
+  """
+  Finalize a maille upload. This reads the store's `maille.json` and refuses a prefix that has none -- which is what an interrupted upload looks like, since the manifest is written last
+  """
+  finishMailleUpload(input: FinishMailleUploadInput!): MailleStore!
+
   """Finalize a media upload after the client has written the object"""
   finishMediaUpload(input: FinishMediaUploadInput!): MediaStore!
 
@@ -6618,6 +6639,11 @@ type Mutation {
   requestBigfileUpload(input: RequestBigFileUploadInput!): BigFileUploadGrant!
 
   """
+  Request temporary S3 read credentials for maille stores in the organization
+  """
+  requestGeneralMailleAccess(input: RequestGeneralMailleAccessInput!): GeneralMailleAccessGrant!
+
+  """
   Request temporary S3 read credentials for media files in the organization
   """
   requestGeneralMediaAccess(input: RequestGeneralMediaAccessInput!): GeneralMediaAccessGrant!
@@ -6631,6 +6657,16 @@ type Mutation {
   Request temporary S3 read credentials for Zarr files in the organization
   """
   requestGeneralZarrAccess(input: RequestGeneralZarrAccessInput!): GeneralZarrAccessGrant!
+
+  """
+  Request temporary S3 read credentials covering a maille store's whole prefix
+  """
+  requestMailleAccess(input: RequestMailleAccessInput!): MailleAccessGrant!
+
+  """
+  Request an upload grant for a maille store. The grant covers the whole prefix, so one request authorizes the manifest, both catalogs and every level
+  """
+  requestMailleUpload(input: RequestMailleUploadInput!): MailleUploadGrant!
 
   """Request temporary S3 read credentials for a media file"""
   requestMediaAccess(input: RequestMediaAccessInput!): MediaAccessGrant!
@@ -9611,6 +9647,10 @@ input RequestBigFileUploadInput {
   port: Int = null
 }
 
+input RequestGeneralMailleAccessInput {
+  expiresIn: Int = null
+}
+
 input RequestGeneralMediaAccessInput {
   expiresIn: Int = null
 }
@@ -9621,6 +9661,15 @@ input RequestGeneralParquetAccessInput {
 
 input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
+}
+
+input RequestMailleAccessInput {
+  storeId: String!
+}
+
+input RequestMailleUploadInput {
+  host: String = null
+  port: Int = null
 }
 
 input RequestMediaAccessInput {
@@ -12313,7 +12362,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelLayer | LabelView | Lens | LightPath | LightpathView | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshGeometryShard | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
+union _Entity = ADataset | AcquisitionView | AffineTransformation | AffineTransformationView | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | Camera | ChannelLabel | ChannelView | Client | ContinousScanView | CoordinateAnchor | CoordinateSystem | DataArray | DerivedView | Era | Experiment | FieldTransformation | File | FileLink | FileView | Folder | HistogramView | IdentityTransformation | Image | ImageAccessor | ImageLayer | InstanceMaskView | Instrument | LabelAccessor | LabelLayer | LabelView | Lens | LightPath | LightpathView | MailleStore | MapAxisTransformation | MaskView | MediaStore | Membership | MeshCollection | MeshLayer | MultiWellPlate | Objective | OpticsView | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RGBContext | RGBView | ROI | ROIView | ReferenceView | RenderTree | RotationTransformation | ScaleTransformation | ScaleView | Scene | SceneSnapshot | SequenceTransformation | Snapshot | Stage | Table | TableDataset | TableDatasetColumn | Task | TimepointView | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | Video | ViewCollection | WellPositionView | ZarrStore
 
 type _Service {
   sdl: String!

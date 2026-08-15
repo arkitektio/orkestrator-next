@@ -39,6 +39,16 @@ export interface SceneState {
   /** Normalized image layers only (carry zarr + transfer/render-graph state). */
   layers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
+  /**
+   * Patch one polymorphic scene layer in place.
+   *
+   * The image path has `updateLayer` because those layers are normalized into
+   * `LayerState`; a mesh or annotation layer is consumed straight off the
+   * fragment, so its view state is edited here. Local only: `updateLayer` (the
+   * mutation) is typed to return `ImageLayer` and there is no `updateMeshLayer`,
+   * so a mesh layer's visibility lives for the session and no longer.
+   */
+  patchSceneLayer: (id: string, patch: Partial<SceneLayerFragment>) => void;
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
@@ -79,6 +89,13 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
           const index = state.layers.findIndex((layer) => layer.id === updatedLayer.id);
           if (index !== -1) {
             state.layers[index] = updatedLayer;
+          }
+        }),
+      patchSceneLayer: (id, patch) =>
+        set((state) => {
+          const index = state.sceneLayers.findIndex((layer) => layer.id === id);
+          if (index !== -1) {
+            Object.assign(state.sceneLayers[index], patch);
           }
         }),
     })),

@@ -1,0 +1,214 @@
+import {
+  CELL_CATALOG_COLUMNS,
+  OBJECT_CATALOG_COLUMNS,
+  parseCellRow,
+  parseObjectRow,
+  type MailleCellRow,
+  type MailleObjectEntry,
+} from "./mailleCatalogs";
+import { decodeGeometryRow, type MailleGeometryRow, type MeshoptDecoderLike } from "./mailleDecode";
+import { cellGridBox } from "./mailleGrid";
+import { levelParts, MANIFEST_NAME, parseMailleManifest, type MailleFileEntry, type MailleManifest } from "./mailleManifest";
+import type { MailleFetchGroup } from "./maillePlanner";
+import { ParquetPart, type RangeReader } from "./parquetPart";
+import { toBytes, toNumber, toNumberArray } from "./rowValues";
+
+/**
+ * One maille collection: the manifest, the catalogs, and the open parts.
+ *
+ * This owns the READ PLAN — which file, which row group, which columns — and
+ * nothing else. It knows nothing about three.js, the scene graph or React, so
+ * the whole path from a prefix to decoded geometry is testable against a
+ * fixture on disk with no renderer in sight.
+ *
+ * Its one piece of state worth naming is the part cache: a `ParquetPart` holds
+ * a parsed footer, so keeping it alive is what makes the second cell out of a
+ * part cost only its row group.
+ */
+
+/** Reads a whole object. Separate from the ranged read: catalogs are read whole. */
+export type ObjectReader = (path: string) => Promise<Uint8Array>;
+
+export type MailleTransport = {
+  get: ObjectReader;
+  getRange: RangeReader;
+};
+
+const GEOMETRY_COLUMNS = [
+  "level",
+  "cell",
+  "positions",
+  "indices",
+  "vertex_count",
+  "index_count",
+  "object_ids",
+  "object_ordinals",
+  "object_vertex_offsets",
+  "object_index_offsets",
+];
+
+/** A geometry row keyed for lookup, before decode. */
+const parseGeometryRow = (row: Record<string, unknown>): MailleGeometryRow => ({
+  level: toNumber(row.level, "level"),
+  cell: toNumber(row.cell, "cell"),
+  positions: toBytes(row.positions, "positions"),
+  indices: toBytes(row.indices, "indices"),
+  vertexCount: toNumber(row.vertex_count, "vertex_count"),
+  indexCount: toNumber(row.index_count, "index_count"),
+  objectIds: toNumberArray(row.object_ids, "object_ids"),
+  objectOrdinals: toNumberArray(row.object_ordinals, "object_ordinals"),
+  objectVertexOffsets: toNumberArray(row.object_vertex_offsets, "object_vertex_offsets"),
+  objectIndexOffsets: toNumberArray(row.object_index_offsets, "object_index_offsets"),
+});
+
+export class MailleCollection {
+  private readonly parts = new Map<string, ParquetPart>();
+  private objectsPromise: Promise<Map<number, MailleObjectEntry>> | null = null;
+
+  private constructor(
+    readonly manifest: MailleManifest,
+    private readonly transport: MailleTransport,
+  ) {}
+
+  /**
+   * Open a prefix by reading its manifest from the store.
+   *
+   * A missing manifest is the format's defined signal for an INTERRUPTED
+   * WRITE, not for an empty collection — the manifest lands after every file
+   * it names — so it is reported as such rather than as zero geometry.
+   */
+  static async open(transport: MailleTransport): Promise<MailleCollection> {
+    let bytes: Uint8Array;
+    try {
+      bytes = await transport.get(MANIFEST_NAME);
+    } catch (error) {
+      throw new Error(
+        `This prefix has no ${MANIFEST_NAME}. The manifest is written last, so a prefix without one ` +
+          `is an interrupted write rather than a collection. (${String(error)})`,
+      );
+    }
+    const manifest = parseMailleManifest(JSON.parse(new TextDecoder().decode(bytes)));
+    return new MailleCollection(manifest, transport);
+  }
+
+  /**
+   * Open with a manifest already in hand.
+   *
+   * The API mirrors `maille.json` onto the store node — the server read it at
+   * registration, so it describes what was actually written — which means the
+   * first thing a layer needs costs no S3 round trip at all. Same validation
+   * either way: the mirrored object goes through `parseMailleManifest`, so a
+   * server that mirrors something this reader cannot read is still refused.
+   */
+  static fromMirroredManifest(raw: unknown, transport: MailleTransport): MailleCollection {
+    return new MailleCollection(parseMailleManifest(raw), transport);
+  }
+
+  /** The spatial index. One whole-file read; the planner needs nothing else. */
+  async loadCellCatalog(): Promise<MailleCellRow[]> {
+    const rows = await this.readCatalog(this.manifest.cells, CELL_CATALOG_COLUMNS);
+    return rows.map(parseCellRow);
+  }
+
+  /**
+   * The identity index, loaded lazily and memoized.
+   *
+   * Deliberately off the first-render path: nothing needs it to draw, it
+   * carries the format's only `list<struct<>>`, and a collection with millions
+   * of objects should not pay for it before something asks about identity.
+   */
+  loadObjectCatalog(): Promise<Map<number, MailleObjectEntry>> {
+    if (!this.objectsPromise) {
+      this.objectsPromise = this.readCatalog(this.manifest.objects, OBJECT_CATALOG_COLUMNS)
+        .then((rows) => new Map(rows.map(parseObjectRow).map((entry) => [entry.objectId, entry])))
+        .catch((error: unknown) => {
+          this.objectsPromise = null;
+          throw error;
+        });
+    }
+    return this.objectsPromise;
+  }
+
+  private async readCatalog(
+    entry: MailleFileEntry,
+    columns: string[],
+  ): Promise<Record<string, unknown>[]> {
+    // Catalogs are read whole — they are small, and every row is wanted — so
+    // the length is taken from the bytes rather than needing the manifest's.
+    const bytes = await this.transport.get(entry.path);
+    const part = new ParquetPart(entry.path, bytes.byteLength, async (_path, start, end) =>
+      bytes.subarray(start, end),
+    );
+    return part.readRows(columns);
+  }
+
+  /**
+   * Fetch and decode one row group's worth of planned cells.
+   *
+   * The unit is the ROW GROUP rather than the cell: a row group is the
+   * smallest thing a reader can fetch, and a plan routinely puts several cells
+   * in one. A null locator (legal, if unusual) degrades to reading the part
+   * whole, which is correct and merely slow — so it warns.
+   */
+  async readFetchGroup(
+    group: MailleFetchGroup,
+    decoder: MeshoptDecoderLike | null,
+  ): Promise<Map<string, ReturnType<typeof decodeGeometryRow>>> {
+    const partIndex = group.part ?? 0;
+    const entry = levelParts(this.manifest, group.level)[partIndex];
+    if (!entry) {
+      throw new Error(
+        `The catalog places cells in level ${group.level} part ${partIndex}, which the manifest does not name.`,
+      );
+    }
+
+    const part = this.openPart(entry);
+    let rows: Record<string, unknown>[];
+    if (group.rowGroup === null) {
+      console.warn(
+        `[maille] ${entry.path} has no row-group locator for these cells; reading the part whole ` +
+          `(${entry.bytes ?? "unknown"} bytes).`,
+      );
+      rows = await part.readRows(GEOMETRY_COLUMNS);
+    } else {
+      rows = await part.readRowGroup(group.rowGroup, GEOMETRY_COLUMNS);
+    }
+
+    const wanted = new Set(group.cells.map((cell) => cell.cell));
+    const decoded = new Map<string, ReturnType<typeof decodeGeometryRow>>();
+    for (const raw of rows) {
+      const row = parseGeometryRow(raw);
+      if (!wanted.has(row.cell)) continue; // a shared row group carries neighbours too
+      const gridBox = cellGridBox(this.manifest.grid, row.level, row.cell);
+      decoded.set(`${row.level}:${row.cell}`, decodeGeometryRow(row, this.manifest.encoding, gridBox, decoder));
+    }
+    return decoded;
+  }
+
+  /**
+   * The open part for a manifest entry.
+   *
+   * Cached so a part's footer is parsed once per session: the per-fetch cost
+   * is then the row group alone, which is the asymmetry the format's row-group
+   * sizing is chosen against.
+   */
+  private openPart(entry: MailleFileEntry): ParquetPart {
+    const existing = this.parts.get(entry.path);
+    if (existing) return existing;
+    if (entry.bytes === null) {
+      throw new Error(
+        `The manifest records no length for ${entry.path}, and a Parquet footer sits at the end of a ` +
+          `file this reader can only range-read. Rewrite the collection with a writer that records ` +
+          `file lengths.`,
+      );
+    }
+    const part = new ParquetPart(entry.path, entry.bytes, this.transport.getRange);
+    this.parts.set(entry.path, part);
+    return part;
+  }
+
+  /** Drop cached footers. The manifest and catalogs stay. */
+  release(): void {
+    this.parts.clear();
+  }
+}

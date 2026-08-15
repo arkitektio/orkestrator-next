@@ -118,10 +118,29 @@ function canonicalQueryString(url: URL): string {
     .join('&')
 }
 
+/**
+ * The canonical URI for SigV4: every path segment RFC-3986 encoded, with `/`
+ * kept as the separator.
+ *
+ * Encoding the SEGMENTS matters, and it is not what a pathname already gives
+ * you. `URL` leaves reserved sub-delimiters — `=`, `+`, `,`, `:`, `@` — literal
+ * in `pathname`, but SigV4 requires every byte outside the unreserved set to be
+ * percent-encoded, and S3 does the same on its side before comparing. A key
+ * containing one therefore signs one way here and another way at the server,
+ * and the request comes back 403 with nothing to say why.
+ *
+ * This went unnoticed for as long as every signed path was a zarr chunk
+ * (`c/0/0/0`, `zarr.json` — unreserved throughout). A maille prefix is
+ * hive-partitioned, so its very first geometry read is `level=0/part-….parquet`.
+ *
+ * Segments are decoded before re-encoding so an already-escaped pathname is not
+ * escaped twice.
+ */
 function canonicalUri(url: URL): string {
-  return url.pathname.replace(/[!'()*]/g, (char) =>
-    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-  )
+  return url.pathname
+    .split('/')
+    .map((segment) => encodeRfc3986(decodeURIComponent(segment)))
+    .join('/')
 }
 
 function normalizeHeaderValue(value: string): string {

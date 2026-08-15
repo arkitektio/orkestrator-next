@@ -1,11 +1,7 @@
 import { type AbsolutePath } from "@zarrita/storage";
 import { LRUCache } from "../caches/inMemoryLru";
-import {
-  fetchS3Path,
-  isExpiredS3FetchConfig,
-  isStaleS3FetchConfig,
-  type S3FetchConfig,
-} from "@/lib/zarr/runner/s3-request";
+import { fetchS3Path, type S3FetchConfig } from "@/lib/zarr/runner/s3-request";
+import { CredentialRotation, type S3FetchConfigRefresher } from "./credentialRotation";
 import type { ZarrStore } from "./types";
 
 
@@ -67,20 +63,19 @@ const defaultMetadataKeys: AbsolutePath[] = ["/zarr.json"];
  * Mints a fresh config for THIS store — same bucket/key, new credentials. The
  * store never talks to the credential service itself: it is in `lib/`, and who
  * issues grants is a module concern (see `mikro-next/lib/zarr/access.ts`).
+ *
+ * Defined with the rotation logic it drives; re-exported here because this is
+ * where callers have always imported it from.
  */
-export type S3FetchConfigRefresher = (
-  options: { forceRefresh?: boolean },
-) => Promise<S3FetchConfig>;
+export type { S3FetchConfigRefresher };
 
 export class ConfiguredS3Store implements ZarrStore {
   url: string | URL;
   private cache: LRUCache<string, ArrayBuffer>;
   private lockManager: AsyncLockManager;
   private metadataPromise: Promise<void>;
-  private workerFetchConfig: S3FetchConfig;
-  private refresher: S3FetchConfigRefresher | null;
-  /** In-flight rotation, so a burst of stale requests costs one refresh. */
-  private refreshInFlight: Promise<S3FetchConfig> | null = null;
+  /** Credential lifecycle: freshness, single-flight rotation, 403 recovery. */
+  private rotation: CredentialRotation;
 
   constructor(
     workerFetchConfig: S3FetchConfig,
@@ -97,8 +92,13 @@ export class ConfiguredS3Store implements ZarrStore {
     this.url = workerFetchConfig.baseUrl;
     this.cache = global_cache;
     this.lockManager = new AsyncLockManager();
-    this.workerFetchConfig = workerFetchConfig;
-    this.refresher = options.refreshConfig ?? null;
+    this.rotation = new CredentialRotation(
+      workerFetchConfig,
+      options.refreshConfig ?? null,
+      // The bucket/key are unchanged by a re-credentialing, but the grant
+      // decides the bucket, so keep `url` honest either way.
+      (config) => { this.url = config.baseUrl; },
+    );
     this.metadataPromise = options.preloadMetadata === false
       ? Promise.resolve()
       : this.primeMetadata();
@@ -109,7 +109,7 @@ export class ConfiguredS3Store implements ZarrStore {
   }
 
   getWorkerFetchConfig(): S3FetchConfig {
-    return this.workerFetchConfig;
+    return this.rotation.current();
   }
 
   /**
@@ -123,8 +123,7 @@ export class ConfiguredS3Store implements ZarrStore {
    * `await` it pay nothing but a microtask.
    */
   ensureFreshWorkerFetchConfig(): S3FetchConfig | Promise<S3FetchConfig> {
-    if (!this.needsRotation()) return this.workerFetchConfig;
-    return this.rotateConfig({});
+    return this.rotation.ensureFresh();
   }
 
   async get(key: AbsolutePath, options: RequestInit = {}): Promise<Uint8Array | undefined> {
@@ -137,51 +136,14 @@ export class ConfiguredS3Store implements ZarrStore {
     this.cache.clear();
   }
 
-  /** Stale (within the rotation skew) and we have a way to do something about it. */
-  private needsRotation(): boolean {
-    return this.refresher !== null && isStaleS3FetchConfig(this.workerFetchConfig);
-  }
-
-  /**
-   * Replace this store's credentials, once. Callers arriving during a rotation
-   * await the same one rather than starting their own — with the shared
-   * provider behind it, a whole scene going stale at the same instant is a
-   * single credentials round-trip.
-   */
-  private rotateConfig(options: { forceRefresh?: boolean }): Promise<S3FetchConfig> {
-    if (this.refreshInFlight) return this.refreshInFlight;
-    const refresher = this.refresher;
-    if (!refresher) return Promise.resolve(this.workerFetchConfig);
-
-    const rotation = refresher(options)
-      .then((config) => {
-        this.workerFetchConfig = config;
-        // The bucket/key are unchanged by a re-credentialing, but the grant
-        // decides the bucket, so keep `url` honest either way.
-        this.url = config.baseUrl;
-        return config;
-      })
-      .finally(() => {
-        this.refreshInFlight = null;
-      });
-
-    this.refreshInFlight = rotation;
-    return rotation;
-  }
-
   private async getInternal(key: AbsolutePath, options: RequestInit = {}): Promise<Uint8Array | undefined> {
     // Hot path: one Date.now() compare. Everything below only runs when the
     // credentials are actually within the rotation window.
-    if (this.needsRotation()) {
-      await this.rotateConfig({});
-    } else if (isExpiredS3FetchConfig(this.workerFetchConfig)) {
-      // No refresher wired — nothing to do but say so plainly.
-      throw new Error(`S3 credentials for ${this.workerFetchConfig.storeId} have expired`);
-    }
+    await this.rotation.beforeRequest();
 
     // Content-addressed by store and key: credentials are not part of the
     // identity, so a rotation never invalidates a byte of it.
-    const cacheKey = `${this.workerFetchConfig.storeId}:${key}`;
+    const cacheKey = `${this.rotation.current().storeId}:${key}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
       return new Uint8Array(cached);
@@ -193,15 +155,15 @@ export class ConfiguredS3Store implements ZarrStore {
         return new Uint8Array(cachedAfterLock);
       }
 
-      let response = await fetchS3Path(this.workerFetchConfig, key, options);
+      let response = await fetchS3Path(this.rotation.current(), key, options);
 
       // The skew missed: S3 rejected credentials we still believed in (clock
       // drift, or a grant revoked early). Force past the cached grant — it is
       // by definition the one that just failed — and try once more. A second
       // 403 falls through to handle_response as a real error.
-      if (response.status === 403 && this.refresher) {
-        await this.rotateConfig({ forceRefresh: true });
-        response = await fetchS3Path(this.workerFetchConfig, key, options);
+      if (response.status === 403 && this.rotation.canRetryForbidden()) {
+        await this.rotation.rotate({ forceRefresh: true });
+        response = await fetchS3Path(this.rotation.current(), key, options);
       }
 
       const result = await handle_response(response);

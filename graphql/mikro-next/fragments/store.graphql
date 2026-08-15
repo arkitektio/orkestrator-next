@@ -32,3 +32,20 @@ fragment MediaStore on MediaStore {
   bucket
 }
 
+
+# A maille store is a PREFIX, not an object: one tree holding `maille.json`,
+# both catalogs and every octree level. The server reads the manifest at
+# registration and mirrors it here, so a client has the grid, the encoding and
+# every file's length before it touches S3.
+fragment MailleStore on MailleStore {
+  id
+  key
+  bucket
+  path
+  specVersion
+  grid
+  encoding
+  axes
+  counts
+  files
+}

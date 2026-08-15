@@ -1,7 +1,7 @@
 /**
  * Morton (Z-order) cell addressing for mesh-collection octrees.
  *
- * CONTRACT (client side of the MeshCollection spec): a cell's `cell` column is
+ * CONTRACT (the client half of `maille/octree.py`): a cell's `cell` column is
  * the Morton interleave of its (x, y, z) cell-grid coordinates ON ITS OWN
  * LEVEL's grid, with x in the least-significant bit position:
  * bit 0 = x₀, bit 1 = y₀, bit 2 = z₀, bit 3 = x₁, …
@@ -9,7 +9,8 @@
  * Implemented with arithmetic (not 32-bit bitwise ops) so codes stay exact up
  * to 17 bits per axis — 2^17 cells/axis ≈ 8.6M voxels/axis at cellSize 64,
  * far beyond any real label grid, while 3×17 = 51 bits still fits a double
- * exactly (DuckDB-wasm delivers BIGINT columns as doubles here).
+ * exactly. The writer enforces the same 17-bit cap, so a code that arrives as
+ * a Parquet INT64 always survives the `Number()` conversion intact.
  */
 
 export const MAX_MORTON_BITS_PER_AXIS = 17;

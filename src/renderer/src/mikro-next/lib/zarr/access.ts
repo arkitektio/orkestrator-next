@@ -3,20 +3,49 @@ import {
   type S3FetchConfig,
 } from "@/lib/zarr/runner/s3-request";
 import {
+  RequestGeneralMailleAccessDocument,
+  RequestGeneralMailleAccessMutation,
   RequestGeneralZarrAccessDocument,
   RequestGeneralZarrAccessMutation,
 } from "@/mikro-next/api/graphql";
 import type { GeneralZarrAccessGrant, MikroClient } from "@/lib/zarr/store/types";
 
 /**
- * The one general-zarr-credentials round-trip, shared by every consumer that
- * opens datalayer stores imperatively (scene store creation, the attribute
- * pipeline's foreign-array opens). Imperative `client.mutate` — no hook
- * mounts, so the Guard.Mikro obligation stays on the calling host.
+ * Which datalayer credential a caller wants.
+ *
+ * A general grant is bucket-wide, so one covers every store of its kind — but
+ * the KINDS are separate mutations issuing separate credentials, and a maille
+ * prefix cannot be read with a zarr grant. Hence a kind rather than a single
+ * cache: a second kind must not clobber the first.
+ */
+export type AccessKind = "zarr" | "maille";
+
+/**
+ * The one general-credentials round-trip per kind, shared by every consumer
+ * that opens datalayer stores imperatively (scene store creation, the
+ * attribute pipeline's foreign-array opens, maille collections). Imperative
+ * `client.mutate` — no hook mounts, so the Guard.Mikro obligation stays on the
+ * calling host.
  */
 export async function requestGeneralAccess(
   client: MikroClient,
+  kind: AccessKind = "zarr",
 ): Promise<GeneralZarrAccessGrant> {
+  if (kind === "maille") {
+    const access = (await client.mutate({
+      mutation: RequestGeneralMailleAccessDocument,
+      variables: { input: {} },
+    })) as { data?: RequestGeneralMailleAccessMutation };
+
+    const credentials = access.data?.requestGeneralMailleAccess;
+    if (!credentials) {
+      throw new Error("Failed to obtain general maille access credentials");
+    }
+    // Same shape as the zarr grant — bucket-wide credentials either way — so
+    // `buildS3FetchConfig` consumes both without knowing which it was handed.
+    return credentials;
+  }
+
   const access = (await client.mutate({
     mutation: RequestGeneralZarrAccessDocument,
     variables: { input: {} },
@@ -69,18 +98,26 @@ export function buildS3FetchConfig(
 type ProviderState = { current: DatedGrant | null; inFlight: Promise<DatedGrant> | null };
 
 /**
- * Per-client credential cache. WeakMap so a torn-down Apollo client takes its
- * grant with it; module-level so every store in the app shares ONE grant and
- * one refresh — a scene with eight stores hitting expiry at the same instant
- * issues a single mutation, not eight.
+ * Per-client, per-kind credential cache. WeakMap so a torn-down Apollo client
+ * takes its grants with it; module-level so every store of a kind shares ONE
+ * grant and one refresh — a scene with eight stores hitting expiry at the same
+ * instant issues a single mutation, not eight.
+ *
+ * Keyed by kind as well as client so a maille grant and a zarr grant coexist
+ * instead of evicting each other.
  */
-const providers = new WeakMap<MikroClient, ProviderState>();
+const providers = new WeakMap<MikroClient, Map<AccessKind, ProviderState>>();
 
-const stateFor = (client: MikroClient): ProviderState => {
-  let state = providers.get(client);
+const stateFor = (client: MikroClient, kind: AccessKind): ProviderState => {
+  let byKind = providers.get(client);
+  if (!byKind) {
+    byKind = new Map();
+    providers.set(client, byKind);
+  }
+  let state = byKind.get(kind);
   if (!state) {
     state = { current: null, inFlight: null };
-    providers.set(client, state);
+    byKind.set(kind, state);
   }
   return state;
 };
@@ -98,16 +135,19 @@ const stateFor = (client: MikroClient): ProviderState => {
  */
 export function getGeneralAccess(
   client: MikroClient,
-  options: { forceRefresh?: boolean } = {},
+  options: { forceRefresh?: boolean; kind?: AccessKind } = {},
 ): Promise<DatedGrant> {
-  const state = stateFor(client);
+  // Defaulting to "zarr" keeps every existing call site — and its tests —
+  // reading exactly as before.
+  const kind = options.kind ?? "zarr";
+  const state = stateFor(client, kind);
 
   if (!options.forceRefresh && isGrantUsable(state.current, Date.now())) {
     return Promise.resolve(state.current!);
   }
   if (state.inFlight) return state.inFlight;
 
-  const request = requestGeneralAccess(client)
+  const request = requestGeneralAccess(client, kind)
     .then((grant) => {
       const dated = { grant, expiresAt: Date.now() + grant.expiresIn * 1000 };
       state.current = dated;

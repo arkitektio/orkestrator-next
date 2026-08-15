@@ -58,6 +58,8 @@
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.3",
     "electron-store": "^11.0.0",
+    "fzstd": "^0.1.1",
+    "hyparquet": "^1.28.2",
     "just-throttle": "^4.2.0",
     "nuqs": "^2.8.1",
     "reselect": "^5.1.1",

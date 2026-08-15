@@ -1,0 +1,351 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import * as THREE from "three";
+import { describe, expect, it } from "vitest";
+
+import {
+  MailleFormatError,
+  levelParts,
+  parseMailleManifest,
+  rootLevel,
+} from "./mailleManifest";
+import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent } from "./mailleGrid";
+import { encodeMorton3, decodeMorton3, meshCellKey } from "./mortonCell";
+import { buildMailleCellIndex, maxAxisScale, parseCellRow, type MailleCellRow } from "./mailleCatalogs";
+import { groupByRowGroup, planMailleCells, screenError } from "./maillePlanner";
+import { objectRange, positionStride, indexStride } from "./mailleDecode";
+import { MailleCollection, type MailleTransport } from "./mailleCollection";
+import { LruByteCache } from "./lruByteCache";
+
+const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
+
+/** A transport over a fixture directory — the same seam S3 plugs into. */
+const fixtureTransport = (variant: string): MailleTransport => {
+  const root = join(FIXTURES, variant);
+  return {
+    async get(path) {
+      return new Uint8Array(await readFile(join(root, path)));
+    },
+    async getRange(path, start, end) {
+      const bytes = new Uint8Array(await readFile(join(root, path)));
+      return bytes.subarray(start, end);
+    },
+  };
+};
+
+const RAW_MANIFEST = JSON.parse(
+  await readFile(join(FIXTURES, "raw", "maille.json"), "utf8"),
+) as Record<string, unknown>;
+
+// --------------------------------------------------------------------------
+describe("mailleManifest", () => {
+  it("parses the fixture the real writer produced", () => {
+    const manifest = parseMailleManifest(RAW_MANIFEST);
+    expect(manifest.specVersion).toBeTruthy();
+    expect(manifest.grid.cellSize).toEqual([64, 64, 32]);
+    expect(manifest.grid.levels).toBe(3);
+    expect(manifest.encoding.positions).toBe("UINT16_QUANTIZED_PER_CELL");
+    expect(manifest.encoding.codec).toBe("NONE");
+    expect(manifest.cells.path).toBe("catalog/cells.parquet");
+    expect(manifest.cells.bytes).toBeGreaterThan(0);
+    expect(levelParts(manifest, 0)[0].rowGroups).toBeGreaterThan(1);
+    expect(rootLevel(manifest)).toBe(2);
+  });
+
+  it("records the spec version without gating on it", () => {
+    // The label is in flux between the writer and the deployment while both
+    // describe identical trees, so refusing on it would reject readable data.
+    // `encoding` is the check that actually protects decoding.
+    for (const version of ["1", "4", "9"]) {
+      expect(parseMailleManifest({ ...RAW_MANIFEST, specVersion: version }).specVersion).toBe(version);
+    }
+  });
+
+  it("refuses an encoding missing a key instead of defaulting it", () => {
+    const { codec: _dropped, ...rest } = RAW_MANIFEST.encoding as Record<string, unknown>;
+    expect(() => parseMailleManifest({ ...RAW_MANIFEST, encoding: rest })).toThrow(/omits codec/);
+  });
+
+  it("refuses MESHOPT paired with ZSTD, which is undecodable", () => {
+    const encoding = { ...(RAW_MANIFEST.encoding as object), codec: "MESHOPT", compression: "ZSTD" };
+    expect(() => parseMailleManifest({ ...RAW_MANIFEST, encoding })).toThrow(/cannot be decoded/);
+  });
+
+  it("refuses a manifest whose files name no levels, because we cannot list a prefix", () => {
+    const files = { ...(RAW_MANIFEST.files as object), levels: undefined };
+    expect(() => parseMailleManifest({ ...RAW_MANIFEST, files })).toThrow(/cannot list/);
+  });
+
+  it("accepts a bare path string as a file entry", () => {
+    const files = { ...(RAW_MANIFEST.files as Record<string, unknown>), cells: "catalog/cells.parquet" };
+    const manifest = parseMailleManifest({ ...RAW_MANIFEST, files });
+    expect(manifest.cells).toEqual({ path: "catalog/cells.parquet", bytes: null, rowGroups: null });
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("morton cells and the octree", () => {
+  it("round-trips coordinates", () => {
+    for (const triple of [[0, 0, 0], [1, 2, 3], [37, 12, 99]] as const) {
+      expect(decodeMorton3(encodeMorton3(...triple))).toEqual([...triple]);
+    }
+  });
+
+  it("interleaves with component 0 least significant", () => {
+    expect(encodeMorton3(1, 0, 0)).toBe(1);
+    expect(encodeMorton3(0, 1, 0)).toBe(2);
+    expect(encodeMorton3(0, 0, 1)).toBe(4);
+  });
+
+  it("children of c are exactly 8c+octant, so descent needs no decode", () => {
+    // The identity the whole child_mask descent rests on.
+    const [i, j, k] = [5, 3, 9];
+    const parent = encodeMorton3(i, j, k);
+    for (let octant = 0; octant < 8; octant++) {
+      const child = encodeMorton3(2 * i + (octant & 1), 2 * j + ((octant >> 1) & 1), 2 * k + ((octant >> 2) & 1));
+      expect(child).toBe(parent * 8 + octant);
+    }
+    expect(mortonChildren(parent)).toEqual([0, 1, 2, 3, 4, 5, 6, 7].map((o) => parent * 8 + o));
+    expect(mortonParent(parent * 8 + 5)).toBe(parent);
+  });
+
+  it("child_mask names only the children that carry geometry", () => {
+    expect(maskedChildren(3, 0)).toEqual([]);
+    expect(maskedChildren(3, 0b1000_0001)).toEqual([24, 31]);
+    expect(maskedChildren(0, 0b1111_1111)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it("a level-L cell spans cellSize·2^L voxels", () => {
+    const grid = { cellSize: [64, 64, 32] as [number, number, number], levels: 3, sortKey: "MORTON" as const };
+    expect(cellExtent(grid, 0)).toEqual([64, 64, 32]);
+    expect(cellExtent(grid, 2)).toEqual([256, 256, 128]);
+    // cell 1 is (1,0,0) on its level's grid
+    expect(cellGridBox(grid, 0, 1)).toEqual({ min: [64, 0, 0], max: [128, 64, 32] });
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("mailleDecode arithmetic", () => {
+  it("uses stride 6 for raw blobs and 8 for meshopt", () => {
+    // The single most consequential number in the port: maille writes three
+    // bare uint16 (6 B), and only pads to 8 under meshopt's stride rule.
+    expect(positionStride("NONE")).toBe(6);
+    expect(positionStride("MESHOPT")).toBe(8);
+    expect(indexStride("UINT32")).toBe(4);
+    expect(indexStride("UINT16")).toBe(2);
+  });
+
+  it("treats offsets as START offsets of length n, not n+1 fenceposts", () => {
+    // maille writes [0, 17, 32] for three objects in a 48-vertex cell — the
+    // last object's end is the total, not a further entry.
+    const offsets = [0, 17, 32];
+    expect(objectRange(offsets, 0, 48)).toEqual({ start: 0, end: 17 });
+    expect(objectRange(offsets, 1, 48)).toEqual({ start: 17, end: 32 });
+    expect(objectRange(offsets, 2, 48)).toEqual({ start: 32, end: 48 });
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("world-space cell index", () => {
+  const manifest = parseMailleManifest(RAW_MANIFEST);
+  const row = (over: Partial<MailleCellRow>): MailleCellRow => ({
+    level: 2, cell: 0, vertexCount: 10, indexCount: 30,
+    bboxMin: [0, 0, 0], bboxMax: [10, 10, 10],
+    lodError: 2, objectCount: 1, childMask: 0,
+    part: 0, rowGroup: 0, blobBytes: 100, ...over,
+  });
+
+  it("takes the max basis length, so anisotropy can only over-refine", () => {
+    const matrix = new THREE.Matrix4().makeScale(1, 1, 5);
+    expect(maxAxisScale(matrix)).toBe(5);
+  });
+
+  it("transforms boxes and scales lodError into world units", () => {
+    const matrix = new THREE.Matrix4().makeScale(1, 1, 5);
+    const index = buildMailleCellIndex([row({})], manifest, matrix);
+    expect(index.cells[0].worldMax).toEqual([10, 10, 50]);
+    // A voxel error of 2 is worth 10 world units along the tall axis.
+    expect(index.cells[0].worldLodError).toBe(10);
+  });
+
+  it("falls back to the coarsest level present when the declared root is empty", () => {
+    const index = buildMailleCellIndex([row({ level: 1, cell: 3 })], manifest, new THREE.Matrix4());
+    expect(index.roots.map((entry) => entry.level)).toEqual([1]);
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("maillePlanner", () => {
+  const manifest = parseMailleManifest(RAW_MANIFEST);
+  const identity = new THREE.Matrix4();
+
+  /** A two-level pyramid: one root with two children that carry geometry. */
+  const rows: MailleCellRow[] = [
+    { level: 1, cell: 0, vertexCount: 40, indexCount: 120, bboxMin: [0, 0, 0], bboxMax: [128, 128, 64],
+      lodError: 8, objectCount: 2, childMask: 0b0000_0011, part: 0, rowGroup: 0, blobBytes: 400 },
+    { level: 0, cell: 0, vertexCount: 30, indexCount: 90, bboxMin: [0, 0, 0], bboxMax: [64, 64, 32],
+      lodError: 0.1, objectCount: 1, childMask: 0, part: 0, rowGroup: 0, blobBytes: 300 },
+    { level: 0, cell: 1, vertexCount: 30, indexCount: 90, bboxMin: [64, 0, 0], bboxMax: [128, 64, 32],
+      lodError: 0.1, objectCount: 1, childMask: 0, part: 0, rowGroup: 1, blobBytes: 300 },
+  ];
+  const index = buildMailleCellIndex(rows, manifest, identity);
+  const base = {
+    index, frustum: null, focalPixels: 540, pixelBudget: 1, maxCells: 64,
+  } as const;
+
+  it("keeps a far region coarse and refines a near one", () => {
+    const far = planMailleCells({ ...base, cameraPosition: [64, 64, 100_000] });
+    expect(far.cells.map((c) => c.level)).toEqual([1]);
+
+    const near = planMailleCells({ ...base, cameraPosition: [64, 64, 100] });
+    expect(near.cells.map((c) => c.level).sort()).toEqual([0, 0]);
+  });
+
+  it("returns Infinity for a camera inside the box, so it always refines", () => {
+    const root = index.byKey.get("1:0")!;
+    expect(screenError(root, [10, 10, 10], 540)).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("degrades to a coarser cell rather than dropping geometry when out of budget", () => {
+    const plan = planMailleCells({ ...base, cameraPosition: [64, 64, 100], maxCells: 1 });
+    // The region is still covered — just coarsely. A dropped cell would be a
+    // hole in a surface, which reads as corruption rather than a lower setting.
+    expect(plan.cells).toHaveLength(1);
+    expect(plan.cells[0].level).toBe(1);
+    expect(plan.coarsenedRegions).toBe(1);
+  });
+
+  it("keeps a coarse cell where the pyramid has no finer geometry", () => {
+    const sparse = buildMailleCellIndex([{ ...rows[0], childMask: 0 }], manifest, identity);
+    const plan = planMailleCells({ ...base, index: sparse, cameraPosition: [64, 64, 100] });
+    expect(plan.cells.map((c) => c.key)).toEqual(["1:0"]);
+  });
+
+  it("culls against the exact geometry box, not the cell address box", () => {
+    const away = new THREE.Frustum().setFromProjectionMatrix(
+      new THREE.Matrix4().makeTranslation(1e6, 1e6, 1e6),
+    );
+    expect(planMailleCells({ ...base, frustum: away, cameraPosition: [0, 0, 0] }).cells).toHaveLength(0);
+  });
+
+  it("holds a level inside the hysteresis band so a settled camera cannot flap", () => {
+    // Camera placed so the root sits just inside the refine threshold.
+    const root = index.byKey.get("1:0")!;
+    const eye: [number, number, number] = [64, 64, 64 + root.worldLodError * 540];
+    const wasDrawn = planMailleCells({ ...base, cameraPosition: eye, previousKeys: new Set(["1:0"]) });
+    expect(wasDrawn.cells.map((c) => c.key)).toEqual(["1:0"]);
+  });
+
+  it("groups planned cells by the row group that holds them", () => {
+    const groups = groupByRowGroup([index.byKey.get("0:0")!, index.byKey.get("0:1")!]);
+    expect(groups).toHaveLength(2);
+    expect(groups.map((g) => g.rowGroup)).toEqual([0, 1]);
+
+    const shared = groupByRowGroup([index.byKey.get("0:0")!, index.byKey.get("1:0")!]);
+    expect(shared).toHaveLength(2); // different levels never share a row group
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("MailleCollection against fixtures written by maille itself", () => {
+  for (const variant of ["raw", "zstd", "meshopt"] as const) {
+    it(`opens, plans and decodes the ${variant} collection`, async () => {
+      const collection = await MailleCollection.open(fixtureTransport(variant));
+      expect(collection.manifest.specVersion).toBeTruthy();
+
+      const rows = await collection.loadCellCatalog();
+      expect(rows.length).toBeGreaterThan(0);
+      const index = buildMailleCellIndex(rows, collection.manifest, new THREE.Matrix4());
+
+      const plan = planMailleCells({
+        index, frustum: null, cameraPosition: [100, 100, 200],
+        focalPixels: 540, pixelBudget: 1, maxCells: 512,
+      });
+      expect(plan.cells.length).toBeGreaterThan(0);
+
+      // meshopt blobs need a decoder; the raw paths must not.
+      const decoder =
+        collection.manifest.encoding.codec === "MESHOPT"
+          ? (await import("three/examples/jsm/libs/meshopt_decoder.module.js")).MeshoptDecoder
+          : null;
+      if (decoder) await (decoder as unknown as { ready: Promise<void> }).ready;
+
+      // Decode the WHOLE plan, not one group: the locator only earns its
+      // keep when several row groups are involved, and the fixtures are
+      // written with a small row-group budget precisely to force that.
+      const groups = groupByRowGroup(plan.cells);
+      expect(groups.length).toBeGreaterThan(1);
+      const decoded = new Map<string, Awaited<ReturnType<typeof collection.readFetchGroup>> extends Map<string, infer V> ? V : never>();
+      for (const group of groups) {
+        for (const [key, cell] of await collection.readFetchGroup(group, decoder)) decoded.set(key, cell);
+      }
+      // Every planned cell must come back — a missing one is a hole.
+      expect(decoded.size).toBe(plan.cells.length);
+
+      for (const [key, cell] of decoded) {
+        const entry = index.byKey.get(key)!;
+        expect(cell.positions).toHaveLength(entry.vertexCount * 3);
+        expect(cell.indices).toHaveLength(entry.indexCount);
+        expect(cell.objectOrdinals).toHaveLength(entry.vertexCount);
+        // Every vertex must land inside the exact bounds the catalog declares,
+        // give or take one quantization step of the cell's grid box.
+        const step = cellGridBox(collection.manifest.grid, entry.level, entry.cell);
+        const slack = (step.max[0] - step.min[0]) / 65535 + 1e-6;
+        for (let v = 0; v < entry.vertexCount; v++) {
+          for (const axis of [0, 1, 2] as const) {
+            expect(cell.positions[v * 3 + axis]).toBeGreaterThanOrEqual(entry.bboxMin[axis] - slack);
+            expect(cell.positions[v * 3 + axis]).toBeLessThanOrEqual(entry.bboxMax[axis] + slack);
+          }
+        }
+        // Indices address the cell's concatenated vertex array.
+        for (const i of cell.indices) expect(i).toBeLessThan(entry.vertexCount);
+      }
+    });
+  }
+
+  it("reads the object catalog's list<struct<>> inverted index", async () => {
+    const collection = await MailleCollection.open(fixtureTransport("raw"));
+    const objects = await collection.loadObjectCatalog();
+    // The fixture's sparse instance ids, written through unchanged.
+    expect([...objects.keys()].sort((a, b) => a - b)).toEqual([3, 7, 11, 42, 108, 4711]);
+
+    const ordinals = [...objects.values()].map((o) => o.ordinal).sort((a, b) => a - b);
+    expect(ordinals).toEqual([0, 1, 2, 3, 4, 5]); // dense, 0-based — the LUT index
+
+    const one = objects.get(4711)!;
+    expect(one.cells.length).toBeGreaterThan(0);
+    for (const ref of one.cells) {
+      expect(Number.isInteger(ref.level)).toBe(true);
+      expect(Number.isInteger(ref.cell)).toBe(true);
+    }
+  });
+
+  it("reports a prefix with no manifest as an interrupted write", async () => {
+    const empty: MailleTransport = {
+      get: async () => { throw new Error("404"); },
+      getRange: async () => new Uint8Array(),
+    };
+    await expect(MailleCollection.open(empty)).rejects.toThrow(/interrupted write/);
+  });
+});
+
+// --------------------------------------------------------------------------
+describe("LruByteCache", () => {
+  it("evicts least-recently-used unprotected entries over budget", () => {
+    const evicted: string[] = [];
+    const cache = new LruByteCache<string>(100, (key) => evicted.push(key));
+    cache.set("a", "a", 60);
+    cache.set("b", "b", 60);
+    expect(evicted).toEqual(["a"]);
+  });
+
+  it("never evicts protected keys", () => {
+    const evicted: string[] = [];
+    const cache = new LruByteCache<string>(100, (key) => evicted.push(key));
+    cache.set("a", "a", 60);
+    cache.protect(["a"]);
+    cache.set("b", "b", 60);
+    expect(evicted).toEqual([]);
+  });
+});

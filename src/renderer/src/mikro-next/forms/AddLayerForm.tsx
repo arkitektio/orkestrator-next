@@ -325,12 +325,19 @@ const AddLayerFormInner = (props: { scene: string }) => {
   // The server returns only sources placeable into this scene: a lens whose
   // space (or a table's coordinate system) has a traversable path to the
   // scene's world. No client-side coordinate-graph walk is needed.
+  //
+  // The lens filter asks for a SPACE, not a scene: every scene over one world
+  // offers the same candidates, so a scene-shaped argument would ask for more
+  // than the answer depends on. Hence the wait for the scene — its world
+  // coordinate system is the actual question.
+  const worldSpace = sceneData?.scene.worldCoordinateSystem?.id ?? null;
   const { data: lensData, loading: lensesLoading } =
     useAddLayerLensCandidatesQuery({
       variables: {
-        filters: { placeableIn: props.scene },
+        filters: { placeableIn: { space: worldSpace ?? "" } },
         pagination: { limit: 50 },
       },
+      skip: !worldSpace,
     });
   const { data: tableData, loading: tablesLoading } =
     useAddLayerTableDatasetCandidatesQuery({

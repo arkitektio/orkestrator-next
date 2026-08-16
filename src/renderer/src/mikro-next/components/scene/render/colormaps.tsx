@@ -404,6 +404,54 @@ export const resolveBaseColorRgb = (
 const clampRgb = (color: number[]) =>
   color.map((channel) => clamp01(channel)) as [number, number, number];
 
+/**
+ * One stop of a custom positioned gradient — RGBA 0-255, the model's color
+ * convention (`core/renderGraph.ts` `TransferStop` is structurally this).
+ */
+export type GradientStop = { position: number; color: readonly number[] };
+
+/**
+ * Sample a POSITIONED stop gradient at normalized `t` (assumes stops sorted
+ * by position; clamped at both ends). Returns 0-1 rgb. The evenly-spaced
+ * `interpolateStops` below stays for the named-map tables.
+ */
+export const sampleStopsRgb = (
+  stops: readonly GradientStop[],
+  t: number,
+): [number, number, number] => {
+  const rgb01 = (stop: GradientStop): [number, number, number] => [
+    clamp01((stop.color[0] ?? 0) / 255),
+    clamp01((stop.color[1] ?? 0) / 255),
+    clamp01((stop.color[2] ?? 0) / 255),
+  ];
+  if (stops.length === 0) return [0, 0, 0];
+  const x = clamp01(t);
+  if (x <= stops[0].position) return rgb01(stops[0]);
+  const last = stops[stops.length - 1];
+  if (x >= last.position) return rgb01(last);
+  for (let i = 1; i < stops.length; i++) {
+    if (x <= stops[i].position) {
+      const a = rgb01(stops[i - 1]);
+      const b = rgb01(stops[i]);
+      const span = stops[i].position - stops[i - 1].position;
+      const f = span > 0 ? (x - stops[i - 1].position) / span : 0;
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+    }
+  }
+  return rgb01(last);
+};
+
+/** CSS preview of a positioned gradient — the stops' own percents, exact. */
+export const stopsGradientCSS = (stops: readonly GradientStop[]): string => {
+  const entries = stops.map(
+    (stop) =>
+      `rgb(${Math.round(stop.color[0] ?? 0)},${Math.round(stop.color[1] ?? 0)},${Math.round(
+        stop.color[2] ?? 0,
+      )}) ${(clamp01(stop.position) * 100).toFixed(1)}%`,
+  );
+  return `linear-gradient(to right, ${entries.join(", ")})`;
+};
+
 const interpolateStops = (
   stops: ReadonlyArray<readonly [number, number, number]>,
   t: number,
@@ -671,7 +719,14 @@ const atlasRowCache = new Map<string, Uint8Array>();
 const ATLAS_ROW_CACHE_LIMIT = 256;
 
 export const buildColormapAtlas = (
-  channels: { colormap: ColorMap | null | undefined; color?: number[] | null }[],
+  channels: {
+    colormap: ColorMap | null | undefined;
+    color?: number[] | null;
+    /** Custom positioned gradient (sorted, ≥2 entries): takes precedence over
+     * `colormap`/`color`, baked with the SAME ramp response convention as a
+     * named colormap row (see below) — the shader never knows the difference. */
+    stops?: readonly GradientStop[] | null;
+  }[],
 ): THREE.DataTexture => {
   const width = 256;
   const height = Math.max(1, channels.length);
@@ -679,7 +734,11 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
-    const rowKey = `${channel?.colormap ?? ""}|${channel?.color?.join(",") ?? ""}`;
+    const customStops = channel?.stops && channel.stops.length >= 2 ? channel.stops : null;
+    const stopsKey = customStops
+      ? customStops.map((s) => `${s.position}:${s.color.join(",")}`).join(";")
+      : "";
+    const rowKey = `${channel?.colormap ?? ""}|${channel?.color?.join(",") ?? ""}|${stopsKey}`;
     const cached = atlasRowCache.get(rowKey);
     if (cached) {
       data.set(cached, row * width * 4);
@@ -705,7 +764,7 @@ export const buildColormapAtlas = (
     // explicit color (legacy per-channel tint without a named map): those
     // have always rendered linearly via the compositor's single multiply.
     const tintColor =
-      channel?.colormap == null && channel?.color ? channel.color : null;
+      channel?.colormap == null && channel?.color && !customStops ? channel.color : null;
 
     const rowData = new Uint8Array(width * 4);
     for (let x = 0; x < width; x++) {
@@ -713,7 +772,11 @@ export const buildColormapAtlas = (
       let r: number;
       let g: number;
       let b: number;
-      if (tintColor) {
+      if (customStops) {
+        // A custom gradient IS a colormap: bake its ramp like a named map's
+        // (intensity² response via the compositor's extra multiply).
+        [r, g, b] = sampleStopsRgb(customStops, t);
+      } else if (tintColor) {
         // Constant channel color; the shader scales it by the channel's
         // normalized intensity (so 0 -> black, 1 -> full color). A ramp here
         // would double-count intensity and crush the image.

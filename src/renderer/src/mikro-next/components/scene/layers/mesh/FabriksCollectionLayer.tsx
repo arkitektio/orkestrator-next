@@ -5,8 +5,10 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 
+import { sceneZExtent } from "../../core/worldTransform";
+import { useModeStore } from "../../store/modeStore";
 import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
-import { useViewerStoreApi } from "../../store/viewerStore";
+import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
 import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
@@ -180,14 +182,22 @@ const FabriksCollectionGroup = ({
       const frustum = new THREE.Frustum().setFromProjectionMatrix(viewProjectionMatrix);
       let cameraPosition: [number, number, number] | null = null;
       let focalPixels = 0;
+      let errorBudget: number | undefined;
       if (cameraPose?.isPerspective && cameraPose.fovY > 0) {
         cameraPosition = [...cameraPose.position] as [number, number, number];
         // An object of world size s at distance d covers s·focalPixels/d px.
         focalPixels = (0.5 * viewportSize.height) / Math.tan(0.5 * cameraPose.fovY);
+      } else {
+        // Ortho (2D): distance-independent LOD via the planner's camera-free
+        // branch — allow a world-space error worth `pixelBudget` on-screen
+        // pixels at the current zoom. Without this an ortho plan refines
+        // everything to level 0.
+        errorBudget =
+          manager.getPlanConfig().pixelBudget * viewerApi.getState().worldUnitsPerPixel;
       }
       // Budgets (pixelBudget, maxCells) live in the manager's plan config so
       // the debug panel can steer them between settles.
-      manager.updatePlan({ frustum, cameraPosition, focalPixels });
+      manager.updatePlan({ frustum, cameraPosition, focalPixels, errorBudget });
     };
 
     manager
@@ -202,7 +212,29 @@ const FabriksCollectionGroup = ({
       cancelled = true;
       unsubscribe();
     };
-  }, [manager, viewApi]);
+  }, [manager, viewApi, viewerApi]);
+
+  // 2D slab: clip the collection to one z-step around the displayed slice
+  // (the annotation layer's slab convention). Thickness comes from the finest
+  // image layer's z-step; a scene without one falls back to one mesh voxel
+  // (the placement matrix's z basis length). Z-scrub mutates only the plane
+  // constants — no replan, no pipeline rebuild.
+  const displayMode = useModeStore((s) => s.displayMode);
+  const currentZ = useViewerStore((s) => s.currentZ);
+  const imageLayers = useSceneStore((s) => s.layers);
+  const slabThickness = useMemo(() => {
+    const step = sceneZExtent(imageLayers)?.step;
+    if (step && Number.isFinite(step)) return step;
+    const zBasis = new THREE.Vector3().setFromMatrixColumn(matrix, 2).length();
+    return Math.max(zBasis, 1e-3);
+  }, [imageLayers, matrix]);
+  useEffect(() => {
+    if (!manager) return;
+    manager.setSlabClip(
+      displayMode === "3D" ? null : { z: currentZ, thickness: slabThickness },
+    );
+    invalidate();
+  }, [manager, displayMode, currentZ, slabThickness, invalidate]);
 
   if (!manager) return null;
   return <primitive object={manager.group} />;

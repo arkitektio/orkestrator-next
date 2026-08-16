@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { MeshStandardNodeMaterial } from "three/webgpu";
+import { ClippingGroup, type MeshStandardNodeMaterial } from "three/webgpu";
 import { LruByteCache } from "./lruByteCache";
 import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
 import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
@@ -61,10 +61,12 @@ export type FabriksMaterialConfig = {
   instanceColormap?: FabriksInstanceColormap;
 };
 
-/** Camera-derived inputs per plan. Budgets live in `FabriksPlanConfig`. */
+/** Camera-derived inputs per plan. Budgets live in `FabriksPlanConfig`.
+ * `errorBudget` is the ORTHO path: a world-space error cap derived from the
+ * 2D view's world-units-per-pixel (the planner's camera-free branch). */
 export type FabriksPlanView = Pick<
   FabriksPlanInput,
-  "frustum" | "cameraPosition" | "focalPixels"
+  "frustum" | "cameraPosition" | "focalPixels" | "errorBudget"
 >;
 
 /** Runtime planner knobs, adjustable from the debug panel between settles. */
@@ -116,8 +118,12 @@ export type FabriksPlanSummary = {
 };
 
 export class FabriksCollectionManager {
-  /** Mounted by the React layer via `<primitive>`; children managed here. */
-  readonly group = new THREE.Group();
+  /** Mounted by the React layer via `<primitive>`; children managed here.
+   * A ClippingGroup because on the WebGPU node path clipping comes ONLY from
+   * the scene graph — `material.clippingPlanes` is WebGL-era API the node
+   * system never reads (verified: three.webgpu.js consumes planes solely via
+   * `isClippingGroup` → ClippingContext). Disabled outside slab mode. */
+  readonly group = new ClippingGroup();
 
   readonly stats: FabriksManagerStats = {
     plans: 0,
@@ -172,6 +178,15 @@ export class FabriksCollectionManager {
   private flatNormals = true;
   /** The colormap currently baked into the material (null = uniform color). */
   private appliedColormap: FabriksInstanceColormap | null = DEFAULT_INSTANCE_COLORMAP;
+  /** WORLD-space clip planes for the 2D slab (constants mutated on z-scrub). */
+  private readonly clipPlanes = [
+    new THREE.Plane(new THREE.Vector3(0, 0, -1), 0), // keeps z ≤ slab top
+    new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), //  keeps z ≥ slab bottom
+  ];
+  private slab: { z: number; thickness: number } | null = null;
+  /** Draw order for mounted cells (0 in 3D; 2 in slab mode — above the image
+   * quad's renderOrder 1, matching the 2D overlay convention). */
+  private cellRenderOrder = 0;
 
   constructor(
     private readonly opts: {
@@ -186,6 +201,8 @@ export class FabriksCollectionManager {
     },
   ) {
     this.group.matrixAutoUpdate = false;
+    this.group.clippingPlanes = this.clipPlanes;
+    this.group.enabled = false; // slab mode only (setSlabClip)
     this.planConfig = {
       pixelBudget: 1,
       maxCells: opts.maxCells ?? DEFAULT_MAX_CELLS,
@@ -302,6 +319,40 @@ export class FabriksCollectionManager {
   /** The instance colormap in effect, or null when a uniform color is. */
   getAppliedColormap(): FabriksInstanceColormap | null {
     return this.appliedColormap;
+  }
+
+  /**
+   * The 2D slab: clip the collection to a world-z window around the displayed
+   * slice, drawn as an OVERLAY (depth test off, renderOrder above the image
+   * quad — the annotation-layer convention; `currentZ` may sit at any world z
+   * relative to the quad's plane, so depth-testing against it is a coin flip).
+   * `null` restores the 3D state. A z-scrub with the slab already on mutates
+   * only the plane constants (uniforms) — no pipeline rebuild.
+   */
+  setSlabClip(slab: { z: number; thickness: number } | null): void {
+    const wasClipping = this.slab !== null;
+    this.slab = slab ? { ...slab } : null;
+    if (slab) {
+      const half = Math.max(slab.thickness, 1e-6) / 2;
+      this.clipPlanes[0].constant = slab.z + half;
+      this.clipPlanes[1].constant = -(slab.z - half);
+    }
+    const clipping = slab !== null;
+    if (clipping !== wasClipping) {
+      // The plane-count change flows through the ClippingGroup's context and
+      // rebuilds pipelines by itself; needsUpdate covers the depth flip.
+      this.group.enabled = clipping;
+      this.material.depthTest = !clipping;
+      this.material.needsUpdate = true;
+      this.cellRenderOrder = clipping ? 2 : 0;
+      this.batch.setRenderOrder(this.cellRenderOrder);
+      for (const mesh of this.mountedMeshes.values()) mesh.renderOrder = this.cellRenderOrder;
+    }
+    this.opts.onInvalidate();
+  }
+
+  getSlabClip(): { z: number; thickness: number } | null {
+    return this.slab ? { ...this.slab } : null;
   }
 
   /**
@@ -577,6 +628,7 @@ export class FabriksCollectionManager {
     const mesh = new THREE.Mesh(geometry, this.material);
     mesh.name = key;
     mesh.matrixAutoUpdate = false;
+    mesh.renderOrder = this.cellRenderOrder;
     this.group.add(mesh);
     this.mountedMeshes.set(key, mesh);
   }
@@ -602,6 +654,7 @@ export class FabriksCollectionManager {
     stats: FabriksManagerStats;
     lastPlan: FabriksPlanSummary | null;
     mountedCells: number;
+    slab: { z: number; thickness: number } | null;
     cache: { cells: number; bytes: number };
     batch: FabriksBatchStats | null;
     transport: FabriksTransportStats | null;
@@ -613,6 +666,7 @@ export class FabriksCollectionManager {
       stats: { ...this.stats },
       lastPlan: this.lastPlan ? { ...this.lastPlan, byLevel: { ...this.lastPlan.byLevel } } : null,
       mountedCells: this.batching ? this.batch.count : this.mountedMeshes.size,
+      slab: this.getSlabClip(),
       cache: { cells: this.cache.size, bytes: this.cache.bytes },
       batch: this.batching ? this.batch.stats() : null,
       transport: this.opts.collection.transportStats(),

@@ -43,6 +43,11 @@ import {
   Waves,
 } from "lucide-react";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "../colormap-utils";
+import {
+  sampleColorMapRgb,
+  sampleStopsRgb,
+  stopsGradientCSS,
+} from "../../../render/colormaps";
 import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../contrast-utils";
 import { LayerState, useSceneStore } from "../../../store/sceneStore";
@@ -56,6 +61,7 @@ import {
   ProjectionRenderNode,
   RenderNode,
   TransferFn,
+  TransferStop,
   flattenChannels,
   flattenPhasors,
   flattenSources,
@@ -79,6 +85,113 @@ const colorToObj = (color: number[] | null) => ({
 const formatColormapName = (cm: ColorMap) =>
   cm.charAt(0) + cm.slice(1).toLowerCase();
 
+/** Seed a custom gradient from the active named colormap: five evenly spaced
+ * samples, so "Custom stops" starts as an editable copy of what's on screen. */
+const seedStops = (colormap: ColorMap, color: number[] | null): TransferStop[] =>
+  [0, 0.25, 0.5, 0.75, 1].map((position) => {
+    const [r, g, b] = sampleColorMapRgb(colormap, position, color);
+    return {
+      position,
+      color: [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), 255],
+    };
+  });
+
+/**
+ * The custom-gradient editor: a clickable gradient bar (click adds a stop at
+ * that position with the gradient's interpolated color) plus one compact row
+ * per stop — color swatch, position slider, remove. Commits keep the stops
+ * sorted; the model treats < 2 stops as "no custom gradient", so removal is
+ * blocked at two.
+ */
+const StopsEditor = ({
+  stops,
+  onChange,
+}: {
+  stops: TransferStop[];
+  onChange: (stops: TransferStop[]) => void;
+}) => {
+  const commit = (next: TransferStop[]) =>
+    onChange([...next].sort((a, b) => a.position - b.position));
+
+  return (
+    <div className="mt-1 space-y-1">
+      <div
+        className="h-4 w-full cursor-copy rounded border border-border/60"
+        style={{ background: stopsGradientCSS(stops) }}
+        title="Click to add a stop"
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const position = Math.min(
+            1,
+            Math.max(0, (event.clientX - rect.left) / Math.max(rect.width, 1)),
+          );
+          const [r, g, b] = sampleStopsRgb(stops, position);
+          commit([
+            ...stops,
+            {
+              position,
+              color: [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), 255],
+            },
+          ]);
+        }}
+      />
+      {stops.map((stop, index) => (
+        <div key={index} className="flex items-center gap-1.5">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                title="Stop color"
+                className="h-5 w-5 shrink-0 rounded border border-border/60"
+                style={{
+                  background: `rgb(${stop.color[0] ?? 0}, ${stop.color[1] ?? 0}, ${stop.color[2] ?? 0})`,
+                }}
+              />
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-auto p-2">
+              <RgbColorPicker
+                color={colorToObj(stop.color)}
+                onChange={(c) =>
+                  commit(
+                    stops.map((s, i) =>
+                      i === index ? { ...s, color: [c.r, c.g, c.b, 255] } : s,
+                    ),
+                  )
+                }
+              />
+            </PopoverContent>
+          </Popover>
+          <Slider
+            min={0}
+            max={100}
+            step={0.5}
+            value={[stop.position * 100]}
+            onValueChange={([value]) =>
+              commit(
+                stops.map((s, i) => (i === index ? { ...s, position: value / 100 } : s)),
+              )
+            }
+            className="flex-1 py-1"
+          />
+          <span className="w-8 shrink-0 text-right font-mono text-[9px] text-muted-foreground">
+            {Math.round(stop.position * 100)}%
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 shrink-0 text-muted-foreground hover:text-red-300"
+            title={stops.length <= 2 ? "A gradient needs at least two stops" : "Remove stop"}
+            disabled={stops.length <= 2}
+            onClick={() => commit(stops.filter((_, i) => i !== index))}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 /**
  * Compact, searchable colormap picker. A small gradient/name button opens a
  * searchable list in a popover. When the Intensity colormap is active, a
@@ -95,71 +208,105 @@ const ColormapControl = ({
   const [open, setOpen] = useState(false);
   const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
   const current = transfer.colormap ?? ColorMap.Viridis;
-  const isIntensity = current === ColorMap.Intensity;
+  const customStops = transfer.stops && transfer.stops.length >= 2 ? transfer.stops : null;
+  const isIntensity = !customStops && current === ColorMap.Intensity;
   const rgb = colorToObj(transfer.color);
   return (
-    <div className="flex items-center gap-1.5">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="flex h-6 min-w-0 flex-1 items-center gap-2 rounded border border-border/60 bg-background/40 px-1.5 text-[10px] transition-colors hover:bg-background/60"
-          >
-            <div
-              className="h-3 w-8 shrink-0 rounded"
-              style={{ background: colormapGradientCSS(current, 18, transfer.color) }}
-            />
-            <span className="truncate">{formatColormapName(current)}</span>
-            <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-52 p-0">
-          <Command>
-            <CommandInput placeholder="Search colormap…" className="h-8 text-xs" />
-            <CommandList>
-              <CommandEmpty>No colormap found.</CommandEmpty>
-              <CommandGroup>
-                {COLORMAP_OPTIONS.map((cm) => (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex h-6 min-w-0 flex-1 items-center gap-2 rounded border border-border/60 bg-background/40 px-1.5 text-[10px] transition-colors hover:bg-background/60"
+            >
+              <div
+                className="h-3 w-8 shrink-0 rounded"
+                style={{
+                  background: customStops
+                    ? stopsGradientCSS(customStops)
+                    : colormapGradientCSS(current, 18, transfer.color),
+                }}
+              />
+              <span className="truncate">
+                {customStops ? "Custom" : formatColormapName(current)}
+              </span>
+              <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-52 p-0">
+            <Command>
+              <CommandInput placeholder="Search colormap…" className="h-8 text-xs" />
+              <CommandList>
+                <CommandEmpty>No colormap found.</CommandEmpty>
+                <CommandGroup>
+                  {/* Custom gradient: seeds an editable copy of the active
+                      colormap; picking a named map below clears it. */}
                   <CommandItem
-                    key={cm}
-                    value={formatColormapName(cm)}
+                    value="Custom stops"
                     onSelect={() => {
-                      set({ colormap: cm });
+                      if (!customStops) set({ stops: seedStops(current, transfer.color) });
                       setOpen(false);
                     }}
                     className="gap-2 text-xs"
                   >
                     <div
                       className="h-3 w-8 shrink-0 rounded"
-                      style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
+                      style={{
+                        background: stopsGradientCSS(
+                          customStops ?? seedStops(current, transfer.color),
+                        ),
+                      }}
                     />
-                    <span className="flex-1 truncate">{formatColormapName(cm)}</span>
-                    {cm === current && <Check className="h-3 w-3 shrink-0" />}
+                    <span className="flex-1 truncate">Custom stops…</span>
+                    {customStops && <Check className="h-3 w-3 shrink-0" />}
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      {isIntensity && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              title="Base color"
-              className="h-6 w-6 shrink-0 rounded border border-border/60"
-              style={{ background: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` }}
-            />
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-auto p-2">
-            <RgbColorPicker
-              color={rgb}
-              onChange={(c) => set({ color: [c.r, c.g, c.b, 255] })}
-            />
+                  {COLORMAP_OPTIONS.map((cm) => (
+                    <CommandItem
+                      key={cm}
+                      value={formatColormapName(cm)}
+                      onSelect={() => {
+                        set({ colormap: cm, stops: null });
+                        setOpen(false);
+                      }}
+                      className="gap-2 text-xs"
+                    >
+                      <div
+                        className="h-3 w-8 shrink-0 rounded"
+                        style={{ background: colormapGradientCSS(cm, 18, transfer.color) }}
+                      />
+                      <span className="flex-1 truncate">{formatColormapName(cm)}</span>
+                      {!customStops && cm === current && <Check className="h-3 w-3 shrink-0" />}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
           </PopoverContent>
         </Popover>
+
+        {isIntensity && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                title="Base color"
+                className="h-6 w-6 shrink-0 rounded border border-border/60"
+                style={{ background: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` }}
+              />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-2">
+              <RgbColorPicker
+                color={rgb}
+                onChange={(c) => set({ color: [c.r, c.g, c.b, 255] })}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+
+      {customStops && (
+        <StopsEditor stops={customStops} onChange={(stops) => set({ stops })} />
       )}
     </div>
   );

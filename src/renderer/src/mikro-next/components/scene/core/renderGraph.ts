@@ -30,11 +30,23 @@ export const PHASOR_KIND = "phasor";
 export const BLEND_KIND = "blend";
 export const PROJECTION_KIND = "projection";
 
+/** One stop of a custom transfer gradient. `color` is RGBA 0-255 like every
+ * other color in this model; `position` is the normalized intensity in [0,1]
+ * AFTER clim/gamma — stops replace the named colormap's ramp, never the
+ * scalar transfer (gamma stays the fallback shaping control). */
+export type TransferStop = {
+  position: number;
+  color: number[];
+};
+
 export type TransferFn = {
   climMin: number | null;
   climMax: number | null;
   colormap: ColorMap | null;
   color: number[] | null;
+  /** Custom positioned gradient; when ≥2 stops are present they take
+   * precedence over `colormap`/`color` for the LUT row. */
+  stops: TransferStop[] | null;
   gamma: number | null;
   opacity: number | null;
   invert: boolean | null;
@@ -163,9 +175,35 @@ const DEFAULT_TRANSFER: TransferFn = {
   climMax: null,
   colormap: ColorMap.Viridis,
   color: null,
+  stops: null,
   gamma: null,
   opacity: null,
   invert: null,
+};
+
+/**
+ * Normalize a (future) server `stops` payload: RGBA-4 colors, positions
+ * clamped into [0,1] and sorted, and fewer than two stops means "no custom
+ * gradient". Read structurally rather than from the generated fragment type —
+ * the schema field lands server-side first (see the plan's B4); until the
+ * fragment selects it this simply always sees `undefined`.
+ */
+const parseStops = (raw: unknown): TransferStop[] | null => {
+  if (!Array.isArray(raw)) return null;
+  const stops = raw
+    .filter(
+      (stop): stop is { position: number; color: number[] } =>
+        typeof stop === "object" &&
+        stop !== null &&
+        typeof (stop as { position?: unknown }).position === "number" &&
+        Array.isArray((stop as { color?: unknown }).color),
+    )
+    .map((stop) => ({
+      position: Math.min(1, Math.max(0, stop.position)),
+      color: toRgba(stop.color) ?? [255, 255, 255, 255],
+    }))
+    .sort((a, b) => a.position - b.position);
+  return stops.length >= 2 ? stops : null;
 };
 
 const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): TransferFn => ({
@@ -173,6 +211,7 @@ const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): Transf
   climMax: transfer?.climMax ?? null,
   colormap: transfer?.colormap ?? null,
   color: transfer?.color ?? null,
+  stops: parseStops((transfer as { stops?: unknown } | null | undefined)?.stops),
   gamma: transfer?.gamma ?? null,
   opacity: transfer?.opacity ?? null,
   invert: transfer?.invert ?? null,
@@ -388,15 +427,30 @@ export const toRgba = (color: number[] | null): number[] | null => {
   return color.length > 4 ? color.slice(0, 4) : color;
 };
 
-const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
-  climMin: transfer.climMin,
-  climMax: transfer.climMax,
-  colormap: transfer.colormap,
-  color: toRgba(transfer.color),
-  gamma: transfer.gamma,
-  opacity: transfer.opacity,
-  invert: transfer.invert,
-});
+const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => {
+  const input: TransferFunctionInput = {
+    climMin: transfer.climMin,
+    climMax: transfer.climMax,
+    colormap: transfer.colormap,
+    color: toRgba(transfer.color),
+    gamma: transfer.gamma,
+    opacity: transfer.opacity,
+    invert: transfer.invert,
+  };
+  // Emitted only when authored: a pre-stops server rejects unknown input
+  // fields, so a graph without custom gradients keeps saving everywhere. The
+  // cast disappears when the schema lands and `yarn mikro` regenerates.
+  if (transfer.stops && transfer.stops.length >= 2) {
+    return {
+      ...input,
+      stops: transfer.stops.map((stop) => ({
+        position: stop.position,
+        color: toRgba(stop.color),
+      })),
+    } as TransferFunctionInput;
+  }
+  return input;
+};
 
 const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({
   kind: cursor.kind,

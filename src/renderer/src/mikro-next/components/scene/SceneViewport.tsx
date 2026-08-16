@@ -134,6 +134,11 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
           // upgrade.
           (renderer as unknown as { _getFallback: unknown })._getFallback = null;
 
+          // NOTE clipping needs no renderer opt-in here — and
+          // `material.clippingPlanes` does NOTHING on the WebGPU node path:
+          // planes are consumed solely from scene-graph `ClippingGroup`
+          // objects (the 2D mesh slab in fabriksManager uses one as its root).
+
           await renderer.init();
 
           // Timestamp writes land in a 2048-slot query pool that ONLY a
@@ -332,11 +337,6 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
           <WhenDebug>
             <BrickResidencyOverlay />
           </WhenDebug>
-
-          {/* Local, not drei's GizmoHelper: that one calls gl.clearDepth()
-              between the scene and hud renders, which under this renderer's
-              tone-mapped output path costs a full-screen colour blit every
-              frame. See SceneGizmo. */}
 
           </LongCommitProfiler>
         </SceneWrapper>

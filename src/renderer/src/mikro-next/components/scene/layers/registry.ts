@@ -24,5 +24,7 @@ export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRend
   AnnotationLayer: { Layer2D: AnnotationLayerRenderer, Layer3D: AnnotationLayerRenderer },
   PointLayer: { Layer2D: PointLayerRenderer, Layer3D: PointLayerRenderer },
   TrackLayer: { Layer2D: TrackLayerRenderer, Layer3D: TrackLayerRenderer },
-  MeshLayer: { Layer2D: null, Layer3D: FabriksCollectionLayer },
+  // One component for both modes: in 2D it clips itself to a slab around
+  // currentZ (see FabriksCollectionLayer's slab effect).
+  MeshLayer: { Layer2D: FabriksCollectionLayer, Layer3D: FabriksCollectionLayer },
 };

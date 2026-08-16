@@ -114,7 +114,7 @@ export function buildMergedChannelUniformData(
   const cursors = dataTexture(CURSOR_TEXELS, MAX_CURSORS);
   const cursorData = cursors.image.data as Float32Array;
 
-  const colormapSpecs: { colormap: unknown; color?: number[] | null }[] = [];
+  const colormapSpecs: Parameters<typeof buildColormapAtlas>[0] = [];
   const out: MergedMemberUniforms[] = [];
   let cursorCount = 0;
   let used = 0;
@@ -178,7 +178,11 @@ export function buildMergedChannelUniformData(
         source
           ? source.type === "phasor"
             ? { colormap: source.transfer.colormap, color: null }
-            : { colormap: source.transfer.colormap, color: source.transfer.color }
+            : {
+                colormap: source.transfer.colormap,
+                color: source.transfer.color,
+                stops: source.transfer.stops,
+              }
           : { colormap: input.layer?.colormap, color: input.layer?.color },
       );
     }

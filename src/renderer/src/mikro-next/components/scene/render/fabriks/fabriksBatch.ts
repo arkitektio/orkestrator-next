@@ -70,6 +70,8 @@ export class FabriksBatchRenderer {
   private liveIndices = 0;
   private rebuilds = 0;
   private optimizes = 0;
+  /** Applied to the BatchedMesh, surviving rebuilds (2D slab overlay = 2). */
+  private renderOrder = 0;
 
   constructor(
     private readonly material: THREE.Material,
@@ -165,6 +167,12 @@ export class FabriksBatchRenderer {
     if (this.batch && this.slots.size === 0) this.batch.visible = false;
   }
 
+  /** Draw order for the batch (kept across rebuilds). */
+  setRenderOrder(order: number): void {
+    this.renderOrder = order;
+    if (this.batch) this.batch.renderOrder = order;
+  }
+
   /**
    * Re-add every mounted cell into a fresh batch at current capacity — for
    * when the required attribute LAYOUT changes (the flat↔smooth normals
@@ -234,6 +242,7 @@ export class FabriksBatchRenderer {
     const next = new THREE.BatchedMesh(instances, vertices, indices, this.material);
     next.name = "__fabriks-batch__";
     next.matrixAutoUpdate = false;
+    next.renderOrder = this.renderOrder;
     // No object-level sphere is maintained by three; per-instance culling
     // (from the per-geometry analytic bounds) is the real cull.
     next.frustumCulled = false;

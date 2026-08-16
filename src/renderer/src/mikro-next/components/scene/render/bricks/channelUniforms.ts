@@ -157,7 +157,11 @@ export function buildChannelUniformData(
       ? sources.map((source) =>
           source.type === "phasor"
             ? { colormap: source.transfer.colormap, color: null }
-            : { colormap: source.transfer.colormap, color: source.transfer.color },
+            : {
+                colormap: source.transfer.colormap,
+                color: source.transfer.color,
+                stops: source.transfer.stops,
+              },
         )
       : [{ colormap: layer?.colormap, color: layer?.color }],
   );

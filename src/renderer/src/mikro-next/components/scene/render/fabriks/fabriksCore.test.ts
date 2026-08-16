@@ -436,6 +436,57 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     manager.dispose();
   });
 
+  it("clips to the 2D slab as an overlay and restores the 3D state", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    manager.setSlabClip({ z: 12, thickness: 2 });
+    expect(manager.buildDebugReport().slab).toEqual({ z: 12, thickness: 2 });
+    const batch = manager.group.children.find(
+      (c): c is THREE.BatchedMesh => c instanceof THREE.BatchedMesh,
+    )!;
+    expect(batch.renderOrder).toBe(2); // overlay: above the image quad
+    // Clipping rides the GROUP: the WebGPU node path only reads planes from
+    // a ClippingGroup, never from material.clippingPlanes.
+    expect(manager.group.enabled).toBe(true);
+    expect(manager.group.clippingPlanes).toHaveLength(2);
+    expect(manager.group.clippingPlanes[0].constant).toBe(13); // keeps z ≤ 13
+    expect(manager.group.clippingPlanes[1].constant).toBe(-11); // keeps z ≥ 11
+
+    // Z-scrub with the slab on: constants only, same clip state.
+    const planes = manager.group.clippingPlanes;
+    manager.setSlabClip({ z: 20, thickness: 2 });
+    expect(manager.buildDebugReport().slab).toEqual({ z: 20, thickness: 2 });
+    expect(manager.group.clippingPlanes).toBe(planes); // same array, mutated
+    expect(planes[0].constant).toBe(21);
+    expect(planes[1].constant).toBe(-19);
+
+    manager.setSlabClip(null);
+    expect(manager.buildDebugReport().slab).toBeNull();
+    expect(manager.group.enabled).toBe(false);
+    expect(batch.renderOrder).toBe(0);
+    manager.dispose();
+  });
+
+  it("an ortho errorBudget coarsens the plan the camera-free path would fully refine", async () => {
+    const manager = await openManager();
+    // No eye, no budget: the planner refines to the finest level everywhere.
+    manager.updatePlan({ frustum: null, cameraPosition: null, focalPixels: 0 });
+    const fine = manager.buildDebugReport().lastPlan!;
+
+    // A huge world-space error allowance keeps everything coarse.
+    manager.updatePlan({
+      frustum: null,
+      cameraPosition: null,
+      focalPixels: 0,
+      errorBudget: 1e9,
+    });
+    const coarse = manager.buildDebugReport().lastPlan!;
+    expect(coarse.cellCount).toBeLessThan(fine.cellCount);
+    manager.dispose();
+  });
+
   it("colors by instance by default; an explicit materialColor opts into uniform", async () => {
     const manager = await openManager();
     expect(manager.getAppliedColormap()).toBe("hues");

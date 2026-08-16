@@ -22,6 +22,10 @@ export type { LayerState };
 export type MeshLayerSessionState = {
   /** Which instance colormap the collection is colored by (default "hues"). */
   instanceColormap?: FabriksInstanceColormap;
+  /** Color by instance id (the DEFAULT) vs the layer's uniform materialColor.
+   * Explicit rather than inferred from materialColor's presence — a layer
+   * with a stored color must still be instance-colorable. */
+  colorByInstance?: boolean;
 };
 
 /** A polymorphic scene layer plus its session-local render state. */

@@ -154,6 +154,7 @@ const FabriksCollectionGroup = ({
       wireframe: layer.wireframe,
       opacity: layer.opacity,
       instanceColormap: layer.instanceColormap,
+      colorByInstance: layer.colorByInstance,
     });
     invalidate();
   }, [
@@ -162,6 +163,7 @@ const FabriksCollectionGroup = ({
     layer.wireframe,
     layer.opacity,
     layer.instanceColormap,
+    layer.colorByInstance,
     invalidate,
   ]);
 

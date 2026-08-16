@@ -53,12 +53,14 @@ const CONCURRENT_FETCHES = 4;
 const CELL_BOXES_NAME = "__fabriks-cell-boxes__";
 
 export type FabriksMaterialConfig = {
-  /** An explicit uniform color OPTS OUT of instance coloring. */
+  /** The uniform color used when `colorByInstance` is false. */
   color: readonly number[] | null | undefined;
   wireframe: boolean;
   opacity: number;
   /** Which instance colormap to color by; defaults to the standard one. */
   instanceColormap?: FabriksInstanceColormap;
+  /** Instance coloring is the DEFAULT; false = uniform materialColor. */
+  colorByInstance?: boolean;
 };
 
 /** Camera-derived inputs per plan. Budgets live in `FabriksPlanConfig`.
@@ -227,14 +229,21 @@ export class FabriksCollectionManager {
     });
   }
 
-  setMaterialConfig({ color, wireframe, opacity, instanceColormap }: FabriksMaterialConfig): void {
-    // Coloring mode: instance colors (objectOrdinal palette) by DEFAULT; a
-    // layer that declares an explicit materialColor opts into that uniform.
-    const uniformColor = Boolean(color && color.length >= 3);
-    if (uniformColor && color) {
+  setMaterialConfig({
+    color,
+    wireframe,
+    opacity,
+    instanceColormap,
+    colorByInstance,
+  }: FabriksMaterialConfig): void {
+    // Coloring mode is EXPLICIT: instance colors (objectOrdinal palette) by
+    // default; `colorByInstance: false` switches to the uniform materialColor
+    // (which a layer may carry either way — its presence decides nothing).
+    if (color && color.length >= 3) {
       this.material.color.setRGB(color[0] / 255, color[1] / 255, color[2] / 255);
     }
-    const targetColormap = uniformColor ? null : (instanceColormap ?? DEFAULT_INSTANCE_COLORMAP);
+    const targetColormap =
+      colorByInstance === false ? null : (instanceColormap ?? DEFAULT_INSTANCE_COLORMAP);
     const coloringChanged = targetColormap !== this.appliedColormap;
     if (coloringChanged) {
       setInstanceColoring(this.material, targetColormap);

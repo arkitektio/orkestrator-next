@@ -487,11 +487,20 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     manager.dispose();
   });
 
-  it("colors by instance by default; an explicit materialColor opts into uniform", async () => {
+  it("colors by instance by default; only an EXPLICIT opt-out goes uniform", async () => {
     const manager = await openManager();
     expect(manager.getAppliedColormap()).toBe("hues");
 
+    // A stored materialColor decides nothing on its own — instance stays.
     manager.setMaterialConfig({ color: [255, 0, 0], wireframe: false, opacity: 1 });
+    expect(manager.getAppliedColormap()).toBe("hues");
+
+    manager.setMaterialConfig({
+      color: [255, 0, 0],
+      wireframe: false,
+      opacity: 1,
+      colorByInstance: false,
+    });
     expect(manager.getAppliedColormap()).toBeNull();
 
     manager.setMaterialConfig({
@@ -499,6 +508,7 @@ describe("FabriksCollectionManager against the raw fixture", () => {
       wireframe: true,
       opacity: 1,
       instanceColormap: "vivid",
+      colorByInstance: true,
     });
     expect(manager.getAppliedColormap()).toBe("vivid");
     manager.dispose();

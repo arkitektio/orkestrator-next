@@ -116,31 +116,52 @@ export const MeshLayerCard = memo(
           )}
         </div>
 
-        {/* Instance colormap — session-local. Shown only while no explicit
-            materialColor opts the layer into a uniform color; instance
-            coloring by objectOrdinal is the default. */}
-        {!layer.materialColor && (
-          <div className="flex flex-wrap items-center gap-1 border-t border-white/5 px-2 py-1">
-            <span className="shrink-0 text-[9px] text-white/40">colors</span>
-            {INSTANCE_COLORMAPS.map((name) => {
-              const active = (layer.instanceColormap ?? DEFAULT_INSTANCE_COLORMAP) === name;
-              return (
-                <button
-                  key={name}
-                  title={`Color instances with the "${name}" palette (this session only)`}
-                  className={`rounded border px-1 py-px text-[9px] transition-colors ${
-                    active
-                      ? "border-sky-400/50 bg-sky-400/10 text-sky-200"
-                      : "border-white/10 text-white/50 hover:text-white/80"
-                  }`}
-                  onClick={() => patchSceneLayer(layer.id, { instanceColormap: name })}
-                >
-                  {name}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Coloring — session-local, always visible. Instance coloring (by
+            objectOrdinal) is the default; "uniform" uses the layer's stored
+            materialColor (gray when it has none). */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-white/5 px-2 py-1">
+          <span className="shrink-0 text-[9px] text-white/40">colors</span>
+          {INSTANCE_COLORMAPS.map((name) => {
+            const byInstance = layer.colorByInstance !== false;
+            const active =
+              byInstance && (layer.instanceColormap ?? DEFAULT_INSTANCE_COLORMAP) === name;
+            return (
+              <button
+                key={name}
+                title={`Color by instance id with the "${name}" palette (this session only)`}
+                className={`rounded border px-1 py-px text-[9px] transition-colors ${
+                  active
+                    ? "border-sky-400/50 bg-sky-400/10 text-sky-200"
+                    : "border-white/10 text-white/50 hover:text-white/80"
+                }`}
+                onClick={() =>
+                  patchSceneLayer(layer.id, { colorByInstance: true, instanceColormap: name })
+                }
+              >
+                {name}
+              </button>
+            );
+          })}
+          <button
+            title="One uniform color for the whole collection (the layer's material color; this session only)"
+            className={`flex items-center gap-1 rounded border px-1 py-px text-[9px] transition-colors ${
+              layer.colorByInstance === false
+                ? "border-sky-400/50 bg-sky-400/10 text-sky-200"
+                : "border-white/10 text-white/50 hover:text-white/80"
+            }`}
+            onClick={() => patchSceneLayer(layer.id, { colorByInstance: false })}
+          >
+            <span
+              className="h-2 w-2 rounded-full border border-white/20"
+              style={{
+                background: layer.materialColor
+                  ? `rgb(${layer.materialColor[0] ?? 0}, ${layer.materialColor[1] ?? 0}, ${layer.materialColor[2] ?? 0})`
+                  : "rgb(184, 184, 194)",
+              }}
+            />
+            uniform
+          </button>
+        </div>
 
         {/* What the collection actually is, read off the store's mirrored
             manifest — so this costs no request and cannot disagree with what

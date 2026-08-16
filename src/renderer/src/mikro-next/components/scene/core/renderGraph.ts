@@ -182,11 +182,12 @@ const DEFAULT_TRANSFER: TransferFn = {
 };
 
 /**
- * Normalize a (future) server `stops` payload: RGBA-4 colors, positions
- * clamped into [0,1] and sorted, and fewer than two stops means "no custom
- * gradient". Read structurally rather than from the generated fragment type —
- * the schema field lands server-side first (see the plan's B4); until the
- * fragment selects it this simply always sees `undefined`.
+ * Normalize a color-GRADIENT stops payload: RGBA-4 colors, positions clamped
+ * into [0,1] and sorted, fewer than two = "no custom gradient". Read
+ * structurally and defensively: the server's `TransferFunction.stops` is a
+ * DIFFERENT thing (a LookupStop intensity curve, {position, value}) — its
+ * entries carry no color array and are filtered out here, so the gradient
+ * remains session-local until color stops exist server-side.
  */
 const parseStops = (raw: unknown): TransferStop[] | null => {
   if (!Array.isArray(raw)) return null;
@@ -437,18 +438,11 @@ const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => {
     opacity: transfer.opacity,
     invert: transfer.invert,
   };
-  // Emitted only when authored: a pre-stops server rejects unknown input
-  // fields, so a graph without custom gradients keeps saving everywhere. The
-  // cast disappears when the schema lands and `yarn mikro` regenerates.
-  if (transfer.stops && transfer.stops.length >= 2) {
-    return {
-      ...input,
-      stops: transfer.stops.map((stop) => ({
-        position: stop.position,
-        color: toRgba(stop.color),
-      })),
-    } as TransferFunctionInput;
-  }
+  // NOT serialized: the server's `TransferFunction.stops` turned out to be a
+  // LookupStop INTENSITY CURVE ({position, value} — a generalized gamma), a
+  // different thing from this client-side color GRADIENT. The gradient stays
+  // session-local until the server models color stops; the curve is future
+  // client work (piecewise transfer replacing gamma when present).
   return input;
 };
 

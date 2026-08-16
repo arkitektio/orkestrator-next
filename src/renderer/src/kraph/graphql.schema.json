@@ -748,6 +748,30 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "sameAs",
+            "description": "Instances this new one is the same as. Saying \"this is AIS 6\" mints a fresh instance and claims it is the same as the one already known as AIS 6 — all under **one assertion**, because it is one act. Sameness is an equivalence with no primary, so which id you send is immaterial; entities only, never structures.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "String",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "supportingEvidence",
             "description": "List of evidence structures with measurements",
             "type": {
@@ -1541,6 +1565,42 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "AssertSameEntityInput",
+        "description": "Input for claiming that several recorded instances are one thing",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "entities",
+            "description": "Two or more entity ids that name the same thing. Every pair among them is claimed, under one assertion.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "String",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                }
               }
             },
             "defaultValue": null,
@@ -2982,6 +3042,156 @@
           }
         ],
         "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Classification",
+        "description": "A CLASSIFIES claim: somebody's word for what a node is",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "globalId",
+            "description": "Global identifier in format 'graph_name:graph_id'",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "GlobalID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graphId",
+            "description": "Local AGE graph ID, or null for edges that have no projection",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": "Composite ID for edge lookup",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": "The edge label/type",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "source",
+            "description": "The node this word was claimed about",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Node",
+                "kind": "INTERFACE",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sourceId",
+            "description": "Global ID of the source/left node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "targetId",
+            "description": "Global ID of the target/right node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word that was claimed",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Term",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Edge",
+            "ofType": null
+          }
+        ],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -7068,6 +7278,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "globalId",
             "description": "Global identifier in format 'graph_name:graph_id'",
             "args": [],
@@ -7210,6 +7432,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "globalId",
             "description": "Global identifier in format 'graph_name:graph_id'",
             "args": [],
@@ -7308,6 +7542,11 @@
         "possibleTypes": [
           {
             "kind": "OBJECT",
+            "name": "Classification",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
             "name": "Description",
             "ofType": null
           },
@@ -7329,6 +7568,11 @@
           {
             "kind": "OBJECT",
             "name": "Relation",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Sameness",
             "ofType": null
           },
           {
@@ -8892,6 +9136,78 @@
             "deprecationReason": null
           },
           {
+            "name": "component",
+            "description": "Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "ID",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "connections",
+            "description": "Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Edge",
+                    "kind": "INTERFACE",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "drawnIn",
+            "description": "Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "NodeDrawing",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "externalId",
             "description": "External ID if set",
             "args": [],
@@ -8986,6 +9302,30 @@
                 "name": "String",
                 "kind": "SCALAR",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "labels",
+            "description": "What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Label",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -9134,6 +9474,30 @@
                   "kind": "NON_NULL",
                   "ofType": {
                     "name": "RichProperty",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sameAs",
+            "description": "The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Sameness",
                     "kind": "OBJECT",
                     "ofType": null
                   }
@@ -14813,6 +15177,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "globalId",
             "description": "Global identifier in format 'graph_name:graph_id'",
             "args": [],
@@ -14983,6 +15359,74 @@
         "fields": null,
         "inputFields": null,
         "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Label",
+        "description": "A word somebody has called this thing, and how much agreement there is",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertionCount",
+            "description": "How many separate assertions say this. Concurrence, not repetition — the log records a claim that restates a position already held precisely so this is countable",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "latestAssertion",
+            "description": "The most recent act that claimed this word. Ordered by the log's `seq`, which cannot tie",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nodeId",
+            "description": "Which instance in the component was called this. Every observation mints its own, so a component's labels may name different ones",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "term",
+            "description": "The organization's word that was claimed",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Term",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -16288,6 +16732,18 @@
         "description": "A MEASUREMENT claim: a structure measuring an entity",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "category",
             "description": "How the view this was read through draws it, if any view does",
@@ -18219,6 +18675,18 @@
             "deprecationReason": null
           },
           {
+            "name": "assertion",
+            "description": "Who measured this, and when they claimed it",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "confidence",
             "description": "How confident the source is in this measurement",
             "args": [],
@@ -19739,6 +20207,39 @@
               "name": null,
               "ofType": {
                 "name": "RelationAssertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "assertSameEntity",
+            "description": "Claim that several already-recorded instances are one thing. An equivalence with no primary — the order of the ids carries no meaning",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "AssertSameEntityInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "SamenessAssertion",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -21752,6 +22253,39 @@
               "name": null,
               "ofType": {
                 "name": "RelationAssertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "retractSameEntity",
+            "description": "Withdraw one sameness claim. The component it held together is rebuilt from the claims that survive, which may split it",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "RetractSameEntityInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "SamenessAssertion",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -25935,6 +26469,18 @@
         "description": "A claim that an entity came out of an event",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "globalId",
             "description": "Global identifier in format 'graph_name:graph_id'",
@@ -32947,6 +33493,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "category",
             "description": "How the view this was read through draws it, if any view does",
             "args": [],
@@ -35006,6 +35564,34 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "RetractSameEntityInput",
+        "description": "Input for withdrawing one sameness claim",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": "The id of the sameness claim to retract",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "RetractStructureInput",
         "description": "Input for deleting an existing structure",
         "isOneOf": false,
@@ -35365,6 +35951,212 @@
           }
         ],
         "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Sameness",
+        "description": "A claim that two instances are one thing",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "globalId",
+            "description": "Global identifier in format 'graph_name:graph_id'",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "GlobalID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graphId",
+            "description": "Local AGE graph ID, or null for edges that have no projection",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": "Composite ID for edge lookup",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": "The edge label/type",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "source",
+            "description": "One of the two instances claimed to be the same",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Entity",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sourceId",
+            "description": "Global ID of the source/left node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "target",
+            "description": "The other instance claimed to be the same",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Entity",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "targetId",
+            "description": "Global ID of the target/right node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Edge",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "SamenessAssertion",
+        "description": "An assertion that instances are one thing, and the claims it recorded",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Assertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "samenesses",
+            "description": "The sameness claims this act recorded. Asserting that three instances are one records every pair among them, under one assertion",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Sameness",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -35982,6 +36774,30 @@
             "deprecationReason": null
           },
           {
+            "name": "informs",
+            "description": "The nodes this structure is evidence for. Where its labels, merges and connections live — a structure is a pointer to an external datum and is never itself claimed to be an AIS",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Entity",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "kind",
             "description": "The organization's term for this kind of structure",
             "args": [],
@@ -36039,7 +36855,7 @@
           },
           {
             "name": "metrics",
-            "description": "The graph this node belongs to",
+            "description": "Every un-retracted measurement of this structure, in observation order",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -37112,6 +37928,18 @@
         "description": "A relation edge between two structures",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "assertion",
+            "description": "Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assertion",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "category",
             "description": "How the view this was read through draws it, if any view does",

@@ -1,6 +1,7 @@
 import type { MikroClient } from "@/lib/zarr/store/types";
 import type { AxisCoords } from "../coords/axisPath";
 import {
+  isMeshSample,
   planIdentity,
   type AttributeColumnLike,
   type AttributePlanLike,
@@ -12,7 +13,7 @@ import {
   type OpenedZarrArray,
 } from "./exactSampleSource";
 import { createLookupEngine } from "./createLookupEngine";
-import { executePlanAt, type ExecutePlanOptions } from "./executePlan";
+import { executePlanAt, executePlanWithValue, type ExecutePlanOptions } from "./executePlan";
 import type { AttributeLookupEngine } from "./lookupEngine";
 import { LruMap } from "./lruMap";
 import type { HeldValue } from "./planExec";
@@ -92,6 +93,14 @@ export interface AttributeService {
     coords: AxisCoords,
     opts?: ExecutePlanOptions,
   ): Promise<PlanRowsState | null>;
+  /** The value-KNOWN executor (mesh instance picks): skips the field-array
+   * sample, everything else identical. */
+  executePlanWithValue(
+    plan: AttributePlanLike,
+    coords: AxisCoords,
+    value: HeldValue,
+    opts?: Pick<ExecutePlanOptions, "isStale" | "onUnreachable">,
+  ): Promise<PlanRowsState | null>;
   peekRows(
     plan: AttributePlanLike,
     held: Record<string, HeldValue>,
@@ -133,7 +142,11 @@ export function createAttributeService(
   const execDeps = {
     engine,
     sampleExact: (plan: AttributePlanLike, index: readonly number[]) =>
-      sampler.readExact(plan.sample.store, index).catch(() => null),
+      // Mesh samples have no array; executePlanAt guards earlier, this is
+      // type-narrowing plus defense in depth.
+      isMeshSample(plan.sample)
+        ? Promise.resolve(null)
+        : sampler.readExact(plan.sample.store, index).catch(() => null),
   };
 
   const toResult = (
@@ -198,6 +211,10 @@ export function createAttributeService(
 
     executePlanAt(plan, coords, opts) {
       return executePlanAt(execDeps, plan, coords, opts);
+    },
+
+    executePlanWithValue(plan, coords, value, opts) {
+      return executePlanWithValue({ engine }, plan, coords, value, opts);
     },
 
     peekRows(plan, held) {

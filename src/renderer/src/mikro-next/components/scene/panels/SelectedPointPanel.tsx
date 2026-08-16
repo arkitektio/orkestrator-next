@@ -78,6 +78,8 @@ export const SelectedPointPanel = () => {
   const effectiveTargetId = effectiveProbeLayerId(probeLayerId, layers);
   const staleProbe =
     probedCoordinate !== null &&
+    // Mesh probes are owned by their mesh layer (never the image target).
+    probedCoordinate.strategy !== "mesh" &&
     effectiveTargetId !== null &&
     probedCoordinate.layerId !== effectiveTargetId;
   useEffect(() => {
@@ -147,19 +149,29 @@ export const SelectedPointPanel = () => {
           </div>
 
           <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
-            {probedCoordinate.values.map((entry) => (
-              <div key={entry.channel} className="flex items-center justify-between gap-3">
-                <span className="truncate text-[10px] text-white/60">
-                  {channelLabel(layer, entry.channel)}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="font-mono text-white/90">
-                    {formatProbeValue(entry.value, probedCoordinate.dtype)}
-                  </span>
-                  <ProvenanceBadge probe={probedCoordinate} />
+            {probedCoordinate.strategy === "mesh" ? (
+              // A mesh pick: the "value" is the instance's object id.
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-[10px] text-white/60">Instance</span>
+                <span className="font-mono text-white/90">
+                  #{probedCoordinate.values[0]?.value ?? "…"}
                 </span>
               </div>
-            ))}
+            ) : (
+              probedCoordinate.values.map((entry) => (
+                <div key={entry.channel} className="flex items-center justify-between gap-3">
+                  <span className="truncate text-[10px] text-white/60">
+                    {channelLabel(layer, entry.channel)}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="font-mono text-white/90">
+                      {formatProbeValue(entry.value, probedCoordinate.dtype)}
+                    </span>
+                    <ProvenanceBadge probe={probedCoordinate} />
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Attribute-plan results: what the tables attached to this pixel's

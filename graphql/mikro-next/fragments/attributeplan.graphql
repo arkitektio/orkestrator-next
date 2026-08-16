@@ -54,8 +54,13 @@ fragment AttributePlan on AttributePlan {
     inverted
   }
   sample {
+    # SampleStep is an interface: the id lives per PIXEL (ArraySample, a zarr
+    # array to index) or per GEOMETRY ROW (MeshSample, a fabriks collection —
+    # nothing is sampled at a coordinate; a pick already holds the id). Only
+    # the store differs; everything a lookup binds is on the interface.
+    __typename
     # `consumes` is stated in this system's axis order — its axes give the
-    # dimension order of the zarr array being indexed.
+    # dimension order of the map being indexed/picked.
     system {
       id
       name
@@ -66,12 +71,19 @@ fragment AttributePlan on AttributePlan {
         type
       }
     }
-    store {
-      ...ZarrStore
-    }
     consumes
     produces
     passthrough
+    ... on ArraySample {
+      store {
+        ...ZarrStore
+      }
+    }
+    ... on MeshSample {
+      store {
+        ...FabriksStore
+      }
+    }
   }
   lookup {
     store {

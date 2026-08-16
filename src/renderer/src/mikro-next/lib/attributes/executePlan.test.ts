@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AttributePlanLike } from "./attributeTypes";
-import { executePlanAt, type ExecutePlanDeps } from "./executePlan";
+import { executePlanAt, executePlanWithValue, type ExecutePlanDeps } from "./executePlan";
 import type { AttributeLookupEngine } from "./lookupEngine";
 import type { HeldValue } from "./planExec";
 
@@ -150,5 +150,85 @@ describe("executePlanAt", () => {
       { t: 0, y: 0, x: 0 },
     );
     expect(state?.status).toBe("error");
+  });
+});
+
+describe("executePlanWithValue", () => {
+  it("yields the SAME rows and held values as sampling that value at a voxel", async () => {
+    // The mesh-probe contract: a pick that already knows its instance id must
+    // be indistinguishable, lookup-wise, from sampling the mask there.
+    const sampled = fakeEngine([{ area: 42 }]);
+    const known = fakeEngine([{ area: 42 }]);
+    const viaSample = await executePlanAt(
+      deps(sampled.engine, async () => 7),
+      plan(),
+      { t: 1, y: 3, x: 5 },
+    );
+    const viaValue = await executePlanWithValue(
+      { engine: known.engine },
+      plan(),
+      { t: 1, y: 3, x: 5 },
+      7,
+    );
+    expect(viaValue).toEqual(viaSample); // rows, sampledValue, sampleSource
+    expect(known.lookups[0].held).toEqual(sampled.lookups[0].held); // {t:1, i:7}
+  });
+
+  it("short-circuits a background value without a lookup", async () => {
+    const { engine, lookups } = fakeEngine();
+    const state = await executePlanWithValue({ engine }, plan(), { t: 0, y: 0, x: 0 }, 0);
+    expect(state?.status).toBe("background");
+    expect(lookups).toHaveLength(0);
+  });
+
+  it("never touches the field array — no sampler is even provided", async () => {
+    const { engine, lookups } = fakeEngine([{ area: 1 }]);
+    // Out-of-bounds coordinates for the ARRAY are irrelevant here: the value
+    // is known, only path mapping and held-building matter.
+    const state = await executePlanWithValue({ engine }, plan(), { t: 99, y: 0, x: 0 }, 3);
+    expect(state?.status).toBe("rows");
+    expect(lookups[0].held).toEqual({ t: 99, i: 3 });
+  });
+});
+
+describe("mesh-sampled plans", () => {
+  const meshPlan = () =>
+    plan({
+      sample: {
+        __typename: "MeshSample",
+        system: {
+          id: "sys",
+          axes: [
+            { name: "t", order: 0 },
+            { name: "y", order: 1 },
+            { name: "x", order: 2 },
+          ],
+        },
+        store: { id: "fab1" }, // a FabriksStore — no shape, nothing to index
+        consumes: ["y", "x"],
+        produces: ["i"],
+        passthrough: ["t"],
+      },
+    });
+
+  it("cannot be executed by a coordinate ask — only a pick holds the id", async () => {
+    const { engine, lookups } = fakeEngine();
+    const reasons: string[] = [];
+    const state = await executePlanAt(
+      deps(engine, async () => 1),
+      meshPlan(),
+      { t: 0, y: 0, x: 0 },
+      { onUnreachable: (_planKey, reason) => reasons.push(reason) },
+    );
+    expect(state?.status).toBe("unreachable");
+    expect(reasons).toEqual(["a mesh-sampled plan needs a picked instance id"]);
+    expect(lookups).toHaveLength(0);
+  });
+
+  it("executes through the value-known path — the DESIGNED route for picks", async () => {
+    const { engine, lookups } = fakeEngine([{ area: 42 }]);
+    const state = await executePlanWithValue({ engine }, meshPlan(), { t: 1, y: 0, x: 0 }, 7);
+    expect(state?.status).toBe("rows");
+    expect(lookups[0].held).toEqual({ t: 1, i: 7 });
   });
 });

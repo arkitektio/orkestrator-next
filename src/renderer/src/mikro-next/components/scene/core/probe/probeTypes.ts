@@ -48,8 +48,10 @@ export interface ProbeResult {
   voxelIndex: [number, number, number];
   /** World-space hit position (null when unavailable). */
   worldPos: [number, number, number] | null;
-  /** Strategy that produced the hit (after auto dispatch); "plane" for 2D. */
-  strategy: ResolvedProbeStrategy | "plane";
+  /** Strategy that produced the hit (after auto dispatch); "plane" for 2D,
+   * "mesh" for a fabriks instance pick (voxelIndex in the COLLECTION's voxel
+   * space, values[0] = the instance's objectId). */
+  strategy: ResolvedProbeStrategy | "plane" | "mesh";
   /**
    * "hover" = a follow-cursor sweep; "click" = a deliberate pointerDown.
    * Required, not optional, so both emitters have to declare intent — the

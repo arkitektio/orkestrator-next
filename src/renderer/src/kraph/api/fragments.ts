@@ -15,11 +15,13 @@
       "StructureRelationCategory"
     ],
     "Edge": [
+      "Classification",
       "Description",
       "InputParticipation",
       "Measurement",
       "OutputParticipation",
       "Relation",
+      "Sameness",
       "StructureRelation"
     ],
     "EdgeCategory": [

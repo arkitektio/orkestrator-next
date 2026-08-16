@@ -6,7 +6,7 @@ import type {
   AttributePlanLike,
   PlanRowsState,
 } from "@/mikro-next/lib/attributes/attributeTypes";
-import { planIdentity } from "@/mikro-next/lib/attributes/attributeTypes";
+import { isMeshSample, planIdentity } from "@/mikro-next/lib/attributes/attributeTypes";
 import type { AxisCoords } from "@/mikro-next/lib/coords/axisPath";
 import { applyPathToCoords } from "@/mikro-next/lib/coords/axisPath";
 import {
@@ -14,6 +14,7 @@ import {
   isBackground,
   probeCoordsFor,
   resolveSampleIndex,
+  type HeldValue,
 } from "@/mikro-next/lib/attributes/planExec";
 import {
   sceneAttributeKey,
@@ -24,6 +25,7 @@ import { useSceneStoreApi } from "../store/sceneStore";
 import type { ProbeResult } from "../core/probe/probeTypes";
 import type { LayerState } from "../core/layerModel";
 import { buildSliceMap, resolveFixedDimIndex } from "../core/selection";
+import { collectionSpatialAxes } from "../layers/mesh/collectionPlacement";
 import { createResidentSampler } from "./residentSampling";
 
 /**
@@ -119,6 +121,83 @@ export function AttributeProbeTracker() {
     const layerById = (layerId: string): LayerState | null =>
       sceneStore.getState().layers.find((layer) => layer.id === layerId) ?? null;
 
+    /** The MESH layer (with a collection) behind a mesh-strategy probe. */
+    const meshLayerById = (layerId: string) => {
+      const layer = sceneStore
+        .getState()
+        .sceneLayers.find((candidate) => candidate.id === layerId);
+      return layer?.__typename === "MeshLayer" && layer.collection ? layer : null;
+    };
+
+    /**
+     * A mesh probe's voxelIndex as named coordinates in the COLLECTION's
+     * coordinate system — vertex-component slots mapped to axis names by the
+     * store's declared order (the placement module's one convention). Plans
+     * for that system then path/lookup exactly as for an image probe; the
+     * instance value replaces the field-array sample.
+     */
+    const meshCoordsFor = (layerId: string, key: SceneAttributeKey): AxisCoords | null => {
+      const layer = meshLayerById(layerId);
+      if (!layer || !layer.collection) return null;
+      const spatial = collectionSpatialAxes(layer.collection);
+      const coords: AxisCoords = {};
+      spatial.forEach((axis, slot) => {
+        if (axis) coords[axis] = key.voxelIndex[slot];
+      });
+      return Object.keys(coords).length > 0 ? coords : null;
+    };
+
+    /**
+     * REVERSE sync — declaration-driven: when a voxel probe's ARRAY plan
+     * settles with an instance id, the probed system's MESH-SAMPLE plans say
+     * which collection(s) that id names (`MeshSample.store` is the fabriks
+     * store — matched against each mesh layer's `collection.store.id`). The
+     * matched instance is MARKED (highlight + hull) — but only while the
+     * debug page's "marked boundary" setting is on, and never re-entered by
+     * mesh probes (their pick set the selection in the first place). Rides
+     * plan settlement, so it inherits the tracker's debounce.
+     */
+    const syncMeshSelection = (key: SceneAttributeKey, state: PlanRowsState): void => {
+      if (key.instanceValue !== undefined) return;
+      if (!viewerStore.getState().markProbedInstances) return;
+      const value = state.sampledValue;
+      if (state.status !== "rows" || value == null) return;
+
+      // The system's mesh-sample plans declare the id → collection linkage
+      // (cached by the time any plan settles — plansFor ran first).
+      const meshPlans = (service.peekPlans(key.systemId) ?? []).filter((candidate) =>
+        isMeshSample(candidate.sample),
+      );
+      if (meshPlans.length === 0) return;
+      const meshStoreIds = new Set(meshPlans.map((candidate) => candidate.sample.store.id));
+
+      const systems = viewerStore.getState().meshSystems;
+      for (const [layerId, manager] of Object.entries(systems)) {
+        const mesh = meshLayerById(layerId);
+        if (!mesh?.collection || !meshStoreIds.has(mesh.collection.store.id)) continue;
+        void manager
+          .identifyObjectId(Number(value))
+          .then((entry) => {
+            if (!entry) return;
+            // Latest-wins: only apply while this probe is still the active one.
+            const probe = viewerStore.getState().probedCoordinate;
+            if (!probe || keyOf(probe)?.pointId !== key.pointId) return;
+            const previous = viewerStore.getState().meshSelection;
+            viewerStore.getState().setMeshSelection({
+              layerId,
+              ordinal: entry.ordinal,
+              objectId: entry.objectId,
+              stats: { vertices: entry.vertexCount, indices: entry.indexCount },
+              isolate: previous?.layerId === layerId ? previous.isolate : false,
+            });
+          })
+          .catch(() => {
+            /* no catalog: probing still works, only the marking is absent */
+          });
+        break; // first matching collection claims the marking
+      }
+    };
+
     // Warn-once diagnostics: an unreachable plan is an honest absence in the
     // UI, but a silent one is undebuggable — say WHERE it died, once per
     // (plan, reason).
@@ -136,6 +215,22 @@ export function AttributeProbeTracker() {
       plan: AttributePlanLike,
       isStale: () => boolean,
     ): Promise<PlanRowsState | null> => {
+      // Mesh probes: the instance id IS the field value — value-known path.
+      if (key.instanceValue !== undefined) {
+        const coords = meshCoordsFor(key.layerId, key);
+        if (!coords) {
+          warnUnreachable(planIdentity(plan), "mesh probe's collection missing from scene", {
+            layerId: key.layerId,
+          });
+          return { status: "unreachable", rows: [] };
+        }
+        const state = await service.executePlanWithValue(plan, coords, key.instanceValue, {
+          isStale,
+          onUnreachable: warnUnreachable,
+        });
+        return state;
+      }
+
       const layer = layerById(key.layerId);
       if (!layer) {
         warnUnreachable(planIdentity(plan), "probed layer missing from scene", {
@@ -143,11 +238,13 @@ export function AttributeProbeTracker() {
         });
         return { status: "unreachable", rows: [] };
       }
-      return service.executePlanAt(plan, coordsFor(layer, key), {
+      const state = await service.executePlanAt(plan, coordsFor(layer, key), {
         isStale,
         sampleSync: residentSamplerFor(plan),
         onUnreachable: warnUnreachable,
       });
+      if (state !== null && !isStale()) syncMeshSelection(key, state);
+      return state;
     };
 
     // Warm each system's plans once at discovery: secret creation and
@@ -170,6 +267,11 @@ export function AttributeProbeTracker() {
     });
 
     const keyOf = (probe: ProbeResult): SceneAttributeKey | null => {
+      if (probe.strategy === "mesh") {
+        const systemId = meshLayerById(probe.layerId)?.collection?.coordinateSystem.id ?? null;
+        if (!systemId) return null;
+        return sceneAttributeKey(probe, systemId);
+      }
       const layer = layerById(probe.layerId);
       const systemId = layer ? systemIdFor(layer) : null;
       if (!systemId) return null;
@@ -190,9 +292,12 @@ export function AttributeProbeTracker() {
         viewerStore.getState().beginProbedAttributes(key, plans);
         return true;
       }
-      const layer = layerById(key.layerId);
-      if (!layer) return false;
-      const startCoords = coordsFor(layer, key);
+      // Mesh probes carry the field value with them — no residency needed.
+      const isMesh = key.instanceValue !== undefined;
+      const layer = isMesh ? null : layerById(key.layerId);
+      if (!isMesh && !layer) return false;
+      const startCoords = isMesh ? meshCoordsFor(key.layerId, key) : coordsFor(layer!, key);
+      if (!startCoords) return false;
 
       const states: [string, PlanRowsState][] = [];
       for (const plan of plans) {
@@ -204,17 +309,25 @@ export function AttributeProbeTracker() {
           states.push([planKey, { status: "unreachable", rows: [] }]);
           continue;
         }
-        const index = resolveSampleIndex(plan, mapped);
-        if (index === null) {
-          states.push([planKey, { status: "unreachable", rows: [] }]);
-          continue;
+        let value: HeldValue;
+        const sampleSource: "resident" | "exact" = isMesh ? "exact" : "resident";
+        if (isMesh) {
+          value = key.instanceValue!;
+        } else {
+          const index = resolveSampleIndex(plan, mapped);
+          if (index === null) {
+            // Also the mesh-sample-plan case under a voxel probe: no array.
+            states.push([planKey, { status: "unreachable", rows: [] }]);
+            continue;
+          }
+          const resident = residentSamplerFor(plan)?.(index) ?? null;
+          if (resident === null) return false; // not resident: needs the async path
+          value = resident;
         }
-        const value = residentSamplerFor(plan)?.(index) ?? null;
-        if (value === null) return false; // not resident: needs the async path
         if (isBackground(value)) {
           states.push([
             planKey,
-            { status: "background", rows: [], sampledValue: value, sampleSource: "resident" },
+            { status: "background", rows: [], sampledValue: value, sampleSource },
           ]);
           continue;
         }
@@ -227,7 +340,7 @@ export function AttributeProbeTracker() {
         if (rows === null) return false; // LRU miss: a real lookup is needed
         states.push([
           planKey,
-          { status: "rows", rows, sampledValue: value, sampleSource: "resident" },
+          { status: "rows", rows, sampledValue: value, sampleSource },
         ]);
       }
 
@@ -235,6 +348,7 @@ export function AttributeProbeTracker() {
       store.beginProbedAttributes(key, plans);
       for (const [planKey, state] of states) {
         store.mergeAttributeRows(key, planKey, state);
+        syncMeshSelection(key, state);
       }
       return true;
     };
@@ -255,6 +369,9 @@ export function AttributeProbeTracker() {
         viewerStore.getState().clearProbedAttributes();
         return;
       }
+      // A mesh probe still awaiting its objectId (first pick, catalog in
+      // flight) has no lookup key yet; the layer re-publishes when it lands.
+      if (probe.strategy === "mesh" && probe.values[0]?.value == null) return;
       const key = keyOf(probe);
       if (!key) return;
       if (tryInstant(key)) return;

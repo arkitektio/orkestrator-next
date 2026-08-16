@@ -55,24 +55,48 @@ import {
  * identity PLUS the probe fields the panels compare against
  * (`isSameProbeKey`) and the tracker needs to rebuild coordinates.
  */
-export type SceneAttributeKey = AttributeFetchKey & ProbeFetchKey;
+export type SceneAttributeKey = AttributeFetchKey &
+  ProbeFetchKey & {
+    /** Mesh probes only: the instance's objectId — the tracker's value-known
+     * lookup key (no field-array sample needed). */
+    instanceValue?: number;
+  };
 
 /** Build the scene key for a probed point: `pointId` encodes the probe identity. */
 export const sceneAttributeKey = (
-  probe: ProbeFetchKey,
+  probe: ProbeFetchKey & { strategy?: string; values?: readonly { value: number | null }[] },
   systemId: string,
-): SceneAttributeKey => ({
-  layerId: probe.layerId,
-  voxelIndex: probe.voxelIndex,
-  sliceSignature: probe.sliceSignature,
-  systemId,
-  pointId: `${probe.layerId}:${probe.voxelIndex.join(",")}:${probe.sliceSignature}`,
-});
+): SceneAttributeKey => {
+  const instanceValue =
+    probe.strategy === "mesh" && probe.values?.[0]?.value != null
+      ? probe.values[0].value
+      : undefined;
+  return {
+    layerId: probe.layerId,
+    voxelIndex: probe.voxelIndex,
+    sliceSignature: probe.sliceSignature,
+    systemId,
+    pointId: `${probe.layerId}:${probe.voxelIndex.join(",")}:${probe.sliceSignature}`,
+    ...(instanceValue !== undefined ? { instanceValue } : {}),
+  };
+};
 
 /** Historical name for the probe result; kept so the markers / probe-orbit
  * consumers (`layerId`/`localPos`/`voxelIndex`) compile untouched. */
 export type ProbedCoordinate = ProbeResult;
 export type { ProbeMode, ProbeResult } from "../core/probe/probeTypes";
+
+/** One picked mesh instance (`FabriksCollectionLayer` click / card input). */
+export interface MeshSelectionState {
+  layerId: string;
+  /** The dense per-vertex ordinal — what the shader highlights/isolates. */
+  ordinal: number;
+  /** Resolved asynchronously from the collection's object catalog. */
+  objectId: number | null;
+  /** Catalog stats, resolved alongside `objectId`. */
+  stats: { vertices: number; indices: number } | null;
+  isolate: boolean;
+}
 
 /** Why layers were culled from display by the render-cost budget. */
 export interface RenderBudgetInfo {
@@ -170,6 +194,16 @@ export interface ViewerState {
    * cadence — only debug consumers may subscribe (P17), like `residencyVersion`. */
   meshVersion: number;
   bumpMeshVersion: () => void;
+  /** The picked mesh instance (one scene-wide, like the probe): set by a
+   * click on a mesh layer, consumed by that layer's manager (highlight /
+   * isolate) and the MeshLayerCard. `objectId` resolves asynchronously from
+   * the collection's object catalog — null while in flight. */
+  meshSelection: MeshSelectionState | null;
+  setMeshSelection: (selection: MeshSelectionState | null) => void;
+  /** Debug-page opt-in: probing a voxel whose attribute plans name a mesh
+   * collection (a MeshSample plan) MARKS that instance — highlight + hull. */
+  markProbedInstances: boolean;
+  setMarkProbedInstances: (mark: boolean) => void;
 
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
@@ -271,6 +305,10 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
       }),
     meshVersion: 0,
     bumpMeshVersion: () => set((state) => ({ meshVersion: state.meshVersion + 1 })),
+    meshSelection: null,
+    setMeshSelection: (selection) => set({ meshSelection: selection }),
+    markProbedInstances: false,
+    setMarkProbedInstances: (mark) => set({ markProbedInstances: mark }),
     register: (ref) => set((state) => ({
       trackables: new Set(state.trackables).add(ref),
     })),

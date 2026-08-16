@@ -58,23 +58,27 @@ describe("transfer stops", () => {
     }
   });
 
-  it("round-trips through serialize with 0-255 RGBA colors", () => {
+  it("NEVER serializes the color gradient into the server's `stops` field", () => {
+    // The server's `stops` is a LookupStop intensity CURVE ({position, value}),
+    // not color stops — writing the gradient there would corrupt the curve.
     const node = parseRenderNode(
       channelFragment([
         { position: 0, color: [10, 20, 30] },
         { position: 1, color: [200, 210, 220, 128] },
       ]),
     ) as ChannelRenderNode;
-    const input = serializeRenderNode(node) as { transfer?: { stops?: unknown } };
-    expect(input.transfer?.stops).toEqual([
-      { position: 0, color: [10, 20, 30, 255] },
-      { position: 1, color: [200, 210, 220, 128] },
-    ]);
+    expect(node.transfer.stops).toHaveLength(2); // parsed for local rendering…
+    const input = serializeRenderNode(node) as { transfer?: Record<string, unknown> };
+    expect(input.transfer && "stops" in input.transfer).toBe(false); // …never saved
   });
 
-  it("serializes NO stops field when none are authored (pre-stops servers)", () => {
-    const node = parseRenderNode(channelFragment(null)) as ChannelRenderNode;
-    const input = serializeRenderNode(node) as { transfer?: Record<string, unknown> };
-    expect(input.transfer && "stops" in input.transfer).toBe(false);
+  it("ignores server LookupStop curve entries (no color array = not a gradient)", () => {
+    const node = parseRenderNode(
+      channelFragment([
+        { position: 0, value: 0 },
+        { position: 4000, value: 1 },
+      ]),
+    ) as ChannelRenderNode;
+    expect(node.transfer.stops).toBeNull();
   });
 });

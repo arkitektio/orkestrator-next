@@ -898,6 +898,36 @@ The `ArrayLike` scalar type represents a reference to a store previously created
 """
 scalar ArrayLike
 
+"""
+An array whose values are the map: sample it at the point's coordinates. The client that is already rendering the array reads the value from the chunk it already has; a headless worker fetches it through the store's access grant. Either way the plan never says what is in the array -- the client owns pixels
+"""
+type ArraySample implements SampleStep {
+  """
+  The axes the point is resolved against, in the field system's axis order, e.g. ['y', 'x'] -- what you index an array with, or what your pick resolved for a collection
+  """
+  consumes: [String!]!
+
+  """
+  The axes the edge did not consume, e.g. ['t']: their coordinates pass through by name and join the produced values as lookup keys
+  """
+  passthrough: [String!]!
+
+  """
+  The axis names the resulting id produces, per-edge: two sibling edges off one mask may name their produced axis differently (`i`, `label_id`), so always zip the value against THIS edge's names, never a shared key set
+  """
+  produces: [String!]!
+
+  """
+  The zarr store holding the array (the level-0 store for an intrinsic system). Ask it for an accessGrant to actually read chunks -- credentials never appear in a plan
+  """
+  store: ZarrStore!
+
+  """
+  The coordinate system whose contents are the map. Equal to the queried system when the thing's own contents are the map (a label mask, a mesh collection); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
+  """
+  system: CoordinateSystem!
+}
+
 """Input for assigning object-level permissions to a user"""
 input AssignUserPermissionInput {
   """
@@ -935,7 +965,7 @@ type AttributePlan {
   """
   edge: FieldTransformation!
 
-  """The duckdb half: look the sampled value up in the parquet"""
+  """The duckdb half: look the id up in the parquet"""
   lookup: LookupStep!
 
   """
@@ -943,7 +973,9 @@ type AttributePlan {
   """
   path: [PlacementStep!]!
 
-  """The zarr half: sample the field array at the (path-mapped) point"""
+  """
+  Where the id comes from: an `ArraySample` to read at the (path-mapped) point, or a `MeshSample` whose id the client already picked
+  """
   sample: SampleStep!
 
   """
@@ -2329,6 +2361,7 @@ Create a layer that renders a mesh collection (surface reconstructions / isosurf
 """
 input CreateMeshLayerInput {
   blending: Blending = null
+  colorBy: MeshColorByInput = null
   materialColor: [Int!] = null
   meshCollection: ID!
   opacity: Float = null
@@ -2617,6 +2650,16 @@ input DatasetExportOfInput {
   kind: FileLinkContainerKind! = DATASET
   seriesIdentifier: String = null
   valueRelation: ValueRelation = null
+}
+
+"""
+The fields a DATASET keying reads. Published for codegen; the wire type is the flat KeyedByInput
+"""
+input DatasetKeyedByInput {
+  dataset: ID!
+  kind: KeyedBySourceKind! = DATASET
+  name: String = null
+  validity: PlacementValidity = null
 }
 
 """Date with time (isoformat)"""
@@ -4921,12 +4964,46 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 """
-A label mask whose pixel values are the ids this table is indexed by. It authors the FIELD edge in the direction the map actually runs -- mask pixels -> table rows -- which is the direction attributePlans discovers, and the opposite of the lineage `derivedFrom` records
+A source whose own contents are the ids this table is indexed by, as a discriminated union: `kind` selects which sort of source is being named, and only that member's id field is read -- any other is rejected. It authors the FIELD edge in the direction the map actually runs -- source -> table rows -- which is the direction attributePlans discovers, and the opposite of the lineage `derivedFrom` records
 """
 input KeyedByInput {
-  dataset: ID!
+  """
+  (DATASET) The label dataset whose pixels are the map. Its own pixel grid is both the edge's input and its field, which is what a label mask is: the array being mapped is the array doing the mapping
+  """
+  dataset: ID = null
+
+  """
+  Which sort of thing the source is. It fixes which id field below is read; any other is rejected
+  """
+  kind: KeyedBySourceKind!
+
+  """
+  (MESH_COLLECTION) The mesh collection whose geometry carries the ids. Its own vertex space is both the edge's input and its field, exactly as a mask's grid is -- what differs is only where the id was materialised: on the geometry rows rather than in pixels, so a client that picked a surface is already holding one and samples nothing
+  """
+  meshCollection: ID = null
+
+  """An optional name for the edge. Defaults to '<source> -> <table>'"""
   name: String = null
+
+  """
+  How much this dereference is actually known. Defaults to MANUAL -- someone authored it. Say VALIDATED when the ids the source carries were checked against the table's rows
+  """
   validity: PlacementValidity = null
+}
+
+"""
+Which kind of thing keys a table: the discriminator of `KeyedByInput`. Two members, not the six `DerivationSourceKind` carries, because a keying source has to be something whose own contents identify an object -- a mask's pixels, a collection's geometry. A lens is a selection and owns neither; a table is already in record-land, where the relation is `TableColumn.references` rather than an edge; a bare space holds nothing at all. Advertising those and refusing them at runtime would be a schema that says yes where the server says no
+"""
+enum KeyedBySourceKind {
+  """
+  A label mask, through its intrinsic pixel grid: the array being mapped is the array doing the mapping, and its pixel values are the ids.
+  """
+  DATASET
+
+  """
+  A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows, so a client that picked a surface is already holding one.
+  """
+  MESH_COLLECTION
 }
 
 """
@@ -5689,6 +5766,22 @@ type LookupStep {
 }
 
 """
+One control point of an intensity transfer curve: a raw intensity, and the normalized value it maps to. The two sides are on different scales -- `position` in the data's units, `value` in the 0..1 the colormap is indexed with
+"""
+type LookupStop {
+  position: Float!
+  value: Float!
+}
+
+"""
+One control point of an intensity transfer curve: a raw intensity, and the normalized value it maps to. The two sides are on different scales -- `position` in the data's units, `value` in the 0..1 the colormap is indexed with
+"""
+input LookupStopInput {
+  position: Float!
+  value: Float!
+}
+
+"""
 The fields a MAP_AXIS member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input MapAxisTransformInput {
@@ -6009,6 +6102,36 @@ input MeshCollectionFilter {
 }
 
 """
+The fields a MESH_COLLECTION keying reads. Published for codegen; the wire type is the flat KeyedByInput
+"""
+input MeshCollectionKeyedByInput {
+  kind: KeyedBySourceKind! = MESH_COLLECTION
+  meshCollection: ID!
+  name: String = null
+  validity: PlacementValidity = null
+}
+
+"""
+Color a mesh collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color. The same shape `LabelColorBy` carries, and the same relation -- a collection's ids reach a table exactly as a mask's pixel values do -- under a name that reads right on a mesh
+"""
+type MeshColorBy {
+  classColors: JSON
+  colormap: ColorMap
+  column: String!
+  table: ID!
+}
+
+"""
+Color a mesh collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color
+"""
+input MeshColorByInput {
+  classColors: JSON = null
+  colormap: ColorMap = null
+  column: String!
+  table: ID!
+}
+
+"""
 A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
 """
 type MeshLayer implements Layer {
@@ -6018,6 +6141,11 @@ type MeshLayer implements Layer {
   The versioned, coordinate-system-anchored mesh collection this layer renders. Its geometry is fetched from the collection's Parquet catalog, not through this API
   """
   collection: MeshCollection
+
+  """
+  Color the objects by a column of the table this collection's FIELD edge keys into, instead of by the flat `materialColor`. Null means the material color is what is drawn -- the distinction between a surface and a measurement rendered on one
+  """
+  colorBy: MeshColorBy
   id: ID!
   kind: LayerKind!
   materialColor: [Int!]
@@ -6046,6 +6174,36 @@ type MeshLayer implements Layer {
   scene: Scene!
   visible: Boolean!
   wireframe: Boolean!
+}
+
+"""
+A mesh collection whose geometry carries the ids. **Nothing is sampled at a coordinate here**: an id rides on the geometry row, so a client that picked a surface is already holding one and goes straight to the lookup -- the mesh case of the rule that makes a plan worth caching, that it never costs a round-trip. `consumes` names the axes that pick resolved rather than axes to index anything with. The store is named for a headless worker that did not do the picking and must read the object catalog itself
+"""
+type MeshSample implements SampleStep {
+  """
+  The axes the point is resolved against, in the field system's axis order, e.g. ['y', 'x'] -- what you index an array with, or what your pick resolved for a collection
+  """
+  consumes: [String!]!
+
+  """
+  The axes the edge did not consume, e.g. ['t']: their coordinates pass through by name and join the produced values as lookup keys
+  """
+  passthrough: [String!]!
+
+  """
+  The axis names the resulting id produces, per-edge: two sibling edges off one mask may name their produced axis differently (`i`, `label_id`), so always zip the value against THIS edge's names, never a shared key set
+  """
+  produces: [String!]!
+
+  """
+  The fabriks store holding the collection -- its manifest, both catalogs and every octree level. Ask it for an accessGrant; one grant covers the whole prefix
+  """
+  store: FabriksStore!
+
+  """
+  The coordinate system whose contents are the map. Equal to the queried system when the thing's own contents are the map (a label mask, a mesh collection); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
+  """
+  system: CoordinateSystem!
 }
 
 """Schema for unstructured metadata attached to a file."""
@@ -6732,6 +6890,11 @@ type Mutation {
   Update an existing layer's lens, scene, affine transformation, and colormap settings
   """
   updateLayer(input: UpdateLayerInput!): ImageLayer!
+
+  """
+  Retune how a mesh layer is drawn: its material, wireframe, compositing, and which table column colours its objects. A patch -- an omitted field keeps its value
+  """
+  updateMeshLayer(input: UpdateMeshLayerInput!): MeshLayer!
 
   """Update settings of an existing RGB context"""
   updateRgbContext(input: UpdateRGBContextInput!): RGBContext!
@@ -9921,11 +10084,11 @@ input SampleElementInput {
 }
 
 """
-The zarr half of a plan: sample this array at the point's coordinates. The client that is already rendering the array reads the value from the chunk it already has; a headless worker fetches it through the store's access grant. Either way the plan never says what is in the array -- the client owns pixels
+The first half of a plan: where the id comes from. Two substrates implement it, and they differ only in where the answer was materialised -- per pixel in an array, or per geometry row in a mesh collection. Everything a worker needs to bind the lookup is here on the interface; only the store differs, so select it through an `... on ArraySample` / `... on MeshSample` fragment. Either way the plan never says what the id *is* -- the client owns that, because it already has it
 """
-type SampleStep {
+interface SampleStep {
   """
-  The axes the sample consumes, in the field system's axis order: index the array here with the point's coordinates, e.g. ['y', 'x']
+  The axes the point is resolved against, in the field system's axis order, e.g. ['y', 'x'] -- what you index an array with, or what your pick resolved for a collection
   """
   consumes: [String!]!
 
@@ -9935,17 +10098,12 @@ type SampleStep {
   passthrough: [String!]!
 
   """
-  The axis names the sampled value produces, per-edge: two sibling edges off one mask may name their produced axis differently (`i`, `label_id`), so always zip the value against THIS edge's names, never a shared key set
+  The axis names the resulting id produces, per-edge: two sibling edges off one mask may name their produced axis differently (`i`, `label_id`), so always zip the value against THIS edge's names, never a shared key set
   """
   produces: [String!]!
 
   """
-  The zarr store holding the array (the level-0 store for an intrinsic system). Ask it for an accessGrant to actually read chunks -- credentials never appear in a plan
-  """
-  store: ZarrStore!
-
-  """
-  The coordinate system of the array being sampled. Equal to the queried system when the array's own pixels are the map (a label mask); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
+  The coordinate system whose contents are the map. Equal to the queried system when the thing's own contents are the map (a label mask, a mesh collection); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
   """
   system: CoordinateSystem!
 }
@@ -11352,6 +11510,7 @@ type TransferFunction {
   gamma: Float
   invert: Boolean
   opacity: Float
+  stops: [LookupStop!]
 }
 
 """
@@ -11365,6 +11524,7 @@ input TransferFunctionInput {
   gamma: Float = null
   invert: Boolean = null
   opacity: Float = null
+  stops: [LookupStopInput!] = null
 }
 
 """
@@ -11832,6 +11992,20 @@ input UpdateLayerInput {
   renderGraph: LayerRenderGraphInput = null
   scene: ID = null
   visible: Boolean = null
+}
+
+"""
+Retune how a mesh layer is drawn. A patch: every field is optional and an omitted one keeps its current value, so switching the coloring cannot silently drop the material or the wireframe. The collection and the scene are not editable -- a layer renders what it was created to render
+"""
+input UpdateMeshLayerInput {
+  blending: Blending = null
+  colorBy: MeshColorByInput = null
+  id: ID!
+  materialColor: [Int!] = null
+  opacity: Float = null
+  order: Int = null
+  visible: Boolean = null
+  wireframe: Boolean = null
 }
 
 """Input for updating an existing RGB render context"""

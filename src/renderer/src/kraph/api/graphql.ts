@@ -168,6 +168,8 @@ export type ArchiveNodeTableQueryInput = {
 
 /** Input for creating a new entity */
 export type AssertEntityExistsInput = {
+  /** Instances this new one is the same as. Saying "this is AIS 6" mints a fresh instance and claims it is the same as the one already known as AIS 6 — all under **one assertion**, because it is one act. Sameness is an equivalence with no primary, so which id you send is immaterial; entities only, never structures. */
+  sameAs?: Array<Scalars['String']['input']>;
   /** List of evidence structures with measurements */
   supportingEvidence?: Array<StructureReferenceInput>;
   /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
@@ -272,6 +274,12 @@ export type AssertRelationExistsInput = {
   targetId: Scalars['String']['input'];
   /** The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it. */
   term: Scalars['String']['input'];
+};
+
+/** Input for claiming that several recorded instances are one thing */
+export type AssertSameEntityInput = {
+  /** Two or more entity ids that name the same thing. Every pair among them is claimed, under one assertion. */
+  entities: Array<Scalars['String']['input']>;
 };
 
 /** Input for claiming that an external datum exists */
@@ -459,6 +467,29 @@ export type CategoryNodePositionInput = {
   positionY: Scalars['Float']['input'];
   /** Optional width for the node (for visualization purposes) */
   width?: InputMaybe<Scalars['Float']['input']>;
+};
+
+/** A CLASSIFIES claim: somebody's word for what a node is */
+export type Classification = Edge & {
+  __typename?: 'Classification';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
+  /** Global identifier in format 'graph_name:graph_id' */
+  globalId: Scalars['GlobalID']['output'];
+  /** Local AGE graph ID, or null for edges that have no projection */
+  graphId?: Maybe<Scalars['Int']['output']>;
+  /** Composite ID for edge lookup */
+  id: Scalars['String']['output'];
+  /** The edge label/type */
+  label: Scalars['String']['output'];
+  /** The node this word was claimed about */
+  source: Node;
+  /** Global ID of the source/left node */
+  sourceId: Scalars['String']['output'];
+  /** Global ID of the target/right node */
+  targetId: Scalars['String']['output'];
+  /** The organization's word that was claimed */
+  term?: Maybe<Term>;
 };
 
 /** One claim that a node is of a category, inside a batch */
@@ -1100,6 +1131,8 @@ export enum DerivationType {
 /** An INFORMS claim: a structure that is evidence for a node */
 export type Description = Edge & {
   __typename?: 'Description';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** Global identifier in format 'graph_name:graph_id' */
   globalId: Scalars['GlobalID']['output'];
   /** Local AGE graph ID, or null for edges that have no projection */
@@ -1120,6 +1153,8 @@ export type Description = Edge & {
 
 /** Base interface for all graph edges */
 export type Edge = {
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** Global identifier in format 'graph_name:graph_id' */
   globalId: Scalars['GlobalID']['output'];
   /** Local AGE graph ID, or null for edges that have no projection */
@@ -1341,6 +1376,12 @@ export type Entity = Node & VersionedNode & {
   category?: Maybe<EntityCategory>;
   /** Category ID linking to EntityCategory model */
   categoryId?: Maybe<Scalars['String']['output']>;
+  /** Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it */
+  component: Array<Scalars['ID']['output']>;
+  /** Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection */
+  connections: Array<Edge>;
+  /** Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed */
+  drawnIn: Array<NodeDrawing>;
   /** External ID if set */
   externalId?: Maybe<Scalars['String']['output']>;
   /** Global identifier in format 'graph_name:graph_id' */
@@ -1355,6 +1396,8 @@ export type Entity = Node & VersionedNode & {
   kind: Scalars['String']['output'];
   /** The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1') */
   label: Scalars['String']['output'];
+  /** What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed */
+  labels: Array<Label>;
   /** Timestamp when properties were last derived (unix ms) */
   lastDerived?: Maybe<Scalars['UnixMilliseconds']['output']>;
   /** Local ID if set */
@@ -1371,6 +1414,8 @@ export type Entity = Node & VersionedNode & {
   resultedOut: Array<OutputParticipation>;
   /** List of properties derived for this entity */
   richProperties: Array<RichProperty>;
+  /** The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent */
+  sameAs: Array<Sameness>;
   /** Schema version used to derive properties */
   schemaVersion: Scalars['String']['output'];
   /** When this entity became valid */
@@ -2161,6 +2206,8 @@ export type GraphTableRender = {
 /** A claim that an entity went into an event */
 export type InputParticipation = Edge & {
   __typename?: 'InputParticipation';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** Global identifier in format 'graph_name:graph_id' */
   globalId: Scalars['GlobalID']['output'];
   /** Local AGE graph ID, or null for edges that have no projection */
@@ -2179,6 +2226,19 @@ export type InputParticipation = Edge & {
   target: Event;
   /** Global ID of the target/right node */
   targetId: Scalars['String']['output'];
+};
+
+/** A word somebody has called this thing, and how much agreement there is */
+export type Label = {
+  __typename?: 'Label';
+  /** How many separate assertions say this. Concurrence, not repetition — the log records a claim that restates a position already held precisely so this is countable */
+  assertionCount: Scalars['Int']['output'];
+  /** The most recent act that claimed this word. Ordered by the log's `seq`, which cannot tie */
+  latestAssertion?: Maybe<Assertion>;
+  /** Which instance in the component was called this. Every observation mints its own, so a component's labels may name different ones */
+  nodeId: Scalars['ID']['output'];
+  /** The organization's word that was claimed */
+  term?: Maybe<Term>;
 };
 
 /** Input for linking a structure to an entity */
@@ -2361,6 +2421,8 @@ export type MaterializedStructureRelationEdgeOrder =
 /** A MEASUREMENT claim: a structure measuring an entity */
 export type Measurement = Edge & {
   __typename?: 'Measurement';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** How the view this was read through draws it, if any view does */
   category?: Maybe<MeasurementCategory>;
   /** Global identifier in format 'graph_name:graph_id' */
@@ -2629,6 +2691,8 @@ export type Metric = Node & {
   __typename?: 'Metric';
   /** When this measurement was claimed */
   assertedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Who measured this, and when they claimed it */
+  assertion?: Maybe<Assertion>;
   /** How confident the source is in this measurement */
   confidence?: Maybe<Scalars['Float']['output']>;
   /** What kind of confidence this is */
@@ -2816,6 +2880,8 @@ export type Mutation = {
   assertProtocolEventExists: ProtocolEventAssertion;
   /** Assert a relation between two entities, under one of the organization's words */
   assertRelationExists: RelationAssertion;
+  /** Claim that several already-recorded instances are one thing. An equivalence with no primary — the order of the ids carries no meaning */
+  assertSameEntity: SamenessAssertion;
   /** Claim that an external datum exists and is worth pointing at. Idempotent by (identifier, object) */
   assertStructureExists: StructureAssertion;
   /** Assert a relation between two structures. Drawings are always empty: neither endpoint has a vertex */
@@ -2938,6 +3004,8 @@ export type Mutation = {
   retractProtocolEvent: ProtocolEventAssertion;
   /** Retract a relation assertion without destroying it. The edge survives wherever another live assertion still states the same proposition */
   retractRelation: RelationAssertion;
+  /** Withdraw one sameness claim. The component it held together is rebuilt from the claims that survive, which may split it */
+  retractSameEntity: SamenessAssertion;
   /** Claim that a structure should no longer be pointed at. The row and its metrics survive */
   retractStructure: StructureAssertion;
   /** Retract a structure relation assertion without destroying it */
@@ -3106,6 +3174,12 @@ export type MutationAssertProtocolEventExistsArgs = {
 /** Graph Engine Mutations */
 export type MutationAssertRelationExistsArgs = {
   input: AssertRelationExistsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationAssertSameEntityArgs = {
+  input: AssertSameEntityInput;
 };
 
 
@@ -3472,6 +3546,12 @@ export type MutationRetractProtocolEventArgs = {
 /** Graph Engine Mutations */
 export type MutationRetractRelationArgs = {
   input: RetractRelationInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractSameEntityArgs = {
+  input: RetractSameEntityInput;
 };
 
 
@@ -4116,6 +4196,8 @@ export enum Ordering {
 /** A claim that an entity came out of an event */
 export type OutputParticipation = Edge & {
   __typename?: 'OutputParticipation';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** Global identifier in format 'graph_name:graph_id' */
   globalId: Scalars['GlobalID']['output'];
   /** Local AGE graph ID, or null for edges that have no projection */
@@ -5202,6 +5284,8 @@ export type QueryTermsArgs = {
 /** A relation edge between two entities */
 export type Relation = Edge & {
   __typename?: 'Relation';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** How the view this was read through draws it, if any view does */
   category?: Maybe<RelationCategory>;
   /** When this relation was created */
@@ -5505,6 +5589,12 @@ export type RetractRelationInput = {
   id: Scalars['GraphID']['input'];
 };
 
+/** Input for withdrawing one sameness claim */
+export type RetractSameEntityInput = {
+  /** The id of the sameness claim to retract */
+  id: Scalars['String']['input'];
+};
+
 /** Input for deleting an existing structure */
 export type RetractStructureInput = {
   /** The ID of the structure to archive */
@@ -5569,6 +5659,38 @@ export type RoleMappingInput = {
   entityId: Scalars['String']['input'];
   /** The role name */
   role: Scalars['String']['input'];
+};
+
+/** A claim that two instances are one thing */
+export type Sameness = Edge & {
+  __typename?: 'Sameness';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
+  /** Global identifier in format 'graph_name:graph_id' */
+  globalId: Scalars['GlobalID']['output'];
+  /** Local AGE graph ID, or null for edges that have no projection */
+  graphId?: Maybe<Scalars['Int']['output']>;
+  /** Composite ID for edge lookup */
+  id: Scalars['String']['output'];
+  /** The edge label/type */
+  label: Scalars['String']['output'];
+  /** One of the two instances claimed to be the same */
+  source: Entity;
+  /** Global ID of the source/left node */
+  sourceId: Scalars['String']['output'];
+  /** The other instance claimed to be the same */
+  target: Entity;
+  /** Global ID of the target/right node */
+  targetId: Scalars['String']['output'];
+};
+
+/** An assertion that instances are one thing, and the claims it recorded */
+export type SamenessAssertion = {
+  __typename?: 'SamenessAssertion';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** The sameness claims this act recorded. Asserting that three instances are one records every pair among them, under one assertion */
+  samenesses: Array<Sameness>;
 };
 
 /** Result of linking a structure to an entity */
@@ -5664,6 +5786,8 @@ export type Structure = Node & {
   id: Scalars['String']['output'];
   /** Schema identifier (e.g. '@mikro/roi') */
   identifier: Scalars['StructureIdentifier']['output'];
+  /** The nodes this structure is evidence for. Where its labels, merges and connections live — a structure is a pointer to an external datum and is never itself claimed to be an AIS */
+  informs: Array<Entity>;
   /** The organization's term for this kind of structure */
   kind?: Maybe<StructureKind>;
   /** ID of the structure kind this instantiates */
@@ -5672,7 +5796,7 @@ export type Structure = Node & {
   label: Scalars['String']['output'];
   /** Local ID if set */
   localId?: Maybe<Scalars['String']['output']>;
-  /** The graph this node belongs to */
+  /** Every un-retracted measurement of this structure, in observation order */
   metrics: Array<Metric>;
   /** External object ID this structure references */
   object: Scalars['String']['output'];
@@ -5848,6 +5972,8 @@ export type StructureReferenceInput = {
 /** A relation edge between two structures */
 export type StructureRelation = Edge & {
   __typename?: 'StructureRelation';
+  /** Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance */
+  assertion?: Maybe<Assertion>;
   /** How the view this was read through draws it, if any view does */
   category?: Maybe<StructureRelationCategory>;
   /** Category ID linking to StructureRelationCategory model */
@@ -6820,13 +6946,15 @@ export type AssertionFragment = { __typename?: 'Assertion', id: string, subject:
 
 export type NodeDrawingFragment = { __typename?: 'NodeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, node: { __typename?: 'Activity', id: string, label: string } | { __typename?: 'Entity', id: string, label: string } | { __typename?: 'Metric', id: string, label: string } | { __typename?: 'NaturalEvent', id: string, label: string } | { __typename?: 'ProtocolEvent', id: string, label: string } | { __typename?: 'Structure', id: string, label: string } };
 
-export type EdgeDrawingFragment = { __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } };
+export type EdgeDrawingFragment = { __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } };
 
 export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string };
 
 export type MediaAccessGrantFragment = { __typename?: 'MediaAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, path: string, key: string, bucket: string };
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, bucket: string };
+
+type BaseEdge_Classification_Fragment = { __typename?: 'Classification', id: string, sourceId: string, targetId: string };
 
 type BaseEdge_Description_Fragment = { __typename?: 'Description', id: string, sourceId: string, targetId: string };
 
@@ -6838,15 +6966,19 @@ type BaseEdge_OutputParticipation_Fragment = { __typename?: 'OutputParticipation
 
 type BaseEdge_Relation_Fragment = { __typename?: 'Relation', id: string, sourceId: string, targetId: string };
 
+type BaseEdge_Sameness_Fragment = { __typename?: 'Sameness', id: string, sourceId: string, targetId: string };
+
 type BaseEdge_StructureRelation_Fragment = { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string };
 
-export type BaseEdgeFragment = BaseEdge_Description_Fragment | BaseEdge_InputParticipation_Fragment | BaseEdge_Measurement_Fragment | BaseEdge_OutputParticipation_Fragment | BaseEdge_Relation_Fragment | BaseEdge_StructureRelation_Fragment;
+export type BaseEdgeFragment = BaseEdge_Classification_Fragment | BaseEdge_Description_Fragment | BaseEdge_InputParticipation_Fragment | BaseEdge_Measurement_Fragment | BaseEdge_OutputParticipation_Fragment | BaseEdge_Relation_Fragment | BaseEdge_Sameness_Fragment | BaseEdge_StructureRelation_Fragment;
 
 export type MeasurementFragment = { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null };
 
 export type RelationFragment = { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null };
 
 export type StructureRelationFragment = { __typename?: 'StructureRelation', id: string, label: string, sourceId: string, targetId: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
+
+type Edge_Classification_Fragment = { __typename?: 'Classification', sourceId: string, targetId: string, id: string };
 
 type Edge_Description_Fragment = { __typename?: 'Description', sourceId: string, targetId: string, id: string };
 
@@ -6858,9 +6990,11 @@ type Edge_OutputParticipation_Fragment = { __typename?: 'OutputParticipation', s
 
 type Edge_Relation_Fragment = { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null };
 
+type Edge_Sameness_Fragment = { __typename?: 'Sameness', sourceId: string, targetId: string, id: string };
+
 type Edge_StructureRelation_Fragment = { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
 
-export type EdgeFragment = Edge_Description_Fragment | Edge_InputParticipation_Fragment | Edge_Measurement_Fragment | Edge_OutputParticipation_Fragment | Edge_Relation_Fragment | Edge_StructureRelation_Fragment;
+export type EdgeFragment = Edge_Classification_Fragment | Edge_Description_Fragment | Edge_InputParticipation_Fragment | Edge_Measurement_Fragment | Edge_OutputParticipation_Fragment | Edge_Relation_Fragment | Edge_Sameness_Fragment | Edge_StructureRelation_Fragment;
 
 export type PathMeasurementFragment = { __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null };
 
@@ -6874,6 +7008,8 @@ export type PathInputParticipationFragment = { __typename?: 'InputParticipation'
 
 export type PathOutputParticipationFragment = { __typename?: 'OutputParticipation', id: string, label: string };
 
+type PathEdge_Classification_Fragment = { __typename?: 'Classification', sourceId: string, targetId: string, id: string };
+
 type PathEdge_Description_Fragment = { __typename?: 'Description', sourceId: string, targetId: string, id: string, label: string };
 
 type PathEdge_InputParticipation_Fragment = { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string, label: string };
@@ -6884,9 +7020,11 @@ type PathEdge_OutputParticipation_Fragment = { __typename?: 'OutputParticipation
 
 type PathEdge_Relation_Fragment = { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null };
 
+type PathEdge_Sameness_Fragment = { __typename?: 'Sameness', sourceId: string, targetId: string, id: string };
+
 type PathEdge_StructureRelation_Fragment = { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null };
 
-export type PathEdgeFragment = PathEdge_Description_Fragment | PathEdge_InputParticipation_Fragment | PathEdge_Measurement_Fragment | PathEdge_OutputParticipation_Fragment | PathEdge_Relation_Fragment | PathEdge_StructureRelation_Fragment;
+export type PathEdgeFragment = PathEdge_Classification_Fragment | PathEdge_Description_Fragment | PathEdge_InputParticipation_Fragment | PathEdge_Measurement_Fragment | PathEdge_OutputParticipation_Fragment | PathEdge_Relation_Fragment | PathEdge_Sameness_Fragment | PathEdge_StructureRelation_Fragment;
 
 export type EntityFragment = { __typename?: 'Entity', id: string, label: string, properties: any, graph?: { __typename?: 'Graph', id: string } | null, category?: { __typename?: 'EntityCategory', id: string, label: string, ageName: string, propertyDefinitions: Array<{ __typename?: 'PropertyDefinition', key: string, valueKind: ValueKind, unit?: string | null, description?: string | null, label?: string | null, rule?: { __typename?: 'DerivationRule', aggregation?: AggregationFunction | null } | null }> } | null, richProperties: Array<{ __typename?: 'RichProperty', key?: string | null, value?: any | null }>, measuredBy: Array<{ __typename?: 'Measurement', id: string, label: string, category?: { __typename?: 'MeasurementCategory', label: string } | null, source: { __typename?: 'Structure', identifier: any, object: string } }>, participatedIn: Array<{ __typename?: 'InputParticipation', id: string, role: string, target: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }>, resultedOut: Array<{ __typename?: 'OutputParticipation', id: string, role: string, source: { __typename?: 'NaturalEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'NaturalEventCategory', label: string } | null } | { __typename?: 'ProtocolEvent', id: string, label: string, measuredFrom: any, measuredTo: any, category?: { __typename?: 'ProtocolEventCategory', label: string } | null } }> };
 
@@ -7190,7 +7328,7 @@ export type AssertParticipationMutationVariables = Exact<{
 }>;
 
 
-export type AssertParticipationMutation = { __typename?: 'Mutation', assertParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
+export type AssertParticipationMutation = { __typename?: 'Mutation', assertParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Classification', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'Sameness', sourceId: string, targetId: string, id: string } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type AssertParticipationsMutationVariables = Exact<{
   event: Scalars['String']['input'];
@@ -7198,14 +7336,14 @@ export type AssertParticipationsMutationVariables = Exact<{
 }>;
 
 
-export type AssertParticipationsMutation = { __typename?: 'Mutation', assertParticipations: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }>, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
+export type AssertParticipationsMutation = { __typename?: 'Mutation', assertParticipations: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Classification', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'Sameness', sourceId: string, targetId: string, id: string } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }>, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type RetractParticipationMutationVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type RetractParticipationMutation = { __typename?: 'Mutation', retractParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } } };
+export type RetractParticipationMutation = { __typename?: 'Mutation', retractParticipation: { __typename?: 'ParticipationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, participation: { __typename?: 'Classification', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'Sameness', sourceId: string, targetId: string, id: string } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null } } };
 
 export type ClassifyNodesMutationVariables = Exact<{
   classifications: Array<ClassificationInput> | ClassificationInput;
@@ -7219,7 +7357,7 @@ export type RetractClaimsMutationVariables = Exact<{
 }>;
 
 
-export type RetractClaimsMutation = { __typename?: 'Mutation', retractClaims: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> } };
+export type RetractClaimsMutation = { __typename?: 'Mutation', retractClaims: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Classification', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'Sameness', sourceId: string, targetId: string, id: string } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> } };
 
 export type AssertEntityExistsMutationVariables = Exact<{
   input: AssertEntityExistsInput;
@@ -7380,14 +7518,14 @@ export type AssertRelationExistsMutationVariables = Exact<{
 }>;
 
 
-export type AssertRelationExistsMutation = { __typename?: 'Mutation', assertRelationExists: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
+export type AssertRelationExistsMutation = { __typename?: 'Mutation', assertRelationExists: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type UpdateRelationMutationVariables = Exact<{
   input: UpdateRelationInput;
 }>;
 
 
-export type UpdateRelationMutation = { __typename?: 'Mutation', updateRelation: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
+export type UpdateRelationMutation = { __typename?: 'Mutation', updateRelation: { __typename?: 'RelationAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, relation: { __typename?: 'Relation', id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null }, drawings: Array<{ __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } }> } };
 
 export type RetractRelationMutationVariables = Exact<{
   id: Scalars['GraphID']['input'];

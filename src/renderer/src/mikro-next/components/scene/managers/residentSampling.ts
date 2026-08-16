@@ -1,4 +1,7 @@
-import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTypes";
+import {
+  isMeshSample,
+  type AttributePlanLike,
+} from "@/mikro-next/lib/attributes/attributeTypes";
 import type { HeldValue } from "@/mikro-next/lib/attributes/planExec";
 import type { LayerState } from "../core/layerModel";
 import type { BrickResidencyManager } from "./brickResidency";
@@ -39,6 +42,9 @@ const findResidentBinding = (
   layers: readonly LayerState[],
   plan: AttributePlanLike,
 ): ResidentBinding | null => {
+  // A mesh sample has no array to read residently (its store is a fabriks
+  // prefix, and store ids are not comparable across kinds).
+  if (isMeshSample(plan.sample)) return null;
   for (const layer of layers) {
     const level0 = level0Of(layer);
     if (!level0 || level0.store.id !== plan.sample.store.id) continue;

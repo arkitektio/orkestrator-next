@@ -60,23 +60,45 @@ export type AttributeColumnLike = {
   } | null;
 };
 
+/** Fields every sample step carries (the server's `SampleStep` interface). */
+export type SampleStepCommonLike = {
+  /** The system whose contents are the map; `consumes` is in its axis order. */
+  system: {
+    id: string;
+    name?: string | null;
+    axes: readonly { name: string; order: number }[];
+  };
+  consumes: readonly string[];
+  produces: readonly string[];
+  passthrough: readonly string[];
+};
+
+/** The id lives per PIXEL: index this zarr array at the mapped point.
+ * `__typename` optional so legacy fixtures (pre-interface) stay valid. */
+export type ArraySampleLike = SampleStepCommonLike & {
+  __typename?: "ArraySample";
+  store: ZarrStoreLike;
+};
+
+/** The id lives per GEOMETRY ROW of a fabriks collection: nothing is sampled
+ * at a coordinate — a pick already holds the id and goes straight to the
+ * lookup. The store is named for headless workers (and for matching a scene's
+ * mesh layers: `collection.store.id`). */
+export type MeshSampleLike = SampleStepCommonLike & {
+  __typename: "MeshSample";
+  store: { id: string; bucket?: string; key?: string };
+};
+
+export const isMeshSample = (
+  sample: ArraySampleLike | MeshSampleLike,
+): sample is MeshSampleLike => sample.__typename === "MeshSample";
+
 export type AttributePlanLike = {
   /** The FIELD edge the plan was built from — half of the staleness key. */
   edge: { id: string; version: number };
   table: { id: string; name: string };
   path: readonly AttributePathStep[];
-  sample: {
-    /** The system of the array being sampled; `consumes` is in its axis order. */
-    system: {
-      id: string;
-      name?: string | null;
-      axes: readonly { name: string; order: number }[];
-    };
-    store: ZarrStoreLike;
-    consumes: readonly string[];
-    produces: readonly string[];
-    passthrough: readonly string[];
-  };
+  sample: ArraySampleLike | MeshSampleLike;
   lookup: {
     store: ParquetStoreLike;
     keyColumns: readonly { axis: string; column: AttributeColumnLike }[];

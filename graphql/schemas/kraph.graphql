@@ -158,6 +158,11 @@ input ArchiveNodeTableQueryInput {
 
 """Input for creating a new entity"""
 input AssertEntityExistsInput {
+  """
+  Instances this new one is the same as. Saying "this is AIS 6" mints a fresh instance and claims it is the same as the one already known as AIS 6 — all under **one assertion**, because it is one act. Sameness is an equivalence with no primary, so which id you send is immaterial; entities only, never structures.
+  """
+  sameAs: [String!]! = []
+
   """List of evidence structures with measurements"""
   supportingEvidence: [StructureReferenceInput!]! = []
 
@@ -304,6 +309,14 @@ input AssertRelationExistsInput {
   The organization's word for what is being claimed — a term's `key`, e.g. 'AIS'. Not a category id and not a graph: a claim names a word, and every view that declares that word will hold what you write. The word is created if the organization has not used it before; a view that declares no category for it simply will not draw it.
   """
   term: String!
+}
+
+"""Input for claiming that several recorded instances are one thing"""
+input AssertSameEntityInput {
+  """
+  Two or more entity ids that name the same thing. Every pair among them is claimed, under one assertion.
+  """
+  entities: [String!]!
 }
 
 """Input for claiming that an external datum exists"""
@@ -534,6 +547,38 @@ input CategoryNodePositionInput {
 
   """Optional width for the node (for visualization purposes)"""
   width: Float = null
+}
+
+"""A CLASSIFIES claim: somebody's word for what a node is"""
+type Classification implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """The node this word was claimed about"""
+  source: Node!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+
+  """The organization's word that was claimed"""
+  term: Term
 }
 
 """One claim that a node is of a category, inside a batch"""
@@ -1446,6 +1491,11 @@ enum DerivationType {
 
 """An INFORMS claim: a structure that is evidence for a node"""
 type Description implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
@@ -1473,6 +1523,11 @@ type Description implements Edge {
 
 """Base interface for all graph edges"""
 interface Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
@@ -1775,6 +1830,21 @@ type Entity implements Node & VersionedNode {
   """Category ID linking to EntityCategory model"""
   categoryId: String
 
+  """
+  Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it
+  """
+  component: [ID!]!
+
+  """
+  Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection
+  """
+  connections: [Edge!]!
+
+  """
+  Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed
+  """
+  drawnIn: [NodeDrawing!]!
+
   """External ID if set"""
   externalId: String
 
@@ -1802,6 +1872,11 @@ type Entity implements Node & VersionedNode {
   """
   label: String!
 
+  """
+  What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed
+  """
+  labels: [Label!]!
+
   """Timestamp when properties were last derived (unix ms)"""
   lastDerived: UnixMilliseconds
 
@@ -1827,6 +1902,11 @@ type Entity implements Node & VersionedNode {
 
   """List of properties derived for this entity"""
   richProperties: [RichProperty!]!
+
+  """
+  The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent
+  """
+  sameAs: [Sameness!]!
 
   """Schema version used to derive properties"""
   schemaVersion: String!
@@ -2722,6 +2802,11 @@ type GraphTableRender {
 
 """A claim that an entity went into an event"""
 type InputParticipation implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
@@ -2754,6 +2839,27 @@ type InputParticipation implements Edge {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""A word somebody has called this thing, and how much agreement there is"""
+type Label {
+  """
+  How many separate assertions say this. Concurrence, not repetition — the log records a claim that restates a position already held precisely so this is countable
+  """
+  assertionCount: Int!
+
+  """
+  The most recent act that claimed this word. Ordered by the log's `seq`, which cannot tie
+  """
+  latestAssertion: Assertion
+
+  """
+  Which instance in the component was called this. Every observation mints its own, so a component's labels may name different ones
+  """
+  nodeId: ID!
+
+  """The organization's word that was claimed"""
+  term: Term
+}
 
 """Input for linking a structure to an entity"""
 input LinkStructureInput {
@@ -2978,6 +3084,11 @@ input MaterializedStructureRelationEdgeOrder @oneOf {
 
 """A MEASUREMENT claim: a structure measuring an entity"""
 type Measurement implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """How the view this was read through draws it, if any view does"""
   category: MeasurementCategory
 
@@ -3275,6 +3386,9 @@ type Metric implements Node {
   """When this measurement was claimed"""
   assertedAt: DateTime
 
+  """Who measured this, and when they claimed it"""
+  assertion: Assertion
+
   """How confident the source is in this measurement"""
   confidence: Float
 
@@ -3519,6 +3633,11 @@ type Mutation {
   assertRelationExists(input: AssertRelationExistsInput!): RelationAssertion!
 
   """
+  Claim that several already-recorded instances are one thing. An equivalence with no primary — the order of the ids carries no meaning
+  """
+  assertSameEntity(input: AssertSameEntityInput!): SamenessAssertion!
+
+  """
   Claim that an external datum exists and is worth pointing at. Idempotent by (identifier, object)
   """
   assertStructureExists(input: AssertStructureExistsInput!): StructureAssertion!
@@ -3720,6 +3839,11 @@ type Mutation {
   Retract a relation assertion without destroying it. The edge survives wherever another live assertion still states the same proposition
   """
   retractRelation(input: RetractRelationInput!): RelationAssertion!
+
+  """
+  Withdraw one sameness claim. The component it held together is rebuilt from the claims that survive, which may split it
+  """
+  retractSameEntity(input: RetractSameEntityInput!): SamenessAssertion!
 
   """
   Claim that a structure should no longer be pointed at. The row and its metrics survive
@@ -4433,6 +4557,11 @@ enum Ordering {
 
 """A claim that an entity came out of an event"""
 type OutputParticipation implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """Global identifier in format 'graph_name:graph_id'"""
   globalId: GlobalID!
 
@@ -5143,6 +5272,11 @@ type Query {
 
 """A relation edge between two entities"""
 type Relation implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """How the view this was read through draws it, if any view does"""
   category: RelationCategory
 
@@ -5491,6 +5625,12 @@ input RetractRelationInput {
   id: GraphID!
 }
 
+"""Input for withdrawing one sameness claim"""
+input RetractSameEntityInput {
+  """The id of the sameness claim to retract"""
+  id: String!
+}
+
 """Input for deleting an existing structure"""
 input RetractStructureInput {
   """The ID of the structure to archive"""
@@ -5569,6 +5709,51 @@ input RoleMappingInput {
 
   """The role name"""
   role: String!
+}
+
+"""A claim that two instances are one thing"""
+type Sameness implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
+  """Global identifier in format 'graph_name:graph_id'"""
+  globalId: GlobalID!
+
+  """Local AGE graph ID, or null for edges that have no projection"""
+  graphId: Int
+
+  """Composite ID for edge lookup"""
+  id: String!
+
+  """The edge label/type"""
+  label: String!
+
+  """One of the two instances claimed to be the same"""
+  source: Entity!
+
+  """Global ID of the source/left node"""
+  sourceId: String!
+
+  """The other instance claimed to be the same"""
+  target: Entity!
+
+  """Global ID of the target/right node"""
+  targetId: String!
+}
+
+"""An assertion that instances are one thing, and the claims it recorded"""
+type SamenessAssertion {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  The sameness claims this act recorded. Asserting that three instances are one records every pair among them, under one assertion
+  """
+  samenesses: [Sameness!]!
 }
 
 """Result of linking a structure to an entity"""
@@ -5697,6 +5882,11 @@ type Structure implements Node {
   """Schema identifier (e.g. '@mikro/roi')"""
   identifier: StructureIdentifier!
 
+  """
+  The nodes this structure is evidence for. Where its labels, merges and connections live — a structure is a pointer to an external datum and is never itself claimed to be an AIS
+  """
+  informs: [Entity!]!
+
   """The organization's term for this kind of structure"""
   kind: StructureKind
 
@@ -5711,7 +5901,7 @@ type Structure implements Node {
   """Local ID if set"""
   localId: String
 
-  """The graph this node belongs to"""
+  """Every un-retracted measurement of this structure, in observation order"""
   metrics: [Metric!]!
 
   """External object ID this structure references"""
@@ -5916,6 +6106,11 @@ input StructureReferenceInput {
 
 """A relation edge between two structures"""
 type StructureRelation implements Edge {
+  """
+  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
+  """
+  assertion: Assertion
+
   """How the view this was read through draws it, if any view does"""
   category: StructureRelationCategory
 

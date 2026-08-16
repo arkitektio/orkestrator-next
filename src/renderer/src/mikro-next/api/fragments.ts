@@ -76,6 +76,10 @@
       "MeshCollection",
       "TableDataset"
     ],
+    "SampleStep": [
+      "ArraySample",
+      "MeshSample"
+    ],
     "Transformation": [
       "AffineTransformation",
       "BijectionTransformation",

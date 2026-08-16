@@ -514,6 +514,142 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     manager.dispose();
   });
 
+  it("doubleSided flips the material side without disturbing the colormap", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    const batch = manager.group.children.find(
+      (c): c is THREE.BatchedMesh => c instanceof THREE.BatchedMesh,
+    )!;
+    const material = batch.material as THREE.Material;
+    expect(material.side).toBe(THREE.DoubleSide); // today's default
+
+    manager.setMaterialConfig({ color: null, wireframe: false, opacity: 1, doubleSided: false });
+    expect(material.side).toBe(THREE.FrontSide);
+    expect(manager.getAppliedColormap()).toBe("hues"); // coloring untouched
+
+    manager.setMaterialConfig({ color: null, wireframe: false, opacity: 1, doubleSided: true });
+    expect(material.side).toBe(THREE.DoubleSide);
+    manager.dispose();
+  });
+
+  it("setSelection writes uniforms and the report; identify resolves ids from the catalog", async () => {
+    let gets = 0;
+    const base = fixtureTransport("raw");
+    const counting: FabriksTransport = {
+      get: (path) => {
+        gets++;
+        return base.get(path);
+      },
+      getRange: base.getRange,
+    };
+    const collection = await FabriksCollection.open(counting);
+    const manager = new FabriksCollectionManager({
+      collection,
+      loadDecoder: async () => null,
+      onInvalidate: () => {},
+    });
+
+    // The raw fixture's sparse ids over dense ordinals 0..5 (see the object
+    // catalog test above); concurrent identifies load the catalog ONCE.
+    const getsBefore = gets;
+    const entries = await Promise.all(
+      [0, 1, 2, 3, 4, 5].map((ordinal) => manager.identifyOrdinal(ordinal)),
+    );
+    expect(entries.every(Boolean)).toBe(true);
+    expect(new Set(entries.map((entry) => entry!.objectId))).toEqual(
+      new Set([3, 7, 11, 42, 108, 4711]),
+    );
+    expect(gets - getsBefore).toBe(1); // objects.parquet read once
+    expect(await manager.identifyOrdinal(999)).toBeNull();
+
+    const byId = await manager.identifyObjectId(4711);
+    expect(byId!.ordinal).toBe(entries.find((entry) => entry!.objectId === 4711)!.ordinal);
+
+    // The hover hot path: once the catalog resolved, peeking is SYNCHRONOUS.
+    expect(manager.peekOrdinal(0)!.objectId).toBe(entries[0]!.objectId);
+    expect(manager.peekOrdinal(999)).toBeNull();
+
+    manager.setSelection({ ordinal: 3, isolate: true });
+    expect(manager.buildDebugReport().selection).toEqual({ ordinal: 3, isolate: true });
+    manager.setSelection(null);
+    expect(manager.buildDebugReport().selection).toBeNull();
+    manager.dispose();
+  });
+
+  it("the selection hull is the catalog bbox in the instance's hue, latest-wins", async () => {
+    const manager = await openManager();
+    const hulls = () =>
+      manager.group.children.filter((c) => c.name === "__fabriks-selection-hull__");
+    const until = async (predicate: () => boolean) => {
+      for (let i = 0; i < 200 && !predicate(); i++) {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+      expect(predicate()).toBe(true);
+    };
+
+    manager.setSelection({ ordinal: 0, isolate: false });
+    await until(() => hulls().length === 1);
+    const entry0 = (await manager.identifyOrdinal(0))!;
+    const fillOf = (hull: THREE.Object3D) =>
+      hull.children.find((c): c is THREE.Mesh => c instanceof THREE.Mesh)!;
+    expect(fillOf(hulls()[0]).position.x).toBeCloseTo((entry0.bboxMin[0] + entry0.bboxMax[0]) / 2);
+
+    // Latest-wins under rapid re-selection: the hull must land on ordinal 2.
+    manager.setSelection({ ordinal: 1, isolate: false });
+    manager.setSelection({ ordinal: 2, isolate: false });
+    const entry2 = (await manager.identifyOrdinal(2))!;
+    await until(
+      () =>
+        hulls().length === 1 &&
+        Math.abs(fillOf(hulls()[0]).position.x - (entry2.bboxMin[0] + entry2.bboxMax[0]) / 2) <
+          1e-6,
+    );
+
+    manager.setSelection(null);
+    expect(hulls()).toHaveLength(0);
+    manager.dispose();
+  });
+
+  it("raycast picking reads ordinals from the MERGED batch buffers", async () => {
+    const manager = await openManager();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    manager.group.updateMatrixWorld(true);
+    const batch = manager.group.children.find(
+      (c): c is THREE.BatchedMesh => c instanceof THREE.BatchedMesh,
+    )!;
+
+    // Rain rays down over the collection's bounds until one hits.
+    batch.computeBoundingBox();
+    const box = batch.boundingBox!;
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const raycaster = new THREE.Raycaster();
+    let hit: THREE.Intersection | null = null;
+    for (const [ox, oy] of [[0, 0], [0.25, 0], [-0.25, 0], [0, 0.25], [0, -0.25]]) {
+      raycaster.set(
+        new THREE.Vector3(center.x + ox * size.x, center.y + oy * size.y, box.max.z + 100),
+        new THREE.Vector3(0, 0, -1),
+      );
+      const hits = raycaster.intersectObject(batch, false);
+      if (hits.length > 0) {
+        hit = hits[0];
+        break;
+      }
+    }
+    expect(hit).not.toBeNull();
+    // BatchedMesh.raycast windows the SHARED merged buffers via drawRange, so
+    // face indices address the batch geometry's own attributes — the property
+    // the click-identify path depends on.
+    const ordinal = (batch.geometry.getAttribute("objectOrdinal") as THREE.BufferAttribute).getX(
+      hit!.face!.a,
+    );
+    expect([0, 1, 2, 3, 4, 5]).toContain(ordinal);
+    expect(await manager.identifyOrdinal(ordinal)).not.toBeNull();
+    manager.dispose();
+  });
+
   it("the batching toggle remounts from cache in either direction, refetching nothing", async () => {
     const manager = await openManager();
     manager.updatePlan(VIEW);
@@ -694,18 +830,31 @@ describe("FabriksCollectionManager against the raw fixture", () => {
 });
 
 // --------------------------------------------------------------------------
-describe("fabriks material coloring", () => {
-  it("colors by instance by default and builds every colormap", () => {
-    const material = createFabriksMaterial();
-    expect(material.colorNode).not.toBeNull(); // instance-colored by default
-    expect(material.flatShading).toBe(true); // derivative normals
+describe("fabriks material coloring & selection", () => {
+  it("colors by instance by default, builds every colormap, and keeps a colorNode in uniform mode", () => {
+    const handle = createFabriksMaterial();
+    expect(handle.material.colorNode).not.toBeNull(); // instance-colored by default
+    expect(handle.material.flatShading).toBe(true); // derivative normals
     for (const name of INSTANCE_COLORMAPS) {
-      setInstanceColoring(material, name);
-      expect(material.colorNode).not.toBeNull();
+      setInstanceColoring(handle, name);
+      expect(handle.material.colorNode).not.toBeNull();
     }
-    setInstanceColoring(material, null); // uniform: back to material.color
-    expect(material.colorNode).toBeNull();
-    material.dispose();
+    // Uniform mode still composes a colorNode (materialColor accessor), so
+    // the selection highlight/isolation applies in BOTH modes.
+    setInstanceColoring(handle, null);
+    expect(handle.material.colorNode).not.toBeNull();
+    handle.material.dispose();
+  });
+
+  it("selection is uniform writes only — never a material version bump", () => {
+    const handle = createFabriksMaterial();
+    expect(handle.uniforms.selectedOrdinal.value).toBe(-1);
+    expect(handle.uniforms.isolate.value).toBe(0);
+    const version = handle.material.version;
+    handle.uniforms.selectedOrdinal.value = 42;
+    handle.uniforms.isolate.value = 1;
+    expect(handle.material.version).toBe(version); // no recompile
+    handle.material.dispose();
   });
 });
 

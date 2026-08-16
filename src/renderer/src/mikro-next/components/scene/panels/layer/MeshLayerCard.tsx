@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Box, Eye, EyeOff, Grid3x3, Trash2 } from "lucide-react";
-import { memo } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Box, Eye, EyeOff, Grid3x3, Trash2, X } from "lucide-react";
+import { memo, useState } from "react";
 import type { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import {
   DEFAULT_INSTANCE_COLORMAP,
   INSTANCE_COLORMAPS,
 } from "../../render/fabriks/instanceColormaps";
 import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
+import { useViewerStore } from "../../store/viewerStore";
 
 /**
  * A compact card for a `MeshLayer` in the Layers panel.
@@ -37,6 +39,34 @@ const formatCount = (value: number): string =>
       ? `${(value / 1_000).toFixed(1)}k`
       : String(value);
 
+const DETAIL_PRESETS = ["fine", "balanced", "fast"] as const;
+const SLAB_SCALES = [1, 3, 5] as const;
+
+/** The card's toggle/preset chip (matches the colors row's styling). */
+const Chip = ({
+  active,
+  title,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) => (
+  <button
+    title={title}
+    onClick={onClick}
+    className={`rounded border px-1 py-px text-[9px] transition-colors ${
+      active
+        ? "border-sky-400/50 bg-sky-400/10 text-sky-200"
+        : "border-white/10 text-white/50 hover:text-white/80"
+    }`}
+  >
+    {children}
+  </button>
+);
+
 const Badge = ({ children, title }: { children: React.ReactNode; title?: string }) => (
   <span
     className="shrink-0 rounded border border-white/10 bg-white/5 px-1 py-px text-[9px] text-white/50"
@@ -50,6 +80,31 @@ export const MeshLayerCard = memo(
   ({ layer, onRemove }: { layer: MeshLayerVariant; onRemove?: (id: string) => void }) => {
     const patchSceneLayer = useSceneStore((s) => s.patchSceneLayer);
     const hidden = layer.visible === false;
+
+    // Instance selection (scene-wide; this card acts when it owns it).
+    const meshSelection = useViewerStore((s) => s.meshSelection);
+    const setMeshSelection = useViewerStore((s) => s.setMeshSelection);
+    const manager = useViewerStore((s) => s.meshSystems[layer.id]);
+    const selected = meshSelection?.layerId === layer.id ? meshSelection : null;
+    const [idQuery, setIdQuery] = useState("");
+
+    const selectById = () => {
+      const objectId = Number(idQuery);
+      if (!manager || !Number.isFinite(objectId)) return;
+      void manager
+        .identifyObjectId(objectId)
+        .then((entry) => {
+          if (!entry) return;
+          setMeshSelection({
+            layerId: layer.id,
+            ordinal: entry.ordinal,
+            objectId: entry.objectId,
+            stats: { vertices: entry.vertexCount, indices: entry.indexCount },
+            isolate: selected?.isolate ?? false,
+          });
+        })
+        .catch((error) => console.warn("[fabriks] select-by-id failed:", error));
+    };
 
     const collection = layer.collection;
     const store = collection?.store;
@@ -161,6 +216,109 @@ export const MeshLayerCard = memo(
             />
             uniform
           </button>
+        </div>
+
+        {/* Opacity — session-local, a uniform edit (no recompile). */}
+        <div className="flex items-center gap-2 border-t border-white/5 px-2 py-1">
+          <span className="shrink-0 text-[9px] text-white/40">opacity</span>
+          <Slider
+            min={0}
+            max={100}
+            step={5}
+            value={[Math.round((layer.opacity ?? 1) * 100)]}
+            onValueChange={([value]) => patchSceneLayer(layer.id, { opacity: value / 100 })}
+            className="flex-1 py-1"
+          />
+          <span className="w-7 shrink-0 text-right font-mono text-[9px] text-white/40">
+            {Math.round((layer.opacity ?? 1) * 100)}%
+          </span>
+        </div>
+
+        {/* Render options — session-local. */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-white/5 px-2 py-1">
+          <span className="shrink-0 text-[9px] text-white/40">detail</span>
+          {DETAIL_PRESETS.map((preset) => (
+            <Chip
+              key={preset}
+              active={(layer.detail ?? "fine") === preset}
+              title={`LOD budget: ${preset} (${{ fine: "1", balanced: "2", fast: "4" }[preset]} px screen error)`}
+              onClick={() => patchSceneLayer(layer.id, { detail: preset })}
+            >
+              {preset}
+            </Chip>
+          ))}
+          <Chip
+            active={layer.flatNormals === false}
+            title="Smooth normals (computed per cell on the main thread; flat derivative shading is cheaper)"
+            onClick={() => patchSceneLayer(layer.id, { flatNormals: layer.flatNormals === false })}
+          >
+            smooth
+          </Chip>
+          <Chip
+            active={layer.doubleSided !== false}
+            title="Render both faces (off = front faces only; interiors disappear through openings)"
+            onClick={() => patchSceneLayer(layer.id, { doubleSided: layer.doubleSided === false })}
+          >
+            two-sided
+          </Chip>
+          <span className="ml-1 shrink-0 text-[9px] text-white/40">slab</span>
+          {SLAB_SCALES.map((scale) => (
+            <Chip
+              key={scale}
+              active={(layer.slabScale ?? 1) === scale}
+              title="2D cross-section thickness, × the scene's z-step (2D view only)"
+              onClick={() => patchSceneLayer(layer.id, { slabScale: scale })}
+            >
+              ×{scale}
+            </Chip>
+          ))}
+        </div>
+
+        {/* Instance selection: identify (click in probe mode / by id here),
+            highlight, isolate. */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-white/5 px-2 py-1">
+          <span className="shrink-0 text-[9px] text-white/40">instance</span>
+          {selected ? (
+            <>
+              <span className="rounded bg-sky-400/10 px-1 py-px font-mono text-[9px] text-sky-200">
+                {selected.objectId !== null ? `#${selected.objectId}` : `ordinal ${selected.ordinal}`}
+              </span>
+              {selected.stats && (
+                <span className="text-[9px] text-white/40">
+                  {formatCount(selected.stats.vertices)}v ·{" "}
+                  {formatCount(Math.round(selected.stats.indices / 3))}t
+                </span>
+              )}
+              <Chip
+                active={selected.isolate}
+                title="Show ONLY this instance"
+                onClick={() => setMeshSelection({ ...selected, isolate: !selected.isolate })}
+              >
+                isolate
+              </Chip>
+              <button
+                title="Clear selection"
+                onClick={() => setMeshSelection(null)}
+                className="text-white/40 transition-colors hover:text-white/80"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                value={idQuery}
+                onChange={(event) => setIdQuery(event.target.value)}
+                onKeyDown={(event) => event.key === "Enter" && selectById()}
+                placeholder="object id"
+                className="h-5 w-16 rounded border border-white/10 bg-transparent px-1 text-[9px] text-white/80 outline-none placeholder:text-white/25"
+              />
+              <Chip active={false} title="Select by object id" onClick={selectById}>
+                select
+              </Chip>
+              <span className="text-[9px] text-white/30">or click a mesh in probe mode</span>
+            </>
+          )}
         </div>
 
         {/* What the collection actually is, read off the store's mirrored

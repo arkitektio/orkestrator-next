@@ -26,6 +26,14 @@ export type MeshLayerSessionState = {
    * Explicit rather than inferred from materialColor's presence — a layer
    * with a stored color must still be instance-colorable. */
   colorByInstance?: boolean;
+  /** Per-layer LOD preset: the planner's pixel-error budget (1 / 2 / 4 px). */
+  detail?: "fine" | "balanced" | "fast";
+  /** Flat derivative normals (the default) vs smooth per-cell normals. */
+  flatNormals?: boolean;
+  /** Double-sided surfaces (the default) vs front faces only. */
+  doubleSided?: boolean;
+  /** 2D cross-section thickness multiplier over the scene's z-step (1/3/5). */
+  slabScale?: number;
 };
 
 /** A polymorphic scene layer plus its session-local render state. */

@@ -12,6 +12,13 @@
  * LUT-free take on a glasbey-style palette).
  */
 
+export const GOLDEN_RATIO_CONJUGATE = 0.6180339887498949;
+
+/** CPU twin of the shader's hue scatter — hulls and UI swatches must land on
+ * exactly the hue the surface renders with. */
+export const instanceHue = (ordinal: number): number =>
+  ((ordinal * GOLDEN_RATIO_CONJUGATE) % 1 + 1) % 1;
+
 export const INSTANCE_COLORMAPS = ["hues", "distinct", "pastel", "vivid"] as const;
 
 export type FabriksInstanceColormap = (typeof INSTANCE_COLORMAPS)[number];

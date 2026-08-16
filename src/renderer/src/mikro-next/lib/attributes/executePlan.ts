@@ -1,5 +1,6 @@
 import { applyPathToCoords, type AxisCoords } from "../coords/axisPath";
 import {
+  isMeshSample,
   planIdentity,
   type AttributePlanLike,
   type PlanRowsState,
@@ -56,6 +57,14 @@ export async function executePlanAt(
     return { status: "unreachable", rows: [] };
   };
 
+  // A MeshSample carries no array to index: the id rides on geometry rows,
+  // so only a PICK (the value-known path below) can execute such a plan.
+  if (isMeshSample(plan.sample)) {
+    return unreachable("a mesh-sampled plan needs a picked instance id", {
+      table: plan.table.name,
+    });
+  }
+
   const mapped = plan.path.length
     ? applyPathToCoords(plan.path, startCoords)
     : startCoords;
@@ -93,6 +102,52 @@ export async function executePlanAt(
   if (value === null) {
     return { status: "error", rows: [], error: "could not sample the field array" };
   }
+  return lookupValue(deps, plan, mapped, value, sampleSource, isStale, unreachable);
+}
+
+/**
+ * The value-KNOWN entry point: same pipeline, minus the field-array sample.
+ *
+ * A mesh instance pick already carries its objectId — the number the sample
+ * step exists to discover — so it maps the path (a plan may still be rooted
+ * elsewhere) and jumps straight to `buildHeld` + the DuckDB lookup. Rows are
+ * identical to what sampling the mask at any voxel of that instance yields.
+ */
+export async function executePlanWithValue(
+  deps: Pick<ExecutePlanDeps, "engine">,
+  plan: AttributePlanLike,
+  startCoords: AxisCoords,
+  value: HeldValue,
+  opts: Pick<ExecutePlanOptions, "isStale" | "onUnreachable"> = {},
+): Promise<PlanRowsState | null> {
+  const planKey = planIdentity(plan);
+  const isStale = opts.isStale ?? (() => false);
+  const unreachable = (reason: string, detail?: unknown): PlanRowsState => {
+    opts.onUnreachable?.(planKey, reason, detail);
+    return { status: "unreachable", rows: [] };
+  };
+  const mapped = plan.path.length
+    ? applyPathToCoords(plan.path, startCoords)
+    : startCoords;
+  if (mapped === null) {
+    return unreachable("cannot map the probed point along the plan's path", {
+      table: plan.table.name,
+      startCoords,
+    });
+  }
+  return lookupValue(deps, plan, mapped, value, "exact", isStale, unreachable);
+}
+
+/** Shared tail: background short-circuit → held values → DuckDB lookup. */
+async function lookupValue(
+  deps: Pick<ExecutePlanDeps, "engine">,
+  plan: AttributePlanLike,
+  mapped: AxisCoords,
+  value: HeldValue,
+  sampleSource: "resident" | "exact",
+  isStale: () => boolean,
+  unreachable: (reason: string, detail?: unknown) => PlanRowsState,
+): Promise<PlanRowsState | null> {
   if (isBackground(value)) {
     return { status: "background", rows: [], sampledValue: value, sampleSource };
   }

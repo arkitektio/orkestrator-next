@@ -526,6 +526,8 @@ const FabriksMeshSection = ({
   const [showBoxes, setShowBoxes] = useState(() => managers[0]?.getShowCellBoxes() ?? false);
   const [flatNormals, setFlatNormals] = useState(() => managers[0]?.getFlatNormals() ?? true);
   const [batched, setBatched] = useState(() => managers[0]?.getBatching() ?? true);
+  const markProbedInstances = useViewerStore((s) => s.markProbedInstances);
+  const setMarkProbedInstances = useViewerStore((s) => s.setMarkProbedInstances);
 
   const applyPixelBudget = (value: number) => {
     setPixelBudget(value);
@@ -602,6 +604,13 @@ const FabriksMeshSection = ({
           className="px-1 rounded border border-border/50 hover:bg-accent"
         >
           batched: {batched ? "on" : "off"}
+        </button>
+        <button
+          onClick={() => setMarkProbedInstances(!markProbedInstances)}
+          title="Probing a voxel whose attribute plans name a mesh collection (a MeshSample plan) marks that instance: highlight + bounding-box hull. Rides the attribute pipeline's settle debounce."
+          className="px-1 rounded border border-border/50 hover:bg-accent"
+        >
+          marked boundary: {markProbedInstances ? "on" : "off"}
         </button>
       </div>
       {Object.entries(systems).map(([layerId, manager]) => {

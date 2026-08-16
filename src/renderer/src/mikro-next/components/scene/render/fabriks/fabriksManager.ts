@@ -1,13 +1,24 @@
 import * as THREE from "three";
-import { ClippingGroup, type MeshStandardNodeMaterial } from "three/webgpu";
+import { ClippingGroup } from "three/webgpu";
 import { LruByteCache } from "./lruByteCache";
 import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
-import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
+import {
+  createFabriksMaterial,
+  setInstanceColoring,
+  type FabriksMaterialHandle,
+} from "./fabriksMaterial";
 import {
   DEFAULT_INSTANCE_COLORMAP,
+  instanceHue,
   type FabriksInstanceColormap,
 } from "./instanceColormaps";
-import { buildFabriksCellIndex, type FabriksCellEntry, type FabriksCellIndex, type FabriksCellRow } from "./fabriksCatalogs";
+import {
+  buildFabriksCellIndex,
+  type FabriksCellEntry,
+  type FabriksCellIndex,
+  type FabriksCellRow,
+  type FabriksObjectEntry,
+} from "./fabriksCatalogs";
 import type { FabriksCollection, FabriksTransportStats } from "./fabriksCollection";
 import type { MeshoptDecoderLike } from "./fabriksDecode";
 import { cellGridBox } from "./fabriksGrid";
@@ -51,6 +62,20 @@ const CONCURRENT_FETCHES = 4;
 
 /** The debug overlay's child name; the reconcile loop must never treat it as a cell. */
 const CELL_BOXES_NAME = "__fabriks-cell-boxes__";
+/** The selected instance's hull (bbox overlay). */
+const SELECTION_HULL_NAME = "__fabriks-selection-hull__";
+
+/** 12 box edges as corner-index pairs (corners differing in exactly one bit;
+ * bit 0 → x, bit 1 → y, bit 2 → z picks min/max per axis). */
+const BOX_EDGES: ReadonlyArray<readonly [number, number]> = (() => {
+  const edges: [number, number][] = [];
+  for (let corner = 0; corner < 8; corner++) {
+    for (const bit of [1, 2, 4]) {
+      if ((corner & bit) === 0) edges.push([corner, corner | bit]);
+    }
+  }
+  return edges;
+})();
 
 export type FabriksMaterialConfig = {
   /** The uniform color used when `colorByInstance` is false. */
@@ -61,6 +86,15 @@ export type FabriksMaterialConfig = {
   instanceColormap?: FabriksInstanceColormap;
   /** Instance coloring is the DEFAULT; false = uniform materialColor. */
   colorByInstance?: boolean;
+  /** Double-sided surfaces (the default) vs front faces only. */
+  doubleSided?: boolean;
+};
+
+/** One selected instance, addressed by its dense ordinal. */
+export type FabriksSelection = {
+  ordinal: number;
+  /** Draw ONLY the selected instance. */
+  isolate: boolean;
 };
 
 /** Camera-derived inputs per plan. Budgets live in `FabriksPlanConfig`.
@@ -140,7 +174,10 @@ export class FabriksCollectionManager {
     indexRebuilds: 0,
   };
 
-  private readonly material: MeshStandardNodeMaterial;
+  private readonly materialHandle: FabriksMaterialHandle;
+  private get material() {
+    return this.materialHandle.material;
+  }
   /** Decoded cell geometries, owned here: mounting never transfers ownership
    * (the batch copies; the mesh path shares), so eviction is the ONE place a
    * geometry is disposed. */
@@ -186,6 +223,9 @@ export class FabriksCollectionManager {
     new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), //  keeps z ≥ slab bottom
   ];
   private slab: { z: number; thickness: number } | null = null;
+  private selection: FabriksSelection | null = null;
+  private selectionHull: THREE.Group | null = null;
+  private hullOrdinal: number | null = null;
   /** Draw order for mounted cells (0 in 3D; 2 in slab mode — above the image
    * quad's renderOrder 1, matching the 2D overlay convention). */
   private cellRenderOrder = 0;
@@ -212,8 +252,9 @@ export class FabriksCollectionManager {
       frozen: false,
     };
     // Node material, instance-colored by `objectOrdinal` by default; the
-    // flat-normals default is baked in there too (fabriksMaterial.ts).
-    this.material = createFabriksMaterial();
+    // flat-normals default and the selection uniforms live in the handle
+    // (fabriksMaterial.ts).
+    this.materialHandle = createFabriksMaterial();
     this.cache = new LruByteCache<THREE.BufferGeometry>(
       opts.maxCacheBytes ?? DEFAULT_CACHE_BYTES,
       (key, geometry) => {
@@ -235,6 +276,7 @@ export class FabriksCollectionManager {
     opacity,
     instanceColormap,
     colorByInstance,
+    doubleSided,
   }: FabriksMaterialConfig): void {
     // Coloring mode is EXPLICIT: instance colors (objectOrdinal palette) by
     // default; `colorByInstance: false` switches to the uniform materialColor
@@ -246,7 +288,7 @@ export class FabriksCollectionManager {
       colorByInstance === false ? null : (instanceColormap ?? DEFAULT_INSTANCE_COLORMAP);
     const coloringChanged = targetColormap !== this.appliedColormap;
     if (coloringChanged) {
-      setInstanceColoring(this.material, targetColormap);
+      setInstanceColoring(this.materialHandle, targetColormap);
       this.appliedColormap = targetColormap;
     }
 
@@ -254,14 +296,178 @@ export class FabriksCollectionManager {
     // system it can recompile the material, so an opacity slider must not set
     // it per tick. Color and opacity are uniforms and need nothing.
     const transparent = opacity < 1;
+    const side = doubleSided === false ? THREE.FrontSide : THREE.DoubleSide;
     const pipelineChanged =
       coloringChanged ||
       this.material.wireframe !== wireframe ||
-      this.material.transparent !== transparent;
+      this.material.transparent !== transparent ||
+      this.material.side !== side;
     this.material.wireframe = wireframe;
     this.material.opacity = opacity;
     this.material.transparent = transparent;
+    this.material.side = side;
     if (pipelineChanged) this.material.needsUpdate = true;
+  }
+
+  /**
+   * Highlight (and optionally isolate) one instance. Uniform writes only —
+   * the selection branch is always compiled, so picking never rebuilds a
+   * pipeline.
+   */
+  setSelection(selection: FabriksSelection | null): void {
+    this.selection = selection ? { ...selection } : null;
+    this.materialHandle.uniforms.selectedOrdinal.value = selection?.ordinal ?? -1;
+    this.materialHandle.uniforms.isolate.value = selection?.isolate ? 1 : 0;
+    this.updateSelectionHull();
+    this.opts.onInvalidate();
+    this.opts.onStatsChanged?.();
+  }
+
+  /**
+   * The selected instance's HULL: its catalog bbox as bright edges + a faint
+   * fill, in the instance's own hue (CPU twin of the shader's hue scatter).
+   * Performance over fidelity by design — no second pass over mesh geometry,
+   * just 12 edges and a box, appearing when the (cached) catalog resolves.
+   */
+  private updateSelectionHull(): void {
+    const ordinal = this.selection?.ordinal ?? null;
+    if (ordinal === null) {
+      this.disposeSelectionHull();
+      return;
+    }
+    if (this.hullOrdinal === ordinal && this.selectionHull) return;
+    void this.identifyOrdinal(ordinal)
+      .then((entry) => {
+        // Latest-wins: the selection may have moved while the catalog loaded.
+        if (this.disposed || this.selection?.ordinal !== ordinal) return;
+        this.buildSelectionHull(ordinal, entry);
+        this.opts.onInvalidate();
+      })
+      .catch(() => {
+        // No catalog, no hull — the shader highlight still marks the object.
+      });
+  }
+
+  private buildSelectionHull(ordinal: number, entry: FabriksObjectEntry | null): void {
+    this.disposeSelectionHull();
+    if (!entry) return;
+
+    const min = entry.bboxMin;
+    const max = entry.bboxMax;
+    const color = new THREE.Color().setHSL(instanceHue(ordinal), 0.85, 0.6);
+    const hull = new THREE.Group();
+    hull.name = SELECTION_HULL_NAME;
+    hull.matrixAutoUpdate = false;
+
+    const positions = new Float32Array(BOX_EDGES.length * 2 * 3);
+    let cursor = 0;
+    for (const [a, b] of BOX_EDGES) {
+      for (const corner of [a, b]) {
+        positions[cursor] = corner & 1 ? max[0] : min[0];
+        positions[cursor + 1] = corner & 2 ? max[1] : min[1];
+        positions[cursor + 2] = corner & 4 ? max[2] : min[2];
+        cursor += 3;
+      }
+    }
+    const edgeGeometry = new THREE.BufferGeometry();
+    edgeGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const edges = new THREE.LineSegments(
+      edgeGeometry,
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.9,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    edges.renderOrder = 3;
+    edges.matrixAutoUpdate = false;
+    hull.add(edges);
+
+    const fill = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.08,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    fill.position.set((min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2);
+    fill.scale.set(
+      Math.max(max[0] - min[0], 1e-6),
+      Math.max(max[1] - min[1], 1e-6),
+      Math.max(max[2] - min[2], 1e-6),
+    );
+    fill.renderOrder = 3;
+    hull.add(fill);
+
+    this.selectionHull = hull;
+    this.hullOrdinal = ordinal;
+    this.group.add(hull);
+  }
+
+  private disposeSelectionHull(): void {
+    if (!this.selectionHull) return;
+    this.group.remove(this.selectionHull);
+    for (const child of this.selectionHull.children) {
+      const object = child as THREE.Mesh | THREE.LineSegments;
+      object.geometry.dispose();
+      (object.material as THREE.Material).dispose();
+    }
+    this.selectionHull = null;
+    this.hullOrdinal = null;
+  }
+
+  getSelection(): FabriksSelection | null {
+    return this.selection ? { ...this.selection } : null;
+  }
+
+  /** ordinal → the object catalog's entry (lazy; the catalog loads once). */
+  async identifyOrdinal(ordinal: number): Promise<FabriksObjectEntry | null> {
+    return (await this.ordinalIndex()).get(ordinal) ?? null;
+  }
+
+  /**
+   * SYNCHRONOUS ordinal lookup for the hover hot path: answers from the
+   * already-resolved catalog (the common case after the first pick) and
+   * returns null while it is still loading — kicking the load so the next
+   * peek answers. Instant cursor-tracking depends on this never awaiting.
+   */
+  peekOrdinal(ordinal: number): FabriksObjectEntry | null {
+    if (!this.ordinalIndexResolved) {
+      void this.ordinalIndex().catch(() => {});
+      return null;
+    }
+    return this.ordinalIndexResolved.get(ordinal) ?? null;
+  }
+
+  /** objectId → entry (for select-by-id; same lazy catalog). */
+  async identifyObjectId(objectId: number): Promise<FabriksObjectEntry | null> {
+    return (await this.opts.collection.loadObjectCatalog()).get(objectId) ?? null;
+  }
+
+  private ordinalIndexPromise: Promise<Map<number, FabriksObjectEntry>> | null = null;
+  /** The resolved map, for the synchronous `peekOrdinal` fast path. */
+  private ordinalIndexResolved: Map<number, FabriksObjectEntry> | null = null;
+  private ordinalIndex(): Promise<Map<number, FabriksObjectEntry>> {
+    if (!this.ordinalIndexPromise) {
+      this.ordinalIndexPromise = this.opts.collection
+        .loadObjectCatalog()
+        .then((objects) => {
+          const byOrdinal = new Map<number, FabriksObjectEntry>();
+          for (const entry of objects.values()) byOrdinal.set(entry.ordinal, entry);
+          this.ordinalIndexResolved = byOrdinal;
+          return byOrdinal;
+        })
+        .catch((error: unknown) => {
+          this.ordinalIndexPromise = null;
+          throw error;
+        });
+    }
+    return this.ordinalIndexPromise;
   }
 
   /**
@@ -664,6 +870,7 @@ export class FabriksCollectionManager {
     lastPlan: FabriksPlanSummary | null;
     mountedCells: number;
     slab: { z: number; thickness: number } | null;
+    selection: FabriksSelection | null;
     cache: { cells: number; bytes: number };
     batch: FabriksBatchStats | null;
     transport: FabriksTransportStats | null;
@@ -676,6 +883,7 @@ export class FabriksCollectionManager {
       lastPlan: this.lastPlan ? { ...this.lastPlan, byLevel: { ...this.lastPlan.byLevel } } : null,
       mountedCells: this.batching ? this.batch.count : this.mountedMeshes.size,
       slab: this.getSlabClip(),
+      selection: this.getSelection(),
       cache: { cells: this.cache.size, bytes: this.cache.bytes },
       batch: this.batching ? this.batch.stats() : null,
       transport: this.opts.collection.transportStats(),
@@ -731,20 +939,13 @@ export class FabriksCollectionManager {
     }
     if (!this.showCellBoxes || this.plannedEntries.length === 0 || this.disposed) return;
 
-    // 12 edges a box, two vertices an edge: corner pairs differing in one bit.
-    const EDGES: Array<[number, number]> = [];
-    for (let corner = 0; corner < 8; corner++) {
-      for (const bit of [1, 2, 4]) {
-        if ((corner & bit) === 0) EDGES.push([corner, corner | bit]);
-      }
-    }
-    const positions = new Float32Array(this.plannedEntries.length * EDGES.length * 2 * 3);
+    const positions = new Float32Array(this.plannedEntries.length * BOX_EDGES.length * 2 * 3);
     const colors = new Float32Array(positions.length);
     const color = new THREE.Color();
     let cursor = 0;
     for (const entry of this.plannedEntries) {
       color.setHSL((entry.level * 0.31 + 0.05) % 1, 0.85, 0.55);
-      for (const [a, b] of EDGES) {
+      for (const [a, b] of BOX_EDGES) {
         for (const corner of [a, b]) {
           positions[cursor] = corner & 1 ? entry.bboxMax[0] : entry.bboxMin[0];
           positions[cursor + 1] = corner & 2 ? entry.bboxMax[1] : entry.bboxMin[1];
@@ -777,6 +978,7 @@ export class FabriksCollectionManager {
     this.cache.clear(); // evictions unmount and dispose every geometry
     this.batch.dispose();
     this.mountedMeshes.clear();
+    this.disposeSelectionHull();
     if (this.cellBoxes) {
       this.cellBoxes.geometry.dispose();
       (this.cellBoxes.material as THREE.Material).dispose();

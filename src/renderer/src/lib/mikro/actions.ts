@@ -299,7 +299,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   'add-layer-to-scene': {
     title: 'Add Layer',
     description:
-      'Add a dataset or table composable in this scene\'s coordinate system as a new layer',
+      'Add anything reachable from this scene\'s world coordinate system — images, tables, meshes or annotations — as a new layer',
     icon: Layers,
     conditions: [
       { type: 'identifier', identifier: '@mikro/scene' },

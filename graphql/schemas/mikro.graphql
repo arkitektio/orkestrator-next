@@ -1112,9 +1112,19 @@ type BigFileStore {
   contentType: String
   id: ID!
   key: String!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
   originalFileName: String
   path: String!
   presignedUrl: String!
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
 }
 
 """Temporary S3 credentials for uploading a big file."""
@@ -2674,7 +2684,17 @@ type FabriksStore {
   grid: JSON
   id: ID!
   key: String!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
   path: String!
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
   specVersion: String
 }
 
@@ -4263,11 +4283,21 @@ type MediaStore {
   contentType: String
   id: ID!
   key: String!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
   originalFileName: String
   path: String!
 
   """Compatibility field returning the canonical S3 object path."""
   presignedUrl(host: String = null): String!
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
 }
 
 """A presigned PUT grant for uploading a media object."""
@@ -4826,6 +4856,11 @@ type Mutation {
   putTableDatasetsInFolder(input: AssociateInput!): Folder!
 
   """
+  Reissue upload credentials for a Zarr store whose upload is still in flight. A grant's credentials expire, and clients hold the session token as a static credential, so a write large enough to outlive its session dies partway through. This returns a fresh session against the same prefix so the write can carry on. Refuses a store that is already populated -- that is an overwrite, not a resumption
+  """
+  refreshZarrUpload(input: RefreshZarrUploadInput!): ZarrUploadGrant!
+
+  """
   Unfile annotation collections from a folder. They are not deleted, only unfiled
   """
   releaseAnnotationCollectionsFromFolder(input: DesociateInput!): Folder!
@@ -5359,11 +5394,21 @@ type ParquetStore {
   contentType: String
   id: ID!
   key: String!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
   originalFileName: String
   path: String!
 
   """Compatibility field returning the canonical S3 object path."""
   presignedUrl(host: String = null): String!
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
 }
 
 """Temporary S3 credentials for uploading a parquet store."""
@@ -6125,6 +6170,10 @@ type Query {
   List transformations (the directed edges of the coordinate graph). Compose them client-side; the server never resolves a path to world, because the same dataset can sit in two scenes under two registrations
   """
   transformations(filters: TransformationFilter, ordering: [TransformationOrder!]! = [], pagination: OffsetPaginationInput): [Transformation!]!
+}
+
+input RefreshZarrUploadInput {
+  storeId: String!
 }
 
 """
@@ -7935,8 +7984,18 @@ type ZarrStore {
   fillValue: JSON!
   id: ID!
   key: String!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
   path: String!
   shape: [Int!]!
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
   storageTransformers: JSON
   version: String
 }

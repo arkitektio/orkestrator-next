@@ -1,0 +1,54 @@
+# What the Add Layer picker needs of one resident of a reachable space.
+#
+# Richer than the shared `Resident` fragment, which fetches a `__typename` and a
+# name — enough for a breadcrumb, not enough to submit. This one also carries
+# what step 2 asks about the source (a lens's axes and slices, a table's declared
+# column roles), so choosing a row never costs a second round trip.
+#
+# Every member of the union is selected, including the two that can never become
+# a layer: an ArrayDataset is staged through its lenses and a DataArray is a
+# pyramid level of one. They are listed — dimmed — because a space's story is who
+# lives in it, and silently dropping half its residents would make the picker
+# disagree with the coordinate system page about what is there.
+fragment AddLayerCandidate on Resident {
+  __typename
+  ... on Lens {
+    id
+    shape
+    axisNames
+    slices {
+      ...DimSlice
+    }
+    dataset {
+      id
+      name
+      description
+    }
+  }
+  ... on TableDataset {
+    ...ListTableDataset
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  # A MeshCollection has no name of its own — `version` is all it can honestly
+  # show, which is what `residentName` already assumes.
+  ... on MeshCollection {
+    id
+    version
+    specVersion
+  }
+  ... on AnnotationCollection {
+    id
+    name
+    description
+  }
+  ... on ArrayDataset {
+    id
+    name
+  }
+  ... on DataArray {
+    id
+    level
+  }
+}

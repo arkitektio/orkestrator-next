@@ -55,3 +55,13 @@ mutation CreateTrackLayer($input: CreateTrackLayerInput!) {
 mutation DeleteLayer($input: DeleteLayerInput!) {
   deleteLayer(input: $input)
 }
+
+# Adds a mesh collection (surface reconstructions / isosurfaces) to a scene. The
+# collection's own coordinate system is the layer's space, so it must already
+# have a path to the scene's world — which is exactly what the Add Layer picker
+# lists it from.
+mutation CreateMeshLayer($input: CreateMeshLayerInput!) {
+  createMeshLayer(input: $input) {
+    ...SceneLayer
+  }
+}

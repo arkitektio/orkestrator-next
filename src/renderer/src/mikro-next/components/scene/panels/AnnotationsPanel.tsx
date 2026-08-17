@@ -16,6 +16,7 @@ import { useDeleteSelectedRois } from "../interactions/useDeleteSelectedRois";
 import { useRoiSelectionStore, type SelectedRoi } from "../store/roiSelectionStore";
 import { useSceneStore } from "../store/sceneStore";
 import { RoiAttributeSection } from "./RoiAttributeSection";
+import { formatAnnotationKind, indexLabel } from "./selectionFormat";
 
 /**
  * The annotations panel: the selected annotations as smart model cards on top
@@ -29,17 +30,6 @@ import { RoiAttributeSection } from "./RoiAttributeSection";
  * lived there is now `interactions/RoiDeleteKeybinding` (always mounted —
  * sidebar tabs unmount when inactive).
  */
-
-function formatAnnotationKind(kind: string) {
-  return kind.charAt(0) + kind.slice(1).toLowerCase();
-}
-
-/**
- * Annotations are shown by their INDEX in their collection ("#3"), never by
- * name or id — the labels are machine-minted and unreadable, while the index
- * matches how the shapes read in the scene ("the third one I drew").
- */
-const indexLabel = (index: number) => `#${index + 1}`;
 
 export const AnnotationsPanel = ({
   variant = "floating",

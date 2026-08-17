@@ -13,9 +13,9 @@ import {
   type MeshLayerVariant,
 } from "../layers/mesh/collectionPlacement";
 import type { FabriksObjectEntry } from "../render/fabriks/fabriksCatalogs";
-import { instanceHue } from "../render/fabriks/instanceColormaps";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore, type MeshSelectionState } from "../store/viewerStore";
+import { formatCount, hueStyle, objectLabel } from "./selectionFormat";
 
 /**
  * The meshes panel: every object of every mesh layer in the scene, grouped per
@@ -42,24 +42,6 @@ type MeshLayerRef = { layer: MeshLayerVariant; collection: MeshCollectionRef };
 /** Objects rendered at once. A collection can hold hundreds of thousands of
  * them and there is no virtualizer in the tree; the header says what was cut. */
 const ROW_CAP = 200;
-
-const formatCount = (value: number): string =>
-  value >= 1_000_000
-    ? `${(value / 1_000_000).toFixed(1)}M`
-    : value >= 1_000
-      ? `${(value / 1_000).toFixed(1)}k`
-      : String(value);
-
-/** The instance's own hue — the color the shader actually draws it in. */
-const hueStyle = (ordinal: number) => ({
-  background: `hsla(${instanceHue(ordinal) * 360}, 70%, 45%, 0.5)`,
-  border: `1px solid hsla(${instanceHue(ordinal) * 360}, 80%, 60%, 0.7)`,
-});
-
-/** Objects are shown by their object id; the ordinal is the fallback for the
- * window before the catalog answers (a probe click knows only the ordinal). */
-const objectLabel = (objectId: number | null, ordinal: number) =>
-  objectId !== null ? `#${objectId}` : `ord ${ordinal}`;
 
 export const MeshesPanel = ({
   variant = "floating",

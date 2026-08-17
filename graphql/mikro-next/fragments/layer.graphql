@@ -6,6 +6,13 @@ fragment TransferFunction on TransferFunction {
   gamma
   opacity
   invert
+  # The intensity transfer CURVE: raw value (`position`, data units) → the
+  # normalized 0..1 the colormap is indexed with. Replaces the clim+gamma
+  # power law when present; gamma is the fallback.
+  stops {
+    position
+    value
+  }
 }
 
 # Not a TransferFunction: a label map has one source, no compositing tree, and

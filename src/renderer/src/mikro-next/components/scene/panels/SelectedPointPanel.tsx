@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { AttributeRowsSection } from "./AttributeRowsSection";
 import type { ProbeResult } from "../core/probe/probeTypes";
 import { formatProbeValue } from "../core/probe/valueFormat";
@@ -9,6 +9,7 @@ import { useModeStore } from "../store/modeStore";
 import { useRoiDrawingStore } from "../store/roiDrawingStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useViewerStore } from "../store/viewerStore";
+import { perfMonitor } from "../managers/perfMonitor";
 import type { LayerState } from "../core/layerModel";
 
 /**
@@ -25,10 +26,6 @@ import type { LayerState } from "../core/layerModel";
  * width into the canvas. Not part of the composable column — nothing about
  * where it sits is a host's layout choice.
  */
-
-const channelLabel = (layer: LayerState | null | undefined, channel: number): string =>
-  layer?.channels.find((node) => node.intensityIndex === channel)?.label ??
-  `Ch ${channel}`;
 
 const ProvenanceBadge = ({ probe }: { probe: ProbeResult }) => {
   const { source, level } = probe.provenance;
@@ -54,11 +51,75 @@ const ProvenanceBadge = ({ probe }: { probe: ProbeResult }) => {
 const smallButton =
   "pointer-events-auto rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/70 hover:bg-white/15 hover:text-white";
 
+/**
+ * The measured values. Split out and memoized so the header — whose three
+ * action buttons get fresh closures on every render — is not rebuilt whenever
+ * the reading changes, and so a re-render of the panel for an unrelated reason
+ * (a mode toggle, a layer edit) does not walk the channel list.
+ */
+const ProbeReadoutBody = memo(
+  ({ probe, layer }: { probe: ProbeResult; layer: LayerState | null | undefined }) => {
+    // One pass over the channel list instead of a `find` per channel.
+    const labels = useMemo(() => {
+      const byIndex = new Map<number, string>();
+      for (const node of layer?.channels ?? []) {
+        if (node.intensityIndex != null) byIndex.set(node.intensityIndex, node.label ?? "");
+      }
+      return byIndex;
+    }, [layer?.channels]);
+
+    return (
+      <div className="mt-2 space-y-1.5 text-[11px]">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-white/50">Voxel</span>
+          <span className="font-mono text-white/90">[{probe.voxelIndex.join(", ")}]</span>
+        </div>
+
+        <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
+          {probe.strategy === "mesh" ? (
+            // A mesh pick: the "value" is the instance's object id.
+            <div className="flex items-center justify-between gap-3">
+              <span className="truncate text-[10px] text-white/60">Instance</span>
+              <span className="font-mono text-white/90">
+                #{probe.values[0]?.value ?? "…"}
+              </span>
+            </div>
+          ) : (
+            probe.values.map((entry) => (
+              <div key={entry.channel} className="flex items-center justify-between gap-3">
+                <span className="truncate text-[10px] text-white/60">
+                  {labels.get(entry.channel) || `Ch ${entry.channel}`}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-mono text-white/90">
+                    {formatProbeValue(entry.value, probe.dtype)}
+                  </span>
+                  <ProvenanceBadge probe={probe} />
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Attribute-plan results: what the tables attached to this pixel's
+            object know about it (AttributeProbeTracker fills the store). */}
+        <AttributeRowsSection probe={probe} />
+      </div>
+    );
+  },
+);
+ProbeReadoutBody.displayName = "ProbeReadoutBody";
+
 export const SelectedPointPanel = () => {
+  perfMonitor.countRender("SelectedPointPanel"); // no-op unless a perf recording is armed
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   const setInteractionMode = useModeStore((s) => s.setInteractionMode);
-  const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
+  // The SETTLED snapshot, never the hot `probedCoordinate`: that changes once
+  // per voxel crossing (≈ once per frame while sweeping) and this is a React
+  // subtree — P17. `ProbeReadoutSettler` publishes this once the cursor rests,
+  // flushing immediately for clicks, retractions and target changes.
+  const probedCoordinate = useViewerStore((s) => s.probeReadout);
   const setProbedCoordinate = useViewerStore((s) => s.setProbedCoordinate);
   const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
   const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
@@ -139,46 +200,7 @@ export const SelectedPointPanel = () => {
         </p>
       )}
 
-      {probedCoordinate && (
-        <div className="mt-2 space-y-1.5 text-[11px]">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-white/50">Voxel</span>
-            <span className="font-mono text-white/90">
-              [{probedCoordinate.voxelIndex.join(", ")}]
-            </span>
-          </div>
-
-          <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
-            {probedCoordinate.strategy === "mesh" ? (
-              // A mesh pick: the "value" is the instance's object id.
-              <div className="flex items-center justify-between gap-3">
-                <span className="truncate text-[10px] text-white/60">Instance</span>
-                <span className="font-mono text-white/90">
-                  #{probedCoordinate.values[0]?.value ?? "…"}
-                </span>
-              </div>
-            ) : (
-              probedCoordinate.values.map((entry) => (
-                <div key={entry.channel} className="flex items-center justify-between gap-3">
-                  <span className="truncate text-[10px] text-white/60">
-                    {channelLabel(layer, entry.channel)}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="font-mono text-white/90">
-                      {formatProbeValue(entry.value, probedCoordinate.dtype)}
-                    </span>
-                    <ProvenanceBadge probe={probedCoordinate} />
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Attribute-plan results: what the tables attached to this pixel's
-              object know about it (AttributeProbeTracker fills the store). */}
-          <AttributeRowsSection probe={probedCoordinate} />
-        </div>
-      )}
+      {probedCoordinate && <ProbeReadoutBody probe={probedCoordinate} layer={layer} />}
     </div>
   );
 };

@@ -5,7 +5,7 @@ import type { LayerState } from "../../core/layerModel";
 import { climToUnit } from "../../core/dataRange";
 import type { SlabDesc } from "../../core/octree/levelGeometry";
 import { cursorPaletteColor, resolvePhasorScale, type PhasorScale } from "../../core/phasor";
-import type { PhasorRenderNode } from "../../core/renderGraph";
+import { effectiveScalarTransfer, type PhasorRenderNode } from "../../core/renderGraph";
 import { buildColormapAtlas } from "../colormaps";
 import { MAX_CHANNELS, MAX_CURSORS, MAX_CURSOR_POINTS } from "./channelLimits";
 import { toBase } from "@/lib/quantities";
@@ -160,7 +160,8 @@ export function buildChannelUniformData(
             : {
                 colormap: source.transfer.colormap,
                 color: source.transfer.color,
-                stops: source.transfer.stops,
+                colorStops: source.transfer.colorStops,
+                curve: source.transfer.stops,
               },
         )
       : [{ colormap: layer?.colormap, color: layer?.color }],
@@ -188,12 +189,15 @@ export function buildChannelUniformData(
   const rows = Math.max(1, numChannels);
   sources.forEach((source, i) => {
     // The transfer applied to the source's INTENSITY tap: a channel's own, or a
-    // phasor node's `intensity` transfer over its mean photon count.
+    // phasor node's `intensity` transfer over its mean photon count. With a
+    // transfer CURVE the window becomes the curve's domain and gamma collapses
+    // to 1 — the curve itself is baked into the LUT row's x axis.
     const transfer = source.type === "phasor" ? source.transfer.intensity : source.transfer;
+    const scalar = effectiveScalarTransfer(transfer);
 
-    climMin[i] = climToUnit(transfer.climMin, minValue, maxValue, 0);
-    climMax[i] = climToUnit(transfer.climMax, minValue, maxValue, 1);
-    gamma[i] = transfer.gamma ?? 1;
+    climMin[i] = climToUnit(scalar.climMin, minValue, maxValue, 0);
+    climMax[i] = climToUnit(scalar.climMax, minValue, maxValue, 1);
+    gamma[i] = scalar.gamma;
     opacity[i] = transfer.opacity ?? 1;
     visible[i] = source.visible ? 1 : 0;
     invert[i] = transfer.invert ? 1 : 0;

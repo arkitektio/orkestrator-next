@@ -169,3 +169,78 @@ describe("marchResidentBricks (volume-accum)", () => {
     expect(march(0.01, () => 0, "volume-accum")).toBeNull();
   });
 });
+
+/**
+ * The Y axis, which every fixture above leaves at zero — which is exactly why
+ * the flip that used to live at the `baseVoxelScratch[1]` assignment survived
+ * the 2026-08-15 "no client-injected flips" pass (COORDINATE_SYSTEMS.md §0)
+ * that removed it from both shaders.
+ *
+ * An anisotropic shape is deliberate: with a cube, a sign error and a scale
+ * error look alike.
+ */
+const Y_BASE: Vec3 = [100, 40, 100];
+
+const marchY = (
+  sample: (baseVoxel: Vec3) => number | null,
+  strategy: ProbeMarchStrategy = "first-hit",
+) =>
+  marchResidentBricks({
+    origin: [0, -0.5, 0],
+    direction: [0, 1, 0],
+    bounds: [0, 1],
+    baseShape: Y_BASE,
+    desiredLevel: 0,
+    channel: 0,
+    minValue: 0,
+    maxValue: 255,
+    climMin: 0,
+    climMax: 1,
+    threshold: 0.5,
+    sample,
+    steps: 1000,
+    strategy,
+  });
+
+describe("marchResidentBricks (Y axis, shader lockstep)", () => {
+  it("maps local y to base voxel y WITHOUT a flip", () => {
+    // Pins the sign of the map itself, not just where the hit lands: at the
+    // ray's start (local y = -0.5) the shader's `toBaseVoxel` reads row 0.
+    const seen: number[] = [];
+    marchY((baseVoxel) => {
+      seen.push(baseVoxel[1]);
+      return 0;
+    });
+    expect(seen[0]).toBeCloseTo(0, 3);
+    expect(seen[seen.length - 1]).toBeGreaterThan(Y_BASE[1] * 0.9);
+  });
+
+  it("reports the first hit at the near face of a slab high in y", () => {
+    // Bright for base voxels y ∈ [24, 40) → local y ≈ 24/40 - 0.5 = 0.1.
+    // A flipped march finds the mirror of that slab and answers ≈ -0.1.
+    const hit = marchY((baseVoxel) => (baseVoxel[1] >= 24 ? 200 : 0));
+    expect(hit).not.toBeNull();
+    expect(hit!.position[1]).toBeGreaterThan(0.09);
+    expect(hit!.position[1]).toBeLessThan(0.12);
+    expect(hit!.rawValue).toBe(200);
+  });
+
+  it("finds the brightest y row under `max`", () => {
+    // A single bright row at y = 30 → local y = 30/40 - 0.5 = 0.25.
+    const hit = marchY(
+      (baseVoxel) => (Math.floor(baseVoxel[1]) === 30 ? 255 : 10),
+      "max",
+    );
+    expect(hit).not.toBeNull();
+    expect(hit!.position[1]).toBeGreaterThan(0.24);
+    expect(hit!.position[1]).toBeLessThan(0.28);
+    expect(hit!.rawValue).toBe(255);
+  });
+
+  it("finds the y edge under `gradient`", () => {
+    const hit = marchY((baseVoxel) => (baseVoxel[1] >= 24 ? 200 : 0), "gradient");
+    expect(hit).not.toBeNull();
+    expect(hit!.position[1]).toBeGreaterThan(0.08);
+    expect(hit!.position[1]).toBeLessThan(0.12);
+  });
+});

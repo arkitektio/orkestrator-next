@@ -30,13 +30,22 @@ export const PHASOR_KIND = "phasor";
 export const BLEND_KIND = "blend";
 export const PROJECTION_KIND = "projection";
 
-/** One stop of a custom transfer gradient. `color` is RGBA 0-255 like every
+/** One stop of a custom COLOR gradient. `color` is RGBA 0-255 like every
  * other color in this model; `position` is the normalized intensity in [0,1]
- * AFTER clim/gamma — stops replace the named colormap's ramp, never the
- * scalar transfer (gamma stays the fallback shaping control). */
+ * after the scalar transfer — color stops replace the named colormap's ramp,
+ * never the scalar transfer itself. SESSION-LOCAL (no server field). */
 export type TransferStop = {
   position: number;
   color: number[];
+};
+
+/** One control point of the intensity transfer CURVE (the server's
+ * `LookupStop`): a raw intensity (`position`, data units) and the normalized
+ * 0..1 it maps to. The curve replaces the clim-window + gamma power law when
+ * present — gamma is the fallback. */
+export type TransferCurveStop = {
+  position: number;
+  value: number;
 };
 
 export type TransferFn = {
@@ -44,12 +53,30 @@ export type TransferFn = {
   climMax: number | null;
   colormap: ColorMap | null;
   color: number[] | null;
-  /** Custom positioned gradient; when ≥2 stops are present they take
-   * precedence over `colormap`/`color` for the LUT row. */
-  stops: TransferStop[] | null;
+  /** Session-local color gradient; when ≥2 are present they take precedence
+   * over `colormap`/`color` for the LUT row. */
+  colorStops: TransferStop[] | null;
+  /** The intensity transfer curve (server-persisted `stops`). */
+  stops: TransferCurveStop[] | null;
   gamma: number | null;
   opacity: number | null;
   invert: boolean | null;
+};
+
+/**
+ * The scalar transfer the shader actually runs: with a curve, the window is
+ * the curve's DOMAIN and gamma collapses to 1 (the curve itself is baked into
+ * the LUT row's x axis — see `buildColormapAtlas`); without one, the stored
+ * clim/gamma. The one place the "gamma is a fallback" rule is decided.
+ */
+export const effectiveScalarTransfer = (
+  transfer: Pick<TransferFn, "climMin" | "climMax" | "gamma" | "stops">,
+): { climMin: number | null; climMax: number | null; gamma: number } => {
+  const stops = transfer.stops;
+  if (stops && stops.length >= 2) {
+    return { climMin: stops[0].position, climMax: stops[stops.length - 1].position, gamma: 1 };
+  }
+  return { climMin: transfer.climMin, climMax: transfer.climMax, gamma: transfer.gamma ?? 1 };
 };
 
 export type ChannelRenderNode = {
@@ -175,6 +202,7 @@ const DEFAULT_TRANSFER: TransferFn = {
   climMax: null,
   colormap: ColorMap.Viridis,
   color: null,
+  colorStops: null,
   stops: null,
   gamma: null,
   opacity: null,
@@ -182,26 +210,23 @@ const DEFAULT_TRANSFER: TransferFn = {
 };
 
 /**
- * Normalize a color-GRADIENT stops payload: RGBA-4 colors, positions clamped
- * into [0,1] and sorted, fewer than two = "no custom gradient". Read
- * structurally and defensively: the server's `TransferFunction.stops` is a
- * DIFFERENT thing (a LookupStop intensity curve, {position, value}) — its
- * entries carry no color array and are filtered out here, so the gradient
- * remains session-local until color stops exist server-side.
+ * Normalize the server's `stops` (the LookupStop intensity CURVE): sorted by
+ * position (raw data units), values clamped into [0,1], fewer than two = "no
+ * curve" (the gamma fallback applies). Structural and defensive.
  */
-const parseStops = (raw: unknown): TransferStop[] | null => {
+const parseCurveStops = (raw: unknown): TransferCurveStop[] | null => {
   if (!Array.isArray(raw)) return null;
   const stops = raw
     .filter(
-      (stop): stop is { position: number; color: number[] } =>
+      (stop): stop is { position: number; value: number } =>
         typeof stop === "object" &&
         stop !== null &&
         typeof (stop as { position?: unknown }).position === "number" &&
-        Array.isArray((stop as { color?: unknown }).color),
+        typeof (stop as { value?: unknown }).value === "number",
     )
     .map((stop) => ({
-      position: Math.min(1, Math.max(0, stop.position)),
-      color: toRgba(stop.color) ?? [255, 255, 255, 255],
+      position: stop.position,
+      value: Math.min(1, Math.max(0, stop.value)),
     }))
     .sort((a, b) => a.position - b.position);
   return stops.length >= 2 ? stops : null;
@@ -212,7 +237,10 @@ const parseTransfer = (transfer: Partial<TransferFn> | null | undefined): Transf
   climMax: transfer?.climMax ?? null,
   colormap: transfer?.colormap ?? null,
   color: transfer?.color ?? null,
-  stops: parseStops((transfer as { stops?: unknown } | null | undefined)?.stops),
+  // Session-local only — a fragment never carries it, a re-parse of domain
+  // state preserves it.
+  colorStops: transfer?.colorStops ?? null,
+  stops: parseCurveStops(transfer?.stops),
   gamma: transfer?.gamma ?? null,
   opacity: transfer?.opacity ?? null,
   invert: transfer?.invert ?? null,
@@ -428,23 +456,21 @@ export const toRgba = (color: number[] | null): number[] | null => {
   return color.length > 4 ? color.slice(0, 4) : color;
 };
 
-const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => {
-  const input: TransferFunctionInput = {
-    climMin: transfer.climMin,
-    climMax: transfer.climMax,
-    colormap: transfer.colormap,
-    color: toRgba(transfer.color),
-    gamma: transfer.gamma,
-    opacity: transfer.opacity,
-    invert: transfer.invert,
-  };
-  // NOT serialized: the server's `TransferFunction.stops` turned out to be a
-  // LookupStop INTENSITY CURVE ({position, value} — a generalized gamma), a
-  // different thing from this client-side color GRADIENT. The gradient stays
-  // session-local until the server models color stops; the curve is future
-  // client work (piecewise transfer replacing gamma when present).
-  return input;
-};
+const serializeTransfer = (transfer: TransferFn): TransferFunctionInput => ({
+  climMin: transfer.climMin,
+  climMax: transfer.climMax,
+  colormap: transfer.colormap,
+  color: toRgba(transfer.color),
+  gamma: transfer.gamma,
+  opacity: transfer.opacity,
+  invert: transfer.invert,
+  // The intensity CURVE persists; `colorStops` (the session-local color
+  // gradient) deliberately does not — the server has no field for it.
+  stops:
+    transfer.stops && transfer.stops.length >= 2
+      ? transfer.stops.map((stop) => ({ position: stop.position, value: stop.value }))
+      : null,
+});
 
 const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({
   kind: cursor.kind,

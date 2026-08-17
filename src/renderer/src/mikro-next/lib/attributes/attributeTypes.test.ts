@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { AttributeFetchKey, AttributePlanLike, ProbedAttributes } from "./attributeTypes";
-import { applyAttributeRows, planIdentity } from "./attributeTypes";
+import {
+  applyAttributeRows,
+  buildProbedAttributes,
+  planIdentity,
+} from "./attributeTypes";
 
 const plan = (over: Partial<AttributePlanLike> = {}): AttributePlanLike => ({
   edge: { id: "edge-1", version: 3 },
@@ -98,5 +102,76 @@ describe("applyAttributeRows", () => {
     expect(
       applyAttributeRows(current, key(), "someone-else", { status: "rows", rows: [] }),
     ).toBeNull();
+  });
+});
+
+describe("buildProbedAttributes", () => {
+  const meta = (plans: AttributePlanLike[]): ProbedAttributes["planMeta"] =>
+    Object.fromEntries(
+      plans.map((p) => [
+        planIdentity(p),
+        { tableName: p.table.name, tableId: p.table.id, attributes: p.lookup.attributes },
+      ]),
+    );
+
+  const rows = [{ area: 12 }];
+
+  it("builds the whole slice in one object", () => {
+    const p = plan();
+    const built = buildProbedAttributes(null, key(), meta([p]), [
+      [planIdentity(p), { status: "rows", rows, sampledValue: 7 }],
+    ]);
+
+    expect(built).not.toBeNull();
+    expect(built!.key).toEqual(key());
+    expect(built!.byPlan[planIdentity(p)].rows).toBe(rows);
+    expect(built!.planMeta[planIdentity(p)].tableName).toBe("nuclei morphology");
+  });
+
+  it("returns null when the result is value-equal — the caller then skips the set", () => {
+    const p = plan();
+    const states = [
+      [planIdentity(p), { status: "rows", rows, sampledValue: 7 }],
+    ] as const;
+    const first = buildProbedAttributes(null, key(), meta([p]), states);
+    expect(first).not.toBeNull();
+
+    // Re-crossing the same voxel with the same cached rows must cost no render.
+    expect(buildProbedAttributes(first, key(), meta([p]), states)).toBeNull();
+  });
+
+  it("rebuilds when the probed point moves", () => {
+    const p = plan();
+    const states = [
+      [planIdentity(p), { status: "rows", rows, sampledValue: 7 }],
+    ] as const;
+    const first = buildProbedAttributes(null, key([1, 2, 0]), meta([p]), states);
+    expect(
+      buildProbedAttributes(first, key([9, 9, 0]), meta([p]), states),
+    ).not.toBeNull();
+  });
+
+  it("rebuilds when a plan's rows change at the same point", () => {
+    const p = plan();
+    const first = buildProbedAttributes(null, key(), meta([p]), [
+      [planIdentity(p), { status: "rows", rows, sampledValue: 7 }],
+    ]);
+    const next = buildProbedAttributes(first, key(), meta([p]), [
+      [planIdentity(p), { status: "rows", rows: [{ area: 99 }], sampledValue: 8 }],
+    ]);
+    expect(next).not.toBeNull();
+    expect(next!.byPlan[planIdentity(p)].sampledValue).toBe(8);
+  });
+
+  it("rebuilds when the plan SET changes even if the shared plan is unchanged", () => {
+    const a = plan();
+    const b = plan({ edge: { id: "edge-2", version: 1 }, table: { id: "t2", name: "b" } });
+    const stateA = [planIdentity(a), { status: "rows" as const, rows }] as const;
+    const first = buildProbedAttributes(null, key(), meta([a]), [stateA]);
+    const next = buildProbedAttributes(first, key(), meta([a, b]), [
+      stateA,
+      [planIdentity(b), { status: "rows", rows }],
+    ]);
+    expect(next).not.toBeNull();
   });
 });

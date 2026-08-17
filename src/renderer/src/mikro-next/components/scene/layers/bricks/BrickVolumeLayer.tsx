@@ -9,6 +9,11 @@ import { qualityGovernor } from "../../core/qualityGovernor";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
+import {
+  clickProbeEnabled,
+  hoverProbeEnabled,
+  type ProbeGateInput,
+} from "../../core/probe/probeGating";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
 import {
   effectiveProbeLayerId,
@@ -22,6 +27,7 @@ import { useModeStore } from "../../store/modeStore";
 import {
   isDrawingTool,
   isProbeDerivedTool,
+  useRoiDrawingStore,
   useRoiDrawingStoreApi,
 } from "../../store/roiDrawingStore";
 import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
@@ -70,6 +76,21 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
 };
 
 const MAX_RAY_STEPS = 512;
+
+/**
+ * Scratch for `probeFromRay`, shared across layer instances.
+ *
+ * Safe because the march is synchronous, non-reentrant, and copies every value
+ * out before returning — the same discipline as `brickSampling`'s
+ * `baseVoxelScratch`. It runs up to once per frame per hovered volume, so the
+ * Matrix4 + three Vector3s it replaces were a steady per-frame allocation.
+ */
+const probeScratch = {
+  inverse: new THREE.Matrix4(),
+  origin: new THREE.Vector3(),
+  direction: new THREE.Vector3(),
+  world: new THREE.Vector3(),
+};
 
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
@@ -129,6 +150,21 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const sceneStoreApi = useSceneStoreApi();
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  // A RENDER subscription, unlike the event-time `roiDrawingApi.getState()`
+  // reads it replaces: the handler PROPS below are the raycast gate (P20), so
+  // this component has to re-render when the armed tool changes. Legal under
+  // P17 — arming a tool is a toolbar click, not a render-cadence fact.
+  const activeTool = useRoiDrawingStore((s) => s.activeTool);
+  const gate: ProbeGateInput = {
+    interactionMode,
+    probeFollowsCursor,
+    drawingToolActive: isDrawingTool(activeTool),
+    // The volume answers ANNOTATE hover: inside a volume there is no draw
+    // plane, so the probe IS the placement for every shape tool.
+    annotateProbes: true,
+  };
+  const hoverEnabled = hoverProbeEnabled(gate);
+  const clickEnabled = clickProbeEnabled(gate);
 
   // Event-time resolution — fresh pin AND fresh layer list, no render
   // subscription: exactly one layer (the effective probe target) answers.
@@ -437,11 +473,15 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     const state = viewerStoreApi.getState();
     const plan = state.nodePlans[layerId];
     if (!mesh || !pool || !plan || !brickSystem) return null;
-    const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
-    const localOrigin = ray.origin.clone().applyMatrix4(inverseMatrix);
-    const localDirection = ray.direction.clone().transformDirection(inverseMatrix).normalize();
+    const inverseMatrix = probeScratch.inverse.copy(mesh.matrixWorld).invert();
+    const localOrigin = probeScratch.origin.copy(ray.origin).applyMatrix4(inverseMatrix);
+    const localDirection = probeScratch.direction
+      .copy(ray.direction)
+      .transformDirection(inverseMatrix)
+      .normalize();
     const bounds = intersectLocalVolumeBox(localOrigin, localDirection);
     if (!bounds) return null;
+    perfMonitor.markProbe(); // no-op unless a perf recording is armed
 
     // "Auto" picks the strategy matching what the projection shows on screen.
     const { strategy, threshold } = resolveProbeStrategy(
@@ -489,7 +529,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // One all-channels read at the hit voxel (per hit, not per march step).
     const resident = brickSystem.sampleResidentEx(layerId, voxelIndex, plan.targetLevel);
     const channelCount = Math.max(1, pool.geometry.channelSlabCount);
-    const world = new THREE.Vector3(...localPos).applyMatrix4(mesh.matrixWorld);
+    const world = probeScratch.world
+      .set(localPos[0], localPos[1], localPos[2])
+      .applyMatrix4(mesh.matrixWorld);
     return {
       layerId,
       localPos,
@@ -497,6 +539,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       worldPos: [world.x, world.y, world.z],
       strategy,
       origin,
+      // In ANNOTATE the probe is the drawer's cursor, not a measurement — the
+      // HUD and the attribute plans skip it (core/probe/probeTypes.ts).
+      purpose: interactionMode === "ANNOTATE" ? "placement" : "readout",
       values: resident
         ? resident.values.map((value, channel) => ({ channel, value }))
         : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
@@ -564,19 +609,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       ref={groupRef}
       matrix={affineMatrix}
       matrixAutoUpdate={false}
-      onPointerMove={(e) => {
-        // ANNOTATE hover-probes unconditionally for EVERY shape tool — in 3D
-        // the probe IS the placement, for a path's next vertex exactly as much
-        // as for a sphere's center, and the drawer's rubber band follows the
-        // published probe. Cheap by construction either way: the march reads
-        // only RESIDENT bricks (GPU-lockstep data, no array fetches), and the
-        // precise attribute tier sits behind its own debounce in
-        // AttributeProbeTracker.
-        const hoverProbing =
-          (interactionMode === "PROBE" && probeFollowsCursor) ||
-          (interactionMode === "ANNOTATE" &&
-            isDrawingTool(roiDrawingApi.getState().activeTool));
-        if (!hoverProbing || e.buttons !== 0) return;
+      // `undefined` when hover probing is off, NOT a handler that early-returns:
+      // that is what takes this group out of R3F's pointermove raycast set
+      // entirely (core/probe/probeGating.ts, P20). ANNOTATE arms for EVERY
+      // shape tool — in 3D the probe IS the placement, for a path's next vertex
+      // exactly as much as for a sphere's center, and the drawer's rubber band
+      // follows the published probe.
+      onPointerMove={!hoverEnabled ? undefined : (e) => {
+        if (e.buttons !== 0) return;
         // Declined BEFORE stopPropagation, so the event falls through to the
         // target layer behind this one instead of being swallowed here.
         if (!answersProbe()) return;
@@ -586,19 +626,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         const ray = e.ray.clone();
         probeCoalescer.schedule(() => updateProbe(probeFromRay(ray, "hover"), false));
       }}
-      onPointerOut={() => {
+      onPointerOut={!hoverEnabled ? undefined : () => {
         // Clearing the probe on the way out is what tells the drawer the
         // pointer left the data: a click out there marks nothing.
-        const hoverProbing =
-          (interactionMode === "PROBE" && probeFollowsCursor) ||
-          (interactionMode === "ANNOTATE" &&
-            isDrawingTool(roiDrawingApi.getState().activeTool));
-        if (!hoverProbing) return;
         if (!answersProbe()) return;
         probeCoalescer.cancel();
         updateProbe(null, false);
       }}
-      onPointerDown={(e) => {
+      onPointerDown={!clickEnabled ? undefined : (e) => {
         if (interactionMode === "PROBE" && !answersProbe()) {
           return;
         }
@@ -625,7 +660,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           updateProbe(probeFromRay(e.ray, "click"), false);
         }
       }}
-      onClick={(e) => {
+      onClick={!clickEnabled ? undefined : (e) => {
         if (interactionMode === "ANNOTATE") {
           // Same rule as onPointerDown: only the probe target places
           // annotations; others let the click fall through to it.

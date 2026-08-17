@@ -441,6 +441,39 @@ export const sampleStopsRgb = (
   return rgb01(last);
 };
 
+/**
+ * One control point of the intensity transfer CURVE (the server's
+ * `LookupStop`): raw intensity → normalized 0..1. Structural twin of
+ * `core/renderGraph.ts` `TransferCurveStop`.
+ */
+export type CurveStop = { position: number; value: number };
+
+/**
+ * Sample the piecewise-linear transfer curve at `t ∈ [0,1]` over the curve's
+ * OWN domain [first.position, last.position] (assumes sorted stops; clamped
+ * ends). The shader's clim window is set to that same domain when a curve is
+ * active (`effectiveScalarTransfer`), so LUT x-axis `t` and curve domain
+ * coincide by construction.
+ */
+export const sampleCurveValue = (stops: readonly CurveStop[], t: number): number => {
+  if (stops.length === 0) return clamp01(t);
+  const first = stops[0];
+  const last = stops[stops.length - 1];
+  const raw = first.position + clamp01(t) * (last.position - first.position);
+  if (raw <= first.position) return clamp01(first.value);
+  if (raw >= last.position) return clamp01(last.value);
+  for (let i = 1; i < stops.length; i++) {
+    if (raw <= stops[i].position) {
+      const a = stops[i - 1];
+      const b = stops[i];
+      const span = b.position - a.position;
+      const f = span > 0 ? (raw - a.position) / span : 0;
+      return clamp01(a.value + (b.value - a.value) * f);
+    }
+  }
+  return clamp01(last.value);
+};
+
 /** CSS preview of a positioned gradient — the stops' own percents, exact. */
 export const stopsGradientCSS = (stops: readonly GradientStop[]): string => {
   const entries = stops.map(
@@ -722,10 +755,14 @@ export const buildColormapAtlas = (
   channels: {
     colormap: ColorMap | null | undefined;
     color?: number[] | null;
-    /** Custom positioned gradient (sorted, ≥2 entries): takes precedence over
-     * `colormap`/`color`, baked with the SAME ramp response convention as a
-     * named colormap row (see below) — the shader never knows the difference. */
-    stops?: readonly GradientStop[] | null;
+    /** Custom positioned COLOR gradient (sorted, ≥2 entries): takes precedence
+     * over `colormap`/`color`, baked with the SAME ramp response convention as
+     * a named colormap row (see below) — the shader never knows the difference. */
+    colorStops?: readonly GradientStop[] | null;
+    /** The intensity transfer CURVE (sorted, ≥2): baked into the row's x axis
+     * (`row[x] = base(curve(x))`), with the shader's clim window set to the
+     * curve's domain by `effectiveScalarTransfer`. */
+    curve?: readonly CurveStop[] | null;
   }[],
 ): THREE.DataTexture => {
   const width = 256;
@@ -734,11 +771,14 @@ export const buildColormapAtlas = (
 
   for (let row = 0; row < height; row++) {
     const channel = channels[row];
-    const customStops = channel?.stops && channel.stops.length >= 2 ? channel.stops : null;
+    const customStops =
+      channel?.colorStops && channel.colorStops.length >= 2 ? channel.colorStops : null;
+    const curve = channel?.curve && channel.curve.length >= 2 ? channel.curve : null;
     const stopsKey = customStops
       ? customStops.map((s) => `${s.position}:${s.color.join(",")}`).join(";")
       : "";
-    const rowKey = `${channel?.colormap ?? ""}|${channel?.color?.join(",") ?? ""}|${stopsKey}`;
+    const curveKey = curve ? curve.map((s) => `${s.position}:${s.value}`).join(";") : "";
+    const rowKey = `${channel?.colormap ?? ""}|${channel?.color?.join(",") ?? ""}|${stopsKey}|${curveKey}`;
     const cached = atlasRowCache.get(rowKey);
     if (cached) {
       data.set(cached, row * width * 4);
@@ -764,11 +804,17 @@ export const buildColormapAtlas = (
     // explicit color (legacy per-channel tint without a named map): those
     // have always rendered linearly via the compositor's single multiply.
     const tintColor =
-      channel?.colormap == null && channel?.color && !customStops ? channel.color : null;
+      channel?.colormap == null && channel?.color && !customStops && !curve
+        ? channel.color
+        : null;
 
     const rowData = new Uint8Array(width * 4);
     for (let x = 0; x < width; x++) {
-      const t = x / (width - 1);
+      // The transfer curve remaps the row's x axis: the shader's normalized
+      // window value indexes `curve(t)` instead of `t`. Without a curve this
+      // is the identity. (A tint + curve pair bakes a ramp — the constant-row
+      // optimization can't carry a curve.)
+      const t = curve ? sampleCurveValue(curve, x / (width - 1)) : x / (width - 1);
       let r: number;
       let g: number;
       let b: number;
@@ -776,6 +822,12 @@ export const buildColormapAtlas = (
         // A custom gradient IS a colormap: bake its ramp like a named map's
         // (intensity² response via the compositor's extra multiply).
         [r, g, b] = sampleStopsRgb(customStops, t);
+      } else if (curve && channel?.colormap == null && channel?.color) {
+        // Tint × curve: the constant tint becomes a curve-shaped ramp.
+        const tint = channel.color;
+        r = ((tint[0] ?? 0) / 255) * t;
+        g = ((tint[1] ?? 0) / 255) * t;
+        b = ((tint[2] ?? 0) / 255) * t;
       } else if (tintColor) {
         // Constant channel color; the shader scales it by the channel's
         // normalized intensity (so 0 -> black, 1 -> full color). A ramp here

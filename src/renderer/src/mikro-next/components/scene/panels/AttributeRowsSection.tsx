@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ProbeResult } from "../core/probe/probeTypes";
 import { isSameProbeKey } from "../core/probe/probeTypes";
 import type {
@@ -7,6 +7,7 @@ import type {
   PlanRowsState,
 } from "@/mikro-next/lib/attributes/attributeTypes";
 import { useViewerStore } from "../store/viewerStore";
+import { perfMonitor } from "../managers/perfMonitor";
 
 /**
  * "What is under this pixel?" — the probe HUD section rendering the active
@@ -113,14 +114,16 @@ const RowCellPair = ({ name, value }: { name: string; value: unknown }) => (
 
 const AttributeRowBlock = ({
   row,
-  attributes,
+  columns,
 }: {
   row: AttributeRow;
-  attributes: readonly AttributeColumnLike[];
+  /** Pre-indexed by name: the linear `attributes.find` this replaces ran once
+   * per CELL, so a wide table cost rows x columns scans per render. */
+  columns: ReadonlyMap<string, AttributeColumnLike>;
 }) => (
   <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
     {Object.entries(row).map(([name, cell]) => {
-      const column = attributes.find((candidate) => candidate.name === name);
+      const column = columns.get(name);
       const referenceValue =
         typeof cell === "number" || typeof cell === "bigint" ? cell : null;
       return (
@@ -150,40 +153,48 @@ export const AttributePlanBlock = ({
   tableName: string | null;
   attributes: readonly AttributeColumnLike[];
   state: PlanRowsState;
-}) => (
-  <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
-    <div className="flex items-center justify-between gap-2">
-      <span className="truncate text-[10px] font-medium text-white/60">
-        {tableName ?? "attributes"}
-      </span>
-      <span className="flex items-center gap-1.5">
-        {state.sampledValue !== undefined && state.sampledValue !== null && (
-          <span className="font-mono text-[10px] text-white/70">
-            #{String(state.sampledValue)}
-          </span>
-        )}
-        <StatusBadge state={state} />
-      </span>
+}) => {
+  const columns = useMemo(
+    () => new Map(attributes.map((column) => [column.name, column])),
+    [attributes],
+  );
+
+  return (
+    <div className="space-y-0.5 rounded border border-white/10 bg-white/5 px-2 py-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-[10px] font-medium text-white/60">
+          {tableName ?? "attributes"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {state.sampledValue !== undefined && state.sampledValue !== null && (
+            <span className="font-mono text-[10px] text-white/70">
+              #{String(state.sampledValue)}
+            </span>
+          )}
+          <StatusBadge state={state} />
+        </span>
+      </div>
+      {state.status === "background" && (
+        <span className="text-[10px] text-white/40">background</span>
+      )}
+      {state.status === "error" && (
+        <span className="text-[10px] text-red-300/70">{state.error ?? "failed"}</span>
+      )}
+      {state.status === "rows" && state.rows.length === 0 && (
+        <span className="text-[10px] text-white/40">
+          no row for this object (never measured)
+        </span>
+      )}
+      {state.status === "rows" &&
+        state.rows.map((row, index) => (
+          <AttributeRowBlock key={index} row={row} columns={columns} />
+        ))}
     </div>
-    {state.status === "background" && (
-      <span className="text-[10px] text-white/40">background</span>
-    )}
-    {state.status === "error" && (
-      <span className="text-[10px] text-red-300/70">{state.error ?? "failed"}</span>
-    )}
-    {state.status === "rows" && state.rows.length === 0 && (
-      <span className="text-[10px] text-white/40">
-        no row for this object (never measured)
-      </span>
-    )}
-    {state.status === "rows" &&
-      state.rows.map((row, index) => (
-        <AttributeRowBlock key={index} row={row} attributes={attributes} />
-      ))}
-  </div>
-);
+  );
+};
 
 export const AttributeRowsSection = ({ probe }: { probe: ProbeResult }) => {
+  perfMonitor.countRender("AttributeRowsSection"); // no-op unless a perf recording is armed
   const probedAttributes = useViewerStore((s) => s.probedAttributes);
 
   if (!probedAttributes || !isSameProbeKey(probe, probedAttributes.key)) return null;

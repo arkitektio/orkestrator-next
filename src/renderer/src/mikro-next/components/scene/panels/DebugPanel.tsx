@@ -767,6 +767,9 @@ const PerfSessionSummary = ({ report }: { report: PerfSessionReport }) => {
         <span className="rounded border border-border/50 px-1">
           vis {report.visibilityRecomputes}
         </span>
+        <span className="rounded border border-border/50 px-1">
+          probes {report.probes}
+        </span>
       </div>
       {topRenders.length > 0 && (
         <div className="flex flex-wrap gap-1">

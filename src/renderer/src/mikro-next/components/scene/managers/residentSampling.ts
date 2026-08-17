@@ -38,6 +38,22 @@ const level0Of = (layer: LayerState) =>
     LayerState["lens"]["dataset"]["dataArrays"][number] | null
   >((best, da) => (best === null || da.level < best.level ? da : best), null);
 
+/**
+ * Axis names in declared order, memoized on the SYSTEM object — a pure
+ * function of it, so no invalidation contract. Without this the copy+sort+map
+ * ran once per plan per probe.
+ */
+const axisNamesCache = new WeakMap<AttributePlanLike["sample"]["system"], string[]>();
+const axisNamesOf = (system: AttributePlanLike["sample"]["system"]): string[] => {
+  const cached = axisNamesCache.get(system);
+  if (cached) return cached;
+  const names = [...system.axes]
+    .sort((a, b) => a.order - b.order)
+    .map((axis) => axis.name);
+  axisNamesCache.set(system, names);
+  return names;
+};
+
 const findResidentBinding = (
   layers: readonly LayerState[],
   plan: AttributePlanLike,
@@ -48,9 +64,7 @@ const findResidentBinding = (
   for (const layer of layers) {
     const level0 = level0Of(layer);
     if (!level0 || level0.store.id !== plan.sample.store.id) continue;
-    const axisNames = [...plan.sample.system.axes]
-      .sort((a, b) => a.order - b.order)
-      .map((axis) => axis.name);
+    const axisNames = axisNamesOf(plan.sample.system);
     const ra = layer.lens.renderAxes;
     const xPos = axisNames.indexOf(ra.x);
     const yPos = axisNames.indexOf(ra.y);
@@ -71,11 +85,29 @@ const findResidentBinding = (
  * straight to the exact read.
  */
 export function createResidentSampler(ctx: ResidentSampleContext) {
+  /**
+   * Resolved bindings, keyed on the plan and guarded by the LAYERS array's
+   * identity: the scene store hands out a new array only on a real layer edit,
+   * so a stale binding is impossible while it holds. Identity-keyed on both
+   * sides, so again there is no invalidation contract to get wrong.
+   */
+  const bindings = new WeakMap<
+    AttributePlanLike,
+    { layers: readonly LayerState[]; binding: ResidentBinding | null }
+  >();
+
   return (
     plan: AttributePlanLike,
   ): ((index: readonly number[]) => HeldValue | null) | null => {
-    const resident =
-      plan.path.length === 0 ? findResidentBinding(ctx.getLayers(), plan) : null;
+    const layers = ctx.getLayers();
+    let resident: ResidentBinding | null;
+    const cached = bindings.get(plan);
+    if (cached && cached.layers === layers) {
+      resident = cached.binding;
+    } else {
+      resident = plan.path.length === 0 ? findResidentBinding(layers, plan) : null;
+      bindings.set(plan, { layers, binding: resident });
+    }
     if (!resident) return null;
     return (index) => {
       const brickSystem = ctx.getBrickSystem();

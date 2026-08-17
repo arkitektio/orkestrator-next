@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import {
+  effectiveScalarTransfer,
   parseRenderNode,
   serializeRenderNode,
   toRgba,
@@ -26,7 +27,7 @@ describe("toRgba", () => {
   });
 });
 
-describe("transfer stops", () => {
+describe("transfer curve stops (server LookupStops)", () => {
   const channelFragment = (stops: unknown) =>
     ({
       __typename: "ChannelSourceNode",
@@ -38,47 +39,56 @@ describe("transfer stops", () => {
       transfer: { colormap: null, stops },
     }) as unknown as Parameters<typeof parseRenderNode>[0];
 
-  it("parses stops sorted, RGBA-normalized and position-clamped", () => {
+  it("parses the curve sorted with values clamped into [0,1]", () => {
     const node = parseRenderNode(
       channelFragment([
-        { position: 0.9, color: [0, 0, 255] }, // RGB → RGBA
-        { position: -0.5, color: [255, 0, 0, 255] }, // clamped to 0
+        { position: 4000, value: 1.5 }, // value clamped to 1
+        { position: 100, value: -0.2 }, // value clamped to 0
+        { position: 900, value: 0.5 },
       ]),
     ) as ChannelRenderNode;
     expect(node.transfer.stops).toEqual([
-      { position: 0, color: [255, 0, 0, 255] },
-      { position: 0.9, color: [0, 0, 255, 255] },
+      { position: 100, value: 0 },
+      { position: 900, value: 0.5 },
+      { position: 4000, value: 1 },
     ]);
   });
 
-  it("treats fewer than two stops — or garbage — as no custom gradient", () => {
-    for (const raw of [null, undefined, [], [{ position: 0.5, color: [1, 2, 3] }], "nope", [{}]]) {
+  it("treats fewer than two stops — or garbage — as no curve (gamma fallback)", () => {
+    for (const raw of [null, undefined, [], [{ position: 100, value: 0.5 }], "nope", [{}]]) {
       const node = parseRenderNode(channelFragment(raw)) as ChannelRenderNode;
       expect(node.transfer.stops).toBeNull();
     }
   });
 
-  it("NEVER serializes the color gradient into the server's `stops` field", () => {
-    // The server's `stops` is a LookupStop intensity CURVE ({position, value}),
-    // not color stops — writing the gradient there would corrupt the curve.
+  it("round-trips the curve through serialize; effective transfer collapses gamma", () => {
     const node = parseRenderNode(
       channelFragment([
-        { position: 0, color: [10, 20, 30] },
-        { position: 1, color: [200, 210, 220, 128] },
-      ]),
-    ) as ChannelRenderNode;
-    expect(node.transfer.stops).toHaveLength(2); // parsed for local rendering…
-    const input = serializeRenderNode(node) as { transfer?: Record<string, unknown> };
-    expect(input.transfer && "stops" in input.transfer).toBe(false); // …never saved
-  });
-
-  it("ignores server LookupStop curve entries (no color array = not a gradient)", () => {
-    const node = parseRenderNode(
-      channelFragment([
-        { position: 0, value: 0 },
+        { position: 100, value: 0 },
         { position: 4000, value: 1 },
       ]),
     ) as ChannelRenderNode;
-    expect(node.transfer.stops).toBeNull();
+    const input = serializeRenderNode(node) as { transfer?: { stops?: unknown } };
+    expect(input.transfer?.stops).toEqual([
+      { position: 100, value: 0 },
+      { position: 4000, value: 1 },
+    ]);
+    // The shader's window becomes the curve domain, gamma the identity.
+    expect(effectiveScalarTransfer(node.transfer)).toEqual({
+      climMin: 100,
+      climMax: 4000,
+      gamma: 1,
+    });
+  });
+
+  it("keeps the session-local color GRADIENT out of the server payload", () => {
+    const node = parseRenderNode(channelFragment(null)) as ChannelRenderNode;
+    node.transfer.colorStops = [
+      { position: 0, color: [10, 20, 30, 255] },
+      { position: 1, color: [200, 210, 220, 255] },
+    ];
+    const input = serializeRenderNode(node) as { transfer?: Record<string, unknown> };
+    expect(input.transfer && "colorStops" in input.transfer).toBe(false);
+    expect(input.transfer?.stops).toBeNull(); // and never leaks into the curve
   });
 });

@@ -27,6 +27,7 @@ import { KeyboardSceneNavigation } from "./interactions/KeyboardSceneNavigation"
 import { ModeCompatGuard } from "./interactions/ModeCompatGuard";
 import { SceneAxis } from "./layers/SceneAxis";
 import { AttributeProbeTracker } from "./managers/AttributeProbeTracker";
+import { ProbeReadoutSettler } from "./managers/ProbeReadoutSettler";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { VisibilityManager } from "./managers/VisibilityManager";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
@@ -47,20 +48,30 @@ import { useViewerStore } from "./store/viewerStore";
 
 /**
  * R3F's default event manager raycasts the ENTIRE interaction set for every
- * DOM event it handles — including plain `wheel`, which nothing in this scene
+ * DOM event it handles EXCEPT pointermove (see `pointerMoveGates` below for
+ * that one exception) — including plain `wheel`, which nothing in this scene
  * subscribes to (no R3F `onWheel` props in the scene tree). Trackpad zoom
- * fires 60–120 wheel events/s, and with annotations mounted each raycast
- * walks every Line2 outline segment-by-segment — pure per-tick main-thread
- * waste, concurrent with the zoom itself. Dropping the handler here removes
- * the DOM wheel listener entirely; OrbitControls zooms through its own
- * listener and is unaffected.
+ * fires 60–120 wheel events/s, and because wheel is unfiltered each raycast
+ * walks every Line2 annotation outline segment-by-segment — pure per-tick
+ * main-thread waste, concurrent with the zoom itself. Dropping the handler
+ * here removes the DOM wheel listener entirely; OrbitControls zooms through
+ * its own listener and is unaffected.
  */
 /**
  * Per-canvas gate for suppressing pointermove raycasts while the CAMERA is
- * navigating: a pan/orbit drag produces 60–120 pointermoves/s, and each one
- * raycasts the entire interaction set — with annotations mounted that walks
- * every Line2 outline segment-by-segment, concurrently with the gesture. The
- * gate reads `viewStore.cameraMoving`, so it goes exactly as long as the
+ * navigating: a pan/orbit drag produces 60–120 pointermoves/s and each one
+ * runs a raycast, concurrently with the gesture.
+ *
+ * NOTE the scope, which is narrower than the wheel case above and was once
+ * documented wrongly here. R3F filters the *pointermove* interaction set to
+ * objects carrying a pointer-move-family handler (`filterPointerEvents`), so
+ * annotations — `onClick` only — were never in it. What this gate actually
+ * saves is the picking layers' own raycasts, above all the fabriks
+ * `BatchedMesh`, which three walks per mounted instance. Click-class events
+ * are NOT filtered that way, which is why the layers gate their `onClick` /
+ * `onPointerDown` props too (`core/probe/probeGating.ts`).
+ *
+ * The gate reads `viewStore.cameraMoving`, so it lasts exactly as long as the
  * camera actually moves: drag-drawing tools (RoiDrawer/RectangleDrawer hold a
  * button while the camera is still) and hover probes (no buttons) are
  * untouched. Registered by `PointerMoveGate` below, keyed by the R3F root
@@ -352,23 +363,30 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <WhenDebug>
           <DebugPanel />
         </WhenDebug>
-        {/* Selection details live in the Annotations sidebar tab; only the
-            Backspace-delete keybinding stays viewport-owned (sidebar tabs
-            unmount when inactive, a keybinding must not). */}
-        <RoiDeleteKeybinding />
-        <VisibilityManager />
-        <AttributeProbeTracker />
-        <ScaleBar />
-        <DrawSizeReadout />
-        {/* Both dock bottom-right: the probe readout sits directly above the
-            mode controls that turn probing on. */}
-        <SelectedPointPanel />
-        <SceneModeControls />
+        {/* The renderer's own overlays, bracketed so their commits are
+            attributable: `SelectedPointPanel` in particular used to sit
+            outside every profiler, which made a HUD re-render storm show up
+            as unexplained main-thread time. */}
+        <LongCommitProfiler id="scene-overlays">
+          {/* Selection details live in the Annotations sidebar tab; only the
+              Backspace-delete keybinding stays viewport-owned (sidebar tabs
+              unmount when inactive, a keybinding must not). */}
+          <RoiDeleteKeybinding />
+          <VisibilityManager />
+          <AttributeProbeTracker />
+          <ProbeReadoutSettler />
+          <ScaleBar />
+          <DrawSizeReadout />
+          {/* Both dock bottom-right: the probe readout sits directly above the
+              mode controls that turn probing on. */}
+          <SelectedPointPanel />
+          <SceneModeControls />
 
-        <RoiToolbar />
-        {/* Last, and the only overlay that covers the canvas: on top of
-            everything it documents. */}
-        <SceneShortcuts />
+          <RoiToolbar />
+          {/* Last, and the only overlay that covers the canvas: on top of
+              everything it documents. */}
+          <SceneShortcuts />
+        </LongCommitProfiler>
       </div>
     </SceneGuard>
   );

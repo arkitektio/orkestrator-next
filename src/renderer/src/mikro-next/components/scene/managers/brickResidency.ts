@@ -48,11 +48,11 @@ import {
   brickGridForLevel,
   chunksTouchingBrick,
   fetchVoxelBox,
-  nodeKey,
   nodeVoxelBox,
   parseNodeKey,
   totalBrickCount,
 } from "../core/octree/nodeAddress";
+import { createNodeKeyMemo, type NodeKeyMemo } from "../core/octree/nodeKeyMemo";
 import {
   adjacentSlabBrickZ,
   compareFetchOrder,
@@ -251,6 +251,9 @@ export type LayerBrickPool = {
    * fell back to the CPU (debug report only): "gpu", "cpu:phasor",
    * "cpu:no-repacker", "cpu:pending"/"cpu:broken", "cpu:unsupported:<kind>". */
   lastRepackPath: string | null;
+  /** Per-level `nodeKey` memo for the CPU probe walk — see nodeKeyMemo.ts.
+   * Garbage avoidance only; it caches no residency and needs no invalidation. */
+  nodeKeys: NodeKeyMemo;
 };
 
 type Deps = {
@@ -352,6 +355,9 @@ export class BrickResidencyManager {
   } | null = null;
   /** Scratch for the memo's coord tuple (avoids a per-sample allocation). */
   private readonly chunkCoordsScratch: number[] = [];
+  /** Scratch for `resolveResidentRead`'s per-level voxel (probe march hot
+   * path; read and discarded within the loop body, never retained). */
+  private readonly levelVoxelScratch: [number, number, number] = [0, 0, 0];
   /** In-flight decoded-chunk promises, shared across bricks: without this,
    * N concurrent bricks touching the same plane chunk decode it N times
    * (observed 73× fetch amplification on plane-chunked SPIM data). */
@@ -666,19 +672,21 @@ export class BrickResidencyManager {
     | null {
     const { geometry, spec, atlas } = pool;
 
+    // Reused scratch, and a memoized key: this loop runs per LEVEL per MARCH
+    // STEP (~256 steps a frame while hover probing), and used to allocate two
+    // Vec3s and a fresh key string every time round. The values are consumed
+    // synchronously below and never retained, and consecutive steps almost
+    // always share a brick — see core/octree/nodeKeyMemo.ts.
+    const levelVoxel = this.levelVoxelScratch;
     for (let level = Math.max(0, desiredLevel); level < geometry.levels.length; level++) {
       const { scale, spatialShape } = geometry.levels[level];
-      const levelVoxel: Vec3 = [
-        Math.min(Math.max(baseVoxel[0] / scale[0], 0), spatialShape[0] - 1e-3),
-        Math.min(Math.max(baseVoxel[1] / scale[1], 0), spatialShape[1] - 1e-3),
-        Math.min(Math.max(baseVoxel[2] / scale[2], 0), spatialShape[2] - 1e-3),
-      ];
-      const brick: Vec3 = [
-        Math.floor(levelVoxel[0] / spec.payload[0]),
-        Math.floor(levelVoxel[1] / spec.payload[1]),
-        Math.floor(levelVoxel[2] / spec.payload[2]),
-      ];
-      const key = nodeKey(level, brick);
+      levelVoxel[0] = Math.min(Math.max(baseVoxel[0] / scale[0], 0), spatialShape[0] - 1e-3);
+      levelVoxel[1] = Math.min(Math.max(baseVoxel[1] / scale[1], 0), spatialShape[1] - 1e-3);
+      levelVoxel[2] = Math.min(Math.max(baseVoxel[2] / scale[2], 0), spatialShape[2] - 1e-3);
+      const brickX = Math.floor(levelVoxel[0] / spec.payload[0]);
+      const brickY = Math.floor(levelVoxel[1] / spec.payload[1]);
+      const brickZ = Math.floor(levelVoxel[2] / spec.payload[2]);
+      const key = pool.nodeKeys.keyFor(level, brickX, brickY, brickZ);
 
       const emptyValue = pool.emptyValues.get(key);
       if (emptyValue !== undefined) {
@@ -699,13 +707,13 @@ export class BrickResidencyManager {
       const texel: Vec3 = [
         slot.coords[0] * atlas.slotSize[0] +
           spec.border +
-          Math.floor(levelVoxel[0] - brick[0] * spec.payload[0]),
+          Math.floor(levelVoxel[0] - brickX * spec.payload[0]),
         slot.coords[1] * atlas.slotSize[1] +
           spec.border +
-          Math.floor(levelVoxel[1] - brick[1] * spec.payload[1]),
+          Math.floor(levelVoxel[1] - brickY * spec.payload[1]),
         slot.coords[2] * atlas.slotSize[2] +
           spec.border +
-          Math.floor(levelVoxel[2] - brick[2] * spec.payload[2]),
+          Math.floor(levelVoxel[2] - brickZ * spec.payload[2]),
       ];
       return {
         kind: "slot",
@@ -1566,6 +1574,7 @@ export class BrickResidencyManager {
       gpuStaleKeys: new Set(),
       minTargetLevel: 0,
       lastRepackPath: null,
+      nodeKeys: createNodeKeyMemo(geometry.levels.length),
     };
     this.pools.set(poolKey, pool);
     // Warm the sync-probe chunk-key encoders for every level now — the debug

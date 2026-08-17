@@ -617,6 +617,21 @@ heavy subtree):
 - `viewStore.updateCameraData` minted fresh `viewportSize`/`cameraPose` object
   identities per 16 Hz emission; it now preserves the previous references when
   value-equal, so object selectors can't re-render at frame rate by accident.
+- `probedCoordinate` is published once per voxel crossing, which while the
+  cursor sweeps is once per frame, and it had four React subscribers. Both
+  probe markers built their React `key` from `voxelIndex`, so every crossing
+  unmounted and remounted the marker — disposing and rebuilding its geometries
+  and materials, i.e. a fresh WebGPU pipeline object, tens of times a second.
+  `ProbeAxisGuides`' effect dep was `probe.worldPos`, a new array identity on
+  every publish, so it rewrote three Line2 buffers for a point that had often
+  not moved. `SelectedPointPanel` re-rendered its whole HUD subtree.
+  Fix: `probedCoordinate` is declared a HOT field (vanilla subscribers only);
+  the canvas-side consumers bind imperatively (`core/probe/useProbeMarkerBinding.ts`,
+  and the guides' value-deduped subscription); React reads `probeReadout`, a
+  settled snapshot published by `managers/ProbeReadoutSettler.tsx` once the
+  cursor rests, with retractions, clicks and target changes bypassing the wait
+  (`core/probe/probeReadout.ts`). `AttributeProbeTracker` rides that same
+  settle instead of keeping a second, independent debounce.
 - Corollary for write-side dedup gates (`sameViewRanges`): never gate a hot
   store write on a continuously-varying cosmetic field (the `viewportFraction`
   regression) — compare only what downstream consumers need per-tick.
@@ -695,6 +710,32 @@ raymarch) at 25–50 ms. The governor:
   moving OR bricks streaming** (the drain loop feeds the streaming edge).
 The decoded-chunk cache also halves on ≤8 GiB machines (GC pressure). A
 dedicated GPU stays at High forever — zero behavior change.
+
+**P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
+puts an object in `internal.interaction` as soon as it carries any event
+handler, and the raycast runs BEFORE the handler does — so a handler that
+early-returns on the interaction mode has already paid for the pick. The
+fabriks layer attached `onPointerMove` to a `manager.group` holding a
+`BatchedMesh` of up to 2048 cells (no BVH in the tree), which meant every
+pointer move in EVERY mode, NAVIGATE included, walked every instance. The fix
+is to pass `undefined` rather than a no-op handler
+(`core/probe/probeGating.ts`), which removes the object from the set outright.
+
+Two asymmetries make this easy to reason about wrongly, and both are load-
+bearing:
+
+- **pointermove is filtered; click-class events are not.** R3F narrows the
+  pointermove set to objects carrying `onPointerMove/Over/Enter/Out/Leave`
+  (`filterPointerEvents`). Annotations are `onClick`-only, so they were never
+  in the pointermove raycast — an earlier comment on `SceneViewport`'s
+  `PointerMoveGate` claimed otherwise and sent readers hunting in the wrong
+  place. They ARE fully raycast on pointerdown/pointerup/click, per Line2
+  segment, with `LinePickTuning`'s widened pick band on top; `AnnotationLayer`
+  therefore passes `onClick={undefined}` when a shape is not selectable rather
+  than returning early inside it.
+- **`raycast = () => {}` also stops the recursion into children**
+  (three's `intersect`), which is how the fabriks selection hull and the debug
+  `cellBoxes` LineSegments leave the pick set without leaving the scene graph.
 
 **P13 — three.js overlay geometries don't dispose themselves.** The residency
 overlay rebuilds wireframe `BufferGeometry`s on every residency change; without

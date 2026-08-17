@@ -184,6 +184,64 @@ export type ProbedAttributes<K extends AttributeFetchKey = AttributeFetchKey> = 
 };
 
 /**
+ * The whole probed-attributes slice for one point, in ONE object.
+ *
+ * The synchronous "everything was already cached" path used to reach the store
+ * through `begin` + one `merge` per plan — 1+N separate commits, each waking
+ * every React subscriber, on a path that runs whenever the cursor re-crosses a
+ * voxel it has already visited.
+ *
+ * Returns null when the result is value-equal to `current`, so the caller can
+ * skip the set entirely: re-crossing the same voxel with the same cached rows
+ * then costs zero renders rather than 1+N.
+ */
+export function buildProbedAttributes<K extends AttributeFetchKey>(
+  current: ProbedAttributes<K> | null,
+  key: K,
+  planMeta: ProbedAttributes<K>["planMeta"],
+  states: readonly (readonly [string, PlanRowsState])[],
+): ProbedAttributes<K> | null {
+  const byPlan: Record<string, PlanRowsState> = {};
+  for (const [planKey, state] of states) byPlan[planKey] = state;
+
+  if (
+    current !== null &&
+    isSameAttributeKey(current.key, key) &&
+    samePlanRows(current.byPlan, byPlan)
+  ) {
+    return null;
+  }
+  return { key, byPlan, planMeta };
+}
+
+const samePlanRows = (
+  a: Record<string, PlanRowsState>,
+  b: Record<string, PlanRowsState>,
+): boolean => {
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  for (const planKey of keys) {
+    const left = a[planKey];
+    const right = b[planKey];
+    if (left === right) continue;
+    if (left === undefined || right === undefined) return false;
+    // `rows` is compared by IDENTITY on purpose: it comes from the engine's
+    // result LRU, so the same lookup hands back the same array — a deep
+    // compare would buy nothing and cost per cell.
+    if (
+      left.status !== right.status ||
+      left.rows !== right.rows ||
+      left.sampledValue !== right.sampledValue ||
+      left.sampleSource !== right.sampleSource ||
+      left.error !== right.error
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+/**
  * Merge one plan's settled state into the probed-attributes slice. Returns
  * null when `key` no longer matches the active entry — callers must treat
  * that as a no-op set (same state object) so late async arrivals never cause

@@ -181,7 +181,8 @@ export function buildMergedChannelUniformData(
             : {
                 colormap: source.transfer.colormap,
                 color: source.transfer.color,
-                stops: source.transfer.stops,
+                colorStops: source.transfer.colorStops,
+                curve: source.transfer.stops,
               }
           : { colormap: input.layer?.colormap, color: input.layer?.color },
       );

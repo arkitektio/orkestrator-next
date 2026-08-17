@@ -8,7 +8,13 @@ import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { createRafCoalescer } from "../../core/probe/rafCoalesce";
 import { sceneZExtent } from "../../core/worldTransform";
 import { useModeStore } from "../../store/modeStore";
-import { isDrawingTool, useRoiDrawingStoreApi } from "../../store/roiDrawingStore";
+import { isDrawingTool, useRoiDrawingStore } from "../../store/roiDrawingStore";
+import { perfMonitor } from "../../managers/perfMonitor";
+import {
+  clickProbeEnabled,
+  hoverProbeEnabled,
+  type ProbeGateInput,
+} from "../../core/probe/probeGating";
 import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
@@ -276,7 +282,25 @@ const FabriksCollectionGroup = ({
   // via drawRange, so `face.a` addresses the batch attribute on both paths.
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
-  const roiDrawingApi = useRoiDrawingStoreApi();
+  // A RENDER subscription: the handler PROPS below are the raycast gate, and
+  // for this layer that gate is the whole point. `manager.group` holds a
+  // BatchedMesh of every mounted cell, so an unconditionally-attached
+  // onPointerMove costs a full per-instance raycast on every pointer move in
+  // EVERY mode — NAVIGATE included, where none of these handlers can act. The
+  // click-class props matter just as much: R3F does not filter those by
+  // handler kind, so an unarmed onClick bought that same raycast at the start
+  // of every orbit drag. See core/probe/probeGating.ts (P20).
+  const activeTool = useRoiDrawingStore((s) => s.activeTool);
+  const gate: ProbeGateInput = {
+    interactionMode,
+    probeFollowsCursor,
+    drawingToolActive: isDrawingTool(activeTool),
+    annotateProbes: true,
+  };
+  const hoverEnabled = hoverProbeEnabled(gate);
+  // Picking a mesh instance is a PROBE-mode act only: in ANNOTATE the click
+  // belongs to the shape being drawn.
+  const pickEnabled = clickProbeEnabled(gate) && interactionMode === "PROBE";
   const hoverCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
   useEffect(() => () => hoverCoalescer.cancel(), [hoverCoalescer]);
   const lastHover = useRef<string | null>(null);
@@ -316,6 +340,7 @@ const FabriksCollectionGroup = ({
     origin: "click" | "hover",
   ) => {
     if (!manager) return;
+    perfMonitor.markProbe(); // no-op unless a perf recording is armed
     const state = viewerApi.getState();
 
     // Instant highlight by ordinal — no catalog involved (the hull resolves
@@ -341,6 +366,7 @@ const FabriksCollectionGroup = ({
         worldPos: hit.worldPos,
         strategy: "mesh",
         origin,
+        purpose: interactionMode === "ANNOTATE" ? "placement" : "readout",
         values: [{ channel: 0, value: objectId }],
         provenance: { source: "exact", level: 0 },
         dtype: "uint32",
@@ -414,13 +440,8 @@ const FabriksCollectionGroup = ({
     publishMeshProbe(hit, "click");
   };
 
-  /** Hover probing gate — verbatim the brick layers' rule. */
-  const hoverProbing = () =>
-    (interactionMode === "PROBE" && probeFollowsCursor) ||
-    (interactionMode === "ANNOTATE" && isDrawingTool(roiDrawingApi.getState().activeTool));
-
   const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (!hoverProbing() || event.buttons !== 0 || !manager) return;
+    if (event.buttons !== 0 || !manager) return;
     const hit = resolveMeshHit(event);
     if (!hit) return;
     event.stopPropagation();
@@ -433,7 +454,6 @@ const FabriksCollectionGroup = ({
   };
 
   const handlePointerOut = () => {
-    if (!hoverProbing()) return;
     hoverCoalescer.cancel();
     lastHover.current = null;
     const state = viewerApi.getState();
@@ -451,9 +471,9 @@ const FabriksCollectionGroup = ({
   return (
     <primitive
       object={manager.group}
-      onClick={handleClick}
-      onPointerMove={handlePointerMove}
-      onPointerOut={handlePointerOut}
+      onClick={pickEnabled ? handleClick : undefined}
+      onPointerMove={hoverEnabled ? handlePointerMove : undefined}
+      onPointerOut={hoverEnabled ? handlePointerOut : undefined}
     />
   );
 };

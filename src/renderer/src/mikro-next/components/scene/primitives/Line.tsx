@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Line2 } from "three/examples/jsm/lines/webgpu/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
@@ -47,6 +47,8 @@ export const Line = ({
   renderOrder,
   onClick,
 }: LineProps) => {
+  /** The positions last handed to `setPositions`, for the value dedupe below. */
+  const uploadedRef = useRef<number[] | null>(null);
   const geometry = useMemo(() => new LineGeometry(), []);
   const material = useMemo(() => new Line2NodeMaterial(), []);
   const line = useMemo(() => new Line2(geometry, material), [geometry, material]);
@@ -76,6 +78,24 @@ export const Line = ({
         flat.push(point.x, point.y, point.z);
       }
     }
+    // Compare by VALUE, not by the `points` array's identity. Callers build
+    // their point arrays inline in render (`AnnotationLayer` does, for every
+    // shape), so an identity dep re-uploaded every line's vertex buffer — and
+    // rebuilt its line distances — on any re-render of the subtree, e.g. a
+    // selection change. `setPositions` allocates fresh interleaved buffers and
+    // marks the geometry for a GPU re-upload, so this is not a cheap no-op.
+    const previous = uploadedRef.current;
+    if (previous !== null && previous.length === flat.length) {
+      let same = true;
+      for (let i = 0; i < flat.length; i++) {
+        if (previous[i] !== flat[i]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return;
+    }
+    uploadedRef.current = flat;
     geometry.setPositions(flat);
     line.computeLineDistances(); // required for dashed rendering
   }, [points, geometry, line]);

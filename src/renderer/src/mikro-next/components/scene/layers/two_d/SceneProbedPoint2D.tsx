@@ -1,117 +1,67 @@
-import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import type * as THREE from 'three';
 
-import {
-  computeWorldUnitsPerPixel,
-  probeMarkerRadius,
-  resolveProbeMarkerGeometry,
-} from '../../core/probeWorld';
-import { useSceneStore } from '../../store/sceneStore';
-import { useViewerStore, type ProbedCoordinate } from '../../store/viewerStore';
+import { computeWorldUnitsPerPixel, probeMarkerRadius } from '../../core/probeWorld';
+import { useProbeMarkerBinding } from '../../core/probe/useProbeMarkerBinding';
+import { perfMonitor } from '../../managers/perfMonitor';
 
 /** Screen-pixel radius + physical clamps for the 2D probe marker. */
 const MARKER_PX = 8;
 const MARKER_MIN_FRACTION = 0.006;
 const MARKER_MAX_FRACTION = 0.04;
 
+/**
+ * The crosshair marking the active probe in the flat view.
+ *
+ * Same construction as the 3D marker (`SceneProbedPoint`): mounted once per
+ * probe target and driven imperatively from `useProbeMarkerBinding`, so a hover
+ * sweep never disposes and rebuilds its geometry. Differs only in the shape,
+ * the pixel radius, and the lift off the image plane applied below.
+ */
 export const SceneProbedPoint2D = () => {
-  const probedCoordinate = useViewerStore((s) => s.probedCoordinate);
-  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
-  const layers = useSceneStore((s) => s.layers);
-
-  // Camera-independent geometry only (shared with the 3D marker and the
-  // probe-orbit pivot via core/probeWorld). The camera-dependent radius is
-  // applied in useFrame — no per-frame store subscription (P17). At most one
-  // marker: the active probe. Saved points are persisted annotations now,
-  // rendered by the AnnotationLayer.
-  const markerStates = useMemo(() => {
-    const probes: ProbedCoordinate[] = probedCoordinate ? [probedCoordinate] : [];
-
-    return probes.flatMap((probe) => {
-      const layer = layers.find((candidate) => candidate.id === probe.layerId);
-      if (!layer || layer.visible === false) {
-        return [];
-      }
-
-      const markerState = resolveProbeMarkerGeometry(layer, probe, getArrayForStoreId);
-      if (!markerState) {
-        return [];
-      }
-
-      return [{
-        ...markerState,
-        key: `${probe.layerId}:${probe.voxelIndex.join(':')}`,
-      }];
-    });
-  }, [getArrayForStoreId, layers, probedCoordinate]);
-
-  const scaledGroups = useRef(
-    new Map<string, { group: THREE.Group; minAxis: number; baseZ: number }>(),
-  );
+  perfMonitor.countRender('SceneProbedPoint2D'); // no-op unless a perf recording is armed
+  const { identity, outerRef, innerRef, minAxisRef, baseZRef } = useProbeMarkerBinding();
 
   useFrame(({ camera, size }) => {
-    if (scaledGroups.current.size === 0) return;
-    const wupp = computeWorldUnitsPerPixel(camera, size.height);
-    for (const { group, minAxis, baseZ } of scaledGroups.current.values()) {
-      const radius = probeMarkerRadius(
-        minAxis,
-        wupp,
-        MARKER_PX,
-        MARKER_MIN_FRACTION,
-        MARKER_MAX_FRACTION,
-      );
-      group.scale.setScalar(radius);
-      // Lift slightly above the image plane, proportional to the marker size.
-      group.position.z = baseZ + radius * 0.2;
-    }
+    const inner = innerRef.current;
+    if (!inner || minAxisRef.current === 0) return;
+    const radius = probeMarkerRadius(
+      minAxisRef.current,
+      computeWorldUnitsPerPixel(camera, size.height),
+      MARKER_PX,
+      MARKER_MIN_FRACTION,
+      MARKER_MAX_FRACTION,
+    );
+    inner.scale.setScalar(radius);
+    // Lift slightly above the image plane, proportional to the marker size.
+    inner.position.z = baseZRef.current + radius * 0.2;
   });
 
-  if (markerStates.length === 0) {
-    return null;
-  }
+  if (identity === null) return null;
 
   return (
-    <>
-      {markerStates.map((markerState) => (
-        <group key={markerState.key} matrix={markerState.affineMatrix} matrixAutoUpdate={false}>
-          <group
-            position={markerState.markerPosition}
-            renderOrder={5}
-            // Start invisible; the first useFrame sets the real radius before draw.
-            scale={0}
-            ref={(group) => {
-              if (group) {
-                scaledGroups.current.set(markerState.key, {
-                  group,
-                  minAxis: markerState.minAxis,
-                  baseZ: markerState.markerPosition[2],
-                });
-              } else {
-                scaledGroups.current.delete(markerState.key);
-              }
-            }}
-          >
-            <mesh>
-              <ringGeometry args={[0.72, 1, 36]} />
-              <meshBasicMaterial
-                color="#f97316"
-                transparent
-                opacity={0.95}
-                depthWrite={false}
-              />
-            </mesh>
-            <mesh>
-              <boxGeometry args={[2.1, 0.18, 0.04]} />
-              <meshBasicMaterial color="#fb923c" depthWrite={false} />
-            </mesh>
-            <mesh>
-              <boxGeometry args={[0.18, 2.1, 0.04]} />
-              <meshBasicMaterial color="#fb923c" depthWrite={false} />
-            </mesh>
-          </group>
-        </group>
-      ))}
-    </>
+    // Starts hidden at scale 0: the binding makes it visible once the geometry
+    // resolves, and the first useFrame gives it its real radius — so it never
+    // draws for a frame at the wrong place or size.
+    <group ref={outerRef} matrixAutoUpdate={false} visible={false}>
+      <group ref={innerRef} renderOrder={5} scale={0}>
+        <mesh>
+          <ringGeometry args={[0.72, 1, 36]} />
+          <meshBasicMaterial
+            color="#f97316"
+            transparent
+            opacity={0.95}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[2.1, 0.18, 0.04]} />
+          <meshBasicMaterial color="#fb923c" depthWrite={false} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[0.18, 2.1, 0.04]} />
+          <meshBasicMaterial color="#fb923c" depthWrite={false} />
+        </mesh>
+      </group>
+    </group>
   );
 };

@@ -41,6 +41,7 @@ import { probeAfterPinChange } from "../core/probe/probeTargeting";
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
 import {
   applyAttributeRows,
+  buildProbedAttributes,
   planIdentity,
   type AttributeColumnLike,
   type AttributeFetchKey,
@@ -146,7 +147,24 @@ export interface ViewerState {
   visibleLayers: string[]
   // Visible image-coordinate ranges per layer
   layerViewRanges: Record<string, LayerViewRange>
+  /**
+   * The live probe. **A HOT field: vanilla subscribers only.**
+   *
+   * It changes once per voxel crossing, which while the cursor sweeps is
+   * effectively once per rendered frame. Under P17 that bars React from
+   * subscribing to it — the canvas-side consumers that genuinely need this
+   * latency (the markers, the axis guides, the RoiDrawer's rubber band) bind
+   * to it imperatively through `subscribe`/`getState`. React reads
+   * `probeReadout`.
+   */
   probedCoordinate: ProbedCoordinate | null;
+  /**
+   * UI-cadence mirror of `probedCoordinate` — the only probe field React may
+   * subscribe to. Published by `managers/ProbeReadoutSettler.tsx` once the
+   * cursor rests, with retractions, clicks and target changes bypassing the
+   * wait (`core/probe/probeReadout.ts`).
+   */
+  probeReadout: ProbedCoordinate | null;
   probeThreshold: number;
   /** User-selected probe strategy; "auto" follows the layer's projection. */
   probeMode: ProbeMode;
@@ -210,6 +228,9 @@ export interface ViewerState {
   setVisible: (visibleSet: Set<string>) => void
   setLayerViewRanges: (ranges: Record<string, LayerViewRange>) => void
   setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
+  /** Written ONLY by `ProbeReadoutSettler`; everything else writes the hot
+   * field and lets the settler decide when the HUD sees it. */
+  setProbeReadout: (coordinate: ProbedCoordinate | null) => void
   setProbeThreshold: (threshold: number) => void
   setProbeMode: (mode: ProbeMode) => void
   /** Pin the probe to one layer, or null for the default (first visible
@@ -233,6 +254,14 @@ export interface ViewerState {
   /** Async per-plan settlement: no-op set when the key went stale (same
    * late-arrival contract as mergeExactProbeValues). */
   mergeAttributeRows: (key: SceneAttributeKey, planKey: string, state: PlanRowsState) => void;
+  /** Whole-slice commit for the SYNCHRONOUS all-cached path — one set for N
+   * plans instead of `begin` plus a `merge` each, and no set at all when the
+   * result is value-equal to what is already up. */
+  commitProbedAttributes: (
+    key: SceneAttributeKey,
+    planMeta: NonNullable<ViewerState["probedAttributes"]>["planMeta"],
+    states: readonly (readonly [string, PlanRowsState])[],
+  ) => void;
   clearProbedAttributes: () => void;
   /** The lazy one-hop FK follow (`references`), registered by the tracker so
    * the HUD can expand a referencing attribute without owning the engine —
@@ -320,6 +349,11 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
     setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
     setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
+    probeReadout: null,
+    setProbeReadout: (coordinate) =>
+      set((state) =>
+        state.probeReadout === coordinate ? state : { probeReadout: coordinate },
+      ),
     setProbeThreshold: (threshold) => set({ probeThreshold: threshold }),
     probeMode: "auto",
     setProbeMode: (mode) => set({ probeMode: mode }),
@@ -354,6 +388,11 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     mergeAttributeRows: (key, planKey, planState) =>
       set((state) => {
         const next = applyAttributeRows(state.probedAttributes, key, planKey, planState);
+        return next ? { probedAttributes: next } : state;
+      }),
+    commitProbedAttributes: (key, planMeta, states) =>
+      set((state) => {
+        const next = buildProbedAttributes(state.probedAttributes, key, planMeta, states);
         return next ? { probedAttributes: next } : state;
       }),
     clearProbedAttributes: () =>

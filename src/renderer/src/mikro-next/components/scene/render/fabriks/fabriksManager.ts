@@ -358,6 +358,14 @@ export class FabriksCollectionManager {
     const hull = new THREE.Group();
     hull.name = SELECTION_HULL_NAME;
     hull.matrixAutoUpdate = false;
+    // Pure furniture: it marks the picked instance, it can never BE one — it
+    // carries no `objectOrdinal` attribute, so `resolveMeshHit` discards any
+    // hit on it. But the layer's pointer handlers sit on THIS group, so three
+    // raycasts the hull's children along with the BatchedMesh on every pointer
+    // move while hover probing. `raycast = noop` returns nothing AND stops the
+    // recursion into the children (three.core.js `intersect`), which is what
+    // takes the per-segment LineSegments walk below off the hot path.
+    hull.raycast = () => {};
 
     const positions = new Float32Array(BOX_EDGES.length * 2 * 3);
     let cursor = 0;
@@ -969,6 +977,10 @@ export class FabriksCollectionManager {
     this.cellBoxes = new THREE.LineSegments(geometry, material);
     this.cellBoxes.name = CELL_BOXES_NAME;
     this.cellBoxes.matrixAutoUpdate = false;
+    // Debug overlay, never pickable — and a LineSegments raycast is per
+    // segment, so leaving it in the layer's pick set made turning debug on
+    // silently expensive to hover. Same reasoning as the selection hull.
+    this.cellBoxes.raycast = () => {};
     this.group.add(this.cellBoxes);
   }
 

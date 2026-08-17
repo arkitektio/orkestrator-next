@@ -50,7 +50,11 @@ Concretely in code: voxel `v` of a layer renders at world `affine(v)`
 primitives offset by half their size so group-local spans `[0..shape]`, and
 the shader/CPU local→voxel maps carry no flip (`brickNodeMaterials.ts`
 `toBaseVoxel`, the plane material's `baseVoxel`, and their lockstep mirrors in
-the probe/trace/visibility code).
+the probe/trace/visibility code — of which
+**`core/octree/brickSampling.ts`'s `marchResidentBricks` is the one to check
+first**: it kept a y flip for months after the shaders lost theirs, because
+its tests only ever marched along x, and the CPU probe silently measured the
+mirrored row. It now has Y-axis coverage; keep it).
 
 ---
 
@@ -337,6 +341,15 @@ an annotation likewise. Three-space IS world µm — the camera-pose frame map
 (`sceneFit`) pushes the corners of `[0..shape]` through the plain affine, and
 the probe/trace/visibility code reads layer-local coordinates directly as
 voxel indices.
+
+One asymmetry that looks like an oversight and is not: the 3D volume
+hover-probes in ANNOTATE mode and the 2D plane does not. Inside a volume there
+is no draw plane, so the probe IS the placement — every 3D annotation vertex
+comes from it, and the `RoiDrawer`'s own interaction plane deliberately stands
+down for non-primitive tools there. In 2D that plane drives the rubber band
+itself, and a second hover probe would only compete with it for the pointer
+event. `core/probe/probeGating.ts` makes this explicit with its
+`annotateProbes` flag rather than leaving each layer to re-derive it.
 
 This IS the "scene-root frame normalization" this section used to track: the
 per-layer centering + y-flip frame (`voxelFrame.buildCenteringMatrix` /

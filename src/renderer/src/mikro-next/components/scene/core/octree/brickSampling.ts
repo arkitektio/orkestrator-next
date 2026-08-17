@@ -132,9 +132,15 @@ export function marchResidentBricks({
     const py = origin[1] + direction[1] * t;
     const pz = origin[2] + direction[2] * t;
 
-    // Unit-box local ([-0.5,0.5], y up) → base voxel (y down) — shader parity.
+    // Unit-box local ([-0.5,0.5]) → base voxel. Corner-anchored, NO FLIP on any
+    // axis — this must stay byte-for-byte the shader's `toBaseVoxel`
+    // (`render/bricks/brickNodeMaterials.ts`) and the unflipped `voxelIndex`
+    // that `BrickVolumeLayer.probeFromRay` reports, or the probe measures a
+    // different voxel from the one it renders and names. y carried a flip until
+    // the 2026-08-15 pass removed it from both shaders (COORDINATE_SYSTEMS.md
+    // §0) and missed this mirror; the Y-axis tests exist to keep it gone.
     baseVoxelScratch[0] = (px + 0.5) * baseShape[0];
-    baseVoxelScratch[1] = (0.5 - py) * baseShape[1];
+    baseVoxelScratch[1] = (py + 0.5) * baseShape[1];
     baseVoxelScratch[2] = (pz + 0.5) * baseShape[2];
     const rawValue = sample(baseVoxelScratch, desiredLevel, channel);
     if (rawValue === null) {

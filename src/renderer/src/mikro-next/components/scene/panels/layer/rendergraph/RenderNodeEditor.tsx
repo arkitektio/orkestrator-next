@@ -208,7 +208,8 @@ const ColormapControl = ({
   const [open, setOpen] = useState(false);
   const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
   const current = transfer.colormap ?? ColorMap.Viridis;
-  const customStops = transfer.stops && transfer.stops.length >= 2 ? transfer.stops : null;
+  const customStops =
+    transfer.colorStops && transfer.colorStops.length >= 2 ? transfer.colorStops : null;
   const isIntensity = !customStops && current === ColorMap.Intensity;
   const rgb = colorToObj(transfer.color);
   return (
@@ -245,7 +246,7 @@ const ColormapControl = ({
                   <CommandItem
                     value="Custom stops"
                     onSelect={() => {
-                      if (!customStops) set({ stops: seedStops(current, transfer.color) });
+                      if (!customStops) set({ colorStops: seedStops(current, transfer.color) });
                       setOpen(false);
                     }}
                     className="gap-2 text-xs"
@@ -266,7 +267,7 @@ const ColormapControl = ({
                       key={cm}
                       value={formatColormapName(cm)}
                       onSelect={() => {
-                        set({ colormap: cm, stops: null });
+                        set({ colormap: cm, colorStops: null });
                         setOpen(false);
                       }}
                       className="gap-2 text-xs"
@@ -306,7 +307,7 @@ const ColormapControl = ({
       </div>
 
       {customStops && (
-        <StopsEditor stops={customStops} onChange={(stops) => set({ stops })} />
+        <StopsEditor stops={customStops} onChange={(colorStops) => set({ colorStops })} />
       )}
     </div>
   );
@@ -327,10 +328,12 @@ const TransferHistogram = ({
   layer,
   transfer,
   onLevelsChange,
+  onStopsChange,
 }: {
   layer: LayerState;
   transfer: TransferFn;
   onLevelsChange: (climMin: number, climMax: number, gamma: number) => void;
+  onStopsChange: (stops: TransferFn["stops"]) => void;
 }) => {
   const anchor = layer.lens.activeAnchors.find((a) => a.valueHistogram);
   const vh = anchor?.valueHistogram;
@@ -367,6 +370,8 @@ const TransferHistogram = ({
       dtypeMin={dtypeMin}
       dtypeMax={dtypeMax}
       onChange={(next) => onLevelsChange(next.min, next.max, next.gamma)}
+      stops={transfer.stops}
+      onStopsChange={onStopsChange}
     />
   );
 };
@@ -388,6 +393,7 @@ const TransferEditor = ({
           layer={layer}
           transfer={transfer}
           onLevelsChange={(climMin, climMax, gamma) => set({ climMin, climMax, gamma })}
+          onStopsChange={(stops) => set({ stops })}
         />
       ) : (
         <div className="flex items-center gap-2">

@@ -87,6 +87,10 @@ export type PerfSessionReport = {
   renderCounts: Record<string, number>;
   replans: number;
   visibilityRecomputes: number;
+  /** Probe evaluations (CPU march / plane read / mesh pick) over the session.
+   * The gating in `core/probe/probeGating.ts` is only verifiable against this:
+   * it must read zero for a NAVIGATE-mode sweep. */
+  probes: number;
   bricksUploaded: number;
   bytesUploaded: number;
 };
@@ -99,6 +103,7 @@ class PerfMonitor {
   private renderCounts = new Map<string, number>();
   private replans = 0;
   private visibilityRecomputes = 0;
+  private probes = 0;
   private pendingBricks = 0;
   private pendingBytes = 0;
   private readonly listeners = new Set<() => void>();
@@ -126,6 +131,7 @@ class PerfMonitor {
     this.renderCounts = new Map();
     this.replans = 0;
     this.visibilityRecomputes = 0;
+    this.probes = 0;
     this.pendingBricks = 0;
     this.pendingBytes = 0;
     this.emit();
@@ -151,6 +157,12 @@ class PerfMonitor {
   markVisibilityRecompute(): void {
     if (!this.recording) return;
     this.visibilityRecomputes += 1;
+  }
+
+  /** One probe evaluation — a CPU march, a plane read, or a mesh pick. */
+  markProbe(): void {
+    if (!this.recording) return;
+    this.probes += 1;
   }
 
   /** Accumulated into the next recorded frame. */
@@ -248,6 +260,7 @@ class PerfMonitor {
       renderCounts,
       replans: this.replans,
       visibilityRecomputes: this.visibilityRecomputes,
+      probes: this.probes,
       bricksUploaded: frames.reduce((a, f) => a + f.bricksUploaded, 0),
       bytesUploaded: frames.reduce((a, f) => a + f.bytesUploaded, 0),
     };

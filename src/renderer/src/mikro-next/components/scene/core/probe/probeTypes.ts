@@ -15,6 +15,19 @@ export type ProbeMode = "auto" | "first-hit" | "max" | "gradient";
  */
 export type ProbeOrigin = "click" | "hover";
 
+/**
+ * What a probe is FOR — orthogonal to `origin`, which says how it was
+ * triggered.
+ *
+ * "readout" is a measurement: it feeds the HUD and the attribute plans.
+ * "placement" is geometry for the shape being drawn — in 3D every annotation
+ * vertex comes from the probe — and answers no question the user asked. The
+ * distinction has to travel ON the probe rather than be re-derived from the
+ * interaction mode by each consumer, because those consumers run after a
+ * settle delay, by which time the mode may have changed.
+ */
+export type ProbePurpose = "readout" | "placement";
+
 /** The march strategy actually executed after auto-dispatch. */
 export type ResolvedProbeStrategy =
   | "first-hit"
@@ -58,6 +71,12 @@ export interface ProbeResult {
    * camera pivot only follows clicks.
    */
   origin: ProbeOrigin;
+  /**
+   * Measurement or annotation geometry. Required for the same reason as
+   * `origin`: an emitter must say what it means, rather than leave every
+   * consumer to guess from the mode it happens to observe later.
+   */
+  purpose: ProbePurpose;
   /** One entry per channel slab of the layer. */
   values: ProbeChannelValue[];
   provenance: ProbeProvenance;

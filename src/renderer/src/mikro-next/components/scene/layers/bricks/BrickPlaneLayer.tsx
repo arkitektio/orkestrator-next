@@ -17,6 +17,11 @@ import {
   layerAnswersProbe,
 } from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
+import {
+  clickProbeEnabled,
+  hoverProbeEnabled,
+  type ProbeGateInput,
+} from "../../core/probe/probeGating";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
 import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
@@ -69,6 +74,22 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const sceneStoreApi = useSceneStoreApi();
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
+  // The handler PROPS below are the raycast gate (P20), so this component must
+  // re-render when the gate's inputs change.
+  const gate: ProbeGateInput = {
+    interactionMode,
+    probeFollowsCursor,
+    // The 2D plane never probes for ANNOTATE, so the armed tool cannot change
+    // its answer — no `activeTool` subscription needed here.
+    drawingToolActive: false,
+    // Deliberately false: in 2D the RoiDrawer's own interaction plane drives
+    // the rubber band, and a second hover probe would only fight it for the
+    // event. The 3D volume is the one that must answer (no draw plane inside a
+    // volume) — see core/probe/probeGating.ts.
+    annotateProbes: false,
+  };
+  const hoverEnabled = hoverProbeEnabled(gate);
+  const clickEnabled = clickProbeEnabled(gate);
   const { createPointAnnotation } = useCreateSceneAnnotation();
 
   // Event-time resolution — fresh pin AND fresh layer list, no render
@@ -348,6 +369,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         Math.max(0, Math.min(baseShape[2] - 1, baseZ)),
       ];
 
+      perfMonitor.markProbe(); // no-op unless a perf recording is armed
       const resident = brickSystem?.sampleResidentEx(layer.id, voxelIndex, levelIndex) ?? null;
       const channelCount = Math.max(1, pool.geometry.channelSlabCount);
       const nextProbe: ProbeResult = {
@@ -359,6 +381,9 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
         worldPos: [points.world.x, points.world.y, points.world.z],
         strategy: "plane",
         origin,
+        // Always a measurement: the 2D plane does not answer ANNOTATE hover
+        // (the RoiDrawer's own plane does) — see core/probe/probeGating.ts.
+        purpose: "readout",
         values: resident
           ? resident.values.map((value, channel) => ({ channel, value }))
           : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
@@ -406,8 +431,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       ref={groupRef}
-      onPointerMove={(event) => {
-        if (interactionMode !== "PROBE" || !probeFollowsCursor || event.buttons !== 0) return;
+      // `undefined` rather than an early-returning handler: that is what keeps
+      // this group out of R3F's pointermove raycast set (P20).
+      onPointerMove={!hoverEnabled ? undefined : (event) => {
+        if (event.buttons !== 0) return;
         // Before stopPropagation: declining silently lets the event fall
         // through to the target layer behind this one.
         if (!answersProbe()) return;
@@ -420,14 +447,12 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
           updateProbe({ local, world }, { save: false, origin: "hover" }),
         );
       }}
-      onPointerOut={() => {
-        if (interactionMode !== "PROBE" || !probeFollowsCursor) return;
+      onPointerOut={!hoverEnabled ? undefined : () => {
         if (!answersProbe()) return;
         probeCoalescer.cancel();
         updateProbe(null, { save: false, origin: "hover" });
       }}
-      onPointerDown={(event) => {
-        if (interactionMode !== "PROBE") return;
+      onPointerDown={!clickEnabled ? undefined : (event) => {
         if (!answersProbe()) return;
         const group = groupRef.current;
         if (!group) return;

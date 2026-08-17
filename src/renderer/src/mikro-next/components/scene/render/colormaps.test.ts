@@ -5,6 +5,7 @@ import { ColorMap } from "@/mikro-next/api/graphql";
 import {
   buildColormapAtlas,
   sampleColorMapRgb,
+  sampleCurveValue,
   sampleStopsRgb,
   stopsGradientCSS,
 } from "./colormaps";
@@ -84,7 +85,7 @@ describe("custom gradient stops", () => {
 
   it("bakes a stops row as a ramp-convention LUT, beating colormap and color", () => {
     const atlas = buildColormapAtlas([
-      { colormap: ColorMap.Viridis, color: [0, 255, 0], stops: STOPS },
+      { colormap: ColorMap.Viridis, color: [0, 255, 0], colorStops: STOPS },
     ]);
     expect(rowTexel(atlas, 0, 0).slice(0, 3)).toEqual([255, 0, 0]); // stops, not viridis
     expect(rowTexel(atlas, 0, 255).slice(0, 3)).toEqual([0, 0, 255]);
@@ -94,8 +95,8 @@ describe("custom gradient stops", () => {
   it("row cache distinguishes different stops on otherwise identical entries", () => {
     const moved = [STOPS[0], { position: 0.99, color: [0, 0, 255, 255] }];
     const atlas = buildColormapAtlas([
-      { colormap: null, color: null, stops: STOPS },
-      { colormap: null, color: null, stops: moved },
+      { colormap: null, color: null, colorStops: STOPS },
+      { colormap: null, color: null, colorStops: moved },
     ]);
     // Same key would alias the rows; different keys must give different texels.
     expect(rowTexel(atlas, 0, 128)).not.toEqual(rowTexel(atlas, 1, 128));
@@ -106,5 +107,42 @@ describe("custom gradient stops", () => {
     expect(stopsGradientCSS(STOPS)).toBe(
       "linear-gradient(to right, rgb(255,0,0) 25.0%, rgb(0,0,255) 75.0%)",
     );
+  });
+});
+
+describe("transfer curve (LookupStops)", () => {
+  // Over the curve's own domain [100, 4000]: 0 → 0, midpoint plateau, 1 → 1.
+  const CURVE = [
+    { position: 100, value: 0 },
+    { position: 2050, value: 0.9 },
+    { position: 4000, value: 1 },
+  ];
+
+  it("samples the piecewise curve over its own domain with clamped ends", () => {
+    expect(sampleCurveValue(CURVE, 0)).toBe(0);
+    expect(sampleCurveValue(CURVE, 1)).toBe(1);
+    expect(sampleCurveValue(CURVE, 0.5)).toBeCloseTo(0.9); // t=0.5 → raw 2050
+    expect(sampleCurveValue(CURVE, 0.25)).toBeCloseTo(0.45); // halfway up the first leg
+  });
+
+  it("bakes the curve into the LUT row's x axis (row[x] = base(curve(x)))", () => {
+    const atlas = buildColormapAtlas([
+      { colormap: ColorMap.Intensity, color: null, curve: CURVE },
+      { colormap: ColorMap.Intensity, color: null }, // identity twin
+    ]);
+    // At mid-row: curved row shows curve(0.5)=0.9 of white; identity 0.5.
+    const curved = rowTexel(atlas, 0, 128)[0];
+    const identity = rowTexel(atlas, 1, 128)[0];
+    expect(curved).toBeGreaterThan(identity + 60); // ~229 vs ~128
+    // Row cache key distinguishes curve presence.
+    expect(rowTexel(atlas, 0, 128)).not.toEqual(rowTexel(atlas, 1, 128));
+    atlas.dispose();
+  });
+
+  it("a tint + curve pair bakes a curve-shaped ramp, not a constant", () => {
+    const atlas = buildColormapAtlas([{ colormap: null, color: [0, 128, 255], curve: CURVE }]);
+    expect(rowTexel(atlas, 0, 10)).not.toEqual(rowTexel(atlas, 0, 200)); // ramp
+    expect(rowTexel(atlas, 0, 255).slice(0, 3)).toEqual([0, 128, 255]); // full at 1
+    atlas.dispose();
   });
 });

@@ -341,7 +341,8 @@ const AnnotationPoint = ({
   position: [number, number, number];
   color: string;
   opacity: number;
-  onSelect: (event: ThreeEvent<MouseEvent>) => void;
+  /** Undefined in PROBE mode — see `AnnotationShape`'s `handleSelect`. */
+  onSelect?: (event: ThreeEvent<MouseEvent>) => void;
 }) => {
   const group = useRef<THREE.Group>(null);
 
@@ -396,13 +397,21 @@ const AnnotationShape = ({
 
   const style = resolveStyle(annotation, isActive);
 
-  const handleSelect = (event: ThreeEvent<MouseEvent>) => {
-    // Returning before `stopPropagation` is the point: the event has to reach
-    // the layer underneath.
-    if (!selectable) return;
-    event.stopPropagation();
-    onSelect(event.nativeEvent.shiftKey);
-  };
+  // `undefined` when the shape is not selectable, NOT a handler that returns
+  // early: a handler prop is what puts the object in R3F's interaction set, and
+  // click-class events raycast that set UNFILTERED. An always-attached onClick
+  // therefore made every click in PROBE mode walk every annotation — and a
+  // traced path is one Line2 whose raycast is per-segment, over thousands of
+  // vertices, with `LinePickTuning` widening the pick band on top. Passing
+  // undefined drops them out of the raycast entirely; the layer underneath
+  // then receives the event because nothing intercepted it, which is what the
+  // early return used to achieve at full cost.
+  const handleSelect = selectable
+    ? (event: ThreeEvent<MouseEvent>) => {
+        event.stopPropagation();
+        onSelect(event.nativeEvent.shiftKey);
+      }
+    : undefined;
 
   if (annotation.kind === RoiKind.Point && vectors.length >= 1) {
     return (

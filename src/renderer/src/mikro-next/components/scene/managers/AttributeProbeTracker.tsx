@@ -37,9 +37,9 @@ import { createResidentSampler } from "./residentSampling";
  * store merges. Hover cards or tables acquiring the same service hit the
  * caches this tracker warmed, and vice versa.
  *
- * Transient store subscription (no React re-render per probe move, P17), a
- * debounce so hover sweeps cost nothing until they settle, and a latest-wins
- * resolver (the exactValueResolver pattern).
+ * Transient store subscription (no React re-render per probe move, P17),
+ * driven by the SETTLED `probeReadout` so hover sweeps cost nothing until they
+ * stop, and a latest-wins resolver (the exactValueResolver pattern).
  *
  * All GraphQL here is imperative (`client.query`/`client.mutate`, the
  * zarrSources.ts pattern): no hooks mount, so the Guard.Mikro obligation
@@ -198,6 +198,33 @@ export function AttributeProbeTracker() {
       }
     };
 
+    /**
+     * Display metadata per plan, memoized on the plan LIST's identity — the
+     * attribute service hands back the same array for a system for the life of
+     * the session, so this collapses to one build per system instead of one
+     * per probe.
+     */
+    const planMetaCache = new WeakMap<
+      readonly AttributePlanLike[],
+      NonNullable<ReturnType<typeof viewerStore.getState>["probedAttributes"]>["planMeta"]
+    >();
+    const planMetaFor = (plans: readonly AttributePlanLike[]) => {
+      const cached = planMetaCache.get(plans);
+      if (cached) return cached;
+      const meta = Object.fromEntries(
+        plans.map((plan) => [
+          planIdentity(plan),
+          {
+            tableName: plan.table.name,
+            tableId: plan.table.id,
+            attributes: plan.lookup.attributes,
+          },
+        ]),
+      );
+      planMetaCache.set(plans, meta);
+      return meta;
+    };
+
     // Warn-once diagnostics: an unreachable plan is an honest absence in the
     // UI, but a silent one is undebuggable — say WHERE it died, once per
     // (plan, reason).
@@ -345,26 +372,30 @@ export function AttributeProbeTracker() {
       }
 
       const store = viewerStore.getState();
-      store.beginProbedAttributes(key, plans);
-      for (const [planKey, state] of states) {
-        store.mergeAttributeRows(key, planKey, state);
-        syncMeshSelection(key, state);
-      }
+      // ONE commit for N plans (and none at all when nothing changed): this
+      // path runs whenever the cursor re-crosses an already-visited voxel, and
+      // `begin` + a `merge` per plan woke every subscriber 1+N times for it.
+      store.commitProbedAttributes(key, planMetaFor(plans), states);
+      for (const [, state] of states) syncMeshSelection(key, state);
       return true;
     };
 
-    // Debounced execution: attribute lookups fire only once the probe has
-    // rested on a voxel for a beat — a hover sweep across the image costs
-    // nothing until it settles. (The upstream probe is RAF-coalesced; this is
-    // the slower, read-avoiding tier on top.) The instant path above bypasses
-    // the wait when no fetch would happen anyway.
-    const ATTRIBUTE_DEBOUNCE_MS = 150;
-    let debounce: ReturnType<typeof setTimeout> | null = null;
+    /**
+     * Attribute lookups ride the SETTLED probe (`probeReadout`), not the hot
+     * one: a hover sweep costs nothing until the cursor rests, and the numeric
+     * readout and the attribute rows then describe the same point instead of
+     * reflowing the panel twice. This used to be a second, independent 150 ms
+     * debounce on top of the hot field — one settle point is both cheaper and
+     * honest about what the user is looking at.
+     *
+     * `probeReadout` is already null for "placement" probes, so annotation
+     * drawing never triggers a lookup: those probes are the drawer's cursor,
+     * not a question about the data.
+     *
+     * `tryInstant` stays: after the settle it is a latency win (deliver from
+     * cache rather than wait out a round trip), not a throttle.
+     */
     const request = (probe: ProbeResult | null) => {
-      if (debounce !== null) {
-        clearTimeout(debounce);
-        debounce = null;
-      }
       if (probe === null) {
         viewerStore.getState().clearProbedAttributes();
         return;
@@ -375,10 +406,7 @@ export function AttributeProbeTracker() {
       const key = keyOf(probe);
       if (!key) return;
       if (tryInstant(key)) return;
-      debounce = setTimeout(() => {
-        debounce = null;
-        resolver.request(key);
-      }, ATTRIBUTE_DEBOUNCE_MS);
+      resolver.request(key);
     };
 
     viewerStore
@@ -387,20 +415,19 @@ export function AttributeProbeTracker() {
         service.followReference(column, value),
       );
 
-    let lastProbe = viewerStore.getState().probedCoordinate;
+    let lastProbe = viewerStore.getState().probeReadout;
     request(lastProbe);
     const unsubscribe = viewerStore.subscribe((state) => {
-      if (state.probedCoordinate !== lastProbe) {
+      if (state.probeReadout !== lastProbe) {
         // Exact-value merges replace the probe object too, but the fetch key
         // (voxel + signature) is unchanged, so the resolver dedupes them.
-        lastProbe = state.probedCoordinate;
+        lastProbe = state.probeReadout;
         request(lastProbe);
       }
     });
 
     return () => {
       unsubscribe();
-      if (debounce !== null) clearTimeout(debounce);
       resolver.dispose();
       service.registerArrayProvider(null);
       acquired.release();

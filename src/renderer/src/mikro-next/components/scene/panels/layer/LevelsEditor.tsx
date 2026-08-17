@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColorMap } from "@/mikro-next/api/graphql";
 import { useMemo, useRef, useState } from "react";
-import { Maximize2, RotateCcw } from "lucide-react";
+import { Maximize2, RotateCcw, Spline } from "lucide-react";
+import type { TransferCurveStop } from "../../core/renderGraph";
 import { sampleColormapCSS } from "./colormap-utils";
 import { formatContrastValue } from "./contrast-utils";
 
@@ -27,12 +28,29 @@ const CURVE_SAMPLES = 96;
 
 export type LevelsValue = { min: number; max: number; gamma: number };
 
-type DragTarget = "black" | "mid" | "white";
+type DragTarget = "black" | "mid" | "white" | { stop: number; lockValue: boolean };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 /** Window fraction where the transfer outputs 0.5 (the midtone stop). */
 const midFraction = (gamma: number) => Math.pow(0.5, 1 / clamp(gamma, GAMMA_MIN, GAMMA_MAX));
+
+/** Piecewise-linear curve value at RAW intensity `v` (sorted stops, clamped ends). */
+const curveAtRaw = (stops: readonly TransferCurveStop[], v: number): number => {
+  if (v <= stops[0].position) return stops[0].value;
+  const last = stops[stops.length - 1];
+  if (v >= last.position) return last.value;
+  for (let i = 1; i < stops.length; i++) {
+    if (v <= stops[i].position) {
+      const a = stops[i - 1];
+      const b = stops[i];
+      const span = b.position - a.position;
+      const f = span > 0 ? (v - a.position) / span : 0;
+      return a.value + (b.value - a.value) * f;
+    }
+  }
+  return last.value;
+};
 
 export const LevelsEditor = ({
   bins,
@@ -47,6 +65,8 @@ export const LevelsEditor = ({
   dtypeMin,
   dtypeMax,
   onChange,
+  stops,
+  onStopsChange,
 }: {
   bins: number[];
   histogram: number[];
@@ -60,17 +80,27 @@ export const LevelsEditor = ({
   dtypeMin: number;
   dtypeMax: number;
   onChange: (next: LevelsValue) => void;
+  /** The intensity transfer CURVE (server LookupStops). ≥2 stops = curve mode:
+   * the black/mid/white handles yield to draggable curve points and gamma is
+   * bypassed ("gamma is the fallback"). Editing needs `onStopsChange`. */
+  stops?: TransferCurveStop[] | null;
+  onStopsChange?: (stops: TransferCurveStop[] | null) => void;
 }) => {
+  const curve = stops && stops.length >= 2 && onStopsChange ? stops : null;
   // The histogram extent (the data-focused view). The Reset / Min/Max buttons
   // snap back to this, and it's the floor for the draggable domain.
   const plotMin = histMin ?? dtypeMin;
   const plotMax = histMax ?? dtypeMax;
   // The x domain: the histogram extent grown to always contain the current clim
-  // so a native/typed value is visible and reachable instead of snapping back to
-  // the histogram edge. The "Full range" button pushes the clim out to the dtype
-  // boundaries, which then expands this domain to match.
-  const domainMin = Math.min(plotMin, value.min, value.max);
-  const domainMax = Math.max(plotMax, value.min, value.max);
+  // (or the curve's outer stops) so a native/typed value is visible and
+  // reachable instead of snapping back to the histogram edge.
+  const domainMin = Math.min(plotMin, value.min, value.max, curve?.[0]?.position ?? Infinity);
+  const domainMax = Math.max(
+    plotMax,
+    value.min,
+    value.max,
+    curve?.[curve.length - 1]?.position ?? -Infinity,
+  );
   const domainSpan = Math.max(domainMax - domainMin, Number.EPSILON);
   const minSpan = domainSpan / 500;
 
@@ -141,22 +171,33 @@ export const LevelsEditor = ({
     [histogram, binValues, barHeights, barColors, domainMin, domainSpan],
   );
 
-  // Transfer curve over the full domain, in plot coordinates.
+  // Transfer curve over the full domain, in plot coordinates: the piecewise
+  // stop curve when active, else the clim-window + gamma power law.
   const curvePoints = useMemo(() => {
     const windowSpan = Math.max(white - black, Number.EPSILON);
     const points: string[] = [];
     for (let i = 0; i <= CURVE_SAMPLES; i++) {
       const v = domainMin + (domainSpan * i) / CURVE_SAMPLES;
-      const t = clamp((v - black) / windowSpan, 0, 0.999);
-      const norm = Math.pow(t, gamma);
+      const norm = curve
+        ? curveAtRaw(curve, v)
+        : Math.pow(clamp((v - black) / windowSpan, 0, 0.999), gamma);
       points.push(`${(i / CURVE_SAMPLES) * 100},${PLOT_HEIGHT - norm * PLOT_HEIGHT}`);
     }
     return points.join(" ");
-  }, [domainMin, domainSpan, black, white, gamma]);
+  }, [domainMin, domainSpan, black, white, gamma, curve]);
+
+  // The window the dim overlays and edge lines mark: clim, or the curve's domain.
+  const windowMin = curve ? curve[0].position : black;
+  const windowMax = curve ? curve[curve.length - 1].position : white;
 
   // --- Handle dragging -------------------------------------------------------
   const surfaceRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<{ target: DragTarget; black: number; white: number } | null>(null);
+  const dragRef = useRef<{
+    target: DragTarget;
+    black: number;
+    white: number;
+    stops: TransferCurveStop[];
+  } | null>(null);
 
   const ratioFromClientX = (clientX: number) => {
     const rect = surfaceRef.current?.getBoundingClientRect();
@@ -164,9 +205,62 @@ export const LevelsEditor = ({
     return clamp((clientX - rect.left) / rect.width, 0, 1);
   };
 
-  const nearestTarget = (clientX: number): DragTarget => {
+  /** Normalized curve VALUE (1 at the plot top) from a pointer y. The plot
+   * svg sits after the surface's 4px top padding, PLOT_HEIGHT px tall. */
+  const valueFromClientY = (clientY: number) => {
     const rect = surfaceRef.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return "mid";
+    if (!rect) return 0;
+    return clamp(1 - (clientY - rect.top - 4) / PLOT_HEIGHT, 0, 1);
+  };
+
+  const inPlot = (clientY: number) => {
+    const rect = surfaceRef.current?.getBoundingClientRect();
+    return !!rect && clientY - rect.top - 4 <= PLOT_HEIGHT + 2;
+  };
+
+  /** Nearest curve stop's index (by x), with its pixel distance. */
+  const nearestStop = (clientX: number): { index: number; px: number } | null => {
+    const rect = surfaceRef.current?.getBoundingClientRect();
+    if (!curve || !rect || rect.width === 0) return null;
+    const px = clientX - rect.left;
+    let best = -1;
+    let bestDist = Infinity;
+    curve.forEach((stop, index) => {
+      const dist = Math.abs(px - (xOf(stop.position) / 100) * rect.width);
+      if (dist < bestDist) {
+        best = index;
+        bestDist = dist;
+      }
+    });
+    return best === -1 ? null : { index: best, px: bestDist };
+  };
+
+  /** Drag start resolution. The ADD path publishes the new stop immediately
+   * and returns the POST-add array — the prop hasn't re-rendered yet, and the
+   * drag's neighbor clamps must index the array the drag operates on. */
+  const resolveDragStart = (
+    clientX: number,
+    clientY: number,
+  ): { target: DragTarget; stops: TransferCurveStop[] } => {
+    if (curve) {
+      const near = nearestStop(clientX);
+      // Grabbing near a stop drags it; further away, a press in the PLOT adds
+      // a stop at the pointer. Strip presses always grab the nearest stop.
+      if (near && (near.px <= 10 || !inPlot(clientY))) {
+        return { target: { stop: near.index, lockValue: !inPlot(clientY) }, stops: [...curve] };
+      }
+      const position = valueAt(ratioFromClientX(clientX));
+      const added = [...curve, { position, value: valueFromClientY(clientY) }].sort(
+        (a, b) => a.position - b.position,
+      );
+      onStopsChange?.(added);
+      return {
+        target: { stop: added.findIndex((s) => s.position === position), lockValue: false },
+        stops: added,
+      };
+    }
+    const rect = surfaceRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return { target: "mid", stops: [] };
     const px = clientX - rect.left;
     const candidates: [DragTarget, number][] = [
       ["black", (xOf(black) / 100) * rect.width],
@@ -174,13 +268,32 @@ export const LevelsEditor = ({
       ["white", (xOf(white) / 100) * rect.width],
     ];
     candidates.sort((a, b) => Math.abs(px - a[1]) - Math.abs(px - b[1]));
-    return candidates[0][0];
+    return { target: candidates[0][0], stops: [] };
   };
 
-  const applyDrag = (clientX: number) => {
+  const applyDrag = (clientX: number, clientY: number) => {
     const drag = dragRef.current;
     if (!drag) return;
     const v = valueAt(ratioFromClientX(clientX));
+    if (typeof drag.target === "object") {
+      const { stop, lockValue } = drag.target;
+      const reference = drag.stops;
+      if (!onStopsChange || stop < 0 || stop >= reference.length) return;
+      // Keep the stop between its (drag-start) neighbors so order never flips.
+      const lo = stop > 0 ? reference[stop - 1].position + minSpan : domainMin;
+      const hi =
+        stop < reference.length - 1 ? reference[stop + 1].position - minSpan : domainMax;
+      const next = reference.map((entry, index) =>
+        index === stop
+          ? {
+              position: clamp(v, Math.min(lo, hi), Math.max(lo, hi)),
+              value: lockValue ? entry.value : valueFromClientY(clientY),
+            }
+          : entry,
+      );
+      onStopsChange(next);
+      return;
+    }
     if (drag.target === "black") {
       onChange({ min: clamp(v, domainMin, drag.white - minSpan), max: drag.white, gamma });
     } else if (drag.target === "white") {
@@ -197,30 +310,31 @@ export const LevelsEditor = ({
   // editor re-render → GPU uniform rebuild — PER EVENT. One rAF slot holds
   // the latest clientX and applies it once per frame; pointerup flushes.
   const dragRafRef = useRef<number | null>(null);
-  const pendingClientXRef = useRef(0);
+  const pendingClientRef = useRef({ x: 0, y: 0 });
 
   const flushDrag = () => {
     if (dragRafRef.current !== null) {
       cancelAnimationFrame(dragRafRef.current);
       dragRafRef.current = null;
     }
-    if (dragRef.current) applyDrag(pendingClientXRef.current);
+    if (dragRef.current) applyDrag(pendingClientRef.current.x, pendingClientRef.current.y);
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    dragRef.current = { target: nearestTarget(event.clientX), black, white };
+    const start = resolveDragStart(event.clientX, event.clientY);
+    dragRef.current = { target: start.target, black, white, stops: start.stops };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
-    applyDrag(event.clientX);
+    applyDrag(event.clientX, event.clientY);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!dragRef.current) return;
-    pendingClientXRef.current = event.clientX;
+    pendingClientRef.current = { x: event.clientX, y: event.clientY };
     if (dragRafRef.current === null) {
       dragRafRef.current = requestAnimationFrame(() => {
         dragRafRef.current = null;
-        if (dragRef.current) applyDrag(pendingClientXRef.current);
+        if (dragRef.current) applyDrag(pendingClientRef.current.x, pendingClientRef.current.y);
       });
     }
   };
@@ -230,6 +344,15 @@ export const LevelsEditor = ({
     dragRef.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  /** Double-click a curve stop removes it (a curve keeps at least two). */
+  const handleDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!curve || !onStopsChange || curve.length <= 2) return;
+    const near = nearestStop(event.clientX);
+    if (near && near.px <= 10) {
+      onStopsChange(curve.filter((_, index) => index !== near.index));
     }
   };
 
@@ -266,18 +389,23 @@ export const LevelsEditor = ({
       <div className="flex items-center justify-between text-[10px]">
         <span className="text-muted-foreground">Levels</span>
         <span className="font-mono">
-          {formatContrastValue(black)} – {formatContrastValue(white)}
-          <span className="text-muted-foreground"> · γ {gamma.toFixed(2)}</span>
+          {formatContrastValue(windowMin)} – {formatContrastValue(windowMax)}
+          {curve ? (
+            <span className="text-muted-foreground"> · curve ({curve.length})</span>
+          ) : (
+            <span className="text-muted-foreground"> · γ {gamma.toFixed(2)}</span>
+          )}
         </span>
       </div>
 
       <div
         ref={surfaceRef}
-        className="cursor-ew-resize touch-none select-none rounded border border-white/10 bg-black/25 px-0 pt-1"
+        className={`${curve ? "cursor-crosshair" : "cursor-ew-resize"} touch-none select-none rounded border border-white/10 bg-black/25 px-0 pt-1`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onDoubleClick={handleDoubleClick}
       >
         <svg
           className="block w-full"
@@ -290,20 +418,20 @@ export const LevelsEditor = ({
           {/* Out-of-window dimming: two overlay rects instead of per-bar
               recoloring — dragging a stop moves an attribute on TWO elements
               rather than rebuilding all ~256 bar rects (see the bars memo). */}
-          {xOf(black) > 0 && (
-            <rect x={0} y={0} width={xOf(black)} height={PLOT_HEIGHT} fill="rgba(0,0,0,0.6)" />
+          {xOf(windowMin) > 0 && (
+            <rect x={0} y={0} width={xOf(windowMin)} height={PLOT_HEIGHT} fill="rgba(0,0,0,0.6)" />
           )}
-          {xOf(white) < 100 && (
+          {xOf(windowMax) < 100 && (
             <rect
-              x={xOf(white)}
+              x={xOf(windowMax)}
               y={0}
-              width={100 - xOf(white)}
+              width={100 - xOf(windowMax)}
               height={PLOT_HEIGHT}
               fill="rgba(0,0,0,0.6)"
             />
           )}
           {/* Transfer curve + its window edges. */}
-          {[black, white].map((v, i) => (
+          {[windowMin, windowMax].map((v, i) => (
             <line
               key={i}
               x1={xOf(v)}
@@ -322,21 +450,40 @@ export const LevelsEditor = ({
             strokeWidth={0.9}
             vectorEffect="non-scaling-stroke"
           />
+          {/* Curve control points: drag (both axes in the plot), double-click
+              to remove, press empty plot to add. */}
+          {curve?.map((stop, index) => (
+            <circle
+              key={index}
+              cx={xOf(stop.position)}
+              cy={PLOT_HEIGHT - stop.value * PLOT_HEIGHT}
+              r={2.4}
+              fill="#38bdf8"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth={0.4}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
         </svg>
 
-        {/* Photoshop-style stops: black point, midtone (gamma), white point. */}
+        {/* Handle strip: black/mid/white in gamma mode; one triangle per
+            curve stop (shaded by its VALUE) in curve mode. */}
         <svg
           className="block w-full"
           viewBox={`0 0 100 ${STRIP_HEIGHT}`}
           preserveAspectRatio="none"
           style={{ height: STRIP_HEIGHT + 3 }}
         >
-          {(
-            [
-              [black, "#0a0a0a"],
-              [mid, "#9ca3af"],
-              [white, "#fafafa"],
-            ] as const
+          {(curve
+            ? curve.map((stop): [number, string] => {
+                const shade = Math.round(10 + stop.value * 240);
+                return [stop.position, `rgb(${shade},${shade},${shade})`];
+              })
+            : ([
+                [black, "#0a0a0a"],
+                [mid, "#9ca3af"],
+                [white, "#fafafa"],
+              ] as [number, string][])
           ).map(([v, fill], i) => {
             const x = xOf(v);
             return (
@@ -353,65 +500,103 @@ export const LevelsEditor = ({
         </svg>
       </div>
 
-      <div className="grid grid-cols-3 gap-1">
-        <Input
-          {...draftProps("min", String(value.min))}
-          className="h-6 px-2 text-[10px] font-mono"
-          title="Black point"
-        />
-        <Input
-          {...draftProps("gamma", gamma.toFixed(2))}
-          className="h-6 px-2 text-center text-[10px] font-mono"
-          title="Gamma (midtone)"
-        />
-        <Input
-          {...draftProps("max", String(value.max))}
-          className="h-6 px-2 text-right text-[10px] font-mono"
-          title="White point"
-        />
-      </div>
+      {!curve && (
+        <div className="grid grid-cols-3 gap-1">
+          <Input
+            {...draftProps("min", String(value.min))}
+            className="h-6 px-2 text-[10px] font-mono"
+            title="Black point"
+          />
+          <Input
+            {...draftProps("gamma", gamma.toFixed(2))}
+            className="h-6 px-2 text-center text-[10px] font-mono"
+            title="Gamma (midtone)"
+          />
+          <Input
+            {...draftProps("max", String(value.max))}
+            className="h-6 px-2 text-right text-[10px] font-mono"
+            title="White point"
+          />
+        </div>
+      )}
 
-      <div className="flex gap-0.5">
-        {p1 != null && p99 != null && (
+      {curve ? (
+        <div className="flex items-center gap-0.5">
+          <span className="flex-1 truncate px-1 text-[9px] text-muted-foreground">
+            drag points · press plot to add · double-click to remove
+          </span>
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-5 px-1.5 text-[10px]"
+            title="Back to the clim + gamma transfer (the curve is discarded on save)"
+            onClick={() => onStopsChange?.(null)}
+          >
+            <RotateCcw className="mr-0.5 h-2.5 w-2.5" />
+            Use gamma
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-0.5">
+          {p1 != null && p99 != null && (
+            <Button
+              variant="ghost"
+              size="xs"
+              className="h-5 flex-1 px-1 text-[10px]"
+              onClick={() => onChange({ min: p1, max: Math.max(p99, p1 + minSpan), gamma })}
+            >
+              Auto
+            </Button>
+          )}
+          {histMin != null && histMax != null && (
+            <Button
+              variant="ghost"
+              size="xs"
+              className="h-5 flex-1 px-1 text-[10px]"
+              onClick={() => onChange({ min: histMin, max: histMax, gamma })}
+            >
+              Min/Max
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="xs"
             className="h-5 flex-1 px-1 text-[10px]"
-            onClick={() => onChange({ min: p1, max: Math.max(p99, p1 + minSpan), gamma })}
+            onClick={() => onChange({ min: dtypeMin, max: dtypeMax, gamma })}
+            title="Full dtype range"
           >
-            Auto
+            <Maximize2 className="mr-0.5 h-2.5 w-2.5" />
+            Full
           </Button>
-        )}
-        {histMin != null && histMax != null && (
           <Button
             variant="ghost"
             size="xs"
             className="h-5 flex-1 px-1 text-[10px]"
-            onClick={() => onChange({ min: histMin, max: histMax, gamma })}
+            onClick={() => onChange({ min: plotMin, max: plotMax, gamma: 1 })}
           >
-            Min/Max
+            <RotateCcw className="mr-0.5 h-2.5 w-2.5" />
+            Reset
           </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="xs"
-          className="h-5 flex-1 px-1 text-[10px]"
-          onClick={() => onChange({ min: dtypeMin, max: dtypeMax, gamma })}
-          title="Full dtype range"
-        >
-          <Maximize2 className="mr-0.5 h-2.5 w-2.5" />
-          Full
-        </Button>
-        <Button
-          variant="ghost"
-          size="xs"
-          className="h-5 flex-1 px-1 text-[10px]"
-          onClick={() => onChange({ min: plotMin, max: plotMax, gamma: 1 })}
-        >
-          <RotateCcw className="mr-0.5 h-2.5 w-2.5" />
-          Reset
-        </Button>
-      </div>
+          {onStopsChange && (
+            <Button
+              variant="ghost"
+              size="xs"
+              className="h-5 flex-1 px-1 text-[10px]"
+              title="Switch to a multi-point transfer curve (seeded from the current levels; gamma becomes the fallback)"
+              onClick={() =>
+                onStopsChange([
+                  { position: black, value: 0 },
+                  { position: mid, value: 0.5 },
+                  { position: white, value: 1 },
+                ])
+              }
+            >
+              <Spline className="mr-0.5 h-2.5 w-2.5" />
+              Curve
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { ElektroAnalogSignal, ElektroAnalogSignalChannel } from "@/linkers";
-import { cn } from "@udecode/cn";
+import { cn } from "@/lib/utils";
 import React from "react";
 import { useDetailAnalogSignalQuery } from "../api/graphql";
 import {

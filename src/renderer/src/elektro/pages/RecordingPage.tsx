@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ElektroRecording, ElektroSimulation } from "@/linkers";
-import { cn } from "@udecode/cn";
+import { cn } from "@/lib/utils";
 import React from "react";
 import {
   useDetailRecordingQuery

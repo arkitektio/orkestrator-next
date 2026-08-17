@@ -6,7 +6,7 @@ import {
   ElektroSimulation,
   ElektroStimulus,
 } from "@/linkers";
-import { cn } from "@udecode/cn";
+import { cn } from "@/lib/utils";
 import React from "react";
 import { useDetailSimulationQuery } from "../api/graphql";
 import {

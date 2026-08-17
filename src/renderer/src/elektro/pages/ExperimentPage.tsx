@@ -6,7 +6,7 @@ import {
   ElektroRecording,
   ElektroStimulus,
 } from "@/linkers";
-import { cn } from "@udecode/cn";
+import { cn } from "@/lib/utils";
 import React from "react";
 import Timestamp from "react-timestamp";
 import { useSearchParams } from "react-router-dom";

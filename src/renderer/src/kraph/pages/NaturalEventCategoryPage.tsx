@@ -1,12 +1,7 @@
-import { Plate } from "@udecode/plate-common/react";
-
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FreeformListField } from "@/components/fields/FreeformListField";
 import { StringField } from "@/components/fields/StringField";
 import { Sidebars } from "@/components/layout/Sidebars";
-import { CommentsPopover } from "@/components/plate-ui/comments-popover";
-import { Editor } from "@/components/plate-ui/editor";
-import { TooltipProvider } from "@/components/plate-ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -14,10 +9,6 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphNaturalEventCategory } from "@/linkers";
-import { editor } from "@/plate/plugins";
-import {
-  usePlateEditor
-} from "@udecode/plate-common/react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   EventKind,
@@ -28,25 +19,6 @@ import {
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
-
-export function PlateDisplay({ plates }: { plates: any[] }) {
-  const plateEditor = usePlateEditor({
-    ...editor,
-    value: plates,
-  });
-  return (
-    <TooltipProvider>
-      <Plate editor={plateEditor}>
-        <Editor
-          className="rounded-xs border-0 mt-0 ring-0 h-full w-full"
-          disabled={true}
-        />
-
-        <CommentsPopover />
-      </Plate>
-    </TooltipProvider>
-  );
-}
 
 // Note: the backend no longer stores rich-text `plateChildren` on event
 // categories, and the previous source/target "role" concept (with tag /

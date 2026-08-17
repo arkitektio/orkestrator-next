@@ -65,6 +65,10 @@ export const ArrayDatasetPage = asDetailQueryRoute(useGetArrayDatasetQuery, ({ d
         <>
           <Sidebars.Tab label="Layers"><Scene.LayersSidebar /></Sidebars.Tab>
           <Sidebars.Tab label="Annotations"><Scene.AnnotationsSidebar /></Sidebars.Tab>
+          {/* Only when there is something to list — see Scene.hasMeshLayer. */}
+          {Scene.hasMeshLayer(sceneData?.scene) && (
+            <Sidebars.Tab label="Meshes"><Scene.MeshesSidebar /></Sidebars.Tab>
+          )}
           {/* No separate "Derived" tab: what this dataset came from and what
               came out of it are both in Info, next to the facts they explain. */}
           <Sidebars.Tab label="Info">

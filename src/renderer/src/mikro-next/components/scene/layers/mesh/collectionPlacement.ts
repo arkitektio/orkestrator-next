@@ -23,6 +23,20 @@ export type MeshLayerVariant = Extract<SceneLayerFragment, { __typename: "MeshLa
 export type MeshCollectionRef = NonNullable<MeshLayerVariant["collection"]>;
 
 /**
+ * Does this scene render any mesh at all?
+ *
+ * Reads the FRAGMENT, not the scene store, so a page can decide whether to
+ * mount the Meshes sidebar tab from outside `SceneProvider` — where the tab
+ * JSX is built and no scoped store hook can be called.
+ */
+export const sceneHasMeshLayer = (
+  scene: { layers: readonly SceneLayerFragment[] } | null | undefined,
+): boolean =>
+  (scene?.layers ?? []).some(
+    (layer) => layer.__typename === "MeshLayer" && !!layer.collection,
+  );
+
+/**
  * The collection's axis names in VERTEX COMPONENT order, or null if unstated.
  *
  * fabriks addresses components by position — `cellSize[0]`, `bbox_*_x` — and

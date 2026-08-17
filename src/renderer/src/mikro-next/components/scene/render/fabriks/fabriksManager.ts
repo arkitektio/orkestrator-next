@@ -457,6 +457,20 @@ export class FabriksCollectionManager {
     return (await this.opts.collection.loadObjectCatalog()).get(objectId) ?? null;
   }
 
+  /**
+   * EVERY object in the collection, ordinal-ordered — for a list that browses
+   * the collection rather than picking out of it (`panels/MeshesPanel`).
+   *
+   * Shares the lazy ordinal index with picking, so the list is free once
+   * anything has resolved an ordinal, and vice versa. REJECTS when the
+   * collection carries no object catalog (the picking callers all swallow
+   * that; a list has to say so), so callers must handle the rejection.
+   */
+  async listObjects(): Promise<readonly FabriksObjectEntry[]> {
+    const byOrdinal = await this.ordinalIndex();
+    return [...byOrdinal.values()].sort((a, b) => a.ordinal - b.ordinal);
+  }
+
   private ordinalIndexPromise: Promise<Map<number, FabriksObjectEntry>> | null = null;
   /** The resolved map, for the synchronous `peekOrdinal` fast path. */
   private ordinalIndexResolved: Map<number, FabriksObjectEntry> | null = null;

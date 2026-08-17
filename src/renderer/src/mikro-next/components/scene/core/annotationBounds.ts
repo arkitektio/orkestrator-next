@@ -8,6 +8,7 @@ import {
 import { composePlacementPath } from "@/mikro-next/lib/coords/transformGraph";
 
 import { affineToMatrix4 } from "./worldTransform";
+import { padDegenerateAxes } from "./cameraFit";
 import { zSpanOf, type ZSpan } from "./annotationVisibility";
 import type { SceneTransformContext } from "./layerModel";
 import type { RoiBounds } from "../store/roiSelectionStore";
@@ -200,18 +201,11 @@ export function worldExtentToBox3(
   extent: { bounds: RoiBounds; zSpan: ZSpan },
   minHalfExtent: number,
 ): THREE.Box3 {
-  const box = new THREE.Box3(
-    new THREE.Vector3(extent.bounds.minX, extent.bounds.minY, extent.zSpan.min),
-    new THREE.Vector3(extent.bounds.maxX, extent.bounds.maxY, extent.zSpan.max),
+  return padDegenerateAxes(
+    new THREE.Box3(
+      new THREE.Vector3(extent.bounds.minX, extent.bounds.minY, extent.zSpan.min),
+      new THREE.Vector3(extent.bounds.maxX, extent.bounds.maxY, extent.zSpan.max),
+    ),
+    minHalfExtent,
   );
-  const axes = ["x", "y", "z"] as const;
-  for (const axis of axes) {
-    const size = box.max[axis] - box.min[axis];
-    if (size < 2 * minHalfExtent) {
-      const center = (box.max[axis] + box.min[axis]) / 2;
-      box.min[axis] = center - minHalfExtent;
-      box.max[axis] = center + minHalfExtent;
-    }
-  }
-  return box;
 }

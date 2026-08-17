@@ -79,16 +79,26 @@ const SidebarsRoot = (props: {
     return labels.at(0) || "";
   });
 
+  // Tabs are conditional, so the set can shrink under a LIVE rail — remove a
+  // scene's last mesh layer and the Meshes tab goes with it. The initializer
+  // above validates only the FIRST render, so a tab that disappears while it is
+  // the active one would leave `activeTab` matching no `TabsContent`, i.e. a
+  // blank rail. Re-validated at render rather than corrected in an effect, so
+  // there is no blank commit in between.
+  const effectiveTab = tabs.some((tab) => tab.label === activeTab)
+    ? activeTab
+    : (tabs.at(0)?.label ?? "");
+
   // Save to local storage whenever the active tab changes
   useEffect(() => {
-    if (activeTab) {
-      localStorage.setItem(props.sidebarKey || ACTIVE_SIDEBAR_KEY, activeTab);
+    if (effectiveTab) {
+      localStorage.setItem(props.sidebarKey || ACTIVE_SIDEBAR_KEY, effectiveTab);
     }
-  }, [activeTab, props.sidebarKey]);
+  }, [effectiveTab, props.sidebarKey]);
 
   return (
     <Tabs
-      value={activeTab}
+      value={effectiveTab}
       onValueChange={setActiveTab}
       className="w-full h-full flex flex-initial flex-col"
     >

@@ -8,12 +8,14 @@ import {
 import { SceneDock } from "./SceneDock";
 import { SceneProvider } from "./SceneProvider";
 import { DefaultScenePanels, SceneViewport } from "./SceneViewport";
+import { sceneHasMeshLayer } from "./layers/mesh/collectionPlacement";
 import { AnimationPanel } from "./panels/AnimationPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import {
   SceneAnimationsSidebar,
   SceneAnnotationsSidebar,
   SceneLayersSidebar,
+  SceneMeshesSidebar,
 } from "./panels/sceneSidebarTabs";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 
@@ -79,4 +81,8 @@ export const Scene = Object.assign(SceneRoot, {
   LayersSidebar: SceneLayersSidebar,
   AnimationsSidebar: SceneAnimationsSidebar,
   AnnotationsSidebar: SceneAnnotationsSidebar,
+  // Conditional by design: hosts pair it with `Scene.hasMeshLayer(scene)`, so
+  // a scene without meshes carries no dead tab.
+  MeshesSidebar: SceneMeshesSidebar,
+  hasMeshLayer: sceneHasMeshLayer,
 });

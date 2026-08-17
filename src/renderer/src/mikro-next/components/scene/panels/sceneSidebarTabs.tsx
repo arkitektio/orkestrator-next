@@ -3,6 +3,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { AnimationPanel } from "./AnimationPanel";
 import { AnnotationsPanel } from "./AnnotationsPanel";
 import { LayerControlPanel } from "./LayerControlPanel";
+import { MeshesPanel } from "./MeshesPanel";
 
 /**
  * Scene panels as ModelPage sidebar tabs
@@ -55,5 +56,16 @@ export const SceneAnimationsSidebar = () => (
 export const SceneAnnotationsSidebar = () => (
   <SceneGuard fallback={<SidebarFallback />}>
     <AnnotationsPanel variant="sidebar" />
+  </SceneGuard>
+);
+
+/**
+ * Every mesh instance in the scene, as a sidebar tab. Hosts mount it only when
+ * the scene HAS a mesh layer (`sceneHasMeshLayer`) — the panel is empty and
+ * meaningless otherwise, and a dead tab in the rail is worse than no tab.
+ */
+export const SceneMeshesSidebar = () => (
+  <SceneGuard fallback={<SidebarFallback />}>
+    <MeshesPanel variant="sidebar" />
   </SceneGuard>
 );

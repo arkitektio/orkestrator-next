@@ -15,6 +15,27 @@ export type FitCanvasContext = {
 };
 
 /**
+ * Grow any axis thinner than `2 * minHalfExtent` around its own centre.
+ *
+ * A go-to target is routinely flat or degenerate — a POINT annotation, a mesh
+ * object one voxel deep — and fitting such a box literally yields an absurd
+ * ortho zoom. Padding it to a fixed on-screen size (callers pass
+ * `worldUnitsPerPixel * 40`, i.e. ~80 px) frames it the way a user means.
+ * Mutates and returns `box`.
+ */
+export function padDegenerateAxes(box: THREE.Box3, minHalfExtent: number): THREE.Box3 {
+  for (const axis of ["x", "y", "z"] as const) {
+    const size = box.max[axis] - box.min[axis];
+    if (size < 2 * minHalfExtent) {
+      const center = (box.max[axis] + box.min[axis]) / 2;
+      box.min[axis] = center - minHalfExtent;
+      box.max[axis] = center + minHalfExtent;
+    }
+  }
+  return box;
+}
+
+/**
  * Apply a `computeFitPose` result to a live camera + controls. Shared by the
  * post-mount object fit below and the pre-first-render initial fit
  * (`cameras/InitialCameraFit.tsx`).

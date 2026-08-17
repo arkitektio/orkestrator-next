@@ -1,9 +1,0 @@
-fragment MultiWellPlate on MultiWellPlate {
-  id
-  name
-}
-
-fragment ListMultiWellPlate on MultiWellPlate {
-  id
-  name
-}

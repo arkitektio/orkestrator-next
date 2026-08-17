@@ -1,6 +1,0 @@
-fragment Snapshot on Snapshot {
-  id
-  store {
-    ...MediaStore
-  }
-}

@@ -12,7 +12,7 @@ import { RoiKind } from "@/mikro-next/api/graphql";
 
 /**
  * The SPHERE RoiKind, ahead of the generated enum: the backend kind is being
- * added, and until the next `yarn mikro` pull includes it the literal is
+ * added, and until the next `pnpm mikro` pull includes it the literal is
  * widened here — in exactly one place. Replace with `RoiKind.Sphere` once the
  * regenerated enum carries it.
  */

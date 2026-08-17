@@ -1,0 +1,24 @@
+# pnpm 11 no longer reads the "pnpm" field in package.json — every setting that
+# used to live there belongs here instead. See https://pnpm.io/settings
+
+# Was `resolutions: { vite }` under yarn. It exists because yarn classic used to
+# throw "could not find a copy of vite to link" when the tree carried more than
+# one vite major. Keep it until pnpm has proven stable for a release cycle, then
+# try dropping it — vite is already a direct devDependency, and `pnpm why vite`
+# should still show a single 7.x without the pin.
+overrides:
+  vite: ^7.2.6
+
+# pnpm 10+ blocks dependency lifecycle scripts unless they are listed here.
+# Written by `pnpm approve-builds`; keep it that way rather than hand-editing.
+#   esbuild             - postinstall resolves the platform binary; vite needs it
+#   @parcel/watcher     - install script; falls back to the prebuilt platform pkg
+#   electron-winstaller - install script picks the 7-Zip arch (local, no download)
+#   msw                 - postinstall is `.catch(() => void 0)`; nothing to run
+# NOTE: electron@43 is deliberately absent — it has no scripts field at all and
+# downloads its binary lazily on first require, so it is unaffected by blocking.
+allowBuilds:
+  '@parcel/watcher': true
+  electron-winstaller: true
+  esbuild: true
+  msw: false

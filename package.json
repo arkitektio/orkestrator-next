@@ -7,6 +7,7 @@
   "type": "module",
   "author": "jhnnsrs",
   "homepage": "https://arkitekt.live",
+  "packageManager": "pnpm@11.6.0",
   "resolutions": {
     "vite": "^7.2.6"
   },
@@ -17,8 +18,8 @@
     "dev": "cross-env NO_SANDBOX=1 electron-vite dev",
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
+    "build:unpack": "pnpm run build && electron-builder --dir",
+    "build:win": "pnpm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "rekuest": "graphql-codegen --config rekuest.yml",
@@ -166,6 +167,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.19.1",
+    "@types/offscreencanvas": "^2019.7.3",
     "@types/react": "^19.2.7",
     "@types/react-cytoscapejs": "^1.2.5",
     "@types/react-dom": "^19.2.3",

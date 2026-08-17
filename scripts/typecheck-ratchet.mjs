@@ -19,9 +19,9 @@ const baselinePath = resolve(root, "typecheck-baseline.json");
 const { maxErrors } = JSON.parse(readFileSync(baselinePath, "utf8"));
 
 const result = spawnSync(
-  "npx",
-  ["tsc", "-p", "tsconfig.typecheck.json", "--noEmit"],
-  { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+  "pnpm",
+  ["exec", "tsc", "-p", "tsconfig.typecheck.json", "--noEmit"],
+  { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, shell: process.platform === "win32" },
 );
 
 const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
@@ -33,7 +33,7 @@ if (count > maxErrors) {
   console.error(
     `\n✗ Type errors increased by ${count - maxErrors} (${maxErrors} → ${count}).` +
       `\n  New type errors were introduced. Fix them, or if intentional, see the` +
-      `\n  full output with \`yarn typecheck\`.`,
+      `\n  full output with \`pnpm typecheck\`.`,
   );
   process.exit(1);
 }

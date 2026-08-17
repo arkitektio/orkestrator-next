@@ -18,6 +18,30 @@ query GetArrayDataset($id: ID!) {
   }
 }
 
+# The one dataset, at card depth. For the previews — the hover card and the
+# display widget — which want the snapshot and the spec, and want them without
+# paying for `GetArrayDataset`'s pyramid: that query pulls every `dataArray`,
+# the whole intrinsic system, and every scene the dataset appears in.
+#
+# The fragment is spread EXACTLY as the list query spreads it, and that is the
+# point rather than a tidiness preference: hovering a tile on the datasets page
+# has already written `ListArrayDataset` into the cache under this id, so a
+# cache-first read here resolves with no round trip at all. Inlining a bespoke
+# selection set instead would miss that cache and fetch.
+#
+# `folder` is selected alongside rather than added to the fragment: where a
+# dataset is FILED is worth a line on a preview, but the cards render inside a
+# folder already and have no use for it.
+query GetListArrayDataset($id: ID!) {
+  arrayDataset(id: $id) {
+    ...ListArrayDataset
+    folder {
+      id
+      name
+    }
+  }
+}
+
 query GetArrayDatasets(
   $filters: ArrayDatasetFilter
   $pagination: OffsetPaginationInput

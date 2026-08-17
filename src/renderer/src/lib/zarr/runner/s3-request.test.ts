@@ -1,5 +1,5 @@
 import type { AbsolutePath } from "@zarrita/storage";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchS3Path, resolveStoreUrl, type S3FetchConfig } from "./s3-request";
 
 /**
@@ -46,6 +46,20 @@ afterEach(() => {
 });
 
 describe("canonical URI encoding", () => {
+  // `amzDate` comes from `new Date()` inside the signer, and it is signed. Two
+  // requests issued either side of a second boundary therefore sign different
+  // strings — which made the equality assertion below fail whenever the suite
+  // was loaded enough to straddle one. Freeze the clock: this describe is about
+  // the canonical URI, not about time.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-17T11:15:12.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("signs a hive-partitioned key the same whether `=` arrives raw or escaped", async () => {
     // The regression this file exists for. `URL` leaves `=` literal in
     // `pathname`, but SigV4 — and S3 on the other side — require every byte
@@ -122,5 +136,82 @@ describe("resolveStoreUrl", () => {
       "/level=2/part-00001.parquet" as AbsolutePath,
     );
     expect(url.pathname).toBe("/bucket/prefix/level=2/part-00001.parquet");
+  });
+});
+
+describe("signing-key cache", () => {
+  // Same reason as above: these compare two signatures, so the clock must not
+  // move between them.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-17T11:15:12.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /**
+   * The 403 this exists for: a datalayer whose STS is unavailable falls back to
+   * its STATIC credentials, so every grant it issues carries the SAME access
+   * key while the secret behind it can change. Keyed on the access key alone,
+   * the signing key derived for the first grant was reused for every later one
+   * — `Credential=` current, HMAC stale — and refreshing the grant could not
+   * recover it, because the memo never saw a new key.
+   */
+  it("re-derives when a new grant reuses the access key with a different secret", async () => {
+    const calls = captureRequest();
+    const path = "/level0/part-00000.parquet" as AbsolutePath;
+
+    await fetchS3Path({ ...config(), secretKey: "first-secret" }, path);
+    await fetchS3Path({ ...config(), secretKey: "second-secret" }, path);
+
+    expect(calls).toHaveLength(2);
+    // Same access key on the wire both times — that is the whole trap.
+    for (const call of calls) {
+      expect(authOf(call.init)).toContain("Credential=AKIAEXAMPLE/");
+    }
+    expect(signatureOf(calls[0].init)).not.toBe(signatureOf(calls[1].init));
+  });
+
+  it("still memoizes when the credentials are genuinely unchanged", async () => {
+    const calls = captureRequest();
+    const path = "/level0/part-00000.parquet" as AbsolutePath;
+
+    await fetchS3Path(config(), path);
+    await fetchS3Path(config(), path);
+
+    expect(signatureOf(calls[0].init)).toBe(signatureOf(calls[1].init));
+  });
+});
+
+describe("browser cache interference", () => {
+  /**
+   * The 403 this exists for, and it presented as a credentials problem for a
+   * long time. `range` is a SIGNED header, and Chromium stores a 206 as a
+   * SPARSE cache entry: once the Parquet footer (the tail of the object) is
+   * cached, a later overlapping read is narrowed before it leaves the browser.
+   * The app signed `bytes=10009781-10534068` and the wire carried
+   * `bytes=10009781-10528209` — the server canonicalizes what it RECEIVES, so
+   * the signature could never match, and MinIO answered SignatureDoesNotMatch.
+   */
+  it("opts a ranged request out of the HTTP cache, so `range` cannot be rewritten", async () => {
+    const calls = captureRequest();
+    await fetchS3Path(config(), "/level0/part-00000.parquet" as AbsolutePath, {
+      headers: { Range: "bytes=10009781-10534068" },
+    });
+    expect(calls[0].init.cache).toBe("no-store");
+  });
+
+  it("leaves a whole-object read cacheable — it is never rewritten", async () => {
+    const calls = captureRequest();
+    await fetchS3Path(config(), "/c/0/0/0" as AbsolutePath);
+    expect(calls[0].init.cache).toBeUndefined();
+  });
+
+  it("does not disturb a caller that chose its own cache mode", async () => {
+    const calls = captureRequest();
+    await fetchS3Path(config(), "/zarr.json" as AbsolutePath, { cache: "reload" });
+    expect(calls[0].init.cache).toBe("reload");
   });
 });

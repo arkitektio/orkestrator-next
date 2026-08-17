@@ -206,6 +206,15 @@ export const formatShape = (
 ): string => shape.map((extent, index) => `${extent}${axisNames[index] ?? '?'}`).join(' ')
 
 /**
+ * The same reading, for axes that have already been paired up — which is what
+ * `splitAxesBySpec` hands back. Saves every caller splitting a group back into
+ * two parallel arrays just to have `formatShape` zip them together again, and
+ * removes the chance of transposing them on the way.
+ */
+export const formatAxes = (axes: readonly ArrayDatasetAxis[]): string =>
+  axes.map((axis) => `${axis.extent}${axis.name}`).join(' ')
+
+/**
  * The dtype the dataset is stored in, off the base level — a multiscale
  * pyramid's levels are the same array at different resolutions, so they share
  * one. `level` is a field, not a position, and the API does not promise the

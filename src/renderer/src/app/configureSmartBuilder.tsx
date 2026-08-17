@@ -18,6 +18,7 @@ import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { ComponentType, ReactNode } from "react";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import ArrayDatasetHoverCard from "@/mikro-next/components/hovers/ArrayDatasetHoverCard";
 import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
 import FolderHoverCard from "@/mikro-next/components/hovers/FolderHoverCard";
 import ActionHoverCard from "@/rekuest/components/hovers/ActionHoverCard";
@@ -47,6 +48,10 @@ const asPageVariant = (variant: unknown): PageVariant | undefined =>
 const hoverCards: Record<string, HoverCardEntry> = {
   "@mikro/file": { Component: FileHoverCard, Guard: Guard.Mikro },
   "@mikro/folder": { Component: FolderHoverCard, Guard: Guard.Mikro },
+  "@mikro/arraydataset": {
+    Component: ArrayDatasetHoverCard,
+    Guard: Guard.Mikro,
+  },
   "@rekuest/action": { Component: ActionHoverCard, Guard: Guard.Rekuest },
   "@rekuest/agent": { Component: AgentHoverCard, Guard: Guard.Rekuest },
   "@rekuest/task": {

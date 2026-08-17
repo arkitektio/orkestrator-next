@@ -24,10 +24,9 @@ import { createDisplayProvider } from "@/lib/display/registry";
 import { MessageDisplay } from "@/alpaka/displays/MessageDisplay";
 import { SoloBroadcastDisplay } from "@/lovekit/displays/SoloBroadcastDisplay";
 import { FolderDisplay } from "@/mikro-next/displays/FolderDisplay";
+import { ArrayDatasetDisplay } from "@/mikro-next/displays/ArrayDatasetDisplay";
 import { FileDisplay } from "@/mikro-next/displays/FileDisplay";
-import { InstrumentDisplay } from "@/mikro-next/displays/InstrumentDisplay";
 import { SceneDisplay } from "@/mikro-next/displays/SceneDisplay";
-import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
 import { TableDatasetDisplay } from "@/mikro-next/displays/TableDatasetDisplay";
 
 // Import your display components here
@@ -38,13 +37,11 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
   createDisplayProvider({
     // mikro
     "@mikro-next/file": FileDisplay,
-    "@mikro-next/snapshot": SnapshotDisplay,
     "@mikro/file": FileDisplay,
     "@mikro/scene": SceneDisplay,
-    "@mikro/snapshot": SnapshotDisplay,
+    "@mikro/arraydataset": ArrayDatasetDisplay,
     "@mikro/folder": FolderDisplay,
     "@mikro/tabledataset": TableDatasetDisplay,
-    "@mikro/instrument": InstrumentDisplay,
     // elektro
     "@elektro/analogsignalchannel": AnalogSignalChannelDisplay,
     "@elektro/simulation": SimulationDisplay,

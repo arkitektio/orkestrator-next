@@ -194,6 +194,16 @@ One grant covers a whole prefix: the manifest, both catalogs and every level.
 `access.test.ts` asserts the separation directly, including that forcing a
 refresh of one kind leaves the other untouched.
 
+**A 403 here is usually not about credentials.** fabriks is the only reader in
+the app that fetches by *overlapping byte ranges* — a Parquet footer, then a row
+group running to EOF over the same tail — and `range` is a SigV4-signed header
+that the browser's cache is allowed to rewrite before the request leaves. That
+combination produces a `SignatureDoesNotMatch` on the geometry read while every
+other store in the app keeps working. It is fixed in `s3-request.ts`
+(`cache: 'no-store'` for ranged requests); the mechanism, the diagnosis recipe,
+and the long list of things that are *not* the cause are in
+`lib/zarr/runner/SIGV4_SIGNING.md`. Start there before suspecting the grant.
+
 ## Spec version — deliberately not gated
 
 `manifest.specVersion` is parsed and kept, and nothing refuses on it.

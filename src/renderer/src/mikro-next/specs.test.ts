@@ -9,6 +9,7 @@ import {
   baseDtypeOf,
   datasetNbytes,
   dtypeBytes,
+  formatAxes,
   formatBytes,
   formatShape,
   modifierSpecsOf,
@@ -136,6 +137,27 @@ describe('formatShape', () => {
 
   it('is empty for a scalar with no axes', () => {
     expect(formatShape([], [])).toBe('')
+  })
+})
+
+describe('formatAxes', () => {
+  it('reads a group of already-paired axes the same way formatShape does', () => {
+    const axes = [
+      { name: 'x', extent: 1024 },
+      { name: 'y', extent: 1024 },
+      { name: 'z', extent: 5 }
+    ]
+    expect(formatAxes(axes)).toBe(formatShape(['x', 'y', 'z'], [1024, 1024, 5]))
+  })
+
+  it('is empty for an empty group', () => {
+    expect(formatAxes([])).toBe('')
+  })
+
+  /* The reason the helper exists: a caller splitting a group back into two
+     parallel arrays can transpose them, and this pins the order. */
+  it('puts the extent before the axis name', () => {
+    expect(formatAxes([{ name: 'y', extent: 512 }])).toBe('512y')
   })
 })
 

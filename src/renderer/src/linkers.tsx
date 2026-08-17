@@ -162,11 +162,6 @@ export const RekuestDashboard = buildSmart(
   { name: "Dashboard" },
 );
 
-export const MikroSnapshot = buildSmart(
-  "@mikro/snapshot",
-  "mikro/snapshots",
-  { name: "Snapshot" },
-);
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
@@ -487,13 +482,6 @@ export const KraphNodeQuery = buildSmart(
   { name: "Node Query" },
 );
 
-export const MikroExperiment = buildSmart(
-  "@mikro/experiment",
-  "mikro/experiments",
-  { name: "Experiment (Mikro)" },
-);
-
-
 export const KraphProtocol = buildSmart(
   "@kraph/protocol",
   "kraph/protocols",
@@ -581,12 +569,6 @@ export const MikroTableDataset = buildSmart(
 
 
 
-
-export const MikroInstrument = buildSmart(
-  "@mikro/instrument",
-  "mikro/instruments",
-  { name: "Instrument" },
-);
 
 export const MikroAnnotation = buildSmart(
   "@mikro/annotation",

@@ -232,6 +232,7 @@
     "cmdk": "^1.1.1",
     "color-2-name": "^1.4.4",
     "colormap": "^2.3.2",
+    "cross-env": "^10.1.0",
     "date-fns": "^4.1.0",
     "debounce": "^1.2.1",
     "dedent": "1.0.0",

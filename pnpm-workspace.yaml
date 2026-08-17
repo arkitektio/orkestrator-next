@@ -29,8 +29,13 @@ overrides:
 #   @parcel/watcher     - install script; falls back to the prebuilt platform pkg
 #   electron-winstaller - install script picks the 7-Zip arch (local, no download)
 #   msw                 - postinstall is `.catch(() => void 0)`; nothing to run
-# NOTE: electron@43 is deliberately absent — it has no scripts field at all and
-# downloads its binary lazily on first require, so it is unaffected by blocking.
+# NOTE: electron@43 is deliberately absent — it has no scripts field at all, so
+# there is nothing here to block. Its 295M binary is NOT fetched at install time
+# either: upstream dropped the postinstall and replaced it with a lazy download
+# inside electron/index.js, which only fires on `require('electron')` from node.
+# electron-vite never does that — it reads node_modules/electron/path.txt itself
+# and throws "Electron uninstall" — so the root postinstall in package.json runs
+# electron/install.js explicitly. It is a no-op once dist/ is present.
 allowBuilds:
   '@parcel/watcher': true
   electron-winstaller: true

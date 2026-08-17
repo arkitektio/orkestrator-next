@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import AnalogSignalChannelPage from "./pages/AnalogSignalChannelPage";
 import AnalogSignalPage from "./pages/AnalogSignalPage";
 import BlockPage from "./pages/BlockPage";

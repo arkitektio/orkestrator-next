@@ -1,6 +1,6 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import { ConnectedGuard } from "./ConnectedGuard";
 import DatasetPage from "./pages/DatasetPage";
 import DatasetsPage from "./pages/DatasetsPage";

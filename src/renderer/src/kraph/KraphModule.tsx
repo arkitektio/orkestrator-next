@@ -2,7 +2,7 @@ import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import EntityCategoriesPage from "./pages/EntityCategoriesPage";
 import EntityCategoryPage from "./pages/EntityCategoryPage";
 import EntityPage from "./pages/EntityPage";

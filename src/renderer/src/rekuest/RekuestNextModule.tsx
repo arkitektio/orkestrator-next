@@ -1,7 +1,7 @@
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/app/Arkitekt";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import Action from "./pages/ActionPage";
 import Actions from "./pages/ActionsPage";
 import AgentPage from "./pages/AgentPage";

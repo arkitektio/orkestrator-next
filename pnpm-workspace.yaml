@@ -9,6 +9,20 @@
 overrides:
   vite: ^7.2.6
 
+  # react-router MUST be a single instance or every <Routes> throws
+  # "useRoutes() may be used only in the context of a <Router> component":
+  # <HashRouter> comes from react-router-dom, and a second copy of react-router
+  # means a second React context.
+  #
+  # Two things pull it in besides react-router-dom (which pins it exactly):
+  # nuqs declares react-router as an OPTIONAL PEER (^5 || ^6 || ^7), and
+  # auto-install-peers=true in .npmrc happily satisfies that with whatever the
+  # newest 6.x is — which is how 6.30.3 and 6.30.4 ended up side by side.
+  #
+  # Keep this pinned to exactly the version react-router-dom depends on, and
+  # bump both together. Verify with: pnpm why react-router  ->  1 version.
+  react-router: 6.30.4
+
 # pnpm 10+ blocks dependency lifecycle scripts unless they are listed here.
 # Written by `pnpm approve-builds`; keep it that way rather than hand-editing.
 #   esbuild             - postinstall resolves the platform binary; vite needs it

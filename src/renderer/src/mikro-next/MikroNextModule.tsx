@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import ADatasetPage from "./pages/ADatasetPage";
 import ADatasetSpecPage from "./pages/ADatasetSpecPage";
 import ADatasetsPage from "./pages/ADatasetsPage";

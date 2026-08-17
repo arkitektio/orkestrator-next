@@ -1,7 +1,7 @@
 import { Guard } from "@/app/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import BackendPage from "./pages/BackendPage";
 import DefinitionPage from "./pages/DefinitionPage";
 import FlavourPage from "./pages/FlavourPage";

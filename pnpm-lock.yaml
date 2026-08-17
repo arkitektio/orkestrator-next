@@ -11,12 +11,6 @@ importers:
 
   .:
     dependencies:
-      '@a2ui/react':
-        specifier: ^0.10.0
-        version: 0.10.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
-      '@a2ui/web_core':
-        specifier: ^0.10.0
-        version: 0.10.0
       '@aws-sdk/client-s3':
         specifier: ^3.1010.0
         version: 3.1048.0
@@ -32,12 +26,6 @@ importers:
       '@electron-toolkit/utils':
         specifier: ^4.0.0
         version: 4.0.0(electron@43.1.0)
-      '@moq/hang':
-        specifier: ^0.1.2
-        version: 0.1.3(@svta/cml-utils@1.5.0)(@types/react@19.2.14)(react@19.2.7)
-      '@moq/lite':
-        specifier: ^0.1.2
-        version: 0.1.7(@types/react@19.2.14)(react@19.2.7)(zod@4.4.3)
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -893,22 +881,6 @@ packages:
 
   7zip-bin@5.2.0:
     resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
-
-  '@a2ui/markdown-it@0.0.4':
-    resolution: {integrity: sha512-uaYNywdiHDH4i//pHpyckFnApvOshiUNT2Xl8awceNjL1XAX/gqtki9GRUJQ26RE7id2+aPNgOy1W6mXNBxriQ==}
-    peerDependencies:
-      '@a2ui/web_core': ^0.9.2
-
-  '@a2ui/react@0.10.0':
-    resolution: {integrity: sha512-LeyrHUv7lNkLqrxr+qM2XybCB5ok/8gm5fVcs2foPiPV0KN6XtZGDKk23Kt3oitRHJp7vFOeyDD9y+UYWh4Y3A==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-      zod: ^3.23.8
-
-  '@a2ui/web_core@0.10.0':
-    resolution: {integrity: sha512-pSieKxaB6aZWBL2LjZfKo4/1v4xMWylczpzte1ehuGH0kfNGf/iTd73PKsIKYx3b0FNWTbD8gAloOM4JCVqUig==}
 
   '@adobe/css-tools@4.5.0':
     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
@@ -2546,15 +2518,6 @@ packages:
   '@juggle/resize-observer@3.4.0':
     resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
 
-  '@kixelated/libavjs-webcodecs-polyfill@0.5.5':
-    resolution: {integrity: sha512-Q1zgnTMMQ2F7IE9ylx3C1XzVbg5vYN18jiDINO5U3kNPBOHdYuUlJsMhtBoqr1M6ocLtoiqdHmLs7tHFgrw5KA==}
-
-  '@libav.js/types@6.8.8':
-    resolution: {integrity: sha512-Lbik/0Q3x2R8cI7mOtRgt+nUWLqGXh7UinMndmpdXSDY4YEjYyVUDsq6fxkuriL78+LCYx8frZIN1r+oDsvYCQ==}
-
-  '@libav.js/variant-opus-af@6.8.8':
-    resolution: {integrity: sha512-8KBQyA8n5goN7lyctOaPxpcx7dapOgqKh8dWW/NAcl87AgM/WoUGSex3fFc46oCtTHYrUKEm1OmZUrtkt3Q56A==}
-
   '@livekit/components-core@0.12.13':
     resolution: {integrity: sha512-DQmi84afHoHjZ62wm8y+XPNIDHTwFHAltjd3lmyXj8UZHOY7wcza4vFt1xnghJOD5wLRY58L1dkAgAw59MgWvw==}
     engines: {node: '>=18'}
@@ -2623,32 +2586,6 @@ packages:
     resolution: {integrity: sha512-2Z0FATFHaoYJ8b+Y4y4Hgfn3FRFwuU5zRrk+9dFWp4uGAdHGqVEdP7HP+gLA3X469KXHmfupJaUbKo1b/aDKIg==}
     peerDependencies:
       three: '>= 0.159.0'
-
-  '@moq/hang@0.1.3':
-    resolution: {integrity: sha512-GJ47RIUxSI4yF9IzmQLr+HMuABb1IVk8FX2548H+SwGQBuvOk2MpIutH3rn9SWSB7l/NuIyr8+Ijo0C4GTZ7xw==}
-
-  '@moq/lite@0.1.7':
-    resolution: {integrity: sha512-28KiFT0l4aWxPg/dr5HRxgPcfYL7IQZsuDB+mlPX4fUH5tsYrMFXfI2LSBXDpdoOB6dcXqmgqrkTaDr2wE0IaA==}
-    deprecated: Renamed to @moq/net. See https://moq.dev
-    peerDependencies:
-      zod: ^4.1.0
-
-  '@moq/qmux@0.0.6':
-    resolution: {integrity: sha512-ISuGz05lUvf1hzHW3Aw3VnsGRJe1w9Qdog3LQ66KS+l+5mzQsPANvW8yOioEe1Z9dJO2G3sAHoGPnzwnsY9SIQ==}
-
-  '@moq/signals@0.1.6':
-    resolution: {integrity: sha512-ic7ttiz6dHXOPoVAfhz4K6LGT2LWdDGTi1x2u8sYSGZ5nOKGWfqDkwYcGvCPlcVQetn3PaeXYSPFiMAC6RO3tQ==}
-    peerDependencies:
-      '@types/react': ^19.1.8
-      react: ^19.0.0
-      solid-js: ^1.9.7
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react:
-        optional: true
-      solid-js:
-        optional: true
 
   '@mswjs/interceptors@0.41.9':
     resolution: {integrity: sha512-VVPPgHyQ6ShqnrmDWuxjmUIsO9gWyOZFmuOfLd9LfBGQJwZfy0gvv9pbHSJuoFNIYC7ZDX9aoFwowjcdSC4E8w==}
@@ -3146,9 +3083,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@preact/signals-core@1.14.2':
-    resolution: {integrity: sha512-RZHdBj9ZF4n40Rp4jS052EHHjBWf96P9oNdXPfhQTovCuWY9iQn3Gq+gOTJSgBO9A/JBuPfMOWsSX/lIU9Pc/A==}
 
   '@r2wc/core@1.3.1':
     resolution: {integrity: sha512-x9nMthXsTjqr1alE+boX1Zuzqb6/oFi4wAOdWaWcWKcrwq9M/PATK74c3DFJfRnUOkYWPlsz0e4CsFBXJGStSA==}
@@ -4702,12 +4636,6 @@ packages:
     peerDependencies:
       '@svta/cml-utils': 1.0.1
 
-  '@svta/cml-iso-bmff@1.0.2':
-    resolution: {integrity: sha512-c9UgY1z16zgvTEa6fS++9E9zxLuPtLJ4Dw5ebOgEDtwIw+PIhbh3URGXjv30tyDU2QQTXstI6U1q6h/Q4SkxGQ==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      '@svta/cml-utils': 1.5.0
-
   '@svta/cml-request@1.0.1':
     resolution: {integrity: sha512-enL19BuXUjFkDDDF9jdNwUclMNPRsagnjGAetVC7xcmpDMpEx+ZLgsDip6BFNg5p6izSEk/OyujTWW1r8bDNiA==}
     engines: {node: '>=20'}
@@ -5804,9 +5732,6 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@ungap/global-this@0.4.4':
-    resolution: {integrity: sha512-mHkm6FvepJECMNthFuIgpAEFmPOk71UyXuIxYfjytvFTnSDBIz7jmViO+LfHI/AjrazWije0PnSP3+/NlwzqtA==}
-
   '@use-gesture/core@10.3.1':
     resolution: {integrity: sha512-WcINiDt8WjqBdUXye25anHiNxPc0VOrlT8F6LLkU6cycrOGUDyY/yyFmsg3k8i5OLvv25llc0QC45GhR/C8llw==}
 
@@ -6139,9 +6064,6 @@ packages:
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
-
-  async-mutex@0.5.0:
-    resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
 
   async@3.2.6:
     resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
@@ -6560,9 +6482,6 @@ packages:
   combined-stream@1.0.8:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
-
-  comlink@4.4.2:
-    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
 
   command-line-args@5.2.1:
     resolution: {integrity: sha512-H4UfQhZyakIjC74I9d34fGYDwk3XpSr17QhEd0Q3I9Xq1CETHo4Hcuo87WyWHpAF1aSLjLRf5lD9ZGX2qStUvg==}
@@ -7121,9 +7040,6 @@ packages:
   domhandler@5.0.3:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
-
-  dompurify@3.4.5:
-    resolution: {integrity: sha512-OrwIBKsdNSVEeubdJ1HBv/wNENRM9ytAVCv7YXt//A3vPdVMNuACRqK9mXCGCBW2ln7BT/A4X0jXHo2Gu89miA==}
 
   dompurify@3.4.8:
     resolution: {integrity: sha512-yb1cEmaOum7wFvOCSQxyfgVlv5D47Rc30iZWoMpbDIWTnJ6grDDQyu2KFJzB2k7u0pMuJcQ1zphH//fFnw2tjQ==}
@@ -8805,9 +8721,6 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  linkify-it@5.0.0:
-    resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
-
   listr2@4.0.5:
     resolution: {integrity: sha512-juGHV1doQdpNT3GSTs9IUN43QJb7KHdF9uqg7Vufs/tG9VTzpFphqF4pm/ICdAABGQxsyNn9CiYA3StkI6jpwA==}
     engines: {node: '>=12'}
@@ -8983,10 +8896,6 @@ packages:
     resolution: {integrity: sha512-8y/eV9QQZCiyn1SprXSrCmqJN0yNRATe+PO8ztwqrvrbdRLA3eYJF0yaR0YayLWkMbsQSKWS9N2gPcGEc4UsZg==}
     engines: {node: '>=0.10.0'}
 
-  markdown-it@14.1.1:
-    resolution: {integrity: sha512-BuU2qnTti9YKgK5N+IeMubp14ZUKUUw7yeJbkjtosvHiP0AZ5c8IAgEMk79D0eC8F23r4Ac/q8cAIFdm2FtyoA==}
-    hasBin: true
-
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
 
@@ -9074,9 +8983,6 @@ packages:
 
   mdn-data@2.27.1:
     resolution: {integrity: sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ==}
-
-  mdurl@2.0.0:
-    resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
 
   media-chrome@4.19.0:
     resolution: {integrity: sha512-HWhDTwts+BSbdPkkB1VsJXp5kvL0IxY7xFT5tBwliM2+89kTPVTnHnev+9it2f9PweANjT/C8/C/S0PW9oyZbA==}
@@ -10052,10 +9958,6 @@ packages:
 
   pump@3.0.4:
     resolution: {integrity: sha512-VS7sjc6KR7e1ukRFhQSY5LM2uBWAUPiOPa/A3mkKmiMwSmRFUITt0xuj+/lesgnCv+dPIEYlkzrcyXgquIHMcA==}
-
-  punycode.js@2.3.1:
-    resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
-    engines: {node: '>=6'}
 
   punycode@1.4.1:
     resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
@@ -11389,9 +11291,6 @@ packages:
     resolution: {integrity: sha512-LbBDqdIC5s8iROCUjMbW1f5dJQTEFB1+KO9ogbvlb3nm9n4YHa5p4KTvFPWvh2Hs8gZMBuiB1/8+pdfe/tDPug==}
     hasBin: true
 
-  uc.micro@2.1.0:
-    resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
-
   uglify-js@3.19.3:
     resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
     engines: {node: '>=0.8.0'}
@@ -12110,29 +12009,6 @@ packages:
 snapshots:
 
   7zip-bin@5.2.0: {}
-
-  '@a2ui/markdown-it@0.0.4(@a2ui/web_core@0.10.0)':
-    dependencies:
-      '@a2ui/web_core': 0.10.0
-      dompurify: 3.4.5
-      markdown-it: 14.1.1
-
-  '@a2ui/react@0.10.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)':
-    dependencies:
-      '@a2ui/markdown-it': 0.0.4(@a2ui/web_core@0.10.0)
-      '@a2ui/web_core': 0.10.0
-      clsx: 2.1.1
-      markdown-it: 14.1.1
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      zod: 4.4.3
-
-  '@a2ui/web_core@0.10.0':
-    dependencies:
-      '@preact/signals-core': 1.14.2
-      date-fns: 4.1.0
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
 
   '@adobe/css-tools@4.5.0': {}
 
@@ -14242,15 +14118,6 @@ snapshots:
 
   '@juggle/resize-observer@3.4.0': {}
 
-  '@kixelated/libavjs-webcodecs-polyfill@0.5.5':
-    dependencies:
-      '@libav.js/types': 6.8.8
-      '@ungap/global-this': 0.4.4
-
-  '@libav.js/types@6.8.8': {}
-
-  '@libav.js/variant-opus-af@6.8.8': {}
-
   '@livekit/components-core@0.12.13(livekit-client@2.19.0(@types/dom-mediacapture-record@1.0.22))(tslib@2.8.1)':
     dependencies:
       '@floating-ui/dom': 1.7.4
@@ -14333,40 +14200,6 @@ snapshots:
     dependencies:
       promise-worker-transferable: 1.0.4
       three: 0.184.0
-
-  '@moq/hang@0.1.3(@svta/cml-utils@1.5.0)(@types/react@19.2.14)(react@19.2.7)':
-    dependencies:
-      '@kixelated/libavjs-webcodecs-polyfill': 0.5.5
-      '@libav.js/variant-opus-af': 6.8.8
-      '@moq/lite': 0.1.7(@types/react@19.2.14)(react@19.2.7)(zod@4.4.3)
-      '@moq/signals': 0.1.6(@types/react@19.2.14)(react@19.2.7)
-      '@svta/cml-iso-bmff': 1.0.2(@svta/cml-utils@1.5.0)
-      async-mutex: 0.5.0
-      comlink: 4.4.2
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@svta/cml-utils'
-      - '@types/react'
-      - react
-      - solid-js
-
-  '@moq/lite@0.1.7(@types/react@19.2.14)(react@19.2.7)(zod@4.4.3)':
-    dependencies:
-      '@moq/qmux': 0.0.6
-      '@moq/signals': 0.1.6(@types/react@19.2.14)(react@19.2.7)
-      async-mutex: 0.5.0
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@types/react'
-      - react
-      - solid-js
-
-  '@moq/qmux@0.0.6': {}
-
-  '@moq/signals@0.1.6(@types/react@19.2.14)(react@19.2.7)':
-    optionalDependencies:
-      '@types/react': 19.2.14
-      react: 19.2.7
 
   '@mswjs/interceptors@0.41.9':
     dependencies:
@@ -14924,8 +14757,6 @@ snapshots:
       config-chain: 1.1.13
 
   '@polka/url@1.0.0-next.29': {}
-
-  '@preact/signals-core@1.14.2': {}
 
   '@r2wc/core@1.3.1': {}
 
@@ -16533,10 +16364,6 @@ snapshots:
     dependencies:
       '@svta/cml-utils': 1.5.0
 
-  '@svta/cml-iso-bmff@1.0.2(@svta/cml-utils@1.5.0)':
-    dependencies:
-      '@svta/cml-utils': 1.5.0
-
   '@svta/cml-request@1.0.1(@svta/cml-utils@1.5.0)(@svta/cml-xml@1.0.1(@svta/cml-utils@1.5.0))':
     dependencies:
       '@svta/cml-utils': 1.5.0
@@ -17771,8 +17598,6 @@ snapshots:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  '@ungap/global-this@0.4.4': {}
-
   '@use-gesture/core@10.3.1': {}
 
   '@use-gesture/react@10.3.1(react@19.2.7)':
@@ -18202,10 +18027,6 @@ snapshots:
   async-exit-hook@2.0.1: {}
 
   async-function@1.0.0: {}
-
-  async-mutex@0.5.0:
-    dependencies:
-      tslib: 2.8.1
 
   async@3.2.6: {}
 
@@ -18735,8 +18556,6 @@ snapshots:
   combined-stream@1.0.8:
     dependencies:
       delayed-stream: 1.0.0
-
-  comlink@4.4.2: {}
 
   command-line-args@5.2.1:
     dependencies:
@@ -19336,10 +19155,6 @@ snapshots:
   domhandler@5.0.3:
     dependencies:
       domelementtype: 2.3.0
-
-  dompurify@3.4.5:
-    optionalDependencies:
-      '@types/trusted-types': 2.0.7
 
   dompurify@3.4.8:
     optionalDependencies:
@@ -21216,10 +21031,6 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  linkify-it@5.0.0:
-    dependencies:
-      uc.micro: 2.1.0
-
   listr2@4.0.5:
     dependencies:
       cli-truncate: 2.1.0
@@ -21392,15 +21203,6 @@ snapshots:
       semver: 7.8.0
 
   map-cache@0.2.2: {}
-
-  markdown-it@14.1.1:
-    dependencies:
-      argparse: 2.0.1
-      entities: 4.5.0
-      linkify-it: 5.0.0
-      mdurl: 2.0.0
-      punycode.js: 2.3.1
-      uc.micro: 2.1.0
 
   markdown-table@3.0.4: {}
 
@@ -21607,8 +21409,6 @@ snapshots:
       '@types/mdast': 4.0.4
 
   mdn-data@2.27.1: {}
-
-  mdurl@2.0.0: {}
 
   media-chrome@4.19.0(react@19.2.7):
     dependencies:
@@ -22660,8 +22460,6 @@ snapshots:
     dependencies:
       end-of-stream: 1.4.5
       once: 1.4.0
-
-  punycode.js@2.3.1: {}
 
   punycode@1.4.1: {}
 
@@ -24260,8 +24058,6 @@ snapshots:
   typical@7.3.0: {}
 
   ua-parser-js@1.0.41: {}
-
-  uc.micro@2.1.0: {}
 
   uglify-js@3.19.3:
     optional: true

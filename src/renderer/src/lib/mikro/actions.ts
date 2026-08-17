@@ -54,13 +54,13 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     icon: Clapperboard,
     pinned: true,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'identifier', identifier: '@mikro/arraydataset' },
       { type: 'nopartner' },
     ],
     collections: ['arrayDataset'],
     execute: async ({ state, services, navigate }) => {
       const selected = state.left.find(
-        (item) => item.identifier === '@mikro/adataset',
+        (item) => item.identifier === '@mikro/arraydataset',
       );
 
       if (!selected?.object?.id) {
@@ -196,7 +196,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     icon: Waypoints,
     conditions: [
       { type: 'identifier', identifier: '@mikro/coordinatesystem' },
-      { type: 'partner', partner: '@mikro/adataset' },
+      { type: 'partner', partner: '@mikro/arraydataset' },
     ],
     collections: ['coordinatesystem'],
     execute: async ({ state, dialog }) => {
@@ -204,7 +204,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
         (item) => item.identifier === '@mikro/coordinatesystem',
       );
       const dataset = state.right?.find(
-        (item) => item.identifier === '@mikro/adataset',
+        (item) => item.identifier === '@mikro/arraydataset',
       );
       if (!target?.object?.id || !dataset?.object?.id) {
         throw new Error('Register needs both a coordinate system and a dataset');
@@ -254,13 +254,13 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       "Create a physical space for this dataset's pixels: a pixel size, a unit per axis",
     icon: Ruler,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'identifier', identifier: '@mikro/arraydataset' },
       { type: 'nopartner' },
     ],
     collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const selected = state.left.find(
-        (item) => item.identifier === '@mikro/adataset',
+        (item) => item.identifier === '@mikro/arraydataset',
       );
       if (!selected?.object?.id) {
         throw new Error('No dataset selected for Calibrate action');
@@ -278,13 +278,13 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       "Place this dataset into a coordinate system: a scene's world, an atlas hub, or any other space",
     icon: Waypoints,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'identifier', identifier: '@mikro/arraydataset' },
       { type: 'nopartner' },
     ],
     collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const selected = state.left.find(
-        (item) => item.identifier === '@mikro/adataset',
+        (item) => item.identifier === '@mikro/arraydataset',
       );
       if (!selected?.object?.id) {
         throw new Error('No dataset selected for Register Into action');
@@ -404,13 +404,13 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     description: 'File this dataset into a folder',
     icon: FolderInput,
     conditions: [
-      { type: 'identifier', identifier: '@mikro/adataset' },
+      { type: 'identifier', identifier: '@mikro/arraydataset' },
       { type: 'nopartner' },
     ],
     collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const ids = state.left
-        .filter((item) => item.identifier === '@mikro/adataset')
+        .filter((item) => item.identifier === '@mikro/arraydataset')
         .map((item) => item.object.id)
 
       if (ids.length === 0) {
@@ -474,14 +474,14 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     icon: Boxes,
     conditions: [
       { type: 'identifier', identifier: '@mikro/folder' },
-      { type: 'partner', partner: '@mikro/adataset' }
+      { type: 'partner', partner: '@mikro/arraydataset' }
     ],
     collections: ['folder'],
     execute: async ({ state, services }) => {
       if (!state.right || state.right.length === 0) {
         throw new Error('No partner provided for Move Datasets to Folder action')
       }
-      const datasets = state.right.filter((item) => item.identifier === '@mikro/adataset')
+      const datasets = state.right.filter((item) => item.identifier === '@mikro/arraydataset')
       if (datasets.length === 0) {
         throw new Error('No datasets selected for Move Datasets to Folder action')
       }
@@ -607,7 +607,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
   }),
   'delete-mikro-arrayDataset': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Dataset',
-    identifier: '@mikro/adataset',
+    identifier: '@mikro/arraydataset',
     description:
       'Delete the array dataset, its pyramid levels and the store behind them',
     service: 'mikro',

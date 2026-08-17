@@ -346,7 +346,7 @@ export const FolderListExplorer = (props: FolderListExplorerProps) => {
       const filings = [
         [idsFor("@mikro/folder"), putFolders],
         [idsFor("@mikro/file"), putFiles],
-        [idsFor("@mikro/adataset"), putArrayDatasets],
+        [idsFor("@mikro/arraydataset"), putArrayDatasets],
         [idsFor("@mikro/tabledataset"), putTableDatasets],
       ] as const;
 

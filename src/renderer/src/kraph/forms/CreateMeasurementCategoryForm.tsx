@@ -167,7 +167,7 @@ const TForm = (props: { graph?: string; identifier?: string }) => {
               />
               <StructureDescriptorFields
                 prefix="source"
-                identifierDescription="Schema identifier of the structure being measured (e.g. '@mikro/adataset')"
+                identifierDescription="Schema identifier of the structure being measured (e.g. '@mikro/arraydataset')"
                 showAdvanced={showAdvanced}
               />
               <EntityDescriptorFields

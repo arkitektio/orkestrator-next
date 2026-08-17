@@ -195,7 +195,7 @@ export const MikroFolder = buildSmart(
 );
 
 export const MikroArrayDataset = buildSmart(
-  "@mikro/adataset",
+  "@mikro/arraydataset",
   "mikro/arraydatasets",
   { name: "Array Dataset" },
 );

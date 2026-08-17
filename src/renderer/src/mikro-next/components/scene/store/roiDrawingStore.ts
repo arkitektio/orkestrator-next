@@ -1,19 +1,19 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
-import { RoiKind } from "@/mikro-next/api/graphql";
+import { AnnotationKind } from "@/mikro-next/api/graphql";
 import { SPHERE_KIND } from "../core/primitiveDraw";
 import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "../core/trace/traceCost";
 
 /**
- * The drawing tool types the drawer implements. Each maps to a RoiKind for
+ * The drawing tool types the drawer implements. Each maps to a AnnotationKind for
  * the mutation. SPHERE and CUBE are the volumetric (3D-only) tools: a probe
  * click anchors their center, a second click sets the radius
  * (`core/primitiveDraw.ts`).
  */
 export type DrawingTool =
   | "RECTANGLE"
-  | "ELLIPSIS"
+  | "ELLIPSE"
   | "POINT"
   | "LINE"
   | "POLYGON"
@@ -46,15 +46,15 @@ export const isEnhanceableTool = (
 ): tool is "LINE" | "POLYGON" | "PATH" =>
   tool === "LINE" || tool === "POLYGON" || tool === "PATH";
 
-export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
-  RECTANGLE: RoiKind.Rectangle,
-  ELLIPSIS: RoiKind.Ellipsis,
-  POINT: RoiKind.Point,
-  LINE: RoiKind.Line,
-  POLYGON: RoiKind.Polygon,
-  PATH: RoiKind.Path,
+export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, AnnotationKind> = {
+  RECTANGLE: AnnotationKind.Rectangle,
+  ELLIPSE: AnnotationKind.Ellipse,
+  POINT: AnnotationKind.Point,
+  LINE: AnnotationKind.Line,
+  POLYGON: AnnotationKind.Polygon,
+  PATH: AnnotationKind.Path,
   SPHERE: SPHERE_KIND,
-  CUBE: RoiKind.Cube,
+  CUBE: AnnotationKind.Cube,
 };
 
 /**
@@ -63,8 +63,8 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, RoiKind> = {
  * `RoiDrawer` draws.
  *
  * Deliberately a separate union from `DrawingTool`: `DRAWING_TOOL_TO_ROI_KIND`
- * is a *total* `Record<DrawingTool, RoiKind>` that the drawer indexes unguarded,
- * so widening `DrawingTool` would force either a lying `RoiKind` entry for
+ * is a *total* `Record<DrawingTool, AnnotationKind>` that the drawer indexes unguarded,
+ * so widening `DrawingTool` would force either a lying `AnnotationKind` entry for
  * SELECT or a partial map for all six real tools.
  *
  * Drawing and marquee are then mutually exclusive by construction: exactly one
@@ -84,10 +84,10 @@ export const isDrawingTool = (
  */
 export interface DrawnRoi {
   id: string;
-  kind: RoiKind;
+  kind: AnnotationKind;
   /**
    * The tool that drew it, kept so the local preview can be re-stroked with the
-   * right outline. `RoiKind` alone is not enough to invert — it has values with
+   * right outline. `AnnotationKind` alone is not enough to invert — it has values with
    * no drawing tool — and this state never leaves the client.
    */
   tool: DrawingTool;

@@ -67,7 +67,7 @@ describe("availableAnnotateTools", () => {
     expect(tools).toEqual([
       "SELECT",
       "RECTANGLE",
-      "ELLIPSIS",
+      "ELLIPSE",
       "POLYGON",
       "POINT",
       "LINE",
@@ -79,7 +79,7 @@ describe("availableAnnotateTools", () => {
     const tools = availableAnnotateTools(ctx3D);
     expect(tools).toEqual([
       "RECTANGLE",
-      "ELLIPSIS",
+      "ELLIPSE",
       "POLYGON",
       "SPHERE",
       "CUBE",
@@ -99,7 +99,7 @@ describe("availableAnnotateTools", () => {
     // kept them out).
     expect(isAnnotateToolAvailable("POLYGON", ctx3D)).toBe(true);
     expect(isAnnotateToolAvailable("RECTANGLE", ctx3D)).toBe(true);
-    expect(isAnnotateToolAvailable("ELLIPSIS", ctx3D)).toBe(true);
+    expect(isAnnotateToolAvailable("ELLIPSE", ctx3D)).toBe(true);
     // The volumetric tools stay 3D-only — they are anchored by a probe click.
     expect(isAnnotateToolAvailable("SPHERE", ctx2D)).toBe(false);
     expect(isAnnotateToolAvailable("SPHERE", ctx3D)).toBe(true);

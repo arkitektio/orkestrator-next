@@ -10,10 +10,10 @@ import {
   Zap,
   type LucideIcon
 } from 'lucide-react'
-import { ADatasetSpec } from './api/graphql'
+import { ArrayDatasetSpec } from './api/graphql'
 
 /**
- * The presentable form of ADatasetSpec — what a dataset structurally IS, derived
+ * The presentable form of ArrayDatasetSpec — what a dataset structurally IS, derived
  * server-side from the axes of its intrinsic coordinate system. One entry per
  * enum member, and the single source for both the sidebar sections and the
  * filtered list pages behind them.
@@ -23,11 +23,11 @@ import { ADatasetSpec } from './api/graphql'
  * acquisition axis present. So two spatial specs together match nothing, while
  * modifiers stack — VOLUME + TIMESERIES + MULTICHANNEL is one 3D timelapse.
  */
-export type ADatasetSpecKind = 'spatial' | 'modifier'
+export type ArrayDatasetSpecKind = 'spatial' | 'modifier'
 
-export type ADatasetSpecEntry = {
-  spec: ADatasetSpec
-  /** URL segment under /mikro/adatasets/spec/. */
+export type ArrayDatasetSpecEntry = {
+  spec: ArrayDatasetSpec
+  /** URL segment under /mikro/arraydatasets/spec/. */
   slug: string
   /** Plural, for a section listing many. */
   label: string
@@ -35,7 +35,7 @@ export type ADatasetSpecEntry = {
   short: string
   description: string
   icon: LucideIcon
-  kind: ADatasetSpecKind
+  kind: ArrayDatasetSpecKind
   /**
    * How many SPACE axes this spatial spec denotes. Undefined for a modifier, and
    * for HYPERVOLUME — "four or more" does not pin a number. Usable to split a
@@ -47,9 +47,9 @@ export type ADatasetSpecEntry = {
 
 /** Spatial first, in ascending rank, then the modifiers — the reading order the
  *  schema's own docs use, and the order the sidebar renders. */
-export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
+export const ADATASET_SPECS: readonly ArrayDatasetSpecEntry[] = [
   {
-    spec: ADatasetSpec.Scalar,
+    spec: ArrayDatasetSpec.Scalar,
     slug: 'scalar',
     short: 'scalar',
     label: 'Scalars',
@@ -59,7 +59,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     spatialRank: 0
   },
   {
-    spec: ADatasetSpec.Profile,
+    spec: ArrayDatasetSpec.Profile,
     slug: 'profile',
     short: 'profile',
     label: 'Profiles',
@@ -69,7 +69,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     spatialRank: 1
   },
   {
-    spec: ADatasetSpec.Image,
+    spec: ArrayDatasetSpec.Image,
     slug: 'image',
     short: '2d',
     label: 'Images',
@@ -79,7 +79,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     spatialRank: 2
   },
   {
-    spec: ADatasetSpec.Volume,
+    spec: ArrayDatasetSpec.Volume,
     slug: 'volume',
     short: '3d',
     label: 'Volumes',
@@ -90,7 +90,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     spatialRank: 3
   },
   {
-    spec: ADatasetSpec.Hypervolume,
+    spec: ArrayDatasetSpec.Hypervolume,
     slug: 'hypervolume',
     short: 'nd',
     label: 'Hypervolumes',
@@ -99,7 +99,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     kind: 'spatial'
   },
   {
-    spec: ADatasetSpec.Multichannel,
+    spec: ArrayDatasetSpec.Multichannel,
     slug: 'multichannel',
     short: 'multichannel',
     label: 'Multichannel',
@@ -109,7 +109,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     kind: 'modifier'
   },
   {
-    spec: ADatasetSpec.Timeseries,
+    spec: ArrayDatasetSpec.Timeseries,
     slug: 'timeseries',
     short: 'timeseries',
     label: 'Timeseries',
@@ -119,7 +119,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     kind: 'modifier'
   },
   {
-    spec: ADatasetSpec.Spectral,
+    spec: ArrayDatasetSpec.Spectral,
     slug: 'spectral',
     short: 'spectral',
     label: 'Spectral',
@@ -129,7 +129,7 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
     kind: 'modifier'
   },
   {
-    spec: ADatasetSpec.Flim,
+    spec: ArrayDatasetSpec.Flim,
     slug: 'flim',
     short: 'flim',
     label: 'FLIM',
@@ -139,29 +139,29 @@ export const ADATASET_SPECS: readonly ADatasetSpecEntry[] = [
   }
 ]
 
-export const ADATASET_SPEC_BY_SLUG: Record<string, ADatasetSpecEntry> = Object.fromEntries(
+export const ADATASET_SPEC_BY_SLUG: Record<string, ArrayDatasetSpecEntry> = Object.fromEntries(
   ADATASET_SPECS.map((entry) => [entry.slug, entry])
 )
 
-export const adatasetSpecLink = (slug: string) => `/mikro/adatasets/spec/${slug}`
+export const arrayDatasetSpecLink = (slug: string) => `/mikro/arraydatasets/spec/${slug}`
 
 export const ADATASET_SPEC_INFO = Object.fromEntries(
   ADATASET_SPECS.map((entry) => [entry.spec, entry])
-) as Record<ADatasetSpec, ADatasetSpecEntry>
+) as Record<ArrayDatasetSpec, ArrayDatasetSpecEntry>
 
 /**
  * The single spatial spec a dataset carries. Undefined only while its intrinsic
  * system does not exist yet — `spec` is empty then, and nothing structural is
  * known about it.
  */
-export const spatialSpecOf = (specs: readonly ADatasetSpec[] | undefined) =>
+export const spatialSpecOf = (specs: readonly ArrayDatasetSpec[] | undefined) =>
   specs?.map((spec) => ADATASET_SPEC_INFO[spec]).find((entry) => entry?.kind === 'spatial')
 
 /** The acquisition modifiers a dataset carries, in catalogue order. */
-export const modifierSpecsOf = (specs: readonly ADatasetSpec[] | undefined) =>
+export const modifierSpecsOf = (specs: readonly ArrayDatasetSpec[] | undefined) =>
   ADATASET_SPECS.filter((entry) => entry.kind === 'modifier' && specs?.includes(entry.spec))
 
-export type ADatasetAxis = { name: string; extent: number }
+export type ArrayDatasetAxis = { name: string; extent: number }
 
 /**
  * Splits a shape into its acquisition axes and its spatial ones, using the
@@ -175,9 +175,9 @@ export type ADatasetAxis = { name: string; extent: number }
 export const splitAxesBySpec = (
   axisNames: readonly string[],
   shape: readonly number[],
-  specs: readonly ADatasetSpec[] | undefined
-): { acquisition: ADatasetAxis[]; spatial: ADatasetAxis[] } => {
-  const axes: ADatasetAxis[] = shape.map((extent, index) => ({
+  specs: readonly ArrayDatasetSpec[] | undefined
+): { acquisition: ArrayDatasetAxis[]; spatial: ArrayDatasetAxis[] } => {
+  const axes: ArrayDatasetAxis[] = shape.map((extent, index) => ({
     name: axisNames[index] ?? '?',
     extent
   }))

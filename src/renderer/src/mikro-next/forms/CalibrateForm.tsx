@@ -14,7 +14,7 @@ import {
   AxisType,
   CreatableTransformKind,
   useCreateCoordinateSystemMutation,
-  useGetADatasetQuery,
+  useGetArrayDatasetQuery,
 } from "../api/graphql";
 import {
   CalibrationRow,
@@ -36,12 +36,12 @@ import {
  */
 
 const REFETCH = {
-  refetchQueries: ["GetADataset", "GetCoordinateSystem", "GetCoordinateGraph"],
+  refetchQueries: ["GetArrayDataset", "GetCoordinateSystem", "GetCoordinateGraph"],
   awaitRefetchQueries: true,
 };
 
 const CalibrateFormInner = (props: { dataset: string }) => {
-  const { data, loading, error } = useGetADatasetQuery({
+  const { data, loading, error } = useGetArrayDatasetQuery({
     variables: { id: props.dataset },
   });
 
@@ -50,7 +50,7 @@ const CalibrateFormInner = (props: { dataset: string }) => {
     return <div className="text-sm text-muted-foreground">Loading dataset…</div>;
   }
 
-  const intrinsic = data.adataset.intrinsicSystem;
+  const intrinsic = data.arrayDataset.intrinsicSystem;
   if (!intrinsic) {
     return (
       <div className="text-sm text-muted-foreground">
@@ -63,7 +63,7 @@ const CalibrateFormInner = (props: { dataset: string }) => {
   return (
     <CalibrateFormBody
       dataset={props.dataset}
-      datasetName={data.adataset.name}
+      datasetName={data.arrayDataset.name}
       axes={intrinsic.axes}
     />
   );

@@ -1,6 +1,6 @@
-query GetADataset($id: ID!) {
-  adataset(id: $id) {
-    ...ADataset
+query GetArrayDataset($id: ID!) {
+  arrayDataset(id: $id) {
+    ...ArrayDataset
     # The scenes this dataset is rendered in, reached through its lenses'
     # layers. Selected on the query rather than the fragment because it is an
     # inverse relation the list views have no use for.
@@ -18,13 +18,13 @@ query GetADataset($id: ID!) {
   }
 }
 
-query GetADatasets(
-  $filters: ADatasetFilter
+query GetArrayDatasets(
+  $filters: ArrayDatasetFilter
   $pagination: OffsetPaginationInput
-  $ordering: [ADatasetOrder!]
+  $ordering: [ArrayDatasetOrder!]
 ) {
-  adatasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    ...ListADataset
+  arrayDatasets(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    ...ListArrayDataset
   }
 }
 
@@ -42,8 +42,8 @@ query GetADatasets(
 # computed. The parent is not on the edge, it is whatever lives in the space the edge
 # lands in, so `output.residents` is the hop back to a dataset — directly for a
 # parent's intrinsic grid, through `Lens.dataset` when the parent was a crop.
-query GetADatasetDerived($id: ID!) {
-  adataset(id: $id) {
+query GetArrayDatasetDerived($id: ID!) {
+  arrayDataset(id: $id) {
     id
     # An unsliced lens resolves to this same system, which is why "the dataset itself"
     # and "its full-array lenses" come out as one group rather than two.
@@ -63,7 +63,7 @@ query GetADatasetDerived($id: ID!) {
         name
         residents {
           __typename
-          ... on ADataset {
+          ... on ArrayDataset {
             id
             name
           }
@@ -81,7 +81,7 @@ query GetADatasetDerived($id: ID!) {
       }
     }
     derivedDatasets {
-      ...ListADataset
+      ...ListArrayDataset
       derivedFrom {
         id
         kind
@@ -113,10 +113,10 @@ query GetADatasetDerived($id: ID!) {
 # Just the space a scene would be built over. `createSceneFromDataset` is gone —
 # staging a dataset means calling createSceneFromCoordinateSystem with its
 # intrinsic grid — so an entry point holding only a dataset id needs this one
-# hop first. Deliberately not the full ADataset: the action wants an id, not
+# hop first. Deliberately not the full ArrayDataset: the action wants an id, not
 # every pyramid level and its store.
-query GetADatasetIntrinsicSystem($id: ID!) {
-  adataset(id: $id) {
+query GetArrayDatasetIntrinsicSystem($id: ID!) {
+  arrayDataset(id: $id) {
     id
     name
     intrinsicSystem {

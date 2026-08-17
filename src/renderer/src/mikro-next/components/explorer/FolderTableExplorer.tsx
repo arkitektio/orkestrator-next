@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/table";
 
 import { Sidebars } from "@/components/layout/Sidebars";
-import { MikroADataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
+import { MikroArrayDataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import {
   ChildrenQuery,
@@ -130,11 +130,11 @@ export const columns: ColumnDef<Item>[] = [
               {name}
             </MikroFile.DetailLink>
           );
-        case "ADataset":
+        case "ArrayDataset":
           return (
-            <MikroADataset.DetailLink object={item} className="lowercase">
+            <MikroArrayDataset.DetailLink object={item} className="lowercase">
               {name}
-            </MikroADataset.DetailLink>
+            </MikroArrayDataset.DetailLink>
           );
         case "TableDataset":
           return (

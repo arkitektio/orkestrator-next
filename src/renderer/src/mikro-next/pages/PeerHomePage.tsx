@@ -14,7 +14,7 @@ import { parseAsBoolean, parseAsIsoDateTime, useQueryState } from "nuqs";
 import { usePeerHomePageQuery } from "../api/graphql";
 import FolderList from "../components/lists/FolderList";
 import FileList from "../components/lists/FileList";
-import ADatasetList from "../components/lists/ADatasetList";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { PeerStatisticsSidebar } from "../components/sidebars/PeerStatisticsSidebar";
 
 
@@ -93,7 +93,7 @@ const Page = asDetailQueryRoute(usePeerHomePageQuery, ({ id }) => {
           </CardDescription>
         </CardHeader>
 
-        <ADatasetList
+        <ArrayDatasetList
           filters={{ notDerived: parentless ? true : undefined, owner: id, ...temporalFilter }}
         />
         <Separator className="my-4" />

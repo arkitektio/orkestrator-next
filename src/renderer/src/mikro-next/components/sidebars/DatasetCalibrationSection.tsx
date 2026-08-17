@@ -1,6 +1,6 @@
 import { MikroCoordinateSystem } from "@/linkers";
-import { GetADatasetQuery } from "../../api/graphql";
-import { useDatasetWorlds } from "../adataset/DatasetBackdrop";
+import { GetArrayDatasetQuery } from "../../api/graphql";
+import { useDatasetWorlds } from "../arraydataset/DatasetBackdrop";
 import {
   formatPixelSize,
   pixelSizeEntries,
@@ -9,7 +9,7 @@ import {
 } from "../coordinates/pixelSize";
 import { isPhysicalUnit } from "../scene/core/sceneUnits";
 
-type PageDataset = GetADatasetQuery["adataset"];
+type PageDataset = GetArrayDatasetQuery["arrayDataset"];
 
 /**
  * How big a voxel actually is.

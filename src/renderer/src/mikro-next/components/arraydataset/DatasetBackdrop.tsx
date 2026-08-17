@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Clapperboard, ChevronDown } from "lucide-react";
 import {
-  GetADatasetQuery,
+  GetArrayDatasetQuery,
   useCreateSceneFromCoordinateSystemMutation,
   useGetCoordinateGraphQuery,
 } from "../../api/graphql";
 import { formatShape } from "../../specs";
 import { datasetRegistrations } from "../coordinates/registrations";
 
-type PageDataset = GetADatasetQuery["adataset"];
+type PageDataset = GetArrayDatasetQuery["arrayDataset"];
 
 /**
  * The spaces this dataset's grid is registered into — the worlds a scene could
@@ -84,7 +84,7 @@ export const CreateSceneControl = ({
     // The new scene is one of the dataset's own `scenes` now, and that list is
     // what the switcher reads; awaited so `onCreated` never names a scene the
     // caller cannot find yet.
-    refetchQueries: ["GetADataset"],
+    refetchQueries: ["GetArrayDataset"],
     awaitRefetchQueries: true,
     onCompleted: (result) => onCreated(result.createSceneFromCoordinateSystem.id),
   });

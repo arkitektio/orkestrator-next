@@ -67,7 +67,7 @@ query GetRegistrationSystems($input: ID!, $output: ID!) {
   }
 }
 
-# The spaces an ADataset's data lives in: "its own grid, and the grids of its
+# The spaces an ArrayDataset's data lives in: "its own grid, and the grids of its
 # pyramid levels and lenses" (the filter's own words) — the systems it is a
 # resident of.
 #
@@ -75,7 +75,7 @@ query GetRegistrationSystems($input: ID!, $output: ID!) {
 # with different correct matrices — into a µm world the former's scale is the
 # pixel size, the latter's is 1 — so the form makes the user see the choice
 # whenever a dataset has more than one candidate. Filtered here rather than
-# selected off ADataset to keep dataArrays and their stores off the wire for
+# selected off ArrayDataset to keep dataArrays and their stores off the wire for
 # what is usually a two-row radio group.
 query GetDatasetSystems($dataset: ID!) {
   coordinateSystems(filters: { dataset: $dataset }) {
@@ -114,8 +114,8 @@ query CoordinateSystemOptions($search: String, $values: [ID!]) {
 # by — and there is no @mikro/meshcollection linker either, so nothing can drag
 # one. They are reachable only once both of those exist.
 query RegisterSourceCandidates($search: String) {
-  adatasets(filters: { search: $search }, pagination: { limit: 20 }) {
-    ...ListADataset
+  arrayDatasets(filters: { search: $search }, pagination: { limit: 20 }) {
+    ...ListArrayDataset
   }
   tableDatasets(filters: { search: $search }, pagination: { limit: 20 }) {
     ...ListTableDataset

@@ -14,7 +14,7 @@ const MikroWidget = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  const latestDataset = homeData?.adatasets?.[0];
+  const latestDataset = homeData?.arrayDatasets?.[0];
 
   return (
     <div>
@@ -27,13 +27,10 @@ const MikroWidget = () => {
       ) : (
         <div className="flex gap-4 items-center">
           <div>
-            {/* Still `imagesStats`: it is the only aggregate the mikro schema
-                exposes, so the count is of legacy images until a dataset
-                equivalent lands. */}
             <p className="text-2xl font-bold">
-              {statsData?.imagesStats?.count ?? 0}
+              {statsData?.arrayDatasetsStats?.count ?? 0}
             </p>
-            <p className="text-xs text-muted-foreground">Images</p>
+            <p className="text-xs text-muted-foreground">Datasets</p>
           </div>
           {latestDataset?.latestSnapshot?.store?.key && (
             <img

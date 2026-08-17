@@ -5,7 +5,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { MikroCoordinateSystem } from "@/linkers";
-import { GetADatasetQuery, useGetADatasetDerivedQuery } from "../../api/graphql";
+import { GetArrayDatasetQuery, useGetArrayDatasetDerivedQuery } from "../../api/graphql";
 import {
   ADATASET_SPEC_INFO,
   arrayNbytes,
@@ -19,7 +19,7 @@ import { DerivedDatasetsSection } from "./DerivedDatasetsSection";
 import { DerivedFromSection } from "./DerivedFromSection";
 import { ProvenanceSection } from "./ProvenanceSection";
 
-type PageDataset = GetADatasetQuery["adataset"];
+type PageDataset = GetArrayDatasetQuery["arrayDataset"];
 
 /**
  * Everything about the dataset that is not the picture: what it IS, where it
@@ -39,7 +39,7 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
 
   // cache-and-network so reopening the tab after a task ran shows what it
   // produced rather than the answer from before it started.
-  const { data, error, loading } = useGetADatasetDerivedQuery({
+  const { data, error, loading } = useGetArrayDatasetDerivedQuery({
     variables: { id: dataset.id },
     fetchPolicy: "cache-and-network",
   });
@@ -188,15 +188,15 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
         </div>
       ) : (
         <>
-          <DerivedFromSection edges={data.adataset.derivedFrom} />
+          <DerivedFromSection edges={data.arrayDataset.derivedFrom} />
 
           <DerivedDatasetsSection
-            intrinsicSystem={data.adataset.intrinsicSystem}
+            intrinsicSystem={data.arrayDataset.intrinsicSystem}
             lenses={data.lenses}
-            derived={data.adataset.derivedDatasets}
+            derived={data.arrayDataset.derivedDatasets}
           />
 
-          <ProvenanceSection entries={data.adataset.provenanceEntries} />
+          <ProvenanceSection entries={data.arrayDataset.provenanceEntries} />
         </>
       )}
     </div>

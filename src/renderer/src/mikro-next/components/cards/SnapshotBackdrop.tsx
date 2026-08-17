@@ -9,7 +9,7 @@ import { SceneSnapshotFragment } from '../../api/graphql'
  * The card is black whether or not a picture ever arrives — which is what lets
  * the content above be unconditionally white. A snapshot needs credentials plus
  * a signed S3 fetch before it can resolve, and both `Scene.latestSnapshot` and
- * `ADataset.latestSnapshot` are nullable (nothing snapshots a scene on creation;
+ * `ArrayDataset.latestSnapshot` are nullable (nothing snapshots a scene on creation;
  * a dataset borrows the newest picture of the scene it NOMINATES, and nominates
  * none until something sets one), so "no image" is the common case rather than
  * the exception. Painting black from the start means those cards read as

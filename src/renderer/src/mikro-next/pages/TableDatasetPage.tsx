@@ -8,7 +8,7 @@ import { TableDatasetInfoSidebar } from "../components/sidebars/TableDatasetInfo
 import { TableDatasetTable } from "../components/tables/TableDatasetTable";
 
 /**
- * Laid out like `ADatasetPage`: the data fills the middle and everything *about*
+ * Laid out like `ArrayDatasetPage`: the data fills the middle and everything *about*
  * it lives in the rail. For an array dataset the middle is a scene; here it is
  * the rows, which is the whole difference between the two pages.
  *

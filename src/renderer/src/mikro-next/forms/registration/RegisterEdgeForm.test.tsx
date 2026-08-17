@@ -55,7 +55,7 @@ const system = (
 ) =>
   ({ __typename: "CoordinateSystem", id, name, epoch: null, residents, axes }) as never;
 
-const DATASET_RESIDENT = { __typename: "ADataset", id: "ds-1", name: "stack" };
+const DATASET_RESIDENT = { __typename: "ArrayDataset", id: "ds-1", name: "stack" };
 
 // (c, y, x) pixels -> (t, z, y, x) micrometre world: the rank-changing case.
 const SOURCE = system("cs-1", "intrinsic pixels", [DATASET_RESIDENT], [

@@ -1,22 +1,22 @@
-import { RoiKind } from "@/mikro-next/api/graphql";
+import { AnnotationKind } from "@/mikro-next/api/graphql";
 
 /**
  * The center + radius math of the volumetric drawing tools (Sphere, Cube).
  *
  * Wire contract shared with the server: a volumetric primitive's `vectors` are
  * the two opposite corners of its bounding cube, `[center − (r,r,r),
- * center + (r,r,r)]` — the same corner semantics RECTANGLE/ELLIPSIS/CUBE
+ * center + (r,r,r)]` — the same corner semantics RECTANGLE/ELLIPSE/CUBE
  * already use, so `intrinsicBbox` derivation and XY marquee bounds need no
  * kind-specific cases.
  */
 
 /**
- * The SPHERE RoiKind, ahead of the generated enum: the backend kind is being
+ * The SPHERE AnnotationKind, ahead of the generated enum: the backend kind is being
  * added, and until the next `pnpm mikro` pull includes it the literal is
- * widened here — in exactly one place. Replace with `RoiKind.Sphere` once the
+ * widened here — in exactly one place. Replace with `AnnotationKind.Sphere` once the
  * regenerated enum carries it.
  */
-export const SPHERE_KIND = "SPHERE" as RoiKind;
+export const SPHERE_KIND = "SPHERE" as AnnotationKind;
 
 export type Vec3 = [number, number, number];
 

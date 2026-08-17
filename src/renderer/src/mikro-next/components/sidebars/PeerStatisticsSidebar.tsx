@@ -3,7 +3,7 @@ import { usePeerHomePageStatsQuery } from "@/mikro-next/api/graphql";
 import {
   Activity,
   Calendar,
-  Images,
+  Boxes,
   TrendingUp
 } from "lucide-react";
 
@@ -13,23 +13,23 @@ export const PeerStatisticsSidebar = (props: { sub: string }) => {
     });
 
     // Calculate additional metrics from available data
-    const totalImages = data?.imagesStats?.count || 0;
-    const recentActivity = data?.imagesStats?.series?.reduce((sum, bucket) => sum + bucket.count, 0) || 0;
+    const totalDatasets = data?.arrayDatasetsStats?.count || 0;
+    const recentActivity = data?.arrayDatasetsStats?.series?.reduce((sum, bucket) => sum + bucket.count, 0) || 0;
     const averageDaily = recentActivity > 0 ? Math.round(recentActivity / 7) : 0; // Assuming 7 days of data
 
     const statsCards = [
         {
-            title: "Total Images",
-            value: loading ? "..." : totalImages,
-            description: "Total number of images in your collection",
-            icon: Images,
+            title: "Total Datasets",
+            value: loading ? "..." : totalDatasets,
+            description: "Total number of array datasets in your collection",
+            icon: Boxes,
             color: "text-primary",
             bgColor: "bg-chart-1/10",
         },
         {
             title: "Recent Activity",
             value: loading ? "..." : recentActivity,
-            description: "Images created in the past week",
+            description: "Datasets created in the past week",
             icon: Activity,
             color: "text-chart-1",
             bgColor: "bg-chart-2/10",

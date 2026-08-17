@@ -25,7 +25,7 @@ describe("measureDraw", () => {
   });
 
   it("measures an ellipse by its bounding box", () => {
-    expect(measureDraw("ELLIPSIS", [{ x: 0, y: 0 }, { x: 6, y: 8 }])).toEqual({
+    expect(measureDraw("ELLIPSE", [{ x: 0, y: 0 }, { x: 6, y: 8 }])).toEqual({
       kind: "box",
       width: 6,
       height: 8,

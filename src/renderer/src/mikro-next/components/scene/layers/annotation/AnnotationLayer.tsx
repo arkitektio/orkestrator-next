@@ -5,7 +5,7 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import {
   useGetSceneAnnotationsQuery,
   type SceneAnnotationFragment,
-  RoiKind,
+  AnnotationKind,
 } from "@/mikro-next/api/graphql";
 
 import { Line } from "../../primitives/Line";
@@ -413,7 +413,7 @@ const AnnotationShape = ({
       }
     : undefined;
 
-  if (annotation.kind === RoiKind.Point && vectors.length >= 1) {
+  if (annotation.kind === AnnotationKind.Point && vectors.length >= 1) {
     return (
       <AnnotationPoint
         position={getVectorPoint(vectors[0], flattenToPlane)}
@@ -424,7 +424,7 @@ const AnnotationShape = ({
     );
   }
 
-  if (annotation.kind === RoiKind.Line && vectors.length >= 2) {
+  if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
     return (
       <Line
         points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
@@ -439,7 +439,7 @@ const AnnotationShape = ({
   // already extrudes to a box whenever the corners span depth (which a cube's
   // always do) and falls back to the rectangle footprint when flattened.
   if (
-    (annotation.kind === RoiKind.Rectangle || annotation.kind === RoiKind.Cube) &&
+    (annotation.kind === AnnotationKind.Rectangle || annotation.kind === AnnotationKind.Cube) &&
     vectors.length >= 2
   ) {
     const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
@@ -507,7 +507,7 @@ const AnnotationShape = ({
   // (center ± r), so the scaled-unit-sphere path renders a true sphere in 3D
   // and the flattened path draws the ellipse the current plane cuts out of it.
   if (
-    (annotation.kind === RoiKind.Ellipsis || annotation.kind === SPHERE_KIND) &&
+    (annotation.kind === AnnotationKind.Ellipse || annotation.kind === SPHERE_KIND) &&
     vectors.length >= 2
   ) {
     const [[x0, y0, z0], [x1, y1, z1]] = vectors.map((vector) =>
@@ -581,9 +581,9 @@ const AnnotationShape = ({
     );
   }
 
-  if ((annotation.kind === RoiKind.Polygon || annotation.kind === RoiKind.Path) && vectors.length >= 2) {
+  if ((annotation.kind === AnnotationKind.Polygon || annotation.kind === AnnotationKind.Path) && vectors.length >= 2) {
     const pts = vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
-    const isPolygon = annotation.kind === RoiKind.Polygon;
+    const isPolygon = annotation.kind === AnnotationKind.Polygon;
     // A path is open: it has a stroke to click and no inside to speak of.
     const interior = isPolygon ? [...pts] : null;
     if (isPolygon) pts.push(pts[0]); // close polygon

@@ -1,13 +1,13 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
-import { RoiKind } from "@/mikro-next/api/graphql";
+import { AnnotationKind } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 
 export interface SelectedRoi {
   id: string;
   layerId: string;
   name: string | null | undefined;
-  kind: RoiKind;
+  kind: AnnotationKind;
   /** The collection's coordinate system — attribute lookups start here (the
    * server resolves the path to every reachable table). */
   systemId: string | null;

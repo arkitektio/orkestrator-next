@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { RoiKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
+import { AnnotationKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import { cn } from "@/lib/utils";
 
 import { getAnnotationSelectionPoints } from "../scene/core/annotationBounds";
@@ -27,10 +27,10 @@ import {
  * exception so a kind added to the schema defaults to closed — every region
  * kind is, and only the three drawn-through ones are not.
  */
-const OPEN_KINDS = new Set<RoiKind>([
-  RoiKind.Line,
-  RoiKind.Path,
-  RoiKind.MultiPoint,
+const OPEN_KINDS = new Set<AnnotationKind>([
+  AnnotationKind.Line,
+  AnnotationKind.Path,
+  AnnotationKind.MultiPoint,
 ]);
 
 const VIEWBOX = 100;
@@ -95,7 +95,7 @@ export const AnnotationGlyph = ({
       aria-hidden
       preserveAspectRatio="xMidYMid meet"
     >
-      {points.length === 1 || annotation.kind === RoiKind.Point ? (
+      {points.length === 1 || annotation.kind === AnnotationKind.Point ? (
         <circle
           cx={points[0][0]}
           cy={points[0][1]}

@@ -1,21 +1,21 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
 import { Sidebars } from "@/components/layout/Sidebars";
-import { MikroADataset } from '@/linkers'
+import { MikroArrayDataset } from '@/linkers'
 import { useCallback, useState } from 'react'
-import { useGetADatasetQuery, useGetSceneQuery } from '../api/graphql'
-import { DatasetBackdrop } from '../components/adataset/DatasetBackdrop'
+import { useGetArrayDatasetQuery, useGetSceneQuery } from '../api/graphql'
+import { DatasetBackdrop } from '../components/arraydataset/DatasetBackdrop'
 import { MoveToFolderButton } from '../components/folder/MoveToFolderButton'
-import { DatasetTitleOverlay } from '../components/adataset/DatasetTitleOverlay'
+import { DatasetTitleOverlay } from '../components/arraydataset/DatasetTitleOverlay'
 import { Scene } from '../components/scene/Scene'
 import { DatasetInfoSidebar } from '../components/sidebars/DatasetInfoSidebar'
 
-export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) => {
-  const dataset = data.adataset
+export const ArrayDatasetPage = asDetailQueryRoute(useGetArrayDatasetQuery, ({ data }) => {
+  const dataset = data.arrayDataset
   const [selectedSceneId, setSelectedSceneId] = useState<string>()
 
   // Creating a scene here does NOT leave the page: this page already renders
   // scenes, so the new one is simply the one now selected — the switcher lists
-  // it (the mutation awaits a GetADataset refetch) and the viewport remounts on
+  // it (the mutation awaits a GetArrayDataset refetch) and the viewport remounts on
   // its id.
   const handleSceneCreated = useCallback(
     (sceneId: string) => setSelectedSceneId(sceneId),
@@ -44,21 +44,21 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
     // sibling panel of the content area) reaches the scene stores. Null scene
     // = "no scene selected"; the tab says so instead of listing layers.
     <Scene.Provider scene={sceneData?.scene ?? null}>
-    <MikroADataset.ModelPage
+    <MikroArrayDataset.ModelPage
       object={dataset}
       title={dataset.name}
       variant="black"
       overlay
-      actions={<MikroADataset.Actions object={dataset} />}
+      actions={<MikroArrayDataset.Actions object={dataset} />}
       pageActions={
         <div className="flex items-center gap-2">
           {/* `folder` is nullable and the null is meaningful — a dataset nobody
               filed reads "Unfiled", which is not the same as not knowing. */}
           <MoveToFolderButton
-            subject={{ kind: "adataset", ids: [dataset.id] }}
+            subject={{ kind: "arrayDataset", ids: [dataset.id] }}
             currentFolder={dataset.folder ?? null}
           />
-          <MikroADataset.ObjectButton object={dataset} />
+          <MikroArrayDataset.ObjectButton object={dataset} />
         </div>
       }
       additionalSidebars={
@@ -108,9 +108,9 @@ export const ADatasetPage = asDetailQueryRoute(useGetADatasetQuery, ({ data }) =
           sceneLoading={sceneLoading}
         />
       </div>
-    </MikroADataset.ModelPage>
+    </MikroArrayDataset.ModelPage>
     </Scene.Provider>
   )
 })
 
-export default ADatasetPage
+export default ArrayDatasetPage

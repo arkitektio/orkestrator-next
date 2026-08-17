@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-// (ADatasetSpec is a runtime enum, and importing the generated `graphql.ts`
+// (ArrayDatasetSpec is a runtime enum, and importing the generated `graphql.ts`
 // pulls in the Apollo hooks barrel, which touches `window` on load)
 import { describe, expect, it } from 'vitest'
-import { ADatasetSpec } from './api/graphql'
+import { ArrayDatasetSpec } from './api/graphql'
 import {
   ADATASET_SPECS,
   arrayNbytes,
@@ -19,7 +19,7 @@ import {
 describe('the spec catalogue', () => {
   it('covers every enum member exactly once', () => {
     const covered = ADATASET_SPECS.map((entry) => entry.spec).sort()
-    expect(covered).toEqual(Object.values(ADatasetSpec).sort())
+    expect(covered).toEqual(Object.values(ArrayDatasetSpec).sort())
   })
 
   it('gives every spec a unique slug', () => {
@@ -32,18 +32,18 @@ describe('the spec catalogue', () => {
       if (entry.kind === 'modifier') expect(entry.spatialRank).toBeUndefined()
     }
     // "four or more" does not pin a number, so it must stay unranked.
-    expect(spatialSpecOf([ADatasetSpec.Hypervolume])?.spatialRank).toBeUndefined()
+    expect(spatialSpecOf([ArrayDatasetSpec.Hypervolume])?.spatialRank).toBeUndefined()
   })
 })
 
 describe('spatialSpecOf', () => {
   it('finds the one spatial spec among stacked modifiers', () => {
     const spec = spatialSpecOf([
-      ADatasetSpec.Volume,
-      ADatasetSpec.Timeseries,
-      ADatasetSpec.Multichannel
+      ArrayDatasetSpec.Volume,
+      ArrayDatasetSpec.Timeseries,
+      ArrayDatasetSpec.Multichannel
     ])
-    expect(spec?.spec).toBe(ADatasetSpec.Volume)
+    expect(spec?.spec).toBe(ArrayDatasetSpec.Volume)
   })
 
   it('is undefined for a dataset with no spec yet', () => {
@@ -55,11 +55,11 @@ describe('spatialSpecOf', () => {
 describe('modifierSpecsOf', () => {
   it('returns modifiers in catalogue order, never the spatial spec', () => {
     const modifiers = modifierSpecsOf([
-      ADatasetSpec.Timeseries,
-      ADatasetSpec.Volume,
-      ADatasetSpec.Multichannel
+      ArrayDatasetSpec.Timeseries,
+      ArrayDatasetSpec.Volume,
+      ArrayDatasetSpec.Multichannel
     ]).map((entry) => entry.spec)
-    expect(modifiers).toEqual([ADatasetSpec.Multichannel, ADatasetSpec.Timeseries])
+    expect(modifiers).toEqual([ArrayDatasetSpec.Multichannel, ArrayDatasetSpec.Timeseries])
   })
 })
 
@@ -68,7 +68,7 @@ describe('splitAxesBySpec', () => {
     const { acquisition, spatial } = splitAxesBySpec(
       ['t', 'c', 'z', 'y', 'x'],
       [20, 3, 8, 512, 512],
-      [ADatasetSpec.Volume, ADatasetSpec.Timeseries, ADatasetSpec.Multichannel]
+      [ArrayDatasetSpec.Volume, ArrayDatasetSpec.Timeseries, ArrayDatasetSpec.Multichannel]
     )
     expect(acquisition).toEqual([
       { name: 't', extent: 20 },
@@ -82,7 +82,7 @@ describe('splitAxesBySpec', () => {
   })
 
   it('treats a plain image as all-spatial', () => {
-    const { acquisition, spatial } = splitAxesBySpec(['y', 'x'], [512, 512], [ADatasetSpec.Image])
+    const { acquisition, spatial } = splitAxesBySpec(['y', 'x'], [512, 512], [ArrayDatasetSpec.Image])
     expect(acquisition).toEqual([])
     expect(spatial).toHaveLength(2)
   })
@@ -91,7 +91,7 @@ describe('splitAxesBySpec', () => {
     const { acquisition, spatial } = splitAxesBySpec(
       ['t'],
       [100],
-      [ADatasetSpec.Scalar, ADatasetSpec.Timeseries]
+      [ArrayDatasetSpec.Scalar, ArrayDatasetSpec.Timeseries]
     )
     expect(spatial).toEqual([])
     expect(acquisition).toEqual([{ name: 't', extent: 100 }])
@@ -101,7 +101,7 @@ describe('splitAxesBySpec', () => {
     const { acquisition, spatial } = splitAxesBySpec(
       ['a', 'b', 'c', 'd', 'e'],
       [1, 2, 3, 4, 5],
-      [ADatasetSpec.Hypervolume]
+      [ArrayDatasetSpec.Hypervolume]
     )
     expect(acquisition).toEqual([])
     expect(spatial).toHaveLength(5)
@@ -110,13 +110,13 @@ describe('splitAxesBySpec', () => {
   it('falls back rather than split wrongly when the shape is shorter than the rank', () => {
     // A VOLUME claims 3 spatial axes; a 2-axis shape contradicts that, and
     // slicing at a negative boundary would silently mangle the readout.
-    const { acquisition, spatial } = splitAxesBySpec(['y', 'x'], [512, 512], [ADatasetSpec.Volume])
+    const { acquisition, spatial } = splitAxesBySpec(['y', 'x'], [512, 512], [ArrayDatasetSpec.Volume])
     expect(acquisition).toEqual([])
     expect(spatial).toHaveLength(2)
   })
 
   it("names an axis '?' when axisNames is shorter than shape", () => {
-    const { spatial } = splitAxesBySpec(['y'], [512, 512], [ADatasetSpec.Image])
+    const { spatial } = splitAxesBySpec(['y'], [512, 512], [ArrayDatasetSpec.Image])
     expect(spatial.map((axis) => axis.name)).toEqual(['y', '?'])
   })
 })

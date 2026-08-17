@@ -284,7 +284,7 @@ export const RoiDrawer = () => {
 
   const finishShape = useCallback(
     // `asTool` lets a gesture commit as a different tool than the one that ran
-    // it: an enhanced LINE is an open polyline, and RoiKind.Line is a strictly
+    // it: an enhanced LINE is an open polyline, and AnnotationKind.Line is a strictly
     // two-point kind — it commits as PATH so every found vertex survives.
     (worldVectors: THREE.Vector3[], asTool?: DrawingTool) => {
       if (!tool) return;
@@ -309,7 +309,7 @@ export const RoiDrawer = () => {
    *
    * Also fixes a live bug: `finishShape` reads the active tool at call time, so
    * finishing a polygon after switching to the ellipse tool used to commit an
-   * ELLIPSIS carrying N vectors.
+   * ELLIPSE carrying N vectors.
    */
   useEffect(
     () => resetSession,
@@ -705,7 +705,7 @@ export const RoiDrawer = () => {
               // which the renderer extrudes when the two straddle depth.
               if (tool === "LINE" && enhanceOn) {
                 // The enhanced LINE traces its one edge at commit, and commits
-                // as PATH: RoiKind.Line is a strictly two-point kind.
+                // as PATH: AnnotationKind.Line is a strictly two-point kind.
                 const prev = session.anchors[0];
                 finishShape(
                   [session.vertices[0], ...enhanceEdge(prev, anchorAt(probed))],

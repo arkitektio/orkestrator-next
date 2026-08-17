@@ -1,23 +1,23 @@
 import { useMikro } from "@/app/Arkitekt";
 import { getRefetchableQueriesForEntities } from "@/lib/localactions/helpers/refetch";
 import {
-  usePutADatasetsInFolderMutation,
+  usePutArrayDatasetsInFolderMutation,
   usePutFilesInFolderMutation,
 } from "@/mikro-next/api/graphql";
 
 /**
  * What is being filed. Two kinds because the server takes two mutations —
- * `putFilesInFolder` and `putADatasetsInFolder` — over otherwise identical
+ * `putFilesInFolder` and `putArrayDatasetsInFolder` — over otherwise identical
  * `{selfs, other}` input.
  */
 export type FolderMoveSubject =
   | { kind: "file"; ids: string[] }
-  | { kind: "adataset"; ids: string[] };
+  | { kind: "arrayDataset"; ids: string[] };
 
 /** The cache typename each kind resolves to, for invalidation. */
 const TYPENAME: Record<FolderMoveSubject["kind"], string> = {
   file: "File",
-  adataset: "ADataset",
+  arrayDataset: "ArrayDataset",
 };
 
 /**
@@ -30,7 +30,7 @@ const TYPENAME: Record<FolderMoveSubject["kind"], string> = {
 export const useFolderMove = () => {
   const client = useMikro();
   const [putFiles, files] = usePutFilesInFolderMutation();
-  const [putADatasets, adatasets] = usePutADatasetsInFolderMutation();
+  const [putArrayDatasets, arrayDatasets] = usePutArrayDatasetsInFolderMutation();
 
   const moveOptions = (subject: FolderMoveSubject, folder: string) => ({
     variables: { selfs: subject.ids, other: folder },
@@ -46,9 +46,9 @@ export const useFolderMove = () => {
   const move = (subject: FolderMoveSubject, folder: string) =>
     subject.kind === "file"
       ? putFiles(moveOptions(subject, folder))
-      : putADatasets(moveOptions(subject, folder));
+      : putArrayDatasets(moveOptions(subject, folder));
 
-  return { move, loading: files.loading || adatasets.loading };
+  return { move, loading: files.loading || arrayDatasets.loading };
 };
 
 /** "3 files" / "this dataset" — the subject as a sentence fragment. */

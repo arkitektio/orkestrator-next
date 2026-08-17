@@ -2,7 +2,7 @@
 // The graphql module this pulls in reaches `window` at import time.
 import { describe, expect, it } from "vitest";
 
-import { RoiKindChoices } from "../../api/graphql";
+import { AnnotationKindChoices } from "../../api/graphql";
 import { annotationFilters } from "./AnnotationFilterBar";
 
 describe("the annotation filter assembly", () => {
@@ -17,15 +17,15 @@ describe("the annotation filter assembly", () => {
   });
 
   it("passes a chosen kind through as the server enum", () => {
-    expect(annotationFilters("", RoiKindChoices.Rectangle)).toEqual({
-      kind: RoiKindChoices.Rectangle,
+    expect(annotationFilters("", AnnotationKindChoices.Rectangle)).toEqual({
+      kind: AnnotationKindChoices.Rectangle,
     });
   });
 
   it("carries search alongside a kind", () => {
-    expect(annotationFilters("nucleus", RoiKindChoices.Polygon)).toEqual({
+    expect(annotationFilters("nucleus", AnnotationKindChoices.Polygon)).toEqual({
       search: "nucleus",
-      kind: RoiKindChoices.Polygon,
+      kind: AnnotationKindChoices.Polygon,
     });
   });
 });

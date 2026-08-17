@@ -1,4 +1,4 @@
-import { RoiKind } from "@/mikro-next/api/graphql";
+import { AnnotationKind } from "@/mikro-next/api/graphql";
 import type { AxisCoords } from "@/mikro-next/lib/coords/axisPath";
 
 /**
@@ -59,21 +59,21 @@ const midpointOf = (a: RoiVector | undefined, b: RoiVector | undefined): [number
 
 /**
  * The compromise sampling: POINT → its vertex; LINE → both endpoints;
- * RECTANGLE/ELLIPSIS → midpoint of the two stored corners; POLYGON → vertex
+ * RECTANGLE/ELLIPSE → midpoint of the two stored corners; POLYGON → vertex
  * centroid (an honest "background" for concave shapes); PATH → all vertices
  * when ≤5, else 5 evenly spaced including both endpoints. Anything else falls
  * back to the centroid.
  */
 export function roiLookupPoints(
-  kind: RoiKind,
+  kind: AnnotationKind,
   vectors: readonly RoiVector[],
 ): RoiLookupPoint[] {
   if (vectors.length === 0) return [];
 
   switch (kind) {
-    case RoiKind.Point:
+    case AnnotationKind.Point:
       return [{ label: "point", point: toPoint(vectors[0]) }];
-    case RoiKind.Line: {
+    case AnnotationKind.Line: {
       if (vectors.length === 1) {
         return [{ label: "point", point: toPoint(vectors[0]) }];
       }
@@ -82,12 +82,12 @@ export function roiLookupPoints(
         { label: "end", point: toPoint(vectors[vectors.length - 1]) },
       ];
     }
-    case RoiKind.Rectangle:
-    case RoiKind.Ellipsis:
+    case AnnotationKind.Rectangle:
+    case AnnotationKind.Ellipse:
       return [{ label: "center", point: midpointOf(vectors[0], vectors[vectors.length - 1]) }];
-    case RoiKind.Polygon:
+    case AnnotationKind.Polygon:
       return [{ label: "center", point: centroidOf(vectors) }];
-    case RoiKind.Path: {
+    case AnnotationKind.Path: {
       if (vectors.length <= MAX_PATH_POINTS) {
         return vectors.map((vec, i) => ({ label: `p${i + 1}`, point: toPoint(vec) }));
       }

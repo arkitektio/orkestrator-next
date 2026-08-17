@@ -19,7 +19,7 @@ import { CoordinateSystemInfoSidebar } from "../components/sidebars/CoordinateSy
 import { CoordinateSystemProvenanceSidebar } from "../components/sidebars/CoordinateSystemProvenanceSidebar";
 
 /**
- * A coordinate system's page, laid out like `ADatasetPage`: the picture fills
+ * A coordinate system's page, laid out like `ArrayDatasetPage`: the picture fills
  * the stage and everything *about* it lives in the rail.
  *
  * For a space the picture is the GRAPH. A system's whole meaning is relational
@@ -77,7 +77,7 @@ export const CoordinateSystemPage = asDetailQueryRoute(
     // the form takes a dataset id — so this only appears when a dataset is one
     // of the residents.
     const calibrateDataset = system.residents.find(
-      (resident) => resident.__typename === "ADataset",
+      (resident) => resident.__typename === "ArrayDataset",
     );
     const calibrateButton = calibrateDataset ? (
       <Button

@@ -8,7 +8,7 @@ import { useDownload } from "@/providers/download/DownloadProvider";
 import { DownloadIcon, FileIcon, Grid3x3 } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
 import { MoveToFolderButton } from "../components/folder/MoveToFolderButton";
-import ADatasetList from "../components/lists/ADatasetList";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 // Helper for formatting file size
@@ -162,7 +162,7 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           list keeps the same card, pagination and empty state as every other
           dataset list. */}
       <div className="space-y-4 mt-4">
-        <ADatasetList
+        <ArrayDatasetList
           filters={{ sourceFile: file.id }}
           title={
             <div className="flex items-center pb-2">

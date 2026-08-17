@@ -30,9 +30,9 @@ import {
 } from "nuqs";
 import { useMemo } from "react";
 import {
-  ADatasetFilter,
-  ADatasetOrder,
-  ADatasetSpec,
+  ArrayDatasetFilter,
+  ArrayDatasetOrder,
+  ArrayDatasetSpec,
   Ordering,
 } from "../../api/graphql";
 import { ADATASET_SPEC_BY_SLUG, ADATASET_SPECS } from "../../specs";
@@ -106,11 +106,11 @@ export const DEFAULT_ORIGIN = "acquired";
  * Exported for its test: the origin mapping is the one place a sign flip would
  * silently invert the page's default from "acquired only" to "derived only".
  */
-export const adatasetPropertyFilters = (
+export const arrayDatasetPropertyFilters = (
   origin: string,
   pyramid: string,
   units: string,
-): Pick<ADatasetFilter, "notDerived" | "multiscale" | "hasPhysicalSpace"> => {
+): Pick<ArrayDatasetFilter, "notDerived" | "multiscale" | "hasPhysicalSpace"> => {
   const notDerived = valueOf(ORIGIN_OPTIONS, origin);
   const multiscale = valueOf(PYRAMID_OPTIONS, pyramid);
   const hasPhysicalSpace = valueOf(UNITS_OPTIONS, units);
@@ -122,13 +122,13 @@ export const adatasetPropertyFilters = (
   };
 };
 
-export type UseADatasetFilterBarOptions = {
+export type UseArrayDatasetFilterBarOptions = {
   /**
-   * A spec the page itself is about — the one behind /adatasets/spec/:spec. It
+   * A spec the page itself is about — the one behind /arrayDatasets/spec/:spec. It
    * is always applied and cannot be unticked; the picker still offers the rest,
    * because specs stack (VOLUME + TIMESERIES is a 3D timelapse).
    */
-  lockedSpec?: ADatasetSpec;
+  lockedSpec?: ArrayDatasetSpec;
 };
 
 /**
@@ -140,7 +140,7 @@ export type UseADatasetFilterBarOptions = {
  * in three lines rather than restating ~90 lines of dropdowns (which is how the
  * Sort block already ended up copied across three pages).
  *
- * Every one of them filters SERVER-side: they are `ADatasetFilter` fields, so a
+ * Every one of them filters SERVER-side: they are `ArrayDatasetFilter` fields, so a
  * narrowed list pages through matching rows instead of paging through everything
  * and dropping most of it.
  *
@@ -148,13 +148,13 @@ export type UseADatasetFilterBarOptions = {
  * elektro's SimulationsPage. Only non-default choices are written, so the
  * default view has a clean URL.
  *
- * No user filter: ADatasetFilter.owner takes the creator's *sub*, while lok's
+ * No user filter: ArrayDatasetFilter.owner takes the creator's *sub*, while lok's
  * UserOptions yields user ids, so the shared UserFilter would filter on the
  * wrong key.
  */
-export const useADatasetFilterBar = ({
+export const useArrayDatasetFilterBar = ({
   lockedSpec,
-}: UseADatasetFilterBarOptions = {}) => {
+}: UseArrayDatasetFilterBarOptions = {}) => {
   const [search, setSearch] = useQueryState(
     "search",
     parseAsString.withDefault(""),
@@ -208,7 +208,7 @@ export const useADatasetFilterBar = ({
   const dir = sortDirection === "ASC" ? Ordering.Asc : Ordering.Desc;
   const isCustomOrder = sortField !== "createdAt" || sortDirection !== "DESC";
 
-  const filters: ADatasetFilter = useMemo(() => {
+  const filters: ArrayDatasetFilter = useMemo(() => {
     const specs = [
       ...new Set([
         ...(lockedSpec ? [lockedSpec] : []),
@@ -221,7 +221,7 @@ export const useADatasetFilterBar = ({
       ...(createdAfter ? { createdAfter: createdAfter.toISOString() } : {}),
       ...(createdBefore ? { createdBefore: createdBefore.toISOString() } : {}),
       ...(specs.length ? { spec: specs } : {}),
-      ...adatasetPropertyFilters(origin, pyramid, units),
+      ...arrayDatasetPropertyFilters(origin, pyramid, units),
     };
   }, [
     debouncedSearch,
@@ -234,7 +234,7 @@ export const useADatasetFilterBar = ({
     units,
   ]);
 
-  const ordering: ADatasetOrder[] = useMemo(() => {
+  const ordering: ArrayDatasetOrder[] = useMemo(() => {
     if (sortField === "name") return [{ name: dir }];
     if (sortField === "id") return [{ id: dir }];
     return [{ createdAt: dir }];
@@ -250,7 +250,7 @@ export const useADatasetFilterBar = ({
   const spatial = ADATASET_SPECS.filter((entry) => entry.kind === "spatial");
   const modifiers = ADATASET_SPECS.filter((entry) => entry.kind === "modifier");
 
-  const specItem = (slug: string, label: string, spec: ADatasetSpec) => {
+  const specItem = (slug: string, label: string, spec: ArrayDatasetSpec) => {
     const locked = lockedSpec === spec;
     return (
       <DropdownMenuCheckboxItem

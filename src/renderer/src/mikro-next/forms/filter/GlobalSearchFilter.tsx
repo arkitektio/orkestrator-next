@@ -25,18 +25,18 @@ const Filter = ({
   placeholder = "Search...",
 }: FilterProps) => {
   const [search, setSearch] = useState(defaultValue.search ?? "");
-  const [noAdatasets, setNoAdatasets] = useState(defaultValue.noAdatasets ?? false);
+  const [noArrayDatasets, setNoArrayDatasets] = useState(defaultValue.noArrayDatasets ?? false);
 
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
     onFilterChanged({
       search: debouncedSearch,
-      noAdatasets,
+      noArrayDatasets,
       noFiles: defaultValue.noFiles ?? false,
       noFolders: defaultValue.noFolders ?? false,
     });
-  }, [debouncedSearch, noAdatasets]);
+  }, [debouncedSearch, noArrayDatasets]);
 
   return (
     <div className={`w-full flex flex-row ${className ?? ""}`}>
@@ -58,8 +58,8 @@ const Filter = ({
         <PopoverContent>
           <div className="flex flex-row gap-2">
             <Toggle
-              pressed={noAdatasets}
-              onPressedChange={setNoAdatasets}
+              pressed={noArrayDatasets}
+              onPressedChange={setNoArrayDatasets}
             >
               Exclude Datasets
             </Toggle>

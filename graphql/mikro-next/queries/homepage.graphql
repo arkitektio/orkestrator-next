@@ -1,6 +1,6 @@
 query HomePage {
-  adatasets: adatasets(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
-    ...ListADataset
+  arrayDatasets: arrayDatasets(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
+    ...ListArrayDataset
   }
 
   files: files(pagination: { limit: 1 }, ordering: [{ createdAt: DESC }]) {
@@ -9,12 +9,12 @@ query HomePage {
 }
 
 query PeerHomePage($id: ID!) {
-  adatasets: adatasets(
+  arrayDatasets: arrayDatasets(
     pagination: { limit: 1 }
     filters: { owner: $id }
     ordering: [{ createdAt: DESC }]
   ) {
-    ...ListADataset
+    ...ListArrayDataset
   }
 
   files: files(
@@ -27,11 +27,12 @@ query PeerHomePage($id: ID!) {
 }
 
 
-# Still the legacy `imagesStats` — it is the only aggregate the schema exposes
-# (there is no `adatasetsStats`), so the statistics sidebars keep this one
-# Image-shaped dependency until the backend offers a replacement.
+# `arrayDatasetsStats` is the replacement the sidebars were waiting on: they used
+# to count legacy Images because that was the only aggregate the schema exposed.
+# Same shape (count + a bucketed series), now over the model the UI actually
+# shows, so the numbers finally describe what is on screen.
 query HomePageStats{
-  imagesStats(filters: {
+  arrayDatasetsStats(filters: {
     owner: null
   }) {
     count
@@ -42,7 +43,7 @@ query HomePageStats{
 }
 
 query PeerHomePageStats($id: ID!){
-  imagesStats(filters: {
+  arrayDatasetsStats(filters: {
     owner: $id
   }) {
     count

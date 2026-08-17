@@ -68,7 +68,7 @@ describe("ellipsoidCrossSectionScale", () => {
 describe("SPHERE_KIND bridge", () => {
   it("is the literal the backend enum will carry", () => {
     // When this fails after a `pnpm mikro`, the generated enum has gained
-    // Sphere — replace the widened literal with `RoiKind.Sphere` and delete
+    // Sphere — replace the widened literal with `AnnotationKind.Sphere` and delete
     // this pin.
     expect(SPHERE_KIND).toBe("SPHERE");
   });

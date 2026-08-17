@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// (only because the tool map lives beside `RoiKind`, which pulls the Apollo
+// (only because the tool map lives beside `AnnotationKind`, which pulls the Apollo
 // barrel — the module under test is pure)
 import { describe, expect, it } from "vitest";
 import {
@@ -148,7 +148,7 @@ describe("roiOutline", () => {
     // Two probed corners describe a BOX; its preview is the footprint at the
     // plane the caller asked for. The AnnotationLayer extrudes the committed
     // shape — that is where depth is drawn.
-    for (const tool of ["RECTANGLE", "ELLIPSIS", "SPHERE", "CUBE"] as const) {
+    for (const tool of ["RECTANGLE", "ELLIPSE", "SPHERE", "CUBE"] as const) {
       const outline = roiOutline(tool, [{ ...a, z: 1 }, { ...b, z: 40 }], 7);
       for (const point of outline) expect(point[2]).toBe(7);
     }

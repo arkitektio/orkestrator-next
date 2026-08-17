@@ -10,7 +10,7 @@ import { isReferenceFrame, residentLabel, residentName } from "./residents";
 describe("isReferenceFrame", () => {
   it("is true only when nothing lives in the space", () => {
     expect(isReferenceFrame({ residents: [] })).toBe(true);
-    expect(isReferenceFrame({ residents: [{ __typename: "ADataset" }] })).toBe(
+    expect(isReferenceFrame({ residents: [{ __typename: "ArrayDataset" }] })).toBe(
       false,
     );
   });
@@ -18,7 +18,7 @@ describe("isReferenceFrame", () => {
 
 describe("residentName", () => {
   it("names a dataset, table or annotation collection by its own name", () => {
-    expect(residentName({ __typename: "ADataset", name: "stack" })).toBe(
+    expect(residentName({ __typename: "ArrayDataset", name: "stack" })).toBe(
       "stack",
     );
     expect(
@@ -60,7 +60,7 @@ describe("residentLabel", () => {
 
   it("names the single resident — that is the space's whole story", () => {
     expect(
-      residentLabel({ residents: [{ __typename: "ADataset", name: "stack" }] }),
+      residentLabel({ residents: [{ __typename: "ArrayDataset", name: "stack" }] }),
     ).toBe("stack");
   });
 
@@ -68,9 +68,9 @@ describe("residentLabel", () => {
     expect(
       residentLabel({
         residents: [
-          { __typename: "ADataset", name: "tile-1" },
-          { __typename: "ADataset", name: "tile-2" },
-          { __typename: "ADataset", name: "tile-3" },
+          { __typename: "ArrayDataset", name: "tile-1" },
+          { __typename: "ArrayDataset", name: "tile-2" },
+          { __typename: "ArrayDataset", name: "tile-3" },
         ],
       }),
     ).toBe("3 residents");

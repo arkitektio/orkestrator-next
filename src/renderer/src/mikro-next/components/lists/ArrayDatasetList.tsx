@@ -1,7 +1,7 @@
 import { createList } from "@/components/layout/createList";
-import { MikroADataset } from "@/linkers";
-import { useGetADatasetsQuery } from "../../api/graphql";
-import ADatasetCard from "../cards/ADatasetCard";
+import { MikroArrayDataset } from "@/linkers";
+import { useGetArrayDatasetsQuery } from "../../api/graphql";
+import ArrayDatasetCard from "../cards/ArrayDatasetCard";
 
 /**
  * On the shared factory rather than a hand-rolled ListRender, because the filter
@@ -16,11 +16,11 @@ import ADatasetCard from "../cards/ADatasetCard";
  * grid's default ladder would pack it into a column too narrow to read either.
  */
 const TList = createList({
-  useHook: useGetADatasetsQuery,
-  dataKey: "adatasets",
-  ItemComponent: ADatasetCard,
+  useHook: useGetArrayDatasetsQuery,
+  dataKey: "arrayDatasets",
+  ItemComponent: ArrayDatasetCard,
   title: "Array Datasets",
-  smart: MikroADataset,
+  smart: MikroArrayDataset,
   defaultLimit: 30,
   minItemWidth: 260,
   autoHide: false,

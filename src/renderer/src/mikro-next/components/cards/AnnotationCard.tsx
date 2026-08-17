@@ -11,7 +11,7 @@ interface Props {
 }
 
 /** `RECTANGLE` → `Rectangle`. Mirrors the annotations panel's own formatter. */
-const formatRoiKind = (kind: string) =>
+const formatAnnotationKind = (kind: string) =>
   kind.charAt(0) + kind.slice(1).toLowerCase().replaceAll("_", " ");
 
 /**
@@ -37,7 +37,7 @@ const TheCard = ({ item: annotation }: Props) => {
           <div className="flex min-w-0 flex-row items-start justify-between gap-2">
             <CardTitle className="min-w-0 break-words text-sm leading-tight">
               <MikroAnnotation.DetailLink object={annotation}>
-                {formatRoiKind(annotation.kind)}
+                {formatAnnotationKind(annotation.kind)}
               </MikroAnnotation.DetailLink>
             </CardTitle>
 

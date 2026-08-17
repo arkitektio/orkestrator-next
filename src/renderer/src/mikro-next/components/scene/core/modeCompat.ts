@@ -22,7 +22,7 @@ const ALL_MODES: InteractionMode[] = ["NAVIGATE", "ANNOTATE", "PROBE"];
 const ALL_TOOLS: AnnotateTool[] = [
   "SELECT",
   "RECTANGLE",
-  "ELLIPSIS",
+  "ELLIPSE",
   "POLYGON",
   "SPHERE",
   "CUBE",

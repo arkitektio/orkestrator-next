@@ -1,8 +1,8 @@
 import { Explainer } from "@/components/explainer/Explainer";
-import { MikroADataset } from "@/linkers";
+import { MikroArrayDataset } from "@/linkers";
 import { useParams } from "react-router-dom";
-import { useADatasetFilterBar } from "../components/filter/ADatasetFilterBar";
-import ADatasetList from "../components/lists/ADatasetList";
+import { useArrayDatasetFilterBar } from "../components/filter/ArrayDatasetFilterBar";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { ADATASET_SPEC_BY_SLUG } from "../specs";
 
 /**
@@ -15,31 +15,31 @@ const Page = () => {
   const entry = slug ? ADATASET_SPEC_BY_SLUG[slug] : undefined;
 
   // Unconditional: the early return below must not change the hook count.
-  const { filters, ordering, actions } = useADatasetFilterBar({
+  const { filters, ordering, actions } = useArrayDatasetFilterBar({
     lockedSpec: entry?.spec,
   });
 
   if (!entry) {
     return (
-      <MikroADataset.ListPage title="Unknown spec">
+      <MikroArrayDataset.ListPage title="Unknown spec">
         <div className="p-3 text-sm text-muted-foreground">
           No array dataset spec named “{slug}”.
         </div>
-      </MikroADataset.ListPage>
+      </MikroArrayDataset.ListPage>
     );
   }
 
   return (
-    <MikroADataset.ListPage title={entry.label} pageActions={actions}>
+    <MikroArrayDataset.ListPage title={entry.label} pageActions={actions}>
       <div className="p-3 flex flex-col gap-3">
         <Explainer title={entry.label} description={entry.description} />
-        <ADatasetList
+        <ArrayDatasetList
           filters={filters}
           ordering={ordering}
           title={entry.label}
         />
       </div>
-    </MikroADataset.ListPage>
+    </MikroArrayDataset.ListPage>
   );
 };
 

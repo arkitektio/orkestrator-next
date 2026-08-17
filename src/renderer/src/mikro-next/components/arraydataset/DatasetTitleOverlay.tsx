@@ -7,12 +7,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { MikroADataset } from '@/linkers'
+import { MikroArrayDataset } from '@/linkers'
 import { Star } from 'lucide-react'
-import { GetADatasetQuery, useSetDefaultSceneMutation } from '../../api/graphql'
+import { GetArrayDatasetQuery, useSetDefaultSceneMutation } from '../../api/graphql'
 import { baseDtypeOf, formatShape } from '../../specs'
 
-type PageDataset = GetADatasetQuery['adataset']
+type PageDataset = GetArrayDatasetQuery['arrayDataset']
 
 /**
  * What the page is *about*, said once and quietly: the dataset's name, the scene
@@ -40,7 +40,7 @@ export const DatasetTitleOverlay = ({
 
   // The nomination the page landed on. Selecting `latestSnapshot` in the
   // mutation is what makes this cheap: Apollo writes the new nomination AND the
-  // tile it implies into the normalized ADataset, so this control needs no
+  // tile it implies into the normalized ArrayDataset, so this control needs no
   // refetch and every card already showing the dataset re-tiles itself.
   const [setDefaultScene, { loading: nominating }] = useSetDefaultSceneMutation()
   const defaultSceneId = dataset.defaultScene?.id
@@ -55,12 +55,12 @@ export const DatasetTitleOverlay = ({
             spaces would not wrap at all and an ellipsis would hide the part
             that tells them apart — the tail. Breaking mid-token shows all of
             it. */}
-        <MikroADataset.DetailLink
+        <MikroArrayDataset.DetailLink
           object={dataset}
           className="text-3xl font-semibold leading-tight text-ellipsis truncate ellipsis break-all"
         >
           {dataset.name}
-        </MikroADataset.DetailLink>
+        </MikroArrayDataset.DetailLink>
         <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground w-[50%]">
           <span className="truncate">{formatShape(dataset.axisNames, dataset.shape)}</span>
           {dtype && <span className="shrink-0">{dtype}</span>}

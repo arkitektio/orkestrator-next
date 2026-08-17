@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
  * The floating column of scene panels — behaviour only. It owns *where* the
  * stack sits and *whether* it is expanded, and nothing about what is in it: the
  * host composes that. See Scene.tsx for the default composition, and
- * ADatasetPage for one that adds a card of its own.
+ * ArrayDatasetPage for one that adds a card of its own.
  *
  * Collapse state is per-column via `storageKey`, so a page that stacks two
  * columns does not have them fold in unison.

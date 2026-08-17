@@ -11,14 +11,14 @@
       "LabelAccessor"
     ],
     "FileLinkContainer": [
-      "ADataset",
       "AnnotationCollection",
+      "ArrayDataset",
       "MeshCollection",
       "TableDataset"
     ],
     "FolderChild": [
-      "ADataset",
       "AnnotationCollection",
+      "ArrayDataset",
       "File",
       "Folder",
       "Image",
@@ -26,8 +26,8 @@
       "TableDataset"
     ],
     "InViewSource": [
-      "ADataset",
       "AnnotationCollection",
+      "ArrayDataset",
       "MeshCollection",
       "TableDataset"
     ],
@@ -69,8 +69,8 @@
       "Video"
     ],
     "Resident": [
-      "ADataset",
       "AnnotationCollection",
+      "ArrayDataset",
       "DataArray",
       "Lens",
       "MeshCollection",
@@ -114,7 +114,6 @@
       "WellPositionView"
     ],
     "_Entity": [
-      "ADataset",
       "AcquisitionView",
       "AffineTransformation",
       "AffineTransformationView",
@@ -123,6 +122,7 @@
       "Annotation",
       "AnnotationCollection",
       "AnnotationLayer",
+      "ArrayDataset",
       "Axis",
       "BigFileStore",
       "BijectionTransformation",

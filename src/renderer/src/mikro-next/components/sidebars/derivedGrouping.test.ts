@@ -123,7 +123,7 @@ describe("parentDatasetOfEdge", () => {
   it("names the dataset living in the space the edge lands in", () => {
     expect(
       parentDatasetOfEdge(
-        edge([{ __typename: "ADataset", id: "ds-1", name: "Raw stack" }]),
+        edge([{ __typename: "ArrayDataset", id: "ds-1", name: "Raw stack" }]),
       ),
     ).toEqual({ id: "ds-1", name: "Raw stack" });
   });
@@ -145,7 +145,7 @@ describe("parentDatasetOfEdge", () => {
       parentDatasetOfEdge(
         edge([
           { __typename: "Lens", id: "lens-1", dataset: { id: "ds-lens", name: "Via lens" } },
-          { __typename: "ADataset", id: "ds-direct", name: "Direct" },
+          { __typename: "ArrayDataset", id: "ds-direct", name: "Direct" },
         ]),
       ),
     ).toEqual({ id: "ds-direct", name: "Direct" });

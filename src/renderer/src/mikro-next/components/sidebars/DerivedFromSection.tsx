@@ -1,5 +1,5 @@
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
-import { MikroADataset, MikroCoordinateSystem } from "@/linkers";
+import { MikroArrayDataset, MikroCoordinateSystem } from "@/linkers";
 import { CornerDownRight } from "lucide-react";
 import { ParentEdge, parentDatasetOfEdge } from "./derivedGrouping";
 
@@ -77,12 +77,12 @@ export const DerivedFromSection = ({
               <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="flex min-w-0 flex-col gap-1">
                 {parent ? (
-                  <MikroADataset.DetailLink
+                  <MikroArrayDataset.DetailLink
                     object={parent}
                     className="break-all text-sm font-medium"
                   >
                     {parent.name}
-                  </MikroADataset.DetailLink>
+                  </MikroArrayDataset.DetailLink>
                 ) : edge.output ? (
                   <MikroCoordinateSystem.DetailLink
                     // Just the identity, not the whole edge target: the link

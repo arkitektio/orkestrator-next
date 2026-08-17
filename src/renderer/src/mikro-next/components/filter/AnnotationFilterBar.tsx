@@ -25,7 +25,7 @@ import {
   AnnotationFilter,
   AnnotationOrder,
   Ordering,
-  RoiKindChoices,
+  AnnotationKindChoices,
 } from "../../api/graphql";
 
 /**
@@ -35,52 +35,33 @@ import {
  */
 const KIND_GROUPS: {
   label: string;
-  kinds: { kind: RoiKindChoices; label: string }[];
+  kinds: { kind: AnnotationKindChoices; label: string }[];
 }[] = [
   {
     label: "Planar",
     kinds: [
-      { kind: RoiKindChoices.Rectangle, label: "Rectangle" },
-      { kind: RoiKindChoices.Ellipsis, label: "Ellipse" },
-      { kind: RoiKindChoices.Circle, label: "Circle" },
-      { kind: RoiKindChoices.Polygon, label: "Polygon" },
+      { kind: AnnotationKindChoices.Rectangle, label: "Rectangle" },
+      { kind: AnnotationKindChoices.Ellipse, label: "Ellipse" },
+      { kind: AnnotationKindChoices.Circle, label: "Circle" },
+      { kind: AnnotationKindChoices.Polygon, label: "Polygon" },
     ],
   },
   {
     label: "Volumetric",
     kinds: [
-      { kind: RoiKindChoices.Cube, label: "Cube" },
-      { kind: RoiKindChoices.Sphere, label: "Sphere" },
-      { kind: RoiKindChoices.Ellipsoid, label: "Ellipsoid" },
+      { kind: AnnotationKindChoices.Cube, label: "Cube" },
+      { kind: AnnotationKindChoices.Sphere, label: "Sphere" },
+      { kind: AnnotationKindChoices.Ellipsoid, label: "Ellipsoid" },
     ],
   },
   {
     label: "Points & paths",
     kinds: [
-      { kind: RoiKindChoices.Point, label: "Point" },
-      { kind: RoiKindChoices.MultiPoint, label: "Multi point" },
-      { kind: RoiKindChoices.Line, label: "Line" },
-      { kind: RoiKindChoices.Path, label: "Path" },
+      { kind: AnnotationKindChoices.Point, label: "Point" },
+      { kind: AnnotationKindChoices.MultiPoint, label: "Multi point" },
+      { kind: AnnotationKindChoices.Line, label: "Line" },
+      { kind: AnnotationKindChoices.Path, label: "Path" },
     ],
-  },
-  {
-    // Shapes that select along a non-spatial axis rather than draw in the
-    // plane: a FRAME is a whole timepoint, a SLICE a whole z plane.
-    label: "Spanning",
-    kinds: [
-      { kind: RoiKindChoices.Frame, label: "Frame" },
-      { kind: RoiKindChoices.Slice, label: "Slice" },
-      { kind: RoiKindChoices.TemporalRectangle, label: "Temporal rectangle" },
-      { kind: RoiKindChoices.TemporalCube, label: "Temporal cube" },
-      { kind: RoiKindChoices.SpectralRectangle, label: "Spectral rectangle" },
-      { kind: RoiKindChoices.SpectralCube, label: "Spectral cube" },
-      { kind: RoiKindChoices.Hypercube, label: "Hypercube" },
-      { kind: RoiKindChoices.SpectralHypercube, label: "Spectral hypercube" },
-    ],
-  },
-  {
-    label: "Other",
-    kinds: [{ kind: RoiKindChoices.Unknown, label: "Unknown" }],
   },
 ];
 
@@ -121,12 +102,12 @@ export const annotationFilters = (
   kind: string,
 ): Pick<AnnotationFilter, "search" | "kind"> => ({
   ...(search ? { search } : {}),
-  ...(kind === "any" ? {} : { kind: kind as RoiKindChoices }),
+  ...(kind === "any" ? {} : { kind: kind as AnnotationKindChoices }),
 });
 
 /**
  * The filter set for annotation lists: search, kind, and sort — the
- * `ADatasetFilterBar` idiom (URL state via nuqs, only non-defaults written, the
+ * `ArrayDatasetFilterBar` idiom (URL state via nuqs, only non-defaults written, the
  * assembled variables returned next to the controls for a ListPage's
  * `pageActions`) narrowed to what `AnnotationFilter` actually offers.
  *

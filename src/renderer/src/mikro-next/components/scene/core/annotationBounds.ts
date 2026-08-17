@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import {
-  RoiKind,
+  AnnotationKind,
   type SceneAnnotationFragment,
   type SceneLayerFragment,
 } from "@/mikro-next/api/graphql";
@@ -109,19 +109,19 @@ export function getAnnotationSelectionPoints(
   const vectors = annotation.vectors;
   if (!vectors || vectors.length === 0) return [];
 
-  if (annotation.kind === RoiKind.Point && vectors.length >= 1) {
+  if (annotation.kind === AnnotationKind.Point && vectors.length >= 1) {
     return [getVectorPoint(vectors[0], flattenToPlane)];
   }
 
-  if (annotation.kind === RoiKind.Line && vectors.length >= 2) {
+  if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
     return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
   }
 
-  if (annotation.kind === RoiKind.Rectangle && vectors.length >= 2) {
+  if (annotation.kind === AnnotationKind.Rectangle && vectors.length >= 2) {
     return getRectangleCorners(vectors[0], vectors[1], flattenToPlane);
   }
 
-  if (annotation.kind === RoiKind.Ellipsis && vectors.length >= 2) {
+  if (annotation.kind === AnnotationKind.Ellipse && vectors.length >= 2) {
     return getEllipsisPoints(vectors[0], vectors[1], flattenToPlane);
   }
 

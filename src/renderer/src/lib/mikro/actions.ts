@@ -4,13 +4,13 @@ import {
   CreateSceneFromCoordinateSystemDocument,
   CreateSceneFromCoordinateSystemMutation,
   CreateSceneFromCoordinateSystemMutationVariables,
-  DeleteADatasetDocument,
+  DeleteArrayDatasetDocument,
   DeleteFolderDocument,
   DeleteFileDocument,
   DeleteSceneDocument,
-  GetADatasetIntrinsicSystemDocument,
-  GetADatasetIntrinsicSystemQuery,
-  GetADatasetIntrinsicSystemQueryVariables,
+  GetArrayDatasetIntrinsicSystemDocument,
+  GetArrayDatasetIntrinsicSystemQuery,
+  GetArrayDatasetIntrinsicSystemQueryVariables,
   GetCoordinateSystemDocument,
   GetFolderDocument,
   GetScenesDocument,
@@ -22,9 +22,9 @@ import {
   PutFilesInFolderMutation,
   PutFilesInFolderMutationVariables,
   PutFilesInFolderDocument,
-  PutADatasetsInFolderDocument,
-  PutADatasetsInFolderMutation,
-  PutADatasetsInFolderMutationVariables,
+  PutArrayDatasetsInFolderDocument,
+  PutArrayDatasetsInFolderMutation,
+  PutArrayDatasetsInFolderMutationVariables,
   PutTableDatasetsInFolderDocument,
   PutTableDatasetsInFolderMutation,
   PutTableDatasetsInFolderMutationVariables,
@@ -47,7 +47,7 @@ import { getRefetchableQueriesForEntities } from "../localactions/helpers/refetc
 type MikroAction = Action<typeof Arkitekt>;
 
 export const MIKRO_ACTIONS: Record<string, MikroAction> = {
-  'create-scene-from-adataset': {
+  'create-scene-from-arrayDataset': {
     title: 'Create Scene',
     description:
       "Bootstrap a renderable scene over this array dataset's own pixel grid: a full lens and a default image layer",
@@ -57,7 +57,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       { type: 'identifier', identifier: '@mikro/adataset' },
       { type: 'nopartner' },
     ],
-    collections: ['adataset'],
+    collections: ['arrayDataset'],
     execute: async ({ state, services, navigate }) => {
       const selected = state.left.find(
         (item) => item.identifier === '@mikro/adataset',
@@ -79,14 +79,14 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       // at physical scale instead, build over a space the dataset is registered
       // into; the dataset page offers those.
       const { data: datasetData } = await mikro.client.query<
-        GetADatasetIntrinsicSystemQuery,
-        GetADatasetIntrinsicSystemQueryVariables
+        GetArrayDatasetIntrinsicSystemQuery,
+        GetArrayDatasetIntrinsicSystemQueryVariables
       >({
-        query: GetADatasetIntrinsicSystemDocument,
+        query: GetArrayDatasetIntrinsicSystemDocument,
         variables: { id: selected.object.id },
       });
 
-      const system = datasetData?.adataset.intrinsicSystem;
+      const system = datasetData?.arrayDataset.intrinsicSystem;
       if (!system) {
         throw new Error(
           'This dataset has no intrinsic coordinate system yet, so there is no space to build a scene over',
@@ -190,7 +190,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       );
     },
   },
-  'register-adataset-into-coordinatesystem': {
+  'register-arrayDataset-into-coordinatesystem': {
     title: 'Register Dataset Here',
     description: 'Place this dataset into the coordinate system it was dropped on',
     icon: Waypoints,
@@ -213,7 +213,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
         'register',
         {
           target: target.object.id,
-          source: { kind: 'adataset', id: dataset.object.id },
+          source: { kind: 'arrayDataset', id: dataset.object.id },
         },
         { className: 'max-w-3xl' },
       );
@@ -248,7 +248,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       );
     },
   },
-  'calibrate-adataset': {
+  'calibrate-arrayDataset': {
     title: 'Calibrate…',
     description:
       "Create a physical space for this dataset's pixels: a pixel size, a unit per axis",
@@ -257,7 +257,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       { type: 'identifier', identifier: '@mikro/adataset' },
       { type: 'nopartner' },
     ],
-    collections: ['adataset'],
+    collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const selected = state.left.find(
         (item) => item.identifier === '@mikro/adataset',
@@ -272,7 +272,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       );
     },
   },
-  'register-adataset-into': {
+  'register-arrayDataset-into': {
     title: 'Register Into…',
     description:
       "Place this dataset into a coordinate system: a scene's world, an atlas hub, or any other space",
@@ -281,7 +281,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       { type: 'identifier', identifier: '@mikro/adataset' },
       { type: 'nopartner' },
     ],
-    collections: ['adataset'],
+    collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const selected = state.left.find(
         (item) => item.identifier === '@mikro/adataset',
@@ -291,7 +291,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       }
       dialog.openDialog(
         'register',
-        { source: { kind: 'adataset', id: selected.object.id } },
+        { source: { kind: 'arrayDataset', id: selected.object.id } },
         { className: 'max-w-3xl' },
       );
     },
@@ -399,7 +399,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       )
     },
   },
-  'move-adataset-to-folder': {
+  'move-arrayDataset-to-folder': {
     title: 'Move to Folder',
     description: 'File this dataset into a folder',
     icon: FolderInput,
@@ -407,7 +407,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       { type: 'identifier', identifier: '@mikro/adataset' },
       { type: 'nopartner' },
     ],
-    collections: ['adataset'],
+    collections: ['arrayDataset'],
     execute: async ({ state, dialog }) => {
       const ids = state.left
         .filter((item) => item.identifier === '@mikro/adataset')
@@ -419,7 +419,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
 
       dialog.openDialog(
         'movetofolder',
-        { subject: { kind: 'adataset', ids } },
+        { subject: { kind: 'arrayDataset', ids } },
         { className: 'max-w-lg' },
       )
     },
@@ -468,7 +468,7 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
       })
     }
   },
-  move_adatasets_to_folder: {
+  move_arrayDatasets_to_folder: {
     description: 'File array datasets into this folder',
     title: 'Move Datasets to Folder',
     icon: Boxes,
@@ -501,13 +501,13 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
         throw new Error('Inside item must be a folder for Move Datasets to Folder action')
       }
 
-      await client.mutate<PutADatasetsInFolderMutation, PutADatasetsInFolderMutationVariables>({
-        mutation: PutADatasetsInFolderDocument,
+      await client.mutate<PutArrayDatasetsInFolderMutation, PutArrayDatasetsInFolderMutationVariables>({
+        mutation: PutArrayDatasetsInFolderDocument,
         variables: {
           selfs: datasets.map((i) => i.object.id),
           other: inside.object.id
         },
-        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((f) => ({ typename: "ADataset", id: f.object.id })))
+        refetchQueries: getRefetchableQueriesForEntities(client, datasets.map((f) => ({ typename: "ArrayDataset", id: f.object.id })))
      })
     }
   },
@@ -605,14 +605,14 @@ export const MIKRO_ACTIONS: Record<string, MikroAction> = {
     typename: 'Scene',
     mutation: DeleteSceneDocument
   }),
-  'delete-mikro-adataset': buildDeleteAction<typeof Arkitekt>({
+  'delete-mikro-arrayDataset': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Dataset',
     identifier: '@mikro/adataset',
     description:
       'Delete the array dataset, its pyramid levels and the store behind them',
     service: 'mikro',
-    typename: 'ADataset',
-    mutation: DeleteADatasetDocument
+    typename: 'ArrayDataset',
+    mutation: DeleteArrayDatasetDocument
   }),
   'delete-mikro-folder': buildDeleteAction<typeof Arkitekt>({
     title: 'Delete Folder',

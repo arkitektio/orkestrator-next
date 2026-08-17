@@ -12,8 +12,8 @@ import { ArrowDown, Axis3d, File, Folder, Grid3x3, Home, PenTool, Table2 } from 
 import * as React from 'react'
 import { NavLink } from 'react-router-dom'
 import { GlobalSearchQueryVariables, useGlobalSearchQuery, useMembersQuery } from '../api/graphql'
-import { ADATASET_SPECS, adatasetSpecLink } from '../specs'
-import ADatasetCard from '../components/cards/ADatasetCard'
+import { ADATASET_SPECS, arrayDatasetSpecLink } from '../specs'
+import ArrayDatasetCard from '../components/cards/ArrayDatasetCard'
 import FileCard from '../components/cards/FileCard'
 import FolderCard from '../components/cards/FolderCard'
 
@@ -34,7 +34,7 @@ export const NavigationPane = () => {
         </SidePaneGroup>
 
         <SidePaneGroup title="Data">
-          <PaneLink to="/mikro/adatasets" className="flex gap-3 w-full hover:text-primary">
+          <PaneLink to="/mikro/arraydatasets" className="flex gap-3 w-full hover:text-primary">
             <Grid3x3 className="h-4 w-4" />
             Array Datasets
           </PaneLink>
@@ -70,7 +70,7 @@ export const NavigationPane = () => {
         <SidePaneGroup
           title={
             <NavLink
-              to="/mikro/adatasets"
+              to="/mikro/arraydatasets"
               className="text-muted-foreground text-xs font-semibold uppercase hover:text-primary"
             >
               Array Datasets
@@ -80,7 +80,7 @@ export const NavigationPane = () => {
           {ADATASET_SPECS.map((entry) => (
             <PaneLink
               key={entry.slug}
-              to={adatasetSpecLink(entry.slug)}
+              to={arrayDatasetSpecLink(entry.slug)}
               className="flex gap-3 w-full hover:text-primary"
             >
               <entry.icon className="h-4 w-4" />
@@ -124,7 +124,7 @@ export const NavigationPane = () => {
 
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState('')
-  const [noAdatasets, setNoAdatasets] = React.useState(false)
+  const [noArrayDatasets, setNoArrayDatasets] = React.useState(false)
   const [noFiles, setNoFiles] = React.useState(false)
   const [noFolders, setNoFolders] = React.useState(false)
 
@@ -132,7 +132,7 @@ const Pane: React.FunctionComponent = () => {
 
   const variables: GlobalSearchQueryVariables = {
     search: debouncedSearch,
-    noAdatasets,
+    noArrayDatasets,
     noFiles,
     noFolders,
     pagination: {
@@ -144,7 +144,7 @@ const Pane: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     refetch(variables)
-  }, [debouncedSearch, noAdatasets, noFiles, noFolders])
+  }, [debouncedSearch, noArrayDatasets, noFiles, noFolders])
 
   const searchBar = (
     <div className="w-full flex flex-row">
@@ -167,9 +167,9 @@ const Pane: React.FunctionComponent = () => {
           <div className="flex flex-col gap-2">
             <Toggle
               label="No Datasets"
-              name="noAdatasets"
-              pressed={noAdatasets}
-              onPressedChange={setNoAdatasets}
+              name="noArrayDatasets"
+              pressed={noArrayDatasets}
+              onPressedChange={setNoArrayDatasets}
             >
               Exclude Datasets
             </Toggle>
@@ -196,8 +196,8 @@ const Pane: React.FunctionComponent = () => {
         <NavigationPane />
       ) : (
         <div className="h-full">
-          <ListRender array={data?.adatasets}>
-            {(item, i) => <ADatasetCard item={item} key={i} />}
+          <ListRender array={data?.arrayDatasets}>
+            {(item, i) => <ArrayDatasetCard item={item} key={i} />}
           </ListRender>
           <ListRender array={data?.files}>
             {(item, i) => <FileCard item={item} key={i} />}

@@ -1,0 +1,3 @@
+mutation DeleteArrayDataset($id: ID!) {
+  deleteArrayDataset(input: { id: $id })
+}

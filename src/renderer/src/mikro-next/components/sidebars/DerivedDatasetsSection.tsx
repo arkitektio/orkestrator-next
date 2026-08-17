@@ -4,9 +4,9 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { MikroADataset } from "@/linkers";
+import { MikroArrayDataset } from "@/linkers";
 import { Grid3x3 } from "lucide-react";
-import { GetADatasetDerivedQuery } from "../../api/graphql";
+import { GetArrayDatasetDerivedQuery } from "../../api/graphql";
 import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec } from "../../specs";
 import { groupDerived } from "./derivedGrouping";
 
@@ -14,7 +14,7 @@ import { groupDerived } from "./derivedGrouping";
  * What came OUT of this dataset — the deconvolutions, segmentations, projections
  * and fusions that named one of its spaces as a parent.
  *
- * `ADataset.derivedDatasets` is already the union this promises: a child is
+ * `ArrayDataset.derivedDatasets` is already the union this promises: a child is
  * listed there whether it was computed from the dataset's intrinsic grid or from
  * the space a slicing lens cuts out, because a lens' space IS a space of the
  * dataset. The lenses are fetched alongside only to LABEL the groups.
@@ -24,12 +24,12 @@ import { groupDerived } from "./derivedGrouping";
  * history in the Info tab. The query lives with that tab, so this takes data.
  */
 
-type QueryLens = GetADatasetDerivedQuery["lenses"][number];
+type QueryLens = GetArrayDatasetDerivedQuery["lenses"][number];
 type QueryDerived =
-  GetADatasetDerivedQuery["adataset"]["derivedDatasets"][number];
+  GetArrayDatasetDerivedQuery["arrayDataset"]["derivedDatasets"][number];
 
 /**
- * Compact enough for the rail — deliberately not `ADatasetCard`, which is an
+ * Compact enough for the rail — deliberately not `ArrayDatasetCard`, which is an
  * aspect-square grid tile. Same vocabulary though: the spec's icon, the spatial
  * extent, then the acquisition modifiers.
  */
@@ -52,19 +52,19 @@ const DerivedRow = ({
     primary && "reason" in primary ? (primary.reason ?? undefined) : undefined;
 
   return (
-    <MikroADataset.Smart object={dataset}>
+    <MikroArrayDataset.Smart object={dataset}>
       <div className="flex flex-row items-start gap-2 rounded-md border border-border/60 p-2 transition-colors hover:bg-accent/50">
         <Icon
           className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
           aria-label={spatial?.label}
         />
         <div className="flex min-w-0 flex-col gap-1">
-          <MikroADataset.DetailLink
+          <MikroArrayDataset.DetailLink
             object={dataset}
             className="break-all text-sm font-medium"
           >
             {dataset.name}
-          </MikroADataset.DetailLink>
+          </MikroArrayDataset.DetailLink>
 
           <div className="flex flex-row flex-wrap items-baseline gap-x-2 font-mono text-[0.625rem] text-muted-foreground">
             {axes.spatial.map((axis, index) => (
@@ -112,7 +112,7 @@ const DerivedRow = ({
           )}
         </div>
       </div>
-    </MikroADataset.Smart>
+    </MikroArrayDataset.Smart>
   );
 };
 
@@ -121,7 +121,7 @@ export const DerivedDatasetsSection = ({
   lenses,
   derived,
 }: {
-  intrinsicSystem: GetADatasetDerivedQuery["adataset"]["intrinsicSystem"];
+  intrinsicSystem: GetArrayDatasetDerivedQuery["arrayDataset"]["intrinsicSystem"];
   lenses: readonly QueryLens[];
   derived: readonly QueryDerived[];
 }) => {

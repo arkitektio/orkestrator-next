@@ -1,18 +1,18 @@
 import { useRegisterDashboardWidget } from "../hooks";
 import { Boxes, Loader2 } from "lucide-react";
 import {
-  useGetADatasetsQuery,
+  useGetArrayDatasetsQuery,
   Ordering,
 } from "@/mikro-next/api/graphql";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroADataset } from "@/linkers";
+import { MikroArrayDataset } from "@/linkers";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { Card } from "@/components/ui/card";
 
-const LatestADatasetsWidget = () => {
+const LatestArrayDatasetsWidget = () => {
   const resolve = useResolve();
-  const { data, loading } = useGetADatasetsQuery({
+  const { data, loading } = useGetArrayDatasetsQuery({
     variables: {
       pagination: { limit: 8 },
       ordering: [{ createdAt: Ordering.Desc }],
@@ -20,7 +20,7 @@ const LatestADatasetsWidget = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  const datasets = data?.adatasets ?? [];
+  const datasets = data?.arrayDatasets ?? [];
 
   return (
     <div className="flex flex-col h-full">
@@ -31,8 +31,8 @@ const LatestADatasetsWidget = () => {
       ) : (
         <ResponsiveContainerGrid className="[&>*:first-child]:@lg:col-span-2 [&>*:first-child]:@lg:row-span-2">
             {datasets.map((dataset) => (
-              <MikroADataset.Smart key={dataset.id} object={dataset}>
-                <MikroADataset.DetailLink
+              <MikroArrayDataset.Smart key={dataset.id} object={dataset}>
+                <MikroArrayDataset.DetailLink
                   object={dataset}
                   className={() => "block cursor-pointer group"}
                 >
@@ -53,8 +53,8 @@ const LatestADatasetsWidget = () => {
                       </p>
                     </div>
                   </Card>
-                </MikroADataset.DetailLink>
-              </MikroADataset.Smart>
+                </MikroArrayDataset.DetailLink>
+              </MikroArrayDataset.Smart>
             ))}
         </ResponsiveContainerGrid>
       )}
@@ -62,13 +62,13 @@ const LatestADatasetsWidget = () => {
   );
 };
 
-export const LatestADatasetsDashboardWidget = () => {
+export const LatestArrayDatasetsDashboardWidget = () => {
   useRegisterDashboardWidget({
-    key: "latest-adatasets",
+    key: "latest-arrayDatasets",
     label: "Latest Datasets",
     module: "mikro",
     icon: <Boxes className="w-3 h-3" />,
-    component: () => <LatestADatasetsWidget />,
+    component: () => <LatestArrayDatasetsWidget />,
     defaultSize: "2x2",
     defaultWidth: 50,
     defaultHeight: 100,

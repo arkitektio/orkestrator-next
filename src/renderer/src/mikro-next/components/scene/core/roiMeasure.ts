@@ -20,7 +20,7 @@ export function measureDraw(
 ): DrawMeasure | null {
   if (tool === "POINT" || points.length < 2) return null;
 
-  if (tool === "RECTANGLE" || tool === "ELLIPSIS") {
+  if (tool === "RECTANGLE" || tool === "ELLIPSE") {
     // Absolute, so which corner was pressed first doesn't matter.
     return {
       kind: "box",
@@ -94,15 +94,15 @@ export function formatDrawMeasure(
 }
 
 /**
- * A STORED annotation's headline number, by its `RoiKind`. Kinds that share a
+ * A STORED annotation's headline number, by its `AnnotationKind`. Kinds that share a
  * drawing tool's convention reuse `measureDraw`; a closed POLYGON is the one
  * shape whose headline is its area, which no gesture readout ever needed.
- * Plain string keys on purpose: the generated `RoiKind` enum lives in the
+ * Plain string keys on purpose: the generated `AnnotationKind` enum lives in the
  * Apollo hooks barrel, which this pure module must not import.
  */
 const ANNOTATION_TOOL_BY_KIND: Partial<Record<string, DrawingTool>> = {
   RECTANGLE: "RECTANGLE",
-  ELLIPSIS: "ELLIPSIS",
+  ELLIPSE: "ELLIPSE",
   LINE: "LINE",
   POLYGON: "POLYGON",
   PATH: "PATH",

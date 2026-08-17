@@ -29,7 +29,7 @@ fragment ListCoordinateSystem on CoordinateSystem {
 # back-reference to its dataset, so a pyramid level can name only its level.
 fragment Resident on Resident {
   __typename
-  ... on ADataset {
+  ... on ArrayDataset {
     id
     name
   }

@@ -32,7 +32,7 @@ const TOOLS: {
 }[] = [
   { tool: "SELECT", label: "Select", icon: MousePointer2 },
   { tool: "RECTANGLE", label: "Rect", icon: Square },
-  { tool: "ELLIPSIS", label: "Ellipse", icon: Circle },
+  { tool: "ELLIPSE", label: "Ellipse", icon: Circle },
   { tool: "POLYGON", label: "Polygon", icon: Pentagon },
   // Volumetric (3D-only): a probe click anchors the center, a second click
   // sets the radius.

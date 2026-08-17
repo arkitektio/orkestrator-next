@@ -1,14 +1,14 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardTitle } from '@/components/ui/card'
-import { MikroADataset, MikroScene } from '@/linkers'
+import { MikroArrayDataset, MikroScene } from '@/linkers'
 import { Clapperboard, Grid3x3 } from 'lucide-react'
-import { ListADatasetFragment } from '../../api/graphql'
-import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec, type ADatasetAxis } from '../../specs'
+import { ListArrayDatasetFragment } from '../../api/graphql'
+import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec, type ArrayDatasetAxis } from '../../specs'
 import { SnapshotBackdrop } from './SnapshotBackdrop'
 
 interface Props {
   /** Named `item` because createList passes items in under that name. */
-  item: ListADatasetFragment
+  item: ListArrayDatasetFragment
 }
 
 /**
@@ -17,7 +17,7 @@ interface Props {
  * Dims against the backdrop, not against the card: everything here sits on the
  * snapshot's scrim, so `muted-foreground` would be the wrong grey.
  */
-const AxisChip = ({ axis, muted }: { axis: ADatasetAxis; muted?: boolean }) => (
+const AxisChip = ({ axis, muted }: { axis: ArrayDatasetAxis; muted?: boolean }) => (
   <span className="flex items-baseline gap-0.5">
     <span
       className={
@@ -44,24 +44,24 @@ const AxisChip = ({ axis, muted }: { axis: ADatasetAxis; muted?: boolean }) => (
  * most datasets have none and the spec/extent readout has to carry the card on
  * its own regardless.
  */
-const TheCard = ({ item: adataset }: Props) => {
-  const spatial = spatialSpecOf(adataset.spec)
-  const modifiers = modifierSpecsOf(adataset.spec)
-  const axes = splitAxesBySpec(adataset.axisNames, adataset.shape, adataset.spec)
+const TheCard = ({ item: arrayDataset }: Props) => {
+  const spatial = spatialSpecOf(arrayDataset.spec)
+  const modifiers = modifierSpecsOf(arrayDataset.spec)
+  const axes = splitAxesBySpec(arrayDataset.axisNames, arrayDataset.shape, arrayDataset.spec)
 
   const Icon = spatial?.icon ?? Grid3x3
 
   return (
-    <MikroADataset.Smart object={adataset}>
+    <MikroArrayDataset.Smart object={arrayDataset}>
       <Card className="aspect-square overflow-hidden p-0">
-        <SnapshotBackdrop snapshot={adataset.latestSnapshot} className="h-full w-full">
+        <SnapshotBackdrop snapshot={arrayDataset.latestSnapshot} className="h-full w-full">
           <div className="flex h-full flex-col justify-between gap-2 px-3 py-2">
             <div className="flex min-w-0 flex-row items-start gap-2">
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-white/70" aria-label={spatial?.label} />
               <CardTitle className="min-w-0 break-words text-sm leading-tight line-clamp-2">
-                <MikroADataset.DetailLink object={adataset}>
-                  {adataset.name}
-                </MikroADataset.DetailLink>
+                <MikroArrayDataset.DetailLink object={arrayDataset}>
+                  {arrayDataset.name}
+                </MikroArrayDataset.DetailLink>
               </CardTitle>
 
               {/* What the tile is a picture OF. The backdrop is the newest
@@ -69,18 +69,18 @@ const TheCard = ({ item: adataset }: Props) => {
                   where the picture leads — the name still leads to the dataset.
                   Absent for a dataset that nominates nothing, which is also
                   exactly the case with no picture to explain. */}
-              {adataset.defaultScene && (
+              {arrayDataset.defaultScene && (
                 <MikroScene.DetailLink
-                  object={adataset.defaultScene}
+                  object={arrayDataset.defaultScene}
                   className="shrink-0"
-                  title={adataset.defaultScene.name}
+                  title={arrayDataset.defaultScene.name}
                 >
                   <Badge
                     variant="outline"
                     className="max-w-24 gap-1 border-white/40 px-1 py-0 text-[10px] font-normal text-white"
                   >
                     <Clapperboard className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{adataset.defaultScene.name}</span>
+                    <span className="truncate">{arrayDataset.defaultScene.name}</span>
                   </Badge>
                 </MikroScene.DetailLink>
               )}
@@ -112,7 +112,7 @@ const TheCard = ({ item: adataset }: Props) => {
                     {modifier.short}
                   </Badge>
                 ))}
-                {adataset.multiscale && (
+                {arrayDataset.multiscale && (
                   <Badge
                     variant="outline"
                     className="px-1 py-0 text-[10px] font-normal border-white/40 text-white"
@@ -125,7 +125,7 @@ const TheCard = ({ item: adataset }: Props) => {
           </div>
         </SnapshotBackdrop>
       </Card>
-    </MikroADataset.Smart>
+    </MikroArrayDataset.Smart>
   )
 }
 

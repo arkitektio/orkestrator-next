@@ -105,7 +105,7 @@ export function roiOutline(
   switch (tool) {
     case "RECTANGLE":
       return rectangleOutline(points[0], points[1], z);
-    case "ELLIPSIS":
+    case "ELLIPSE":
       return ellipseOutline(points[0], points[1], z, options.segments);
     // The volumetric tools' points are the two BOUNDING CORNERS
     // (`core/primitiveDraw.ts` — center ± r on every axis); the outline is

@@ -36,7 +36,7 @@ import {
 import { HookFunction } from "@/app/routes/ParamlessRoute";
 import { OperationVariables, QueryHookOptions } from "@apollo/client";
 import {
-  ADatasetOrder,
+  ArrayDatasetOrder,
   FolderOrder,
   FileOrder,
   HomePageQuery,
@@ -58,7 +58,7 @@ const useHomePageQueryForRoute: HookFunction<HomePageQuery, OperationVariables> 
 import { UploadDialog } from "../components/dialogs/UploadDialog";
 import FolderList from "../components/lists/FolderList";
 import FileList from "../components/lists/FileList";
-import ADatasetList from "../components/lists/ADatasetList";
+import ArrayDatasetList from "../components/lists/ArrayDatasetList";
 import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 import { useMikroBigFileUpload } from "@/datalayer/hooks/useMikroBigFileUpload";
 import { parseAsIsoDateTime, parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
@@ -108,7 +108,7 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
     sortField === "createdAt"
       ? ({ createdAt: ordering } as const)
       : ({ name: ordering } as const);
-  const adatasetOrdering: ADatasetOrder[] = [orderByField];
+  const arrayDatasetOrdering: ArrayDatasetOrder[] = [orderByField];
   const fileOrdering: FileOrder[] = [orderByField];
   const folderOrdering: FolderOrder[] = [orderByField];
 
@@ -232,7 +232,7 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
         uploadFile={performDataLayerUpload}
         createFile={createFile}
       >
-        {data?.adatasets?.length == 0 && data.files.length == 0 ? (
+        {data?.arrayDatasets?.length == 0 && data.files.length == 0 ? (
           <div className="min-h-full w-full  flex items-center justify-center rounded-lg">
             <div className="max-w-4xl mx-auto text-center px-6 py-16">
               {/* Hero Section */}
@@ -290,9 +290,9 @@ const Page = asParamlessRoute(useHomePageQueryForRoute, ({ data }) => {
               </CardDescription>
             </CardHeader>
 
-            <ADatasetList
+            <ArrayDatasetList
               filters={{ notDerived: true, ...temporalFilter, ...searchFilter }}
-              ordering={adatasetOrdering}
+              ordering={arrayDatasetOrdering}
             />
             <FolderList
               filters={{ parentless: true, ...temporalFilter, ...searchFilter }}

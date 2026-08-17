@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import {
-  RoiKind,
+  AnnotationKind,
   useCreateAnnotationMutation,
   type CreateAnnotationMutation,
 } from "@/mikro-next/api/graphql";
@@ -30,7 +30,7 @@ export const useCreateSceneAnnotation = () => {
 
   const createSceneAnnotation = useCallback(
     async (
-      kind: RoiKind,
+      kind: AnnotationKind,
       worldVectors: [number, number, number][],
     ): Promise<CreatedSceneAnnotation | null> => {
       try {
@@ -91,7 +91,7 @@ export const useCreateSceneAnnotation = () => {
 
   const createPointAnnotation = useCallback(
     (worldPos: [number, number, number]) =>
-      createSceneAnnotation(RoiKind.Point, [worldPos]),
+      createSceneAnnotation(AnnotationKind.Point, [worldPos]),
     [createSceneAnnotation],
   );
 

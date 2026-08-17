@@ -5,7 +5,7 @@ query GetTableDataset($id: ID!) {
 }
 
 # Where this table came from and how it has been edited since — the lineage half
-# of the Info rail, in one round trip, mirroring GetADatasetDerived.
+# of the Info rail, in one round trip, mirroring GetArrayDatasetDerived.
 #
 # Upwards only, and that is the schema's doing rather than a choice: a table
 # records `derivedFrom` (the edges from its own space back into the data it was
@@ -33,7 +33,7 @@ query GetTableDatasetDerived($id: ID!) {
         name
         residents {
           __typename
-          ... on ADataset {
+          ... on ArrayDataset {
             id
             name
           }

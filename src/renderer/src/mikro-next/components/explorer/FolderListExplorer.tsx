@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { MikroADataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
+import { MikroArrayDataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
 
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   ChildrenQuery,
   FolderFragment,
   useChildrenQuery,
-  usePutADatasetsInFolderMutation,
+  usePutArrayDatasetsInFolderMutation,
   usePutFilesInFolderMutation,
   usePutFoldersInFolderMutation,
   usePutTableDatasetsInFolderMutation,
@@ -48,7 +48,7 @@ import { CreateFolderForm } from "../../forms/CreateFolderForm";
 
 type ViewMode = "grid" | "list" | "table";
 // No "created" option: nothing in the `children` union carries a date —
-// `File`, `ADataset` and `TableDataset` have no `createdAt` at all — so
+// `File`, `ArrayDataset` and `TableDataset` have no `createdAt` at all — so
 // offering it would silently sort by name instead.
 type SortField = "name" | "size";
 type SortDirection = "asc" | "desc";
@@ -105,7 +105,7 @@ type RawChild = ChildrenQuery["children"][number];
 const RENDERABLE_KINDS = [
   "Folder",
   "File",
-  "ADataset",
+  "ArrayDataset",
   "TableDataset",
   "MeshCollection",
   "AnnotationCollection",
@@ -142,7 +142,7 @@ const getItemTypeLabel = (item: ExplorerItem) => {
   switch (item.__typename) {
     case "Folder":
       return "Folder";
-    case "ADataset":
+    case "ArrayDataset":
       return "Dataset";
     case "TableDataset":
       return "Table";
@@ -159,7 +159,7 @@ const getItemMeta = (item: ExplorerItem) => {
   switch (item.__typename) {
     case "Folder":
       return item.description || "Nested folder";
-    case "ADataset":
+    case "ArrayDataset":
       return item.shape.map((extent, index) => `${extent}${item.axisNames[index] ?? "?"}`).join(" ");
     case "TableDataset":
       return item.description || item.axisNames.join(" × ");
@@ -174,7 +174,7 @@ const getItemMeta = (item: ExplorerItem) => {
 
 const ITEM_ICONS: Record<ExplorerKind, typeof Folder> = {
   Folder,
-  ADataset: Boxes,
+  ArrayDataset: Boxes,
   TableDataset: Table2,
   MeshCollection: Shapes,
   AnnotationCollection: PenLine,
@@ -201,8 +201,8 @@ const ExplorerItemSmart = (props: {
   switch (props.item.__typename) {
     case "Folder":
       return <MikroFolder.Smart object={props.item}>{props.children}</MikroFolder.Smart>;
-    case "ADataset":
-      return <MikroADataset.Smart object={props.item}>{props.children}</MikroADataset.Smart>;
+    case "ArrayDataset":
+      return <MikroArrayDataset.Smart object={props.item}>{props.children}</MikroArrayDataset.Smart>;
     case "TableDataset":
       return <MikroTableDataset.Smart object={props.item}>{props.children}</MikroTableDataset.Smart>;
     case "File":
@@ -225,11 +225,11 @@ const ExplorerItemLink = (props: {
           {props.children}
         </MikroFolder.DetailLink>
       );
-    case "ADataset":
+    case "ArrayDataset":
       return (
-        <MikroADataset.DetailLink object={props.item} className={props.className}>
+        <MikroArrayDataset.DetailLink object={props.item} className={props.className}>
           {props.children}
-        </MikroADataset.DetailLink>
+        </MikroArrayDataset.DetailLink>
       );
     case "TableDataset":
       return (
@@ -317,7 +317,7 @@ export const FolderListExplorer = (props: FolderListExplorerProps) => {
   };
   const [putFolders] = usePutFoldersInFolderMutation(refetchChildren);
   const [putFiles] = usePutFilesInFolderMutation(refetchChildren);
-  const [putADatasets] = usePutADatasetsInFolderMutation(refetchChildren);
+  const [putArrayDatasets] = usePutArrayDatasetsInFolderMutation(refetchChildren);
   const [putTableDatasets] = usePutTableDatasetsInFolderMutation(refetchChildren);
   const { selection, bselection } = useSelection();
 
@@ -346,7 +346,7 @@ export const FolderListExplorer = (props: FolderListExplorerProps) => {
       const filings = [
         [idsFor("@mikro/folder"), putFolders],
         [idsFor("@mikro/file"), putFiles],
-        [idsFor("@mikro/adataset"), putADatasets],
+        [idsFor("@mikro/adataset"), putArrayDatasets],
         [idsFor("@mikro/tabledataset"), putTableDatasets],
       ] as const;
 
@@ -363,7 +363,7 @@ export const FolderListExplorer = (props: FolderListExplorerProps) => {
         console.error("Failed to add dropped items to folder:", dropError);
       }
     },
-    [props.folder.id, putFolders, putFiles, putADatasets, putTableDatasets, refetch],
+    [props.folder.id, putFolders, putFiles, putArrayDatasets, putTableDatasets, refetch],
   );
 
   const explorerDropRef = useCallback(
@@ -710,7 +710,7 @@ export const FolderExplorerToolbar = ({
 
 const MATCHES_FILTER: Record<Exclude<FilterType, "all">, ExplorerKind[]> = {
   folders: ["Folder"],
-  datasets: ["ADataset"],
+  datasets: ["ArrayDataset"],
   tables: ["TableDataset"],
   files: ["File"],
 };

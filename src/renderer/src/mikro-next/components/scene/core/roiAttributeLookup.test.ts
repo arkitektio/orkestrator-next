@@ -3,7 +3,7 @@
 // module pulls in the Apollo hooks barrel, which touches `window` on load)
 import { describe, expect, it } from "vitest";
 
-import { RoiKind } from "@/mikro-next/api/graphql";
+import { AnnotationKind } from "@/mikro-next/api/graphql";
 import {
   buildRoiLookupTargets,
   roiAxisCoords,
@@ -12,18 +12,18 @@ import {
 
 describe("roiLookupPoints", () => {
   it("returns nothing for empty vectors", () => {
-    expect(roiLookupPoints(RoiKind.Point, [])).toEqual([]);
+    expect(roiLookupPoints(AnnotationKind.Point, [])).toEqual([]);
   });
 
   it("point → its single vertex", () => {
-    expect(roiLookupPoints(RoiKind.Point, [[1, 2, 3]])).toEqual([
+    expect(roiLookupPoints(AnnotationKind.Point, [[1, 2, 3]])).toEqual([
       { label: "point", point: [1, 2, 3] },
     ]);
   });
 
   it("line → both endpoints", () => {
     expect(
-      roiLookupPoints(RoiKind.Line, [
+      roiLookupPoints(AnnotationKind.Line, [
         [0, 0, 0],
         [10, 10, 0],
       ]),
@@ -38,7 +38,7 @@ describe("roiLookupPoints", () => {
       [0, 0, 2],
       [10, 20, 2],
     ];
-    for (const kind of [RoiKind.Rectangle, RoiKind.Ellipsis]) {
+    for (const kind of [AnnotationKind.Rectangle, AnnotationKind.Ellipse]) {
       expect(roiLookupPoints(kind, corners)).toEqual([
         { label: "center", point: [5, 10, 2] },
       ]);
@@ -47,7 +47,7 @@ describe("roiLookupPoints", () => {
 
   it("polygon → vertex centroid", () => {
     expect(
-      roiLookupPoints(RoiKind.Polygon, [
+      roiLookupPoints(AnnotationKind.Polygon, [
         [0, 0, 0],
         [6, 0, 0],
         [0, 6, 0],
@@ -56,7 +56,7 @@ describe("roiLookupPoints", () => {
   });
 
   it("short path → every vertex", () => {
-    const points = roiLookupPoints(RoiKind.Path, [
+    const points = roiLookupPoints(AnnotationKind.Path, [
       [0, 0, 0],
       [1, 1, 0],
       [2, 2, 0],
@@ -70,14 +70,14 @@ describe("roiLookupPoints", () => {
 
   it("long path → 5 evenly spaced vertices including both endpoints", () => {
     const vectors = Array.from({ length: 12 }, (_, i) => [i, 0, 0]);
-    const points = roiLookupPoints(RoiKind.Path, vectors);
+    const points = roiLookupPoints(AnnotationKind.Path, vectors);
     expect(points).toHaveLength(5);
     expect(points[0].point).toEqual([0, 0, 0]);
     expect(points[points.length - 1].point).toEqual([11, 0, 0]);
   });
 
   it("missing vector components default to 0", () => {
-    expect(roiLookupPoints(RoiKind.Point, [[4, 5]])).toEqual([
+    expect(roiLookupPoints(AnnotationKind.Point, [[4, 5]])).toEqual([
       { label: "point", point: [4, 5, 0] },
     ]);
   });

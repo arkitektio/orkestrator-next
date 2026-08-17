@@ -3,12 +3,12 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_ORIGIN,
-  adatasetPropertyFilters,
-} from "./ADatasetFilterBar";
+  arrayDatasetPropertyFilters,
+} from "./ArrayDatasetFilterBar";
 
-const atDefaults = () => adatasetPropertyFilters(DEFAULT_ORIGIN, "any", "any");
+const atDefaults = () => arrayDatasetPropertyFilters(DEFAULT_ORIGIN, "any", "any");
 
-describe("adatasetPropertyFilters", () => {
+describe("arrayDatasetPropertyFilters", () => {
   // The page's stated default: derived datasets (deconvolutions, segmentations,
   // projections) are hidden until asked for. A flipped sign here would silently
   // show ONLY derived datasets, which still looks like a working list.
@@ -17,10 +17,10 @@ describe("adatasetPropertyFilters", () => {
   });
 
   it("asks for derived only, and for neither, on request", () => {
-    expect(adatasetPropertyFilters("derived", "any", "any")).toEqual({
+    expect(arrayDatasetPropertyFilters("derived", "any", "any")).toEqual({
       notDerived: false,
     });
-    expect(adatasetPropertyFilters("all", "any", "any")).toEqual({});
+    expect(arrayDatasetPropertyFilters("all", "any", "any")).toEqual({});
   });
 
   // "Don't care" must be an ABSENT field: the server reads a present `false` as
@@ -32,11 +32,11 @@ describe("adatasetPropertyFilters", () => {
   });
 
   it("maps resolution and units, including their false sides", () => {
-    expect(adatasetPropertyFilters("all", "multiscale", "physical")).toEqual({
+    expect(arrayDatasetPropertyFilters("all", "multiscale", "physical")).toEqual({
       multiscale: true,
       hasPhysicalSpace: true,
     });
-    expect(adatasetPropertyFilters("all", "single", "pixels")).toEqual({
+    expect(arrayDatasetPropertyFilters("all", "single", "pixels")).toEqual({
       multiscale: false,
       hasPhysicalSpace: false,
     });
@@ -44,6 +44,6 @@ describe("adatasetPropertyFilters", () => {
 
   // A hand-edited URL (?origin=nonsense) must not become a filter.
   it("ignores keys it does not know", () => {
-    expect(adatasetPropertyFilters("bogus", "bogus", "bogus")).toEqual({});
+    expect(arrayDatasetPropertyFilters("bogus", "bogus", "bogus")).toEqual({});
   });
 });

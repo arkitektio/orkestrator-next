@@ -16,7 +16,7 @@ fragment DataArray on DataArray {
   }
 }
 
-fragment ListADataset on ADataset {
+fragment ListArrayDataset on ArrayDataset {
   id
   name
   description
@@ -44,7 +44,7 @@ fragment ListADataset on ADataset {
   }
 }
 
-fragment ADataset on ADataset {
+fragment ArrayDataset on ArrayDataset {
   id
   name
   description

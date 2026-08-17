@@ -1,4 +1,4 @@
-import { MikroADataset, MikroTableDataset } from "@/linkers";
+import { MikroArrayDataset, MikroTableDataset } from "@/linkers";
 import {
   Aperture,
   Grid2x2,
@@ -26,7 +26,7 @@ type Kind = Resident["__typename"];
 
 /** Same convention as the transformation kind → icon map. */
 export const RESIDENT_ICON: Record<Kind, LucideIcon> = {
-  ADataset: Layers,
+  ArrayDataset: Layers,
   TableDataset: Table2,
   AnnotationCollection: Tags,
   MeshCollection: Shapes,
@@ -36,7 +36,7 @@ export const RESIDENT_ICON: Record<Kind, LucideIcon> = {
 
 /** What to call the kind itself, in place of the raw `__typename`. */
 export const RESIDENT_KIND_LABEL: Record<Kind, string> = {
-  ADataset: "array dataset",
+  ArrayDataset: "array dataset",
   TableDataset: "table dataset",
   AnnotationCollection: "annotations",
   MeshCollection: "mesh collection",
@@ -58,11 +58,11 @@ export const ResidentLink = (props: {
 }) => {
   const { resident, className } = props;
   switch (resident.__typename) {
-    case "ADataset":
+    case "ArrayDataset":
       return (
-        <MikroADataset.DetailLink object={resident} className={className}>
+        <MikroArrayDataset.DetailLink object={resident} className={className}>
           {resident.name}
-        </MikroADataset.DetailLink>
+        </MikroArrayDataset.DetailLink>
       );
     case "TableDataset":
       return (
@@ -74,9 +74,9 @@ export const ResidentLink = (props: {
       return (
         <span className={className}>
           a lens of{" "}
-          <MikroADataset.DetailLink object={resident.dataset}>
+          <MikroArrayDataset.DetailLink object={resident.dataset}>
             {resident.dataset.name}
-          </MikroADataset.DetailLink>
+          </MikroArrayDataset.DetailLink>
         </span>
       );
     default:

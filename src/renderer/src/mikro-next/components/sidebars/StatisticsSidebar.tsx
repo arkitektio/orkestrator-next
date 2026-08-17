@@ -2,7 +2,7 @@ import { useHomePageStatsQuery } from "@/mikro-next/api/graphql";
 import {
   Activity,
   Calendar,
-  Images,
+  Boxes,
   TrendingUp
 } from "lucide-react";
 
@@ -10,16 +10,16 @@ export const StatisticsSidebar = () => {
   const { data, error, loading } = useHomePageStatsQuery();
 
   // Calculate additional metrics from available data
-  const totalImages = data?.imagesStats?.count || 0;
-  const recentActivity = data?.imagesStats?.series?.reduce((sum, bucket) => sum + bucket.count, 0) || 0;
+  const totalDatasets = data?.arrayDatasetsStats?.count || 0;
+  const recentActivity = data?.arrayDatasetsStats?.series?.reduce((sum, bucket) => sum + bucket.count, 0) || 0;
   const averageDaily = recentActivity > 0 ? Math.round(recentActivity / 7) : 0; // Assuming 7 days of data
 
   const statsCards = [
     {
-      title: "Total Images",
-      value: loading ? "..." : totalImages,
-      description: "Total number of images in your collection",
-      icon: Images,
+      title: "Total Datasets",
+      value: loading ? "..." : totalDatasets,
+      description: "Total number of array datasets in your collection",
+      icon: Boxes,
       // Using semantic Primary color
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -27,7 +27,7 @@ export const StatisticsSidebar = () => {
     {
       title: "Recent Activity",
       value: loading ? "..." : recentActivity,
-      description: "Images created in the past week",
+      description: "Datasets created in the past week",
       icon: Activity,
       // Using Chart 1 (Harmonious offset)
       color: "text-chart-1",

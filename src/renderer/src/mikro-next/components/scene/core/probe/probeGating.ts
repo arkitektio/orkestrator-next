@@ -50,7 +50,7 @@ export interface ProbeGateInput {
  * The ANNOTATE clause deliberately covers EVERY shape tool, not just the
  * probe-derived ones: in 3D the `RoiDrawer`'s own plane returns early for
  * every non-primitive tool ("the cursor arrives through the probe subscription
- * instead"), so RECTANGLE and ELLIPSIS rubber-band off the probe exactly as
+ * instead"), so RECTANGLE and ELLIPSE rubber-band off the probe exactly as
  * POLYGON does. Narrowing this would leave those tools with no cursor in 3D.
  */
 export const hoverProbeEnabled = ({

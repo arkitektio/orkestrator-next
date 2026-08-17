@@ -30,7 +30,7 @@ import { RoiAttributeSection } from "./RoiAttributeSection";
  * sidebar tabs unmount when inactive).
  */
 
-function formatRoiKind(kind: string) {
+function formatAnnotationKind(kind: string) {
   return kind.charAt(0) + kind.slice(1).toLowerCase();
 }
 
@@ -147,7 +147,7 @@ const SelectedAnnotationCard = ({
         <CardTitle className="break-words text-sm">
           {index >= 0 ? indexLabel(index) : "Annotation"}
         </CardTitle>
-        <div className="text-xs text-muted-foreground">{formatRoiKind(roi.kind)}</div>
+        <div className="text-xs text-muted-foreground">{formatAnnotationKind(roi.kind)}</div>
         {showAttributes && <RoiAttributeSection roi={roi} />}
       </Card>
     </MikroAnnotation.Smart>
@@ -274,7 +274,7 @@ const AnnotationRow = ({
       {indexLabel(index)}
     </CardTitle>
     <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-      {formatRoiKind(annotation.kind)}
+      {formatAnnotationKind(annotation.kind)}
       {measure && ` · ${measure}`}
     </span>
     {/* Hover-revealed: the smart action button (run workflows on this

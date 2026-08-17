@@ -2,9 +2,9 @@ import { Guard } from "@/app/Arkitekt";
 import { NotFound } from "@/app/components/fallbacks/NotFound";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Route, Routes } from "react-router-dom";
-import ADatasetPage from "./pages/ADatasetPage";
-import ADatasetSpecPage from "./pages/ADatasetSpecPage";
-import ADatasetsPage from "./pages/ADatasetsPage";
+import ArrayDatasetPage from "./pages/ArrayDatasetPage";
+import ArrayDatasetSpecPage from "./pages/ArrayDatasetSpecPage";
+import ArrayDatasetsPage from "./pages/ArrayDatasetsPage";
 import AnnotationPage from "./pages/AnnotationPage";
 import AnnotationsPage from "./pages/AnnotationsPage";
 import CoordinateSystemPage from "./pages/CoordinateSystemPage";
@@ -30,10 +30,10 @@ export const MikroNextModule = () => {
           <Route path="home" element={<HomePage />} />
           <Route path="folders/:id" element={<FolderPage />} />
           <Route path="folders" element={<FoldersPage />} />
-          {/* Three segments, so it cannot be mistaken for adatasets/:id. */}
-          <Route path="adatasets/spec/:spec" element={<ADatasetSpecPage />} />
-          <Route path="adatasets/:id" element={<ADatasetPage />} />
-          <Route path="adatasets" element={<ADatasetsPage />} />
+          {/* Three segments, so it cannot be mistaken for arrayDatasets/:id. */}
+          <Route path="arraydatasets/spec/:spec" element={<ArrayDatasetSpecPage />} />
+          <Route path="arraydatasets/:id" element={<ArrayDatasetPage />} />
+          <Route path="arraydatasets" element={<ArrayDatasetsPage />} />
           <Route
             path="coordinatesystems/:id"
             element={<CoordinateSystemPage />}

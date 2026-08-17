@@ -35,7 +35,7 @@ import { RegisterEdgeForm } from "./registration/RegisterEdgeForm";
 /** A thing that can be registered. A container resolves to one of ITS systems. */
 export type RegisterSourceRef =
   | { kind: "coordinatesystem"; id: string }
-  | { kind: "adataset"; id: string }
+  | { kind: "arrayDataset"; id: string }
   | { kind: "tabledataset"; id: string };
 
 export type RegisterFormProps = {
@@ -73,7 +73,7 @@ const SourcePicker = (props: { onPick: (ref: RegisterSourceRef) => void }) => {
     variables: { search: search || undefined },
   });
 
-  const datasets = data?.adatasets ?? [];
+  const datasets = data?.arrayDatasets ?? [];
   const tables = data?.tableDatasets ?? [];
 
   return (
@@ -92,7 +92,7 @@ const SourcePicker = (props: { onPick: (ref: RegisterSourceRef) => void }) => {
             <PickerRow
               key={dataset.id}
               name={dataset.name}
-              onClick={() => props.onPick({ kind: "adataset", id: dataset.id })}
+              onClick={() => props.onPick({ kind: "arrayDataset", id: dataset.id })}
             />
           ))}
           {!loading && !datasets.length && (
@@ -339,7 +339,7 @@ const RegisterFormInner = (props: RegisterFormProps) => {
         />
       )}
 
-      {step === "sourcesystem" && sourceRef?.kind === "adataset" && (
+      {step === "sourcesystem" && sourceRef?.kind === "arrayDataset" && (
         <DatasetSystemStep
           dataset={sourceRef.id}
           onResolve={resolveSystem}

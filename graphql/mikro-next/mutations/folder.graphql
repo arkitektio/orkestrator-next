@@ -54,14 +54,14 @@ mutation DeleteFolder($id: ID!) {
   deleteFolder(input: { id: $id })
 }
 
-mutation PutADatasetsInFolder($selfs: [ID!]!, $other: ID!) {
-  putADatasetsInFolder(input: { selfs: $selfs, other: $other }) {
+mutation PutArrayDatasetsInFolder($selfs: [ID!]!, $other: ID!) {
+  putArrayDatasetsInFolder(input: { selfs: $selfs, other: $other }) {
     ...Folder
   }
 }
 
-mutation ReleaseADatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
-  releaseADatasetsFromFolder(input: { selfs: $selfs, other: $other }) {
+mutation ReleaseArrayDatasetsFromFolder($selfs: [ID!]!, $other: ID!) {
+  releaseArrayDatasetsFromFolder(input: { selfs: $selfs, other: $other }) {
     ...Folder
   }
 }

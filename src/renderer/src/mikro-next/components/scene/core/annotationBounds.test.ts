@@ -3,7 +3,7 @@
 // module pulls in the Apollo hooks barrel, which touches `window` on load)
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { RoiKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
+import { AnnotationKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import {
   getAnnotationSelectionPoints,
   getWorldExtent,
@@ -11,7 +11,7 @@ import {
 } from "./annotationBounds";
 
 const annotation = (
-  kind: RoiKind,
+  kind: AnnotationKind,
   vectors: number[][],
 ): SceneAnnotationFragment =>
   ({ id: "a1", name: "a", kind, vectors, coordinates: [] }) as unknown as SceneAnnotationFragment;
@@ -19,7 +19,7 @@ const annotation = (
 describe("getAnnotationSelectionPoints", () => {
   it("takes only the first vertex of a POINT", () => {
     const points = getAnnotationSelectionPoints(
-      annotation(RoiKind.Point, [[1, 2, 3], [9, 9, 9]]),
+      annotation(AnnotationKind.Point, [[1, 2, 3], [9, 9, 9]]),
       false,
     );
     expect(points).toEqual([[1, 2, 3]]);
@@ -27,7 +27,7 @@ describe("getAnnotationSelectionPoints", () => {
 
   it("keeps every vertex of a LINE", () => {
     const points = getAnnotationSelectionPoints(
-      annotation(RoiKind.Line, [[0, 0, 0], [4, 4, 4]]),
+      annotation(AnnotationKind.Line, [[0, 0, 0], [4, 4, 4]]),
       false,
     );
     expect(points).toEqual([[0, 0, 0], [4, 4, 4]]);
@@ -35,7 +35,7 @@ describe("getAnnotationSelectionPoints", () => {
 
   it("expands a flat RECTANGLE corner pair to 4 corners", () => {
     const points = getAnnotationSelectionPoints(
-      annotation(RoiKind.Rectangle, [[0, 0, 5], [2, 3, 5]]),
+      annotation(AnnotationKind.Rectangle, [[0, 0, 5], [2, 3, 5]]),
       false,
     );
     expect(points).toHaveLength(4);
@@ -44,19 +44,19 @@ describe("getAnnotationSelectionPoints", () => {
 
   it("expands a deep RECTANGLE corner pair to 8 corners", () => {
     const points = getAnnotationSelectionPoints(
-      annotation(RoiKind.Rectangle, [[0, 0, 0], [2, 3, 4]]),
+      annotation(AnnotationKind.Rectangle, [[0, 0, 0], [2, 3, 4]]),
       false,
     );
     expect(points).toHaveLength(8);
   });
 
-  it("rings a flat ELLIPSIS once and a deep one twice", () => {
+  it("rings a flat ELLIPSE once and a deep one twice", () => {
     const flat = getAnnotationSelectionPoints(
-      annotation(RoiKind.Ellipsis, [[0, 0, 1], [4, 2, 1]]),
+      annotation(AnnotationKind.Ellipse, [[0, 0, 1], [4, 2, 1]]),
       false,
     );
     const deep = getAnnotationSelectionPoints(
-      annotation(RoiKind.Ellipsis, [[0, 0, 0], [4, 2, 6]]),
+      annotation(AnnotationKind.Ellipse, [[0, 0, 0], [4, 2, 6]]),
       false,
     );
     expect(flat).toHaveLength(24);
@@ -66,19 +66,19 @@ describe("getAnnotationSelectionPoints", () => {
   it("falls back to raw vectors for POLYGON and friends", () => {
     const vectors = [[0, 0, 0], [1, 0, 0], [1, 1, 0]];
     expect(
-      getAnnotationSelectionPoints(annotation(RoiKind.Polygon, vectors), false),
+      getAnnotationSelectionPoints(annotation(AnnotationKind.Polygon, vectors), false),
     ).toEqual(vectors);
   });
 
   it("is empty with no vectors", () => {
-    expect(getAnnotationSelectionPoints(annotation(RoiKind.Polygon, []), false)).toEqual([]);
+    expect(getAnnotationSelectionPoints(annotation(AnnotationKind.Polygon, []), false)).toEqual([]);
   });
 });
 
 describe("getWorldExtent", () => {
   it("bounds the shape under the identity matrix", () => {
     const extent = getWorldExtent(
-      annotation(RoiKind.Polygon, [[0, 1, 2], [4, 5, 6], [-1, 0, 3]]),
+      annotation(AnnotationKind.Polygon, [[0, 1, 2], [4, 5, 6], [-1, 0, 3]]),
       new THREE.Matrix4(),
     );
     expect(extent).not.toBeNull();
@@ -91,7 +91,7 @@ describe("getWorldExtent", () => {
       .makeScale(2, 2, 2)
       .setPosition(10, 20, 30);
     const extent = getWorldExtent(
-      annotation(RoiKind.Line, [[0, 0, 0], [1, 1, 1]]),
+      annotation(AnnotationKind.Line, [[0, 0, 0], [1, 1, 1]]),
       matrix,
     );
     expect(extent!.bounds).toEqual({ minX: 10, maxX: 12, minY: 20, maxY: 22 });
@@ -100,7 +100,7 @@ describe("getWorldExtent", () => {
 
   it("gives a POINT a zero-size extent, not null", () => {
     const extent = getWorldExtent(
-      annotation(RoiKind.Point, [[3, 4, 5]]),
+      annotation(AnnotationKind.Point, [[3, 4, 5]]),
       new THREE.Matrix4(),
     );
     expect(extent!.bounds).toEqual({ minX: 3, maxX: 3, minY: 4, maxY: 4 });
@@ -109,7 +109,7 @@ describe("getWorldExtent", () => {
 
   it("is null with no vectors", () => {
     expect(
-      getWorldExtent(annotation(RoiKind.Polygon, []), new THREE.Matrix4()),
+      getWorldExtent(annotation(AnnotationKind.Polygon, []), new THREE.Matrix4()),
     ).toBeNull();
   });
 });

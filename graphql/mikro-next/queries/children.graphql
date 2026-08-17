@@ -12,7 +12,7 @@ query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: FolderC
   children(parent: $id, pagination: $pagination, filters: $filters) {
     ...ListFile
     ...ListFolder
-    ...ListADataset
+    ...ListArrayDataset
     ...ListTableDataset
     # A mesh collection carries no name — it is identified by its version.
     ... on MeshCollection {

@@ -49,7 +49,7 @@ export const MoveToFolderButton = ({
   // Newest first. Not scoped to the current user: mikro filters `owner` by the
   // creator's *sub*, which nothing in the client can supply — lok's `me` carries
   // an id and a username, and the two are different keys (see the note in
-  // ADatasetFilterBar).
+  // ArrayDatasetFilterBar).
   const { data } = useGetFoldersQuery({
     variables: {
       ordering: [{ createdAt: Ordering.Desc }],

@@ -1,15 +1,15 @@
 query GlobalSearch(
   $search: String
-  $noAdatasets: Boolean!
+  $noArrayDatasets: Boolean!
   $noFiles: Boolean!
   $noFolders: Boolean!
   $pagination: OffsetPaginationInput
 ) {
-  adatasets: adatasets(
+  arrayDatasets: arrayDatasets(
     filters: { search: $search }
     pagination: $pagination
-  ) @skip(if: $noAdatasets) {
-    ...ListADataset
+  ) @skip(if: $noArrayDatasets) {
+    ...ListArrayDataset
   }
 
   files: files(

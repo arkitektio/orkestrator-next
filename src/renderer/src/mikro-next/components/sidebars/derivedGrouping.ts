@@ -1,7 +1,7 @@
 import { lensLabel, LensLabelInput } from "../../lenses";
 
 /**
- * The grouping behind the ADataset page's "Derived" tab, kept apart from the
+ * The grouping behind the ArrayDataset page's "Derived" tab, kept apart from the
  * component so it can be tested as the pure function it is.
  */
 
@@ -108,7 +108,7 @@ export const groupDerived = <L extends GroupableLens, D extends GroupableDerived
 
 /** A `Resident` of the space an edge lands in, as far as finding a parent cares. */
 export type ParentResident =
-  | { __typename: "ADataset"; id: string; name: string }
+  | { __typename: "ArrayDataset"; id: string; name: string }
   | { __typename: "Lens"; id: string; dataset: { id: string; name: string } }
   | { __typename: string };
 
@@ -121,11 +121,11 @@ export type ParentEdge = {
  *
  * An edge does not name its parent — it names the SPACE it lands in, and the
  * parent is whatever dataset lives there. Two shapes reach one: the space is a
- * dataset's own intrinsic grid (an `ADataset` resident), or it is the crop a
+ * dataset's own intrinsic grid (an `ArrayDataset` resident), or it is the crop a
  * lens cuts out (a `Lens` resident, whose `dataset` is the parent). The other
  * resident kinds — arrays, meshes, tables — are not datasets and are skipped.
  *
- * Prefers a direct `ADataset` over a lens: when both are present the space IS
+ * Prefers a direct `ArrayDataset` over a lens: when both are present the space IS
  * the dataset's grid, and naming the dataset is the more direct answer.
  * Null when nothing in the space is a dataset, which is a placement this UI has
  * nothing useful to say about rather than an error.
@@ -136,7 +136,7 @@ export const parentDatasetOfEdge = (
   const residents = edge.output?.residents ?? [];
 
   for (const resident of residents) {
-    if (resident.__typename === "ADataset") {
+    if (resident.__typename === "ArrayDataset") {
       const dataset = resident as { id: string; name: string };
       return { id: dataset.id, name: dataset.name };
     }

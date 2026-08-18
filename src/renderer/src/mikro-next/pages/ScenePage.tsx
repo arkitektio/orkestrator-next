@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroScene } from "@/linkers";
+import { RefetchProvider } from "@/providers/refetch/RefetchContext";
 import {
   useGetSceneQuery
 } from "../api/graphql";
@@ -16,6 +17,10 @@ const Page = asDetailQueryRoute(
       // right-rail sidebar too — the rail is a sibling panel of the content
       // area, unreachable from anything rendered inside it.
       <Scene.Provider scene={data.scene}>
+        {/* Publish no refetch: this is a canvas page whose content area is the
+            viewport, so the layout's pull-to-refetch gesture would fight the
+            scene's own wheel/drag handling. Overrides the route's provider. */}
+        <RefetchProvider>
         <MikroScene.ModelPage
           variant={"black"}
           overlay
@@ -40,6 +45,7 @@ const Page = asDetailQueryRoute(
             <Scene.Viewport />
           </div>
         </MikroScene.ModelPage>
+        </RefetchProvider>
       </Scene.Provider>
     );
   },

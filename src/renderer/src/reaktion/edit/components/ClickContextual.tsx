@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
 import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder, reactiveFlowNode } from "@/reaktion/utils";
@@ -23,7 +23,6 @@ import {
   useAgentsQuery,
   ListAgentFragment,
 } from "@/rekuest/api/graphql";
-import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";

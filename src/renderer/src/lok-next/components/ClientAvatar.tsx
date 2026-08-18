@@ -1,8 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient } from "@/linkers";
-import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useClientQuery } from "../api/graphql";
 
 export const ClientAvatar = (props: { clientId: string }) => {

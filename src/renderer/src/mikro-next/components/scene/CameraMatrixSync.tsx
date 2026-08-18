@@ -36,6 +36,7 @@ export const CameraMatrixSync = ({
   const pendingPosition = useRef(new THREE.Vector3());
   const pendingPerspective = useRef(false);
   const pendingFovY = useRef(0);
+  const pendingCoordinateSystem = useRef<number>(THREE.WebGLCoordinateSystem);
   const lastChangeAtRef = useRef(0);
 
   // Cleanup on unmount
@@ -118,6 +119,9 @@ export const CameraMatrixSync = ({
     pendingFovY.current = perspective
       ? THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
       : 0;
+    // The renderer stamps its convention onto cameras it renders; under the
+    // WebGPU-only backend this is WebGPUCoordinateSystem (NDC z ∈ [0,1]).
+    pendingCoordinateSystem.current = camera.coordinateSystem;
 
     // Fresh objects per EMISSION: viewStore consumers key on identity, so the
     // matrix/size/pose must be new objects each time they are published.
@@ -130,6 +134,7 @@ export const CameraMatrixSync = ({
           position: [position.x, position.y, position.z] as [number, number, number],
           isPerspective: pendingPerspective.current,
           fovY: pendingFovY.current,
+          coordinateSystem: pendingCoordinateSystem.current,
         },
         moving,
       );

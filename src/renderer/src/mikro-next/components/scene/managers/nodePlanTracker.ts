@@ -277,7 +277,14 @@ export function startNodePlanTracking({
         // math below runs in plain voxel space.
         const voxelToWorld = buildAffineMatrix(layer);
         scratchVoxelVP.copy(viewProjectionMatrix).multiply(voxelToWorld);
-        scratchFrustum.setFromProjectionMatrix(scratchVoxelVP);
+        // Plane extraction must match the matrix's NDC z convention —
+        // WebGPU maps z to [0,1]; the WebGL default would place the near
+        // plane behind its true position (see CameraPose.coordinateSystem).
+        scratchFrustum.setFromProjectionMatrix(
+          scratchVoxelVP,
+          (cameraPose?.coordinateSystem ??
+            THREE.WebGLCoordinateSystem) as THREE.CoordinateSystem,
+        );
         let voxelPosition: [number, number, number] | null = null;
         let voxelViewDirection: [number, number, number] | null = null;
         let pxPerVoxelAtUnitDistance = 0;

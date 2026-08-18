@@ -94,6 +94,52 @@ describe("computeSceneVisibility", () => {
     expect(ranges[LAYER_ID].scale).toBeCloseTo(2, 5);
   });
 
+  it("perspective zoom-in reports a sub-volume range, not the whole dataset", () => {
+    // 1000³ 3D layer; camera hovering 30 units above the center of the top
+    // face, looking straight down. The legacy double-AABB visible box (world
+    // AABB of frustum corners ∩ layer box) contained essentially the whole
+    // volume here; the exact frustum∩box clip must stay local so the
+    // planner's budget floor tracks what is actually on screen.
+    const layer = {
+      id: LAYER_ID,
+      affineMatrix: null,
+      xAxis: "x",
+      yAxis: "y",
+      zAxis: "z",
+      intensityAxis: null,
+      lens: { axisNames: ["z", "y", "x"], shape: [1000, 1000, 1000] },
+    } as unknown as LayerState;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1000, 1000, 1000));
+    mesh.position.set(500, 500, 500);
+    mesh.updateMatrixWorld(true);
+
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 10000);
+    camera.position.set(500, 500, 1030);
+    camera.lookAt(500, 500, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+    const projScreenMatrix = new THREE.Matrix4().multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse,
+    );
+
+    const { ranges } = computeSceneVisibility({
+      projScreenMatrix,
+      viewportSize: { width: 1000, height: 1000 },
+      trackables: [{ kind: "layer", id: LAYER_ID, ref: { current: mesh } }],
+      layers: [layer],
+    });
+
+    const range = ranges[LAYER_ID];
+    expect(range).toBeDefined();
+    // Frustum half-width at the far face is ~480 → strictly inside [0,1000],
+    // and far smaller near the camera.
+    expect(range.xRange[0]).toBeGreaterThan(0);
+    expect(range.xRange[1]).toBeLessThan(1000);
+    expect(range.yRange[0]).toBeGreaterThan(0);
+    expect(range.yRange[1]).toBeLessThan(1000);
+  });
+
   it("excludes off-screen trackables entirely", () => {
     const { visibleIds, ranges } = computeSceneVisibility({
       projScreenMatrix: makeProjScreenMatrix(1000, 0, 50, 50),

@@ -97,3 +97,42 @@ describe("24-bit EMPTY encoding for label ids", () => {
     expect(decodeEmptyValue(0, { minValue: 7, maxValue: 7 }, 24)).toBe(7);
   });
 });
+
+describe("occupancy texel encode/decode", () => {
+  const range = { minValue: 0, maxValue: 65535 };
+
+  it("brackets the true brick range from the outside (conservative rounding)", async () => {
+    const { encodeOccupancyTexel, decodeOccupancyBounds } = await import("./brickEncoding");
+    for (let i = 0; i < 500; i++) {
+      const a = Math.random() * 65535;
+      const b = Math.random() * 65535;
+      const [lo, hi] = a <= b ? [a, b] : [b, a];
+      const bounds = decodeOccupancyBounds(encodeOccupancyTexel(lo, hi, range), range);
+      expect(bounds.minValue).toBeLessThanOrEqual(lo);
+      expect(bounds.maxValue).toBeGreaterThanOrEqual(hi);
+    }
+  });
+
+  it("the all-zero texel (fresh texture / unknown brick) decodes to the full range", async () => {
+    const { decodeOccupancyBounds } = await import("./brickEncoding");
+    const bounds = decodeOccupancyBounds([0, 0], range);
+    expect(bounds.minValue).toBe(range.minValue);
+    expect(bounds.maxValue).toBe(range.maxValue);
+  });
+
+  it("degenerate or non-finite inputs fall back to the conservative texel", async () => {
+    const { encodeOccupancyTexel } = await import("./brickEncoding");
+    expect(encodeOccupancyTexel(1, 2, { minValue: 5, maxValue: 5 })).toEqual([0, 0]);
+    expect(encodeOccupancyTexel(Number.NaN, 2, range)).toEqual([0, 0]);
+    expect(encodeOccupancyTexel(3, 2, range)).toEqual([0, 0]); // max < min
+  });
+
+  it("out-of-range values clamp without losing conservatism", async () => {
+    const { encodeOccupancyTexel, decodeOccupancyBounds } = await import("./brickEncoding");
+    const bounds = decodeOccupancyBounds(encodeOccupancyTexel(-100, 70000, range), range);
+    // Clamped to the pool range — the shader's baseNorm clamps the same way,
+    // so the bracket still bounds every *normalized* value.
+    expect(bounds.minValue).toBe(0);
+    expect(bounds.maxValue).toBe(65535);
+  });
+});

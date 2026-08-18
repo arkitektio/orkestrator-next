@@ -289,3 +289,67 @@ describe("interaction DPR ladder", () => {
     }
   });
 });
+
+describe("scene-load feedforward", () => {
+  it("volumeLoadFactor grows ~√N and caps at 2", async () => {
+    const { volumeLoadFactor } = await import("./qualityGovernor");
+    expect(volumeLoadFactor(0)).toBe(1);
+    expect(volumeLoadFactor(1)).toBe(1);
+    expect(volumeLoadFactor(2)).toBeCloseTo(Math.SQRT2, 6);
+    expect(volumeLoadFactor(4)).toBe(2);
+    expect(volumeLoadFactor(16)).toBe(2); // capped
+  });
+
+  it("registerVolumePass counts mounts and disposers are idempotent", async () => {
+    const { QualityGovernor } = await import("./qualityGovernor");
+    const governor = new QualityGovernor();
+    const a = governor.registerVolumePass();
+    const b = governor.registerVolumePass();
+    expect(governor.getVolumePassCount()).toBe(2);
+    a();
+    a(); // double-dispose must not double-decrement
+    expect(governor.getVolumePassCount()).toBe(1);
+    b();
+    expect(governor.getVolumePassCount()).toBe(0);
+  });
+
+  it("≥3 volume passes floor the burst-entry rung at 0.75", async () => {
+    const { predictBurstLadderScale } = await import("./qualityGovernor");
+    // A fast (stale) EMA alone predicts full resolution…
+    expect(predictBurstLadderScale(8, 1, 1)).toBe(1);
+    expect(predictBurstLadderScale(8, 1, 2)).toBe(1);
+    // …but the pass-count feedforward caps the entry rung on heavy scenes.
+    expect(predictBurstLadderScale(8, 1, 3)).toBe(0.75);
+    // A slow EMA can still predict lower than the cap.
+    expect(predictBurstLadderScale(40, 1, 3)).toBe(0.5);
+  });
+});
+
+describe("mid-burst rung correction", () => {
+  it("steps down only above the floor and only when frames are still slow", async () => {
+    const { shouldStepBurstRungDown } = await import("./qualityGovernor");
+    expect(shouldStepBurstRungDown(30, 1)).toBe(true);
+    expect(shouldStepBurstRungDown(30, 0.75)).toBe(true);
+    expect(shouldStepBurstRungDown(30, 0.5)).toBe(false); // already at the floor
+    expect(shouldStepBurstRungDown(15, 1)).toBe(false); // holding rate
+  });
+
+  it("nextLadderRungDown walks the ladder and clamps at the floor", async () => {
+    const { nextLadderRungDown } = await import("./qualityGovernor");
+    expect(nextLadderRungDown(1)).toBe(0.75);
+    expect(nextLadderRungDown(0.75)).toBe(0.5);
+    expect(nextLadderRungDown(0.5)).toBe(0.5);
+  });
+});
+
+describe("resolveSmoothThreshold", () => {
+  it("disables tricubic while active and on TIER_LOW, restores settled", async () => {
+    const { resolveSmoothThreshold, SMOOTH_ZOOM_THRESHOLD_PX, TIER_HIGH, TIER_MEDIUM, TIER_LOW } =
+      await import("./qualityGovernor");
+    expect(resolveSmoothThreshold(TIER_HIGH, false)).toBe(SMOOTH_ZOOM_THRESHOLD_PX);
+    expect(resolveSmoothThreshold(TIER_MEDIUM, false)).toBe(SMOOTH_ZOOM_THRESHOLD_PX);
+    expect(resolveSmoothThreshold(TIER_HIGH, true)).toBe(0);
+    expect(resolveSmoothThreshold(TIER_LOW, false)).toBe(0);
+    expect(resolveSmoothThreshold(TIER_LOW, true)).toBe(0);
+  });
+});

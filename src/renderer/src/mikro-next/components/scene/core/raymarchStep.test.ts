@@ -8,7 +8,10 @@ import {
   attenuationAt,
   emptyStepMaxNorm,
   normalizeSlotValue,
+  occupancyUpperNorm,
+  residentBrickSkippable,
   shouldSkipStep,
+  type MemberSkipState,
   type SlotTransfer,
 } from "./raymarchStep";
 
@@ -120,6 +123,92 @@ describe("attenuatedMipDone", () => {
       const current = attenuationAt(d);
       expect(current).toBeLessThan(previous);
       previous = current;
+    }
+  });
+});
+
+describe("occupancyUpperNorm", () => {
+  it("bounds every raw value in the bracket for a monotone window", () => {
+    const s = slot({ climMin: 0.2, climMax: 0.8 });
+    const upper = occupancyUpperNorm(10, 40, 0, 100, [s]);
+    for (let raw = 10; raw <= 40; raw += 1) {
+      expect(normalizeSlotValue(raw, 0, 100, s)).toBeLessThanOrEqual(upper + 1e-9);
+    }
+  });
+
+  it("bounds inverted channels via the MIN endpoint", () => {
+    const s = slot({ invert: true });
+    // Low raw values are BRIGHT under inversion: the bound must come from
+    // brickMin, not brickMax.
+    const upper = occupancyUpperNorm(10, 40, 0, 100, [s]);
+    expect(upper).toBeCloseTo(normalizeSlotValue(10, 0, 100, s), 9);
+    for (let raw = 10; raw <= 40; raw += 1) {
+      expect(normalizeSlotValue(raw, 0, 100, s)).toBeLessThanOrEqual(upper + 1e-9);
+    }
+  });
+
+  it("ignores invisible slots and maxes across visible ones", () => {
+    const dim = slot({ climMin: 0.9, climMax: 1 });
+    const hot = slot({ climMin: 0, climMax: 0.1 });
+    expect(occupancyUpperNorm(5, 8, 0, 100, [dim, slot({ visible: false })])).toBe(0);
+    // hot: baseNorm(8) = 0.08 → windowed over [0, 0.1] = 0.8.
+    expect(occupancyUpperNorm(5, 8, 0, 100, [dim, hot])).toBeCloseTo(0.8, 5);
+  });
+});
+
+describe("residentBrickSkippable", () => {
+  const member = (overrides: Partial<MemberSkipState> = {}): MemberSkipState => ({
+    projectionMode: 0,
+    upperNorm: 0.5,
+    bestNorm: 0,
+    isoThreshold: 0.5,
+    done: false,
+    ...overrides,
+  });
+
+  it("skips a brick invisible under the clim window in any mode", () => {
+    for (const projectionMode of [0, 1, 2, 3]) {
+      expect(residentBrickSkippable([member({ projectionMode, upperNorm: 0.001 })])).toBe(true);
+      expect(residentBrickSkippable([member({ projectionMode: 1, upperNorm: 0.1 })])).toBe(
+        false,
+      );
+    }
+  });
+
+  it("MIP skips bricks that cannot beat the accumulated max", () => {
+    expect(residentBrickSkippable([member({ upperNorm: 0.4, bestNorm: 0.4 })])).toBe(true);
+    expect(residentBrickSkippable([member({ upperNorm: 0.41, bestNorm: 0.4 })])).toBe(false);
+    // Fresh ray (bestNorm 0): only invisible bricks skip.
+    expect(residentBrickSkippable([member({ upperNorm: 0.1, bestNorm: 0 })])).toBe(false);
+  });
+
+  it("ISO skips bricks that never reach the threshold", () => {
+    expect(
+      residentBrickSkippable([member({ projectionMode: 3, upperNorm: 0.49, isoThreshold: 0.5 })]),
+    ).toBe(true);
+    expect(
+      residentBrickSkippable([member({ projectionMode: 3, upperNorm: 0.5, isoThreshold: 0.5 })]),
+    ).toBe(false);
+  });
+
+  it("hops only when EVERY member is satisfied", () => {
+    const beaten = member({ upperNorm: 0.3, bestNorm: 0.4 });
+    const hungry = member({ upperNorm: 0.3, bestNorm: 0.2 });
+    expect(residentBrickSkippable([beaten, hungry])).toBe(false);
+    expect(residentBrickSkippable([beaten, member({ ...hungry, done: true })])).toBe(true);
+    expect(residentBrickSkippable([beaten, beaten])).toBe(true);
+  });
+
+  it("a skipped brick provably cannot change a MIP accumulator", () => {
+    // Property over random states: when a MIP member is skippable, every
+    // reachable sample norm in the brick (≤ upperNorm) stays within the
+    // accumulated max, up to the shared invisible threshold (0.001).
+    for (let i = 0; i < 200; i++) {
+      const best = Math.random();
+      const upper = Math.random();
+      const m = member({ upperNorm: upper, bestNorm: best });
+      if (!residentBrickSkippable([m])) continue;
+      expect(upper).toBeLessThanOrEqual(Math.max(best, 0.001));
     }
   });
 });

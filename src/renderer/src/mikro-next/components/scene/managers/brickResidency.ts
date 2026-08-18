@@ -26,6 +26,7 @@ import {
   decodeEmptyValue,
   encodeEmptyTexel,
   encodeEmptyValue,
+  encodeOccupancyTexel,
   type EmptyValueBits,
 } from "../core/octree/brickEncoding";
 import { ChunkRefRegistry } from "../core/octree/chunkRefRegistry";
@@ -141,6 +142,9 @@ type PendingBrick = {
   /** CPU path: the repacked brick ready for upload. Null on the GPU path. */
   data: BrickArray | null;
   uniformValue: number | null;
+  /** Raw brick [min, max] from the repack scan (occupancy sidecar). Null on
+   * the GPU path — its min/max arrives with the async readback. */
+  range: [number, number] | null;
   bytes: number;
   /** GPU path: raw decoded chunks; the repack runs as a compute dispatch at
    * drain time, once a slot is acquired. */
@@ -232,6 +236,11 @@ export type LayerBrickPool = {
   queuedKeys: Set<string>;
   /** Uniform bricks: page-mapped EMPTY, no slot; value = the uniform fill. */
   emptyValues: Map<string, number>;
+  /** Raw `[min, max]` of every RESIDENT brick (from the repack min/max scan /
+   * GPU readback) — backs the occupancy sidecar's re-encode when the pool
+   * range moves (quantization is relative to the range, exactly like
+   * `emptyValues`). Entries are dropped on evict; bounded by slot count. */
+  brickRanges: Map<string, [number, number]>;
   /** Per-dim fixed chunk coords / in-chunk offsets for non-spatial dims. */
   fixedChunkCoords: number[];
   fixedOffsets: number[];
@@ -1058,8 +1067,11 @@ export class BrickResidencyManager {
       derivations: PoolDerivation[];
     };
     const groups = new Map<string, Group>();
+    // O(1) lookups — `layers.find` per plan (and again per cached derivation
+    // below) was O(plans × layers) per reconcile.
+    const layerById = new Map(layers.map((l) => [l.id, l]));
     for (const [layerId, plan] of Object.entries(plans)) {
-      const layer = layers.find((l) => l.id === layerId);
+      const layer = layerById.get(layerId);
       if (!layer) continue;
       try {
         const derivation = this.derivePool(layer, plan);
@@ -1085,7 +1097,7 @@ export class BrickResidencyManager {
 
     // Derivation caches for layers that vanished entirely.
     for (const layerId of [...this.layerDerivationCache.keys()]) {
-      if (!plans[layerId] || !layers.find((l) => l.id === layerId)) {
+      if (!plans[layerId] || !layerById.has(layerId)) {
         this.layerDerivationCache.delete(layerId);
       }
     }
@@ -1307,9 +1319,29 @@ export class BrickResidencyManager {
     // pool's page table and reconcileAll has already called wakeDrain().
   }
 
+  /** Concurrent brick fetches across ALL pools. The per-pool ceiling alone
+   * made total decode pressure LINEAR in layer count (N pools × 16 in-flight
+   * on HIGH) — the many-layers fetch-storm half of the linear-cost problem.
+   * 2× one pool's allowance keeps cross-pool parallelism without the blowup. */
+  private globalInFlightLimit(): number {
+    return qualityGovernor.getProfile().maxInflightBricks * 2;
+  }
+
+  private totalInFlight(): number {
+    let total = 0;
+    for (const pool of this.pools.values()) total += pool.inFlight.size;
+    return total;
+  }
+
   private startNextFetches(pool: LayerBrickPool): void {
     const maxInflight = qualityGovernor.getProfile().maxInflightBricks;
-    while (pool.inFlight.size < maxInflight && pool.pendingFetch.length > 0) {
+    const globalLimit = this.globalInFlightLimit();
+    let globalInFlight = this.totalInFlight();
+    while (
+      pool.inFlight.size < maxInflight &&
+      globalInFlight < globalLimit &&
+      pool.pendingFetch.length > 0
+    ) {
       const node = pool.pendingFetch.pop()!;
       if (
         !pool.protectedKeys.has(node.key) ||
@@ -1320,7 +1352,19 @@ export class BrickResidencyManager {
       ) {
         continue;
       }
+      globalInFlight += 1;
       void this.fetchBrick(pool, node);
+    }
+  }
+
+  /** Kick every pool with pending work — needed once the GLOBAL in-flight cap
+   * exists: a completed fetch in pool A frees a global slot that pool B may be
+   * waiting on, but A's own `startNextFetches` cannot hand it over. Called
+   * from the fetch `finally`; cheap (pools are few, empty queues no-op). */
+  private startNextFetchesAll(): void {
+    if (this.disposed) return;
+    for (const pool of this.pools.values()) {
+      if (pool.pendingFetch.length > 0) this.startNextFetches(pool);
     }
   }
 
@@ -1596,6 +1640,7 @@ export class BrickResidencyManager {
       queue: [],
       queuedKeys: new Set(),
       emptyValues: new Map(),
+      brickRanges: new Map(),
       fixedChunkCoords,
       fixedOffsets,
       minValue,
@@ -1857,6 +1902,7 @@ export class BrickResidencyManager {
           coords: node.coords,
           data: null,
           uniformValue: null,
+          range: null,
           bytes: elementCount * (pool.atlas.kind === "r8" ? 1 : 4),
           gpu: { chunks },
         };
@@ -1889,6 +1935,7 @@ export class BrickResidencyManager {
           coords: node.coords,
           data: result.data,
           uniformValue: result.uniformValue,
+          range: [result.min, result.max],
           bytes: result.data.byteLength,
           gpu: null,
         };
@@ -1943,7 +1990,9 @@ export class BrickResidencyManager {
       ) {
         pool.pendingFetch.push(node); // tail = dispatched next
       }
-      if (!this.disposed) this.startNextFetches(pool);
+      // ALL pools, not just this one: the freed global in-flight slot may be
+      // what another pool's queue is blocked on (see startNextFetchesAll).
+      if (!this.disposed) this.startNextFetchesAll();
     }
   }
 
@@ -1995,6 +2044,7 @@ export class BrickResidencyManager {
       setPageEntry(pool.pageTable, evicted.level, evicted.coords, null, PAGE_FLAG_UNMAPPED);
       pool.gpuStaleKeys.delete(acquired.evictedKey);
       pool.coarsestResident.delete(acquired.evictedKey);
+      pool.brickRanges.delete(acquired.evictedKey);
       this.stats.evictions += 1;
     }
     if (pending.level === pool.geometry.levels.length - 1) {
@@ -2062,12 +2112,20 @@ export class BrickResidencyManager {
       });
       this.scheduleMirrorDrain();
     }
+    // Occupancy sidecar: the brick's conservative min/max bracket (skip
+    // predicate for the raymarcher). GPU-path bricks have no range yet —
+    // the default texel means "unknown, never skip" until the readback
+    // continuation writes the real one (applyGpuOutcome).
+    if (pending.range) pool.brickRanges.set(pending.key, pending.range);
     setPageEntry(
       pool.pageTable,
       pending.level,
       pending.coords,
       acquired.slot.coords,
       PAGE_FLAG_RESIDENT,
+      pending.range
+        ? encodeOccupancyTexel(pending.range[0], pending.range[1], pool)
+        : undefined,
     );
     progress.bytes += frameCostBytes;
     progress.bricks += 1;
@@ -2177,6 +2235,7 @@ export class BrickResidencyManager {
       if (pool.autoRangeEncodeDirty) {
         pool.autoRangeEncodeDirty = false;
         this.reencodeEmptyEntries(pool);
+        this.reencodeOccupancyEntries(pool);
       }
       flushPageTable(this.deps.renderer, pool.pageTable);
     }
@@ -2419,6 +2478,26 @@ export class BrickResidencyManager {
     }
   }
 
+  /** Re-encode every RESIDENT brick's occupancy texel against the current
+   * pool range (same quantization dependency as the EMPTY entries; the range
+   * only ever widens, but the old encoding was relative to the old range and
+   * may no longer bracket the brick after a move). */
+  private reencodeOccupancyEntries(pool: LayerBrickPool): void {
+    for (const [key, range] of pool.brickRanges) {
+      const slot = pool.pool.slotOf(key);
+      if (!slot) continue; // evicted since — its page entry is UNMAPPED
+      const { level, coords } = parseNodeKey(key);
+      setPageEntry(
+        pool.pageTable,
+        level,
+        coords,
+        slot.coords,
+        PAGE_FLAG_RESIDENT,
+        encodeOccupancyTexel(range[0], range[1], pool),
+      );
+    }
+  }
+
   /**
    * Min/max-readback continuation for a GPU repack batch: EMPTY demotion of
    * uniform bricks and unmapping of failed dispatches. Lands a few frames
@@ -2434,7 +2513,26 @@ export class BrickResidencyManager {
       if (!pool) continue;
       // Fold every brick's range into the layer auto-contrast, uniform or not.
       this.accumulateAutoRange(pool, result.min, result.max);
-      if (result.uniformValue === null) continue;
+      if (result.uniformValue === null) {
+        // Non-uniform GPU brick: its occupancy texel was written as "unknown"
+        // at dispatch — backfill the real min/max bracket now that the
+        // readback delivered it (resolveGpuToken already validated the slot).
+        const { level, coords } = parseNodeKey(result.token.key);
+        const slot = pool.pool.slotOf(result.token.key);
+        if (slot) {
+          pool.brickRanges.set(result.token.key, [result.min, result.max]);
+          setPageEntry(
+            pool.pageTable,
+            level,
+            coords,
+            slot.coords,
+            PAGE_FLAG_RESIDENT,
+            encodeOccupancyTexel(result.min, result.max, pool),
+          );
+          touchedPools.add(pool);
+        }
+        continue;
+      }
       const { level, coords } = parseNodeKey(result.token.key);
       // Uniform brick: the same EMPTY demotion the CPU path applies before
       // acquiring a slot — just deferred to the readback; the slot frees up.
@@ -2443,6 +2541,7 @@ export class BrickResidencyManager {
       pool.pool.release(result.token.key);
       pool.gpuStaleKeys.delete(result.token.key);
       pool.coarsestResident.delete(result.token.key);
+      pool.brickRanges.delete(result.token.key);
       pool.emptyValues.set(result.token.key, result.uniformValue);
       this.stats.emptyBricks += 1;
       touchedPools.add(pool);
@@ -2459,6 +2558,7 @@ export class BrickResidencyManager {
       pool.pool.release(token.key);
       pool.gpuStaleKeys.delete(token.key);
       pool.coarsestResident.delete(token.key);
+      pool.brickRanges.delete(token.key);
       this.stats.fetchErrors += 1;
       if (pool.protectedKeys.has(token.key)) {
         this.wakeDrain();
@@ -2656,6 +2756,7 @@ export class BrickResidencyManager {
     pool.queue = [];
     pool.queuedKeys.clear();
     pool.emptyValues.clear();
+    pool.brickRanges.clear();
     pool.pool.clear();
     pool.gpuStaleKeys.clear();
     pool.coarsestResident.clear();

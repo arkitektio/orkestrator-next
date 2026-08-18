@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { resolveAxisIndices } from "./dims";
 import { affineToMatrix4 } from "./worldTransform";
+import {
+  frustumBoxIntersectionAabb,
+  type FrustumClipCoordinateSystem,
+} from "./frustumClip";
 import type { LayerState } from "./layerModel";
 
 /**
@@ -31,6 +35,10 @@ export type SceneVisibilityInput = {
   viewportSize: { width: number; height: number };
   trackables: Iterable<VisibilityTrackable>;
   layers: readonly LayerState[];
+  /** NDC z convention of `projScreenMatrix` (see `CameraPose.coordinateSystem`).
+   * Defaults to WebGL ([-1,1]); the production tracker passes the camera's
+   * actual convention (WebGPU, [0,1]). */
+  coordinateSystem?: number;
 };
 
 export type SceneVisibilityResult = {
@@ -43,13 +51,8 @@ export type SceneVisibilityResult = {
 // dead-band never saves the recompute), so it must not allocate per call.
 const frustum = new THREE.Frustum();
 const box = new THREE.Box3();
-const corner = new THREE.Vector3();
-const invPV = new THREE.Matrix4();
-const frustumBox = new THREE.Box3();
-const visibleBox = new THREE.Box3();
-const invAffine = new THREE.Matrix4();
+const voxelToClip = new THREE.Matrix4();
 const localBox = new THREE.Box3();
-const localCorner = new THREE.Vector3();
 const scaleP0 = new THREE.Vector3();
 const scaleP1 = new THREE.Vector3();
 
@@ -58,20 +61,12 @@ export function computeSceneVisibility({
   viewportSize,
   trackables,
   layers,
+  coordinateSystem = THREE.WebGLCoordinateSystem,
 }: SceneVisibilityInput): SceneVisibilityResult {
-  frustum.setFromProjectionMatrix(projScreenMatrix);
-
-  // Frustum AABB in world space (for intersecting layer boxes).
-  invPV.copy(projScreenMatrix).invert();
-  frustumBox.makeEmpty();
-  for (let x = -1; x <= 1; x += 2) {
-    for (let y = -1; y <= 1; y += 2) {
-      for (let z = -1; z <= 1; z += 2) {
-        corner.set(x, y, z).applyMatrix4(invPV);
-        frustumBox.expandByPoint(corner);
-      }
-    }
-  }
+  frustum.setFromProjectionMatrix(
+    projScreenMatrix,
+    coordinateSystem as THREE.CoordinateSystem,
+  );
 
   // O(1) layer lookup — `layers.find` inside the trackable loop was
   // O(trackables × layers) per camera tick.
@@ -94,10 +89,7 @@ export function computeSceneVisibility({
     const layer = layerById.get(trackable.id);
     if (!layer) continue;
 
-    visibleBox.copy(box).intersect(frustumBox);
-    if (visibleBox.isEmpty()) continue;
-
-    const range = computeLayerViewRange(layer, visibleBox, projScreenMatrix, viewportSize);
+    const range = computeLayerViewRange(layer, projScreenMatrix, viewportSize, coordinateSystem);
     if (range) ranges[trackable.id] = range;
   }
 
@@ -122,55 +114,51 @@ const cachedAffineMatrix = (raw: number[][] | null | undefined): THREE.Matrix4 =
 
 function computeLayerViewRange(
   layer: LayerState,
-  visibleWorldBox: THREE.Box3,
   projScreenMatrix: THREE.Matrix4,
   viewportSize: { width: number; height: number },
+  coordinateSystem: number,
 ): LayerViewRange | null {
   const affine = cachedAffineMatrix(layer.affineMatrix);
-  invAffine.copy(affine).invert();
-
-  // Visible box corners into layer-local space.
-  localBox.makeEmpty();
-  const c = localCorner;
-  for (let ix = 0; ix <= 1; ix++) {
-    for (let iy = 0; iy <= 1; iy++) {
-      for (let iz = 0; iz <= 1; iz++) {
-        c.set(
-          ix === 0 ? visibleWorldBox.min.x : visibleWorldBox.max.x,
-          iy === 0 ? visibleWorldBox.min.y : visibleWorldBox.max.y,
-          iz === 0 ? visibleWorldBox.min.z : visibleWorldBox.max.z,
-        );
-        c.applyMatrix4(invAffine);
-        localBox.expandByPoint(c);
-      }
-    }
-  }
 
   const { xPos: xIdx, yPos: yIdx, zPos: zIdx } = resolveAxisIndices(layer.lens.axisNames, layer);
   const xMax = xIdx >= 0 ? layer.lens.shape[xIdx] : 0;
   const yMax = yIdx >= 0 ? layer.lens.shape[yIdx] : 0;
+  const zMax = layer.zAxis && zIdx >= 0 ? layer.lens.shape[zIdx] : 0;
 
-  // The layer-local frame IS voxel space — corner-anchored, no flip
-  // (COORDINATE_SYSTEMS.md "Coordinate conventions") — so the local box reads
-  // directly as voxel indices.
-  const voxelXMin = localBox.min.x;
-  const voxelXMax = localBox.max.x;
-  const voxelYMin = localBox.min.y;
-  const voxelYMax = localBox.max.y;
+  // Exact AABB of (frustum ∩ layer box), computed directly in voxel space —
+  // the layer-local frame IS voxel space (corner-anchored, no flip,
+  // COORDINATE_SYSTEMS.md "Coordinate conventions"), so `projScreen × affine`
+  // maps voxels straight to clip space. This replaces the legacy double
+  // AABB (world AABB of frustum corners → re-AABB through the inverse
+  // affine), which under a perspective camera near/inside the volume
+  // degenerated to ~the whole dataset and inflated further under tilt —
+  // see frustumClip.ts for the failure modes this fixes.
+  voxelToClip.multiplyMatrices(projScreenMatrix, affine);
+  const hit = frustumBoxIntersectionAabb(
+    voxelToClip,
+    [0, 0, 0],
+    [xMax, yMax, zMax],
+    localBox,
+    coordinateSystem as FrustumClipCoordinateSystem,
+  );
+  if (!hit) return null;
 
-  let zRange: [number, number] | null = null;
-  if (layer.zAxis) {
-    const zMax = zIdx >= 0 ? layer.lens.shape[zIdx] : 0;
-    zRange = [
-      Math.max(0, Math.floor(localBox.min.z)),
-      Math.min(zMax, Math.ceil(localBox.max.z)),
-    ];
-  }
+  const zRange: [number, number] | null = layer.zAxis
+    ? [
+        Math.max(0, Math.floor(localBox.min.z)),
+        Math.min(zMax, Math.ceil(localBox.max.z)),
+      ]
+    : null;
 
   // Screen-pixels-per-image-pixel: transform two points 1 voxel apart
-  // through affine + projection into screen space.
-  const p0 = scaleP0.set(0, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
-  const p1 = scaleP1.set(1, 0, 0).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
+  // through affine + projection into screen space — anchored at the CENTER
+  // of the visible voxel box, not the layer origin (under perspective the
+  // origin can be far off-screen and misrepresent the on-screen density).
+  const cx = (localBox.min.x + localBox.max.x) / 2;
+  const cy = (localBox.min.y + localBox.max.y) / 2;
+  const cz = (localBox.min.z + localBox.max.z) / 2;
+  const p0 = scaleP0.set(cx, cy, cz).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
+  const p1 = scaleP1.set(cx + 1, cy, cz).applyMatrix4(affine).applyMatrix4(projScreenMatrix);
   const hw = viewportSize.width / 2;
   const hh = viewportSize.height / 2;
   const dx = (p1.x - p0.x) * hw;
@@ -178,8 +166,8 @@ function computeLayerViewRange(
   const scale = Math.sqrt(dx * dx + dy * dy);
 
   return {
-    xRange: [Math.max(0, Math.floor(voxelXMin)), Math.min(xMax, Math.ceil(voxelXMax))],
-    yRange: [Math.max(0, Math.floor(voxelYMin)), Math.min(yMax, Math.ceil(voxelYMax))],
+    xRange: [Math.max(0, Math.floor(localBox.min.x)), Math.min(xMax, Math.ceil(localBox.max.x))],
+    yRange: [Math.max(0, Math.floor(localBox.min.y)), Math.min(yMax, Math.ceil(localBox.max.y))],
     zRange,
     scale,
   };

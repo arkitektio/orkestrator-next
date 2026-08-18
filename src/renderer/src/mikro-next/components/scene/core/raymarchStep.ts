@@ -12,9 +12,10 @@ export const STATUS_EMPTY = 2;
 
 /**
  * The empty-space skip predicate: an unmapped chain always skips; a uniform
- * EMPTY brick skips when no visible channel would contribute. Residents never
- * skip. `maxNorm` is the max normalized intensity across every visible slot of
- * every member at this step.
+ * EMPTY brick skips when no visible channel would contribute. Residents are
+ * NOT decided here — their skip is the occupancy predicate below
+ * (`residentBrickSkippable`). `maxNorm` is the max normalized intensity across
+ * every visible slot of every member at this step.
  */
 export function shouldSkipStep(status: number, maxNorm: number): boolean {
   if (status < 0.5) return true;
@@ -67,6 +68,65 @@ export function emptyStepMaxNorm(
     maxNorm = Math.max(maxNorm, normalizeSlotValue(emptyValue, dataMin, dataMax, slot));
   }
   return maxNorm;
+}
+
+/**
+ * Upper bound of the windowed norm any voxel of a brick can reach, from the
+ * occupancy sidecar's conservative raw bracket `[brickMin, brickMax]`
+ * (`decodeOccupancyBounds`). `normalizeSlotValue` is monotone in the raw value
+ * up to its final invert, so over the whole bracket the norm is bounded by the
+ * larger endpoint image — valid for inverted channels too (there the min
+ * endpoint dominates). Max over the member's VISIBLE slots, mirroring the
+ * shader's `oc<m>` loop.
+ */
+export function occupancyUpperNorm(
+  brickMin: number,
+  brickMax: number,
+  dataMin: number,
+  dataMax: number,
+  slots: readonly SlotTransfer[],
+): number {
+  let upper = 0;
+  for (const slot of slots) {
+    if (!slot.visible) continue;
+    upper = Math.max(
+      upper,
+      normalizeSlotValue(brickMin, dataMin, dataMax, slot),
+      normalizeSlotValue(brickMax, dataMin, dataMax, slot),
+    );
+  }
+  return upper;
+}
+
+/** One merged-pass member's inputs to the resident-brick skip decision. */
+export type MemberSkipState = {
+  /** 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO. */
+  projectionMode: number;
+  /** `occupancyUpperNorm` over this member's visible slots. */
+  upperNorm: number;
+  /** The member's MIP accumulator (max norm seen so far on this ray). */
+  bestNorm: number;
+  isoThreshold: number;
+  /** The member's early-out flag (saturated / first ISO crossing). */
+  done: boolean;
+};
+
+/**
+ * The RESIDENT-brick occupancy skip (shader lockstep: the `occSkipAll` block
+ * in `brickNodeMaterials.ts`): the ray may hop the resident brick's whole cell
+ * when EVERY member is satisfied — invisible under its clim window (the EMPTY
+ * threshold), a MIP that the brick cannot beat, an ISO the brick never
+ * reaches, or already done. Conservative by construction: a skipped brick
+ * cannot change any member's accumulator.
+ */
+export function residentBrickSkippable(members: readonly MemberSkipState[]): boolean {
+  return members.every((member) => {
+    if (member.done) return true;
+    if (member.upperNorm <= 0.001) return true;
+    if (member.projectionMode === 0 && member.upperNorm <= member.bestNorm) return true;
+    if (member.projectionMode === 3 && member.upperNorm < member.isoThreshold) return true;
+    return false;
+  });
 }
 
 /**

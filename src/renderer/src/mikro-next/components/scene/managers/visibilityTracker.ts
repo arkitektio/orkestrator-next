@@ -43,7 +43,7 @@ export function startVisibilityTracking({
   let scheduled = false;
 
   const recompute = () => {
-    const { viewProjectionMatrix, viewportSize } = viewStore.getState();
+    const { viewProjectionMatrix, viewportSize, cameraPose } = viewStore.getState();
     if (!viewProjectionMatrix) return;
 
     perfMonitor.markVisibilityRecompute(); // no-op unless a perf recording is armed
@@ -53,6 +53,7 @@ export function startVisibilityTracking({
       viewportSize,
       trackables: viewerState.trackables,
       layers: sceneStore.getState().layers,
+      coordinateSystem: cameraPose?.coordinateSystem,
     });
 
     // Write-if-changed: skipping no-op writes keeps every subscriber of

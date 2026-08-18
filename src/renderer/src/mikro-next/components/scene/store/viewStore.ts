@@ -9,6 +9,11 @@ export interface CameraPose {
   isPerspective: boolean;
   /** Vertical field of view in radians; 0 for orthographic cameras. */
   fovY: number;
+  /** `camera.coordinateSystem` at emission — decides the NDC z convention
+   * ([-1,1] WebGL, [0,1] WebGPU) for frustum-plane extraction and NDC-corner
+   * unprojection. Production is WebGPU-only (§5); tests build WebGL cameras.
+   * Absent (older fixtures) means WebGL. */
+  coordinateSystem?: number;
 }
 
 export interface ViewState {
@@ -34,6 +39,7 @@ const samePose = (a: CameraPose | null, b: CameraPose | null): boolean =>
     !!b &&
     a.isPerspective === b.isPerspective &&
     a.fovY === b.fovY &&
+    a.coordinateSystem === b.coordinateSystem &&
     a.position[0] === b.position[0] &&
     a.position[1] === b.position[1] &&
     a.position[2] === b.position[2]);

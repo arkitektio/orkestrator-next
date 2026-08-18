@@ -38,7 +38,11 @@ import {
 } from "../../render/bricks/brickNodeMaterials";
 import { buildChannelDataSignature } from "../../render/bricks/channelDataSignature";
 import { buildMergeMembers } from "../../render/bricks/mergeMembers";
-import { useStepScaleUniform, useVolumeRayUniforms } from "./useVolumeRayUniforms";
+import {
+  useStepScaleUniform,
+  useVolumePassRegistration,
+  useVolumeRayUniforms,
+} from "./useVolumeRayUniforms";
 import { buildMergedChannelUniformData } from "../../render/bricks/mergedChannelUniforms";
 import {
   findMergeGroup,
@@ -406,6 +410,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   });
 
   useStepScaleUniform(bundle?.nodes);
+  useVolumePassRegistration(!!bundle);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
   const probeFromRay = (ray: THREE.Ray, origin: ProbeOrigin): ProbeResult | null => {

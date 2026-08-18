@@ -171,10 +171,11 @@ export function resolveActiveLadderScale(emaMs: number): number {
 
 /**
  * The rung for the NEXT activity burst, decided ONCE at burst entry and held
- * for the whole burst. Mid-burst stepping was self-amplifying: every `setDpr`
- * reallocates the render targets (a multi-hundred-ms frame), that spike frame
- * inflated the EMA, the ladder dropped another rung, which reallocated again —
- * the mitigation caused the very hitches it was meant to remove. One decision
+ * for the whole burst (one allowed exception: `shouldStepBurstRungDown`).
+ * Mid-burst stepping was self-amplifying: every `setDpr` reallocates the
+ * render targets (a multi-hundred-ms frame), that spike frame inflated the
+ * EMA, the ladder dropped another rung, which reallocated again — the
+ * mitigation caused the very hitches it was meant to remove. One decision
  * per burst caps the cost at exactly one realloc per gesture.
  *
  * The EMA is NORMALIZED by the rung the previous burst rendered at
@@ -183,12 +184,80 @@ export function resolveActiveLadderScale(emaMs: number): number {
  * resolution, so the prediction stays at 0.5 instead of oscillating back to 1
  * — while a machine that is genuinely fast even normalized climbs back up on
  * the next burst.
+ *
+ * `volumePasses` is the scene-load FEEDFORWARD: the EMA after idle is stale
+ * (demand frameloop — no frames flowed), so the first heavy gesture used to
+ * enter at rung 1 and stay janky for its whole duration. Frame cost is
+ * linear in the number of full-screen raymarch passes, which is known BEFORE
+ * any frame renders — ≥3 passes floor the entry rung at 0.75.
  */
-export function predictBurstLadderScale(emaMs: number, previousRung: number): number {
+export function predictBurstLadderScale(
+  emaMs: number,
+  previousRung: number,
+  volumePasses = 1,
+): number {
   const rung =
     previousRung > 0 && Number.isFinite(previousRung) ? Math.min(previousRung, 1) : 1;
   const normalizedEma = emaMs / (rung * rung);
-  return resolveActiveLadderScale(normalizedEma);
+  const loadCap = volumePasses >= 3 ? ACTIVE_DPR_LADDER[1] : 1;
+  return Math.min(resolveActiveLadderScale(normalizedEma), loadCap);
+}
+
+/**
+ * The ONE allowed mid-burst downward correction. The monotone-within-burst
+ * rule exists to prevent the realloc cascade (see above) — but a burst that
+ * ENTERED at too high a rung from a stale post-idle EMA used to stay janky
+ * for its entire duration, with relief only on the NEXT gesture. A single
+ * drop is one extra realloc, not a cascade: allowed once per burst, only
+ * after the burst has rendered long enough for the EMA to reflect its own
+ * frames (the caller gates on burst age), and only while a lower rung exists.
+ * Compares the RAW ema (measured at the current rung) against the ladder's
+ * worst threshold — if frames are still slow at this rung, drop.
+ */
+export function shouldStepBurstRungDown(emaMs: number, currentRung: number): boolean {
+  if (currentRung <= ACTIVE_DPR_LADDER[ACTIVE_DPR_LADDER.length - 1]) return false;
+  return emaMs > LADDER_EMA_THRESHOLDS_MS[LADDER_EMA_THRESHOLDS_MS.length - 1];
+}
+
+/** The next rung below `rung` (the ladder's floor when already at/below it). */
+export function nextLadderRungDown(rung: number): number {
+  for (const candidate of ACTIVE_DPR_LADDER) {
+    if (candidate < rung) return candidate;
+  }
+  return ACTIVE_DPR_LADDER[ACTIVE_DPR_LADDER.length - 1];
+}
+
+/**
+ * Scene-load factor (the many-layers fix): total frame cost is LINEAR in the
+ * number of concurrently marched full-screen volume passes (one per merge
+ * group + one per label volume layer), but no quality knob saw that — the
+ * tier reacts only to sustained slow-frame streaks, and demoting it punishes
+ * the MACHINE's persisted label for what is a property of the SCENE. This
+ * factor scales the per-pass step budget so total sample cost grows ~√N
+ * instead of N (each pass marches at √N× the pitch); capped at 2× so a
+ * many-layer scene never falls below half its tier's step density. Fed by
+ * `registerVolumePass` at material mount — feedforward, known before the
+ * first heavy frame renders, and it costs nothing when a single pass is open.
+ */
+export function volumeLoadFactor(volumePasses: number): number {
+  return Math.min(2, Math.sqrt(Math.max(1, volumePasses)));
+}
+
+/** Default px-per-voxel threshold past which tricubic zoom smoothing engages. */
+export const SMOOTH_ZOOM_THRESHOLD_PX = 3;
+
+/**
+ * Tricubic zoom smoothing is a settled-image luxury: it multiplies the
+ * intensity tap 8× and — contrary to the "only engages where rays are short"
+ * design assumption — zoom+tilt engages it over essentially the entire step
+ * budget exactly when the frame is already fragment-bound (long diagonal
+ * rays at fine pitch). Disabled while ACTIVE (camera moving or streaming)
+ * on every tier, and entirely on TIER_LOW. Returning 0 disables the filter
+ * at runtime with no material rebuild (the shader gates on `> 0`).
+ */
+export function resolveSmoothThreshold(tier: QualityTier, active: boolean): number {
+  if (active || tier === TIER_LOW) return 0;
+  return SMOOTH_ZOOM_THRESHOLD_PX;
 }
 
 /**
@@ -268,6 +337,7 @@ export class QualityGovernor {
   private fastFrames = 0;
   private lastDemoteAt = Number.NEGATIVE_INFINITY;
   private streaming = false;
+  private volumePasses = 0;
   private version = 0;
   private readonly listeners = new Set<() => void>();
   private storage: QualityStorage | null = null;
@@ -366,6 +436,35 @@ export class QualityGovernor {
 
   isStreaming(): boolean {
     return this.streaming;
+  }
+
+  // --- scene load (feedforward, see volumeLoadFactor) -----------------------
+  /** Register one mounted full-screen volume raymarch pass; call the returned
+   * disposer on unmount. Pass-count changes are rare (layer add/remove/
+   * visibility, merge-group membership) — safe to `emit()`. */
+  registerVolumePass(): () => void {
+    this.setVolumePassCount(this.volumePasses + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.setVolumePassCount(Math.max(0, this.volumePasses - 1));
+    };
+  }
+
+  setVolumePassCount(count: number): void {
+    if (count === this.volumePasses) return;
+    this.volumePasses = count;
+    this.emit();
+  }
+
+  getVolumePassCount(): number {
+    return this.volumePasses;
+  }
+
+  /** `volumeLoadFactor` of the current pass count. */
+  getLoadFactor(): number {
+    return volumeLoadFactor(this.volumePasses);
   }
 
   /** Edge events from the residency manager's drain loop. */

@@ -8,7 +8,8 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 
-import { qualityGovernor } from "../../core/qualityGovernor";
+import { qualityGovernor, resolveSmoothThreshold } from "../../core/qualityGovernor";
+import { isSmoothZoomEnabled } from "../../render/bricks/shaderFlags";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import { useViewerStore } from "../../store/viewerStore";
@@ -39,8 +40,12 @@ export type VolumeRayUniformHandles = {
   uMaxSteps: { value: number };
 };
 
-/** The handle `useStepScaleUniform` drives. Separate: it is imperative. */
-export type StepScaleUniformHandle = { uStepScale: { value: number } };
+/** The handles `useStepScaleUniform` drives. Separate: it is imperative.
+ * `uSmoothThreshold` is optional — the label raymarcher has no smoothing. */
+export type StepScaleUniformHandle = {
+  uStepScale: { value: number };
+  uSmoothThreshold?: { value: number };
+};
 
 /**
  * Screen px per base voxel at unit distance — the CPU twin of the footprint term
@@ -116,14 +121,38 @@ export const useVolumeRayUniforms = (
 };
 
 /**
- * `uStepScale`, driven IMPERATIVELY off the camera-motion flag.
+ * Count this component as one mounted full-screen volume raymarch pass while
+ * `activePass` holds (a live raymarch material bundle — merge-group primaries
+ * and label volume layers; non-primaries and 2D planes never pass true).
+ * Feeds the governor's scene-load factor: total frame cost is linear in the
+ * number of concurrent raymarch passes, and this is the feedforward signal
+ * that lets the step budget and the DPR burst prediction scale with it.
+ */
+export const useVolumePassRegistration = (activePass: boolean): void => {
+  useEffect(() => {
+    if (!activePass) return;
+    return qualityGovernor.registerVolumePass();
+  }, [activePass]);
+};
+
+/**
+ * `uStepScale` (and the tricubic gate `uSmoothThreshold`), driven IMPERATIVELY
+ * off the camera-motion flag.
  *
  * `cameraMoving` is deliberately NOT a React subscription: it flips true on every
  * leading camera emission and false on every settle (~23 flips over a 10 s
  * orbit), and it feeds exactly ONE float. Subscribing re-rendered every volume
  * layer on each flip and re-ran the whole uniform effect, rebuilding pointer
- * handlers and re-diffing the group tree. This writes the uniform directly and
+ * handlers and re-diffing the group tree. This writes the uniforms directly and
  * requests a frame.
+ *
+ * Two governor inputs fold in here:
+ *  - the SCENE-LOAD factor (`getLoadFactor`): step scales stretch by √(pass
+ *    count) so total sample cost across N concurrent raymarch passes grows
+ *    ~√N instead of N — the feedforward half of the many-layers fix;
+ *  - the tricubic gate (`resolveSmoothThreshold`): smoothing off while active
+ *    and on TIER_LOW — zoom+tilt otherwise flips ~the whole step budget to
+ *    8× taps exactly when the frame is already fragment-bound.
  */
 export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): void => {
   const viewStoreApi = useViewStoreApi();
@@ -131,16 +160,26 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
 
   useEffect(() => {
     if (!nodes) return;
-    let last: number | null = null;
+    let lastStep: number | null = null;
+    let lastSmooth: number | null = null;
+    // Read once per effect, not per camera tick (localStorage): flipping the
+    // flag rebuilds the material, which remounts this effect anyway.
+    const smoothZoom = isSmoothZoomEnabled();
     const apply = () => {
       const profile = qualityGovernor.getProfile();
-      const next =
-        viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming()
-          ? profile.activeStepScale
-          : profile.settledStepScale;
-      if (next === last) return; // the flag flips far more often than the value
-      last = next;
-      nodes.uStepScale.value = next;
+      const active =
+        viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming();
+      const step =
+        (active ? profile.activeStepScale : profile.settledStepScale) *
+        qualityGovernor.getLoadFactor();
+      const smooth = smoothZoom
+        ? resolveSmoothThreshold(qualityGovernor.getTier(), active)
+        : 0;
+      if (step === lastStep && smooth === lastSmooth) return; // flags flip far more often than the values
+      lastStep = step;
+      lastSmooth = smooth;
+      nodes.uStepScale.value = step;
+      if (nodes.uSmoothThreshold) nodes.uSmoothThreshold.value = smooth;
       invalidate();
     };
     apply();

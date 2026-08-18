@@ -178,6 +178,9 @@ export function makeTraversalNodes(
 
   return {
     pageTable: pool.pageTable.texture,
+    /** RG8 occupancy sidecar (per-brick min/max bracket) — only the volume
+     * raymarcher's skip block samples it; inert elsewhere. */
+    occupancy: pool.pageTable.occupancy,
     brickAtlas: pool.atlas.texture,
     uNumLevels: uniform(Math.min(pool.geometry.levels.length, MAX_BRICK_LEVELS), "int"),
     uPageOffset: uniformArray(pageOffsets, "ivec3"),
@@ -334,6 +337,9 @@ export type ResolvedResidency = {
   /** Level the walk stopped RESIDENT at (coarsest when not resident) — the
    * zoom-smoothing gate needs its voxel scale. */
   residentLevel: any;
+  /** Page-table texel coords of the RESIDENT stop (zero otherwise) — where
+   * the occupancy sidecar's texel for this brick lives. */
+  pageTexel: any;
   /** Atlas texel of the resident SLOT's origin (no border, no slab offset) —
    * the tricubic tap clamp bounds derive from it. Zero when not resident. */
   slotOriginTexel: any;
@@ -380,6 +386,7 @@ export function emitResolveBrickResidency(
   const hopLevel = int(t.uNumLevels).sub(1).toVar("resHopLevel");
   const residentLevel = int(t.uNumLevels).sub(1).toVar("resResidentLevel");
   const slotOriginTexel = vec3(0.0).toVar("resSlotOrigin");
+  const pageTexel = vec3(0.0).toVar("resPageTexel");
 
   Loop(
     { start: int(0), end: t.uNumLevels, type: "int", condition: "<", name: "sbLvl" },
@@ -440,6 +447,7 @@ export function emitResolveBrickResidency(
         status.assign(1.0);
         residentLevel.assign(int(sbLvl));
         slotOriginTexel.assign(vec3(slot.mul(t.uSlotSize)));
+        pageTexel.assign(vec3(ivec3(t.uPageOffset.element(sbLvl)).add(brick)));
         texelBase.assign(
           vec3(slot.mul(t.uSlotSize)).add(float(t.uBrickBorder)).add(inBrick),
         );
@@ -448,7 +456,7 @@ export function emitResolveBrickResidency(
     },
   );
 
-  return { status, emptyValue, texelBase, hopLevel, residentLevel, slotOriginTexel };
+  return { status, emptyValue, texelBase, hopLevel, residentLevel, slotOriginTexel, pageTexel };
 }
 
 /**
@@ -1296,6 +1304,90 @@ export function createVolumeNodeMaterial(
           });
           If(maxEmptyNorm.lessThanEqual(0.001), () => {
             hopPastCell();
+          });
+        });
+
+        // OCCUPANCY SKIP — the resident-brick analogue of the EMPTY hop (CPU
+        // mirror: core/raymarchStep.ts `residentBrickSkippable`). The page
+        // table's RG8 sidecar brackets each resident brick's raw [min, max]
+        // conservatively (encodeOccupancyTexel: floor'd min, inverted-ceil'd
+        // max, so an unwritten texel decodes to the full range and can never
+        // skip). Because `channelNormalize` is monotone in the raw value up to
+        // its final invert, the windowed norm over the whole brick is bounded
+        // by max(normalize(bMin), normalize(bMax)) — valid for inverted
+        // channels too. A brick skips for a member when
+        //  - it is invisible under the current clim window (norm ≤ 0.001, the
+        //    EMPTY threshold), or
+        //  - the member is MIP and the brick cannot beat its accumulated max
+        //    (the classic maximum-culling MIP acceleration), or
+        //  - the member is ISO and the brick never reaches the threshold, or
+        //  - the member is already done.
+        // When EVERY member skips, the ray hops the resident brick's cell.
+        // This is what finally gives MIP — the default projection, whose
+        // 0.995 early-out dim fluorescence never reaches — a way to stop
+        // paying full per-slot sampling through visually black or already-
+        // beaten bricks.
+        If(resolved.status.greaterThanEqual(0.5).and(resolved.status.lessThan(1.5)), () => {
+          const occ = vec4(
+            texture3DLoad(t.occupancy, ivec3(resolved.pageTexel)),
+          ).toVar("occTexel");
+          const occRange = max(float(c.maxValue).sub(c.minValue), 0.00001);
+          const occMin = float(c.minValue).add(occ.r.mul(occRange)).toVar("occMin");
+          const occMax = float(c.minValue)
+            .add(oneMinus(occ.g).mul(occRange))
+            .toVar("occMax");
+          const occSkipAll = bool(true).toVar("occSkipAll");
+          memberNodes.forEach((mem, m) => {
+            const upper = float(0.0).toVar();
+            Loop(
+              {
+                start: int(0),
+                end: int(MAX_CHANNELS),
+                type: "int",
+                condition: "<",
+                name: `oc${m}`,
+              },
+              (args: any) => {
+                const k = args[`oc${m}`];
+                If(int(k).greaterThanEqual(mem.slotCount), () => {
+                  Break();
+                });
+                const slot = int(mem.slotFirst).add(int(k)).toVar();
+                If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
+                  Continue();
+                });
+                upper.assign(
+                  max(
+                    upper,
+                    max(
+                      float(memberFns[m].channelNormalize(slot, occMin)),
+                      float(memberFns[m].channelNormalize(slot, occMax)),
+                    ),
+                  ),
+                );
+              },
+            );
+            const invisible = upper.lessThanEqual(0.001);
+            const mipBeaten = int(mem.projectionMode)
+              .equal(int(0))
+              .and(upper.lessThanEqual(acc[m].bestNorm));
+            const isoMiss = int(mem.projectionMode)
+              .equal(int(3))
+              .and(upper.lessThan(mem.isoThreshold));
+            occSkipAll.assign(
+              occSkipAll.and(acc[m].done.or(invisible).or(mipBeaten).or(isoMiss)),
+            );
+          });
+          If(occSkipAll, () => {
+            // Hop the RESIDENT level's cell — resolved.hopLevel defaults to
+            // the coarsest here (it is only set by the EMPTY branch).
+            rayT.addAssign(
+              max(
+                stepLen,
+                float(brickExitRel(pB, invD, resolved.residentLevel)).add(0.01),
+              ),
+            );
+            Continue();
           });
         });
       }

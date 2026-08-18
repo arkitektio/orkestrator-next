@@ -91,3 +91,49 @@ export function encodeEmptyTexel(
   if (bits === 8) return [code, 0, 0];
   return [code & 0xff, (code >>> 8) & 0xff, (code >>> 16) & 0xff];
 }
+
+/**
+ * Per-brick occupancy texel `[r, g]` (RG8) for the page table's occupancy
+ * sidecar: `r` is the brick's raw MIN, `g` its raw MAX, both 8-bit quantized
+ * over the pool data range — with CONSERVATIVE rounding and an INVERTED max:
+ *
+ *  - `r = floor(minFrac·255)` — decodes to a value ≤ the true min,
+ *  - `g = 255 − ceil(maxFrac·255)` — decodes to a value ≥ the true max,
+ *
+ * so the decode brackets the brick's true value range from the outside. The
+ * inversion makes the ALL-ZERO texel (a fresh texture, a brick whose range is
+ * not yet known — e.g. a GPU-repacked brick before its min/max readback lands)
+ * decode to the FULL data range: "could be anything, never skip". The shader's
+ * occupancy skip and `decodeOccupancyBounds` must stay in lockstep.
+ */
+export function encodeOccupancyTexel(
+  minValue: number,
+  maxValue: number,
+  dataRange: { minValue: number; maxValue: number },
+): [number, number] {
+  const range = dataRange.maxValue - dataRange.minValue;
+  if (
+    !(range > 0) ||
+    !Number.isFinite(minValue) ||
+    !Number.isFinite(maxValue) ||
+    maxValue < minValue
+  ) {
+    return [0, 0]; // conservative: full range
+  }
+  const minFrac = THREE.MathUtils.clamp((minValue - dataRange.minValue) / range, 0, 1);
+  const maxFrac = THREE.MathUtils.clamp((maxValue - dataRange.minValue) / range, 0, 1);
+  return [Math.floor(minFrac * 255), 255 - Math.ceil(maxFrac * 255)];
+}
+
+/** CPU mirror of the shader's occupancy decode: the conservative raw-value
+ * bracket `[min, max]` an occupancy texel declares for its brick. */
+export function decodeOccupancyBounds(
+  texel: readonly [number, number],
+  dataRange: { minValue: number; maxValue: number },
+): { minValue: number; maxValue: number } {
+  const range = dataRange.maxValue - dataRange.minValue;
+  return {
+    minValue: dataRange.minValue + (texel[0] / 255) * range,
+    maxValue: dataRange.minValue + ((255 - texel[1]) / 255) * range,
+  };
+}

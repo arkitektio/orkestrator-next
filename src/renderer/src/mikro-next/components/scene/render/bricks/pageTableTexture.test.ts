@@ -42,7 +42,8 @@ describe("flushPageTable dirty-box uploads", () => {
     setPageEntry(pageTable, 0, [2, 3, 1], [1, 0, 0], PAGE_FLAG_RESIDENT);
 
     expect(flushPageTable(renderer, pageTable)).toBe(true);
-    expect(writeTexture).toHaveBeenCalledTimes(1);
+    // One write for the page mirror, one for the RG8 occupancy sidecar.
+    expect(writeTexture).toHaveBeenCalledTimes(2);
 
     const [destination, data, layout, extent] = writeTexture.mock.calls[0];
     // Box spans bricks [1..2, 1..3, 0..1]; texture origin adds the level offset.
@@ -55,6 +56,17 @@ describe("flushPageTable dirty-box uploads", () => {
       bytesPerRow: 4 * 4,
       rowsPerImage: 4,
     });
+
+    // The occupancy upload shares the dirty box at 2 bytes/texel.
+    const [occDest, occData, occLayout, occExtent] = writeTexture.mock.calls[1];
+    expect(occDest.origin).toEqual([16 + 1, 1, 0]);
+    expect(occExtent).toEqual([2, 3, 2]);
+    expect(occData).toBe(pageTable.occMirrors[0]);
+    expect(occLayout).toEqual({
+      offset: ((0 * 4 + 1) * 4 + 1) * 2,
+      bytesPerRow: 4 * 2,
+      rowsPerImage: 4,
+    });
   });
 
   it("is a no-op when nothing is dirty, and re-flushes only new writes", () => {
@@ -64,12 +76,12 @@ describe("flushPageTable dirty-box uploads", () => {
     setPageEntry(pageTable, 0, [0, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT);
     expect(flushPageTable(renderer, pageTable)).toBe(true);
     expect(flushPageTable(renderer, pageTable)).toBe(false);
-    expect(writeTexture).toHaveBeenCalledTimes(1);
+    expect(writeTexture).toHaveBeenCalledTimes(2); // page + occupancy
 
     // A single new entry dirties only its own 1×1×1 box.
     setPageEntry(pageTable, 0, [3, 2, 1], [0, 1, 0], PAGE_FLAG_RESIDENT);
     expect(flushPageTable(renderer, pageTable)).toBe(true);
-    const [destination, , , extent] = writeTexture.mock.calls[1];
+    const [destination, , , extent] = writeTexture.mock.calls[2];
     expect(destination.origin).toEqual([16 + 3, 2, 1]);
     expect(extent).toEqual([1, 1, 1]);
   });
@@ -84,5 +96,35 @@ describe("flushPageTable dirty-box uploads", () => {
     expect(destination.origin).toEqual([16, 0, 0]);
     expect(extent).toEqual([4, 4, 2]);
     expect(layout.offset).toBe(0);
+  });
+});
+
+describe("occupancy sidecar", () => {
+  it("writes the occupancy bytes with RESIDENT entries and resets them otherwise", async () => {
+    const { PAGE_FLAG_UNMAPPED } = await import("../../core/octree/pageTableLayout");
+    const pageTable = createPageTableTexture(LAYOUT);
+
+    setPageEntry(pageTable, 0, [1, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT, [12, 200]);
+    // Entry index of brick [1,0,0] in the 4×4×2 grid is 1.
+    expect(pageTable.occMirrors[0][2]).toBe(12);
+    expect(pageTable.occMirrors[0][3]).toBe(200);
+    // Full-texture restore mirror at level offset [16,0,0] + brick [1,0,0].
+    const texel = (0 * 4 + 0) * 20 + 17;
+    expect(pageTable.occBacking[texel * 2]).toBe(12);
+    expect(pageTable.occBacking[texel * 2 + 1]).toBe(200);
+
+    // Unmapping (or writing without occupancy) resets to the conservative
+    // all-zero texel — "unknown, never skip".
+    setPageEntry(pageTable, 0, [1, 0, 0], null, PAGE_FLAG_UNMAPPED);
+    expect(pageTable.occMirrors[0][2]).toBe(0);
+    expect(pageTable.occMirrors[0][3]).toBe(0);
+  });
+
+  it("clearPageTable zeroes the occupancy mirrors too", () => {
+    const pageTable = createPageTableTexture(LAYOUT);
+    setPageEntry(pageTable, 0, [2, 1, 1], [0, 0, 0], PAGE_FLAG_RESIDENT, [7, 9]);
+    clearPageTable(pageTable);
+    expect(pageTable.occMirrors[0].every((byte) => byte === 0)).toBe(true);
+    expect(pageTable.occBacking.every((byte) => byte === 0)).toBe(true);
   });
 });

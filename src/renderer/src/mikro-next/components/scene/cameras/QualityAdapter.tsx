@@ -2,9 +2,11 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   isAdaptiveDprEnabled,
+  nextLadderRungDown,
   predictBurstLadderScale,
   qualityGovernor,
   resolveDpr,
+  shouldStepBurstRungDown,
 } from "../core/qualityGovernor";
 import { getGpuKey, type SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useViewStoreApi } from "../store/viewStore";
@@ -52,6 +54,11 @@ const SETTLE_RESTORE_MS = 500;
  */
 const ACTIVE_DPR_DELAY_MS = 250;
 
+/** How long a burst must have rendered before the ONE allowed mid-burst rung
+ * correction may fire — the EMA (window 20) must reflect the burst's own
+ * frames, not pre-burst history, before it can justify the extra realloc. */
+const MID_BURST_CORRECT_AFTER_MS = 450;
+
 export const QualityAdapter = () => {
   const gl = useThree((s) => s.gl);
   const setDpr = useThree((s) => s.setDpr);
@@ -80,6 +87,8 @@ export const QualityAdapter = () => {
    * predicting the next burst's rung, so a cheap-because-low-res burst does
    * not oscillate the prediction back up. */
   const lastBurstRungRef = useRef(1);
+  /** Whether this burst already used its one mid-burst downward correction. */
+  const burstCorrectedRef = useRef(false);
   /** setDpr wrapper that also drops the NEXT frame delta from the governor's
    * learning: that frame measures the render-target realloc, not the tier —
    * and feeding it back is what made the ladder self-amplify. */
@@ -116,12 +125,32 @@ export const QualityAdapter = () => {
       settledAtRef.current = null;
       if (activeSinceRef.current === null) {
         activeSinceRef.current = now;
+        burstCorrectedRef.current = false;
         // Rung decided ONCE per burst, from the previous burst's
         // rung-normalized EMA — held for the whole gesture so it pays at
-        // most one realloc. Disabled → rung 1 → pre-ladder behavior.
+        // most one realloc (plus the single correction below). The volume
+        // pass count is the scene-load feedforward: a stale post-idle EMA
+        // cannot see that six raymarch passes are open, but the mount
+        // registry can. Disabled → rung 1 → pre-ladder behavior.
         burstLadderScaleRef.current = isAdaptiveDprEnabled()
-          ? predictBurstLadderScale(qualityGovernor.getEmaMs(), lastBurstRungRef.current)
+          ? predictBurstLadderScale(
+              qualityGovernor.getEmaMs(),
+              lastBurstRungRef.current,
+              qualityGovernor.getVolumePassCount(),
+            )
           : 1;
+      } else if (
+        isAdaptiveDprEnabled() &&
+        !burstCorrectedRef.current &&
+        now - activeSinceRef.current >= MID_BURST_CORRECT_AFTER_MS &&
+        shouldStepBurstRungDown(qualityGovernor.getEmaMs(), burstLadderScaleRef.current)
+      ) {
+        // The ONE allowed mid-burst correction: a burst that entered at too
+        // high a rung (stale EMA after idle) used to stay janky for its whole
+        // duration — relief only arrived with the NEXT gesture. A single drop
+        // is one extra realloc, not the old self-amplifying cascade.
+        burstCorrectedRef.current = true;
+        burstLadderScaleRef.current = nextLadderRungDown(burstLadderScaleRef.current);
       }
       const dpr = resolveDpr(
         qualityGovernor.getProfile(),
@@ -130,11 +159,12 @@ export const QualityAdapter = () => {
         burstLadderScaleRef.current,
       );
       // Entry hysteresis (ACTIVE_DPR_DELAY_MS): only sustained activity pays
-      // the drop realloc — a lone wheel notch stays at the crisp DPR.
-      if (
-        dpr !== appliedDprRef.current &&
-        now - activeSinceRef.current >= ACTIVE_DPR_DELAY_MS
-      ) {
+      // the drop realloc — a lone wheel notch stays at the crisp DPR. When
+      // the burst PREDICTION already says this scene is heavy (rung < 1),
+      // the first quarter-second is exactly the jank being mitigated, so the
+      // cheap DPR applies immediately instead.
+      const dprDelay = burstLadderScaleRef.current < 1 ? 0 : ACTIVE_DPR_DELAY_MS;
+      if (dpr !== appliedDprRef.current && now - activeSinceRef.current >= dprDelay) {
         applyDpr(dpr);
       }
       return;

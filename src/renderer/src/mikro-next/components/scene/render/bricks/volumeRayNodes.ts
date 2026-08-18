@@ -5,10 +5,10 @@ import * as TSLTyped from "three/tsl";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TSL = TSLTyped as any;
 const {
+  Break,
   Fn,
   If,
   Loop,
-  bool,
   cameraPosition,
   distance,
   float,
@@ -118,29 +118,28 @@ export const makeVolumeRayNodes = (t: any, u: VolumeRayUniforms): VolumeRayNodes
     }).Else(() => {
       const dist = max(distance(vec3(baseVoxel), vec3(cameraBase)), 1.0);
       const pxPerBaseVoxel = float(u.uPxPerVoxelAtUnitDist).div(dist);
-      const found = bool(false).toVar();
       // Unique iterator name: this Fn inlines into the ray loop (see the
       // emitResolveBrickResidency shadowing note).
       Loop(
         { start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<", name: "dlv" },
         ({ dlv }: any) => {
-          If(found.not(), () => {
-            // MAX spatial factor — mirrors the planner's `wantFiner`
-            // (nodePlanning.ts): a level counts as resolvable while ANY of its
-            // axes still spans ≥1 px (true-factor pyramids are anisotropic).
-            // Keep the two in lockstep.
-            const lvlScale = vec3(t.uLevelScale.element(dlv));
-            If(
-              pxPerBaseVoxel
-                .mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)))
-                .mul(u.uLodBias)
-                .greaterThanEqual(1.0),
-              () => {
-                out.assign(max(int(dlv), int(u.uDesiredLevel)));
-                found.assign(true);
-              },
-            );
-          });
+          // MAX spatial factor — mirrors the planner's `wantFiner`
+          // (nodePlanning.ts): a level counts as resolvable while ANY of its
+          // axes still spans ≥1 px (true-factor pyramids are anisotropic).
+          // Keep the two in lockstep. `Break` on the first hit — this runs
+          // per SAMPLE per FRAGMENT, and the previous flag-guarded loop
+          // always walked every level.
+          const lvlScale = vec3(t.uLevelScale.element(dlv));
+          If(
+            pxPerBaseVoxel
+              .mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)))
+              .mul(u.uLodBias)
+              .greaterThanEqual(1.0),
+            () => {
+              out.assign(max(int(dlv), int(u.uDesiredLevel)));
+              Break();
+            },
+          );
         },
       );
     });

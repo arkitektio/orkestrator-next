@@ -39,14 +39,23 @@ export type PageTableTexture = {
   dirty: DirtyBox[];
   /** Full-texture mirror (`texture.image.data`) for context restore. */
   backing: Uint8Array;
+  /**
+   * Occupancy sidecar: an RG8 texture with the SAME layout, one texel per
+   * page entry, carrying the brick's conservatively-quantized raw min/max
+   * (`encodeOccupancyTexel` — g is INVERTED so the all-zero default decodes
+   * to the full data range and never enables a skip). The volume raymarcher
+   * reads it per RESIDENT step to hop bricks that are invisible under the
+   * current transfer function (and, for MIP, bricks that cannot beat the
+   * ray's accumulated max). Shares the page table's dirty boxes — occupancy
+   * writes only ever happen inside `setPageEntry`.
+   */
+  occupancy: THREE.Data3DTexture;
+  occMirrors: Uint8Array[];
+  occBacking: Uint8Array;
 };
 
-export function createPageTableTexture(layout: PageTableLayout): PageTableTexture {
-  const [w, h, d] = layout.size;
-  const backing = new Uint8Array(w * h * d * 4); // all zero = UNMAPPED
-
-  const texture = new THREE.Data3DTexture(backing, w, h, d);
-  texture.format = THREE.RGBAFormat;
+const configureTexture = (texture: THREE.Data3DTexture, format: THREE.PixelFormat) => {
+  texture.format = format;
   texture.type = THREE.UnsignedByteType;
   texture.minFilter = THREE.NearestFilter;
   texture.magFilter = THREE.NearestFilter;
@@ -56,6 +65,17 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
   texture.unpackAlignment = 1;
   texture.flipY = false;
   texture.needsUpdate = true;
+};
+
+export function createPageTableTexture(layout: PageTableLayout): PageTableTexture {
+  const [w, h, d] = layout.size;
+  const backing = new Uint8Array(w * h * d * 4); // all zero = UNMAPPED
+  const occBacking = new Uint8Array(w * h * d * 2); // all zero = full range
+
+  const texture = new THREE.Data3DTexture(backing, w, h, d);
+  configureTexture(texture, THREE.RGBAFormat);
+  const occupancy = new THREE.Data3DTexture(occBacking, w, h, d);
+  configureTexture(occupancy, THREE.RGFormat);
 
   return {
     texture,
@@ -65,6 +85,11 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
     ),
     dirty: layout.levelGrid.map(() => null),
     backing,
+    occupancy,
+    occMirrors: layout.levelGrid.map(
+      (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
+    ),
+    occBacking,
   };
 }
 
@@ -74,10 +99,18 @@ export function setPageEntry(
   brick: Vec3,
   slot: Vec3 | null,
   flag: PageFlag,
+  /** RESIDENT entries only: `encodeOccupancyTexel` bytes. Omitted (or a
+   * non-RESIDENT flag) resets the texel to the conservative all-zero
+   * "unknown, never skip" default. */
+  occupancy?: readonly [number, number],
 ): void {
   const grid = pageTable.layout.levelGrid[level];
   const entry = pageEntryIndex(grid, brick);
   encodePageEntry(pageTable.mirrors[level], entry, slot, flag);
+  const occR = occupancy?.[0] ?? 0;
+  const occG = occupancy?.[1] ?? 0;
+  pageTable.occMirrors[level][entry * 2] = occR;
+  pageTable.occMirrors[level][entry * 2 + 1] = occG;
   const box = pageTable.dirty[level];
   if (box === null) {
     pageTable.dirty[level] = {
@@ -97,6 +130,8 @@ export function setPageEntry(
   const texel =
     ((offset[2] + brick[2]) * h + (offset[1] + brick[1])) * w + (offset[0] + brick[0]);
   encodePageEntry(pageTable.backing, texel, slot, flag);
+  pageTable.occBacking[texel * 2] = occR;
+  pageTable.occBacking[texel * 2 + 1] = occG;
 }
 
 /** Upload every dirty level's bounding box; returns whether anything was
@@ -117,22 +152,41 @@ export function flushPageTable(
       box.max[1] - box.min[1] + 1,
       box.max[2] - box.min[2] + 1,
     ];
-    if (
-      uploadTexSubImage3D(
-        renderer,
-        pageTable.texture,
-        "rgba8",
-        [offset[0] + box.min[0], offset[1] + box.min[1], offset[2] + box.min[2]],
-        [extent[0], extent[1], extent[2]],
-        pageTable.mirrors[level],
-        {
-          offsetBytes:
-            ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 4,
-          bytesPerRow: grid[0] * 4,
-          rowsPerImage: grid[1],
-        },
-      )
-    ) {
+    const dest: Vec3 = [
+      offset[0] + box.min[0],
+      offset[1] + box.min[1],
+      offset[2] + box.min[2],
+    ];
+    const pageOk = uploadTexSubImage3D(
+      renderer,
+      pageTable.texture,
+      "rgba8",
+      dest,
+      [extent[0], extent[1], extent[2]],
+      pageTable.mirrors[level],
+      {
+        offsetBytes: ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 4,
+        bytesPerRow: grid[0] * 4,
+        rowsPerImage: grid[1],
+      },
+    );
+    // The occupancy sidecar shares the dirty box (writes only happen through
+    // `setPageEntry`); both uploads go through the same device, so they
+    // succeed or fail together.
+    const occOk = uploadTexSubImage3D(
+      renderer,
+      pageTable.occupancy,
+      "rg8",
+      dest,
+      [extent[0], extent[1], extent[2]],
+      pageTable.occMirrors[level],
+      {
+        offsetBytes: ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
+        bytesPerRow: grid[0] * 2,
+        rowsPerImage: grid[1],
+      },
+    );
+    if (pageOk && occOk) {
       pageTable.dirty[level] = null;
       uploaded = true;
     }
@@ -143,9 +197,11 @@ export function flushPageTable(
 /** Reset every entry to UNMAPPED (slice-signature flushes). */
 export function clearPageTable(pageTable: PageTableTexture): void {
   pageTable.backing.fill(0);
+  pageTable.occBacking.fill(0);
   for (let level = 0; level < pageTable.mirrors.length; level++) {
     const grid = pageTable.layout.levelGrid[level];
     pageTable.mirrors[level].fill(0);
+    pageTable.occMirrors[level].fill(0);
     pageTable.dirty[level] = {
       min: [0, 0, 0],
       max: [grid[0] - 1, grid[1] - 1, grid[2] - 1],
@@ -155,4 +211,5 @@ export function clearPageTable(pageTable: PageTableTexture): void {
 
 export function disposePageTable(pageTable: PageTableTexture): void {
   pageTable.texture.dispose();
+  pageTable.occupancy.dispose();
 }

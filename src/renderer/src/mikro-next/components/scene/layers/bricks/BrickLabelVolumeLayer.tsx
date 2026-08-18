@@ -13,7 +13,11 @@ import { useViewerStore } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { useBrickLayer } from "./useBrickPlaneProbe";
 import { useBrickMaterialBundle } from "./useBrickMaterialBundle";
-import { useStepScaleUniform, useVolumeRayUniforms } from "./useVolumeRayUniforms";
+import {
+  useStepScaleUniform,
+  useVolumePassRegistration,
+  useVolumeRayUniforms,
+} from "./useVolumeRayUniforms";
 
 /**
  * A label mask in 3D: a unit-box proxy whose fragment shader marches the brick
@@ -107,6 +111,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     planTargetLevel,
   });
   useStepScaleUniform(bundle?.nodes);
+  useVolumePassRegistration(!!bundle);
 
   // The picked colouring and the active filter rules, resolved into the
   // material's colour LUT. Shared with the other label mode — same table, same

@@ -151,6 +151,16 @@ consumes **no atlas slot**; its fill value is encoded 8-bit into the R channel
 (raw value, see pitfall P11). CPU `Uint8Array` mirrors per level with dirty
 flags; dirty levels are re-uploaded whole (they are tiny).
 
+**Occupancy sidecar.** A second RG8 texture with the same layout carries each
+RESIDENT brick's raw `[min, max]`, 8-bit-quantized against the pool range with
+conservative rounding and an INVERTED max byte (`encodeOccupancyTexel` in
+`core/octree/brickEncoding.ts`) — so the all-zero texel (fresh texture, or a
+GPU-repacked brick whose async min/max readback has not landed yet) decodes to
+the full data range: "unknown, never skip". The min/max comes from the repack
+scan both paths already run; `pool.brickRanges` keeps the raw values so an
+auto-range move re-encodes the sidecar exactly like the EMPTY entries. This
+feeds the raymarcher's resident-brick skip (§2.10).
+
 ### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
 
 One `Data3DTexture` per (layer, mode), format `R8` or `R32F` only — the zarr
@@ -280,8 +290,12 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
 - **Byte-bounded decoded-chunk cache** (`zarr/caches/byteBudgetChunkCache.ts`,
   512 MB LRU). The runner's default cache is *count*-bounded; 500 entries of
   plane chunks pinned multiple GB (pitfall P6).
-- **In-flight ceiling** `MAX_INFLIGHT_BRICKS = 12`, abort-on-drop per brick via
-  the worker runner's signal path.
+- **In-flight ceiling** per pool from the quality profile, abort-on-drop per
+  brick via the worker runner's signal path — **plus a GLOBAL cap** (2× one
+  pool's allowance, `globalInFlightLimit`): the per-pool ceiling alone made
+  total decode pressure linear in layer count (N pools × 16 on HIGH). A
+  completed fetch kicks EVERY pool with pending work (`startNextFetchesAll`),
+  since the freed global slot may belong to another pool's queue.
 - **Frame upload budget** 6 MB / 12 bricks, drained in
   `BrickSystemProvider`'s `useFrame`; every batch ends with page flush,
   `residencyVersion++`, `invalidate()` (demand frameloop). GPU-repacked
@@ -371,6 +385,21 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
     strictly decreases and `norm ≤ 1`, so once `attenuatedMax` reaches the
     current weight nothing later can beat it (`attenuatedMipDone`) — this mode
     previously always marched the full ray.
+  - **Occupancy skip (resident bricks).** Residents used to NEVER skip: a
+    brick whose values sit entirely below `climMin` — visually black — was
+    marched at fine pitch with full per-slot sampling, and MIP (the default
+    projection, whose 0.995 early-out dim fluorescence never reaches)
+    effectively marched every full ray every frame. The page table's RG8
+    occupancy sidecar (§2.4) brackets each resident brick's raw `[min, max]`;
+    since `channelNormalize` is monotone up to its final invert, the windowed
+    norm over a brick is bounded by `max(norm(bMin), norm(bMax))` — valid for
+    inverted channels too. A brick hops (whole resident-level cell, via
+    `brickExitRel`) when EVERY member is satisfied: invisible under its clim
+    window (≤ 0.001, the EMPTY threshold), a MIP the brick cannot beat
+    (`upper ≤ bestNorm` — classic maximum culling), an ISO it never reaches,
+    or already done. CPU lockstep: `residentBrickSkippable` /
+    `occupancyUpperNorm` in `core/raymarchStep.ts`. Conservative by
+    construction — a skipped brick cannot change any accumulator.
   - **Compile-time phasor specialization**: a member whose slots hold no phasor
     sources (`hasPhasorSources`, from `buildMergedChannelUniformData`) gets the
     whole phasor branch — kind load, 2 extra taps, atan/tan/sqrt, the 16×24
@@ -383,8 +412,15 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   trilinear to a tricubic B-spline reconstruction — 8 trilinear taps via the
   two-tap decomposition (`emitTricubicTap`; algebra pinned by
   `core/tricubic.ts` tests) — so magnified fluorescence renders as smooth
-  blobs instead of hard voxel blocks. Cost is bounded: it only engages where
-  rays are short (deep zoom). Caveats: the 1-voxel atlas border is smaller
+  blobs instead of hard voxel blocks. The original "cost is bounded: only
+  engages where rays are short" claim is TRUE for zoom-down-axis and FALSE
+  for zoom+tilt (the diagonal ray runs hundreds of fine-pitch samples, all
+  within the engagement distance — essentially the whole step budget at 8×
+  taps, exactly when the frame is already fragment-bound), so the threshold
+  is now GOVERNED: `resolveSmoothThreshold` sets it to 0 (runtime off, no
+  rebuild) while ACTIVE (camera moving or streaming) and on TIER_LOW, driven
+  by `useStepScaleUniform`'s existing vanilla subscription. Caveats: the
+  1-voxel atlas border is smaller
   than the ±1.5-voxel cubic support, so taps are CLAMPED to the slot/slab
   interior (edge voxels smooth slightly less; border 2 is the follow-up if
   seams show); phasor g/s taps stay single-tap; CPU probes read RAW voxel
@@ -705,6 +741,50 @@ Diagnosis path: perf recorder → DebugPanel `upload X ms/brick` chip
 these, the next lever is three.js' texStorage3D/immutable-texture path on
 ANGLE-Metal — measure before building.
 
+**P21 — The double-AABB visible box lied under 3D perspective, and tilt made
+it flip the budget floor mid-gesture.** `layerViewRanges` was computed as
+world-AABB(frustum corners) ∩ layer box, re-AABBed through the inverse affine.
+Under a perspective camera near or inside the volume the frustum's world AABB
+contains ~the whole layer, so `visibleBox` degenerated to the full dataset:
+the budget floor (`visibleBytesAtLevel`) stopped tracking the screen — deep
+zoom could not unlock finer levels on large volumes — and TILTING inflated the
+AABB up to ~√3× further, pushing `visibleBytesAtLevel` across `maxPlanBytes`
+and flipping `budgetMinLevel` a level coarser mid-gesture, which replaces the
+ENTIRE finest target set (abort/fetch/evict churn during the exact gesture
+that is already fragment-bound). Fix: `core/frustumClip.ts`
+`frustumBoxIntersectionAabb` — the EXACT AABB of the frustum∩box intersection
+polytope (candidate-vertex construction), computed directly in voxel space via
+`projScreen × affine`, so both legacy inflations are gone; `scale` is now
+measured at the visible box's center rather than the layer origin. Related:
+frustum-plane extraction and NDC-corner unprojection must match the matrix's
+NDC z convention — WebGPU maps z to [0,1], and the WebGL-convention default
+put the near plane at ~near/2 (mildly too permissive). `CameraPose` now
+carries `coordinateSystem` from the real camera; visibility and the plan
+tracker pass it through.
+
+**P22 — Frame cost is linear in volume passes, and the governor was blind to
+scene content.** One full-screen additive raymarch per merge group + one per
+label volume layer, no early-Z, `Discard` after the loop — N distinct images
+cost N full marches of their overlap, and NOTHING scaled down as N grew: the
+tier reacts only to sustained slow-frame streaks (which a 20↔30 ms mixed
+scene never produces — one in-band frame resets the streak), demotion only
+changes ACTIVE knobs above TIER_LOW, a settled heavy scene on the demand
+frameloop feeds the governor nothing at all, and a demote persists a
+too-low tier for the MACHINE when the real cause was the SCENE. The fix is
+scene-load FEEDFORWARD (`registerVolumePass` → `volumeLoadFactor`, applied in
+`useStepScaleUniform`): each mounted raymarch pass registers with the
+governor, and step scales stretch by √(pass count) (capped 2×) so total
+sample cost grows ~√N instead of N — known before the first heavy frame
+renders, nothing persisted. The burst ladder consumes the same signal (≥3
+passes floor the entry rung at 0.75), and three burst-timing repairs landed
+with it in `QualityAdapter`: the entry rung was predicted from the PREVIOUS
+burst's EMA (stale after idle — the first tilt after a zoom ran a whole
+gesture unmitigated), so ONE mid-burst downward correction is now allowed
+(`shouldStepBurstRungDown`, ≥450 ms into the burst so the EMA reflects its
+own frames — a single extra realloc, not the old self-amplifying cascade);
+and the 250 ms crisp-DPR entry delay is skipped when the predicted rung is
+already < 1 (a predicted-heavy burst's first quarter-second IS the jank).
+
 **The quality GOVERNOR generalizes this** (`core/qualityGovernor.ts`): the
 one-shot motion-DPR regress still janked because the real jank window is
 STREAMING, not motion — after any gesture, bricks stream for seconds and every
@@ -870,4 +950,11 @@ No longer deferred:
   the original table verbatim; active-path knobs are untouched either way;
 - the shader fast path + phasor specialization (§2.10,
   `orkestrator.shaderFastPath`), equivalence-class planning (§2.7), the
-  GPU-flush byte accounting (§2.8) and the repack output free list (§2.9).
+  GPU-flush byte accounting (§2.8) and the repack output free list (§2.9);
+- **occupancy-based resident-brick skipping** (§2.4/§2.10 — clim-aware hops +
+  MIP maximum culling from the RG8 page-table sidecar; P22's shader half);
+- **scene-load feedforward quality** (`volumeLoadFactor` step-budget scaling,
+  burst-rung flooring, one mid-burst rung correction — P22), the tricubic
+  activity/tier gate (`resolveSmoothThreshold`), the exact frustum∩box
+  visible region (P21, `core/frustumClip.ts`), and the GLOBAL in-flight
+  fetch cap (§2.8).

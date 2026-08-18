@@ -44,6 +44,10 @@ export function BrickSystemProvider() {
       sceneStore,
       invalidate,
       repack,
+      // The streaming render-cadence gate and its off-frame pump read this at
+      // fire time (gestures started after a timer was armed still drain under
+      // the trickle policy).
+      isInteracting: () => viewStore.getState().cameraMoving,
     });
     managerRef.current = manager;
     const stop = manager.start();
@@ -55,7 +59,7 @@ export function BrickSystemProvider() {
       repack.dispose();
       managerRef.current = null;
     };
-  }, [gl, invalidate, viewerStore, sceneStore]);
+  }, [gl, invalidate, viewerStore, sceneStore, viewStore]);
 
   useFrame(() => {
     // Mid-gesture frames use the trickle drain policy (no free pass, no GPU

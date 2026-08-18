@@ -298,7 +298,18 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   since the freed global slot may belong to another pool's queue.
 - **Frame upload budget** 6 MB / 12 bricks, drained in
   `BrickSystemProvider`'s `useFrame`; every batch ends with page flush,
-  `residencyVersion++`, `invalidate()` (demand frameloop). GPU-repacked
+  `residencyVersion++`, and a CADENCE-GATED frame request
+  (`scheduleStreamingFrame` / `resolveStreamFrameAction` in
+  `uploadBudget.ts`). The invalidate used to do two jobs — run the next
+  drain AND display progress — so the demand frameloop free-ran for whole
+  streaming bursts, re-raymarching the entire scene per brick batch (frame
+  cost is O(scene), not O(change)). Now, while streaming and the camera is
+  quiet, rendered frames land at the `residencyBumpMs` cadence and an
+  off-frame pump timer (`DRAIN_PUMP_MS`) keeps `drainUploads` running
+  between them at full speed; the drained edge and interacting frames
+  bypass the gate (the settled frame must always land; gesture frames flow
+  anyway). `stats.streamFramesCoalesced` counts the whole-scene re-renders
+  this saves. GPU-repacked
   bricks are charged their REAL flush cost — the source-chunk bytes the
   compute path must `writeBuffer` for cache misses (`gpuFlushUploadBytes`),
   not the atlas-slot bytes — which bounds the previously ungated synchronous
@@ -982,7 +993,16 @@ No longer deferred:
   the last `.x`-vs-max lockstep gap with `wantFiner`/`desiredLevelAt`;
 - `BrickVolumeLayer` subscribes to a scalar identity key over its GROUP's
   layers instead of the whole `layers` array — an edit to an unrelated layer
-  no longer re-renders every volume component (the last P9c-shaped hazard).
+  no longer re-renders every volume component (the last P9c-shaped hazard);
+- **streaming render cadence** (§2.8): residency-driven invalidates are
+  coalesced to the bump cadence with an off-frame drain pump — the first
+  slice of the "frame cost is O(scene) per invalidate" gap to
+  Neuroglancer-style progressive rendering (the remaining slice, cached
+  volume compositing into an offscreen target, is a future step);
+- `emitResolveBrickResidency` takes a `name` prefix — the label contour
+  emits one full resolve per NEIGHBOUR, and the fixed `res*` names produced
+  a TSL rename warning per var per neighbour, drowning the real-shadowing
+  signal those warnings exist to carry.
 
 Assessed and NOT done, deliberately: an image+label merged pass. It would
 share only the loop scaffolding — the two pools still need two page walks per

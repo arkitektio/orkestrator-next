@@ -138,6 +138,42 @@ export function gpuFlushUploadBytes(
   return bytes;
 }
 
+/**
+ * Streaming render-cadence gate (gap 1a): whether a residency-driven wakeup
+ * should RENDER a frame (`"invalidate"`) or merely keep the upload pipeline
+ * pumping off-frame (`"pump"`).
+ *
+ * The demand frameloop used to free-run for the whole streaming burst — every
+ * drained batch invalidated, and every resulting frame re-raymarched the
+ * ENTIRE scene at full cost to display one batch of bricks (frame cost is
+ * O(scene), not O(change)). But the invalidate was doing two jobs at once:
+ * running the next drain (drainUploads lives in the provider's useFrame) and
+ * showing progress. This gate splits them — uploads continue at full speed via
+ * an off-frame pump timer; actual frames render at the residencyBumpMs
+ * cadence the React residencyVersion bump already uses.
+ *
+ * Two unconditional bypasses, both load-bearing:
+ *  - NOT streaming: the drained edge — the final settled-quality frame must
+ *    always land immediately;
+ *  - interacting: gesture frames flow regardless (camera invalidates), so the
+ *    gate would only delay showing work the user is already paying frames for.
+ */
+export function resolveStreamFrameAction(input: {
+  streaming: boolean;
+  interacting: boolean;
+  nowMs: number;
+  lastInvalidateAtMs: number;
+  cadenceMs: number;
+}): "invalidate" | "pump" {
+  if (!input.streaming || input.interacting) return "invalidate";
+  if (input.nowMs - input.lastInvalidateAtMs >= input.cadenceMs) return "invalidate";
+  return "pump";
+}
+
+/** Off-frame pump interval: ~a frame, so gated streaming drains as fast as
+ * frame-driven streaming did — only the RENDERING is coalesced. */
+export const DRAIN_PUMP_MS = 8;
+
 export type QueueEntry = { key: string; uniformValue: number | null; level: number };
 
 /**

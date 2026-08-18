@@ -2,11 +2,13 @@ import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
 import {
+  DRAIN_PUMP_MS,
   FRAME_UPLOAD_BUDGET,
   MAX_STALE_QUEUE,
   gpuFlushUploadBytes,
   partitionUploadQueue,
   resolveDrainPolicy,
+  resolveStreamFrameAction,
   shouldContinueDrain,
   shouldContinueStaleDrain,
 } from "./uploadBudget";
@@ -286,6 +288,11 @@ type Deps = {
   invalidate: () => void;
   /** Runs `repackBrick` off the UI thread (worker pool; sync in tests). */
   repack: RepackDispatcher;
+  /** Live camera-gesture state (viewStore.cameraMoving) — read by the
+   * streaming render-cadence gate and its off-frame pump at FIRE time, so a
+   * gesture that starts after a timer was armed still drains under the
+   * trickle policy. Optional: absent (tests) reads as not interacting. */
+  isInteracting?: () => boolean;
 };
 
 export type ResidentBrickInfo = {
@@ -353,6 +360,9 @@ export type BrickSystemStats = {
    * in-progress decodes was the 13× amplification bug — never do that). */
   cancelledDecodes: number;
   fetchErrors: number;
+  /** Streaming wakeups whose render was coalesced by the cadence gate — each
+   * one is a whole-scene re-raymarch that no longer happened (gap 1a). */
+  streamFramesCoalesced: number;
 };
 
 export class BrickResidencyManager {
@@ -479,7 +489,17 @@ export class BrickResidencyManager {
     cancelledDecodes: 0,
     staleUploads: 0,
     fetchErrors: 0,
+    streamFramesCoalesced: 0,
   };
+  /** Streaming render-cadence gate (gap 1a — see resolveStreamFrameAction):
+   * last actually-issued streaming invalidate, and the off-frame pump timer
+   * that keeps drainUploads running between the coalesced frames. */
+  private lastStreamInvalidateAt = 0;
+  private drainPumpTimer: ReturnType<typeof setTimeout> | null = null;
+  /** True while at least one coalesced wakeup still awaits its frame — the
+   * pump keeps re-entering the gate until the cadence window closes and the
+   * frame lands, even if the upload queue drained mid-window. */
+  private pendingStreamFrame = false;
   /** Chunk keys already counted toward bytesDecoded. */
   private readonly countedChunkKeys = new Set<string>();
   /** Layers already warned about a non-viable pool (one warning per layer). */
@@ -1032,6 +1052,53 @@ export class BrickResidencyManager {
    * `drainUploads` must run its full pass. */
   private wakeDrain(): void {
     this.drainNeeded = true;
+  }
+
+  /**
+   * Streaming render-cadence gate (gap 1a): request a frame for freshly landed
+   * residency work. While streaming and the camera is quiet, actual
+   * `invalidate()`s are coalesced to the residencyBumpMs cadence — every
+   * skipped one was a whole-scene re-raymarch that showed a single brick
+   * batch — and the off-frame pump timer keeps `drainUploads` running between
+   * frames so the UPLOAD pipeline never slows down (the invalidate used to do
+   * both jobs). The drained edge and interacting frames bypass the gate
+   * (`resolveStreamFrameAction`). The pump re-reads the interaction state at
+   * fire time and re-enters this gate via the drain, so a burst that ends
+   * mid-window still gets its trailing settled frame.
+   */
+  private scheduleStreamingFrame(interacting: boolean, streaming: boolean): void {
+    const now = performance.now();
+    const action = resolveStreamFrameAction({
+      streaming,
+      interacting,
+      nowMs: now,
+      lastInvalidateAtMs: this.lastStreamInvalidateAt,
+      cadenceMs: qualityGovernor.getProfile().residencyBumpMs,
+    });
+    if (action === "invalidate") {
+      this.lastStreamInvalidateAt = now;
+      this.pendingStreamFrame = false;
+      this.deps.invalidate();
+      return;
+    }
+    this.stats.streamFramesCoalesced += 1;
+    this.pendingStreamFrame = true;
+    if (this.drainPumpTimer !== null) return;
+    this.drainPumpTimer = setTimeout(() => {
+      this.drainPumpTimer = null;
+      if (this.disposed) return;
+      this.drainUploads(this.deps.isInteracting?.() ?? false);
+      // The drain re-enters this gate itself when it uploaded or left work
+      // queued. If it did neither (queue drained mid-window, fetches still in
+      // flight) the coalesced batches still owe a frame — keep knocking until
+      // the cadence window closes and the invalidate branch clears the flag.
+      if (this.pendingStreamFrame && !this.disposed) {
+        this.scheduleStreamingFrame(
+          this.deps.isInteracting?.() ?? false,
+          this.anyPipelineWork(),
+        );
+      }
+    }, DRAIN_PUMP_MS);
   }
 
   /**
@@ -1963,7 +2030,10 @@ export class BrickResidencyManager {
       this.wakeDrain();
       pool.queue.push(pending);
       pool.queuedKeys.add(node.key);
-      this.deps.invalidate(); // demand frameloop: get a frame to drain uploads
+      // Gated (gap 1a): a fetch completes up to maxInflight×pools times per
+      // second — each used to force a full-scene frame just to run the drain;
+      // the gate pumps the drain off-frame and renders at the bump cadence.
+      this.scheduleStreamingFrame(this.deps.isInteracting?.() ?? false, true);
     } catch (error) {
       if (!controller.signal.aborted) {
         this.stats.fetchErrors += 1;
@@ -2310,9 +2380,11 @@ export class BrickResidencyManager {
         this.lastResidencyBumpAt = now;
         this.deps.viewerStore.getState().bumpResidencyVersion();
       }
-      this.deps.invalidate();
+      // Gated (gap 1a): while streaming + camera quiet, RENDERED frames land
+      // at the bump cadence; the pump keeps this drain running off-frame.
+      this.scheduleStreamingFrame(interacting, streaming);
     } else {
-      // Budget exhausted with work left: keep the demand frameloop running.
+      // Budget exhausted with work left: keep the pipeline pumping.
       let queued = false;
       for (const pool of this.pools.values()) {
         if (pool.queue.length > 0) {
@@ -2320,7 +2392,7 @@ export class BrickResidencyManager {
           break;
         }
       }
-      if (queued) this.deps.invalidate();
+      if (queued) this.scheduleStreamingFrame(interacting, streaming);
     }
 
     // Fully idle: nothing queued/in-flight/pending anywhere, nothing uploaded
@@ -2612,7 +2684,9 @@ export class BrickResidencyManager {
         this.lastResidencyBumpAt = now;
         this.deps.viewerStore.getState().bumpResidencyVersion();
       }
-      this.deps.invalidate();
+      // Gated (gap 1a), same as the drain path — the drained edge
+      // (!streaming) still invalidates unconditionally through the gate.
+      this.scheduleStreamingFrame(this.deps.isInteracting?.() ?? false, streaming);
     }
   }
 
@@ -2817,6 +2891,10 @@ export class BrickResidencyManager {
     if (this.streamingClearTimer !== null) {
       clearTimeout(this.streamingClearTimer);
       this.streamingClearTimer = null;
+    }
+    if (this.drainPumpTimer !== null) {
+      clearTimeout(this.drainPumpTimer);
+      this.drainPumpTimer = null;
     }
     this.mirrorQueue.length = 0;
     this.gpuRepacker?.dispose();

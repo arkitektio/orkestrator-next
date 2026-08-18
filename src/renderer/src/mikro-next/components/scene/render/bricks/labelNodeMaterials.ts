@@ -182,7 +182,11 @@ const emitDecodeId = (t: any, resolved: ResolvedResidency, named: string): any =
 const emitIdAt = (t: any, baseVoxel: any, desiredLevel: any, named: string): any =>
   emitDecodeId(
     t,
-    emitResolveBrickResidency(t, baseVoxel, desiredLevel, { slabZ: true }),
+    // `name` threads the per-call prefix into the resolver's own vars — the
+    // contour emits one FULL resolve per neighbour, and unprefixed emissions
+    // collided on the default `res*` names (a TSL rename warning per var per
+    // neighbour, drowning out the real-shadowing signal those names guard).
+    emitResolveBrickResidency(t, baseVoxel, desiredLevel, { slabZ: true, name: named }),
     named,
   );
 

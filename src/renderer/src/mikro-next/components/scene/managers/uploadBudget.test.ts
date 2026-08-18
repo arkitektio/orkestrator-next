@@ -201,3 +201,56 @@ describe("gpuFlushUploadBytes", () => {
     expect(gpuFlushUploadBytes([], () => false)).toBe(0);
   });
 });
+
+describe("resolveStreamFrameAction (streaming render-cadence gate)", () => {
+  const base = {
+    streaming: true,
+    interacting: false,
+    nowMs: 1000,
+    lastInvalidateAtMs: 900,
+    cadenceMs: 150,
+  };
+
+  it("coalesces within the cadence window while streaming and quiet", async () => {
+    const { resolveStreamFrameAction } = await import("./uploadBudget");
+    expect(resolveStreamFrameAction(base)).toBe("pump"); // 100ms < 150ms
+  });
+
+  it("invalidates once the cadence window closes", async () => {
+    const { resolveStreamFrameAction } = await import("./uploadBudget");
+    expect(resolveStreamFrameAction({ ...base, nowMs: 1050 })).toBe("invalidate");
+    expect(resolveStreamFrameAction({ ...base, nowMs: 1051 })).toBe("invalidate");
+  });
+
+  it("the drained edge always invalidates — the settled frame must land", async () => {
+    const { resolveStreamFrameAction } = await import("./uploadBudget");
+    expect(resolveStreamFrameAction({ ...base, streaming: false })).toBe("invalidate");
+  });
+
+  it("interacting frames bypass the gate (camera drives frames anyway)", async () => {
+    const { resolveStreamFrameAction } = await import("./uploadBudget");
+    expect(resolveStreamFrameAction({ ...base, interacting: true })).toBe("invalidate");
+  });
+
+  it("at most one rendered frame per window over a simulated burst", async () => {
+    const { resolveStreamFrameAction } = await import("./uploadBudget");
+    // Batches land every 10ms for 600ms; cadence 150ms → ≤ ceil(600/150)+1 frames.
+    let lastInvalidateAtMs = -Infinity;
+    let frames = 0;
+    for (let now = 0; now <= 600; now += 10) {
+      const action = resolveStreamFrameAction({
+        streaming: true,
+        interacting: false,
+        nowMs: now,
+        lastInvalidateAtMs,
+        cadenceMs: 150,
+      });
+      if (action === "invalidate") {
+        frames += 1;
+        lastInvalidateAtMs = now;
+      }
+    }
+    expect(frames).toBeLessThanOrEqual(5); // 61 wakeups → ≤5 rendered frames
+    expect(frames).toBeGreaterThanOrEqual(4); // still shows regular progress
+  });
+});

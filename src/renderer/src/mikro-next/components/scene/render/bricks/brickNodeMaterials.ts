@@ -376,21 +376,37 @@ export function emitResolveBrickResidency(
   t: any,
   baseVoxel: any,
   desiredLevel: any,
-  opts?: { slabZ?: boolean },
+  opts?: {
+    slabZ?: boolean;
+    /** Name prefix for this emission's vars (default "res"). REQUIRED when a
+     * material emits the resolver more than once in one scope (the label
+     * contour resolves per NEIGHBOUR): TSL auto-renames colliding names —
+     * safe, but a console warning per var per extra emission, and the very
+     * mechanism this module reserves for catching REAL shadowing bugs. */
+    name?: string;
+  },
 ): ResolvedResidency {
-  const status = float(0.0).toVar("resStatus");
-  const emptyValue = float(0.0).toVar("resEmptyValue");
-  const texelBase = vec3(0.0).toVar("resTexelBase");
+  const nm = (base: string) => `${opts?.name ?? "res"}${base}`;
+  const status = float(0.0).toVar(nm("Status"));
+  const emptyValue = float(0.0).toVar(nm("EmptyValue"));
+  const texelBase = vec3(0.0).toVar(nm("TexelBase"));
   // Defaults to the coarsest level: only overwritten when the walk stops at
   // an EMPTY entry, so a fully-unmapped chain hops a coarsest-sized cell.
-  const hopLevel = int(t.uNumLevels).sub(1).toVar("resHopLevel");
-  const residentLevel = int(t.uNumLevels).sub(1).toVar("resResidentLevel");
-  const slotOriginTexel = vec3(0.0).toVar("resSlotOrigin");
-  const pageTexel = vec3(0.0).toVar("resPageTexel");
+  const hopLevel = int(t.uNumLevels).sub(1).toVar(nm("HopLevel"));
+  const residentLevel = int(t.uNumLevels).sub(1).toVar(nm("ResidentLevel"));
+  const slotOriginTexel = vec3(0.0).toVar(nm("SlotOrigin"));
+  const pageTexel = vec3(0.0).toVar(nm("PageTexel"));
 
   Loop(
-    { start: int(0), end: t.uNumLevels, type: "int", condition: "<", name: "sbLvl" },
-    ({ sbLvl }: any) => {
+    {
+      start: int(0),
+      end: t.uNumLevels,
+      type: "int",
+      condition: "<",
+      name: opts?.name ? `${opts.name}Lvl` : "sbLvl",
+    },
+    (loopArgs: any) => {
+      const sbLvl = loopArgs[opts?.name ? `${opts.name}Lvl` : "sbLvl"];
       If(int(sbLvl).lessThan(desiredLevel), () => {
         Continue();
       });

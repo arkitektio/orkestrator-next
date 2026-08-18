@@ -46,23 +46,24 @@ describe("assessPoolViability", () => {
   });
 
   it("refuses an oversized single-level volume in 3D with the real floor bytes", () => {
-    // 2048×2048×1024 uint16 (promoted r32f): grid 32×32×16 = 16384 bricks,
-    // slots 66³·4 B ≈ 1.15 MB → floor ≈ 18.9 GB.
+    // 2048×2048×1024 uint16 (R16F atlas, 2 B/voxel — roadmap R3): grid
+    // 32×32×16 = 16384 bricks, slots 66³·2 B ≈ 0.57 MB → floor ≈ 9.4 GB —
+    // half the old promoted-r32f floor, still far past any budget.
     const geometry = geometryOf([level([1024, 2048, 2048], "uint16", "s0")]);
     const verdict = assessPoolViability(geometry, resolveBrickSpec(geometry, "3D"));
     expect(verdict.viable).toBe(false);
     if (!verdict.viable) {
-      expect(verdict.floorBytes).toBeGreaterThan(15e9);
+      expect(verdict.floorBytes).toBeGreaterThan(7.5e9);
       expect(verdict.capBytes).toBe(512 * 1024 * 1024);
     }
   });
 
   it("refuses the same volume in 2D too (slot floor spans every z slab)", () => {
-    // 2D grid 8×8×1024 = 65536 slabs-worth of slots × 256·256·4 B ≈ 17 GB.
+    // 2D grid 8×8×1024 = 65536 slabs-worth of slots × 256·256·2 B ≈ 8.6 GB.
     const geometry = geometryOf([level([1024, 2048, 2048], "uint16", "s0")]);
     const verdict = assessPoolViability(geometry, resolveBrickSpec(geometry, "2D"));
     expect(verdict.viable).toBe(false);
-    if (!verdict.viable) expect(verdict.floorBytes).toBeGreaterThan(15e9);
+    if (!verdict.viable) expect(verdict.floorBytes).toBeGreaterThan(7.5e9);
   });
 
   it("is budget-based, not single-level-based: a moderate single-level stack passes", () => {

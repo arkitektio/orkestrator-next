@@ -5,6 +5,10 @@
  * across the plane, volume, probe and visibility code paths.
  */
 export type LayerAxisDims = {
+  /** The LayerState discriminant, when the caller has a full layer — the
+   * geometry builder reads it to mark label masks `exactValues` (R16F gate).
+   * Structural fixtures may omit it (⇒ intensity semantics). */
+  __typename?: string;
   xAxis?: string | null;
   yAxis?: string | null;
   zAxis?: string | null;

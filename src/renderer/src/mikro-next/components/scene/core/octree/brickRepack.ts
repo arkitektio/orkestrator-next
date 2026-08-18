@@ -32,7 +32,10 @@ import type { VoxelBox } from "./nodeAddress";
  * bins deep without the atlas paying for it.
  */
 
-export type BrickArray = Uint8Array | Float32Array;
+/** Uint16Array = an R16F atlas brick (half-float BITS, not values — encoded
+ * by the worker after the raw repack; see halfFloat.ts). `repackBrick`
+ * itself only ever writes raw values into Uint8Array/Float32Array outputs. */
+export type BrickArray = Uint8Array | Uint16Array | Float32Array;
 
 export type RepackChunk = {
   /** Spatial chunk-grid coords [cx, cy, cz] on the level's grid. */

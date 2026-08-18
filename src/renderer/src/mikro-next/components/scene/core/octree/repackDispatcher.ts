@@ -1,3 +1,5 @@
+import { atlasBytesPerVoxel, R16F_DATA_SCALE, type AtlasKind } from "./atlasFormat";
+import { encodeHalfArray } from "./halfFloat";
 import { repackBrick, type BrickArray, type RepackBrickInput, type RepackResult } from "./brickRepack";
 import type { RepackWorkerRequest, RepackWorkerResponse } from "./repack-worker";
 
@@ -19,7 +21,7 @@ import type { RepackWorkerRequest, RepackWorkerResponse } from "./repack-worker"
  */
 
 export type RepackJob = {
-  kind: "r8" | "r32f";
+  kind: AtlasKind;
   /** storedX·storedY·storedZ·channelCount — the output brick's length. */
   elementCount: number;
   input: Omit<RepackBrickInput, "output">;
@@ -44,6 +46,16 @@ export interface RepackDispatcher {
 export function createSyncRepackDispatcher(): RepackDispatcher {
   return {
     repack: (job) => {
+      if (job.kind === "r16f") {
+        // Raw repack into a float scratch (min/max and the uniform test must
+        // see RAW values), then half-float-encode into the output — the same
+        // two-step the worker path runs (repack-worker.ts, keep in lockstep).
+        const scratch = new Float32Array(job.elementCount);
+        const result = repackBrick({ ...job.input, output: scratch });
+        const output = new Uint16Array(job.elementCount);
+        encodeHalfArray(scratch, output, 1 / R16F_DATA_SCALE);
+        return Promise.resolve({ ...result, data: output });
+      }
       const output: BrickArray =
         job.kind === "r8"
           ? new Uint8Array(job.elementCount)
@@ -111,7 +123,7 @@ const REPACK_WORKER_COUNT = Math.min(
 type Pending = {
   resolve: (outcome: RepackOutcome) => void;
   reject: (error: Error) => void;
-  kind: "r8" | "r32f";
+  kind: AtlasKind;
 };
 
 function createWorkerRepackDispatcher(): RepackDispatcher {
@@ -135,7 +147,9 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
     const data: BrickArray =
       entry.kind === "r8"
         ? new Uint8Array(response.buffer)
-        : new Float32Array(response.buffer);
+        : entry.kind === "r16f"
+          ? new Uint16Array(response.buffer)
+          : new Float32Array(response.buffer);
     entry.resolve({
       min: response.min,
       max: response.max,
@@ -184,9 +198,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       const id = nextId++;
       return new Promise<RepackOutcome>((resolve, reject) => {
         pending.set(id, { resolve, reject, kind: job.kind });
-        const recycled = freeList.take(
-          job.elementCount * (job.kind === "r8" ? 1 : 4),
-        );
+        const recycled = freeList.take(job.elementCount * atlasBytesPerVoxel(job.kind));
         const request: RepackWorkerRequest = {
           id,
           kind: job.kind,

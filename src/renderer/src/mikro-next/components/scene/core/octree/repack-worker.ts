@@ -1,3 +1,5 @@
+import { encodeHalfArray } from "./halfFloat";
+import { R16F_DATA_SCALE } from "./atlasFormat";
 import { repackBrick, type BrickArray, type RepackBrickInput } from "./brickRepack";
 
 /**
@@ -15,7 +17,7 @@ import { repackBrick, type BrickArray, type RepackBrickInput } from "./brickRepa
 
 export type RepackWorkerRequest = {
   id: number;
-  kind: "r8" | "r32f";
+  kind: "r8" | "r16f" | "r32f";
   elementCount: number;
   input: Omit<RepackBrickInput, "output">;
   /** A previously returned output buffer, transferred back for reuse (the
@@ -30,10 +32,16 @@ export type RepackWorkerResponse =
 
 const ctx = self as unknown as Worker;
 
+/** Reusable raw-value scratch for the R16F path: `repackBrick` writes RAW
+ * floats (its min/max scan and the uniform test must see raw values), the
+ * half-float encode happens after, into the transferable output. Grow-only
+ * and worker-local — repacks are serialized per worker. */
+let r16fScratch = new Float32Array(0);
+
 ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
   const { id, kind, elementCount, input, recycled } = event.data;
   try {
-    const bytesNeeded = elementCount * (kind === "r8" ? 1 : 4);
+    const bytesNeeded = elementCount * (kind === "r8" ? 1 : kind === "r16f" ? 2 : 4);
     let backing: ArrayBuffer;
     if (recycled && recycled.byteLength === bytesNeeded) {
       backing = recycled;
@@ -45,9 +53,23 @@ ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
     } else {
       backing = new ArrayBuffer(bytesNeeded);
     }
-    const output: BrickArray =
-      kind === "r8" ? new Uint8Array(backing) : new Float32Array(backing);
-    const result = repackBrick({ ...input, output });
+    let output: BrickArray;
+    let result;
+    if (kind === "r16f") {
+      // Repack raw into the scratch, THEN encode `raw / 65535` half floats
+      // into the half-sized transferable (see halfFloat.ts). A phasor layer
+      // never reaches r16f (atlasKindForGeometry forces r32f), so the
+      // zeroed-arrival contract concerns only the untouched output tail.
+      if (r16fScratch.length < elementCount) r16fScratch = new Float32Array(elementCount);
+      else r16fScratch.fill(0, 0, elementCount);
+      const scratch = r16fScratch.subarray(0, elementCount);
+      result = repackBrick({ ...input, output: scratch });
+      output = new Uint16Array(backing);
+      encodeHalfArray(scratch, output as Uint16Array, 1 / R16F_DATA_SCALE, elementCount);
+    } else {
+      output = kind === "r8" ? new Uint8Array(backing) : new Float32Array(backing);
+      result = repackBrick({ ...input, output });
+    }
     const response: RepackWorkerResponse = {
       id,
       buffer: output.buffer as ArrayBuffer,

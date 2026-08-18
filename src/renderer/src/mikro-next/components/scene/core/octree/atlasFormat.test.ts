@@ -40,9 +40,34 @@ describe("atlasKindForGeometry (planner ↔ pool slot-byte agreement)", () => {
       levels: [{ dtype }],
     }) as unknown as LayerLevelGeometry;
 
-  it("keys off the base dtype for plain layers", () => {
+  it("keys off the base dtype for plain layers — uint16 intensities take R16F", () => {
     expect(atlasKindForGeometry(geo("uint8", false))).toBe("r8");
-    expect(atlasKindForGeometry(geo("uint16", false))).toBe("r32f");
+    // Roadmap R3: unsigned-16 intensity data stores raw/65535 half floats.
+    expect(atlasKindForGeometry(geo("uint16", false))).toBe("r16f");
+    expect(atlasKindForGeometry(geo("float32", false))).toBe("r32f");
+  });
+
+  it("EXACT-value (label) geometries never take R16F — ids above 2048 would corrupt", () => {
+    const labelGeo = {
+      ...geo("uint16", false),
+      exactValues: true,
+    } as unknown as LayerLevelGeometry;
+    expect(atlasKindForGeometry(labelGeo)).toBe("r32f");
+  });
+
+  it("the r16 kill switch restores the promoted-r32f behavior", async () => {
+    const { setR16AtlasesEnabled } = await import("./atlasFormat");
+    setR16AtlasesEnabled(false);
+    try {
+      expect(atlasKindForGeometry(geo("uint16", false))).toBe("r32f");
+      expect(atlasKindForDtype("uint16", false)).toBe("r32f");
+    } finally {
+      setR16AtlasesEnabled(true);
+    }
+  });
+
+  it("r16f is 2 bytes per voxel (planner and pool must agree)", () => {
+    expect(atlasBytesPerVoxel("r16f")).toBe(2);
   });
 
   it("regression: a uint8 PHASOR layer is r32f — the planner sizing it at " +

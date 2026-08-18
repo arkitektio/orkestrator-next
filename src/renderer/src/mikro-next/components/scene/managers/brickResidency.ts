@@ -560,7 +560,7 @@ export class BrickResidencyManager {
   /** Structured snapshot for the DebugPanel's copyable report. */
   buildDebugReport(): Record<string, unknown> {
     let atlasBytesTotal = 0;
-    for (const pool of this.pools.values()) atlasBytesTotal += pool.atlas.backing.byteLength;
+    for (const pool of this.pools.values()) atlasBytesTotal += pool.atlas.byteLength;
     return {
       stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
       /** Pools, NOT layers. Fewer pools than layers means sharing is working;
@@ -568,8 +568,9 @@ export class BrickResidencyManager {
        * something it should not (compare the `poolKey`s). */
       poolCount: this.pools.size,
       layerCount: this.layerToPoolKey.size,
-      /** Summed atlas backing across pools. The GPU texture costs the same
-       * again, so the real footprint is roughly twice this. */
+      /** Summed atlas GPU bytes across pools. In lazy-mirror mode (the
+       * default, roadmap R3) this IS the footprint; with
+       * `orkestrator.atlasMirror = "on"` a JS-heap copy costs the same again. */
       atlasBytesTotal,
       timeToSharpRing: this.timeToSharpRing.map((ms) => Math.round(ms)),
       gpuRepack:
@@ -608,7 +609,7 @@ export class BrickResidencyManager {
             size: pool.atlas.size,
             slotGrid: pool.atlas.slotGrid,
             capacity: pool.atlas.capacity,
-            bytes: pool.atlas.backing.byteLength,
+            bytes: pool.atlas.byteLength,
           },
           pageTableSize: pool.pageTable.layout.size,
           slotsUsed: pool.pool.size,
@@ -749,7 +750,10 @@ export class BrickResidencyManager {
 
       const slot = pool.pool.slotOf(key);
       if (!slot) continue;
-      if (pool.gpuStaleKeys.has(key)) return { kind: "gpu", level };
+      // Lazy-mirror mode (backing null — the default, roadmap R3): EVERY
+      // resident brick reads through the decoded chunk cache, the path
+      // GPU-repacked bricks have always used.
+      if (pool.gpuStaleKeys.has(key) || !atlas.backing) return { kind: "gpu", level };
 
       const texel: Vec3 = [
         slot.coords[0] * atlas.slotSize[0] +
@@ -792,7 +796,9 @@ export class BrickResidencyManager {
       return this.sampleChunkCacheSync(pool, read.level, baseVoxel, channel);
     }
     const clampedChannel = Math.min(Math.max(channel, 0), pool.spec.channelCount - 1);
-    return pool.atlas.backing[read.index0 + clampedChannel * read.slabStride];
+    // kind "slot" implies a live backing (resolveResidentRead routes
+    // mirror-less pools to "gpu"); the fallback is belt-and-braces.
+    return pool.atlas.backing?.[read.index0 + clampedChannel * read.slabStride] ?? null;
   }
 
   /**
@@ -823,9 +829,11 @@ export class BrickResidencyManager {
       }
       return { values, level: read.level };
     }
+    const backing = pool.atlas.backing;
+    if (!backing) return null; // unreachable for kind "slot"; belt-and-braces
     const values = new Array<number>(channelCount);
     for (let channel = 0; channel < channelCount; channel++) {
-      values[channel] = pool.atlas.backing[read.index0 + channel * read.slabStride];
+      values[channel] = backing[read.index0 + channel * read.slabStride];
     }
     return { values, level: read.level };
   }
@@ -1639,7 +1647,7 @@ export class BrickResidencyManager {
     // `assessPoolViability` already vetted the floor itself as affordable).
     let allocatedAtlasBytes = 0;
     for (const pool of this.pools.values()) {
-      allocatedAtlasBytes += pool.atlas.backing.byteLength;
+      allocatedAtlasBytes += pool.atlas.byteLength;
     }
     const remainingBudgetBytes = Math.max(0, deviceBudgetBytes - allocatedAtlasBytes);
     const cappedAtlasBytes = Math.min(
@@ -1668,14 +1676,16 @@ export class BrickResidencyManager {
     });
     const pageTable = createPageTableTexture(layout);
 
-    if (gpuRepacker && !hasPhasorSlabs(geometry)) {
-      // Create the backend GPUTexture now, so compute dispatches (r32f:
-      // textureStore; r8: copyBufferToTexture) never race the first draw's
-      // lazy texture creation.
-      (
-        this.deps.renderer as unknown as { initTexture?: (texture: unknown) => void }
-      ).initTexture?.(atlas.texture);
-    }
+    // Create the backend GPUTexture now, for EVERY pool (it used to be
+    // compute-repack pools only): compute dispatches must not race the first
+    // draw's lazy texture creation, and in lazy-mirror mode (backing null —
+    // roadmap R3) `uploadTexSubImage3D`'s needsUpdate fallback has no CPU
+    // data to re-spec from, so `writeTexture` must always find the texture
+    // already created. WebGPU textures are zero-initialized by spec, so the
+    // eager creation costs no upload.
+    (
+      this.deps.renderer as unknown as { initTexture?: (texture: unknown) => void }
+    ).initTexture?.(atlas.texture);
 
     const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(
       layer,
@@ -1988,7 +1998,7 @@ export class BrickResidencyManager {
           data: null,
           uniformValue: null,
           range: null,
-          bytes: elementCount * (pool.atlas.kind === "r8" ? 1 : 4),
+          bytes: elementCount * atlasBytesPerVoxel(pool.atlas.kind),
           gpu: { chunks },
         };
       } else {
@@ -2185,20 +2195,28 @@ export class BrickResidencyManager {
       pool.gpuStaleKeys.add(pending.key);
     } else {
       writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
-      // The backing-mirror copy is deferred to idle time (it used to eat a
-      // sizable share of the drain's wall budget). Until it lands the key
-      // reads through the chunk-cache path, exactly like a GPU-repacked one;
-      // the idle drain validates slot ownership before copying and then
-      // clears the flag.
       pool.gpuStaleKeys.add(pending.key);
-      this.mirrorQueue.push({
-        pool,
-        key: pending.key,
-        slotIndex: acquired.slot.index,
-        slotCoords: acquired.slot.coords,
-        data: pending.data!,
-      });
-      this.scheduleMirrorDrain();
+      if (pool.atlas.backing) {
+        // Legacy eager-mirror mode only (orkestrator.atlasMirror = "on"): the
+        // backing copy is deferred to idle time (it used to eat a sizable
+        // share of the drain's wall budget); until it lands the key reads
+        // through the chunk-cache path, exactly like a GPU-repacked one.
+        // LAZY mode (the default, roadmap R3) has no backing at all — the key
+        // stays in gpuStaleKeys for good and probes always read the decoded
+        // chunk cache, halving the atlas' real memory footprint.
+        this.mirrorQueue.push({
+          pool,
+          key: pending.key,
+          slotIndex: acquired.slot.index,
+          slotCoords: acquired.slot.coords,
+          data: pending.data!,
+        });
+        this.scheduleMirrorDrain();
+      } else if (pending.data) {
+        // No mirror will consume the payload — recycle it now (the mirror
+        // drain used to be the release point for CPU-path bricks).
+        this.deps.repack.release(pending.data);
+      }
     }
     // Occupancy sidecar: the brick's conservative min/max bracket (skip
     // predicate for the raymarcher). GPU-path bricks have no range yet —

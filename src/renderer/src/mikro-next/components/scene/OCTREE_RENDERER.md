@@ -163,9 +163,19 @@ feeds the raymarcher's resident-brick skip (§2.10).
 
 ### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
 
-One `Data3DTexture` per (layer, mode), format `R8` or `R32F` only — the zarr
-worker emits only `Uint8Array` or `Float32Array` (uint16 is promoted). Slot
-depth is `stored.z × channelCount` (channel slabs stacked in z).
+One `Data3DTexture` per (layer, mode), format `R8`, `R16F` or `R32F`. The zarr
+worker emits only `Uint8Array` or `Float32Array` (uint16 is promoted to
+float32 in the CHUNKS) — but uint16 INTENSITY pools store their bricks as
+`R16F` half floats (roadmap R3): the repack writes raw values, then encodes
+`raw / 65535` (`encodeHalfArray`, `core/octree/halfFloat.ts` — precision
+analysis there) and the shader rescales through `uAtlasScale` (= 65535),
+exactly like the R8 path's 255. Half the bytes, double the slot budget; label
+pools never take R16F (`geometry.exactValues` — an 11-bit significand
+corrupts ids above 2048), and the GPU compute repack rejects it
+(`supports()`), so those bricks ride the CPU worker path. Kill switch:
+`orkestrator.r16Atlas` (default ON, DebugPanel toggle; affects pools created
+after the flip). Slot depth is `stored.z × channelCount` (channel slabs
+stacked in z).
 
 Slot count: `min(totalBrickCount(geometry), max(minSlots, budgetShare /
 slotBytes))` where `budgetShare = min(MAX_LAYER_POOL_BYTES = 128 MB,
@@ -178,9 +188,26 @@ each reconcile; coarsest-level bricks are effectively permanent (always in
 `keep` chains), so a fallback of last resort is always resident. Eviction
 unmaps the evicted brick's page entry.
 
-A CPU backing mirror of every uploaded brick is kept (bounded by the same
-budget). It serves synchronous probes (`sampleResident`), context-loss
-restore, and remap-without-refetch.
+The CPU backing mirror is GONE by default (roadmap R3, lazy-mirror mode):
+every atlas byte used to exist twice — VRAM plus the JS-heap array the
+`Data3DTexture` was built over — doubling the real footprint on
+unified-memory machines. Probes (`sampleResident`) now read EVERY resident
+brick through the decoded-chunk cache (`sampleChunkCacheSync`), the path
+GPU-repacked bricks — the majority on this WebGPU-only build — always used:
+keys simply never leave `gpuStaleKeys`. The atlas texture is created over
+NULL data with **`texture.source.dataReady = false`** — the load-bearing
+flag: three's `Textures.updateTexture` runs `backend.createTexture` (pure
+GPU allocation, zero-initialized by WebGPU — which also skips the old
+full-zero upload) unconditionally but gates the DATA upload on `dataReady`;
+without it, `initTexture` crashed pool creation outright
+(`_copyBufferToTexture` has no null guard — "writeTexture … Overload
+resolution failed"). `initTexture` runs eagerly for every pool so
+`writeTexture` never needs the needsUpdate re-spec fallback. A lost device
+restores by refetch (the chunk cache is warm — a repack, not a network
+storm).
+`orkestrator.atlasMirror = "on"` (DebugPanel toggle) restores the eager
+mirror for A/B, except for R16F atlases, whose backing would hold half-float
+BITS a raw probe read would misinterpret.
 
 ### 2.6 The unified planner (`core/octree/nodePlanning.ts`)
 
@@ -561,16 +588,19 @@ than reporting the exact-but-not-rendered raw value. Encode/decode live in
 `core/octree/brickEncoding.ts`; tested in `core/octree/brickEncoding.test.ts`.
 
 **Atlas format must mirror the worker's promotion, not the dtype string.**
-`atlasKindForDtype` (`render/bricks/brickAtlas.ts`) picks R8 only for unsigned
-8-bit and R32F for everything else — matching the codec worker's DEFAULT-fidelity
-promotion (`lib/zarr/runner/codec-worker.ts`: only `Uint8Array` stays uint8, all
-else → `Float32Array`). An earlier `dtype.includes("8")` test wrongly routed
-`int8` (a signed Float32Array) into a Uint8 R8 atlas, wrapping its negatives. Two
-standing constraints: (1) the scene never sets `textureFidelity`, so it assumes
-`'default'` — the `'low'`/`'high'` paths per-chunk-normalize to uint8/uint16 and
-would break both this format choice and the global `pool.minValue/maxValue`
-normalization; (2) `uint16` is (still) promoted to raw-valued float32 in R32F —
-native `R16` atlases remain deferred (§5). Tested in `brickAtlas.test.ts`.
+`atlasKindForDtype` (`core/octree/atlasFormat.ts`) picks R8 only for unsigned
+8-bit, R16F for unsigned 16-bit intensities (roadmap R3 — the promoted
+Float32 CHUNKS are unchanged; the repack re-encodes brick-side, so the worker
+lockstep is preserved), and R32F for everything else — matching the codec
+worker's DEFAULT-fidelity promotion (`lib/zarr/runner/codec-worker.ts`: only
+`Uint8Array` stays uint8, all else → `Float32Array`). An earlier
+`dtype.includes("8")` test wrongly routed `int8` (a signed Float32Array) into
+a Uint8 R8 atlas, wrapping its negatives; SIGNED 16-bit similarly stays R32F —
+it cannot ride the multiply-only `uAtlasScale` rescale. One standing
+constraint: the scene never sets `textureFidelity`, so it assumes `'default'`
+— the `'low'`/`'high'` paths per-chunk-normalize to uint8/uint16 and would
+break both this format choice and the global `pool.minValue/maxValue`
+normalization. Tested in `atlasFormat.test.ts` / `brickAtlas.test.ts`.
 
 **Contrast limits are raw dtype units.** `climToUnit` (`core/dataRange.ts`) maps an
 absolute clim into the shader's `[0,1]` via `pool.minValue/maxValue`. This is
@@ -922,10 +952,6 @@ green, typecheck at baseline.
 not implement without cause):
 
 - per-mode pool retention (instant 2D↔3D toggles; doubles per-layer memory),
-- `texStorage3D` allocation (skips the one-time zeroed 128 MB upload per pool),
-- lazy backing-mirror (drop the per-upload CPU memcpy in `writeBrickToAtlas`;
-  entangled with `sampleResident` probes + context-loss restore, see §2.9),
-- uint16-native `R16` atlases (worker currently promotes to float32),
 - per-frame `uniformArray` re-upload (~5 KB/material/frame: three's
   `UniformArrayNode` is `updateType = RENDER` and `Buffer.update()` returns
   true unconditionally, so five arrays rewrite every frame even static —
@@ -1002,7 +1028,14 @@ No longer deferred:
 - `emitResolveBrickResidency` takes a `name` prefix — the label contour
   emits one full resolve per NEIGHBOUR, and the fixed `res*` names produced
   a TSL rename warning per var per neighbour, drowning the real-shadowing
-  signal those warnings exist to carry.
+  signal those warnings exist to carry;
+- **lazy backing mirror + R16F atlases** (roadmap R3, see §2.5): the CPU
+  atlas mirror is gone by default (probes read the decoded-chunk cache, the
+  path GPU-repacked bricks always used; `orkestrator.atlasMirror` restores
+  it) and uint16 intensity pools store half floats
+  (`orkestrator.r16Atlas`, `core/octree/halfFloat.ts`) — together ≈4× less
+  memory for uint16 data, and the null-data texture creation also absorbs
+  the old `texStorage3D` deferred item (no more one-time zeroed full upload).
 
 Assessed and NOT done, deliberately: an image+label merged pass. It would
 share only the loop scaffolding — the two pools still need two page walks per
@@ -1011,3 +1044,67 @@ without a GPU; the mask pass is already cheap in practice (its background is
 EMPTY-skipped brick-at-a-time, and the occupancy skip now covers its resident
 fringe). Revisit only with a measured recording showing the label pass's
 rasterization overhead matters.
+
+---
+
+## 7. Roadmap — remaining gaps to Neuroglancer-class viewers
+
+The 2026-08 design review closed the acute issues (see "No longer deferred"
+above). What follows is what is STILL structurally behind Neuroglancer /
+BigVolumeViewer, ranked by expected impact. Each item is its own future plan;
+do them in this order unless a measurement says otherwise.
+
+**R1 — Cached volume compositing (finish the progressive-rendering gap).**
+Frame cost is still O(scene) per rendered frame: every frame re-raymarches
+every volume pass, even when only an annotation or HUD element changed. The
+streaming render cadence (§2.8) fixed the *frequency* of such frames during
+bursts; this fixes their *cost*: render the volume passes into an offscreen
+target re-rendered only when their inputs change (camera, uniforms,
+residency), and composite that texture per frame. Makes annotation/overlay
+interaction free. Needs three.js WebGPU render-target plumbing; GPU-verify.
+
+**R2 — Half-res volume target (resolution decoupling).** Neuroglancer-family
+viewers draw volumes at reduced resolution into their own target and
+upsample, keeping lines/annotations/HUD crisp. Our DPR ladder downscales the
+WHOLE canvas, and only while active. A dedicated 0.5–0.75× volume target with
+a smart upsample is ~2–4× *permanent* fragment relief — the biggest
+settled-state lever for many-layer scenes. Shares the render-target plumbing
+with R1; consider building them together.
+
+**R3 — R16 atlases + lazy backing mirror — DONE (2026-08-18).** uint16
+intensity pools store `raw/65535` half floats in `r16float` atlases
+(`core/octree/halfFloat.ts`; labels excluded via `geometry.exactValues`;
+GPU repack rejects them → CPU worker path), and the CPU backing mirror is
+gone by default — probes read the decoded-chunk cache via the `gpuStaleKeys`
+path all GPU-repacked bricks already used. ≈4× memory for uint16 data.
+Kill switches: `orkestrator.r16Atlas`, `orkestrator.atlasMirror` (DebugPanel
+toggles). See §2.5.
+
+**R4 — Hierarchical occupancy.** The §2.10 occupancy skip hops one
+resolved-level cell at a time; propagating brick min/max UP the tree would
+let rays hop coarse cells across large dead regions. Caveat that shapes the
+design: mean-downsampled pyramid data does NOT bound fine data, so parent
+occupancy must be aggregated from FINE bricks as they land (exact only when
+children known; conservative full-range default otherwise). Medium win — the
+per-brick skip already covers the common case.
+
+**R5 — Governor rework.** The tier is still a persisted frame-time-streak
+machine label: a mixed 20↔30 ms scene never demotes (one in-band frame resets
+the streak), and it conflates machine with scene. The feedforward
+(`volumeLoadFactor`, adaptive depth) removed the sharp edges; the full fix is
+continuous load-proportional control fed by a real cost model —
+`renderCost.ts` is the intended home and is still unwired for layer admission
+(`LayerRenderer` feeds `costBytes: 0`; only the 64-layer backstop culls).
+
+**R6 — Small.** (a) Cross-pool fetch prioritization: order is foveated within
+a pool but arrival-order across pools; Neuroglancer has one global priority
+queue. (b) Prefetch is 2D-adjacent-z only — no 3D margin or temporal (t±1)
+prefetch. (c) The settle restore lands DPR + tricubic + adaptive depth in one
+frame — a visible quality pop; staggering them would soften it.
+
+**Non-gaps** (deliberate design differences — do not "fix"): slice-first
+economics and the precomputed/sharded data format are Neuroglancer choices
+this renderer intentionally does not share; and the per-sample coarse-fallback
+shader (§1) is strictly simpler and more robust than Neuroglancer's
+cover/substitute machinery. The real fix for coarse-MIP dimming remains a
+max-downsampled pyramid upstream (P14), not renderer work.

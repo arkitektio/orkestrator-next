@@ -20,11 +20,12 @@ import {
  * extents (tightly packed rows/images).
  */
 
-export type TexelKind = "r8" | "rg8" | "r32f" | "rgba8";
+export type TexelKind = "r8" | "rg8" | "r16f" | "r32f" | "rgba8";
 
 const BYTES_PER_TEXEL: Record<TexelKind, number> = {
   r8: 1,
   rg8: 2,
+  r16f: 2,
   r32f: 4,
   rgba8: 4,
 };

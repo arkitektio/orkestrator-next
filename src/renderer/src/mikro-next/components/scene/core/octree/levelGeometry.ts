@@ -72,6 +72,12 @@ export type LayerLevelGeometry = {
   channelSlabCount: number;
   /** Samples along the reduced phasor axis; 0 when the layer has no phasor. */
   phasorBins: number;
+  /** Voxel values are IDENTITIES, not intensities (label masks): every lossy
+   * storage option — above all the R16F half-float atlas, whose 11-bit
+   * significand corrupts ids above 2048 — is off the table. Derived from the
+   * layer's `__typename` at build time; false for test fixtures without one,
+   * which is safe because real label layers always carry it. */
+  exactValues: boolean;
   /** Finest first (index 0 = level 0), matching `dataArrays` ordering. */
   levels: readonly LevelGeometry[];
 };
@@ -273,6 +279,7 @@ export function buildLayerLevelGeometry(
     slabs,
     channelSlabCount,
     phasorBins: slabs.some((slab) => slab.kind === "phasor") ? phasorBins : 0,
+    exactValues: layer.__typename === "LabelLayer",
     levels: levels.map((level, index) => ({
       index,
       storeId: level.storeId,

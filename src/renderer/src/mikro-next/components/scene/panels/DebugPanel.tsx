@@ -14,6 +14,14 @@ import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
 import type { FabriksCollectionManager } from "../render/fabriks/fabriksManager";
 import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/computeRepack";
 import {
+  isR16AtlasesEnabled,
+  setR16AtlasesEnabled,
+} from "../core/octree/atlasFormat";
+import {
+  isAtlasMirrorEnabled,
+  setAtlasMirrorEnabled,
+} from "../render/bricks/brickAtlas";
+import {
   isVolumeMergeEnabled,
   setVolumeMergeEnabled,
 } from "../render/bricks/volumeMergeGroups";
@@ -51,6 +59,8 @@ export const DebugPanel = () => {
   const [shaderFastPathOn, setShaderFastPathOn] = useState(isShaderFastPathEnabled);
   const [smoothZoomOn, setSmoothZoomOn] = useState(isSmoothZoomEnabled);
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
+  const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
+  const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   // Applied drawing-buffer DPR (CanvasSync re-registers the canvas on every
   // dpr change, so this chip tracks the interaction ladder live).
   const canvasDpr = useViewerStore((s) => s.canvas?.dpr);
@@ -88,6 +98,18 @@ export const DebugPanel = () => {
     const next = !adaptiveDprOn;
     setAdaptiveDprEnabled(next);
     setAdaptiveDprOn(next);
+  };
+
+  const toggleR16Atlas = () => {
+    const next = !r16AtlasOn;
+    setR16AtlasesEnabled(next);
+    setR16AtlasOn(next);
+  };
+
+  const toggleAtlasMirror = () => {
+    const next = !atlasMirrorOn;
+    setAtlasMirrorEnabled(next);
+    setAtlasMirrorOn(next);
   };
 
   const runGpuSelfTest = () => {
@@ -436,6 +458,20 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 adaptive dpr: {adaptiveDprOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleR16Atlas}
+                title="R16F half-float atlases for uint16 intensity data (raw/65535, rescaled in-shader): half the atlas bytes, double the slot budget. Labels always stay r32f. Takes effect for pools created after the toggle (reopen the scene for existing ones)."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                r16 atlas: {r16AtlasOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleAtlasMirror}
+                title="Eager CPU atlas mirror (legacy): every atlas byte also lives on the JS heap; probes read it instead of the decoded-chunk cache. Off (default) = lazy, half the real footprint. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                atlas mirror: {atlasMirrorOn ? "on" : "off"}
               </button>
               {typeof canvasDpr === "number" && (
                 <span className="px-1 rounded border border-border/50 text-muted-foreground">

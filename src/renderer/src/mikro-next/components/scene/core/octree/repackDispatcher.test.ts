@@ -73,6 +73,32 @@ describe("repackDispatcher (sync impl)", () => {
     const outcome = await createSyncRepackDispatcher().repack(job);
     expect(outcome.data).toBeInstanceOf(Uint8Array);
   });
+
+  it("r16f: raw min/max/uniform, half-float payload that rescales back (roadmap R3)", async () => {
+    const { halfBitsToFloat } = await import("./halfFloat");
+    const { R16F_DATA_SCALE } = await import("./atlasFormat");
+    const job = { ...buildJob([1, 1, 0]), kind: "r16f" as const };
+    const outcome = await createSyncRepackDispatcher().repack(job);
+
+    const reference = new Float32Array(job.elementCount);
+    const referenceResult = repackBrick({ ...job.input, output: reference });
+
+    // Result metadata is RAW — auto-range, EMPTY demotion and the occupancy
+    // sidecar all consume it and must not see half-float quantization.
+    expect(outcome.min).toBe(referenceResult.min);
+    expect(outcome.max).toBe(referenceResult.max);
+    expect(outcome.uniformValue).toBe(referenceResult.uniformValue);
+
+    // The payload holds half bits of raw/65535; decoding × dataScale must
+    // land within half-float precision of every raw voxel.
+    expect(outcome.data).toBeInstanceOf(Uint16Array);
+    for (let i = 0; i < reference.length; i++) {
+      const rescaled = halfBitsToFloat(outcome.data[i]) * R16F_DATA_SCALE;
+      expect(Math.abs(rescaled - reference[i])).toBeLessThanOrEqual(
+        Math.max(Math.abs(reference[i]) * 2 ** -11, 0.01),
+      );
+    }
+  });
 });
 
 describe("createRepackDispatcher", () => {

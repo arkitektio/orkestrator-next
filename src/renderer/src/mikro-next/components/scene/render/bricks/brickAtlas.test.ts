@@ -74,3 +74,110 @@ describe("chooseSlotGrid", () => {
     expect(slotGrid).toEqual([1, 1, 1]);
   });
 });
+
+describe("createBrickAtlas (roadmap R3: lazy mirror + R16F)", () => {
+  const spec = { payload: [4, 4, 4], border: 1, stored: [6, 6, 6], channelCount: 1 } as never;
+
+  it("lazy mode (default): no CPU backing, byteLength tracks the GPU bytes", async () => {
+    const { createBrickAtlas } = await import("./brickAtlas");
+    const atlas = createBrickAtlas({
+      spec,
+      dtype: "float32",
+      desiredSlots: 8,
+      maxExtent: 2048,
+      filter: "linear",
+    });
+    expect(atlas.backing).toBeNull();
+    expect(atlas.byteLength).toBe(atlas.size[0] * atlas.size[1] * atlas.size[2] * 4);
+    atlas.texture.dispose();
+  });
+
+  it("r16f: half-float type, dataScale 65535, 2 bytes/voxel, never mirrored", async () => {
+    const { createBrickAtlas } = await import("./brickAtlas");
+    const THREE = await import("three");
+    const atlas = createBrickAtlas({
+      spec,
+      dtype: "uint16",
+      kind: "r16f",
+      desiredSlots: 8,
+      maxExtent: 2048,
+      filter: "linear",
+    });
+    expect(atlas.kind).toBe("r16f");
+    expect(atlas.dataScale).toBe(65535);
+    expect(atlas.texture.type).toBe(THREE.HalfFloatType);
+    expect(atlas.backing).toBeNull();
+    expect(atlas.byteLength).toBe(atlas.size[0] * atlas.size[1] * atlas.size[2] * 2);
+    atlas.texture.dispose();
+  });
+
+  it("orkestrator.atlasMirror = 'on' restores the eager mirror (non-r16f only)", async () => {
+    const { createBrickAtlas, setAtlasMirrorEnabled } = await import("./brickAtlas");
+    setAtlasMirrorEnabled(true);
+    try {
+      const mirrored = createBrickAtlas({
+        spec,
+        dtype: "float32",
+        desiredSlots: 8,
+        maxExtent: 2048,
+        filter: "linear",
+      });
+      expect(mirrored.backing).toBeInstanceOf(Float32Array);
+      mirrored.texture.dispose();
+
+      const half = createBrickAtlas({
+        spec,
+        dtype: "uint16",
+        kind: "r16f",
+        desiredSlots: 8,
+        maxExtent: 2048,
+        filter: "linear",
+      });
+      expect(half.backing).toBeNull(); // half-float BITS must never back probes
+      half.texture.dispose();
+    } finally {
+      setAtlasMirrorEnabled(false);
+    }
+  });
+});
+
+describe("lazy-mirror texture creation (the initTexture crash regression)", () => {
+  const spec = { payload: [4, 4, 4], border: 1, stored: [6, 6, 6], channelCount: 1 } as never;
+
+  it("marks a mirror-less texture source dataReady=false so three never uploads null data", async () => {
+    const { createBrickAtlas } = await import("./brickAtlas");
+    // Regression: three's updateTexture gates the data upload on
+    // source.dataReady but runs createTexture regardless; without this flag,
+    // initTexture on a null-backing atlas threw "Failed to execute
+    // 'writeTexture' ... Overload resolution failed" and aborted pool creation.
+    const lazy = createBrickAtlas({
+      spec,
+      dtype: "uint8",
+      desiredSlots: 8,
+      maxExtent: 2048,
+      filter: "linear",
+    });
+    expect(lazy.backing).toBeNull();
+    expect(lazy.texture.source.dataReady).toBe(false);
+    lazy.texture.dispose();
+  });
+
+  it("keeps dataReady=true when an eager mirror backs the texture", async () => {
+    const { createBrickAtlas, setAtlasMirrorEnabled } = await import("./brickAtlas");
+    setAtlasMirrorEnabled(true);
+    try {
+      const mirrored = createBrickAtlas({
+        spec,
+        dtype: "uint8",
+        desiredSlots: 8,
+        maxExtent: 2048,
+        filter: "linear",
+      });
+      expect(mirrored.backing).toBeInstanceOf(Uint8Array);
+      expect(mirrored.texture.source.dataReady).toBe(true);
+      mirrored.texture.dispose();
+    } finally {
+      setAtlasMirrorEnabled(false);
+    }
+  });
+});

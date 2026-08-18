@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Box, Focus, X } from "lucide-react";
+import { MikroAnnotation } from "@/linkers";
 import {
   useGetSceneAnnotationsQuery,
   type SceneAnnotationFragment,
@@ -513,6 +514,17 @@ const SelectedRoiRow = ({
         </span>
         <span className="min-w-0 flex-1 truncate text-white/60">
           {formatAnnotationKind(roi.kind)}
+        </span>
+        {/* The smart action button: run a rekuest action on this annotation
+            (cropping a dataset to it, above all). The one launcher reachable
+            straight from the draw — `AnnotationsPanel` has the other. Wrapped
+            so opening it never reaches the row's own handlers. Fed the store's
+            `roi` rather than the queried `annotation` so it is live the moment
+            the shape is confirmed, not one refetch later; `name` is normalized
+            because the Smart payload is JSON-shaped and JSON has no
+            `undefined`. */}
+        <span onClick={(event) => event.stopPropagation()}>
+          <MikroAnnotation.ObjectButton object={{ ...roi, name: roi.name ?? null }} />
         </span>
         <button
           className={smallButton}

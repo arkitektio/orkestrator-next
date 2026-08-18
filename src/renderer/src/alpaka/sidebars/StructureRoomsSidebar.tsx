@@ -1,19 +1,21 @@
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Empty,
   EmptyContent,
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Guard } from "@/app/Arkitekt";
 import { Identifier, Object } from "@/types";
-import { useEffect, useState } from "react";
+import { Check, Menu, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useCreateRoomMutation,
   useGetRoomQuery,
@@ -28,6 +30,47 @@ import { storeRoomTalkingAbout } from "../roomTalkingAbout";
 export type StructureRoomsSidebarProps = {
   identifier: Identifier;
   object: Object;
+};
+
+type RankableRoom = { id: string; messages: readonly { createdAt: unknown }[] };
+
+const lastMessageAt = (room: RankableRoom): number =>
+  room.messages.reduce((newest, message) => {
+    const at = Date.parse(String(message.createdAt));
+    return Number.isNaN(at) ? newest : Math.max(newest, at);
+  }, Number.NEGATIVE_INFINITY);
+
+/**
+ * The chat the tab opens on: the one that was talked in most recently.
+ *
+ * `Room` exposes no timestamp of its own and `rooms` takes no ordering, so
+ * recency is read off the messages the list query already carries. A room
+ * nobody has written in yet has nothing to compare with, so it loses to any
+ * room that does have a message; between two of those, the one created last
+ * wins — by id, which alpaka hands out ascending, and by list position when
+ * ids aren't numeric.
+ */
+const latestRoomId = (rooms: readonly RankableRoom[]): string => {
+  let best: { id: string; at: number; rank: number } | undefined;
+
+  rooms.forEach((room, index) => {
+    const numericId = Number(room.id);
+    const candidate = {
+      id: room.id,
+      at: lastMessageAt(room),
+      rank: Number.isFinite(numericId) ? numericId : index,
+    };
+
+    if (
+      !best ||
+      candidate.at > best.at ||
+      (candidate.at === best.at && candidate.rank >= best.rank)
+    ) {
+      best = candidate;
+    }
+  });
+
+  return best?.id ?? "";
 };
 
 const buildSidebarStorageKey = (identifier: Identifier, object: Object) =>
@@ -99,10 +142,18 @@ const StructureRoomView = ({ roomId }: { roomId: string }) => {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg ">
-      <Chat
-        isMobile={isMobile}
-        room={data.room}
-      />
+      {/* `Chat` talks to rekuest (and kabinet) for its action picker, so it
+          must not mount at all without that service — guarded from out here,
+          before its hooks can fire. */}
+      <Guard.Rekuest
+        unavailable={
+          <div className="p-3 text-xs text-muted-foreground">
+            Chat needs the rekuest service.
+          </div>
+        }
+      >
+        <Chat isMobile={isMobile} room={data.room} />
+      </Guard.Rekuest>
     </div>
   );
 };
@@ -139,23 +190,33 @@ export const StructureRoomsSidebar = ({
     }
   }, [activeRoomId, storageKey]);
 
+  // A room picked or opened during THIS session is trusted as-is; only an id
+  // restored from localStorage is validated against the list, which is what
+  // that check is for (the room may have been deleted since). A freshly
+  // created room can lag its own filtered query by a beat, and validating it
+  // would drop the user back into an older chat.
+  const pickedThisSession = useRef(false);
+  const selectRoom = useCallback((roomId: string) => {
+    pickedThisSession.current = true;
+    setActiveRoomId(roomId);
+  }, []);
+
+  const rooms = data?.rooms ?? [];
+
   const resolvedActiveRoomId = (() => {
-    const firstRoomId = data?.rooms.at(0)?.id ?? "";
+    // Nothing chosen yet — open on the most recent conversation, which is what
+    // the tab is for. A room the user picked from the menu sticks instead.
+    const fallback = latestRoomId(rooms);
 
-    if (!firstRoomId) {
-      return "";
-    }
+    if (!activeRoomId) return fallback;
+    if (pickedThisSession.current) return activeRoomId;
 
-    if (!activeRoomId) {
-      return firstRoomId;
-    }
-
-    return data?.rooms.some((room) => room.id === activeRoomId)
+    return rooms.some((room) => room.id === activeRoomId)
       ? activeRoomId
-      : firstRoomId;
+      : fallback;
   })();
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = useCallback(async () => {
     const result = await createRoom({
       variables: {
         input: {
@@ -181,9 +242,9 @@ export const StructureRoomsSidebar = ({
           object: object.id,
         },
       ]);
-      setActiveRoomId(nextRoomId);
+      selectRoom(nextRoomId);
     }
-  };
+  }, [createRoom, identifier, object.id, refetch, selectRoom]);
 
   if (error) {
     return (
@@ -197,43 +258,64 @@ export const StructureRoomsSidebar = ({
     );
   }
 
-  if (!loading && (data?.rooms.length ?? 0) === 0) {
+  if (loading && rooms.length === 0) {
+    return <div className="p-3 text-xs text-muted-foreground">Loading chats…</div>;
+  }
+
+  if (!resolvedActiveRoomId) {
     return (
       <Empty>
-        <EmptyTitle>No rooms yet</EmptyTitle>
+        <EmptyTitle>No chats yet</EmptyTitle>
         <EmptyDescription>
-          There are no Alpaka conversations attached to this structure yet.
+          There are no Alpaka conversations about this yet.
         </EmptyDescription>
         <EmptyContent>
           <Button onClick={handleCreateRoom} disabled={creatingRoom} variant="outline">
-            {creatingRoom ? "Opening…" : "Chat about"}
+            <Plus className="h-4 w-4" />
+            {creatingRoom ? "Opening…" : "New chat"}
           </Button>
         </EmptyContent>
       </Empty>
     );
   }
 
-  const rooms = data?.rooms ?? [];
-  const hasMultipleRooms = rooms.length > 1;
-
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      {hasMultipleRooms && (
-        <div className="shrink-0 border-b p-2">
-          <Select value={resolvedActiveRoomId} onValueChange={setActiveRoomId}>
-            <SelectTrigger className="h-8 text-sm">
-              <SelectValue placeholder="Select a room" />
-            </SelectTrigger>
-            <SelectContent>
-              {rooms.map((room) => (
-                <SelectItem key={room.id} value={room.id}>
-                  {room.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="flex shrink-0 items-center gap-2 border-b p-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Menu className="h-4 w-4" />
+              <span className="sr-only">Switch chat</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-w-72">
+            <DropdownMenuLabel>Chats about this</DropdownMenuLabel>
+            {rooms.map((room) => (
+              <DropdownMenuItem key={room.id} onSelect={() => selectRoom(room.id)}>
+                <Check
+                  className={
+                    room.id === resolvedActiveRoomId
+                      ? "h-4 w-4 shrink-0"
+                      : "h-4 w-4 shrink-0 opacity-0"
+                  }
+                />
+                <span className="truncate">{room.title}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto gap-1.5 text-muted-foreground hover:text-foreground"
+          onClick={handleCreateRoom}
+          disabled={creatingRoom}
+        >
+          <Plus className="h-4 w-4" />
+          {creatingRoom ? "Opening…" : "New chat"}
+        </Button>
+      </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {resolvedActiveRoomId && (
           <StructureRoomView key={resolvedActiveRoomId} roomId={resolvedActiveRoomId} />

@@ -54,9 +54,12 @@ export const useCreateSceneAnnotation = () => {
 
         // Auto-select the confirmed annotation. On the very first annotation
         // the AnnotationLayer does not exist yet (GetScene refetch in flight)
-        // — layerId stays "" and the highlight catches up by annotation id
-        // once the layer mounts; the attribute lookups only need the system
-        // and vectors from the payload.
+        // — layerId stays "" here, and the layer REPAIRS the entry when it
+        // mounts (`core/selectionRepair.ts`). That repair is not cosmetic:
+        // the info panel resolves the collection matrix by layerId, so an
+        // unrepaired "" leaves it with no anchor and parks it in the corner.
+        // The highlight itself matches by annotation id and lands either way,
+        // and attribute lookups only need the system and vectors below.
         const annotationLayer = sceneStoreApi
           .getState()
           .sceneLayers.find(

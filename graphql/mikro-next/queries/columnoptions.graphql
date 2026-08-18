@@ -1,0 +1,104 @@
+# The candidate columns a mesh collection's objects can be COLOURED or FILTERED
+# by, and how each is reached.
+#
+# `colorByOptions` and `filterByOptions` return the SAME set — one relation, one
+# coordinate-graph walk, two names so each reads right where it is used. What
+# differs is only what a control means downstream: MEASURE takes a colormap plus
+# a range in a colouring and a `min`/`max` bound in a rule. The two option types
+# are therefore structurally identical, and both fragments below select the same
+# fields so the client can collapse them into one `ColumnOption` shape
+# (`panels/layer/columnOptions.ts`).
+#
+# Everything returned is something `createMeshLayer(colorBys:)` / `filterBys`
+# accepts, and every column omitted is one it refuses — that invariant is why
+# this exists rather than the client filtering `attributePlans`, which walks a
+# different set for a different question.
+#
+# The ROOT queries, not `MeshCollection.colorByOptions`: the nested field is
+# colour-only and carries no search or paging, and options must never ride the
+# `SceneLayer` fragment — that would walk the coordinate graph once per layer on
+# every scene load.
+#
+# `store` and `columns` are selected on the option's table because the picker
+# reads the column's real values (distinct set, numeric domain) client-side from
+# the parquet — the server publishes no values.
+
+fragment ColumnOptionJoinStep on ColumnOptionJoinStep {
+  table {
+    id
+    name
+    store {
+      ...ParquetStore
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+}
+
+fragment ColorByOption on ColorByOption {
+  control
+  table {
+    ...ListTableDataset
+    store {
+      ...ParquetStore
+    }
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+  joinPath {
+    ...ColumnOptionJoinStep
+  }
+}
+
+# Same selection as ColorByOption — see the note above.
+fragment FilterByOption on FilterByOption {
+  control
+  table {
+    ...ListTableDataset
+    store {
+      ...ParquetStore
+    }
+    columns {
+      ...TableDatasetColumn
+    }
+  }
+  column {
+    ...TableDatasetColumn
+  }
+  joinPath {
+    ...ColumnOptionJoinStep
+  }
+}
+
+query MeshColorByOptions(
+  $meshCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: colorByOptions(
+    meshCollection: $meshCollection
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...ColorByOption
+  }
+}
+
+query MeshFilterByOptions(
+  $meshCollection: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: filterByOptions(
+    meshCollection: $meshCollection
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...FilterByOption
+  }
+}

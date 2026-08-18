@@ -12,8 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RESIDENT_ICON } from "@/mikro-next/components/coordinates/ResidentLink";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { modifierSpecsOf, spatialSpecOf } from "@/mikro-next/specs";
+import {
+  ChevronDown,
+  ChevronRight,
+  Image as ImageIcon,
+  Shapes,
+  Spline,
+  Table2,
+  type LucideIcon,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -31,15 +39,20 @@ import {
   useCreateVolumeLayerMutation,
 } from "../api/graphql";
 import {
-  AnnotationCandidate,
-  CandidateRow,
+  AnnotationEntry,
   Capabilities,
-  MeshCandidate,
+  DatasetEntry,
+  Entry,
+  LAYER_KIND_INFO,
+  LayerKind,
+  MeshEntry,
+  Section,
   Source,
-  SpaceGroup,
-  TableCandidate,
-  groupCandidates,
-  totalRows,
+  SpaceRef,
+  TABLE_KIND_INFO,
+  TableEntry,
+  TableKind,
+  buildSections,
 } from "./addLayer/candidates";
 
 // The mutation options every layer creation submits with: the scene view
@@ -55,144 +68,281 @@ const DIALOG_OPTIONS = {
   errorPrefix: "Could not add layer",
 };
 
-// Beyond this many rows the spaces start collapsed: a stage frame can hold a
-// hundred registered tiles, and a wall of them is not a picker.
-const COLLAPSE_ABOVE = 40;
-
 const kindButton = (active: boolean) =>
-  `rounded border px-3 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+  `rounded border px-3 py-1 text-sm transition-colors ${
     active
       ? "border-primary bg-primary text-primary-foreground"
       : "border-input hover:bg-accent"
   }`;
 
-/** What a row could become — "image", "points", "mesh". */
-const Badge = (props: { children: string }) => (
-  <span className="rounded-full border border-input px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-    {props.children}
-  </span>
-);
+/** Where an entry lives — a caption, since the picker no longer groups by it. */
+const SpaceCaption = (props: { space: SpaceRef }) =>
+  props.space.isWorld ? (
+    <span>{"in this scene's world"}</span>
+  ) : (
+    <span>in {props.space.name}</span>
+  );
 
 /**
- * One resident of one reachable space.
+ * What a thing becomes, stated rather than asked.
  *
- * A row that cannot become a layer is still drawn — an ArrayDataset is staged
- * through its lenses, a DataArray is a pyramid level of one — but as plain text
- * carrying its reason, so nobody clicks it and wonders why nothing happened.
+ * The inferred kind is the answer; the alternatives exist for the case where the
+ * inference is not what someone wanted, and stay folded away until then. A
+ * source with only one possible kind shows a sentence and no control at all.
  */
-const CandidateRowView = (props: {
-  row: CandidateRow;
-  onSelect: (source: Source) => void;
+const InferredKind = <K extends string>(props: {
+  kinds: readonly K[];
+  info: Record<K, { title: string; description: string }>;
+  value: K;
+  onChange: (kind: K) => void;
 }) => {
-  const { row } = props;
-  const Icon = RESIDENT_ICON[row.resident.__typename];
-  const body = (
-    <>
-      <Icon className="size-4 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium">{row.name}</div>
-        {(row.secondary || row.disabledReason) && (
-          <div className="truncate text-xs text-muted-foreground">
-            {row.disabledReason ?? row.secondary}
-          </div>
-        )}
-      </div>
-      <div className="flex shrink-0 gap-1">
-        {row.badges.map((badge) => (
-          <Badge key={badge}>{badge}</Badge>
-        ))}
-      </div>
-    </>
-  );
-
-  if (!row.source) {
-    return (
-      <div className="flex items-center gap-2 rounded border border-dashed border-input/60 p-2 opacity-60">
-        {body}
-      </div>
-    );
-  }
+  const [open, setOpen] = useState(false);
+  const chosen = props.info[props.value];
 
   return (
-    <button
-      type="button"
-      onClick={() => props.onSelect(row.source!)}
-      className="flex w-full items-center gap-2 rounded border border-input p-2 text-left transition-colors hover:bg-accent"
-    >
-      {body}
-    </button>
-  );
-};
-
-/**
- * One space, with who lives in it. The header is the whole point of the grouped
- * shape: a candidate is offered BECAUSE its space has a path into the world, so
- * the space is named rather than left implicit.
- */
-const SpaceSection = (props: {
-  group: SpaceGroup;
-  defaultOpen: boolean;
-  onSelect: (source: Source) => void;
-}) => {
-  const { group } = props;
-  // Uncontrolled on purpose: an open/closed section is a per-section gesture,
-  // and the parent re-keys these on the collapse decision so a search reopens
-  // them without an effect fighting the user's own clicks.
-  const [open, setOpen] = useState(props.defaultOpen);
-
-  return (
-    <div className="flex flex-col gap-1">
-      <button
-        type="button"
-        onClick={() => setOpen((was) => !was)}
-        className="flex items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
-      >
-        {open ? (
-          <ChevronDown className="size-3" />
-        ) : (
-          <ChevronRight className="size-3" />
+    <div className="flex flex-col gap-2 rounded border border-input p-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-sm font-medium">{chosen.title}</div>
+          <div className="text-xs text-muted-foreground">
+            {chosen.description}
+          </div>
+        </div>
+        {props.kinds.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setOpen((was) => !was)}
+            className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {open ? "never mind" : "show it differently"}
+          </button>
         )}
-        <span className="font-medium uppercase tracking-wide">{group.name}</span>
-        <span>· {group.label}</span>
-        {group.isWorld && <span>{"· this scene's world"}</span>}
-      </button>
-      {open &&
-        (group.rows.length ? (
-          <div className="flex flex-col gap-1 pl-4">
-            {group.rows.map((row) => (
-              <CandidateRowView
-                key={row.key}
-                row={row}
-                onSelect={props.onSelect}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="pl-4 text-xs text-muted-foreground">
-            nothing lives here — a frame to register into
-          </div>
-        ))}
+      </div>
+      {open && (
+        <div className="flex flex-wrap gap-2 border-t border-input pt-2">
+          {props.kinds.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className={kindButton(kind === props.value)}
+              title={props.info[kind].description}
+              onClick={() => {
+                props.onChange(kind);
+                setOpen(false);
+              }}
+            >
+              {props.info[kind].title}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
+/** What this row would become, in one word. */
+const Badge = (props: { children: string }) => (
+  <span className="shrink-0 rounded-full border border-input px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+    {props.children}
+  </span>
+);
+
+const EntryRow = (props: {
+  icon: LucideIcon;
+  title: string;
+  subtitle?: React.ReactNode;
+  badge?: string;
+  onClick: () => void;
+  /** Rendered before the badge — the expander on a multi-lens dataset. */
+  trailing?: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-2 rounded border border-input transition-colors hover:bg-accent">
+    <button
+      type="button"
+      onClick={props.onClick}
+      className="flex min-w-0 flex-1 items-center gap-2 p-2 text-left"
+    >
+      <props.icon className="size-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium">{props.title}</div>
+        {props.subtitle && (
+          <div className="truncate text-xs text-muted-foreground">
+            {props.subtitle}
+          </div>
+        )}
+      </div>
+      {props.badge && <Badge>{props.badge}</Badge>}
+    </button>
+    {props.trailing}
+  </div>
+);
+
 /**
- * Step 2a: a lens becomes an image layer. Image layers hang off a lens, and the
- * chosen lens is the layer's source directly — no lens resolution needed.
+ * A dataset, and — only when there is more than one — the lenses onto it.
  *
- * The kinds the server would refuse are disabled rather than offered and then
- * rejected: `asLayer` already answered which of IMAGE and LABEL this lens
- * qualifies for (§ AddLayerLensCapabilities).
+ * The entry itself adds the first lens, which sorting has made the unsliced one:
+ * that is what someone means by "the dataset". A dataset with a single lens
+ * renders no children at all, since a lone child row saying "full" is the
+ * clutter this picker exists to be rid of.
+ */
+const DatasetEntryView = (props: {
+  entry: DatasetEntry;
+  onSelect: (source: Source) => void;
+}) => {
+  const { entry } = props;
+  const [open, setOpen] = useState(false);
+  const primary = entry.lenses[0];
+  const spatial = spatialSpecOf(entry.specs);
+  const modifiers = modifierSpecsOf(entry.specs);
+
+  const subtitle = [
+    ...(spatial ? [spatial.short] : []),
+    ...modifiers.map((modifier) => modifier.short),
+  ].join(" · ");
+
+  return (
+    <div className="flex flex-col gap-1">
+      <EntryRow
+        icon={spatial?.icon ?? ImageIcon}
+        title={entry.name}
+        subtitle={
+          <>
+            {subtitle && <span>{subtitle} · </span>}
+            <SpaceCaption space={primary.space} />
+          </>
+        }
+        badge={LAYER_KIND_INFO[primary.kinds[0]].title.toLowerCase()}
+        onClick={() =>
+          props.onSelect({ kind: "lens", dataset: entry, option: primary })
+        }
+        trailing={
+          entry.lenses.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setOpen((was) => !was)}
+              className="flex shrink-0 items-center gap-1 self-stretch border-l border-input px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {open ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronRight className="size-3" />
+              )}
+              {entry.lenses.length} lenses
+            </button>
+          )
+        }
+      />
+      {open && entry.lenses.length > 1 && (
+        <div className="flex flex-col gap-1 border-l border-input pl-3">
+          {entry.lenses.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() =>
+                props.onSelect({ kind: "lens", dataset: entry, option })
+              }
+              className="flex items-center gap-2 rounded border border-input/60 p-2 text-left transition-colors hover:bg-accent"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs">{option.label}</div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  <SpaceCaption space={option.space} />
+                </div>
+              </div>
+              <Badge>{LAYER_KIND_INFO[option.kinds[0]].title.toLowerCase()}</Badge>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EntryView = (props: {
+  entry: Entry;
+  onSelect: (source: Source) => void;
+}) => {
+  const { entry } = props;
+  switch (entry.kind) {
+    case "dataset":
+      return <DatasetEntryView entry={entry} onSelect={props.onSelect} />;
+    case "mesh":
+      return (
+        <EntryRow
+          icon={Shapes}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge="mesh"
+          onClick={() => props.onSelect({ kind: "mesh", entry })}
+        />
+      );
+    case "table":
+      return (
+        <EntryRow
+          icon={Table2}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge={TABLE_KIND_INFO[entry.kinds[0]].title.toLowerCase()}
+          onClick={() => props.onSelect({ kind: "table", entry })}
+        />
+      );
+    case "annotation":
+      return (
+        <EntryRow
+          icon={Spline}
+          title={entry.name}
+          subtitle={
+            <>
+              {entry.secondary ? `${entry.secondary} · ` : ""}
+              <SpaceCaption space={entry.space} />
+            </>
+          }
+          badge="annotations"
+          onClick={() => props.onSelect({ kind: "annotation", entry })}
+        />
+      );
+  }
+};
+
+const SectionView = (props: {
+  section: Section;
+  onSelect: (source: Source) => void;
+}) => (
+  <div className="flex flex-col gap-1">
+    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {props.section.title}
+    </div>
+    {props.section.entries.map((entry) => (
+      <EntryView key={entry.key} entry={entry} onSelect={props.onSelect} />
+    ))}
+  </div>
+);
+
+/**
+ * Step 2a: a lens becomes an image layer.
+ *
+ * Which kind is not asked — `inferLensKinds` already answered, from what the
+ * server says the lens qualifies for and from its z extent — so this step states
+ * the answer and asks only what the answer itself needs (a projection mode for a
+ * volume). The other kinds live behind the disclosure.
  */
 const LensLayerForm = (props: {
   scene: string;
   source: Extract<Source, { kind: "lens" }>;
   onBack: () => void;
 }) => {
-  const { image, label, lens } = props.source;
-  const [kind, setKind] = useState<"INTENSITY" | "RGB" | "VOLUME" | "LABEL">(
-    image ? "INTENSITY" : "LABEL",
-  );
+  const { option } = props.source;
+  const [kind, setKind] = useState<LayerKind>(option.kinds[0]);
 
   const [createIntensity] = useCreateIntensityLayerMutation();
   const [createRgb] = useCreateRgbLayerMutation();
@@ -209,7 +359,7 @@ const LensLayerForm = (props: {
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
-    const base = { lens: lens.id, scene: props.scene };
+    const base = { lens: option.lens.id, scene: props.scene };
     switch (kind) {
       case "INTENSITY":
         return submitIntensity({ variables: { input: base }, ...REFETCH_SCENE });
@@ -228,29 +378,12 @@ const LensLayerForm = (props: {
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          {(["INTENSITY", "RGB", "VOLUME", "LABEL"] as const).map((k) => {
-            const allowed = k === "LABEL" ? label : image;
-            return (
-              <button
-                key={k}
-                type="button"
-                disabled={!allowed}
-                title={
-                  allowed
-                    ? undefined
-                    : k === "LABEL"
-                      ? "Requires a derivation declaring CATEGORIZED — the values became object ids"
-                      : "Requires an x and a y axis of more than one pixel"
-                }
-                className={kindButton(kind === k)}
-                onClick={() => setKind(k)}
-              >
-                {k.charAt(0) + k.slice(1).toLowerCase()}
-              </button>
-            );
-          })}
-        </div>
+        <InferredKind
+          kinds={option.kinds}
+          info={LAYER_KIND_INFO}
+          value={kind}
+          onChange={setKind}
+        />
 
         {kind === "VOLUME" && (
           <ChoicesField
@@ -285,14 +418,11 @@ const LensLayerForm = (props: {
  */
 const TableLayerForm = (props: {
   scene: string;
-  table: TableCandidate;
+  entry: TableEntry;
   onBack: () => void;
 }) => {
-  const columns = props.table.columns;
-  // Same signal the picker badged the row with, re-read here rather than
-  // threaded through: a table is trackable or not, in this form and that list.
-  const trackable = columns.some((c) => c.role === TableColumnRole.TrackId);
-  const [kind, setKind] = useState<"POINT" | "TRACK">("POINT");
+  const columns = props.entry.table.columns;
+  const [kind, setKind] = useState<TableKind>(props.entry.kinds[0]);
 
   const [createPoint] = useCreatePointLayerMutation();
   const [createTrack] = useCreateTrackLayerMutation();
@@ -327,7 +457,7 @@ const TableLayerForm = (props: {
     const orUndefined = (v: string) => v || undefined;
     const base = {
       scene: props.scene,
-      tableDataset: props.table.id,
+      tableDataset: props.entry.table.id,
     };
     if (kind === "POINT") {
       return submitPoint({
@@ -357,26 +487,12 @@ const TableLayerForm = (props: {
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={kindButton(kind === "POINT")}
-            onClick={() => setKind("POINT")}
-          >
-            Points
-          </button>
-          <button
-            type="button"
-            className={kindButton(kind === "TRACK")}
-            disabled={!trackable}
-            title={
-              trackable ? undefined : "Requires a column with the TRACK_ID role"
-            }
-            onClick={() => setKind("TRACK")}
-          >
-            Tracks
-          </button>
-        </div>
+        <InferredKind
+          kinds={props.entry.kinds}
+          info={TABLE_KIND_INFO}
+          value={kind}
+          onChange={setKind}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           {kind === "POINT" ? (
@@ -435,7 +551,7 @@ const TableLayerForm = (props: {
  */
 const MeshLayerForm = (props: {
   scene: string;
-  mesh: MeshCandidate;
+  entry: MeshEntry;
   onBack: () => void;
 }) => {
   const [createMesh] = useCreateMeshLayerMutation();
@@ -453,7 +569,7 @@ const MeshLayerForm = (props: {
       variables: {
         input: {
           scene: props.scene,
-          meshCollection: props.mesh.id,
+          meshCollection: props.entry.mesh.id,
           wireframe: data.wireframe,
           opacity: data.opacity ?? undefined,
         },
@@ -499,7 +615,7 @@ const MeshLayerForm = (props: {
  */
 const AnnotationLayerForm = (props: {
   scene: string;
-  collection: AnnotationCandidate;
+  entry: AnnotationEntry;
   onBack: () => void;
 }) => {
   const [createAnnotationLayer] = useCreateAnnotationLayerMutation();
@@ -514,7 +630,7 @@ const AnnotationLayerForm = (props: {
       variables: {
         input: {
           scene: props.scene,
-          annotationCollection: props.collection.id,
+          annotationCollection: props.entry.collection.id,
           opacity: data.opacity ?? undefined,
         },
       },
@@ -545,13 +661,13 @@ const AnnotationLayerForm = (props: {
 const stepDescription = (source: Source): string => {
   switch (source.kind) {
     case "lens":
-      return `What kind of image layer should "${source.lens.dataset.name}" become?`;
-    case "tabledataset":
-      return `How should the rows of "${source.table.name}" be rendered?`;
+      return `How "${source.dataset.name}" will be shown — ${source.option.label}.`;
+    case "table":
+      return `How the rows of "${source.entry.name}" will be drawn.`;
     case "mesh":
-      return `Add mesh collection ${source.mesh.version} to this scene.`;
+      return `Add ${source.entry.name} to this scene.`;
     case "annotation":
-      return `Draw the shapes of "${source.collection.name}" in this scene.`;
+      return `Draw the shapes of "${source.entry.name}" in this scene.`;
   }
 };
 
@@ -588,10 +704,10 @@ const AddLayerFormInner = (props: { scene: string }) => {
     [capabilityData],
   );
 
-  const groups = useMemo(
+  const sections = useMemo(
     () =>
       world
-        ? groupCandidates({
+        ? buildSections({
             world,
             placedSystems: world.placedSystems,
             capabilities,
@@ -601,8 +717,6 @@ const AddLayerFormInner = (props: { scene: string }) => {
     [world, capabilities, search],
   );
 
-  const expanded = !!search || totalRows(groups) <= COLLAPSE_ABOVE;
-
   return (
     <div className="flex flex-col gap-3">
       <DialogHeader>
@@ -611,7 +725,7 @@ const AddLayerFormInner = (props: { scene: string }) => {
           {source
             ? stepDescription(source)
             : world
-              ? `Everything reachable from "${world.name}", the world "${data?.scene.name}" composes over.`
+              ? `Everything "${data?.scene.name}" can reach from its world, "${world.name}".`
               : "Loading what this scene can reach…"}
         </DialogDescription>
       </DialogHeader>
@@ -619,24 +733,23 @@ const AddLayerFormInner = (props: { scene: string }) => {
       {source === null ? (
         <>
           <Input
-            placeholder="Search spaces and what lives in them…"
+            placeholder="Search datasets, meshes, measurements…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto">
-            {groups.map((group) => (
-              <SpaceSection
-                key={`${group.id}:${expanded}`}
-                group={group}
-                defaultOpen={expanded}
+          <div className="flex max-h-[50vh] flex-col gap-4 overflow-y-auto">
+            {sections.map((section) => (
+              <SectionView
+                key={section.id}
+                section={section}
                 onSelect={setSource}
               />
             ))}
-            {!loading && !groups.length && (
+            {!loading && !sections.length && (
               <div className="text-xs text-muted-foreground">
                 {search
                   ? "Nothing reachable matches that"
-                  : "No space can reach this scene's world yet — register something into it first"}
+                  : "Nothing can reach this scene's world yet — register something into it first"}
               </div>
             )}
           </div>
@@ -647,22 +760,22 @@ const AddLayerFormInner = (props: { scene: string }) => {
           source={source}
           onBack={() => setSource(null)}
         />
-      ) : source.kind === "tabledataset" ? (
+      ) : source.kind === "table" ? (
         <TableLayerForm
           scene={props.scene}
-          table={source.table}
+          entry={source.entry}
           onBack={() => setSource(null)}
         />
       ) : source.kind === "mesh" ? (
         <MeshLayerForm
           scene={props.scene}
-          mesh={source.mesh}
+          entry={source.entry}
           onBack={() => setSource(null)}
         />
       ) : (
         <AnnotationLayerForm
           scene={props.scene}
-          collection={source.collection}
+          entry={source.entry}
           onBack={() => setSource(null)}
         />
       )}

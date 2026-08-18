@@ -1,6 +1,7 @@
+import { Guard } from "@/app/Arkitekt";
 import { Separator } from "@/components/ui/separator";
+import { LatestMentionsSection } from "@/kraph/components/sections/LatestMentionsSection";
 import { Username } from "../Me";
-import { LatestMentionsSection } from "./LatestMentionsSection";
 import { RecentAppsSection } from "./RecentAppsSection";
 import { UserOrganizationsSection } from "./UserOrganizationsSection";
 
@@ -19,10 +20,12 @@ export const DashboardLayout = () => {
 
       <Separator />
 
-      {/* Latest Mentions - Top Priority */}
-      <LatestMentionsSection />
-
-      <Separator />
+      {/* Latest Mentions - Top Priority. Mentions come out of kraph now, so
+          the whole block sits out in a deployment without it. */}
+      <Guard.Kraph unavailable={<></>}>
+        <LatestMentionsSection />
+        <Separator />
+      </Guard.Kraph>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -1,19 +1,59 @@
 import { Guard } from "@/app/Arkitekt";
+import { StructureRoomsSidebar } from "@/alpaka/sidebars/StructureRoomsSidebar";
 import { CommandMenu } from "@/command/Menu";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { Identifier, Object } from "@/types";
-import { useMemo } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useMemo,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { Sidebars } from "./Sidebars";
 import { PageLayout, PageVariant } from "./PageLayout";
-import { useNavigate } from "react-router-dom";
-import { useCreateRoomMutation } from "@/alpaka/api/graphql";
-import { storeRoomTalkingAbout } from "@/alpaka/roomTalkingAbout";
-import { AlpakaRoom } from "@/linkers";
-import { MessageSquareMore } from "lucide-react";
-import { Button } from "../ui/button";
-import { toast } from "sonner";
-import { Komments } from "@/lok-next/components/komments/Komments";
+import { Komments } from "@/kraph/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+
+/** Label of the rail tab holding this structure's conversations. */
+const CHAT_TAB_LABEL = "Chat";
+
+/**
+ * Most model pages hand in their own rail instead of using the default below,
+ * and every model page should be able to talk about what it is showing — so
+ * the Chat tab is folded into whatever the page passed:
+ *
+ * - a `<Sidebars>` rail gets the tab appended (`collectTabs` dedups by label,
+ *   so a rail already spelling out its own "Chat" keeps winning);
+ * - a bare component as the rail (a handful of pages pass just their
+ *   `Komments`) is promoted to a two-tab rail, since a tabless rail has
+ *   nowhere for the chat to go.
+ */
+const withChatTab = (
+  rail: ReactNode,
+  chatTab: ReactNode,
+  sidebarKey: string,
+): ReactNode => {
+  if (isValidElement(rail) && rail.type === Sidebars) {
+    const element = rail as ReactElement<ComponentProps<typeof Sidebars>>;
+    return cloneElement(
+      element,
+      {},
+      <>
+        {element.props.children}
+        {chatTab}
+      </>,
+    );
+  }
+
+  return (
+    <Sidebars sidebarKey={sidebarKey}>
+      <Sidebars.Tab label="Comments">{rail}</Sidebars.Tab>
+      {chatTab}
+    </Sidebars>
+  );
+};
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -65,98 +105,40 @@ export const ModelPageLayout = ({
     <KnowledgeSidebar identifier={identifier} object={object} />
   );
 
+  const chatTab = (
+    <Sidebars.Tab label={CHAT_TAB_LABEL} key={CHAT_TAB_LABEL}>
+      <Guard.Alpaka>
+        <StructureRoomsSidebar identifier={identifier} object={object} />
+      </Guard.Alpaka>
+    </Sidebars.Tab>
+  );
+
   return (
     <PageLayout
       title={title}
-      sidebars={sidebars ? <>{sidebars}</> : (
+      sidebars={sidebars ? withChatTab(sidebars, chatTab, sidebarKey ?? "DetailModel") : (
         <Sidebars
           sidebarKey={sidebarKey ?? "DetailModel"}
           defaultTab={defaultSidebar}
           variant={overlay ? "overlay" : "default"}
         >
-          <Sidebars.Tab label="Comments">{kommentsSidebar}</Sidebars.Tab>
+          <Sidebars.Tab label="Comments">
+            <Guard.Kraph>{kommentsSidebar}</Guard.Kraph>
+          </Sidebars.Tab>
           <Sidebars.Tab label="Knowledge">
             <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>
           </Sidebars.Tab>
           {additionalSidebars}
+          {chatTab}
         </Sidebars>
       )}
       variant={variant}
       overlay={overlay}
       actions={actions}
-      pageActions={
-        <div className="flex flex-row gap-1.5 items-center">
-          <Guard.Alpaka><TalkAboutPageButton identifier={identifier} object={object} /></Guard.Alpaka>
-          {pageActions || <ObjectButton objects={objects} />}
-        </div>
-      }
+      pageActions={pageActions || <ObjectButton objects={objects} />}
     >
       <CommandMenu objects={objects} />
       {children}
     </PageLayout>
-  );
-};
-
-export const TalkAboutPageButton = ({
-  identifier,
-  object,
-}: {
-  identifier: string;
-  object: { id: string };
-}) => {
-  const [createRoom, { loading }] = useCreateRoomMutation();
-  const navigate = useNavigate();
-
-  const handleTalk = async () => {
-    if (!object?.id) return;
-
-    const talkingAbout = [{
-      identifier,
-      object: object.id,
-    }];
-
-    try {
-      const title = `Talk about ${identifier.split(".").pop() || identifier}`;
-      const description = `Conversation about ${identifier} ${object.id}`;
-
-      const result = await createRoom({
-        variables: {
-          input: {
-            title,
-            description,
-            talkingAbout,
-          },
-        },
-      });
-
-      const roomId = result.data?.createRoom.id;
-      if (!roomId) {
-        throw new Error("Failed to create room");
-      }
-
-      storeRoomTalkingAbout(roomId, talkingAbout);
-
-      navigate(
-        `${AlpakaRoom.linkBuilder(roomId)}?prefillStructures=${encodeURIComponent(
-          JSON.stringify(talkingAbout)
-        )}`
-      );
-    } catch (err: any) {
-      console.error(err);
-      toast.error(`Failed to start conversation: ${err.message || err}`);
-    }
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="flex items-center gap-1.5 h-9 rounded-xl border bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground"
-      onClick={handleTalk}
-      disabled={loading}
-    >
-      <MessageSquareMore className="h-4 w-4" />
-      <span>Talk</span>
-    </Button>
   );
 };

@@ -65,3 +65,15 @@ mutation CreateMeshLayer($input: CreateMeshLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Retune how a mesh layer is drawn. A patch: an omitted field keeps its current
+# value, so switching the colouring cannot silently drop the material or the
+# wireframe. The card uses it for the two PICKER choices — `activeColorBy` (one
+# index, or null for the flat material color) and `activeFilterBys` (the subset
+# of rules that apply, AND-combined) — which are stored, unlike the card's
+# session-local render settings.
+mutation UpdateMeshLayer($input: UpdateMeshLayerInput!) {
+  updateMeshLayer(input: $input) {
+    ...SceneLayer
+  }
+}

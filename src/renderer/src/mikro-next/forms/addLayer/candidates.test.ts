@@ -1,25 +1,72 @@
 import { describe, expect, it } from "vitest";
-import type { TableColumnRole } from "../../api/graphql";
+import type { ArrayDatasetSpec, TableColumnRole } from "../../api/graphql";
 import {
   Candidate,
   Capabilities,
+  DatasetEntry,
+  Section,
   SpaceLike,
-  candidateRow,
-  groupCandidates,
+  buildSections,
+  inferLensKinds,
+  inferTableKinds,
 } from "./candidates";
 
 // Spelled as wire values, for the same reason candidates.ts does: importing the
 // generated enum would drag the Apollo client into a node-environment suite.
 const COORDINATE = "COORDINATE" as TableColumnRole;
 const TRACK_ID = "TRACK_ID" as TableColumnRole;
+const VOLUME = "VOLUME" as ArrayDatasetSpec;
 
-const lens = (id: string, dataset = "dapi.zarr"): Candidate => ({
+type LensOverrides = {
+  dataset?: string;
+  datasetId?: string;
+  axisNames?: string[];
+  shape?: number[];
+  slices?: { axis: string; start?: number | null; stop?: number | null }[];
+  z?: string | null;
+  intensity?: string | null;
+};
+
+const lens = (id: string, overrides: LensOverrides = {}): Candidate => ({
   __typename: "Lens",
   id,
-  shape: [512, 512],
-  axisNames: ["y", "x"],
-  slices: [],
-  dataset: { id: `ds-${id}`, name: dataset, description: null },
+  shape: overrides.shape ?? [512, 512],
+  axisNames: overrides.axisNames ?? ["y", "x"],
+  slices: (overrides.slices ?? []).map((slice) => ({
+    axis: slice.axis,
+    start: slice.start ?? null,
+    stop: slice.stop ?? null,
+    step: null,
+  })),
+  renderAxes: {
+    x: "x",
+    y: "y",
+    z: overrides.z ?? null,
+    intensity: overrides.intensity ?? null,
+  },
+  dataset: {
+    id: overrides.datasetId ?? `ds-${id}`,
+    name: overrides.dataset ?? "dapi.zarr",
+    description: null,
+  },
+});
+
+const dataset = (
+  id: string,
+  name = "dapi.zarr",
+  spec: ArrayDatasetSpec[] = [],
+): Candidate => ({
+  __typename: "ArrayDataset",
+  id,
+  name,
+  description: null,
+  spec,
+});
+
+const level = (id: string, value: number): Candidate => ({
+  __typename: "DataArray",
+  id,
+  level: value,
 });
 
 const table = (id: string, roles: TableColumnRole[]): Candidate => ({
@@ -54,152 +101,226 @@ const annotations = (id: string): Candidate => ({
   description: null,
 });
 
-const space = (
-  id: string,
-  name: string,
-  residents: Candidate[],
-): SpaceLike => ({ id, name, residents });
+const space = (id: string, name: string, residents: Candidate[]): SpaceLike => ({
+  id,
+  name,
+  residents,
+});
 
 const caps = (drawable: string[], labels: string[]): Capabilities => ({
   drawable: new Set(drawable),
   labels: new Set(labels),
 });
 
-describe("candidateRow", () => {
-  it("offers a lens only the kinds the server would accept", () => {
-    const row = candidateRow(lens("l1"), caps(["l1"], []));
-    expect(row.badges).toEqual(["image"]);
-    expect(row.source).toMatchObject({ kind: "lens", image: true, label: false });
-  });
+const sectionOf = (sections: Section[], id: string) =>
+  sections.find((section) => section.id === id);
 
-  it("disables a lens the server would draw as neither", () => {
-    const row = candidateRow(lens("l1"), caps([], []));
-    expect(row.source).toBeNull();
-    expect(row.disabledReason).toContain("not drawable");
-    expect(row.badges).toEqual([]);
-  });
+const datasetsOf = (sections: Section[]) =>
+  (sectionOf(sections, "datasets")?.entries ?? []) as DatasetEntry[];
 
-  it("offers both kinds while the capability query is still unanswered", () => {
-    const row = candidateRow(lens("l1"), null);
-    expect(row.badges).toEqual(["image", "label"]);
-    expect(row.source).toMatchObject({ image: true, label: true });
-  });
+const asLens = (candidate: Candidate) =>
+  candidate as Extract<Candidate, { __typename: "Lens" }>;
 
-  it("badges tracks only for a table with a TRACK_ID column", () => {
-    expect(
-      candidateRow(table("t1", [COORDINATE]), null).badges,
-    ).toEqual(["points"]);
-    expect(
-      candidateRow(table("t2", [TRACK_ID]), null).badges,
-    ).toEqual(["points", "tracks"]);
-  });
-
-  it("lists the two residents that are not layer sources, with a reason", () => {
-    const dataset = candidateRow(
-      { __typename: "ArrayDataset", id: "d1", name: "dapi.zarr" },
-      null,
-    );
-    expect(dataset.source).toBeNull();
-    expect(dataset.disabledReason).toContain("lenses");
-
-    const level = candidateRow(
-      { __typename: "DataArray", id: "a1", level: 0 },
-      null,
-    );
-    expect(level.source).toBeNull();
-    expect(level.name).toBe("pyramid level 0");
-  });
-
-  it("makes a mesh collection and an annotation collection addable", () => {
-    expect(candidateRow(mesh("m1"), null).source).toMatchObject({ kind: "mesh" });
-    expect(candidateRow(annotations("a1"), null).source).toMatchObject({
-      kind: "annotation",
-    });
-  });
-});
-
-describe("groupCandidates", () => {
-  const world = space("w", "Stage world", []);
-
-  it("puts the world first and dedupes it against placedSystems", () => {
-    const groups = groupCandidates({
-      world,
-      placedSystems: [space("z", "zeta grid", [mesh("m1")]), world],
-      capabilities: null,
-      search: "",
-    });
-    expect(groups.map((group) => group.id)).toEqual(["w", "z"]);
-    expect(groups[0].isWorld).toBe(true);
-  });
-
-  it("sorts the reachable spaces by name", () => {
-    const groups = groupCandidates({
-      world,
-      placedSystems: [
-        space("b", "beta", [mesh("m2")]),
-        space("a", "alpha", [mesh("m1")]),
-      ],
-      capabilities: null,
-      search: "",
-    });
-    expect(groups.map((group) => group.name)).toEqual([
-      "Stage world",
-      "alpha",
-      "beta",
+describe("inferLensKinds", () => {
+  it("infers a plain image, and offers nothing else", () => {
+    expect(inferLensKinds(asLens(lens("l1")), caps(["l1"], []))).toEqual([
+      "INTENSITY",
     ]);
   });
 
-  it("labels an empty space a reference frame and keeps it without a search", () => {
-    const [worldGroup] = groupCandidates({
-      world,
-      placedSystems: [],
-      capabilities: null,
-      search: "",
-    });
-    expect(worldGroup.label).toBe("reference frame");
-    expect(worldGroup.rows).toEqual([]);
+  it("infers a label whenever the server says the lens is one", () => {
+    expect(inferLensKinds(asLens(lens("l1")), caps(["l1"], ["l1"]))).toEqual([
+      "LABEL",
+      "INTENSITY",
+    ]);
   });
 
-  it("orders addable rows above the ones that only explain themselves", () => {
-    const groups = groupCandidates({
+  it("infers a volume from real z extent", () => {
+    const volumetric = lens("l1", {
+      axisNames: ["z", "y", "x"],
+      shape: [40, 512, 512],
+      z: "z",
+    });
+    expect(inferLensKinds(asLens(volumetric), caps(["l1"], []))).toEqual([
+      "VOLUME",
+      "INTENSITY",
+    ]);
+  });
+
+  it("does not call a single-plane stack a volume", () => {
+    const flat = lens("l1", {
+      axisNames: ["z", "y", "x"],
+      shape: [1, 512, 512],
+      z: "z",
+    });
+    expect(inferLensKinds(asLens(flat), caps(["l1"], []))).toEqual([
+      "INTENSITY",
+    ]);
+  });
+
+  it("offers rgb for three channels but never infers it", () => {
+    const rgb = lens("l1", {
+      axisNames: ["c", "y", "x"],
+      shape: [3, 512, 512],
+      intensity: "c",
+    });
+    expect(inferLensKinds(asLens(rgb), caps(["l1"], []))).toEqual([
+      "INTENSITY",
+      "RGB",
+    ]);
+  });
+
+  it("offers a label it cannot confirm, but never leads with one", () => {
+    // Optimism about the set, never about the choice: the first kind is what
+    // gets created unasked, and an ordinary stack is not a mask.
+    expect(inferLensKinds(asLens(lens("l1")), null)).toEqual([
+      "INTENSITY",
+      "LABEL",
+    ]);
+  });
+
+  it("offers nothing for a lens the server would draw as neither", () => {
+    expect(inferLensKinds(asLens(lens("l1")), caps([], []))).toEqual([]);
+  });
+});
+
+describe("inferTableKinds", () => {
+  it("infers points, and tracks only with a TRACK_ID column", () => {
+    const points = table("t1", [COORDINATE]);
+    const tracks = table("t2", [TRACK_ID]);
+    expect(
+      inferTableKinds(points as Extract<Candidate, { __typename: "TableDataset" }>),
+    ).toEqual(["POINT"]);
+    expect(
+      inferTableKinds(tracks as Extract<Candidate, { __typename: "TableDataset" }>),
+    ).toEqual(["TRACK", "POINT"]);
+  });
+});
+
+describe("buildSections", () => {
+  const world = space("w", "Stage world", []);
+
+  it("never lists a pyramid level", () => {
+    const sections = buildSections({
       world: space("w", "Stage world", [
-        { __typename: "ArrayDataset", id: "d1", name: "dapi.zarr" },
-        lens("l1"),
+        dataset("d1"),
+        lens("l1", { datasetId: "d1" }),
+        level("a0", 0),
+        level("a1", 1),
       ]),
       placedSystems: [],
       capabilities: caps(["l1"], []),
       search: "",
     });
-    expect(groups[0].rows.map((row) => row.resident.__typename)).toEqual([
-      "Lens",
-      "ArrayDataset",
+    const datasets = datasetsOf(sections);
+    expect(datasets).toHaveLength(1);
+    expect(datasets[0].lenses).toHaveLength(1);
+    expect(JSON.stringify(sections)).not.toContain("DataArray");
+  });
+
+  it("merges a dataset with its lenses, wherever those lenses live", () => {
+    const sections = buildSections({
+      world: space("w", "Stage world", [
+        dataset("d1", "dapi.zarr", [VOLUME]),
+        lens("full", { datasetId: "d1" }),
+      ]),
+      placedSystems: [
+        space("crop", "crop space", [
+          lens("cropped", {
+            datasetId: "d1",
+            slices: [{ axis: "x", start: 0, stop: 128 }],
+          }),
+        ]),
+      ],
+      capabilities: caps(["full", "cropped"], []),
+      search: "",
+    });
+
+    const [entry] = datasetsOf(sections);
+    expect(entry.name).toBe("dapi.zarr");
+    expect(entry.specs).toEqual([VOLUME]);
+    // The unsliced lens first: that is what "the dataset" means.
+    expect(entry.lenses.map((option) => option.lens.id)).toEqual([
+      "full",
+      "cropped",
+    ]);
+    expect(entry.lenses[0].space).toMatchObject({ id: "w", isWorld: true });
+    expect(entry.lenses[1].space).toMatchObject({ id: "crop", isWorld: false });
+  });
+
+  it("keeps a dataset reachable only through a lens, and drops one with no drawable lens", () => {
+    const sections = buildSections({
+      world: space("w", "Stage world", [
+        // No ArrayDataset resident of its own — the lens knows its dataset.
+        lens("l1", { datasetId: "d1", dataset: "orphan.zarr" }),
+        // A dataset whose only lens the server refuses: not a row, not a reason.
+        dataset("d2", "undrawable.zarr"),
+        lens("l2", { datasetId: "d2", dataset: "undrawable.zarr" }),
+      ]),
+      placedSystems: [],
+      capabilities: caps(["l1"], []),
+      search: "",
+    });
+    expect(datasetsOf(sections).map((entry) => entry.name)).toEqual([
+      "orphan.zarr",
     ]);
   });
 
-  it("keeps a space matched by its own name, with every row", () => {
-    const groups = groupCandidates({
-      world,
-      placedSystems: [space("n", "nuclei mask grid", [lens("l1"), mesh("m1")])],
-      capabilities: null,
-      search: "nuclei",
-    });
-    expect(groups).toHaveLength(1);
-    expect(groups[0].rows).toHaveLength(2);
-  });
-
-  it("keeps only the matching rows of an unmatched space, and drops the empty ones", () => {
-    const groups = groupCandidates({
+  it("sections meshes, measurements and annotations apart from datasets", () => {
+    const sections = buildSections({
       world,
       placedSystems: [
-        space("n", "grid one", [lens("l1", "dapi.zarr"), mesh("m1")]),
-        space("o", "grid two", [mesh("m2")]),
+        space("m", "mesh space", [mesh("m1")]),
+        space("t", "table space", [table("t1", [TRACK_ID])]),
+        space("a", "annotation space", [annotations("a1")]),
+      ],
+      capabilities: null,
+      search: "",
+    });
+    expect(sections.map((section) => section.id)).toEqual([
+      "meshes",
+      "tables",
+      "annotations",
+    ]);
+    expect(sectionOf(sections, "tables")?.entries[0]).toMatchObject({
+      kind: "table",
+      kinds: ["TRACK", "POINT"],
+      space: { name: "table space" },
+    });
+  });
+
+  it("dedupes the world against placedSystems", () => {
+    const inhabited = space("w", "Stage world", [mesh("m1")]);
+    const sections = buildSections({
+      world: inhabited,
+      placedSystems: [inhabited],
+      capabilities: null,
+      search: "",
+    });
+    expect(sectionOf(sections, "meshes")?.entries).toHaveLength(1);
+  });
+
+  it("searches names, and the space that made a thing reachable", () => {
+    const byName = buildSections({
+      world,
+      placedSystems: [
+        space("n", "grid one", [lens("l1", { dataset: "dapi.zarr" })]),
+        space("o", "grid two", [mesh("m1")]),
       ],
       capabilities: null,
       search: "dapi",
     });
-    expect(groups.map((group) => group.id)).toEqual(["n"]);
-    expect(groups[0].rows.map((row) => row.name)).toEqual([
-      "a lens of dapi.zarr",
-    ]);
+    expect(byName.map((section) => section.id)).toEqual(["datasets"]);
+
+    const bySpace = buildSections({
+      world,
+      placedSystems: [
+        space("n", "nuclei mask grid", [mesh("m1")]),
+        space("o", "grid two", [mesh("m2")]),
+      ],
+      capabilities: null,
+      search: "nuclei",
+    });
+    expect(sectionOf(bySpace, "meshes")?.entries).toHaveLength(1);
   });
 });

@@ -93,7 +93,34 @@ export interface DrawnRoi {
   tool: DrawingTool;
   /** World-space vectors, for rendering and for the mutation */
   worldVectors: Array<{ x: number; y: number; z: number }>;
+  /**
+   * The server annotation this preview became, once the mutation answered.
+   * The preview OUTLIVES the mutation: dropping it the moment the server
+   * confirms would blink the shape off screen until the annotation layer's own
+   * query returns it (a fresh layer has to mount first, so on a scene's first
+   * annotation that gap is the whole scope reconcile plus a query). Cleared by
+   * `resolvePersistedRois` when the persisted copy actually renders.
+   */
+  persistedId?: string;
+  /**
+   * The collection the annotation landed in. A scene can carry SEVERAL
+   * annotation layers (one per collection — see `AnnotationsPanel`), each
+   * polling its own query, so a layer may only expire previews it is actually
+   * responsible for. Without this an unrelated layer's poll would time out a
+   * preview whose annotation only ever appears in another layer's result.
+   */
+  persistedCollectionId?: string;
+  /** When the stamp was made — see `PERSISTED_PREVIEW_TIMEOUT_MS`. */
+  persistedAt?: number;
 }
+
+/**
+ * How long a confirmed preview may wait for its persisted copy before it is
+ * dropped anyway. Without this a shape whose annotation never comes back in
+ * its collection's query (filtered out, deleted server-side, a collection
+ * mismatch) would strand its preview on screen for the session.
+ */
+export const PERSISTED_PREVIEW_TIMEOUT_MS = 15_000;
 
 export interface RoiDrawingState {
   activeTool: AnnotateTool | null;
@@ -145,6 +172,30 @@ export interface RoiDrawingState {
   addDrawnRoi: (roi: DrawnRoi) => void;
   removeDrawnRoi: (id: string) => void;
   clearDrawnRois: () => void;
+  /**
+   * The server confirmed this preview as `annotationId`. Keeps it on screen —
+   * `resolvePersistedRois` is what finally drops it, once the persisted copy
+   * is actually being drawn.
+   */
+  markDrawnRoiPersisted: (
+    id: string,
+    annotation: { id: string; collectionId: string },
+    now?: number,
+  ) => void;
+  /**
+   * One annotation layer reporting what its query returned. Drops every
+   * confirmed preview whose annotation is now in hand, plus any of THIS
+   * collection's that waited past `PERSISTED_PREVIEW_TIMEOUT_MS`.
+   *
+   * Unconfirmed previews are never touched: a failed mutation must not
+   * silently lose the user's shape. Neither are other collections' — see
+   * `persistedCollectionId`.
+   */
+  resolvePersistedRois: (
+    collectionId: string,
+    annotationIds: Iterable<string>,
+    now?: number,
+  ) => void;
   setPendingPathSeed: (seed: [number, number, number] | null) => void;
   setPendingPrimitiveAnchor: (anchor: [number, number, number] | null) => void;
   setPrimitiveSessionActive: (active: boolean) => void;
@@ -200,6 +251,27 @@ export const createRoiDrawingStore = () =>
       clearDrawnRois: () =>
         set((state) => {
           state.drawnRois = [];
+        }),
+      markDrawnRoiPersisted: (id, annotation, now = Date.now()) =>
+        set((state) => {
+          const roi = state.drawnRois.find((r) => r.id === id);
+          if (!roi) return;
+          roi.persistedId = annotation.id;
+          roi.persistedCollectionId = annotation.collectionId;
+          roi.persistedAt = now;
+        }),
+      resolvePersistedRois: (collectionId, annotationIds, now = Date.now()) =>
+        set((state) => {
+          const rendered = new Set(annotationIds);
+          const next = state.drawnRois.filter((roi) => {
+            if (!roi.persistedId) return true;
+            if (rendered.has(roi.persistedId)) return false;
+            // Someone else's collection: not this layer's to expire.
+            if (roi.persistedCollectionId !== collectionId) return true;
+            return now - (roi.persistedAt ?? now) < PERSISTED_PREVIEW_TIMEOUT_MS;
+          });
+          // Skip the write when nothing resolved — this runs on every poll.
+          if (next.length !== state.drawnRois.length) state.drawnRois = next;
         }),
     })),
   );

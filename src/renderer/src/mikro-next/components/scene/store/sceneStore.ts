@@ -2,7 +2,9 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { AxisType, PreferredView, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
-import { isImageLayer } from "../core/layerGuards";
+import { isImageLayer, type ImageLayerFragment } from "../core/layerGuards";
+import { reconcileSceneLayers } from "../core/layerReconcile";
+import { layerStructureKey } from "../core/sceneStructure";
 import {
   normalizeLayer,
   type LayerState,
@@ -15,9 +17,11 @@ import type { FabriksInstanceColormap } from "../render/fabriks/instanceColormap
 export type { LayerState };
 
 /**
- * Session-local render state a MESH layer carries beyond its fragment. There
- * is no `updateMeshLayer` mutation, so — exactly like the card's visibility
- * toggle — these live for the session and no longer.
+ * Session-local render state a MESH layer carries beyond its fragment. These
+ * fields have nowhere to be stored — `updateMeshLayer` accepts the layer's
+ * material, its pickers and their active indices, but none of the client-side
+ * render presets below — so, exactly like the card's visibility toggle, they
+ * live for the session and no longer.
  */
 export type MeshLayerSessionState = {
   /** Which instance colormap the collection is colored by (default "hues"). */
@@ -60,19 +64,56 @@ export interface SceneState {
    * what non-image layers (meshes, ROIs) compose their transforms from.
    */
   transformContext: SceneTransformContext;
-  /** Raw polymorphic layers (all __typenames), consumed by the render dispatch. */
+  /**
+   * Raw polymorphic layers (all __typenames), consumed by the render dispatch.
+   *
+   * NOT write-once: the layer set is dynamic (the server mints an
+   * `AnnotationLayer` on a scene's first annotation, layers are added and
+   * deleted), and `syncSceneLayers` folds those changes in while the scene
+   * keeps rendering. Untouched layers keep their object identity across a
+   * fold, so a subscription that reads one layer out of this list still
+   * settles — see `core/layerReconcile.ts`.
+   */
   sceneLayers: SceneLayer[];
   /** Normalized image layers only (carry zarr + transfer/render-graph state). */
   layers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
   /**
+   * Fold a new layer set into the LIVE store, id-keyed — the alternative to
+   * rebuilding the whole store scope (which unmounts the canvas and re-opens
+   * every zarr array). Layers that did not structurally change keep their
+   * exact objects, so session-only state and the layer-keyed caches downstream
+   * survive. See `core/layerReconcile.ts` for the contract.
+   *
+   * The world frame is deliberately NOT a parameter: it is scope-scoped (a
+   * world change rebuilds the scope), so the fold composes affines against
+   * this store's own `transformContext` and can never silently adopt a new
+   * world.
+   */
+  syncSceneLayers: (
+    nextLayers: readonly SceneLayerFragment[],
+  ) => { addedLayerIds: string[]; removedLayerIds: string[] };
+  /**
+   * Republish `layers` with a NEW array reference and identical elements. The
+   * only way to ask the trackers for a replan when nothing about the layers
+   * changed but their zarr arrays did (a store that opened late).
+   */
+  touchImageLayers: () => void;
+  /**
    * Patch one polymorphic scene layer in place.
    *
    * The image path has `updateLayer` because those layers are normalized into
    * `LayerState`; a mesh or annotation layer is consumed straight off the
-   * fragment, so its view state is edited here. Local only: `updateLayer` (the
-   * mutation) is typed to return `ImageLayer` and there is no `updateMeshLayer`,
-   * so a mesh layer's visibility lives for the session and no longer.
+   * fragment, so its view state is edited here.
+   *
+   * Two callers, two meanings. SESSION state (visibility, palette, detail) is
+   * patched here and nowhere else — `updateLayer` the mutation is typed to
+   * return `ImageLayer`, so it has no home on the server. STORED mesh state
+   * (`colorBys`/`filterBys` and their active indices) goes through
+   * `updateMeshLayer` and is folded back in here afterwards, because
+   * `syncSceneLayers` keeps the previous raw object whenever a layer's
+   * STRUCTURE key is unchanged — a re-emission that changed only a mesh
+   * layer's content would otherwise be discarded.
    */
   patchSceneLayer: (id: string, patch: Partial<SceneLayer>) => void;
 }
@@ -86,7 +127,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
   const spaceAxis = scene.worldCoordinateSystem?.axes.find((axis) => axis.type === AxisType.Space);
 
   return createStore<SceneState>()(
-    immer((set) => ({
+    immer((set, get) => ({
       id: scene.id,
       preferredView: scene.preferredView,
       setPreferredView: (view) =>
@@ -124,6 +165,50 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
             Object.assign(state.sceneLayers[index], patch);
           }
         }),
+      syncSceneLayers: (nextLayers) => {
+        const { sceneLayers, layers, transformContext } = get();
+        const result = reconcileSceneLayers<SceneLayer, SceneLayer & ImageLayerFragment, LayerState>({
+          previousSceneLayers: sceneLayers,
+          previousLayers: layers,
+          nextLayers: nextLayers as readonly SceneLayer[],
+          isImage: (layer): layer is SceneLayer & ImageLayerFragment => isImageLayer(layer),
+          structureKey: layerStructureKey,
+          planDefaultLods: (images) => planDefaultVolumeLods(images as ImageLayerFragment[]),
+          normalize: (layer, defaultVolumeLod) =>
+            normalizeLayer(layer, defaultVolumeLod, transformContext),
+          // New objects, never a mutation of the stored one: after any earlier
+          // `updateLayer`/`patchSceneLayer` the stored objects are immer-frozen.
+          carryImageSession: (previous, next) => ({
+            ...next,
+            fixedLOD: previous.fixedLOD,
+            defaultVolumeLOD: previous.defaultVolumeLOD,
+            visible: previous.visible,
+          }),
+          carryRawSession: (previous, next) => ({
+            ...next,
+            instanceColormap: previous.instanceColormap,
+            colorByInstance: previous.colorByInstance,
+            detail: previous.detail,
+            flatNormals: previous.flatNormals,
+            doubleSided: previous.doubleSided,
+            slabScale: previous.slabScale,
+          }),
+        });
+
+        const summary = {
+          addedLayerIds: result.addedLayerIds,
+          removedLayerIds: result.removedLayerIds,
+        };
+        if (!result.sceneLayersChanged && !result.layersChanged) return summary;
+
+        // The PLAIN-OBJECT form on purpose: the immer middleware only runs
+        // `produce` for function updaters, so this bypasses the finalizer.
+        // Going through it would freeze/clone the reused elements and break
+        // the identity preservation the reconcile exists for.
+        set({ sceneLayers: result.sceneLayers, layers: result.layers });
+        return summary;
+      },
+      touchImageLayers: () => set({ layers: [...get().layers] }),
     })),
   );
 };

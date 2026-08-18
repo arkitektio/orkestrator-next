@@ -1,3 +1,4 @@
+import { Guard } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -7,7 +8,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { OmeroArkImage } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
+import { Komments } from "@/kraph/components/komments/Komments";
 import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
 
@@ -19,7 +20,11 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
       sidebars={
         <Sidebars>
           <Sidebars.Tab label="Comments">
-            {data?.image ? <Komments identifier="@omero-ark/image" object={data.image} /> : null}
+            <Guard.Kraph>
+              {data?.image ? (
+                <Komments identifier="@omero-ark/image" object={data.image} />
+              ) : null}
+            </Guard.Kraph>
           </Sidebars.Tab>
         </Sidebars>
       }

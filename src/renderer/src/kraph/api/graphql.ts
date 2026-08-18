@@ -306,6 +306,14 @@ export type AssertStructureRelationExistsInput = {
   term: Scalars['String']['input'];
 };
 
+export type AssertedComment = {
+  __typename?: 'AssertedComment';
+  /** The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart. */
+  assertion: Assertion;
+  /** The remark this act was about — recorded it, withdrew it, or reopened it; the assertion says which */
+  comment: Comment;
+};
+
 /** Who claimed something, with what tool, and when — one row of the append-only log */
 export type Assertion = {
   __typename?: 'Assertion';
@@ -325,6 +333,11 @@ export type Assertion = {
   seq: Scalars['Int']['output'];
   /** Who made the claim — a user id, or the identity of an automated agent */
   subject: Scalars['String']['output'];
+};
+
+export type AttestCommentInput = {
+  /** The ID of the comment to attest */
+  id: Scalars['String']['input'];
 };
 
 /** Input for claiming that an entity exists */
@@ -564,6 +577,43 @@ export enum ColumnKind {
   Node = 'NODE',
   Value = 'VALUE'
 }
+
+export type Comment = {
+  __typename?: 'Comment';
+  /** The act of commenting: who said it, with which app, and when */
+  assertion: Assertion;
+  /** When the remark was recorded */
+  createdAt: Scalars['DateTime']['output'];
+  /** The rich body — the tree of paragraphs, leaves and mentions, as it was posted */
+  descendants: Array<Descendant>;
+  /** The claim's durable identity — a bare uuid */
+  id: Scalars['ID']['output'];
+  /** The subjects mentioned in the body, extracted at write time */
+  mentions: Array<Scalars['String']['output']>;
+  /** The comment this replies to, for threading. Null for a top-level remark */
+  parent?: Maybe<Comment>;
+  /** The direct replies to this comment, oldest first — a thread reads downward */
+  replies: Array<Comment>;
+  /** Whether the winning position says this remark no longer stands — resolved by a reviewer or withdrawn by its author; `standings` says which and by whom. The fold a comment can honestly carry, because nothing scopes it per view */
+  resolved: Scalars['Boolean']['output'];
+  /** Every position anyone has taken on whether this remark still stands, newest first. Empty means nobody has withdrawn or resolved it */
+  standings: Array<Standing>;
+  /** The external datum this remark is about. The structure carries the thread */
+  structure: Structure;
+  /** The plain-text rendering of the body's leaves. Searchable; the body itself is `descendants` */
+  text: Scalars['String']['output'];
+};
+
+export type CommentOnStructureInput = {
+  /** The rich body of the remark — a tree of LEAF/MENTION/PARAGRAPH nodes */
+  descendants: Array<DescendantInput>;
+  /** The structure identifier of the datum, e.g. '@mikro/roi' */
+  identifier: Scalars['String']['input'];
+  /** The id of the external object on its service */
+  object: Scalars['String']['input'];
+  /** The comment this replies to. Must be on the same structure's thread */
+  parent?: InputMaybe<Scalars['ID']['input']>;
+};
 
 export enum ConflictPolicy {
   Combine = 'COMBINE',
@@ -1126,6 +1176,38 @@ export enum DerivationType {
   LatestAssertionTool = 'LATEST_ASSERTION_TOOL',
   PriorityLatest = 'PRIORITY_LATEST',
   Rollup = 'ROLLUP'
+}
+
+export type Descendant = {
+  /** The children of this node. Always empty for leafs */
+  children?: Maybe<Array<Descendant>>;
+  /** The kind of this node */
+  kind: DescendantKind;
+  /** The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree */
+  unsafeChildren?: Maybe<Scalars['AnyScalar']['output']>;
+};
+
+export type DescendantInput = {
+  bold?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The children of this node. Always empty for leafs */
+  children?: InputMaybe<Array<DescendantInput>>;
+  code?: InputMaybe<Scalars['Boolean']['input']>;
+  italic?: InputMaybe<Scalars['Boolean']['input']>;
+  /** LEAF, MENTION or PARAGRAPH — see `core.enums.DescendantKind` */
+  kind: DescendantKind;
+  /** The size of a paragraph */
+  size?: InputMaybe<Scalars['String']['input']>;
+  /** The text of a leaf */
+  text?: InputMaybe<Scalars['String']['input']>;
+  underline?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The mentioned subject id — `Assertion.subject`'s vocabulary. Named `user` for shape-compatibility with lok's tree */
+  user?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum DescendantKind {
+  Leaf = 'LEAF',
+  Mention = 'MENTION',
+  Paragraph = 'PARAGRAPH'
 }
 
 /** An INFORMS claim: a structure that is evidence for a node */
@@ -2241,6 +2323,26 @@ export type Label = {
   term?: Maybe<Term>;
 };
 
+export type LeafDescendant = Descendant & {
+  __typename?: 'LeafDescendant';
+  /** Render this text bold */
+  bold?: Maybe<Scalars['Boolean']['output']>;
+  /** The children of this node. Always empty for leafs */
+  children?: Maybe<Array<Descendant>>;
+  /** Render this text as code */
+  code?: Maybe<Scalars['Boolean']['output']>;
+  /** Render this text italic */
+  italic?: Maybe<Scalars['Boolean']['output']>;
+  /** The kind of this node */
+  kind: DescendantKind;
+  /** The text of the leaf */
+  text?: Maybe<Scalars['String']['output']>;
+  /** Render this text underlined */
+  underline?: Maybe<Scalars['Boolean']['output']>;
+  /** The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree */
+  unsafeChildren?: Maybe<Scalars['AnyScalar']['output']>;
+};
+
 /** Input for linking a structure to an entity */
 export type LinkStructureInput = {
   /** Composite ID of the entity this structure informs */
@@ -2686,6 +2788,18 @@ export type MediaUploadGrant = {
   uploadFormField: Scalars['String']['output'];
 };
 
+export type MentionDescendant = Descendant & {
+  __typename?: 'MentionDescendant';
+  /** The children of this node. Always empty for leafs */
+  children?: Maybe<Array<Descendant>>;
+  /** The kind of this node */
+  kind: DescendantKind;
+  /** The mentioned subject id */
+  subject?: Maybe<Scalars['String']['output']>;
+  /** The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree */
+  unsafeChildren?: Maybe<Scalars['AnyScalar']['output']>;
+};
+
 /** A metric node representing computed values */
 export type Metric = Node & {
   __typename?: 'Metric';
@@ -2886,6 +3000,8 @@ export type Mutation = {
   assertStructureExists: StructureAssertion;
   /** Assert a relation between two structures. Drawings are always empty: neither endpoint has a vertex */
   assertStructureRelationExists: StructureRelationAssertion;
+  /** Claim a remark stands again — reopening, as new evidence rather than an undo */
+  attestComment: AssertedComment;
   /** Claim that an entity exists, returning it to every projection whose rules admit it */
   attestEntity: EntityAssertion;
   /** Claim that a natural event exists */
@@ -2894,6 +3010,8 @@ export type Mutation = {
   attestProtocolEvent: ProtocolEventAssertion;
   /** Claim that several nodes are of a word, without displacing anyone else's claim. One act, one assertion */
   classifyNodes: NodesAssertion;
+  /** Record a remark about an external datum, minting its structure if this is the first sight of it. A reply names its parent and stays on the parent's thread */
+  commentOnStructure: AssertedComment;
   /** Create an edge pairs query */
   createEdgePairsQuery: EdgePairsQuery;
   /** Create an edge path query */
@@ -2990,6 +3108,8 @@ export type Mutation = {
   requestZarrUpload: ZarrUploadGrant;
   /** Retract several claims as one act */
   retractClaims: EdgesAssertion;
+  /** Claim a remark no longer stands — resolved by a reviewer or withdrawn by its author; the assertion records whose position it is. The row survives */
+  retractComment: AssertedComment;
   /** Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays. */
   retractEntity: EntityAssertion;
   /** Retract a measurement assertion without destroying it */
@@ -3196,6 +3316,12 @@ export type MutationAssertStructureRelationExistsArgs = {
 
 
 /** Graph Engine Mutations */
+export type MutationAttestCommentArgs = {
+  input: AttestCommentInput;
+};
+
+
+/** Graph Engine Mutations */
 export type MutationAttestEntityArgs = {
   input: AttestEntityInput;
 };
@@ -3216,6 +3342,12 @@ export type MutationAttestProtocolEventArgs = {
 /** Graph Engine Mutations */
 export type MutationClassifyNodesArgs = {
   input: ClassifyNodesInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationCommentOnStructureArgs = {
+  input: CommentOnStructureInput;
 };
 
 
@@ -3504,6 +3636,12 @@ export type MutationRequestZarrUploadArgs = {
 /** Graph Engine Mutations */
 export type MutationRetractClaimsArgs = {
   input: RetractClaimsInput;
+};
+
+
+/** Graph Engine Mutations */
+export type MutationRetractCommentArgs = {
+  input: RetractCommentInput;
 };
 
 
@@ -4218,6 +4356,18 @@ export type OutputParticipation = Edge & {
   targetId: Scalars['String']['output'];
 };
 
+export type ParagraphDescendant = Descendant & {
+  __typename?: 'ParagraphDescendant';
+  /** The children of this node. Always empty for leafs */
+  children?: Maybe<Array<Descendant>>;
+  /** The kind of this node */
+  kind: DescendantKind;
+  /** The size of the paragraph */
+  size?: Maybe<Scalars['String']['output']>;
+  /** The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree */
+  unsafeChildren?: Maybe<Scalars['AnyScalar']['output']>;
+};
+
 /** One entity's part in an event, inside a batch */
 export type ParticipantInput = {
   /** The ID of the entity that took part */
@@ -4530,6 +4680,10 @@ export type Query = {
   activities: Array<Activity>;
   /** Get an activity node by composite graph ID */
   activity: Activity;
+  /** Get one remark by ID, as the log has it */
+  comment: Comment;
+  /** Every remark about one external datum, addressed by (identifier, object), newest first — resolved ones included */
+  commentsFor: Array<Comment>;
   /** Get a description edge by composite graph ID */
   description: Description;
   /** List description edges in a graph */
@@ -4632,6 +4786,8 @@ export type Query = {
   metricsForAssertion: Array<Metric>;
   /** List every un-retracted metric describing a structure */
   metricsForStructure: Array<Metric>;
+  /** Every remark that mentions the caller, newest first */
+  myMentions: Array<Comment>;
   /** Get a natural event by composite graph ID */
   naturalEvent: NaturalEvent;
   /** List all natural event categories/schemas */
@@ -4736,6 +4892,17 @@ export type QueryActivitiesArgs = {
 
 export type QueryActivityArgs = {
   id: Scalars['GraphID']['input'];
+};
+
+
+export type QueryCommentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommentsForArgs = {
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
 };
 
 
@@ -5547,6 +5714,11 @@ export type RetractClaimsInput = {
   ids: Array<Scalars['String']['input']>;
 };
 
+export type RetractCommentInput = {
+  /** The ID of the comment to retract */
+  id: Scalars['String']['input'];
+};
+
 /** Input for retracting an entity claim */
 export type RetractEntityInput = {
   /** The ID of the entity to archive */
@@ -5771,9 +5943,23 @@ export type SequenceMappingInput = {
   sequence: Scalars['String']['input'];
 };
 
+export type Standing = {
+  __typename?: 'Standing';
+  /** Who took this position, with what tool, and when they recorded it */
+  assertion: Assertion;
+  /** When the position took effect — world time, the axis that decides which claim is newest */
+  at: Scalars['DateTime']['output'];
+  /** This position's own identity */
+  id: Scalars['ID']['output'];
+  /** Whether the claimant says the claim holds. True attests, False retracts */
+  stands: Scalars['Boolean']['output'];
+};
+
 /** A structure that provides evidence for entities */
 export type Structure = Node & {
   __typename?: 'Structure';
+  /** The discussion this datum carries: every remark recorded about it, newest first, resolved ones included — resolution is shown, not hidden. Threading is on each comment (`parent`/`replies`) */
+  comments: Array<Comment>;
   /** External ID if set */
   externalId?: Maybe<Scalars['String']['output']>;
   /** Global identifier in format 'graph_name:graph_id' */
@@ -6948,6 +7134,32 @@ export type NodeDrawingFragment = { __typename?: 'NodeDrawing', graph: { __typen
 
 export type EdgeDrawingFragment = { __typename?: 'EdgeDrawing', graph: { __typename?: 'Graph', id: string, name: string }, category: { __typename?: 'EntityCategory', id: string, label: string } | { __typename?: 'MeasurementCategory', id: string, label: string } | { __typename?: 'NaturalEventCategory', id: string, label: string } | { __typename?: 'ProtocolEventCategory', id: string, label: string } | { __typename?: 'RelationCategory', id: string, label: string } | { __typename?: 'StructureRelationCategory', id: string, label: string }, edge: { __typename?: 'Classification', id: string, sourceId: string, targetId: string } | { __typename?: 'Description', id: string, sourceId: string, targetId: string } | { __typename?: 'InputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Measurement', id: string, sourceId: string, targetId: string } | { __typename?: 'OutputParticipation', id: string, sourceId: string, targetId: string } | { __typename?: 'Relation', id: string, sourceId: string, targetId: string } | { __typename?: 'Sameness', id: string, sourceId: string, targetId: string } | { __typename?: 'StructureRelation', id: string, sourceId: string, targetId: string } };
 
+export type LeafFragment = { __typename?: 'LeafDescendant', bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null };
+
+export type MentionFragment = { __typename?: 'MentionDescendant', subject?: string | null };
+
+export type ParagraphFragment = { __typename?: 'ParagraphDescendant', size?: string | null };
+
+type Descendant_LeafDescendant_Fragment = { __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null };
+
+type Descendant_MentionDescendant_Fragment = { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null };
+
+type Descendant_ParagraphDescendant_Fragment = { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null };
+
+export type DescendantFragment = Descendant_LeafDescendant_Fragment | Descendant_MentionDescendant_Fragment | Descendant_ParagraphDescendant_Fragment;
+
+export type CommentAssertionFragment = { __typename?: 'Assertion', id: string, subject: string, assertedAt: any };
+
+export type CommentStandingFragment = { __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } };
+
+export type ReplyCommentFragment = { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> };
+
+export type ListCommentFragment = { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> };
+
+export type MentionCommentFragment = { __typename?: 'Comment', text: string, mentions: Array<string>, id: string, createdAt: any, resolved: boolean, structure: { __typename?: 'Structure', id: string, identifier: any, object: string }, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> };
+
+export type DetailCommentFragment = { __typename?: 'Comment', text: string, mentions: Array<string>, id: string, createdAt: any, resolved: boolean, structure: { __typename?: 'Structure', id: string, identifier: any, object: string }, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> };
+
 export type MediaUploadGrantFragment = { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string };
 
 export type MediaAccessGrantFragment = { __typename?: 'MediaAccessGrant', accessKey: string, secretKey: string, sessionToken: string, expiresIn: number, region: string, path: string, key: string, bucket: string };
@@ -7358,6 +7570,30 @@ export type RetractClaimsMutationVariables = Exact<{
 
 
 export type RetractClaimsMutation = { __typename?: 'Mutation', retractClaims: { __typename?: 'EdgesAssertion', assertion: { __typename?: 'Assertion', id: string, subject: string, appId?: string | null, actionId?: string | null, actionName?: string | null, assertedAt: any, recordedAt: any, seq: number }, edges: Array<{ __typename?: 'Classification', sourceId: string, targetId: string, id: string } | { __typename?: 'Description', sourceId: string, targetId: string, id: string } | { __typename?: 'InputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Measurement', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'MeasurementCategory', id: string, label: string } | null } | { __typename?: 'OutputParticipation', sourceId: string, targetId: string, id: string } | { __typename?: 'Relation', sourceId: string, targetId: string, id: string, label: string, category?: { __typename?: 'RelationCategory', id: string, label: string } | null } | { __typename?: 'Sameness', sourceId: string, targetId: string, id: string } | { __typename?: 'StructureRelation', sourceId: string, targetId: string, id: string, label: string, source: { __typename?: 'Structure', id: string, label: string }, target: { __typename?: 'Structure', id: string, label: string }, category?: { __typename?: 'StructureRelationCategory', id: string, label: string } | null }> } };
+
+export type CommentOnStructureMutationVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  object: Scalars['String']['input'];
+  descendants: Array<DescendantInput> | DescendantInput;
+  parent?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type CommentOnStructureMutation = { __typename?: 'Mutation', commentOnStructure: { __typename?: 'AssertedComment', assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, comment: { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> } } };
+
+export type RetractCommentMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type RetractCommentMutation = { __typename?: 'Mutation', retractComment: { __typename?: 'AssertedComment', assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, comment: { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> } } };
+
+export type AttestCommentMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type AttestCommentMutation = { __typename?: 'Mutation', attestComment: { __typename?: 'AssertedComment', assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, comment: { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> } } };
 
 export type AssertEntityExistsMutationVariables = Exact<{
   input: AssertEntityExistsInput;
@@ -7848,6 +8084,26 @@ export type RequestMediaUploadMutationVariables = Exact<{
 
 
 export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'MediaUploadGrant', accessKey: string, secretKey: string, sessionToken: string, path: string, key: string, bucket: string, expiresIn: number, maxBytes: number, store: string } };
+
+export type CommentsForQueryVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
+}>;
+
+
+export type CommentsForQuery = { __typename?: 'Query', commentsFor: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> }> };
+
+export type MyMentionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyMentionsQuery = { __typename?: 'Query', myMentions: Array<{ __typename?: 'Comment', text: string, mentions: Array<string>, id: string, createdAt: any, resolved: boolean, structure: { __typename?: 'Structure', id: string, identifier: any, object: string }, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> }> };
+
+export type DetailCommentQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailCommentQuery = { __typename?: 'Query', comment: { __typename?: 'Comment', text: string, mentions: Array<string>, id: string, createdAt: any, resolved: boolean, structure: { __typename?: 'Structure', id: string, identifier: any, object: string }, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }>, standings: Array<{ __typename?: 'Standing', id: string, stands: boolean, at: any, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any } }>, replies: Array<{ __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, assertion: { __typename?: 'Assertion', id: string, subject: string, assertedAt: any }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, subject?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: any | null, bold?: boolean | null, italic?: boolean | null, code?: boolean | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: any | null, subject?: string | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: any | null, size?: string | null }> | null }> | null }> }> } };
 
 export type GetEntityQueryVariables = Exact<{
   id: Scalars['GraphID']['input'];
@@ -8863,6 +9119,123 @@ export const EdgeDrawingFragmentDoc = gql`
   }
 }
     ${BaseEdgeFragmentDoc}`;
+export const CommentAssertionFragmentDoc = gql`
+    fragment CommentAssertion on Assertion {
+  id
+  subject
+  assertedAt
+}
+    `;
+export const LeafFragmentDoc = gql`
+    fragment Leaf on LeafDescendant {
+  bold
+  italic
+  code
+  text
+}
+    `;
+export const MentionFragmentDoc = gql`
+    fragment Mention on MentionDescendant {
+  subject
+}
+    `;
+export const ParagraphFragmentDoc = gql`
+    fragment Paragraph on ParagraphDescendant {
+  size
+}
+    `;
+export const DescendantFragmentDoc = gql`
+    fragment Descendant on Descendant {
+  kind
+  children {
+    kind
+    children {
+      kind
+      unsafeChildren
+      ...Leaf
+      ...Mention
+      ...Paragraph
+    }
+    ...Leaf
+    ...Mention
+    ...Paragraph
+  }
+  ...Mention
+  ...Paragraph
+  ...Leaf
+}
+    ${LeafFragmentDoc}
+${MentionFragmentDoc}
+${ParagraphFragmentDoc}`;
+export const CommentStandingFragmentDoc = gql`
+    fragment CommentStanding on Standing {
+  id
+  stands
+  at
+  assertion {
+    ...CommentAssertion
+  }
+}
+    ${CommentAssertionFragmentDoc}`;
+export const ReplyCommentFragmentDoc = gql`
+    fragment ReplyComment on Comment {
+  id
+  createdAt
+  assertion {
+    ...CommentAssertion
+  }
+  parent {
+    id
+  }
+  descendants {
+    ...Descendant
+  }
+  resolved
+}
+    ${CommentAssertionFragmentDoc}
+${DescendantFragmentDoc}`;
+export const ListCommentFragmentDoc = gql`
+    fragment ListComment on Comment {
+  id
+  createdAt
+  assertion {
+    ...CommentAssertion
+  }
+  parent {
+    id
+  }
+  descendants {
+    ...Descendant
+  }
+  resolved
+  standings {
+    ...CommentStanding
+  }
+  replies {
+    ...ReplyComment
+  }
+}
+    ${CommentAssertionFragmentDoc}
+${DescendantFragmentDoc}
+${CommentStandingFragmentDoc}
+${ReplyCommentFragmentDoc}`;
+export const MentionCommentFragmentDoc = gql`
+    fragment MentionComment on Comment {
+  ...ListComment
+  text
+  mentions
+  structure {
+    id
+    identifier
+    object
+  }
+}
+    ${ListCommentFragmentDoc}`;
+export const DetailCommentFragmentDoc = gql`
+    fragment DetailComment on Comment {
+  ...MentionComment
+}
+    ${MentionCommentFragmentDoc}`;
 export const MediaUploadGrantFragmentDoc = gql`
     fragment MediaUploadGrant on MediaUploadGrant {
   accessKey
@@ -10198,6 +10571,128 @@ export function useRetractClaimsMutation(baseOptions?: ApolloReactHooks.Mutation
 export type RetractClaimsMutationHookResult = ReturnType<typeof useRetractClaimsMutation>;
 export type RetractClaimsMutationResult = Apollo.MutationResult<RetractClaimsMutation>;
 export type RetractClaimsMutationOptions = Apollo.BaseMutationOptions<RetractClaimsMutation, RetractClaimsMutationVariables>;
+export const CommentOnStructureDocument = gql`
+    mutation CommentOnStructure($identifier: String!, $object: String!, $descendants: [DescendantInput!]!, $parent: ID) {
+  commentOnStructure(
+    input: {identifier: $identifier, object: $object, descendants: $descendants, parent: $parent}
+  ) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}
+    ${CommentAssertionFragmentDoc}
+${ListCommentFragmentDoc}`;
+export type CommentOnStructureMutationFn = Apollo.MutationFunction<CommentOnStructureMutation, CommentOnStructureMutationVariables>;
+
+/**
+ * __useCommentOnStructureMutation__
+ *
+ * To run a mutation, you first call `useCommentOnStructureMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCommentOnStructureMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [commentOnStructureMutation, { data, loading, error }] = useCommentOnStructureMutation({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      object: // value for 'object'
+ *      descendants: // value for 'descendants'
+ *      parent: // value for 'parent'
+ *   },
+ * });
+ */
+export function useCommentOnStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CommentOnStructureMutation, CommentOnStructureMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CommentOnStructureMutation, CommentOnStructureMutationVariables>(CommentOnStructureDocument, options);
+      }
+export type CommentOnStructureMutationHookResult = ReturnType<typeof useCommentOnStructureMutation>;
+export type CommentOnStructureMutationResult = Apollo.MutationResult<CommentOnStructureMutation>;
+export type CommentOnStructureMutationOptions = Apollo.BaseMutationOptions<CommentOnStructureMutation, CommentOnStructureMutationVariables>;
+export const RetractCommentDocument = gql`
+    mutation RetractComment($id: String!) {
+  retractComment(input: {id: $id}) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}
+    ${CommentAssertionFragmentDoc}
+${ListCommentFragmentDoc}`;
+export type RetractCommentMutationFn = Apollo.MutationFunction<RetractCommentMutation, RetractCommentMutationVariables>;
+
+/**
+ * __useRetractCommentMutation__
+ *
+ * To run a mutation, you first call `useRetractCommentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRetractCommentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [retractCommentMutation, { data, loading, error }] = useRetractCommentMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRetractCommentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RetractCommentMutation, RetractCommentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RetractCommentMutation, RetractCommentMutationVariables>(RetractCommentDocument, options);
+      }
+export type RetractCommentMutationHookResult = ReturnType<typeof useRetractCommentMutation>;
+export type RetractCommentMutationResult = Apollo.MutationResult<RetractCommentMutation>;
+export type RetractCommentMutationOptions = Apollo.BaseMutationOptions<RetractCommentMutation, RetractCommentMutationVariables>;
+export const AttestCommentDocument = gql`
+    mutation AttestComment($id: String!) {
+  attestComment(input: {id: $id}) {
+    assertion {
+      ...CommentAssertion
+    }
+    comment {
+      ...ListComment
+    }
+  }
+}
+    ${CommentAssertionFragmentDoc}
+${ListCommentFragmentDoc}`;
+export type AttestCommentMutationFn = Apollo.MutationFunction<AttestCommentMutation, AttestCommentMutationVariables>;
+
+/**
+ * __useAttestCommentMutation__
+ *
+ * To run a mutation, you first call `useAttestCommentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAttestCommentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [attestCommentMutation, { data, loading, error }] = useAttestCommentMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useAttestCommentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AttestCommentMutation, AttestCommentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<AttestCommentMutation, AttestCommentMutationVariables>(AttestCommentDocument, options);
+      }
+export type AttestCommentMutationHookResult = ReturnType<typeof useAttestCommentMutation>;
+export type AttestCommentMutationResult = Apollo.MutationResult<AttestCommentMutation>;
+export type AttestCommentMutationOptions = Apollo.BaseMutationOptions<AttestCommentMutation, AttestCommentMutationVariables>;
 export const AssertEntityExistsDocument = gql`
     mutation AssertEntityExists($input: AssertEntityExistsInput!) {
   assertEntityExists(input: $input) {
@@ -12673,6 +13168,111 @@ export function useRequestMediaUploadMutation(baseOptions?: ApolloReactHooks.Mut
 export type RequestMediaUploadMutationHookResult = ReturnType<typeof useRequestMediaUploadMutation>;
 export type RequestMediaUploadMutationResult = Apollo.MutationResult<RequestMediaUploadMutation>;
 export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
+export const CommentsForDocument = gql`
+    query CommentsFor($identifier: String!, $object: ID!) {
+  commentsFor(identifier: $identifier, object: $object) {
+    ...ListComment
+  }
+}
+    ${ListCommentFragmentDoc}`;
+
+/**
+ * __useCommentsForQuery__
+ *
+ * To run a query within a React component, call `useCommentsForQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommentsForQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommentsForQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      object: // value for 'object'
+ *   },
+ * });
+ */
+export function useCommentsForQuery(baseOptions: ApolloReactHooks.QueryHookOptions<CommentsForQuery, CommentsForQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<CommentsForQuery, CommentsForQueryVariables>(CommentsForDocument, options);
+      }
+export function useCommentsForLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<CommentsForQuery, CommentsForQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<CommentsForQuery, CommentsForQueryVariables>(CommentsForDocument, options);
+        }
+export type CommentsForQueryHookResult = ReturnType<typeof useCommentsForQuery>;
+export type CommentsForLazyQueryHookResult = ReturnType<typeof useCommentsForLazyQuery>;
+export type CommentsForQueryResult = Apollo.QueryResult<CommentsForQuery, CommentsForQueryVariables>;
+export const MyMentionsDocument = gql`
+    query MyMentions {
+  myMentions {
+    ...MentionComment
+  }
+}
+    ${MentionCommentFragmentDoc}`;
+
+/**
+ * __useMyMentionsQuery__
+ *
+ * To run a query within a React component, call `useMyMentionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyMentionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyMentionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMyMentionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MyMentionsQuery, MyMentionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<MyMentionsQuery, MyMentionsQueryVariables>(MyMentionsDocument, options);
+      }
+export function useMyMentionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MyMentionsQuery, MyMentionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<MyMentionsQuery, MyMentionsQueryVariables>(MyMentionsDocument, options);
+        }
+export type MyMentionsQueryHookResult = ReturnType<typeof useMyMentionsQuery>;
+export type MyMentionsLazyQueryHookResult = ReturnType<typeof useMyMentionsLazyQuery>;
+export type MyMentionsQueryResult = Apollo.QueryResult<MyMentionsQuery, MyMentionsQueryVariables>;
+export const DetailCommentDocument = gql`
+    query DetailComment($id: ID!) {
+  comment(id: $id) {
+    ...DetailComment
+  }
+}
+    ${DetailCommentFragmentDoc}`;
+
+/**
+ * __useDetailCommentQuery__
+ *
+ * To run a query within a React component, call `useDetailCommentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailCommentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailCommentQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailCommentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailCommentQuery, DetailCommentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailCommentQuery, DetailCommentQueryVariables>(DetailCommentDocument, options);
+      }
+export function useDetailCommentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailCommentQuery, DetailCommentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailCommentQuery, DetailCommentQueryVariables>(DetailCommentDocument, options);
+        }
+export type DetailCommentQueryHookResult = ReturnType<typeof useDetailCommentQuery>;
+export type DetailCommentLazyQueryHookResult = ReturnType<typeof useDetailCommentLazyQuery>;
+export type DetailCommentQueryResult = Apollo.QueryResult<DetailCommentQuery, DetailCommentQueryVariables>;
 export const GetEntityDocument = gql`
     query GetEntity($id: GraphID!) {
   entity(id: $id) {

@@ -1778,6 +1778,50 @@
       },
       {
         "kind": "OBJECT",
+        "name": "AssertedComment",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Assertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "comment",
+            "description": "The remark this act was about — recorded it, withdrew it, or reopened it; the assertion says which",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Comment",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "Assertion",
         "description": "Who claimed something, with what tool, and when — one row of the append-only log",
         "isOneOf": null,
@@ -1901,6 +1945,34 @@
         ],
         "inputFields": null,
         "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "AttestCommentInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": "The ID of the comment to attest",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
       },
@@ -3631,6 +3703,302 @@
             "deprecationReason": null
           }
         ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Comment",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "The act of commenting: who said it, with which app, and when",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Assertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "createdAt",
+            "description": "When the remark was recorded",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DateTime",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "descendants",
+            "description": "The rich body — the tree of paragraphs, leaves and mentions, as it was posted",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Descendant",
+                    "kind": "INTERFACE",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": "The claim's durable identity — a bare uuid",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "mentions",
+            "description": "The subjects mentioned in the body, extracted at write time",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "String",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parent",
+            "description": "The comment this replies to, for threading. Null for a top-level remark",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Comment",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "replies",
+            "description": "The direct replies to this comment, oldest first — a thread reads downward",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Comment",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "resolved",
+            "description": "Whether the winning position says this remark no longer stands — resolved by a reviewer or withdrawn by its author; `standings` says which and by whom. The fold a comment can honestly carry, because nothing scopes it per view",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "standings",
+            "description": "Every position anyone has taken on whether this remark still stands, newest first. Empty means nobody has withdrawn or resolved it",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Standing",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "structure",
+            "description": "The external datum this remark is about. The structure carries the thread",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Structure",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "text",
+            "description": "The plain-text rendering of the body's leaves. Searchable; the body itself is `descendants`",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CommentOnStructureInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "descendants",
+            "description": "The rich body of the remark — a tree of LEAF/MENTION/PARAGRAPH nodes",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "DescendantInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "identifier",
+            "description": "The structure identifier of the datum, e.g. '@mikro/roi'",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "object",
+            "description": "The id of the external object on its service",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "parent",
+            "description": "The comment this replies to. Must be on the same structure's thread",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
         "possibleTypes": null
       },
       {
@@ -7264,6 +7632,244 @@
           },
           {
             "name": "ROLLUP",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INTERFACE",
+        "name": "Descendant",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "children",
+            "description": "The children of this node. Always empty for leafs",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Descendant",
+                  "kind": "INTERFACE",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of this node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DescendantKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "unsafeChildren",
+            "description": "The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "AnyScalar",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "LeafDescendant",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "MentionDescendant",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ParagraphDescendant",
+            "ofType": null
+          }
+        ]
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DescendantInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "bold",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "children",
+            "description": "The children of this node. Always empty for leafs",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "DescendantInput",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "code",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "italic",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "LEAF, MENTION or PARAGRAPH — see `core.enums.DescendantKind`",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DescendantKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "size",
+            "description": "The size of a paragraph",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "text",
+            "description": "The text of a leaf",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "underline",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "user",
+            "description": "The mentioned subject id — `Assertion.subject`'s vocabulary. Named `user` for shape-compatibility with lok's tree",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "DescendantKind",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "LEAF",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "MENTION",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "PARAGRAPH",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -15431,6 +16037,132 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "LeafDescendant",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "bold",
+            "description": "Render this text bold",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "children",
+            "description": "The children of this node. Always empty for leafs",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Descendant",
+                  "kind": "INTERFACE",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "code",
+            "description": "Render this text as code",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "italic",
+            "description": "Render this text italic",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of this node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DescendantKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "text",
+            "description": "The text of the leaf",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "underline",
+            "description": "Render this text underlined",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "unsafeChildren",
+            "description": "The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "AnyScalar",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Descendant",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "LinkStructureInput",
         "description": "Input for linking a structure to an entity",
@@ -18658,6 +19390,84 @@
       },
       {
         "kind": "OBJECT",
+        "name": "MentionDescendant",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "children",
+            "description": "The children of this node. Always empty for leafs",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Descendant",
+                  "kind": "INTERFACE",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of this node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DescendantKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subject",
+            "description": "The mentioned subject id",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "unsafeChildren",
+            "description": "The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "AnyScalar",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Descendant",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "Metric",
         "description": "A metric node representing computed values",
         "isOneOf": null,
@@ -20314,6 +21124,39 @@
             "deprecationReason": null
           },
           {
+            "name": "attestComment",
+            "description": "Claim a remark stands again — reopening, as new evidence rather than an undo",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "AttestCommentInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "AssertedComment",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "attestEntity",
             "description": "Claim that an entity exists, returning it to every projection whose rules admit it",
             "args": [
@@ -20438,6 +21281,39 @@
               "name": null,
               "ofType": {
                 "name": "NodesAssertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "commentOnStructure",
+            "description": "Record a remark about an external datum, minting its structure if this is the first sight of it. A reply names its parent and stays on the parent's thread",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "CommentOnStructureInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "AssertedComment",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -22022,6 +22898,39 @@
               "name": null,
               "ofType": {
                 "name": "EdgesAssertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "retractComment",
+            "description": "Claim a remark no longer stands — resolved by a reviewer or withdrawn by its author; the assertion records whose position it is. The row survives",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "RetractCommentInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "AssertedComment",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -26634,6 +27543,84 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "ParagraphDescendant",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "children",
+            "description": "The children of this node. Always empty for leafs",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "Descendant",
+                  "kind": "INTERFACE",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "The kind of this node",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DescendantKind",
+                "kind": "ENUM",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "size",
+            "description": "The size of the paragraph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "unsafeChildren",
+            "description": "The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "AnyScalar",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Descendant",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "ParticipantInput",
         "description": "One entity's part in an event, inside a batch",
@@ -28784,6 +29771,96 @@
                 "name": "Activity",
                 "kind": "OBJECT",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "comment",
+            "description": "Get one remark by ID, as the log has it",
+            "args": [
+              {
+                "name": "id",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "ID",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Comment",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "commentsFor",
+            "description": "Every remark about one external datum, addressed by (identifier, object), newest first — resolved ones included",
+            "args": [
+              {
+                "name": "identifier",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "String",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "object",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "ID",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Comment",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -31265,6 +32342,30 @@
                   "kind": "NON_NULL",
                   "ofType": {
                     "name": "Metric",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "myMentions",
+            "description": "Every remark that mentions the caller, newest first",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Comment",
                     "kind": "OBJECT",
                     "ofType": null
                   }
@@ -35368,6 +36469,34 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "RetractCommentInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": "The ID of the comment to retract",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "RetractEntityInput",
         "description": "Input for retracting an entity claim",
         "isOneOf": false,
@@ -36673,6 +37802,82 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "Standing",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "assertion",
+            "description": "Who took this position, with what tool, and when they recorded it",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Assertion",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "at",
+            "description": "When the position took effect — world time, the axis that decides which claim is newest",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "DateTime",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": "This position's own identity",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "stands",
+            "description": "Whether the claimant says the claim holds. True attests, False retracts",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "SCALAR",
         "name": "String",
         "description": "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
@@ -36689,6 +37894,30 @@
         "description": "A structure that provides evidence for entities",
         "isOneOf": null,
         "fields": [
+          {
+            "name": "comments",
+            "description": "The discussion this datum carries: every remark recorded about it, newest first, resolved ones included — resolution is shown, not hidden. Threading is on each comment (`parent`/`replies`)",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Comment",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "externalId",
             "description": "External ID if set",
@@ -45379,7 +46608,7 @@
       },
       {
         "name": "oneOf",
-        "description": null,
+        "description": "Indicates exactly one field must be supplied and this field must not be `null`.",
         "isRepeatable": false,
         "isDeprecated": false,
         "deprecationReason": null,

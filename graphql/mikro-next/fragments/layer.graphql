@@ -26,6 +26,45 @@ fragment LabelColorBy on LabelColorBy {
   classColors
 }
 
+# One entry of a mesh layer's colour picker. Same shape and same relation as
+# `LabelColorBy` — a collection's object ids reach a table exactly as a mask's
+# pixel values do — plus the `label` a picker needs to caption the entry.
+fragment MeshColorBy on MeshColorBy {
+  table
+  column
+  # The `references` hops from the table the collection's ids land in to
+  # `table`; empty is the direct case. NOT optional to select: `colorBys` is a
+  # whole-array replace on the write path, so an entry read back without its
+  # join path and re-sent flattens to `[]` — the same column name resolved
+  # against the wrong table, silently.
+  joinPath {
+    table
+    column
+  }
+  colormap
+  classColors
+  label
+}
+
+# One entry of a mesh layer's filter picker: which objects are DRAWN, over the
+# same FIELD edge its colourings use. Which half applies follows from the
+# column's role — `min`/`max` bound a measure, `values` enumerate a categorical
+# — and `exclude` inverts the rule.
+fragment MeshFilterBy on MeshFilterBy {
+  table
+  column
+  # Same read-modify-write hazard as `MeshColorBy.joinPath` — see there.
+  joinPath {
+    table
+    column
+  }
+  label
+  min
+  max
+  values
+  exclude
+}
+
 fragment LabelRender on LabelRender {
   intensityAxis
   intensityIndex
@@ -234,5 +273,18 @@ fragment SceneLayer on Layer {
     }
     materialColor
     wireframe
+    # The layer publishes PICKERS, not a single choice: `colorBys`/`filterBys`
+    # are what it offers (server-checked to be reachable and to exist), and the
+    # active indices are the choice. The deprecated singular `colorBy` is
+    # deliberately NOT selected — it is `colorBys[activeColorBy]` re-derived,
+    # and a second copy of a choice is a second thing to keep in sync.
+    colorBys {
+      ...MeshColorBy
+    }
+    activeColorBy
+    filterBys {
+      ...MeshFilterBy
+    }
+    activeFilterBys
   }
 }

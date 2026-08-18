@@ -4,6 +4,7 @@ import { LruByteCache } from "./lruByteCache";
 import { FabriksBatchRenderer, type FabriksBatchStats } from "./fabriksBatch";
 import {
   createFabriksMaterial,
+  setColorLut,
   setInstanceColoring,
   type FabriksMaterialHandle,
 } from "./fabriksMaterial";
@@ -217,6 +218,8 @@ export class FabriksCollectionManager {
   private flatNormals = true;
   /** The colormap currently baked into the material (null = uniform color). */
   private appliedColormap: FabriksInstanceColormap | null = DEFAULT_INSTANCE_COLORMAP;
+  /** The colour LUT currently on the GPU, so a rebuild frees the old one. */
+  private appliedLut: THREE.Texture | null = null;
   /** WORLD-space clip planes for the 2D slab (constants mutated on z-scrub). */
   private readonly clipPlanes = [
     new THREE.Plane(new THREE.Vector3(0, 0, -1), 0), // keeps z ≤ slab top
@@ -307,6 +310,28 @@ export class FabriksCollectionManager {
     this.material.transparent = transparent;
     this.material.side = side;
     if (pipelineChanged) this.material.needsUpdate = true;
+  }
+
+  /**
+   * Bind the ordinal → RGBA lookup a layer's `colorBys` / `filterBys` resolve
+   * to (`fabriksColorLut.ts`), or `null` to drop back to the instance palette
+   * with nothing filtered.
+   *
+   * Uniform writes and a texture swap, exactly like `setSelection` — a picker
+   * toggle must not recompile a pipeline. The previously bound texture is
+   * disposed here because this manager is what put it on the GPU; the caller
+   * only ever hands over the new one.
+   */
+  setColorLut(
+    lut: { texture: THREE.Texture; width: number; height: number } | null,
+    modes: { colorize: boolean; filter: boolean },
+  ): void {
+    if (lut?.texture !== this.appliedLut) {
+      this.appliedLut?.dispose();
+      this.appliedLut = lut?.texture ?? null;
+    }
+    setColorLut(this.materialHandle, lut, modes);
+    this.opts.onInvalidate();
   }
 
   /**
@@ -1011,6 +1036,8 @@ export class FabriksCollectionManager {
       this.cellBoxes = null;
     }
     this.group.clear();
+    this.appliedLut?.dispose();
+    this.appliedLut = null;
     this.material.dispose();
     this.opts.collection.release();
   }

@@ -66,6 +66,7 @@ FabriksCollectionManager.updatePlan()
 | `fabriksSource.ts` | API node → prefix + credentials | everything above |
 | `fabriksBatch.ts` | the BatchedMesh: capacity, slots, compaction | plans, fetching, caches |
 | `fabriksManager.ts` | THREE objects, reconcile, abort generation | React, HTTP, bytes |
+| `fabriksColorLut.ts` | stored colorBys/filterBys → one ordinal-indexed RGBA8 texture | THREE materials, React |
 | `FabriksCollectionLayer.tsx` | lifecycle, transforms, settle cadence | everything above's internals |
 
 ## Why there is no DuckDB here
@@ -80,6 +81,43 @@ had: DuckDB-wasm cannot cancel a `query()`, every fetch re-opened a connection
 and re-installed secrets, and each query re-read footers. DuckDB is still the
 app's Parquet engine for the table UI and `lib/attributes` — it just is not on
 the render path.
+
+## The colour LUT — where DuckDB *is* on this path
+
+The exception to the section above, and it does not contradict it: the LUT
+reads a **table's** parquet, never the collection's. `fabriksColorLut.ts` turns
+a mesh layer's stored `colorBys` / `filterBys` into one RGBA8 texture indexed by
+the dense object ordinal — `rgb` is the active colouring, `a` is visibility
+under the AND of the active rules — and hands it to `fabriksMaterial.ts` as a
+single bind. Row-group addressing is irrelevant there: a full-column scan is
+exactly what SQL is for, and the read reuses the attribute engine's connection,
+grants and per-store scoped secrets (`lib/attributes/lookupEngine.ts`,
+`readAcross`).
+
+What is load-bearing:
+
+- **Ordinal-indexed and 2D.** Object ids are sparse and would size the texture
+  by the largest id; ordinals are dense and are what the vertices carry. They
+  run to 2^24, past any backend's max texture dimension, so the ordinal
+  decomposes into `(ordinal % LUT_WIDTH, ordinal / LUT_WIDTH)` on both sides —
+  `LUT_WIDTH` is the shared constant, and the shader samples the texel CENTRE
+  because NEAREST on a boundary is a coin flip between two objects.
+- **Filtering is fragment `Discard`, never a change to the batch.** The batch's
+  slots and the LOD cache are planned by what is RESIDENT (P13), so removing
+  filtered objects would re-plan and re-fetch on every toggle. Discard
+  over-rasterizes; that is the right trade.
+- **Both modes are uniforms.** `lutColorize` and `lutFilter` gate an
+  unconditional texel fetch, so switching a colouring or a rule on and off is a
+  `.value` write, exactly like selection — never a pipeline rebuild.
+- **The table's store and key column come from an ATTRIBUTE PLAN**, not from a
+  second query: a plan for this collection already names the parquet and the
+  column an object id binds to. Where no mesh-sampled plan reaches an entry's
+  table, the entry is skipped and named in `skipped` (logged by the layer) —
+  loud, never a silently wrong join.
+- **Joins are not executed.** The server publishes the key column for the base
+  table only; each `references` hop target's key would have to be inferred, and
+  a wrong join key returns the wrong rows rather than an error. Joined entries
+  are authored and stored fine and marked `*` on the card.
 
 ## Performance rules encoded here
 
@@ -251,8 +289,6 @@ Regenerate with `python __fixtures__/generate.py <out>` in an environment with
   profiles say otherwise — but give fabriks its **own pool instance**, because
   pool slots are untyped and a recycled zarr codec worker cannot answer fabriks
   messages.
-- **No per-object colour, visibility or picking yet.** The data is all here —
-  ordinals on the vertices, the inverted index in `objects.parquet` — but
-  `MeshLayer` has no way to persist render state (`updateLayer` returns
-  `ImageLayer`; there is no `updateMeshLayer`), so there is nothing to wire it
-  to.
+- **A colouring or rule reached through a JOIN does not render.** See the
+  colour-LUT section above: direct entries only, joined ones are authored,
+  stored and badged but not executed.

@@ -21,6 +21,8 @@ import { useViewStoreApi } from "../../store/viewStore";
 import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
 import { openFabriksCollection } from "../../render/fabriks/fabriksSource";
+import { buildColorLut } from "../../render/fabriks/fabriksColorLut";
+import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
   resolveCollectionMatrix,
   type MeshCollectionRef,
@@ -179,6 +181,92 @@ const FabriksCollectionGroup = ({
     layer.doubleSided,
     invalidate,
   ]);
+
+  /**
+   * The layer's STORED pickers, resolved to pixels.
+   *
+   * `colorBys` / `filterBys` are what the layer offers and the two active
+   * indices are the choice; everything below the choice — which table, which
+   * column, which rows — is data this API never returns. It is read out of the
+   * table's parquet with the same DuckDB and the same grants the attribute
+   * probe uses, baked into an ordinal-indexed texture
+   * (`fabriksColorLut.ts`), and handed to the material as one bind.
+   *
+   * Nothing active means no LUT at all, not an all-white one: the placeholder
+   * is already the identity, and skipping the read is what keeps a layer with
+   * no colouring exactly as cheap as it was before any of this existed.
+   */
+  const attributeService = useAttributeServiceOrNull();
+  const activeColorByIndex = layer.activeColorBy ?? null;
+  const colorBy =
+    activeColorByIndex === null ? null : (layer.colorBys?.[activeColorByIndex] ?? null);
+  const filterBys = layer.filterBys;
+  const activeFilterBys = layer.activeFilterBys;
+  const activeRules = useMemo(
+    () =>
+      (activeFilterBys ?? [])
+        .map((index) => filterBys?.[index])
+        .filter((rule): rule is NonNullable<typeof rule> => Boolean(rule)),
+    [activeFilterBys, filterBys],
+  );
+  const systemId = collection.coordinateSystem?.id ?? null;
+  /**
+   * A CONTENT key, not the object references, because the fold after a picker
+   * mutation writes the server's arrays back with `Object.assign` into an immer
+   * draft — whether that yields new array identities is structural sharing's
+   * call, not ours. Depending on references would let an edited bound show in
+   * the card while the meshes kept the old one.
+   */
+  const lutKey = useMemo(() => JSON.stringify([colorBy, activeRules]), [colorBy, activeRules]);
+
+  useEffect(() => {
+    if (!manager) return;
+    if (!attributeService || !systemId || (!colorBy && activeRules.length === 0)) {
+      manager.setColorLut(null, { colorize: false, filter: false });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      // The object catalog is shared with picking, so this is free once
+      // anything has resolved an ordinal — and vice versa.
+      const [objects, plans] = await Promise.all([
+        manager.listObjects(),
+        attributeService.plansFor(systemId),
+      ]);
+      if (cancelled) return;
+      const lut = await buildColorLut({
+        objects,
+        colorBy,
+        filterBys: activeRules,
+        plans,
+        engine: attributeService.engine,
+      });
+      // A superseded build must not reach the GPU, and its texture is ours to
+      // free — `setColorLut` only ever disposes what it replaces.
+      if (cancelled) {
+        lut.texture.dispose();
+        return;
+      }
+      if (lut.skipped.length > 0) {
+        console.warn("[mesh] picker entries that do not render yet:", lut.skipped);
+      }
+      manager.setColorLut(lut, {
+        colorize: colorBy !== null,
+        filter: activeRules.length > 0,
+      });
+      invalidate();
+    })().catch((error) => {
+      if (cancelled) return;
+      console.warn("[mesh] could not build the colour lookup:", error);
+      manager.setColorLut(null, { colorize: false, filter: false });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // `colorBy` / `activeRules` are read inside the effect; `lutKey` is what
+    // decides whether it re-runs. See the note on the key itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manager, attributeService, systemId, lutKey, invalidate]);
 
   // Per-layer LOD preset: replans immediately against the last settle.
   useEffect(() => {

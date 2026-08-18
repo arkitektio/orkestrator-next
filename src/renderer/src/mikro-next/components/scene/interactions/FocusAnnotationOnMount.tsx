@@ -36,8 +36,10 @@ const FocusBody = ({ annotation }: { annotation: DetailAnnotationFragment }) => 
   const selectionApi = useRoiSelectionStoreApi();
   const navigateToAnnotation = useNavigateToAnnotation();
 
-  // The one reactive read. `sceneLayers` is written once per store scope (the
-  // provider rebuilds only on a structural change), so this settles on the
+  // The one reactive read. `sceneLayers` can now be rewritten on any layer
+  // reconcile (the provider folds a changed layer set into the live stores
+  // rather than rebuilding), but the reconcile preserves the object identity
+  // of layers that did not structurally change — so this still settles on the
   // first commit and never churns at camera or poll cadence.
   const layer = useSceneStore((state) =>
     state.sceneLayers.find(
@@ -53,8 +55,17 @@ const FocusBody = ({ annotation }: { annotation: DetailAnnotationFragment }) => 
   const annotationRef = useRef(annotation);
   annotationRef.current = annotation;
 
+  // Same reasoning on the layer axis: a registration refinement re-derives the
+  // layer object mid-session, and firing the fly-to again would yank the
+  // camera out from under a user who has since moved it. Only the layer's
+  // IDENTITY (does it exist, and which one is it) may re-arm the focus.
+  const layerRef = useRef(layer);
+  layerRef.current = layer;
+  const layerId = layer?.id ?? null;
+
   useEffect(() => {
-    if (!layer) return;
+    const layer = layerRef.current;
+    if (!layerId || !layer) return;
     let cancelled = false;
     let frame = 0;
     let unsubscribe: (() => void) | null = null;
@@ -110,9 +121,9 @@ const FocusBody = ({ annotation }: { annotation: DetailAnnotationFragment }) => 
       cancelAnimationFrame(frame);
       unsubscribe?.();
     };
-    // `annotation.id`, not `annotation`: fragment identity churn must not
-    // re-fire the fly-to under a user who has since moved the camera.
-  }, [viewerApi, selectionApi, navigateToAnnotation, layer, annotation.id]);
+    // `annotation.id` / `layerId`, not the objects: fragment identity churn
+    // must not re-fire the fly-to under a user who has since moved the camera.
+  }, [viewerApi, selectionApi, navigateToAnnotation, layerId, annotation.id]);
 
   // Fires once, so a window resize after the fly-to re-runs `InitialCameraFit`
   // and reframes the whole scene (its latch is armed only by interaction). The

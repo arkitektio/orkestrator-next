@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { MikroLens } from "@/linkers";
 import { Crosshair, Eye, EyeOff, Focus, Save, Trash2 } from "lucide-react";
 import { LayerState, useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
@@ -69,7 +70,7 @@ export const LayerRow = ({
   );
   const setProbeLayerId = useViewerStore((s) => s.setProbeLayerId);
 
-  return (
+  const row = (
     <div
       className={`group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer @xs/card:gap-2 @xs/card:px-2.5 ${
         embedded
@@ -192,4 +193,15 @@ export const LayerRow = ({
       </div>
     </div>
   );
+
+  /* The row is a DROP TARGET for the layer's LENS — the thing that names "this
+     dataset, these channels". Drop an annotation on it and `SmartContext`
+     assembles (Lens, Annotation) for the rekuest action that does the cropping,
+     so the gesture itself answers "which dataset did you mean".
+
+     `.Drop`, not `.Smart`: `useSmartDropZone` takes no selection-store
+     subscription, while `useSmartModel` snapshots it per instance — and this
+     panel is the one that already froze once. A drop zone is also all the row
+     needs; it is not itself draggable. */
+  return <MikroLens.Drop object={{ id: layer.lens.id }}>{row}</MikroLens.Drop>;
 };

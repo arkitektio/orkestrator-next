@@ -11,6 +11,7 @@ import {
 import { Line } from "../../primitives/Line";
 import { SPHERE_KIND, ellipsoidCrossSectionScale } from "../../core/primitiveDraw";
 import { sceneZExtent } from "../../core/worldTransform";
+import { repairedSelections } from "../../core/selectionRepair";
 import { computeWorldUnitsPerPixel } from "../../core/probeWorld";
 import {
   isAnnotationInView,
@@ -33,6 +34,7 @@ import {
   rgbaToStyle,
 } from "../../core/annotationStyle";
 import { useModeStore } from "../../store/modeStore";
+import { useRoiDrawingStore } from "../../store/roiDrawingStore";
 import { useRoiSelectionStore } from "../../store/roiSelectionStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useViewerStore } from "../../store/viewerStore";
@@ -131,6 +133,20 @@ const AnnotationCollectionGroup = ({
   );
 
   const annotations = data?.annotations;
+
+  // Hand over from the local preview: a drawn shape stays on screen from the
+  // gesture until its persisted copy is in hand HERE, so it never blinks out
+  // in between (the gap is widest on a scene's first annotation, where this
+  // layer has to be minted and mounted first).
+  const resolvePersistedRois = useRoiDrawingStore((s) => s.resolvePersistedRois);
+  useEffect(() => {
+    if (!annotations) return;
+    resolvePersistedRois(
+      collection.id,
+      annotations.map((annotation) => annotation.id),
+    );
+  }, [annotations, collection.id, resolvePersistedRois]);
+
   // Lookup identity for the selection store: attribute lookups start in the
   // collection's own system with the RAW collection-space vectors — the plan
   // path (server-resolved) does any frame conversion.
@@ -224,6 +240,20 @@ const AnnotationCollectionGroup = ({
       ),
     [placed, coverages, plane],
   );
+
+  // This layer draws these annotations, so it holds the authoritative entry
+  // for each — including the `layerId` a selection made before the layer
+  // existed could not know. See `core/selectionRepair.ts`: without this the
+  // info panel never finds a collection matrix for the shape and parks in the
+  // corner. Converges after one pass (the repaired entries then agree).
+  const mergeSelectedRois = useRoiSelectionStore((s) => s.mergeSelectedRois);
+  useEffect(() => {
+    const repairs = repairedSelections(
+      selectedRois,
+      placed.map((entry) => entry.roi),
+    );
+    if (repairs.length > 0) mergeSelectedRois(repairs);
+  }, [placed, selectedRois, mergeSelectedRois]);
 
   const visibleRois = useMemo(
     () => shown.map((entry) => ({ ...entry.roi, bounds: entry.bounds })),

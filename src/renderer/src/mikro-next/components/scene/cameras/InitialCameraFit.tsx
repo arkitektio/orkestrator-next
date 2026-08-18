@@ -43,6 +43,10 @@ export const InitialCameraFit = () => {
   // (the memo keys on the store api, and `layers` is still as-loaded when this
   // mounts). Non-reactive read: layer edits (clim, dims, affine…) must never
   // re-trigger the initial fit (P17 — a camera jump on every layer edit).
+  //
+  // Going stale when a layer is reconciled INTO a running scene is deliberate,
+  // not an oversight: this is the INITIAL fit, and refitting because a layer
+  // arrived is the camera jump above wearing a different hat. Leave it.
   const box = useMemo(
     () => computeSceneWorldBox(sceneApi.getState().layers),
     [sceneApi],

@@ -18,6 +18,7 @@ import {
 } from "../store/viewerStore";
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
+import { AnnotationLayerCard } from "./layer/AnnotationLayerCard";
 import { MeshLayerCard } from "./layer/MeshLayerCard";
 import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
 
@@ -250,6 +251,19 @@ export const LayerControlPanel = ({
     [sceneLayers],
   );
 
+  // Last, for the same reason meshes come after images: a separate normalized
+  // list with its own card, kept in a stable block rather than interleaved.
+  // A scene grows one of these the first time anyone draws on it, so the block
+  // appearing is itself the feedback that the annotation layer now exists.
+  const annotationLayers = useMemo(
+    () =>
+      sceneLayers.filter(
+        (layer): layer is Extract<typeof layer, { __typename: "AnnotationLayer" }> =>
+          layer.__typename === "AnnotationLayer",
+      ),
+    [sceneLayers],
+  );
+
   // NO auto-expand: unfolding used to be space-derived (`fitsExpanded`), which
   // meant a rail resize could pop every editor open at once — mounting every
   // card's full render-graph editor subtree in a single commit and making
@@ -306,6 +320,9 @@ export const LayerControlPanel = ({
           {shownLayers.map(renderRow)}
           {meshLayers.map((layer) => (
             <MeshLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
+          ))}
+          {annotationLayers.map((layer) => (
+            <AnnotationLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
           ))}
         </div>
 

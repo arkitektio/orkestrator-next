@@ -1517,6 +1517,31 @@ type Client {
 }
 
 """
+One column a layer may be coloured or filtered by, and how it is reached. Both pickers read the same options: `colorBys` and `filterBys` turn on the same measure-vs-categorical split, so two lists would be two copies of one answer. Every option returned is one `createMeshLayer` accepts, and every column it omits is one it refuses -- that invariant is why this exists rather than a client filtering `attributePlans`, which walks a different set
+"""
+type ColorByOption {
+  """
+  The column holding the value. Its `name` is what `colorBys`/`filterBys` take, and its `role`, `unit` and `dtype` are declared on the table
+  """
+  column: TableDatasetColumn!
+
+  """
+  Which control this column admits, derived from its role by the same rule the write path enforces: MEASURE takes a colormap and a `min`/`max` range, CATEGORICAL an explicit colour map and a `values` set
+  """
+  control: ColumnControl!
+
+  """
+  The `references` hops from the table the ids land in to `table`. Empty is the direct case. Pass it back verbatim as `colorBys[].joinPath` to select this option
+  """
+  joinPath: [ColumnOptionJoinStep!]!
+
+  """
+  The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
+  """
+  table: TableDataset!
+}
+
+"""
 The colormap used to map intensity values of a channel to display colors.
 """
 enum ColorMap {
@@ -1593,6 +1618,59 @@ enum ColorMap {
 
   """A monochromatic colormap from black to yellow."""
   YELLOW
+}
+
+"""
+Which kind of control a column admits, derived from its declared role. The one split that decides how a value becomes a colour and how it is filtered -- published here so a picker renders the control the write path will actually accept.
+"""
+enum ColumnControl {
+  """
+  The values name things rather than measuring them, so they take an explicit value-to-colour map and a `values` set. A colormap or a bound over them would impose an order they do not have. Roles ID, TRACK_ID, LABEL and COLOR.
+  """
+  CATEGORICAL
+
+  """
+  The values are measured and ordered, so they take a colormap over their range and a `min`/`max` bound. Roles COORDINATE and ATTRIBUTE.
+  """
+  MEASURE
+}
+
+input ColumnOptionFilter {
+  """
+  Keep only the options admitting these controls: MEASURE for the ones taking a colormap and a range, CATEGORICAL for the ones taking a value set
+  """
+  controls: [ColumnControl!] = null
+
+  """
+  Keep only the options whose `joinPath` is empty -- the columns of the tables the collection's ids key directly, with no `references` hop
+  """
+  directOnly: Boolean = null
+
+  """
+  Keep only the options whose column declares one of these roles. Finer than `controls`, which groups the roles into the two the pickers actually branch on
+  """
+  roles: [TableColumnRole!] = null
+
+  """
+  Case-insensitive substring, matched against the column's name, its `longName` and the name of the table it lives in. The same `icontains` the list queries' `search` uses
+  """
+  search: String = null
+
+  """
+  Keep only the options whose value is **read from** this table -- the terminal one, not a table the `joinPath` passes through on the way. An option hopping from A into B is kept by `table: B` and dropped by `table: A`
+  """
+  table: ID = null
+}
+
+"""
+One hop of a join path: the column whose values identify rows of the next table
+"""
+type ColumnOptionJoinStep {
+  """The column of it whose `references` identifies rows of the next table"""
+  column: TableDatasetColumn!
+
+  """The table this hop stands in"""
+  table: TableDataset!
 }
 
 """
@@ -1988,13 +2066,18 @@ input CreateMeshCollectionInput {
 Create a layer that renders a mesh collection (surface reconstructions / isosurfaces) in a scene. The collection's own coordinate system is the layer's space, so it must already have a path to the scene's world
 """
 input CreateMeshLayerInput {
+  activeColorBy: Int = null
+  activeFilterBys: [Int!] = null
   blending: Blending = null
-  colorBy: MeshColorByInput = null
+  colorBys: [MeshColorByInput!] = null
+  filterBys: [MeshFilterByInput!] = null
   materialColor: [Int!] = null
+  maxLevel: Int = null
   meshCollection: ID!
   opacity: Float = null
   order: Int = null
   scene: ID!
+  shading: MeshShading = null
   visible: Boolean = null
   wireframe: Boolean = null
 }
@@ -3111,6 +3194,31 @@ input FileOrder @oneOf {
   size: Ordering
 }
 
+"""
+One column a layer may be filtered by, and how it is reached. The same set `colorByOptions` returns, under the name that reads right where a rule is being authored: both pickers turn on the same measure-vs-categorical split, so the candidates are one answer and this is the second way to ask for it. Every option returned is one `createMeshLayer(filterBys:)` accepts
+"""
+type FilterByOption {
+  """
+  The column the rule is written against. Its `name` is what `filterBys` takes, and its `unit` is the unit a `min`/`max` bound is stated in
+  """
+  column: TableDatasetColumn!
+
+  """
+  Which rule this column admits, derived from its role by the same rule the write path enforces: MEASURE takes a `min`/`max` bound, CATEGORICAL an explicit `values` set. Passing the wrong one is refused at the boundary
+  """
+  control: ColumnControl!
+
+  """
+  The `references` hops from the table the ids land in to `table`. Empty is the direct case. Pass it back verbatim as `filterBys[].joinPath` to write a rule against this column
+  """
+  joinPath: [ColumnOptionJoinStep!]!
+
+  """
+  The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
+  """
+  table: TableDataset!
+}
+
 """A filter"""
 type FilterElement implements OpticalElement {
   id: ID!
@@ -3515,6 +3623,22 @@ input IntFilterLookup {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""
+One hop of a join path: the column whose values identify rows of the next table. The target is not named here -- the next step names it, and which of its columns holds row identity is already declared on it
+"""
+type JoinStep {
+  column: String!
+  table: ID!
+}
+
+"""
+One hop of a join path: the column whose values identify rows of the next table. The target is not named here -- the next step names it, and which of its columns holds row identity is already declared on it
+"""
+input JoinStepInput {
+  column: String!
+  table: ID!
+}
 
 """
 A source whose own contents are the ids this table is indexed by, as a discriminated union: `kind` selects which sort of source is being named, and only that member's id field is read -- any other is rejected. It authors the FIELD edge in the direction the map actually runs -- source -> table rows -- which is the direction attributePlans discovers, and the opposite of the lineage `derivedFrom` records
@@ -4336,6 +4460,11 @@ An immutable, versioned collection of meshes, stored as one fabriks prefix. Ask 
 """
 type MeshCollection {
   """
+  Every column this collection's objects can be coloured or filtered by, with the control each one's role admits -- the same set `createMeshLayer(colorBys:)` and `filterBys` accept. The nested form of the `colorByOptions` root query, which is where the search, narrowing and paging live; this one hands back the whole list. It walks the coordinate graph once per collection, so read it on a collection, not across a page of them
+  """
+  colorByOptions(maxJoinDepth: Int! = 1): [ColorByOption!]!
+
+  """
   The coordinate system the collection's vertices are expressed in. The collection owns it; `derivedFrom` relates it to the data the meshes were extracted from
   """
   coordinateSystem: CoordinateSystem!
@@ -4447,12 +4576,14 @@ input MeshCollectionKeyedByInput {
 }
 
 """
-Color a mesh collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color. The same shape `LabelColorBy` carries, and the same relation -- a collection's ids reach a table exactly as a mask's pixel values do -- under a name that reads right on a mesh
+One entry of a mesh layer's picker: color the collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color. The same shape `LabelColorBy` carries, and the same relation -- a collection's ids reach a table exactly as a mask's pixel values do -- plus the caption a picker needs
 """
 type MeshColorBy {
   classColors: JSON
   colormap: ColorMap
   column: String!
+  joinPath: [JoinStep!]!
+  label: String
   table: ID!
 }
 
@@ -4463,13 +4594,52 @@ input MeshColorByInput {
   classColors: JSON = null
   colormap: ColorMap = null
   column: String!
+  joinPath: [JoinStepInput!]! = []
+  label: String = null
   table: ID!
+}
+
+"""
+One entry of a mesh layer's filter picker: draw only the objects whose row in the keyed table satisfies this rule. The sibling of `MeshColorBy` over the same FIELD edge -- same table, same column check -- deciding whether an object is drawn rather than what colour it takes
+"""
+type MeshFilterBy {
+  column: String!
+  exclude: Boolean!
+  joinPath: [JoinStep!]!
+  label: String
+  max: Float
+  min: Float
+  table: ID!
+  values: [String!]
+}
+
+"""
+Draw only the objects whose row in a table this collection's FIELD edge keys into satisfies this rule. Which half applies follows from the column's declared role -- bounds for a measure column, an explicit value set for a categorical one
+"""
+input MeshFilterByInput {
+  column: String!
+  exclude: Boolean! = false
+  joinPath: [JoinStepInput!]! = []
+  label: String = null
+  max: Float = null
+  min: Float = null
+  table: ID!
+  values: [String!] = null
 }
 
 """
 A layer that renders a 3D mesh (surface reconstruction / isosurface) placed and styled in a scene.
 """
 type MeshLayer implements Layer {
+  """
+  Which entry of `colorBys` is drawn, as an index into it. Null means the flat `materialColor` is what is drawn -- the distinction between a surface and a measurement rendered on one
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. They combine with AND: an object is drawn when every active rule keeps it. Empty applies none of them, so everything draws
+  """
+  activeFilterBys: [Int!]!
   blending: Blending!
 
   """
@@ -4478,12 +4648,23 @@ type MeshLayer implements Layer {
   collection: MeshCollection
 
   """
-  Color the objects by a column of the table this collection's FIELD edge keys into, instead of by the flat `materialColor`. Null means the material color is what is drawn -- the distinction between a surface and a measurement rendered on one
+  The colouring currently drawn: `colorBys[activeColorBy]`, or null when nothing is selected. Derived, never stored -- there is one copy of the choice, and it is the index
   """
-  colorBy: MeshColorBy
+  colorBy: MeshColorBy @deprecated(reason: "Read `colorBys` and `activeColorBy` instead: a layer now publishes a picker rather than a single colouring, and this field can only ever show one of its entries.")
+
+  """
+  The colourings this layer offers, in the order a picker should show them. Each is a column of a table this collection's FIELD edge keys into, already checked to be reachable and to exist. Empty means there is nothing to pick and the material color is the rendering
+  """
+  colorBys: [MeshColorBy!]!
+
+  """
+  The filters this layer offers, in the order a picker should show them. Each keeps or drops objects by a column of a table this collection's FIELD edge keys into, already checked to be reachable and to exist. Empty means nothing is offered and every object draws
+  """
+  filterBys: [MeshFilterBy!]!
   id: ID!
   kind: LayerKind!
   materialColor: [Int!]
+  maxLevel: Int
   opacity: Float!
   order: Int!
 
@@ -4507,6 +4688,7 @@ type MeshLayer implements Layer {
   """
   placementValidity: PlacementValidity!
   scene: Scene!
+  shading: MeshShading!
   visible: Boolean!
   wireframe: Boolean!
 }
@@ -4539,6 +4721,36 @@ type MeshSample implements SampleStep {
   The coordinate system whose contents are the map. Equal to the queried system when the thing's own contents are the map (a label mask, a mesh collection); a different, array-backed system when the map is a separate field. `consumes` is stated in this system's axis order
   """
   system: CoordinateSystem!
+}
+
+"""
+How a mesh surface is lit. Vocabulary a mesh needs and an image has no use for: a raster has no normals to shade with, which is why this sits on the mesh layer rather than anywhere near a render graph.
+"""
+enum MeshShading {
+  """
+  One normal per face, so every facet reads as a facet. Honest about a decimated surface: it shows the triangles the geometry actually has rather than smoothing them away.
+  """
+  FLAT
+
+  """
+  A pre-lit sphere texture sampled in view space. Lighting does not move with the camera, which makes shape easy to read and comparisons between two views fair.
+  """
+  MATCAP
+
+  """
+  A metallic-roughness material lit by the viewer's environment. Costs more and looks like a rendering rather than a measurement -- reach for it for a figure, not for reading data.
+  """
+  PBR
+
+  """
+  Interpolated vertex normals, so the surface reads as curved. The default, and the one that flatters an isosurface.
+  """
+  SMOOTH
+
+  """
+  No lighting at all: every fragment takes the material colour or the colour-by value. The right choice when the colour *is* the measurement and shading would be read as one.
+  """
+  UNLIT
 }
 
 """Schema for unstructured metadata attached to a file."""
@@ -6048,6 +6260,11 @@ type Query {
   children(filters: FolderChildrenFilter = null, order: ChildrenOrder = null, pagination: ChildrenPaginationInput = null, parent: ID!): [FolderChild!]!
 
   """
+  Every column a mesh collection's objects can be coloured or filtered by: one entry per (joinPath, table, column), with the control its declared role admits. **The set this returns is exactly the set `createMeshLayer(colorBys:)` and `filterBys` accept** -- same reachability walk, same measure-vs-categorical rule -- which is what makes it an options query rather than a suggestion. Distinct from `attributePlans`, which answers a different question (how to execute a lookup per hover) over a different set: it walks the whole fact component and returns plans rooted at a source mask that mesh ids cannot execute, drops tables the write path accepts, and fails outright on a storeless array. Both pickers read these same options, because both branch on the same split. `joinPath` follows `references` from table to table -- pass an option's path back verbatim to select it. The columns' *values* are not here: a picker wanting a class list or a numeric range reads them from the parquet it already has an `accessGrant` for
+  """
+  colorByOptions(filters: ColumnOptionFilter = null, maxJoinDepth: Int! = 1, meshCollection: ID!, pagination: OffsetPaginationInput = null): [ColorByOption!]!
+
+  """
   Walk the coordinate graph out from one system: every coordinate system it reaches and every top-level edge between them. Reachability is undirected (an edge pointing into the system relates to it as much as one pointing out), the edges keep their true direction, and nothing is composed -- what the list queries cannot answer is 'which edges relate to *this* one', because relatedness is transitive and a filter is not
   """
   coordinateGraph(coordinateSystem: ID!, maxDepth: Int = null): CoordinateGraph!
@@ -6077,6 +6294,11 @@ type Query {
 
   """List files (raw microscopy files such as .czi or .ome.tiff)"""
   files(filters: FileFilter, ordering: [FileOrder!]! = [], pagination: OffsetPaginationInput): [File!]!
+
+  """
+  Every column a mesh collection's objects can be filtered by -- **the same set `colorByOptions` returns**, under the name that reads right where a rule is being authored. One relation, one walk, two names: a colouring and a rule reach the same column through the same join and branch on the same measure-vs-categorical split, so two different sets would mean one of them was wrong. What differs is what a control *means*: MEASURE takes a `min`/`max` bound here and a colormap there. Same arguments, same `joinPath` to pass back, same invariant -- everything returned is something `createMeshLayer(filterBys:)` accepts
+  """
+  filterByOptions(filters: ColumnOptionFilter = null, maxJoinDepth: Int! = 1, meshCollection: ID!, pagination: OffsetPaginationInput = null): [FilterByOption!]!
 
   """Get a single folder by ID"""
   folder(
@@ -7069,6 +7291,11 @@ type TableDatasetColumn {
   """
   references: TableDataset
   role: TableColumnRole!
+
+  """
+  The table this column is declared on. Trivial when the column was read through its table, load-bearing when it was not -- an options list is flat, and a column with no table on it cannot be named in a `colorBy`
+  """
+  table: TableDataset!
   unit: Unit
 }
 
@@ -7784,15 +8011,20 @@ input UpdateLayerInput {
 }
 
 """
-Retune how a mesh layer is drawn. A patch: every field is optional and an omitted one keeps its current value, so switching the coloring cannot silently drop the material or the wireframe. The collection and the scene are not editable -- a layer renders what it was created to render
+Retune how a mesh layer is drawn. A patch: every field is optional and an omitted one keeps its current value, so switching the colouring cannot silently drop the material or the wireframe. The collection and the scene are not editable -- a layer renders what it was created to render
 """
 input UpdateMeshLayerInput {
+  activeColorBy: Int = null
+  activeFilterBys: [Int!] = null
   blending: Blending = null
-  colorBy: MeshColorByInput = null
+  colorBys: [MeshColorByInput!] = null
+  filterBys: [MeshFilterByInput!] = null
   id: ID!
   materialColor: [Int!] = null
+  maxLevel: Int = null
   opacity: Float = null
   order: Int = null
+  shading: MeshShading = null
   visible: Boolean = null
   wireframe: Boolean = null
 }

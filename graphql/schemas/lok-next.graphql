@@ -133,7 +133,7 @@ type Client {
   tenant: User!
 
   """
-  The configuration of the client. This is the configuration that will be sent to the client. It should never contain sensitive information.
+  The client's fakts token. Only visible to the organization that owns the client — it is a bearer credential, redeemable at `/f/claim/` for this client's OAuth `client_id` and `client_secret`.
   """
   token: String!
 
@@ -302,10 +302,6 @@ input CreateServiceInstanceInput {
 input CreateStashInput {
   description: String = null
   name: String = null
-}
-
-input CreateUserInput {
-  name: String!
 }
 
 """Date with time (isoformat)"""
@@ -719,7 +715,6 @@ type Mutation {
 
   """Create a new stash"""
   createStash(input: CreateStashInput!): Stash!
-  createUser(input: CreateUserInput!): User!
   declineInvite(input: DeclineInviteInput!): Invite!
   deleteStash(input: DeleteStashInput!): ID!
 

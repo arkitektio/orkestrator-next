@@ -353,6 +353,18 @@ input AssertStructureRelationExistsInput {
   term: String!
 }
 
+type AssertedComment {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  The remark this act was about — recorded it, withdrew it, or reopened it; the assertion says which
+  """
+  comment: Comment!
+}
+
 """
 Who claimed something, with what tool, and when — one row of the append-only log
 """
@@ -384,6 +396,11 @@ type Assertion {
 
   """Who made the claim — a user id, or the identity of an automated agent"""
   subject: String!
+}
+
+input AttestCommentInput {
+  """The ID of the comment to attest"""
+  id: String!
 }
 
 """Input for claiming that an entity exists"""
@@ -694,6 +711,69 @@ enum ColumnKind {
   EDGE
   NODE
   VALUE
+}
+
+type Comment {
+  """The act of commenting: who said it, with which app, and when"""
+  assertion: Assertion!
+
+  """When the remark was recorded"""
+  createdAt: DateTime!
+
+  """
+  The rich body — the tree of paragraphs, leaves and mentions, as it was posted
+  """
+  descendants: [Descendant!]!
+
+  """The claim's durable identity — a bare uuid"""
+  id: ID!
+
+  """The subjects mentioned in the body, extracted at write time"""
+  mentions: [String!]!
+
+  """
+  The comment this replies to, for threading. Null for a top-level remark
+  """
+  parent: Comment
+
+  """
+  The direct replies to this comment, oldest first — a thread reads downward
+  """
+  replies: [Comment!]!
+
+  """
+  Whether the winning position says this remark no longer stands — resolved by a reviewer or withdrawn by its author; `standings` says which and by whom. The fold a comment can honestly carry, because nothing scopes it per view
+  """
+  resolved: Boolean!
+
+  """
+  Every position anyone has taken on whether this remark still stands, newest first. Empty means nobody has withdrawn or resolved it
+  """
+  standings: [Standing!]!
+
+  """
+  The external datum this remark is about. The structure carries the thread
+  """
+  structure: Structure!
+
+  """
+  The plain-text rendering of the body's leaves. Searchable; the body itself is `descendants`
+  """
+  text: String!
+}
+
+input CommentOnStructureInput {
+  """The rich body of the remark — a tree of LEAF/MENTION/PARAGRAPH nodes"""
+  descendants: [DescendantInput!]!
+
+  """The structure identifier of the datum, e.g. '@mikro/roi'"""
+  identifier: String!
+
+  """The id of the external object on its service"""
+  object: String!
+
+  """The comment this replies to. Must be on the same structure's thread"""
+  parent: ID = null
 }
 
 enum ConflictPolicy {
@@ -1487,6 +1567,49 @@ enum DerivationType {
   LATEST_ASSERTION_TOOL
   PRIORITY_LATEST
   ROLLUP
+}
+
+interface Descendant {
+  """The children of this node. Always empty for leafs"""
+  children: [Descendant!]
+
+  """The kind of this node"""
+  kind: DescendantKind!
+
+  """
+  The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree
+  """
+  unsafeChildren: AnyScalar
+}
+
+input DescendantInput {
+  bold: Boolean = null
+
+  """The children of this node. Always empty for leafs"""
+  children: [DescendantInput!] = null
+  code: Boolean = null
+  italic: Boolean = null
+
+  """LEAF, MENTION or PARAGRAPH — see `core.enums.DescendantKind`"""
+  kind: DescendantKind!
+
+  """The size of a paragraph"""
+  size: String = null
+
+  """The text of a leaf"""
+  text: String = null
+  underline: Boolean = null
+
+  """
+  The mentioned subject id — `Assertion.subject`'s vocabulary. Named `user` for shape-compatibility with lok's tree
+  """
+  user: String = null
+}
+
+enum DescendantKind {
+  LEAF
+  MENTION
+  PARAGRAPH
 }
 
 """An INFORMS claim: a structure that is evidence for a node"""
@@ -2861,6 +2984,34 @@ type Label {
   term: Term
 }
 
+type LeafDescendant implements Descendant {
+  """Render this text bold"""
+  bold: Boolean
+
+  """The children of this node. Always empty for leafs"""
+  children: [Descendant!]
+
+  """Render this text as code"""
+  code: Boolean
+
+  """Render this text italic"""
+  italic: Boolean
+
+  """The kind of this node"""
+  kind: DescendantKind!
+
+  """The text of the leaf"""
+  text: String
+
+  """Render this text underlined"""
+  underline: Boolean
+
+  """
+  The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree
+  """
+  unsafeChildren: AnyScalar
+}
+
 """Input for linking a structure to an entity"""
 input LinkStructureInput {
   """Composite ID of the entity this structure informs"""
@@ -3381,6 +3532,22 @@ type MediaUploadGrant {
   uploadFormField: String!
 }
 
+type MentionDescendant implements Descendant {
+  """The children of this node. Always empty for leafs"""
+  children: [Descendant!]
+
+  """The kind of this node"""
+  kind: DescendantKind!
+
+  """The mentioned subject id"""
+  subject: String
+
+  """
+  The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree
+  """
+  unsafeChildren: AnyScalar
+}
+
 """A metric node representing computed values"""
 type Metric implements Node {
   """When this measurement was claimed"""
@@ -3648,6 +3815,11 @@ type Mutation {
   assertStructureRelationExists(input: AssertStructureRelationExistsInput!): StructureRelationAssertion!
 
   """
+  Claim a remark stands again — reopening, as new evidence rather than an undo
+  """
+  attestComment(input: AttestCommentInput!): AssertedComment!
+
+  """
   Claim that an entity exists, returning it to every projection whose rules admit it
   """
   attestEntity(input: AttestEntityInput!): EntityAssertion!
@@ -3662,6 +3834,11 @@ type Mutation {
   Claim that several nodes are of a word, without displacing anyone else's claim. One act, one assertion
   """
   classifyNodes(input: ClassifyNodesInput!): NodesAssertion!
+
+  """
+  Record a remark about an external datum, minting its structure if this is the first sight of it. A reply names its parent and stays on the parent's thread
+  """
+  commentOnStructure(input: CommentOnStructureInput!): AssertedComment!
 
   """Create an edge pairs query"""
   createEdgePairsQuery(input: CreateEdgePairsQueryInput!): EdgePairsQuery!
@@ -3810,6 +3987,11 @@ type Mutation {
 
   """Retract several claims as one act"""
   retractClaims(input: RetractClaimsInput!): EdgesAssertion!
+
+  """
+  Claim a remark no longer stands — resolved by a reviewer or withdrawn by its author; the assertion records whose position it is. The row survives
+  """
+  retractComment(input: RetractCommentInput!): AssertedComment!
 
   """
   Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays.
@@ -4590,6 +4772,22 @@ type OutputParticipation implements Edge {
   targetId: String!
 }
 
+type ParagraphDescendant implements Descendant {
+  """The children of this node. Always empty for leafs"""
+  children: [Descendant!]
+
+  """The kind of this node"""
+  kind: DescendantKind!
+
+  """The size of the paragraph"""
+  size: String
+
+  """
+  The subtree as raw JSON, for clients that render it themselves rather than selecting the typed tree
+  """
+  unsafeChildren: AnyScalar
+}
+
 """One entity's part in an event, inside a batch"""
 input ParticipantInput {
   """The ID of the entity that took part"""
@@ -4985,6 +5183,14 @@ type Query {
   """Get an activity node by composite graph ID"""
   activity(id: GraphID!): Activity!
 
+  """Get one remark by ID, as the log has it"""
+  comment(id: ID!): Comment!
+
+  """
+  Every remark about one external datum, addressed by (identifier, object), newest first — resolved ones included
+  """
+  commentsFor(identifier: String!, object: ID!): [Comment!]!
+
   """Get a description edge by composite graph ID"""
   description(id: GraphID!): Description!
 
@@ -5137,6 +5343,9 @@ type Query {
 
   """List every un-retracted metric describing a structure"""
   metricsForStructure(structureId: GraphID!): [Metric!]!
+
+  """Every remark that mentions the caller, newest first"""
+  myMentions: [Comment!]!
 
   """Get a natural event by composite graph ID"""
   naturalEvent(id: GraphID!): NaturalEvent!
@@ -5581,6 +5790,11 @@ input RetractClaimsInput {
   ids: [String!]!
 }
 
+input RetractCommentInput {
+  """The ID of the comment to retract"""
+  id: String!
+}
+
 """Input for retracting an entity claim"""
 input RetractEntityInput {
   """The ID of the entity to archive"""
@@ -5858,8 +6072,31 @@ input SequenceMappingInput {
   sequence: String!
 }
 
+type Standing {
+  """Who took this position, with what tool, and when they recorded it"""
+  assertion: Assertion!
+
+  """
+  When the position took effect — world time, the axis that decides which claim is newest
+  """
+  at: DateTime!
+
+  """This position's own identity"""
+  id: ID!
+
+  """
+  Whether the claimant says the claim holds. True attests, False retracts
+  """
+  stands: Boolean!
+}
+
 """A structure that provides evidence for entities"""
 type Structure implements Node {
+  """
+  The discussion this datum carries: every remark recorded about it, newest first, resolved ones included — resolution is shown, not hidden. Threading is on each comment (`parent`/`replies`)
+  """
+  comments: [Comment!]!
+
   """External ID if set"""
   externalId: String
 

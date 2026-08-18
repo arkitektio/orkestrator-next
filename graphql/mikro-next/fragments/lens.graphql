@@ -119,3 +119,38 @@ fragment SceneLens on Lens {
     }
   }
 }
+
+# The detail page's selection. Deliberately NOT `SceneLens`: that one carries
+# the whole pyramid (every level's store and chunking), the phasor context and
+# every anchor's histogram, because the renderer needs them to build a brick
+# pool. A page that says what this lens IS needs none of it.
+#
+# A lens has no name of its own — it borrows its dataset's, and `lensLabel`
+# (`mikro-next/lenses.ts`) is what turns the slices into the line that tells one
+# lens of a dataset from another.
+fragment DetailLens on Lens {
+  id
+  shape
+  axisNames
+  slices {
+    ...DimSlice
+  }
+  # The space the SELECTION lives in: its own for a sliced lens, the dataset's
+  # intrinsic grid for a full one.
+  coordinateSystem {
+    id
+    name
+  }
+  # The edge back into the dataset's pixel grid — "a crop is a translation of
+  # the slice starts". Null for a full lens, whose space IS that grid, and the
+  # single most informative fact about a sliced one.
+  toParent {
+    ...Transformation
+  }
+  dataset {
+    id
+    name
+    axisNames
+    shape
+  }
+}

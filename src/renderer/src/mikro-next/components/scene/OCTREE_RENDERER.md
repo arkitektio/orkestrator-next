@@ -213,7 +213,21 @@ never admits or rejects a node; orthographic/2D fall back to plain distance.
 ### 2.7 The plan driver (`managers/nodePlanTracker.ts`)
 
 Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
-`viewProjectionMatrix`, and `displayMode`. Two deliberate absences:
+`viewProjectionMatrix`, and `displayMode`.
+
+**The layer set is dynamic.** `SceneProvider` no longer rebuilds the store scope
+when layers are added, removed or reordered (the server mints an
+`AnnotationLayer` on a scene's first annotation, and rebuilding disposed the
+renderer and every atlas for it) — it reconciles them into the live
+`sceneStore`. `state.layers !== lastLayers` is therefore a REAL trigger, not
+just a mount-time formality, and it is the ONLY thing that replans a
+newly arrived layer. Two consequences: the reconcile must register a new
+layer's zarr arrays BEFORE folding the layers (a fold that lands first replans
+without the array and nothing retries it), and a layer that did not
+structurally change keeps its object identity across a fold, so
+`layerDerivationCache` and the plan caches stay warm.
+
+Two deliberate absences:
 
 - **`residencyVersion` is NOT a trigger.** Plans describe *desire*; residency
   describes *state*. Feeding residency back into planning recreated the legacy

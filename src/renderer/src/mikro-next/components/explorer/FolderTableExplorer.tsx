@@ -43,7 +43,8 @@ import {
 
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroArrayDataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
+import { Guard } from "@/app/Arkitekt";
+import { Komments } from "@/kraph/components/komments/Komments";
 import {
   ChildrenQuery,
   FolderFragment,
@@ -285,7 +286,9 @@ export const FolderTableExplorer = (props: {
       sidebars={
         <Sidebars>
           <Sidebars.Tab label="Comments">
-            <Komments identifier="@mikro/folder" object={props.folder} />
+            <Guard.Kraph>
+              <Komments identifier="@mikro/folder" object={props.folder} />
+            </Guard.Kraph>
           </Sidebars.Tab>
           <Sidebars.Tab label="Provenance">
             <ProvenanceSidebar items={props.folder.provenanceEntries} />

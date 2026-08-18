@@ -1,76 +1,95 @@
 import { useRegisterDashboardWidget } from "../hooks";
+import { Guard } from "@/app/Arkitekt";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMyMentionsQuery } from "@/kraph/api/graphql";
 import {
   useMyActiveMessagesQuery,
-  useMyMentionsQuery,
   useUsersQuery,
 } from "@/lok-next/api/graphql";
+import { JustUsername } from "@/lok-next/components/UserAvatar";
 import { Bell, MessageSquare, Users } from "lucide-react";
-
-// ── Helpers ──
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const extractTextFromDescendants = (descendants: any[]): string => {
-  if (!descendants) return "";
-  return descendants
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((d: any) => {
-      if (d.text) return d.text;
-      if (d.children) return extractTextFromDescendants(d.children);
-      if (d.user) return `@${d.user.username}`;
-      return "";
-    })
-    .join("");
-};
+import { useEffect, useState } from "react";
 
 // ── Notifications widget ──
 
-const NotificationsWidget = () => {
-  const { data: messagesData } = useMyActiveMessagesQuery({
-    fetchPolicy: "cache-and-network",
-  });
-  const { data: mentionsData } = useMyMentionsQuery({
+// Messages come from lok and mentions from kraph, and a component cannot guard
+// one of its own hooks — so the two halves are separate components, each behind
+// its own service. They report emptiness upward only so the widget can say
+// "nothing new" once rather than twice.
+
+const MessagesList = ({ onCount }: { onCount: (n: number) => void }) => {
+  const { data } = useMyActiveMessagesQuery({
     fetchPolicy: "cache-and-network",
   });
 
-  const messages = messagesData?.myActiveMessages ?? [];
-  const mentions = mentionsData?.myMentions ?? [];
+  // Derived from `data`, not `onCompleted` — the latter does not fire when
+  // Apollo answers straight out of the cache, which would leave the count at
+  // zero and print "No new notifications" above a list of them.
+  const count = data?.myActiveMessages?.length ?? 0;
+  useEffect(() => onCount(count), [count, onCount]);
+
+  return (
+    <>
+      {(data?.myActiveMessages ?? []).map((msg) => (
+        <div key={msg.id} className="p-2 rounded-lg bg-muted/50 space-y-0.5">
+          <p className="text-xs font-medium">{msg.title}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {msg.message}
+          </p>
+        </div>
+      ))}
+    </>
+  );
+};
+
+const MentionsList = ({ onCount }: { onCount: (n: number) => void }) => {
+  const { data } = useMyMentionsQuery({
+    fetchPolicy: "cache-and-network",
+  });
+
+  const count = data?.myMentions?.length ?? 0;
+  useEffect(() => onCount(count), [count, onCount]);
+
+  return (
+    <>
+      {(data?.myMentions ?? []).slice(0, 5).map((mention) => (
+        <div
+          key={mention.id}
+          className="p-2 rounded-lg bg-muted/50 flex items-start gap-2"
+        >
+          <MessageSquare className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                <JustUsername sub={mention.assertion.subject} />
+              </span>{" "}
+              mentioned you
+            </p>
+            {/* kraph renders the body to plain text for us — no walking the
+                descendant tree for a one-line preview. */}
+            <p className="text-xs text-muted-foreground truncate">
+              {mention.text}
+            </p>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+};
+
+const NotificationsWidget = () => {
+  const [messageCount, setMessageCount] = useState(0);
+  const [mentionCount, setMentionCount] = useState(0);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className="p-2 rounded-lg bg-muted/50 space-y-0.5"
-          >
-            <p className="text-xs font-medium">{msg.title}</p>
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {msg.message}
-            </p>
-          </div>
-        ))}
-        {mentions.slice(0, 5).map((mention) => (
-          <div
-            key={mention.id}
-            className="p-2 rounded-lg bg-muted/50 flex items-start gap-2"
-          >
-            <MessageSquare className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {mention.user.username}
-                </span>{" "}
-                mentioned you
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {extractTextFromDescendants(mention.descendants)}
-              </p>
-            </div>
-          </div>
-        ))}
-        {messages.length === 0 && mentions.length === 0 && (
+        <MessagesList onCount={setMessageCount} />
+        <Guard.Kraph unavailable={<></>}>
+          <MentionsList onCount={setMentionCount} />
+        </Guard.Kraph>
+        {messageCount === 0 && mentionCount === 0 && (
           <p className="text-xs text-muted-foreground">No new notifications</p>
         )}
       </div>

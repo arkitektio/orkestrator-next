@@ -201,6 +201,17 @@ export const MikroCoordinateSystem = buildSmart(
   { name: "Coordinate System" },
 );
 
+// A lens is a named SELECTION over an array dataset — the thing a layer renders
+// through, and the thing a crop action names ("this dataset, these channels").
+// Registered so it can be an argument: `MikroLens.Drop` makes a layer row a drop
+// target, and `SmartContext` then assembles (Lens, Annotation) for the rekuest
+// action that does the cropping.
+export const MikroLens = buildSmart(
+  "@mikro/lens",
+  "mikro/lenses",
+  { name: "Lens" },
+);
+
 export const ElektroTrace = buildSmart(
   "@elektro/trace",
   "elektro/traces",
@@ -688,11 +699,6 @@ export const AlpakaCollection = buildSmart(
   "@alpaka/collection",
   "alpaka/collections",
   { name: "Collection" },
-);
-export const LokComment = buildSmart(
-  "@lok/comment",
-  "lok/comments",
-  { name: "Comment" },
 );
 export const LokMapping = buildSmart(
   "@lok/mapping",

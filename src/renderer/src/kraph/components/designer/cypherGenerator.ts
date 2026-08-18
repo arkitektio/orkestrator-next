@@ -545,7 +545,7 @@ export function generateGraphQueryInput(
     matchingMappings.forEach((mapping) => {
       // Determine column kind based on property
       let columnKind = ColumnKind.Value
-      let valueType: ValueKind = ValueKind.String
+      const valueType: ValueKind = ValueKind.String
       let isIdForKey: string | undefined = undefined
 
       if (col.property === 'id') {

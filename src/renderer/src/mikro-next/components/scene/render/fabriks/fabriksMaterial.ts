@@ -23,7 +23,9 @@ const {
   materialColor,
   mix,
   select,
+  texture,
   uniform,
+  vec2,
   vec3,
 } = TSL;
 
@@ -55,7 +57,36 @@ export type FabriksMaterialHandle = {
     selectedOrdinal: { value: number };
     /** 1 = draw ONLY the selected instance (isolation); 0 = draw all. */
     isolate: { value: number };
+    /** 1 = the LUT's rgb IS this object's colour (a `colorBy` is active). */
+    lutColorize: { value: number };
+    /** 1 = the LUT's alpha decides visibility (a `filterBy` is active). */
+    lutFilter: { value: number };
+    /** The LUT's dimensions, for the ordinal → texel decomposition. */
+    lutWidth: { value: number };
+    lutHeight: { value: number };
   };
+  /** The ordinal → RGBA lookup (`fabriksColorLut.ts`); swap `.value` to rebind. */
+  lut: { node: { value: THREE.Texture } };
+};
+
+/**
+ * The LUT's identity: white and opaque, so a material with no colouring and no
+ * filter renders exactly as it did before the LUT existed. Every mesh layer
+ * starts here, and the two `lut*` mode uniforms stay 0 until something is
+ * actually bound — the placeholder is the fallback, never the answer.
+ */
+const createPlaceholderLut = (): THREE.DataTexture => {
+  const lut = new THREE.DataTexture(
+    new Uint8Array([255, 255, 255, 255]),
+    1,
+    1,
+    THREE.RGBAFormat,
+  );
+  lut.magFilter = THREE.NearestFilter;
+  lut.minFilter = THREE.NearestFilter;
+  lut.generateMipmaps = false;
+  lut.needsUpdate = true;
+  return lut;
 };
 
 /** ordinal → rgb node for one colormap spec. */
@@ -79,14 +110,46 @@ const buildInstanceColorNode = (spec: InstanceColormapSpec) => {
   return mix(vec3(1.0), ramp, saturation).mul(value);
 };
 
-/** Wrap a base color node with the selection logic (isolate + highlight). */
+/**
+ * Wrap a base color node with the per-object table lookup (colour + filter)
+ * and the selection logic (isolate + highlight).
+ *
+ * The LUT is read UNCONDITIONALLY and its two modes are uniforms, not branches
+ * in the graph: turning a colouring or a rule on and off is then a `.value`
+ * write, never a pipeline rebuild — the same reason selection is uniforms. One
+ * texel fetch per fragment buys both features, since they are two channels of
+ * one answer.
+ *
+ * The ordinal decomposes into a 2D texel because a strip wide enough for
+ * fabriks's ordinal ceiling exceeds any backend's max texture dimension. The
+ * `+ 0.5` is the texel CENTRE — NEAREST sampling on a boundary is a coin flip
+ * between two objects' colours.
+ */
 const composeColorNode = (handle: FabriksMaterialHandle, baseNode: unknown) =>
   Fn(() => {
     const ordinal = attribute("objectOrdinal", "float");
+
+    const width = float(handle.uniforms.lutWidth);
+    const height = float(handle.uniforms.lutHeight);
+    const column = ordinal.mod(width);
+    const row = ordinal.div(width).floor();
+    const lut = (handle.lut.node as unknown as { sample: (uv: unknown) => any }).sample(
+      vec2(column.add(0.5).div(width), row.add(0.5).div(height)),
+    );
+
+    // A rule that drops this object drops it here rather than by removing it
+    // from the batch: the batch's slots and the LOD cache are planned by what
+    // is RESIDENT, and a filter must not re-plan and re-fetch on every toggle.
+    Discard(float(handle.uniforms.lutFilter).greaterThan(0.5).and(lut.a.lessThan(0.5)));
+
     // Float equality is exact here: ordinals are integers ≤ 2^24 on both sides.
     const selected = ordinal.equal(float(handle.uniforms.selectedOrdinal));
     Discard(float(handle.uniforms.isolate).greaterThan(0.5).and(selected.not()));
-    const base = vec3(baseNode);
+
+    // A colouring REPLACES the base rather than tinting it: the base is the
+    // instance-id hash (or the flat material), and multiplying a colormap by a
+    // random hue is neither of the two things the user asked for.
+    const base = mix(vec3(baseNode), lut.rgb, float(handle.uniforms.lutColorize));
     // ~35% toward white: the identified object pops without a recompile.
     return select(selected, mix(base, vec3(1.0), 0.35), base);
   })();
@@ -103,7 +166,12 @@ export function createFabriksMaterial(): FabriksMaterialHandle {
     uniforms: {
       selectedOrdinal: uniform(-1),
       isolate: uniform(0),
+      lutColorize: uniform(0),
+      lutFilter: uniform(0),
+      lutWidth: uniform(1),
+      lutHeight: uniform(1),
     },
+    lut: { node: texture(createPlaceholderLut()) },
   };
   setInstanceColoring(handle, DEFAULT_INSTANCE_COLORMAP);
   return handle;
@@ -121,4 +189,26 @@ export function setInstanceColoring(
 ): void {
   const base = colormap ? buildInstanceColorNode(INSTANCE_COLORMAP_SPECS[colormap]) : materialColor;
   handle.material.colorNode = composeColorNode(handle, base);
+}
+
+/**
+ * Bind a freshly built ordinal → RGBA lookup, or `null` to fall back to the
+ * placeholder (white, opaque — the identity).
+ *
+ * Rebinding is a uniform write and a texture swap, never a graph change, so it
+ * costs no recompile. The caller owns disposing the texture it replaces: this
+ * module never learns when the old one stopped being referenced.
+ */
+export function setColorLut(
+  handle: FabriksMaterialHandle,
+  lut: { texture: THREE.Texture; width: number; height: number } | null,
+  modes: { colorize: boolean; filter: boolean },
+): void {
+  if (lut) {
+    handle.lut.node.value = lut.texture;
+    handle.uniforms.lutWidth.value = lut.width;
+    handle.uniforms.lutHeight.value = lut.height;
+  }
+  handle.uniforms.lutColorize.value = lut && modes.colorize ? 1 : 0;
+  handle.uniforms.lutFilter.value = lut && modes.filter ? 1 : 0;
 }

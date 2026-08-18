@@ -13,7 +13,8 @@ import {
 } from "react";
 import { resolveSceneCameraFrame } from "./core/cameraState";
 import { resolvePreferredDisplayMode } from "./core/preferredView";
-import { sceneStructureSignature } from "./core/sceneStructure";
+import { sceneLayerSignature, sceneScopeSignature } from "./core/sceneStructure";
+import { openMissingSceneArrays } from "./sources/zarrSources";
 import { assertWebGPUSupported } from "./render/gpu/webgpuSupport";
 import {
   AnimationStoreContext,
@@ -116,11 +117,28 @@ export const SceneGuard = (props: {
  * `scene` may be null ("no scene selected" — e.g. a dataset without scenes);
  * the scope build is skipped and the status says so.
  *
- * Rebuild contract: the scope is rebuilt only when `sceneStructureSignature`
- * changes (scene switch, layer add/remove/reorder, world change, registration
- * refinement). Content mutations fold their results into the stores at their
- * call sites and MUST keep doing so — the provider deliberately ignores the
- * fragment-identity churn they cause.
+ * ## Rebuild contract — two tiers
+ *
+ * 1. **Rebuild** (`sceneScopeSignature`: scene id, world coordinate system).
+ *    A different scene, or a different world frame, is a different scope: the
+ *    stores are rebuilt and `SceneGuard` remounts everything under them.
+ * 2. **Reconcile** (`sceneLayerSignature`: which layers, in which order,
+ *    placed how). The layer set is DYNAMIC — the server mints an
+ *    `AnnotationLayer` on a scene's first annotation, layers are added and
+ *    deleted, registrations are refined — and none of that may tear the scope
+ *    down. The reconcile effect below opens any newly referenced zarr arrays
+ *    and folds the new layer set into the LIVE stores while the canvas keeps
+ *    rendering.
+ * 3. **Ignore** (everything else). Content mutations fold their results into
+ *    the stores at their call sites and MUST keep doing so — the provider
+ *    deliberately ignores the fragment-identity churn they cause.
+ *
+ * THE load-bearing invariant: `status.phase` is computed from the SCOPE
+ * signature ALONE. The layer signature schedules a reconcile and never gates
+ * readiness — the moment a layer change can push `phase` back to
+ * "initializing", `SceneViewport` swaps in its fallback frame, the `<Canvas>`
+ * unmounts, and the WebGPU renderer plus every brick atlas are disposed. That
+ * full reload on the first annotation is exactly what the split exists to kill.
  */
 export const SceneProvider = (props: {
   scene: SceneFragment | null | undefined;
@@ -131,30 +149,41 @@ export const SceneProvider = (props: {
   const scene = props.scene ?? null;
 
   // The rebuild key. Content-only cache re-emissions (a saved render graph, a
-  // pinned view, a new animation) change the fragment's identity but not this
-  // string, so they no longer tear the scope down — see
-  // `sceneStructureSignature`.
-  const signature = useMemo(
-    () => (scene ? sceneStructureSignature(scene) : null),
+  // pinned view, a new animation) and layer-set changes alike leave this
+  // string alone, so neither tears the scope down.
+  const scopeSignature = useMemo(
+    () => (scene ? sceneScopeSignature(scene) : null),
+    [scene],
+  );
+  // The reconcile key. Never read by `status` — see the invariant above.
+  const layerSignature = useMemo(
+    () => (scene ? sceneLayerSignature(scene) : null),
     [scene],
   );
 
-  // The effect keys on the signature, not the fragment, so it must read the
-  // CURRENT fragment through a ref — the build uses whatever data is live
-  // when the structure changes.
+  // The effects key on signatures, not the fragment, so they must read the
+  // CURRENT fragment through a ref — a build or fold uses whatever data is
+  // live when it runs.
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
 
-  // Both results remember WHICH structure they were built for: between a
-  // structural change and the rebuild effect firing there is one commit where
-  // the old scope still exists — matching signatures keeps the status honest
-  // ("initializing", never "ready with the wrong stores") through that window.
+  // `built` remembers WHICH scope it is, and WHICH layer set is currently
+  // folded into it. Between a structural change and the rebuild effect firing
+  // there is one commit where the old scope still exists — matching signatures
+  // keep the status honest ("initializing", never "ready with the wrong
+  // stores") through that window.
+  //
+  // `layerSignature` lives here rather than in a ref on purpose: deriving the
+  // reconcile trigger from state is what makes a second refetch landing
+  // mid-fold self-heal (the stamp won't match, so the effect simply runs
+  // again) instead of being dropped.
   const [built, setBuilt] = useState<{
-    signature: string;
+    scopeSignature: string;
+    layerSignature: string;
     scope: SceneScope;
   } | null>(null);
   const [failure, setFailure] = useState<{
-    signature: string;
+    scopeSignature: string;
     error: Error;
   } | null>(null);
 
@@ -165,7 +194,10 @@ export const SceneProvider = (props: {
       setBuilt(null);
       setFailure(null);
       const scene = sceneRef.current;
-      if (!scene || !signature) return;
+      if (!scene || !scopeSignature) return;
+      // Stamped from the fragment we are actually building, not the
+      // render-time memo — they can differ if a refetch landed in between.
+      const builtLayerSignature = sceneLayerSignature(scene);
 
       try {
         // Gate before anything expensive: a scene without WebGPU cannot render
@@ -201,12 +233,16 @@ export const SceneProvider = (props: {
         };
 
         if (!cancelled) {
-          setBuilt({ signature, scope });
+          setBuilt({
+            scopeSignature,
+            layerSignature: builtLayerSignature,
+            scope,
+          });
         }
       } catch (error) {
         if (!cancelled) {
           setFailure({
-            signature,
+            scopeSignature,
             error: error instanceof Error ? error : new Error(String(error)),
           });
         }
@@ -218,19 +254,128 @@ export const SceneProvider = (props: {
     return () => {
       cancelled = true;
     };
-  }, [signature, client, datalayer]);
+  }, [scopeSignature, client, datalayer]);
 
   // `status.scene` is always the LIVE fragment: content the viewport reads
   // reactively (backgroundColor, …) keeps updating without a rebuild.
+  //
+  // Note what is NOT here: `layerSignature`. A pending layer fold must never
+  // move `phase` off "ready" — see the invariant in the block comment above.
   const status: SceneScopeStatus = !scene
     ? { phase: "no-scene", scene: null, error: null }
-    : failure && failure.signature === signature
+    : failure && failure.scopeSignature === scopeSignature
       ? { phase: "error", scene, error: failure.error }
-      : built && built.signature === signature
+      : built && built.scopeSignature === scopeSignature
         ? { phase: "ready", scene, error: null }
         : { phase: "initializing", scene, error: null };
 
   const scope = status.phase === "ready" ? built!.scope : null;
+
+  // Fold a changed layer set into the live stores. Only ever runs against a
+  // ready scope for the CURRENT scene; a layer change that arrives while the
+  // scope is still building needs nothing, because the build reads the live
+  // fragment and stamps that fragment's layer signature.
+  const needsReconcile =
+    !!scope && !!built && built.layerSignature !== layerSignature;
+
+  useEffect(() => {
+    if (!needsReconcile || !scope || !built) return;
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const foldLayers = (source: SceneFragment) => {
+      const { removedLayerIds } = scope.sceneStore
+        .getState()
+        .syncSceneLayers(source.layers);
+
+      // Prune what pointed AT a layer that just left. Done here rather than in
+      // the card that deletes, so every removal path is covered — the layer
+      // panel's trash, a server-side delete, a future subscription.
+      if (removedLayerIds.length > 0) {
+        // A probe pinned to a departed layer would keep naming it. Unpinning
+        // also clears a probe that no longer resolves (`probeAfterPinChange`).
+        const viewer = scope.viewerStore.getState();
+        if (viewer.probeLayerId && removedLayerIds.includes(viewer.probeLayerId)) {
+          viewer.setProbeLayerId(null);
+        }
+        // A selection outliving its layer leaves `SelectionInfoPanel` unable
+        // to resolve a collection matrix — no anchor, so it parks in the
+        // corner describing a shape that is no longer in the scene.
+        scope.roiSelectionStore.getState().dropLayerSelections(removedLayerIds);
+      }
+      // Stamp what we actually folded. If a newer fragment arrived meanwhile,
+      // this won't match the render-time signature, `needsReconcile` stays
+      // true, and the effect runs once more against the newest data.
+      setBuilt((prev) =>
+        prev && prev.scope === scope
+          ? { ...prev, layerSignature: sceneLayerSignature(source) }
+          : prev,
+      );
+    };
+
+    const reconcile = async () => {
+      // The fragment we open arrays for and the one we fold must be the SAME
+      // object, or the stamp would describe something that is not in the store.
+      const source = sceneRef.current;
+      if (!source || sceneScopeSignature(source) !== built.scopeSignature) return;
+
+      let failedStoreIds: string[] = [];
+      if (datalayer) {
+        try {
+          const opened = await openMissingSceneArrays({
+            scene: source,
+            client,
+            datalayer,
+            isOpen: scope.viewerStore.getState().hasArrayForStoreId,
+          });
+          if (cancelled) return;
+          // Arrays BEFORE layers: the fold is what wakes the planner.
+          scope.viewerStore.getState().registerArrays(opened.arrays);
+          failedStoreIds = opened.failedStoreIds;
+        } catch (error) {
+          if (cancelled) return;
+          // Never blanks the scene: fold the layers anyway (see
+          // `openMissingSceneArrays`' partial-tolerance contract).
+          console.warn("[scene] reconcile could not open zarr arrays", error);
+        }
+      }
+
+      foldLayers(source);
+
+      if (failedStoreIds.length > 0) {
+        console.warn("[scene] zarr open failed on reconcile", failedStoreIds);
+        // Nothing else would ever retry these: the planner only replans when
+        // the layers array identity moves. One bounded retry, then republish
+        // the same layers to trigger it.
+        retryTimer = window.setTimeout(() => {
+          void (async () => {
+            const retrySource = sceneRef.current;
+            if (cancelled || !retrySource || !datalayer) return;
+            try {
+              const retried = await openMissingSceneArrays({
+                scene: retrySource,
+                client,
+                datalayer,
+                isOpen: scope.viewerStore.getState().hasArrayForStoreId,
+              });
+              if (cancelled || retried.arrays.size === 0) return;
+              scope.viewerStore.getState().registerArrays(retried.arrays);
+              scope.sceneStore.getState().touchImageLayers();
+            } catch (error) {
+              console.warn("[scene] zarr reopen retry failed", error);
+            }
+          })();
+        }, 2000);
+      }
+    };
+
+    void reconcile();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(retryTimer);
+    };
+  }, [needsReconcile, scope, built, layerSignature, client, datalayer]);
 
   return (
     <SceneScopeStatusContext.Provider value={status}>

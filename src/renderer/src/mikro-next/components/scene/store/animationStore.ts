@@ -13,8 +13,11 @@ import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
  *
  * `animations` is seeded from the scene fragment and patched from mutation
  * results, the same shape `sceneStore` uses for layers — the scene's stores are
- * built once at mount and never rehydrate, so a tour saved mid-session has to
- * land here to be visible without a reload.
+ * built once per scope and never rehydrate from a refetch, so a tour saved
+ * mid-session has to land here to be visible without a reload. (`sceneStore`
+ * is the one exception: its LAYER set is reconciled in place, because layers
+ * arrive dynamically. Nothing here does — every animation mutation folds its
+ * own result.)
  */
 
 /** A stop being authored: no id yet, and `key` is only for React/reordering. */

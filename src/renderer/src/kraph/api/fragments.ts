@@ -14,6 +14,11 @@
       "RelationCategory",
       "StructureRelationCategory"
     ],
+    "Descendant": [
+      "LeafDescendant",
+      "MentionDescendant",
+      "ParagraphDescendant"
+    ],
     "Edge": [
       "Classification",
       "Description",

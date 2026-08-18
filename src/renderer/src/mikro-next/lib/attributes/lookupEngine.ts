@@ -264,6 +264,70 @@ export class AttributeLookupEngine {
     return this.results.get(resultKey(`ref:${target.id}`, [value])) ?? null;
   }
 
+  /**
+   * Run one ad-hoc read across an arbitrary set of parquet stores.
+   *
+   * The plan path above answers "what is under this point?" for one store with
+   * a prepared, cached statement. This answers the other question a client
+   * asks of the same parquet — what values does this COLUMN hold — which is
+   * neither per-point nor cacheable by key tuple, and which spans more than
+   * one store the moment a `colorBy` reaches its column through a `references`
+   * hop. Both share the expensive parts: one connection, one region, one grant
+   * per store, and a SCOPED secret per store rather than a single overwritten
+   * `parquet_access` (which is exactly why the tables UI's reader cannot serve
+   * a joined read).
+   *
+   * `buildSql` receives the grant URL of each store by id. It must take the URL
+   * from HERE and not from the store's declared bucket/key: the secret is
+   * scoped to the grant's own `s3://bucket/key`, and a URL built from anything
+   * else falls outside that scope and silently reaches for DuckDB's default AWS
+   * endpoint.
+   *
+   * Unbatched and uncached on purpose — callers here are user-initiated
+   * (opening a rule editor, rebuilding a colour LUT), not a hover hot path.
+   */
+  async readAcross(
+    stores: readonly ParquetStoreLike[],
+    buildSql: (urlOf: (storeId: string) => string) => string,
+  ): Promise<readonly AttributeRow[]> {
+    if (this.disposed) return [];
+    // Distinct stores only: a joined read routinely names the same store twice
+    // (a self-referencing table), and installing its secret twice is waste.
+    const distinct = new Map(stores.map((store) => [store.id, store]));
+    // Off the chain, so the token round trips overlap each other and whatever
+    // DuckDB work is queued ahead of this read.
+    const grantsReady = new Map(
+      [...distinct.values()].map((store) => {
+        const pending = this.grantFor(store);
+        pending.catch(() => undefined); // observed again inside the task
+        return [store.id, pending] as const;
+      }),
+    );
+
+    return this.enqueue(async () => {
+      if (this.disposed) return [];
+      const connection = await this.ensureConnection();
+      const urls = new Map<string, string>();
+      for (const [storeId, store] of distinct) {
+        const grant = await grantsReady.get(storeId)!;
+        await this.installSecret(connection, store, grant);
+        urls.set(storeId, grantUrl(grant));
+      }
+      if (this.disposed) return [];
+      const sql = buildSql((storeId) => {
+        const url = urls.get(storeId);
+        if (!url) {
+          throw new Error(
+            `readAcross was not given the store ${storeId} its SQL reads from`,
+          );
+        }
+        return url;
+      });
+      const result = await connection.query(sql);
+      return result.toArray().map((row) => rowToRecord(row));
+    });
+  }
+
   dispose(): void {
     this.disposed = true;
     const statements = this.statements.drain();

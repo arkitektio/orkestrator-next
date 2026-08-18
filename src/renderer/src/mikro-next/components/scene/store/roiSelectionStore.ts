@@ -40,6 +40,15 @@ interface RoiSelectionState {
   toggleSelectedRoi: (roi: SelectedRoi) => void;
   removeSelectedRoi: (roiId: string) => void;
   clearSelectedRois: () => void;
+  /**
+   * Drop every selection belonging to layers that have left the scene.
+   *
+   * A selection outlives its layer otherwise, and a selected shape with no
+   * layer is worse than nothing: `SelectionInfoPanel` resolves the collection
+   * matrix by `layerId`, so it computes no anchor and the info panel parks in
+   * the corner describing something that is no longer in the scene.
+   */
+  dropLayerSelections: (layerIds: readonly string[]) => void;
   setVisibleLayerRois: (layerId: string, rois: VisibleRoi[]) => void;
   clearVisibleLayerRois: (layerId: string) => void;
 }
@@ -82,6 +91,14 @@ export const createRoiSelectionStore = () =>
       clearSelectedRois: () =>
         set((state) => {
           state.selectedRois = [];
+        }),
+      dropLayerSelections: (layerIds) =>
+        set((state) => {
+          const gone = new Set(layerIds);
+          const next = state.selectedRois.filter((roi) => !gone.has(roi.layerId));
+          // Skip the write when nothing was selected in those layers — this
+          // runs on every reconcile that removes a layer.
+          if (next.length !== state.selectedRois.length) state.selectedRois = next;
         }),
       setVisibleLayerRois: (layerId, rois) =>
         set((state) => {

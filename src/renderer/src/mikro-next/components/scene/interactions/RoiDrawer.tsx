@@ -108,7 +108,7 @@ export const RoiDrawer = () => {
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const addDrawnRoi = useRoiDrawingStore((s) => s.addDrawnRoi);
   const drawnRois = useRoiDrawingStore((s) => s.drawnRois);
-  const removeDrawnRoi = useRoiDrawingStore((s) => s.removeDrawnRoi);
+  const markDrawnRoiPersisted = useRoiDrawingStore((s) => s.markDrawnRoiPersisted);
   const pendingPathSeed = useRoiDrawingStore((s) => s.pendingPathSeed);
   const setPendingPathSeed = useRoiDrawingStore((s) => s.setPendingPathSeed);
   const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
@@ -277,9 +277,19 @@ export const RoiDrawer = () => {
         roi.kind,
         roi.worldVectors.map((v): [number, number, number] => [v.x, v.y, v.z]),
       );
-      if (created) removeDrawnRoi(roi.id);
+      // Confirmed, but NOT dropped yet: the persisted shape is drawn by the
+      // annotation layer's own query, and on a scene's first annotation that
+      // layer does not exist yet. Dropping here would blink the shape off
+      // screen in between. `resolvePersistedRois` hands over once the server
+      // copy is actually on screen.
+      if (created) {
+        markDrawnRoiPersisted(roi.id, {
+          id: created.id,
+          collectionId: created.collection.id,
+        });
+      }
     },
-    [createSceneAnnotation, removeDrawnRoi],
+    [createSceneAnnotation, markDrawnRoiPersisted],
   );
 
   const finishShape = useCallback(

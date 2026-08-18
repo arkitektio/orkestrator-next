@@ -2,14 +2,16 @@
 #
 # Richer than the shared `Resident` fragment, which fetches a `__typename` and a
 # name — enough for a breadcrumb, not enough to submit. This one also carries
-# what step 2 asks about the source (a lens's axes and slices, a table's declared
-# column roles), so choosing a row never costs a second round trip.
+# what the picker infers from (a lens's render axes and shape, a dataset's spec,
+# a table's declared column roles), so neither choosing a row nor deciding what
+# kind of layer it becomes costs a second round trip.
 #
-# Every member of the union is selected, including the two that can never become
-# a layer: an ArrayDataset is staged through its lenses and a DataArray is a
-# pyramid level of one. They are listed — dimmed — because a space's story is who
-# lives in it, and silently dropping half its residents would make the picker
-# disagree with the coordinate system page about what is there.
+# The picker is organised by *source* — a dataset, a mesh collection, a table, a
+# collection of annotations — not by resident, so a lens carries its dataset and
+# an ArrayDataset carries what it structurally is: the two are merged into one
+# entry, whether or not they live in the same space. DataArrays are selected
+# only to be dropped: a pyramid level is an implementation detail of its
+# dataset, never something anyone adds to a scene.
 fragment AddLayerCandidate on Resident {
   __typename
   ... on Lens {
@@ -18,6 +20,16 @@ fragment AddLayerCandidate on Resident {
     axisNames
     slices {
       ...DimSlice
+    }
+    # Which axis is x, y, z and intensity — derived server-side from the axis
+    # types. The picker infers a volume from a z axis of more than one plane
+    # (`spec: VOLUME` holds for a single-plane stack too, so it cannot answer
+    # this), and offers RGB only where there is a channel axis to index into.
+    renderAxes {
+      x
+      y
+      z
+      intensity
     }
     dataset {
       id
@@ -46,6 +58,10 @@ fragment AddLayerCandidate on Resident {
   ... on ArrayDataset {
     id
     name
+    description
+    # What the dataset structurally is — 3D, timelapse, multichannel. The entry's
+    # icon and its one-line subtitle, in place of a shape nobody reads.
+    spec
   }
   ... on DataArray {
     id

@@ -1,0 +1,113 @@
+# A comment's rich body. The tree is shape-compatible with lok's komment
+# descendants — the same LEAF/MENTION/PARAGRAPH nodes — with one deliberate
+# difference: a mention names an `Assertion.subject` id, not a user row. The
+# evidence layer knows actors by subject, so resolving that id to a username is
+# lok's job, done at render time.
+fragment Leaf on LeafDescendant {
+  bold
+  italic
+  code
+  text
+}
+
+fragment Mention on MentionDescendant {
+  subject
+}
+
+fragment Paragraph on ParagraphDescendant {
+  size
+}
+
+fragment Descendant on Descendant {
+  kind
+  children {
+    kind
+    children {
+      kind
+      unsafeChildren
+      ...Leaf
+      ...Mention
+      ...Paragraph
+    }
+    ...Leaf
+    ...Mention
+    ...Paragraph
+  }
+  ...Mention
+  ...Paragraph
+  ...Leaf
+}
+
+# Who said it and when. `subject` is the actor id — feed it to lok's
+# `UserAvatarUsername`/`UserUsername` to draw a face.
+fragment CommentAssertion on Assertion {
+  id
+  subject
+  assertedAt
+}
+
+# A position anyone took on whether a remark still stands.
+fragment CommentStanding on Standing {
+  id
+  stands
+  at
+  assertion {
+    ...CommentAssertion
+  }
+}
+
+# A reply, as a thread draws it. Deliberately does not select `replies` — the
+# thread reads one level down and recursion has no base case here.
+fragment ReplyComment on Comment {
+  id
+  createdAt
+  assertion {
+    ...CommentAssertion
+  }
+  parent {
+    id
+  }
+  descendants {
+    ...Descendant
+  }
+  resolved
+}
+
+fragment ListComment on Comment {
+  id
+  createdAt
+  assertion {
+    ...CommentAssertion
+  }
+  parent {
+    id
+  }
+  descendants {
+    ...Descendant
+  }
+  resolved
+  standings {
+    ...CommentStanding
+  }
+  replies {
+    ...ReplyComment
+  }
+}
+
+# A mention surface needs the datum the remark hangs off, so it can link back to
+# the object that was discussed. `text` is the backend's plain-text rendering of
+# the body — no client-side descendant walking needed for a one-line preview.
+fragment MentionComment on Comment {
+  ...ListComment
+  text
+  mentions
+  structure {
+    id
+    identifier
+    object
+  }
+}
+
+fragment DetailComment on Comment {
+  ...MentionComment
+}

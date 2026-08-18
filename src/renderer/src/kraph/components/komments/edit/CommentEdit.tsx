@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DescendantInput, DescendantKind } from "@/lok-next/api/graphql";
+import { DescendantInput, DescendantKind } from "@/kraph/api/graphql";
 import { BoldPlugin, CodePlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
 import { MentionPlugin } from "@platejs/mention/react";
 import {
@@ -11,13 +11,13 @@ import {
 } from "lucide-react";
 import { Plate, PlateContent, usePlateEditor } from "platejs/react";
 import { useState } from "react";
-import { CreateCommentFunc } from "../types";
+import { CommentOnStructureFunc } from "../types";
 
 export type CommentEditProps = {
   identifier: string;
   object: string;
   parent?: string;
-  createComment: CreateCommentFunc;
+  commentOnStructure: CommentOnStructureFunc;
 };
 
 // Convert Plate editor content to DescendantInput
@@ -36,7 +36,9 @@ const convertToDescendantInput = (nodes: any[]): DescendantInput[] => {
       ];
     }
 
-    // Handle mention nodes
+    // Handle mention nodes. The input field stays `user` even though the read
+    // side calls it `subject` — kraph keeps the write shape compatible with
+    // lok's tree, so only the render path renames.
     if (node.type === 'mention') {
       return [
         {
@@ -68,7 +70,7 @@ const convertToDescendantInput = (nodes: any[]): DescendantInput[] => {
 };
 
 export const CommentEdit = ({
-  createComment,
+  commentOnStructure,
   object,
   parent,
   identifier,
@@ -88,9 +90,8 @@ export const CommentEdit = ({
 
   const saveComment = () => {
     const editorContent = editor.children;
-    console.log('Editor content:', editorContent);
     setSaving(true);
-    createComment({
+    commentOnStructure({
       variables: {
         identifier: identifier,
         object: object,

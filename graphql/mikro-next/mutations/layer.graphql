@@ -37,6 +37,20 @@ mutation CreateLabelLayer($input: CreateLabelLayerInput!) {
   }
 }
 
+# Retune how a label layer is drawn. A patch at BOTH levels: an omitted field on
+# the input keeps its value, and `LabelRenderInput` is itself a patch, so writing
+# a picker choice never has to resend the hashing seed or the background id.
+#
+# Unlike `UpdateMeshLayerInput` — which carries `colorBys`/`filterBys` flat on the
+# layer — a label layer's picker lives under `render`, because everything about
+# how a mask becomes colour is one object on this type. The card therefore sends
+# `{ id, render: { colorBys, activeColorBy } }`.
+mutation UpdateLabelLayer($input: UpdateLabelLayerInput!) {
+  updateLabelLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
 mutation CreatePointLayer($input: CreatePointLayerInput!) {
   createPointLayer(input: $input) {
     ...SceneLayer

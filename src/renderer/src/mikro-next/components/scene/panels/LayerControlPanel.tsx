@@ -11,6 +11,7 @@ import { assessLayerPoolViability } from "../core/octree/poolViability";
 import { perfMonitor } from "../managers/perfMonitor";
 import { useModeStore } from "../store/modeStore";
 import { useSelectionStore } from "../store/selectionStore";
+import { isLabelLayerState } from "../core/layerModel";
 import { LayerState, useSceneStore } from "../store/sceneStore";
 import {
   useViewerStore,
@@ -19,6 +20,7 @@ import {
 import { LayerGraphFlyout } from "./layer/LayerGraphFlyout";
 import { LayerRow } from "./layer/LayerRow";
 import { AnnotationLayerCard } from "./layer/AnnotationLayerCard";
+import { LabelLayerCard } from "./layer/LabelLayerCard";
 import { MeshLayerCard } from "./layer/MeshLayerCard";
 import { useRenderGraphEditor } from "./layer/rendergraph/RenderNodeEditor";
 
@@ -237,7 +239,14 @@ export const LayerControlPanel = ({
   // as you panned, so the layer you were reaching for slid out from under the
   // cursor. Coverage still shows as a per-row badge, it just no longer decides
   // position.
-  const shownLayers = layers;
+  // IMAGE layers only. `layers` now also carries label masks (they share the
+  // brick path), but a label has its own card: `LayerCard` mounts the
+  // render-graph editor, which a layer with no render graph has nothing to say
+  // to. Listing them here as well would give one label two cards.
+  const shownLayers = useMemo(
+    () => layers.filter((layer) => layer.__typename === "ImageLayer"),
+    [layers],
+  );
 
   // Listed after the image layers rather than interleaved by `order`: the two
   // lists are normalized differently, and a stable "images, then meshes" split
@@ -250,6 +259,14 @@ export const LayerControlPanel = ({
       ),
     [sceneLayers],
   );
+
+  // Off `layers`, NOT `sceneLayers`: a label mask is normalized like an image
+  // (it shares the brick path), and the renderer reads it from there — so the
+  // card has to edit the same objects or a picked colouring would never reach
+  // the material. Its own block all the same, because `LayerCard` mounts the
+  // render-graph editor and a label has no render graph. Right after the images,
+  // because a mask is almost always read AGAINST one.
+  const labelLayers = useMemo(() => layers.filter(isLabelLayerState), [layers]);
 
   // Last, for the same reason meshes come after images: a separate normalized
   // list with its own card, kept in a stable block rather than interleaved.
@@ -318,6 +335,9 @@ export const LayerControlPanel = ({
             mates taller. */}
         <div className="grid grid-cols-1 items-start gap-1 @2xl/layers:grid-cols-2 @5xl/layers:grid-cols-3">
           {shownLayers.map(renderRow)}
+          {labelLayers.map((layer) => (
+            <LabelLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
+          ))}
           {meshLayers.map((layer) => (
             <MeshLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
           ))}

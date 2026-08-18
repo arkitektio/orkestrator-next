@@ -1,11 +1,11 @@
 import type { DataType } from "zarrita";
 import { mapDTypeToTextureBytes } from "@/lib/zarr/indexing/dtype";
-import { ImageLayerFragment } from "./layerGuards";
+import { BrickLayerFragment, ImageLayerFragment } from "./layerGuards";
 
 /**
  * GPU volume-texture memory budgeting and default per-layer LOD assignment.
  * Extracted from `store/sceneStore.ts` so the store no longer owns this
- * concern — it just calls `planDefaultVolumeLods(imageLayers)` at construction.
+ * concern — it just calls `planDefaultVolumeLods(brickLayers)` at construction.
  */
 
 const DEFAULT_VOLUME_TEXTURE_BUDGET_BYTES = 512 * 1024 * 1024;
@@ -52,7 +52,7 @@ function getSliceLength(
   return Math.max(1, Math.ceil((stop - start) / step));
 }
 
-export function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: number): number {
+export function estimateLayerVolumeBytes(layer: BrickLayerFragment, lodIndex: number): number {
   const dataArray = layer.lens.dataset.dataArrays[lodIndex];
   if (!dataArray) return Number.POSITIVE_INFINITY;
 
@@ -82,9 +82,9 @@ export function estimateLayerVolumeBytes(layer: ImageLayerFragment, lodIndex: nu
  * texture memory within a device-derived budget (coarsest first, then greedily
  * upgrade the cheapest layers).
  */
-export function planDefaultVolumeLods(imageLayers: ImageLayerFragment[]): Map<string, number> {
+export function planDefaultVolumeLods(brickLayers: readonly BrickLayerFragment[]): Map<string, number> {
   const budgetBytes = getInitialVolumeTextureBudgetBytes();
-  const candidates = imageLayers
+  const candidates = brickLayers
     .filter((layer) => layer.lens.dataset.dataArrays.length > 0)
     .map((layer) => ({
       layerId: layer.id,

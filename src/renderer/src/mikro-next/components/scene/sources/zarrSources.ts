@@ -5,23 +5,28 @@ import {
 } from "@/lib/zarr/store/types";
 import { ConfiguredS3Store } from "@/lib/zarr/store/s3Store";
 import { SceneFragment } from "@/mikro-next/api/graphql";
-import { isImageLayer } from "../core/layerGuards";
+import { isBrickLayer } from "../core/layerGuards";
 import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
 import { openZarrArray, type OpenedZarrArray } from "./arrayRegistry";
 
 export { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
 
 /**
- * Zarr store construction for a scene: gather the unique data-array stores an
- * image scene references, request S3 credentials, and build a ready
- * `ConfiguredS3Store` per store. Extracted out of `store/viewerStore.ts` so the
- * store no longer owns data-loading — it just consumes these.
+ * Zarr store construction for a scene: gather the unique data-array stores the
+ * scene's brick-backed layers reference, request S3 credentials, and build a
+ * ready `ConfiguredS3Store` per store. Extracted out of `store/viewerStore.ts`
+ * so the store no longer owns data-loading — it just consumes these.
+ *
+ * `isBrickLayer`, not `isImageLayer`: a LABEL mask is a Lens over an array too,
+ * and this is the gate that decides whether its arrays are ever opened. Nothing
+ * downstream can plan, stream or probe a layer whose stores are not collected
+ * here.
  */
 export function collectSceneStoreDescriptors(scene: SceneFragment): Map<string, SceneZarrStoreDescriptor> {
   const descriptors = new Map<string, SceneZarrStoreDescriptor>();
 
   for (const layer of scene.layers) {
-    if (!isImageLayer(layer)) continue;
+    if (!isBrickLayer(layer)) continue;
     for (const dataArray of layer.lens.dataset.dataArrays) {
       descriptors.set(dataArray.store.id, {
         bucket: dataArray.store.bucket,

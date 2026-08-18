@@ -49,9 +49,14 @@ import {
   activeColorByAfterRemoval,
   activeFilterBysAfterRemoval,
   colorByEntryToInput,
+  describeColouring,
+  describeFilterRule,
   entryKey,
+  entryLabel,
   filterByEntryToInput,
+  isJoinedEntry,
   isMeasure,
+  JOINED_NOTE,
   toColorByInput,
   toFilterByInput,
   type ColumnOption,
@@ -99,43 +104,6 @@ const paletteCSS = (name: FabriksInstanceColormap): string => {
   });
   return `linear-gradient(to right, ${colors.join(", ")})`;
 };
-
-/**
- * A filter rule in words, for the toggle's tooltip. Which half applies follows
- * from the column's role: bounds for a measure, an explicit set for a
- * categorical — the same either/or the input models.
- */
-const describeFilterRule = (rule: {
-  min?: number | null;
-  max?: number | null;
-  values?: string[] | null;
-}): string => {
-  if (rule.values && rule.values.length > 0) {
-    return `is one of ${rule.values.slice(0, 4).join(", ")}${
-      rule.values.length > 4 ? `, +${rule.values.length - 4} more` : ""
-    }`;
-  }
-  if (rule.min != null && rule.max != null) return `is between ${rule.min} and ${rule.max}`;
-  if (rule.min != null) return `is at least ${rule.min}`;
-  if (rule.max != null) return `is at most ${rule.max}`;
-  return "matches";
-};
-
-/**
- * A colouring in words, for its row's second line. Which half applies is the
- * measure/categorical split again: a colormap is a ramp over the column's
- * range, and a categorical column takes a colour per distinct value instead —
- * explicit ones when the entry carries a `classColors` map, derived otherwise.
- */
-const describeColouring = (entry: {
-  colormap?: ColorMap | null;
-  classColors?: unknown;
-}): string =>
-  entry.colormap
-    ? `${entry.colormap.toLowerCase()} over the column's range`
-    : entry.classColors
-      ? "explicit colours per value"
-      : "a colour per distinct value";
 
 export const MeshLayerCard = memo(
   ({ layer, onRemove }: { layer: MeshLayerVariant; onRemove?: (id: string) => void }) => {
@@ -375,21 +343,6 @@ export const MeshLayerCard = memo(
           : [...activeFilterBys, index].sort((a, b) => a - b),
       });
 
-    /** A picker entry captions itself; the column is the fallback name. */
-    const entryLabel = (entry: { label?: string | null; column: string }) =>
-      entry.label?.trim() || entry.column;
-
-    /**
-     * A joined entry is stored and honoured by the server, but the renderer
-     * does not execute the `references` hop yet (see the LIMITATION note in
-     * `fabriksColorLut.ts`), so it is badged rather than silently doing
-     * nothing on screen.
-     */
-    const isJoined = (entry: { joinPath?: readonly unknown[] | null }) =>
-      (entry.joinPath?.length ?? 0) > 0;
-
-    const joinedNote = " — reached through a join, not rendered yet";
-
     return (
       <div
         className={`@container/card rounded-lg border border-white/10 bg-black/40 backdrop-blur-md transition-opacity ${
@@ -496,7 +449,7 @@ export const MeshLayerCard = memo(
             title="color by"
             action={
               <ColumnOptionPicker
-                meshCollection={collection.id}
+                source={{ kind: "mesh", meshCollection: collection.id }}
                 mode="color"
                 taken={takenColorBys}
                 onPick={addColorBy}
@@ -523,7 +476,7 @@ export const MeshLayerCard = memo(
                 key={`${entryKey(entry)}.${index}`}
                 active={activeColorBy === index}
                 title={`Color objects by ${entry.column} of table ${entry.table} (stored)${
-                  isJoined(entry) ? joinedNote : ""
+                  isJoinedEntry(entry) ? JOINED_NOTE : ""
                 }`}
                 onClick={() => activeColorBy !== index && persistPick({ activeColorBy: index })}
                 leading={
@@ -539,7 +492,7 @@ export const MeshLayerCard = memo(
                 label={
                   <>
                     {entryLabel(entry)}
-                    {isJoined(entry) && <span className="ml-1 text-amber-300/70">*</span>}
+                    {isJoinedEntry(entry) && <span className="ml-1 text-amber-300/70">*</span>}
                   </>
                 }
                 detail={describeColouring(entry)}
@@ -574,7 +527,7 @@ export const MeshLayerCard = memo(
             title="filters"
             action={
               <ColumnOptionPicker
-                meshCollection={collection.id}
+                source={{ kind: "mesh", meshCollection: collection.id }}
                 mode="filter"
                 taken={takenFilterBys}
                 onPick={addFilterBy}
@@ -599,7 +552,7 @@ export const MeshLayerCard = memo(
                 title={`${entry.exclude ? "Drop" : "Keep"} objects where ${
                   entry.column
                 } ${describeFilterRule(entry)} — combined with AND (stored)${
-                  isJoined(entry) ? joinedNote : ""
+                  isJoinedEntry(entry) ? JOINED_NOTE : ""
                 }`}
                 onClick={() => toggleFilter(index)}
                 leading={
@@ -612,7 +565,7 @@ export const MeshLayerCard = memo(
                 label={
                   <>
                     {entryLabel(entry)}
-                    {isJoined(entry) && <span className="ml-1 text-amber-300/70">*</span>}
+                    {isJoinedEntry(entry) && <span className="ml-1 text-amber-300/70">*</span>}
                   </>
                 }
                 detail={`${entry.exclude ? "drop" : "keep"} where ${describeFilterRule(entry)}`}

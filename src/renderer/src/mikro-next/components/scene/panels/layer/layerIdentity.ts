@@ -7,12 +7,14 @@ import type { LayerState } from "../../core/layerModel";
  *
  * "Labels" used to be derived here from a `transfer.categorical` flag. That flag
  * no longer exists — a label map is its own `LabelLayer` type now, so the flavor
- * comes from the layer's `__typename` rather than from its render graph. The
- * badge is wired up when `LabelLayer` joins `LayerState`.
+ * comes from the layer's `__typename` rather than from its render graph, and is
+ * checked FIRST: a label has no channels and no phasors, so every graph-derived
+ * test below would fall through to "Image" and mislabel it.
  */
 export type LayerFlavor = "FLIM" | "Labels" | "Multichannel" | "Image";
 
 export const layerFlavor = (layer: LayerState): LayerFlavor => {
+  if (layer.__typename === "LabelLayer") return "Labels";
   if (layer.phasors.length > 0) return "FLIM";
   if (layer.channels.length > 1) return "Multichannel";
   return "Image";

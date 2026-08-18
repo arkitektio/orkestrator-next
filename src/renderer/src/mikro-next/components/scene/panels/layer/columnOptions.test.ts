@@ -3,12 +3,24 @@
 // `graphql.ts`, whose Apollo hooks barrel touches `window` on load.)
 import { describe, expect, it } from "vitest";
 
-import { ColumnControl, type MeshColorByFragment } from "@/mikro-next/api/graphql";
+import {
+  ColumnControl,
+  type LabelColorByFragment,
+  type LabelFilterByFragment,
+  type MeshColorByFragment,
+  type MeshFilterByFragment,
+} from "@/mikro-next/api/graphql";
 import {
   activeColorByAfterRemoval,
   activeFilterBysAfterRemoval,
   colorByEntryToInput,
+  describeColouring,
+  describeFilterRule,
+  entryKey,
+  entryLabel,
   entryMatchesOption,
+  filterByEntryToInput,
+  isJoinedEntry,
   optionKey,
   toColorByInput,
   toFilterByInput,
@@ -114,6 +126,108 @@ describe("entry → input round trip", () => {
     // Same table and column name, different path — two distinct candidates.
     const joined: ColumnOption = { ...directOption(), joinPath: joinedOption().joinPath };
     expect(optionKey(joined)).not.toBe(optionKey(directOption()));
+  });
+});
+
+/**
+ * The label entries are a different generated type reached through a different
+ * root query (`labelColorByOptions`, keyed by the lens), and the whole point of
+ * this module is that they take the SAME path. These assert that — so the day
+ * the server gives one kind a field the other lacks, this fails here rather
+ * than by flattening a join on a label layer only.
+ */
+describe("label entries take the same path as mesh ones", () => {
+  const labelColouring: LabelColorByFragment = {
+    __typename: "LabelColorBy",
+    table: "t2",
+    column: "phenotype",
+    joinPath: [{ __typename: "JoinStep", table: "t1", column: "track_id" }],
+    colormap: null,
+    classColors: null,
+    label: "tracks · Phenotype",
+  };
+
+  const labelRule: LabelFilterByFragment = {
+    __typename: "LabelFilterBy",
+    table: "t1",
+    column: "area",
+    joinPath: [],
+    label: "area",
+    min: 3,
+    max: 9,
+    values: null,
+    exclude: true,
+  };
+
+  it("carries a label colouring's joinPath back through a read-modify-write", () => {
+    expect(colorByEntryToInput(labelColouring).joinPath).toEqual([
+      { table: "t1", column: "track_id" },
+    ]);
+  });
+
+  it("round-trips a label rule's bounds and its exclude flag", () => {
+    expect(filterByEntryToInput(labelRule)).toMatchObject({
+      table: "t1",
+      column: "area",
+      joinPath: [],
+      min: 3,
+      max: 9,
+      values: null,
+      exclude: true,
+    });
+  });
+
+  it("maps a mesh and a label entry of the same column to the same input", () => {
+    const meshColouring = {
+      ...labelColouring,
+      __typename: "MeshColorBy",
+    } as unknown as MeshColorByFragment;
+    expect(colorByEntryToInput(labelColouring)).toEqual(colorByEntryToInput(meshColouring));
+
+    const meshRule = { ...labelRule, __typename: "MeshFilterBy" } as unknown as MeshFilterByFragment;
+    expect(filterByEntryToInput(labelRule)).toEqual(filterByEntryToInput(meshRule));
+  });
+
+  it("keys a label entry the same way, so 'already added' works in its picker", () => {
+    const option = joinedOption();
+    expect(entryKey(labelColouring)).toBe(optionKey(option));
+    expect(entryMatchesOption(labelColouring, option)).toBe(true);
+  });
+
+  it("badges a joined label entry and leaves a direct one bare", () => {
+    expect(isJoinedEntry(labelColouring)).toBe(true);
+    expect(isJoinedEntry(labelRule)).toBe(false);
+  });
+});
+
+describe("entry captions", () => {
+  it("falls back to the column when an entry carries no label", () => {
+    expect(entryLabel({ label: null, column: "area" })).toBe("area");
+    expect(entryLabel({ label: "   ", column: "area" })).toBe("area");
+    expect(entryLabel({ label: "Area", column: "area" })).toBe("Area");
+  });
+
+  it("describes a colouring by which half of the split applies", () => {
+    expect(describeColouring({ colormap: "VIRIDIS" as never })).toContain("viridis");
+    expect(describeColouring({ colormap: null, classColors: { a: [1, 2, 3] } })).toBe(
+      "explicit colours per value",
+    );
+    expect(describeColouring({ colormap: null, classColors: null })).toBe(
+      "a colour per distinct value",
+    );
+  });
+
+  it("describes a rule by its bounds or its value set", () => {
+    expect(describeFilterRule({ min: 3, max: 9 })).toBe("is between 3 and 9");
+    expect(describeFilterRule({ min: 3 })).toBe("is at least 3");
+    expect(describeFilterRule({ max: 9 })).toBe("is at most 9");
+    expect(describeFilterRule({ values: ["a", "b"] })).toBe("is one of a, b");
+    // A list cut at four says how many it is not showing, rather than reading
+    // as the whole set.
+    expect(describeFilterRule({ values: ["a", "b", "c", "d", "e", "f"] })).toBe(
+      "is one of a, b, c, d, +2 more",
+    );
+    expect(describeFilterRule({})).toBe("matches");
   });
 });
 

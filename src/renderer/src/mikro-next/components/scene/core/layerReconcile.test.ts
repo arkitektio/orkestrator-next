@@ -16,22 +16,31 @@ import { layerStructureKey } from "./sceneStructure";
 
 type Raw = {
   id: string;
-  __typename: "ImageLayer" | "AnnotationLayer";
+  __typename: "ImageLayer" | "LabelLayer" | "AnnotationLayer";
   pathToWorld?: { transformation?: { id?: string; version?: number | null } | null; inverted: boolean }[] | null;
   session?: string;
 };
-type Img = Raw & { __typename: "ImageLayer" };
+/**
+ * The BRICK-backed arm — what the store's `isImage` predicate actually selects.
+ * The generic calls it `Img`; what it means is "normalize this into `layers`",
+ * and a label mask qualifies for the same reason an image does (a Lens over an
+ * array, so the same pool, plan and residency).
+ */
+type Img = Raw & { __typename: "ImageLayer" | "LabelLayer" };
 type State = { id: string; defaultVolumeLOD?: number | null; fixedLOD?: number | null; visible?: boolean };
 
 const image = (id: string, over: Partial<Raw> = {}): Img =>
   ({ id, __typename: "ImageLayer", pathToWorld: [], ...over }) as Img;
+const label = (id: string, over: Partial<Raw> = {}): Img =>
+  ({ id, __typename: "LabelLayer", pathToWorld: [], ...over }) as Img;
 const annotation = (id: string): Raw => ({
   id,
   __typename: "AnnotationLayer",
   pathToWorld: [],
 });
 
-const isImage = (layer: Raw): layer is Img => layer.__typename === "ImageLayer";
+const isImage = (layer: Raw): layer is Img =>
+  layer.__typename === "ImageLayer" || layer.__typename === "LabelLayer";
 
 /** Sensible defaults; each test overrides only what it is about. */
 const run = (over: Partial<Parameters<typeof reconcileSceneLayers<Raw, Img, State>>[0]> = {}) => {
@@ -183,5 +192,73 @@ describe("reconcileSceneLayers", () => {
     expect(result.layersChanged).toBe(false);
     expect(result.addedLayerIds).toEqual([]);
     expect(result.removedLayerIds).toEqual([]);
+  });
+});
+
+
+/**
+ * Label masks share the brick path, so they normalize into `layers` alongside
+ * images and must keep their session state across a fold exactly as an image
+ * does. `reconcileSceneLayers` is generic over the predicate, so this is really
+ * asserting that the store's widened `isImage` composes correctly.
+ */
+describe("reconcileSceneLayers with label layers in the brick arm", () => {
+  it("normalizes a label into `layers` beside an image", () => {
+    const scene = [image("img"), label("mask")];
+    const result = run({
+      previousSceneLayers: scene,
+      previousLayers: [],
+      nextLayers: scene,
+    });
+    expect(result.layers.map((l) => l.id)).toEqual(["img", "mask"]);
+  });
+
+  it("keeps a label's session state across a fold that did not change it", () => {
+    const scene = [image("img"), label("mask")];
+    const result = run({
+      previousSceneLayers: scene,
+      previousLayers: [
+        { id: "img", defaultVolumeLOD: 1 },
+        { id: "mask", defaultVolumeLOD: 1, fixedLOD: 3, visible: false },
+      ],
+      nextLayers: scene,
+    });
+    const mask = result.layers.find((l) => l.id === "mask");
+    expect(mask).toMatchObject({ fixedLOD: 3, visible: false });
+  });
+
+  it("reports an added and a removed label in the summary", () => {
+    const added = run({
+      previousSceneLayers: [image("img")],
+      previousLayers: [{ id: "img", defaultVolumeLOD: 1 }],
+      nextLayers: [image("img"), label("mask")],
+    });
+    expect(added.addedLayerIds).toContain("mask");
+
+    const removed = run({
+      previousSceneLayers: [image("img"), label("mask")],
+      previousLayers: [
+        { id: "img", defaultVolumeLOD: 1 },
+        { id: "mask", defaultVolumeLOD: 1 },
+      ],
+      nextLayers: [image("img")],
+    });
+    expect(removed.removedLayerIds).toContain("mask");
+  });
+
+  it("keeps an untouched label's raw object identity across a fold", () => {
+    // The whole point of the module: a re-emission that changed nothing must not
+    // invalidate the layer-keyed caches downstream.
+    const mask = label("mask");
+    const scene = [image("img"), mask];
+    const result = run({
+      previousSceneLayers: scene,
+      previousLayers: [
+        { id: "img", defaultVolumeLOD: 1 },
+        { id: "mask", defaultVolumeLOD: 1 },
+      ],
+      nextLayers: [image("img"), label("mask")],
+    });
+    expect(result.sceneLayers.find((l) => l.id === "mask")).toBe(mask);
   });
 });

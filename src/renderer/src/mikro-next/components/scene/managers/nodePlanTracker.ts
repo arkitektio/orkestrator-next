@@ -8,7 +8,7 @@ import { totalBrickCount } from "../core/octree/nodeAddress";
 import { resolvePoolBudget } from "../core/octree/poolBudget";
 import { assessPoolViability } from "../core/octree/poolViability";
 import { buildPlanInputSignature } from "../core/octree/planInputSignature";
-import { buildPoolKey } from "../core/octree/poolKey";
+import { buildPoolKey, poolValueSemantics } from "../core/octree/poolKey";
 import { buildSliceSignature } from "../core/sliceSignature";
 import { resolveLayerDataRange } from "../core/dataRange";
 import {
@@ -224,6 +224,7 @@ export function startNodePlanTracking({
         levels,
         sliceSignature: buildSliceSignature(layer, viewerState.dimSelections),
         dataRange: resolveLayerDataRange(layer, geometry.levels[0].dtype),
+        valueSemantics: poolValueSemantics(layer),
       });
       poolKeys.add(poolKey);
       derived.push({ layer, levels, geometry, spec, poolKey });

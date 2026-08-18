@@ -30,17 +30,11 @@ const {
   ivec2,
   ivec3,
   max,
-  min,
   mix,
-  cameraPosition,
-  modelWorldMatrixInverse,
-  normalize,
   oneMinus,
-  positionGeometry,
   pow,
   screenCoordinate,
   select,
-  sign,
   sin,
   sqrt,
   tan,
@@ -50,7 +44,6 @@ const {
   uniform,
   uniformArray,
   uv,
-  varying,
   vec2,
   vec3,
   vec4,
@@ -58,7 +51,7 @@ const {
 
 // three exports texture3DLoad from Texture3DNode.js but (as of 0.184) does not
 // re-export it through the `three/tsl` barrel — recreate its one-liner here.
-const texture3DLoad = (...params: any[]) => texture3D(...params).setSampler(false);
+export const texture3DLoad = (...params: any[]) => texture3D(...params).setSampler(false);
 
 /** A TSL uniform node as the layer components see it: a `.value` box. */
 export type UniformNodeLike<T> = { value: T };
@@ -68,6 +61,12 @@ export type UniformArrayNodeLike<T> = { array: T[] };
 import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
 import { NameScope } from "./tslNames";
 import { isShaderFastPathEnabled, isSmoothZoomEnabled } from "./shaderFlags";
+import {
+  emitVolumeRayBounds,
+  makeVolumeRayNodes,
+  makeVolumeRayUniforms,
+  MAX_RAY_STEPS as SHARED_MAX_RAY_STEPS,
+} from "./volumeRayNodes";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import {
   MAX_CHANNELS,
@@ -96,7 +95,7 @@ import {
  * …` (and mutate array elements in place for `uniformArray`s).
  */
 
-const MAX_RAY_STEPS = 512;
+const MAX_RAY_STEPS = SHARED_MAX_RAY_STEPS;
 
 type Vec3Tuple = readonly [number, number, number];
 
@@ -116,6 +115,15 @@ export type TraversalNodesPublic = {
   uAtlasScale: UniformNodeLike<number>;
   uEmptyDecodeMin: UniformNodeLike<number>;
   uEmptyDecodeRange: UniformNodeLike<number>;
+  /**
+   * Per-channel weights that recompose an EMPTY brick's code from its page-entry
+   * BYTES, and the largest code that width can hold. `(1,0,0)/255` for an 8-bit
+   * intensity code; `(1,256,65536)/16777215` for a 24-bit label id spread across
+   * r,g,b. Uniforms rather than a `#if`, so one compiled material serves both and
+   * the CPU mirror (`decodeEmptyValue`) has one round-trip to match.
+   */
+  uEmptyCodeWeights: UniformNodeLike<THREE.Vector3>;
+  uEmptyCodeMax: UniformNodeLike<number>;
 };
 
 /** Public (consumer-facing) shape of the channel-compositor nodes.
@@ -153,7 +161,7 @@ export type ChannelNodesPublic = {
 
 /** Shared traversal uniform nodes for one (layer, mode) pool (node graph —
  * dynamically typed; see module header). */
-function makeTraversalNodes(
+export function makeTraversalNodes(
   pool: LayerBrickPool,
   dataRange: { minValue: number; maxValue: number },
 ): any {
@@ -183,6 +191,11 @@ function makeTraversalNodes(
     uAtlasScale: uniform(pool.atlas.dataScale, "float"),
     uEmptyDecodeMin: uniform(dataRange.minValue, "float"),
     uEmptyDecodeRange: uniform(dataRange.maxValue - dataRange.minValue, "float"),
+    uEmptyCodeWeights: uniform(
+      pool.emptyBits === 24 ? new THREE.Vector3(1, 256, 65536) : new THREE.Vector3(1, 0, 0),
+      "vec3",
+    ),
+    uEmptyCodeMax: uniform(pool.emptyBits === 24 ? 0xffffff : 0xff, "float"),
   };
 }
 
@@ -299,7 +312,7 @@ function adoptColormapAtlas(nodes: ChannelNodesPublic, atlas: THREE.DataTexture)
 }
 
 /** Node handles produced by `emitResolveBrickResidency`. */
-type ResolvedResidency = {
+export type ResolvedResidency = {
   /** 0 = nothing resident (transparent), 1 = resident, 2 = uniform EMPTY. */
   status: any;
   /** Decoded uniform value when status == 2 (per BRICK — shared by channels). */
@@ -353,7 +366,7 @@ type ResolvedResidency = {
  * UNMAPPED entry and silently falls back to a coarser level, flipping with
  * zoom.
  */
-function emitResolveBrickResidency(
+export function emitResolveBrickResidency(
   t: any,
   baseVoxel: any,
   desiredLevel: any,
@@ -396,12 +409,25 @@ function emitResolveBrickResidency(
       ).toVar();
       const flag = int(entry.a.mul(255.0).add(0.5)).toVar();
 
-      // EMPTY: uniform-fill brick, value 8-bit-encoded in R (P11). The hop
-      // level is the level the EMPTY entry lives at — its whole cell is
+      // EMPTY: uniform-fill brick, its value encoded in the page entry itself
+      // (P11) — 8 bits in R for an intensity, 24 across R,G,B for a label id.
+      // The hop level is the level the EMPTY entry lives at — its whole cell is
       // uniform, so a non-contributing sample may skip the entire cell.
+      //
+      // Each byte is ROUNDED out of its unorm before it is weighted. An 8-bit
+      // unorm reads back as k/255, and k/255*255 is only approximately k — an
+      // error the 65536 weight would amplify into a different id entirely.
       If(flag.equal(int(2)), () => {
         status.assign(2.0);
-        emptyValue.assign(float(t.uEmptyDecodeMin).add(entry.r.mul(t.uEmptyDecodeRange)));
+        const bytes = vec3(
+          floor(entry.r.mul(255.0).add(0.5)),
+          floor(entry.g.mul(255.0).add(0.5)),
+          floor(entry.b.mul(255.0).add(0.5)),
+        );
+        const code = dot(bytes, vec3(t.uEmptyCodeWeights));
+        emptyValue.assign(
+          float(t.uEmptyDecodeMin).add(code.div(t.uEmptyCodeMax).mul(t.uEmptyDecodeRange)),
+        );
         hopLevel.assign(int(sbLvl));
         Break();
       });
@@ -864,7 +890,7 @@ const rand2 = Fn(([co]: any[]) => {
   );
 });
 
-const commonMaterialSettings = (material: NodeMaterial) => {
+export const commonMaterialSettings = (material: NodeMaterial) => {
   material.transparent = true;
   material.blending = THREE.AdditiveBlending;
   material.depthWrite = false;
@@ -1108,9 +1134,11 @@ export function createVolumeNodeMaterial(
     };
   });
 
-  const uDesiredLevel = uniform(0, "int");
-  const uLodBias = uniform(1, "float");
-  const uPxPerVoxelAtUnitDist = uniform(0, "float");
+  // The four ray uniforms come from `volumeRayNodes` so the intensity and the
+  // LABEL raymarchers drive the same LOD pick — see that module's header on why
+  // a second copy of `desiredLevelAt` would rot the planner lockstep.
+  const rayUniforms = makeVolumeRayUniforms();
+  const { uDesiredLevel, uLodBias, uPxPerVoxelAtUnitDist, uBaseShape } = rayUniforms;
   const uMinDelta = uniform(1, "float");
   const uStepScale = uniform(1, "float");
   // Zoom smoothing engages when the RESOLVED level's voxel spans at least
@@ -1121,7 +1149,6 @@ export function createVolumeNodeMaterial(
   // steps LENGTHENS the stride (see floorDelta) rather than cutting the far
   // volume; MAX_RAY_STEPS stays the compile-time loop bound.
   const uMaxSteps = uniform(MAX_RAY_STEPS, "float");
-  const uBaseShape = uniform(new THREE.Vector3(1, 1, 1), "vec3");
   // Back-compat aliases: the single-layer call site writes `projectionMode` /
   // `isoThreshold` directly, which is member 0.
   const projectionMode = memberNodes[0].projectionMode;
@@ -1140,87 +1167,17 @@ export function createVolumeNodeMaterial(
   // the volume at double brightness.
   material.side = THREE.BackSide;
 
-  // Unit-box local ray, interpolated per fragment (parity with the GLSL
-  // vertex stage): origin = camera in object space, direction toward vertex.
-  const vOrigin = varying(
-    modelWorldMatrixInverse.mul(vec4(cameraPosition, 1.0)).xyz,
-    "vOrigin",
-  );
-  const vDirection = varying(positionGeometry.sub(vOrigin), "vDirection");
-
-  // Unit-box local ([-0.5,0.5]) → base voxel. Corner-anchored, no flip: the
-  // mesh is positioned so group-local spans [0..shape], and this map only
-  // undoes the unit-box parameterization (COORDINATE_SYSTEMS.md conventions).
-  const toBaseVoxel = Fn(([p]: any[]) => {
-    const q = vec3(p);
-    return vec3(q.x.add(0.5), q.y.add(0.5), q.z.add(0.5)).mul(uBaseShape);
-  });
-
-  const desiredLevelAt = Fn(([baseVoxel, cameraBase]: any[]) => {
-    const out = int(t.uNumLevels).sub(1).toVar("lodOut");
-    If(uPxPerVoxelAtUnitDist.lessThanEqual(0.0), () => {
-      out.assign(uDesiredLevel);
-    }).Else(() => {
-      const dist = max(distance(vec3(baseVoxel), vec3(cameraBase)), 1.0);
-      const pxPerBaseVoxel = float(uPxPerVoxelAtUnitDist).div(dist);
-      const found = bool(false).toVar();
-      // Unique iterator name: this Fn inlines into the ray loop (see the
-      // emitResolveBrickResidency shadowing note).
-      Loop(
-        { start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<", name: "dlv" },
-        ({ dlv }: any) => {
-          If(found.not(), () => {
-            // MAX spatial factor — mirrors the planner's `wantFiner`
-            // (nodePlanning.ts): a level counts as resolvable while ANY of
-            // its axes still spans ≥1 px (true-factor pyramids are
-            // anisotropic). Keep the two in lockstep.
-            const lvlScale = vec3(t.uLevelScale.element(dlv));
-            If(
-              pxPerBaseVoxel
-                .mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)))
-                .mul(uLodBias)
-                .greaterThanEqual(1.0),
-              () => {
-                out.assign(max(int(dlv), int(uDesiredLevel)));
-                found.assign(true);
-              },
-            );
-          });
-        },
-      );
-    });
-    return out;
-  });
-
-  // Exit distance (along the ray, from pB) of the level's brick cell.
-  const brickExitRel = Fn(([pB, invD, lvl]: any[]) => {
-    const cell = vec3(t.uBrickPayload).mul(vec3(t.uLevelScale.element(lvl)));
-    const lo = floor(vec3(pB).div(cell)).mul(cell);
-    const t1 = lo.sub(pB).mul(invD);
-    const t2 = lo.add(cell).sub(pB).mul(invD);
-    const tf = max(t1, t2);
-    return max(min(tf.x, min(tf.y, tf.z)), 0.0);
-  });
+  // The ray, the base-voxel map, the per-sample LOD pick and the empty-space hop
+  // — shared with the label raymarcher (`volumeRayNodes.ts`).
+  const { vOrigin, vDirection, toBaseVoxel, desiredLevelAt, brickExitRel } =
+    makeVolumeRayNodes(t, rayUniforms);
 
   material.fragmentNode = Fn(() => {
-    const originB = vec3(toBaseVoxel(vOrigin)).toVar();
-    const exitLocal = vec3(vOrigin).add(normalize(vec3(vDirection)));
-    const dirB = normalize(vec3(toBaseVoxel(exitLocal)).sub(originB)).toVar();
-    const safeDir = sign(dirB).mul(max(dirB.abs(), vec3(1e-6)));
-    const invD = vec3(1.0).div(safeDir).toVar();
-
-    // Ray ∩ [0, baseShape] slab test.
-    const t0 = vec3(0.0).sub(originB).mul(invD);
-    const t1v = vec3(uBaseShape).sub(originB).mul(invD);
-    const tminv = min(t0, t1v);
-    const tmaxv = max(t0, t1v);
-    const boundsX = max(max(tminv.x, tminv.y), tminv.z).toVar();
-    const boundsY = min(min(tmaxv.x, tmaxv.y), tmaxv.z).toVar();
-
-    Discard(boundsX.greaterThan(boundsY));
-    boundsX.assign(max(boundsX, 0.0));
-
-    const rayLen = max(boundsY.sub(boundsX), 0.00001);
+    // Ray ∩ [0, baseShape]; discards the fragment when the ray misses.
+    const { originB, dirB, invD, boundsX, boundsY, rayLen } = emitVolumeRayBounds(
+      { vOrigin, vDirection, toBaseVoxel, desiredLevelAt, brickExitRel },
+      rayUniforms,
+    );
     // Termination guarantee: uMaxSteps steps of at least this size always
     // cross the ray, whatever the per-sample LOD picks — a lower tier cap
     // trades step density for the same full-ray coverage.

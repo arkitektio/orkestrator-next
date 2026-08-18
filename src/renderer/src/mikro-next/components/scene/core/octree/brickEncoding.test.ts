@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeEmptyValue, encodeEmptyValue } from "./brickEncoding";
+import { decodeEmptyValue, encodeEmptyTexel, encodeEmptyValue } from "./brickEncoding";
 
 /**
  * EMPTY (uniform-fill) bricks survive only as an 8-bit page-table byte, so the
@@ -37,5 +37,63 @@ describe("EMPTY-brick encode/decode round-trip", () => {
   it("returns min when the range is degenerate", () => {
     expect(encodeEmptyValue(500, { minValue: 7, maxValue: 7 })).toBe(0);
     expect(decodeEmptyValue(0, { minValue: 7, maxValue: 7 })).toBe(7);
+  });
+});
+
+/**
+ * LABEL pools encode an EMPTY brick's value 24-bit across r,g,b instead. This is
+ * the test the whole label render path rests on: a segmentation mask is MOSTLY
+ * uniform bricks — the background between objects, the interior of any large
+ * object — so an id that does not survive this round-trip is not a small
+ * precision loss, it is most of the mask painted as the wrong object.
+ */
+describe("24-bit EMPTY encoding for label ids", () => {
+  const idRange = { minValue: 0, maxValue: 2 ** 24 - 1 };
+
+  it("round-trips EXACTLY over the whole id range", () => {
+    const ids = [
+      0, 1, 2, 3, 7, 255, 256, 257, 65535, 65536, 65537,
+      1_000_000, 8_388_607, 8_388_608, 16_777_214, 2 ** 24 - 1,
+    ];
+    for (const id of ids) {
+      expect(decodeEmptyValue(encodeEmptyValue(id, idRange, 24), idRange, 24)).toBe(id);
+    }
+  });
+
+  it("keeps CONSECUTIVE ids distinct — the property 8 bits destroys", () => {
+    // At 8 bits these three collapse to one code over this range, so a mask's
+    // uniform bricks would all decode to the same object.
+    const codes = [4000, 4001, 4002].map((id) => encodeEmptyValue(id, idRange, 24));
+    expect(new Set(codes).size).toBe(3);
+
+    const eightBit = [4000, 4001, 4002].map((id) => encodeEmptyValue(id, idRange, 8));
+    expect(new Set(eightBit).size).toBe(1);
+  });
+
+  it("splits the code little-endian across r,g,b and leaves 8-bit in r alone", () => {
+    expect(encodeEmptyTexel(0x123456, idRange, 24)).toEqual([0x56, 0x34, 0x12]);
+    expect(encodeEmptyTexel(0xff, idRange, 24)).toEqual([0xff, 0, 0]);
+    // The historical shape is unchanged for intensity pools.
+    expect(encodeEmptyTexel(65535, { minValue: 0, maxValue: 65535 }, 8)).toEqual([255, 0, 0]);
+  });
+
+  it("recomposes the way the shader does (bytes · (1, 256, 65536))", () => {
+    // Lockstep with `emitResolveBrickResidency`'s EMPTY branch: if these weights
+    // change on one side they must change on both.
+    for (const id of [0, 1, 300, 70000, 2 ** 24 - 1]) {
+      const [r, g, b] = encodeEmptyTexel(id, idRange, 24);
+      expect(r + g * 256 + b * 65536).toBe(encodeEmptyValue(id, idRange, 24));
+    }
+  });
+
+  it("defaults to 8 bits, so every existing intensity caller is unchanged", () => {
+    const range = { minValue: 0, maxValue: 65535 };
+    expect(encodeEmptyValue(32768, range)).toBe(encodeEmptyValue(32768, range, 8));
+    expect(decodeEmptyValue(128, range)).toBe(decodeEmptyValue(128, range, 8));
+  });
+
+  it("still returns min for a degenerate range at either width", () => {
+    expect(encodeEmptyValue(500, { minValue: 7, maxValue: 7 }, 24)).toBe(0);
+    expect(decodeEmptyValue(0, { minValue: 7, maxValue: 7 }, 24)).toBe(7);
   });
 });

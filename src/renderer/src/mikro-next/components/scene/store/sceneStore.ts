@@ -2,10 +2,11 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { AxisType, PreferredView, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
-import { isImageLayer, type ImageLayerFragment } from "../core/layerGuards";
+import { isBrickLayer, isLabelLayer, type BrickLayerFragment } from "../core/layerGuards";
 import { reconcileSceneLayers } from "../core/layerReconcile";
 import { layerStructureKey } from "../core/sceneStructure";
 import {
+  normalizeLabelLayer,
   normalizeLayer,
   type LayerState,
   type SceneTransformContext,
@@ -75,7 +76,7 @@ export interface SceneState {
    * settles — see `core/layerReconcile.ts`.
    */
   sceneLayers: SceneLayer[];
-  /** Normalized image layers only (carry zarr + transfer/render-graph state). */
+  /** Normalized BRICK-backed layers — images and label masks alike. */
   layers: LayerState[];
   updateLayer: (updatedLayer: LayerState) => void;
   /**
@@ -119,8 +120,10 @@ export interface SceneState {
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
-  const imageLayers = scene.layers.filter(isImageLayer);
-  const defaultVolumeLods = planDefaultVolumeLods(imageLayers);
+  // Images AND label masks: both are a Lens over an array, so both plan, pool
+  // and stream through the same path (see `isBrickLayer`).
+  const brickLayers = scene.layers.filter(isBrickLayer);
+  const defaultVolumeLods = planDefaultVolumeLods(brickLayers);
 
   // Units are per-axis on the world coordinate system now (the scene-level
   // `spatialUnit` enum is gone); the scale bar shows the first spatial axis'.
@@ -146,7 +149,11 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
         worldCoordinateSystem: scene.worldCoordinateSystem,
       },
       sceneLayers: scene.layers,
-      layers: imageLayers.map((layer) => normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)),
+      layers: brickLayers.map((layer) =>
+        isLabelLayer(layer)
+          ? normalizeLabelLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)
+          : normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene),
+      ),
       // The render graph is the single rendering truth: transfer edits flow
       // graph → store (RenderGraphSection derives the flat clim/colormap
       // fields from the primary channel). No caller writes flat fields
@@ -167,15 +174,19 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
         }),
       syncSceneLayers: (nextLayers) => {
         const { sceneLayers, layers, transformContext } = get();
-        const result = reconcileSceneLayers<SceneLayer, SceneLayer & ImageLayerFragment, LayerState>({
+        const result = reconcileSceneLayers<SceneLayer, SceneLayer & BrickLayerFragment, LayerState>({
           previousSceneLayers: sceneLayers,
           previousLayers: layers,
           nextLayers: nextLayers as readonly SceneLayer[],
-          isImage: (layer): layer is SceneLayer & ImageLayerFragment => isImageLayer(layer),
+          // Named `isImage` by the generic; what it MEANS is "normalize this
+          // one into `layers`", which is every brick-backed layer.
+          isImage: (layer): layer is SceneLayer & BrickLayerFragment => isBrickLayer(layer),
           structureKey: layerStructureKey,
-          planDefaultLods: (images) => planDefaultVolumeLods(images as ImageLayerFragment[]),
+          planDefaultLods: (bricks) => planDefaultVolumeLods(bricks as BrickLayerFragment[]),
           normalize: (layer, defaultVolumeLod) =>
-            normalizeLayer(layer, defaultVolumeLod, transformContext),
+            isLabelLayer(layer)
+              ? normalizeLabelLayer(layer, defaultVolumeLod, transformContext)
+              : normalizeLayer(layer, defaultVolumeLod, transformContext),
           // New objects, never a mutation of the stored one: after any earlier
           // `updateLayer`/`patchSceneLayer` the stored objects are immer-frozen.
           carryImageSession: (previous, next) => ({

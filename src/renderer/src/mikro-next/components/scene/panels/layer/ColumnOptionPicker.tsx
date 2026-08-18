@@ -10,23 +10,32 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  useLabelColorByOptionsLazyQuery,
+  useLabelFilterByOptionsLazyQuery,
   useMeshColorByOptionsLazyQuery,
   useMeshFilterByOptionsLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { isMeasure, optionKey, optionLabel, type ColumnOption } from "./columnOptions";
 
 /**
- * The "+" that turns a mesh collection's OFFERED columns into a stored colouring
- * or filter rule.
+ * The "+" that turns a mesh collection's or a label mask's OFFERED columns into
+ * a stored colouring or filter rule.
  *
- * `colorByOptions` and `filterByOptions` return the same candidate set under two
- * names, so this component is written once and takes which one to ask as a
- * prop: the shapes are identical (`ColumnOption`), and both pickers branch on
- * the same `control` split. Asking under the right name still matters — it is
- * the server's own invariant that everything `filterByOptions` returns is
- * something `createMeshLayer(filterBys:)` accepts.
+ * FOUR roots, ONE component. `colorByOptions` and `filterByOptions` return the
+ * same candidate set under two names, and the label pair
+ * (`labelColorByOptions` / `labelFilterByOptions`, rooted on the lens instead of
+ * on a collection) returns those same two types again — a mask's pixel values
+ * dereference into a table by exactly the FIELD edge a collection's ids do. So
+ * the shapes are identical (`ColumnOption`), all four branch on the same
+ * `control` split, and which one to ask is a prop.
  *
- * Both lazy hooks are declared unconditionally (hooks rules) and neither fires
+ * Asking under the right name still matters, and is why `source` and `mode` are
+ * separate rather than one flat enum: it is the server's own invariant that
+ * everything `filterByOptions` returns is something `createMeshLayer(filterBys:)`
+ * accepts, and likewise that `labelFilterByOptions` returns what
+ * `createLabelLayer(render: {filterBys:})` accepts.
+ *
+ * All four lazy hooks are declared unconditionally (hooks rules) and none fires
  * until the popover opens: an options walk crosses the coordinate graph, so it
  * is not something a layer card should pay for on mount.
  *
@@ -39,14 +48,23 @@ const SEARCH_DEBOUNCE_MS = 200;
 
 export type ColumnOptionPickerMode = "color" | "filter";
 
+/**
+ * What the candidates are walked FROM. A mesh layer roots its options on the
+ * collection it draws; a label layer on the lens it draws, because a mask IS
+ * the thing doing the keying (its pixel values are the ids).
+ */
+export type ColumnOptionSource =
+  | { kind: "mesh"; meshCollection: string }
+  | { kind: "label"; lens: string };
+
 export const ColumnOptionPicker = ({
-  meshCollection,
+  source,
   mode,
   taken,
   onPick,
   title,
 }: {
-  meshCollection: string;
+  source: ColumnOptionSource;
   mode: ColumnOptionPickerMode;
   /** `optionKey`s already stored on the layer — offered, but marked as added. */
   taken: ReadonlySet<string>;
@@ -56,24 +74,51 @@ export const ColumnOptionPicker = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const [runColorBy, colorByResult] = useMeshColorByOptionsLazyQuery();
-  const [runFilterBy, filterByResult] = useMeshFilterByOptionsLazyQuery();
+  const [runMeshColorBy, meshColorByResult] = useMeshColorByOptionsLazyQuery();
+  const [runMeshFilterBy, meshFilterByResult] = useMeshFilterByOptionsLazyQuery();
+  const [runLabelColorBy, labelColorByResult] = useLabelColorByOptionsLazyQuery();
+  const [runLabelFilterBy, labelFilterByResult] = useLabelFilterByOptionsLazyQuery();
 
-  const run = mode === "color" ? runColorBy : runFilterBy;
-  const result = mode === "color" ? colorByResult : filterByResult;
+  const isLabel = source.kind === "label";
+  const result = isLabel
+    ? mode === "color"
+      ? labelColorByResult
+      : labelFilterByResult
+    : mode === "color"
+      ? meshColorByResult
+      : meshFilterByResult;
+
+  // The source's own key is the query variable, so the two branches cannot be
+  // collapsed into one `run(variables)` call — `meshCollection` and `lens` are
+  // different arguments to different fields.
+  const sourceKey = isLabel ? source.lens : source.meshCollection;
 
   const fetchOptions = useCallback(
     (term: string) => {
-      void run({
-        variables: {
-          meshCollection,
-          filters: term.trim() ? { search: term.trim() } : undefined,
-        },
-      }).catch((error) => {
-        console.warn("[mesh] could not load column options:", error);
+      const filters = term.trim() ? { search: term.trim() } : undefined;
+      const request = isLabel
+        ? (mode === "color" ? runLabelColorBy : runLabelFilterBy)({
+            variables: { lens: sourceKey, filters },
+          })
+        : (mode === "color" ? runMeshColorBy : runMeshFilterBy)({
+            variables: { meshCollection: sourceKey, filters },
+          });
+      void request.catch((error) => {
+        console.warn(
+          `[${isLabel ? "label" : "mesh"}] could not load column options:`,
+          error,
+        );
       });
     },
-    [meshCollection, run],
+    [
+      isLabel,
+      mode,
+      sourceKey,
+      runLabelColorBy,
+      runLabelFilterBy,
+      runMeshColorBy,
+      runMeshFilterBy,
+    ],
   );
 
   // Fetch on open, then on every settled search term. Debounced because the
@@ -132,7 +177,9 @@ export const ColumnOptionPicker = ({
               <CommandEmpty className="px-3 py-2 text-[10px]">
                 {search
                   ? "No column matches."
-                  : "This collection's ids reach no table worth colouring by."}
+                  : isLabel
+                    ? "This mask's ids reach no table worth colouring by."
+                    : "This collection's ids reach no table worth colouring by."}
               </CommandEmpty>
             )}
             {groups.map((group) => (

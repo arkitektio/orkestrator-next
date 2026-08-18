@@ -102,3 +102,44 @@ query MeshFilterByOptions(
     ...FilterByOption
   }
 }
+
+# The same two questions for a LABEL layer, rooted on the LENS it renders rather
+# than on a mesh collection — a mask's pixel values dereference into a table by
+# exactly the FIELD edge a collection's ids do, so the walk, the
+# measure-vs-categorical rule and the `joinPath` to pass back are one. The
+# option types are unchanged, which is why both reuse `ColorByOption` /
+# `FilterByOption` verbatim: the label pickers and the mesh pickers consume the
+# identical candidate shape, and `panels/layer/columnOptions.ts` collapses all
+# four into one `ColumnOption`.
+#
+# The set these return is exactly what `createLabelLayer(render: {colorBys:})` /
+# `filterBys` accept. Aliased to `options:` for the same reason the mesh pair is:
+# `ColumnOptionPicker` reads one response key regardless of which it asked.
+query LabelColorByOptions(
+  $lens: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: labelColorByOptions(
+    lens: $lens
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...ColorByOption
+  }
+}
+
+# Same selection and same candidate set as `LabelColorByOptions` — see above.
+query LabelFilterByOptions(
+  $lens: ID!
+  $filters: ColumnOptionFilter
+  $maxJoinDepth: Int
+) {
+  options: labelFilterByOptions(
+    lens: $lens
+    filters: $filters
+    maxJoinDepth: $maxJoinDepth
+  ) {
+    ...FilterByOption
+  }
+}

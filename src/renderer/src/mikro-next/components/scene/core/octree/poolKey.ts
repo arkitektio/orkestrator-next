@@ -30,6 +30,15 @@ import type { LayerLevelGeometry, LevelSource } from "./levelGeometry";
  *   page-mapped with their value QUANTIZED against the pool's `[min,max]` —
  *   see `encodeEmptyValue`. Two layers with different ranges sharing one page
  *   table would decode each other's uniform bricks at the wrong intensity.
+ * - `valueSemantics`: what a slot's contents MEAN — an intensity to normalize,
+ *   or a discrete object id. It decides the EMPTY code width (8 bits for an
+ *   intensity, 24 for an id — see `EmptyValueBits`), so two pools that differ on
+ *   it would read each other's page entries with the wrong channel weights. It
+ *   is a second, explicit guard rather than the only one: a label's `dataRange`
+ *   is `[0, 2^24-1]` whatever its dtype, which already cannot collide with an
+ *   image's dtype or histogram range. Keyed anyway, because "these bricks are
+ *   ids" is the fact the shader branches on, and a fact the key states is a fact
+ *   a future range change cannot quietly unstate.
  *
  * WHAT DOES NOT, AND WHY
  *
@@ -58,10 +67,25 @@ export type PoolKeyInput = {
   sliceSignature: string;
   /** `resolveLayerDataRange(layer, dtype)` — raw value space. */
   dataRange: readonly [number, number];
+  /** What a slot's contents mean. See the note above. */
+  valueSemantics: "intensity" | "labelIds";
 };
 
+/**
+ * What a pool's brick contents MEAN, from the layer that wants them.
+ *
+ * Shared by the residency manager (which keys and allocates pools) and the node
+ * planner (which counts them for the byte budget) — the two must agree on the
+ * key or the planner divides the budget by a different number of pools than the
+ * allocator makes, and plans request slots that do not exist.
+ */
+export const poolValueSemantics = (layer: {
+  __typename?: string;
+}): "intensity" | "labelIds" =>
+  layer.__typename === "LabelLayer" ? "labelIds" : "intensity";
+
 export function buildPoolKey(input: PoolKeyInput): string {
-  const { mode, spec, geometry, levels, sliceSignature, dataRange } = input;
+  const { mode, spec, geometry, levels, sliceSignature, dataRange, valueSemantics } = input;
   return JSON.stringify({
     mode,
     payload: spec.payload,
@@ -76,6 +100,7 @@ export function buildPoolKey(input: PoolKeyInput): string {
     })),
     sliceSignature,
     dataRange: [dataRange[0], dataRange[1]],
+    valueSemantics,
   });
 }
 

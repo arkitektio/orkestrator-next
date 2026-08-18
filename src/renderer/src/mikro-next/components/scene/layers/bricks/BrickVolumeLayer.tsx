@@ -39,12 +39,12 @@ import {
   updateMergedMemberNodes,
 } from "../../render/bricks/brickNodeMaterials";
 import { buildChannelDataSignature } from "../../render/bricks/channelDataSignature";
+import { buildMergeMembers } from "../../render/bricks/mergeMembers";
 import { buildMergedChannelUniformData } from "../../render/bricks/mergedChannelUniforms";
 import {
   findMergeGroup,
   isVolumeMergeEnabled,
   planVolumeMergeGroups,
-  type MergeMember,
 } from "../../render/bricks/volumeMergeGroups";
 
 /**
@@ -219,28 +219,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const mergeGroup = useMemo(() => {
     if (!pool || !isVolumeMergeEnabled()) return null;
-    const members: MergeMember[] = [];
-    memberIds.forEach((id) => {
-      const order = layers.findIndex((l) => l.id === id);
-      const memberLayer = order >= 0 ? layers[order] : undefined;
-      if (!memberLayer) return;
-      // A hidden member must leave the merged pass IMMEDIATELY: the pool's
-      // membership only updates after the next replan + reconcile, and until
-      // then the primary would keep compositing the hidden layer's channels.
-      if (memberLayer.visible === false) return;
-      const targetLevel = viewerStoreApi.getState().nodePlans[id]?.targetLevel;
-      if (targetLevel === undefined) return;
-      members.push({
-        layerId: id,
-        order,
-        affineKey: buildAffineMatrix(memberLayer).elements.join(","),
-        sourceCount: (memberLayer.sources ?? memberLayer.channels ?? []).length,
-        cursorCount: (memberLayer.phasors ?? []).reduce(
-          (total, phasor) => total + (phasor.transfer.cursors?.length ?? 0),
-          0,
-        ),
-        targetLevel,
-      });
+    const members = buildMergeMembers({
+      memberIds,
+      layers,
+      targetLevelOf: (id) => viewerStoreApi.getState().nodePlans[id]?.targetLevel,
     });
     return findMergeGroup(planVolumeMergeGroups(members), layerId);
     // eslint-disable-next-line react-hooks/exhaustive-deps

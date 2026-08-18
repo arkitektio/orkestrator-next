@@ -1517,7 +1517,7 @@ type Client {
 }
 
 """
-One column a layer may be coloured or filtered by, and how it is reached. Both pickers read the same options: `colorBys` and `filterBys` turn on the same measure-vs-categorical split, so two lists would be two copies of one answer. Every option returned is one `createMeshLayer` accepts, and every column it omits is one it refuses -- that invariant is why this exists rather than a client filtering `attributePlans`, which walks a different set
+One column a layer may be coloured or filtered by, and how it is reached. Both pickers read the same options: `colorBys` and `filterBys` turn on the same measure-vs-categorical split, so two lists would be two copies of one answer. Every option returned is one the mutation that publishes the picker accepts -- `createMeshLayer` over a collection, `createLabelLayer` over a lens -- and every column it omits is one that mutation refuses; that invariant is why this exists rather than a client filtering `attributePlans`, which walks a different set
 """
 type ColorByOption {
   """
@@ -1531,7 +1531,7 @@ type ColorByOption {
   control: ColumnControl!
 
   """
-  The `references` hops from the table the ids land in to `table`. Empty is the direct case. Pass it back verbatim as `colorBys[].joinPath` to select this option
+  The `references` hops from the table the source's ids land in to `table`. Empty is the direct case. Pass it back verbatim as `colorBys[].joinPath` to select this option
   """
   joinPath: [ColumnOptionJoinStep!]!
 
@@ -3195,7 +3195,7 @@ input FileOrder @oneOf {
 }
 
 """
-One column a layer may be filtered by, and how it is reached. The same set `colorByOptions` returns, under the name that reads right where a rule is being authored: both pickers turn on the same measure-vs-categorical split, so the candidates are one answer and this is the second way to ask for it. Every option returned is one `createMeshLayer(filterBys:)` accepts
+One column a layer may be filtered by, and how it is reached. The same set the colour-options query returns, under the name that reads right where a rule is being authored: both pickers turn on the same measure-vs-categorical split, so the candidates are one answer and this is the second way to ask for it. Every option returned is one the mutation that publishes the picker accepts -- `createMeshLayer(filterBys:)` over a collection, `createLabelLayer(render: {filterBys: ...})` over a lens
 """
 type FilterByOption {
   """
@@ -3684,23 +3684,55 @@ enum KeyedBySourceKind {
 }
 
 """
-Color objects by a column of the table this mask's FIELD edge keys into. The table is named, never the join: which of its columns holds row identity is already declared there, and the edge that makes the lookup possible is already in the coordinate graph
+One entry of a label layer's colour picker: colour the mask's objects by a column of the table its FIELD edge keys into, instead of by hashing their id. The table is named, never the join: which of its columns holds row identity is already declared there, and the edge that makes the lookup possible is already in the coordinate graph
 """
 type LabelColorBy {
   classColors: JSON
   colormap: ColorMap
   column: String!
+  joinPath: [JoinStep!]!
+  label: String
   table: ID!
 }
 
 """
-Color objects by a column of the table this mask's FIELD edge keys into, instead of by hashing their id
+One entry of a label layer's colour picker: colour objects by a column of the table this mask's FIELD edge keys into, instead of by hashing their id
 """
 input LabelColorByInput {
   classColors: JSON = null
   colormap: ColorMap = null
   column: String!
+  joinPath: [JoinStepInput!]! = []
+  label: String = null
   table: ID!
+}
+
+"""
+One entry of a label layer's filter picker: draw only the objects whose row in the keyed table satisfies this rule. The sibling of `LabelColorBy` over the same FIELD edge -- same table, same column check -- deciding whether an object is drawn rather than what colour it takes
+"""
+type LabelFilterBy {
+  column: String!
+  exclude: Boolean!
+  joinPath: [JoinStep!]!
+  label: String
+  max: Float
+  min: Float
+  table: ID!
+  values: [String!]
+}
+
+"""
+One entry of a label layer's filter picker: draw only the objects whose row in a table this mask's FIELD edge keys into satisfies this rule. Which half applies follows from the column's declared role -- bounds for a measure column, an explicit value set for a categorical one
+"""
+input LabelFilterByInput {
+  column: String!
+  exclude: Boolean! = false
+  joinPath: [JoinStepInput!]! = []
+  label: String = null
+  max: Float = null
+  min: Float = null
+  table: ID!
+  values: [String!] = null
 }
 
 """
@@ -3758,10 +3790,18 @@ type LabelLayer implements Layer {
 How a label layer's discrete object ids become color. Not a transfer function and not a node graph: a label map has one source, no compositing tree, and none of an intensity image's vocabulary -- contrast limits, gamma and colormaps are all meaningless over ids
 """
 type LabelRender {
+  activeColorBy: Int
+  activeFilterBys: [Int!]!
   background: Int!
-  colorBy: LabelColorBy
+
+  """
+  The colouring currently drawn: `colorBys[activeColorBy]`, or null when each id is hashed to a colour. Derived, never stored -- there is one copy of the choice, and it is the index
+  """
+  colorBy: LabelColorBy @deprecated(reason: "Read `colorBys` and `activeColorBy` instead: a label layer now publishes a picker rather than a single colouring, and this field can only ever show one of its entries.")
+  colorBys: [LabelColorBy!]!
   contour: Boolean!
   contourWidth: Float
+  filterBys: [LabelFilterBy!]!
   intensityAxis: String
   intensityIndex: Int!
   opacity: Float
@@ -3775,10 +3815,13 @@ type LabelRender {
 How a label layer's discrete object ids become color. Every field is optional; omitted ones keep their current value on an update, and take their default on a create
 """
 input LabelRenderInput {
+  activeColorBy: Int = null
+  activeFilterBys: [Int!] = null
   background: Int = null
-  colorBy: LabelColorByInput = null
+  colorBys: [LabelColorByInput!] = null
   contour: Boolean = null
   contourWidth: Float = null
+  filterBys: [LabelFilterByInput!] = null
   intensityAxis: String = null
   intensityIndex: Int = null
   opacity: Float = null
@@ -4030,6 +4073,11 @@ type Lens {
   The lens' axis names, in array order. A selection never drops or reorders an axis
   """
   axisNames: [String!]!
+
+  """
+  Every column a label layer over this lens can be coloured or filtered by, with the control each one's role admits -- the same set `createLabelLayer(render: {colorBys: ...})` accepts. The nested form of the `labelColorByOptions` root query, which is where the search, narrowing and paging live; this one hands back the whole list. It walks the coordinate graph once per lens, so read it on a lens, not across a page of them
+  """
+  colorByOptions(maxJoinDepth: Int! = 1): [ColorByOption!]!
 
   """
   The coordinate system the lens' selection is expressed in. A sliced lens owns one (the space its slices cut out, with the derived edge recording the shift); an unsliced lens selects everything, so this resolves to the dataset's INTRINSIC system
@@ -6308,6 +6356,16 @@ type Query {
 
   """List folders (collections of images, files and tables)"""
   folders(filters: FolderFilter, ordering: [FolderOrder!]! = [], pagination: OffsetPaginationInput): [Folder!]!
+
+  """
+  Every column a mask's objects can be coloured or filtered by: `colorByOptions` rooted on the lens a label layer renders instead of on a mesh collection, and the same answer for the same reason -- a mask's pixel values dereference into a table by exactly the FIELD edge a collection's ids do, so the walk, the measure-vs-categorical rule and the `joinPath` to pass back are one. **The set this returns is exactly the set `createLabelLayer(render: {colorBys: ...})` and `filterBys` accept.** The columns' *values* are not here: a picker wanting a class list or a numeric range reads them from the parquet it already has an `accessGrant` for
+  """
+  labelColorByOptions(filters: ColumnOptionFilter = null, lens: ID!, maxJoinDepth: Int! = 1, pagination: OffsetPaginationInput = null): [ColorByOption!]!
+
+  """
+  Every column a mask's objects can be filtered by -- **the same set `labelColorByOptions` returns**, under the name that reads right where a rule is being authored. One relation, one walk, two names, exactly as `filterByOptions` pairs with `colorByOptions` over a collection: what differs is what a control *means*, since MEASURE takes a `min`/`max` bound here and a colormap there. Everything returned is something `createLabelLayer(render: {filterBys: ...})` accepts
+  """
+  labelFilterByOptions(filters: ColumnOptionFilter = null, lens: ID!, maxJoinDepth: Int! = 1, pagination: OffsetPaginationInput = null): [FilterByOption!]!
 
   """Get a single layer by ID"""
   layer(id: ID!): Layer!

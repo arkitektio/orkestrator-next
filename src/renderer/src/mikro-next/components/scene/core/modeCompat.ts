@@ -58,8 +58,8 @@ export const fallbackToolFor = (
 
 /**
  * Only the brick layers emit probes, and `sceneStore.layers` is *already*
- * exactly the image layers (`scene.layers.filter(isImageLayer)`; the raw
- * polymorphic list is `sceneLayers`). Both brick layers bail on
+ * exactly the brick-backed layers (`scene.layers.filter(isBrickLayer)` — images
+ * AND label masks; the raw polymorphic list is `sceneLayers`). They all bail on
  * `visible === false`, so visibility is the whole predicate.
  *
  * Deliberately not gated on brick residency: that is streaming cadence, and
@@ -69,6 +69,12 @@ export const fallbackToolFor = (
  * Equivalent by design to `effectiveProbeLayerId(…) !== null`
  * (`core/probe/probeTargeting.ts`): some layer can answer the probe exactly
  * when some layer is visible.
+ *
+ * KNOWN GAP: the 3D label raymarcher does not answer the probe (only the label
+ * PLANE does — see `BrickLabelVolumeLayer`), so a 3D scene whose only visible
+ * layer is a mask reports probeable while nothing responds. Narrow and
+ * deliberate: a first-hit surface makes "which voxel" a second question, and the
+ * 3D probe closure is entangled with ROI drawing and annotation placement.
  */
 export const hasProbeableLayer = (
   layers: readonly { visible?: boolean }[],

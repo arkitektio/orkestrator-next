@@ -1,5 +1,5 @@
 import { Blending, ColorMap, ProjectionMode } from "@/mikro-next/api/graphql";
-import { ImageLayerFragment } from "./layerGuards";
+import { ImageLayerFragment, LabelLayerFragment } from "./layerGuards";
 import { resolveLayerDataRange } from "./dataRange";
 import {
   ChannelRenderNode,
@@ -19,13 +19,35 @@ export type { SceneTransformContext };
 /**
  * The scene renderer's per-layer view-model. Extracted from `store/sceneStore.ts`
  * so the store holds state, and this module owns the pure derivation from the
- * server `ImageLayerFragment` into render-ready state.
+ * server fragment into render-ready state.
  *
- * Only image layers are tracked here (they carry the zarr data +
- * transfer/render-graph state). Non-image layers (Shape/Point/Track/Mesh) are
- * rendered through a separate path.
+ * BRICK-BACKED layers are tracked here — images and label masks. Both are a Lens
+ * over an array, so both want the same zarr stores, octree planning, residency
+ * and probe; they differ only in how a sampled value becomes colour. The other
+ * layer types (Annotation/Point/Track/Mesh) render through separate paths and
+ * are consumed straight off their fragments.
+ *
+ * A structural SUPERSET with a `__typename` discriminant, deliberately not a
+ * discriminated union: ~30 modules read `.channels` / `.climMin` / `.projection`
+ * off a `LayerState`, and every one of them would have to narrow first for the
+ * sake of fields it will only ever meet on an image. The superset works because
+ * `renderGraph` is already optional on the image fragment and the label
+ * selection spreads the identical `SceneLens` — the label arm is a subset of the
+ * image arm plus `labelRender`.
+ *
+ * The price is that a label carries the render-graph-derived fields as
+ * degenerate values. `normalizeLabelLayer` picks them to be HONEST rather than
+ * plausible — `channels: []` above all, so a label that ever reached the image
+ * compositor by mistake draws nothing instead of something wrong.
  */
-export type LayerState = ImageLayerFragment & {
+export type LayerState = Omit<ImageLayerFragment, "__typename"> & {
+  __typename: "ImageLayer" | "LabelLayer";
+  /**
+   * How a label mask's ids become colour. Present only on a label layer, and the
+   * one field that says which kind this is beyond the `__typename` — narrow with
+   * `isLabelLayerState` rather than testing it, so the intent reads.
+   */
+  labelRender?: LabelLayerFragment["labelRender"];
   fixedLOD?: number | null;
   defaultVolumeLOD?: number | null;
   visible?: boolean;
@@ -136,4 +158,104 @@ export const normalizeLayer = (
     defaultVolumeLOD: defaultVolumeLod,
     visible: true,
   };
+};
+
+/** Which arm of the superset this is. Prefer it to testing `labelRender`. */
+export const isLabelLayerState = (layer: LayerState): boolean =>
+  layer.__typename === "LabelLayer";
+
+/**
+ * The `LayerState` a label mask normalizes to.
+ *
+ * Everything the render graph would have decided is filled with a degenerate
+ * value, because a label map HAS no render graph — it has one source and no
+ * compositing tree, and clim/gamma/colormaps/projections are all meaningless over
+ * object ids. The choices, and why each is the honest one:
+ *
+ *  - `channels: []` / `phasors: []` / `sources: []` — an empty source list means
+ *    the image compositor draws NOTHING. If a label ever reached it by mistake
+ *    (a missed branch, a future merged pass) the failure is a blank layer, not a
+ *    mask painted one flat wrong colour.
+ *  - `climMin`/`climMax` from the dtype range. Nothing normalizes a label, but
+ *    these also feed the pool's value range, and `resolveLayerDataRange` is where
+ *    the id-preserving range is decided for both the planner and the allocator.
+ *  - `colormap`/`color`/`gamma` null — a colormap over ids would impose an order
+ *    they do not have. Ids become colour by hashing, or by a `colorBys` entry.
+ *  - `projection: Mip`, `blend: Additive` — placeholders the label material never
+ *    reads. MIP over ids is meaningless (the largest id wins, which is an
+ *    arbitrary object); the 3D label path resolves FIRST HIT instead and decides
+ *    that itself.
+ *
+ * `intensityAxis` is deliberately NULL even though `labelRender.intensityIndex`
+ * names a channel. Setting it would make `buildLayerLevelGeometry` allocate
+ * `min(16, extent)` slabs per brick — 3-16x the atlas and the fetch — for
+ * channels nothing draws. The chosen index is pinned as a collapsed slice
+ * instead, which is what the slice signature, the fixed-index resolution, the
+ * probe's coordinate mapping and the dim sliders all already read.
+ */
+export const normalizeLabelLayer = (
+  layer: LabelLayerFragment,
+  defaultVolumeLod: number | null,
+  scene: SceneTransformContext,
+): LayerState => {
+  const dtype = layer.lens?.dataset?.dataArrays?.[0]?.store?.dtype;
+  let baseMin = 0;
+  let baseMax = 1;
+  if (dtype) {
+    try {
+      [baseMin, baseMax] = resolveLayerDataRange(layer, dtype);
+    } catch {
+      // keep [0,1] fallback
+    }
+  }
+  const renderAxes = layer.lens.renderAxes;
+  const intensityAxis = resolveIntensityAxis(
+    layer.labelRender?.intensityAxis ?? undefined,
+    renderAxes,
+  );
+  return {
+    ...layer,
+    // Pin the mask's channel as a COLLAPSED slice rather than as the layer's
+    // intensity axis (see the docblock). A scene-wide dim slider can still
+    // override it — `resolveFixedDimIndex` lets a selection win over a slice —
+    // which is the right behaviour: `intensityIndex` is the default this mask
+    // opens on, not a lock.
+    lens:
+      intensityAxis && layer.labelRender
+        ? {
+            ...layer.lens,
+            slices: [
+              ...(layer.lens.slices ?? []).filter((slice) => slice.axis !== intensityAxis),
+              {
+                __typename: "Slice" as const,
+                axis: intensityAxis,
+                start: layer.labelRender.intensityIndex,
+                stop: layer.labelRender.intensityIndex + 1,
+                step: null,
+              },
+            ],
+          }
+        : layer.lens,
+    climMin: baseMin,
+    climMax: baseMax,
+    colormap: null,
+    color: null,
+    gamma: null,
+    affineMatrix: composeLayerAffine(scene, layer),
+    xAxis: renderAxes?.x ?? null,
+    yAxis: renderAxes?.y ?? null,
+    zAxis: renderAxes?.z ?? null,
+    tAxis: renderAxes?.t ?? null,
+    // NOT the mask's channel axis — see the docblock.
+    intensityAxis: null,
+    phasorAxis: null,
+    channels: [],
+    phasors: [],
+    sources: [],
+    blend: Blending.Additive,
+    projection: ProjectionMode.Mip,
+    fixedLOD: null,
+    defaultVolumeLOD: defaultVolumeLod,
+    visible: true,
+  } as LayerState;
 };

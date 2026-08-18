@@ -1,33 +1,14 @@
 import { useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
 import { createPlaneNodeMaterial, updateChannelNodes } from "../../render/bricks/brickNodeMaterials";
 import { buildChannelUniformData } from "../../render/bricks/channelUniforms";
 import { buildAffineMatrix } from "../../core/worldTransform";
-import {
-  buildSliceMap,
-  resolveSpatialSelection,
-  resolveVoxelIndex,
-  type AxisSelection,
-} from "../../core/selection";
-import { createRafCoalescer } from "../../core/probe/rafCoalesce";
-import {
-  effectiveProbeLayerId,
-  layerAnswersProbe,
-} from "../../core/probe/probeTargeting";
-import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
-import {
-  clickProbeEnabled,
-  hoverProbeEnabled,
-  type ProbeGateInput,
-} from "../../core/probe/probeGating";
-import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
-import { useModeStore } from "../../store/modeStore";
-import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
-import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
+import { useViewerStore } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { getBackendTexture, type SceneRenderer } from "../../render/gpu/sceneRenderer";
+import { useBrickPlaneLayer, useBrickPlaneProbe } from "./useBrickPlaneProbe";
 
 /**
  * Brick-pool replacement for `PlaneLayer` + per-chunk `ChunkPlane` meshes:
@@ -36,23 +17,16 @@ import { getBackendTexture, type SceneRenderer } from "../../render/gpu/sceneRen
  * bricks per pixel — which is what retires the whole cover/backdrop
  * machinery. The multi-channel compositor (colormap atlas, clim/gamma/
  * opacity/invert, blend modes) is lifted from ChunkPlane verbatim.
+ *
+ * The probe — the group registration, the pointer gating and the voxel
+ * resolution — lives in `useBrickPlaneProbe`, because it is the half a LABEL
+ * plane needs unchanged: mapping a hit to a base voxel and reading the resident
+ * value is the same question whether that value is an intensity or an object id.
  */
-
-type ProbeGeometryContext = {
-  xSelection: AxisSelection;
-  ySelection: AxisSelection;
-  zSelection: AxisSelection;
-  volumePosition: [number, number, number];
-  volumeSize: [number, number, number];
-};
 
 export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickPlaneLayer"); // no-op unless a perf recording is armed
-  const groupRef = useRef<THREE.Group>(null!);
 
-  const register = useViewerStore((s) => s.register);
-  const unregister = useViewerStore((s) => s.unregister);
-  const currentZ = useViewerStore((s) => s.currentZ);
   // SCALAR plan subscriptions only (P9c/P17, see BrickVolumeLayer): the plan
   // object churns identity per replan; this component consumes only these.
   const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
@@ -68,49 +42,8 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
   const camera = useThree((state) => state.camera);
-  const viewerStoreApi = useViewerStoreApi();
 
-  const layer = useSceneStore((s) => s.layers.find((l) => l.id === layerId));
-  const sceneStoreApi = useSceneStoreApi();
-  const interactionMode = useModeStore((s) => s.interactionMode);
-  const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
-  // The handler PROPS below are the raycast gate (P20), so this component must
-  // re-render when the gate's inputs change.
-  const gate: ProbeGateInput = {
-    interactionMode,
-    probeFollowsCursor,
-    // The 2D plane never probes for ANNOTATE, so the armed tool cannot change
-    // its answer — no `activeTool` subscription needed here.
-    drawingToolActive: false,
-    // Deliberately false: in 2D the RoiDrawer's own interaction plane drives
-    // the rubber band, and a second hover probe would only fight it for the
-    // event. The 3D volume is the one that must answer (no draw plane inside a
-    // volume) — see core/probe/probeGating.ts.
-    annotateProbes: false,
-  };
-  const hoverEnabled = hoverProbeEnabled(gate);
-  const clickEnabled = clickProbeEnabled(gate);
-  const { createPointAnnotation } = useCreateSceneAnnotation();
-
-  // Event-time resolution — fresh pin AND fresh layer list, no render
-  // subscription: exactly one layer (the effective probe target) answers.
-  const answersProbe = useCallback(
-    () =>
-      layerAnswersProbe(
-        effectiveProbeLayerId(
-          viewerStoreApi.getState().probeLayerId,
-          sceneStoreApi.getState().layers,
-        ),
-        layerId,
-      ),
-    [viewerStoreApi, sceneStoreApi, layerId],
-  );
-
-  useEffect(() => {
-    const refProxy = { kind: "layer" as const, id: layerId, ref: groupRef };
-    register(refProxy);
-    return () => unregister(refProxy);
-  }, [layerId, register, unregister]);
+  const layer = useBrickPlaneLayer(layerId);
 
   const affineMatrix = useMemo(
     () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
@@ -118,6 +51,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   );
 
   const pool = brickSystem?.getLayerPool(layerId) ?? null;
+
+  // Owns the group ref, the viewer registration and the pointer handlers —
+  // shared with the label plane, which probes the same way over the same pool.
+  const { groupRef, handlers } = useBrickPlaneProbe({ layerId, layer, pool });
 
   // --- Channel derivation (ChunkPlane parity) -------------------------------
   const channelData = useMemo(
@@ -262,163 +199,6 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDebug, bundle]);
 
-  // --- Probing (PlaneLayer parity, targetLod → plan.targetLevel) ------------
-  // Reads shapes/scales from the pool's (deduplicated) level geometry — the
-  // raw dataArrays list may contain duplicate resolutions, so its indices do
-  // not align with plan levels.
-  const resolveProbeGeometryContext = useCallback((): ProbeGeometryContext | null => {
-    if (!layer || !pool) return null;
-
-    const levelIndex = Math.min(
-      planTargetLevel ?? pool.geometry.levels.length - 1,
-      pool.geometry.levels.length - 1,
-    );
-    const level = pool.geometry.levels[levelIndex];
-    const [shapeX, shapeY, shapeZ] = level.spatialShape;
-    const [scaleX, scaleY, scaleZ] = level.scale;
-
-    const sliceMap = buildSliceMap(layer.lens.slices);
-    const xSelection = resolveSpatialSelection(sliceMap[layer.xAxis ?? ""], shapeX);
-    const ySelection = resolveSpatialSelection(sliceMap[layer.yAxis ?? ""], shapeY);
-
-    let zSelection = resolveSpatialSelection(
-      layer.zAxis ? sliceMap[layer.zAxis] : undefined,
-      shapeZ,
-    );
-    if (currentZ !== undefined && Number.isFinite(currentZ)) {
-      const inv = buildAffineMatrix(layer).clone().invert();
-      const pt = new THREE.Vector3(0, 0, currentZ).applyMatrix4(inv);
-      const zIndex = Math.max(0, Math.min(shapeZ - 1, Math.round(pt.z / scaleZ)));
-      zSelection = { start: zIndex, step: 1, length: 1 };
-    }
-
-    const width = xSelection.length * xSelection.step * scaleX;
-    const height = ySelection.length * ySelection.step * scaleY;
-    const depth = zSelection.length * zSelection.step * scaleZ;
-    if (width <= 0 || height <= 0 || depth <= 0) return null;
-
-    return {
-      xSelection,
-      ySelection,
-      zSelection,
-      // Corner-anchored group-local: the sliced box's CENTER in [0..total].
-      volumePosition: [
-        xSelection.start * scaleX + width / 2,
-        ySelection.start * scaleY + height / 2,
-        zSelection.start * scaleZ + depth / 2,
-      ],
-      volumeSize: [width, height, depth],
-    };
-  }, [planTargetLevel, currentZ, layer, pool]);
-
-  const updateProbe = useCallback(
-    (
-      points: { local: THREE.Vector3; world: THREE.Vector3 } | null,
-      opts: { save: boolean; origin: ProbeOrigin },
-    ) => {
-      const { save, origin } = opts;
-      const currentProbe = viewerStoreApi.getState().probedCoordinate;
-
-      if (!points || !layer || !pool) {
-        if (currentProbe?.layerId === layer?.id) {
-          viewerStoreApi.getState().setProbedCoordinate(null);
-        }
-        return;
-      }
-
-      const probeContext = resolveProbeGeometryContext();
-      if (!probeContext) return;
-
-      // QUAD-PARITY mapping (createPlaneNodeMaterial): the rendered plane is
-      // a corner-anchored totalX×totalY quad showing the FULL base array,
-      // `baseVoxel = (u·shapeX, v·shapeY)` — group-local spans [0..total], so
-      // uv is just the normalized group-local position.
-      const base = pool.geometry.levels[0];
-      const totalX = base.spatialShape[0] * base.scale[0];
-      const totalY = base.spatialShape[1] * base.scale[1];
-      const u = points.local.x / totalX;
-      const v = points.local.y / totalY;
-
-      if (u < 0 || u > 1 || v < 0 || v > 1) {
-        if (currentProbe?.layerId === layer.id) {
-          viewerStoreApi.getState().setProbedCoordinate(null);
-        }
-        return;
-      }
-
-      const clampedU = THREE.MathUtils.clamp(u, 0, 0.999999);
-      const clampedV = THREE.MathUtils.clamp(v, 0, 0.999999);
-
-      // Report BASE (level-0) voxels like the volume probe, so the readout
-      // and downstream consumers address one coordinate system regardless of
-      // the displayed LOD. The z slab still resolves through the slice /
-      // currentZ selection at the displayed level.
-      const levelIndex = Math.min(
-        planTargetLevel ?? pool.geometry.levels.length - 1,
-        pool.geometry.levels.length - 1,
-      );
-      const level = pool.geometry.levels[levelIndex];
-      const baseShape = base.spatialShape;
-      const baseZ = Math.round(
-        resolveVoxelIndex(0.5, probeContext.zSelection) * level.scale[2],
-      );
-      // Shader lockstep with the plane material's `baseVoxel`: no flip.
-      const voxelIndex: [number, number, number] = [
-        Math.min(baseShape[0] - 1, Math.floor(clampedU * baseShape[0])),
-        Math.min(baseShape[1] - 1, Math.floor(clampedV * baseShape[1])),
-        Math.max(0, Math.min(baseShape[2] - 1, baseZ)),
-      ];
-
-      perfMonitor.markProbe(); // no-op unless a perf recording is armed
-      const resident = brickSystem?.sampleResidentEx(layer.id, voxelIndex, levelIndex) ?? null;
-      const channelCount = Math.max(1, pool.geometry.channelSlabCount);
-      const nextProbe: ProbeResult = {
-        layerId: layer.id,
-        // Quad-centered normalized offset — the same ±0.5 frame the rendered
-        // quad and the volume probe use (markers use `worldPos` anyway).
-        localPos: [clampedU - 0.5, clampedV - 0.5, 0],
-        voxelIndex,
-        worldPos: [points.world.x, points.world.y, points.world.z],
-        strategy: "plane",
-        origin,
-        // Always a measurement: the 2D plane does not answer ANNOTATE hover
-        // (the RoiDrawer's own plane does) — see core/probe/probeGating.ts.
-        purpose: "readout",
-        values: resident
-          ? resident.values.map((value, channel) => ({ channel, value }))
-          : Array.from({ length: channelCount }, (_, channel) => ({ channel, value: null })),
-        provenance: resident
-          ? { source: "resident", level: resident.level }
-          : { source: "pending", level: levelIndex },
-        dtype: pool.geometry.levels[0].dtype,
-        sliceSignature: pool.sliceSignature,
-      };
-
-      // Only hover dedupes — a click must reach the store even when the hover
-      // probe already sits on that voxel (it always does while follow-cursor is
-      // on), because a click may re-pivot the camera or save the point.
-      if (
-        origin === "hover" &&
-        !save &&
-        currentProbe?.layerId === nextProbe.layerId &&
-        currentProbe.voxelIndex.every((v, i) => v === nextProbe.voxelIndex[i])
-      ) {
-        return;
-      }
-
-      viewerStoreApi.getState().setProbedCoordinate(nextProbe);
-      // Shift+click persists the point as a scene annotation (fire-and-forget;
-      // it renders via the AnnotationLayer once the refetch lands).
-      if (save && nextProbe.worldPos) createPointAnnotation(nextProbe.worldPos);
-    },
-    [layer, pool, brickSystem, planTargetLevel, resolveProbeGeometryContext, viewerStoreApi, createPointAnnotation],
-  );
-
-  // Pointermove storms coalesce to ≤1 probe per frame (see BrickVolumeLayer):
-  // event-time thunks close over fresh props; only the newest runs per frame.
-  const probeCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
-  useEffect(() => () => probeCoalescer.cancel(), [probeCoalescer]);
-
   if (layer?.visible === false) return null;
   if (!planHasNodes || !pool || !bundle) return null;
 
@@ -431,38 +211,10 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       matrix={affineMatrix}
       matrixAutoUpdate={false}
       ref={groupRef}
-      // `undefined` rather than an early-returning handler: that is what keeps
-      // this group out of R3F's pointermove raycast set (P20).
-      onPointerMove={!hoverEnabled ? undefined : (event) => {
-        if (event.buttons !== 0) return;
-        // Before stopPropagation: declining silently lets the event fall
-        // through to the target layer behind this one.
-        if (!answersProbe()) return;
-        const group = groupRef.current;
-        if (!group) return;
-        event.stopPropagation();
-        const world = event.point.clone();
-        const local = group.worldToLocal(world.clone());
-        probeCoalescer.schedule(() =>
-          updateProbe({ local, world }, { save: false, origin: "hover" }),
-        );
-      }}
-      onPointerOut={!hoverEnabled ? undefined : () => {
-        if (!answersProbe()) return;
-        probeCoalescer.cancel();
-        updateProbe(null, { save: false, origin: "hover" });
-      }}
-      onPointerDown={!clickEnabled ? undefined : (event) => {
-        if (!answersProbe()) return;
-        const group = groupRef.current;
-        if (!group) return;
-        event.stopPropagation();
-        const world = event.point.clone();
-        updateProbe(
-          { local: group.worldToLocal(world.clone()), world },
-          { save: event.shiftKey, origin: "click" },
-        );
-      }}
+      // The probe handlers come from `useBrickPlaneProbe` — spread rather than
+      // written out, because `undefined` vs a function is the raycast gate (P20)
+      // and the hook is what decides it.
+      {...handlers}
     >
       {/* Corner-anchored: the unit quad is offset by half its size so group-
           local spans [0..shape] and voxel v renders at exactly affine(v) —

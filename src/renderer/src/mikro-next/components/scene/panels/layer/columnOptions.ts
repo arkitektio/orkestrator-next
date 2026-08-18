@@ -1,8 +1,13 @@
 import {
   ColumnControl,
   TableColumnRole,
+  type ColorMap,
   type ColorByOptionFragment,
   type FilterByOptionFragment,
+  type LabelColorByFragment,
+  type LabelColorByInput,
+  type LabelFilterByFragment,
+  type LabelFilterByInput,
   type MeshColorByFragment,
   type MeshColorByInput,
   type MeshFilterByFragment,
@@ -10,12 +15,17 @@ import {
 } from "@/mikro-next/api/graphql";
 
 /**
- * The bridge between what the server OFFERS and what a mesh layer STORES.
+ * The bridge between what the server OFFERS and what a MESH OR LABEL layer
+ * STORES.
  *
  * `colorByOptions` and `filterByOptions` return the same candidate set — one
  * coordinate-graph walk, two names — so `ColorByOption` and `FilterByOption`
  * are structurally identical and collapse into the one `ColumnOption` shape
- * every consumer here is written against.
+ * every consumer here is written against. The LABEL roots
+ * (`labelColorByOptions` / `labelFilterByOptions`, keyed by the lens rather than
+ * by a mesh collection) return those same two types, which is why one module
+ * serves both layer kinds: a mask's pixel values dereference into a table by
+ * exactly the FIELD edge a collection's object ids do.
  *
  * The option and the input deliberately do NOT share a shape: an option carries
  * whole `TableDataset` / `TableDatasetColumn` nodes (the picker needs their
@@ -25,14 +35,54 @@ import {
  * collapse to `{ table: id, column: name }`.
  *
  * Why the entry→input mappers exist at all: `colorBys` / `filterBys` are
- * WHOLE-ARRAY replacements on `updateMeshLayer`, so adding or removing one
- * entry means re-sending every other entry. Round-tripping through
- * `colorByEntryToInput` keeps `joinPath` alive — read an entry without it and
- * send it back and the join silently flattens to `[]`, which resolves the same
- * column name against the wrong table.
+ * WHOLE-ARRAY replacements on `updateMeshLayer` and on `updateLabelLayer`'s
+ * `render`, so adding or removing one entry means re-sending every other entry.
+ * Round-tripping through `colorByEntryToInput` keeps `joinPath` alive — read an
+ * entry without it and send it back and the join silently flattens to `[]`,
+ * which resolves the same column name against the wrong table.
  */
 
 export type ColumnOption = ColorByOptionFragment | FilterByOptionFragment;
+
+/**
+ * A stored colouring, either layer kind. `MeshColorByFragment` and
+ * `LabelColorByFragment` are field-for-field identical — same relation, same
+ * `joinPath`, same caption — so every consumer takes the union rather than
+ * being written twice.
+ */
+export type ColorByEntry = MeshColorByFragment | LabelColorByFragment;
+
+/** A stored filter rule, either layer kind. See `ColorByEntry`. */
+export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
+
+/**
+ * What the mappers below RETURN, structurally.
+ *
+ * `MeshColorByInput` and `LabelColorByInput` are generated separately but have
+ * identical fields, so the mappers are typed against the shape both satisfy
+ * rather than against one of them (which would need a cast at every label call
+ * site) or a generic parameter (which would make callers name the input type to
+ * get anything back). A compile-time assertion below pins the equivalence, so
+ * this stops being structurally true the moment the two inputs diverge on the
+ * server — rather than silently sending a mesh-shaped entry to a label layer.
+ */
+export type ColorByInputLike = MeshColorByInput & LabelColorByInput;
+export type FilterByInputLike = MeshFilterByInput & LabelFilterByInput;
+
+/**
+ * The equivalence the two aliases above rest on, asserted at compile time.
+ *
+ * An intersection is assignable to either half whatever they contain, so it
+ * proves nothing on its own — hence the mutual-extends check. If the server
+ * ever gives a label colouring a field a mesh one lacks (or vice versa),
+ * `MutuallyAssignable` resolves to `false`, `= true` stops compiling, and that
+ * is the signal to split the mappers rather than widen a cast.
+ */
+type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+const _colorByInputsMatch: MutuallyAssignable<MeshColorByInput, LabelColorByInput> = true;
+const _filterByInputsMatch: MutuallyAssignable<MeshFilterByInput, LabelFilterByInput> = true;
+void _colorByInputsMatch;
+void _filterByInputsMatch;
 
 /** The `joinPath` shape both the options and the stored entries reduce to. */
 type JoinStepLike = { table: string; column: string };
@@ -95,6 +145,60 @@ export const optionEntryLabel = (option: ColumnOption): string =>
 export const isMeasure = (option: ColumnOption): boolean =>
   option.control === ColumnControl.Measure;
 
+/** A picker entry captions itself; the column is the fallback name. */
+export const entryLabel = (entry: { label?: string | null; column: string }): string =>
+  entry.label?.trim() || entry.column;
+
+/**
+ * A filter rule in words, for its row's detail line and the toggle's tooltip.
+ * Which half applies follows from the column's role: bounds for a measure, an
+ * explicit set for a categorical — the same either/or the input models.
+ */
+export const describeFilterRule = (rule: {
+  min?: number | null;
+  max?: number | null;
+  values?: readonly string[] | null;
+}): string => {
+  if (rule.values && rule.values.length > 0) {
+    return `is one of ${rule.values.slice(0, 4).join(", ")}${
+      rule.values.length > 4 ? `, +${rule.values.length - 4} more` : ""
+    }`;
+  }
+  if (rule.min != null && rule.max != null) return `is between ${rule.min} and ${rule.max}`;
+  if (rule.min != null) return `is at least ${rule.min}`;
+  if (rule.max != null) return `is at most ${rule.max}`;
+  return "matches";
+};
+
+/**
+ * A colouring in words, for its row's second line. Which half applies is the
+ * measure/categorical split again: a colormap is a ramp over the column's
+ * range, and a categorical column takes a colour per distinct value instead —
+ * explicit ones when the entry carries a `classColors` map, derived otherwise.
+ */
+export const describeColouring = (entry: {
+  colormap?: ColorMap | null;
+  classColors?: unknown;
+}): string =>
+  entry.colormap
+    ? `${entry.colormap.toLowerCase()} over the column's range`
+    : entry.classColors
+      ? "explicit colours per value"
+      : "a colour per distinct value";
+
+/**
+ * A joined entry is stored and honoured by the server, but neither renderer
+ * executes the `references` hop yet (see the LIMITATION note in
+ * `fabriksColorLut.ts`), so a card badges it rather than silently doing nothing
+ * on screen.
+ */
+export const isJoinedEntry = (entry: {
+  joinPath?: readonly unknown[] | null;
+}): boolean => (entry.joinPath?.length ?? 0) > 0;
+
+/** What that badge says, appended to a row's tooltip. */
+export const JOINED_NOTE = " — reached through a join, not rendered yet";
+
 /**
  * The control a column admits, from its declared role — the same rule the
  * server derives `ColumnControl` by, restated here because a STORED entry
@@ -114,8 +218,8 @@ export const controlForRole = (role: TableColumnRole): ColumnControl =>
 
 export const toColorByInput = (
   option: ColumnOption,
-  patch?: Partial<Omit<MeshColorByInput, "table" | "column" | "joinPath">>,
-): MeshColorByInput => ({
+  patch?: Partial<Omit<ColorByInputLike, "table" | "column" | "joinPath">>,
+): ColorByInputLike => ({
   table: option.table.id,
   column: option.column.name,
   joinPath: optionJoinPath(option),
@@ -125,8 +229,8 @@ export const toColorByInput = (
 
 export const toFilterByInput = (
   option: ColumnOption,
-  patch?: Partial<Omit<MeshFilterByInput, "table" | "column" | "joinPath">>,
-): MeshFilterByInput => ({
+  patch?: Partial<Omit<FilterByInputLike, "table" | "column" | "joinPath">>,
+): FilterByInputLike => ({
   table: option.table.id,
   column: option.column.name,
   joinPath: optionJoinPath(option),
@@ -137,7 +241,7 @@ export const toFilterByInput = (
 
 // ----------------------------------------------------------------- entry → input
 
-export const colorByEntryToInput = (entry: MeshColorByFragment): MeshColorByInput => ({
+export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
   table: entry.table,
   column: entry.column,
   joinPath: entryJoinPath(entry),
@@ -146,7 +250,7 @@ export const colorByEntryToInput = (entry: MeshColorByFragment): MeshColorByInpu
   label: entry.label ?? null,
 });
 
-export const filterByEntryToInput = (entry: MeshFilterByFragment): MeshFilterByInput => ({
+export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike => ({
   table: entry.table,
   column: entry.column,
   joinPath: entryJoinPath(entry),

@@ -22,7 +22,12 @@ import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { resolveLayerDataRange, serverHistogramRange } from "../core/dataRange";
 import { resolveFixedDimIndex } from "../core/selection";
-import { decodeEmptyValue, encodeEmptyValue } from "../core/octree/brickEncoding";
+import {
+  decodeEmptyValue,
+  encodeEmptyTexel,
+  encodeEmptyValue,
+  type EmptyValueBits,
+} from "../core/octree/brickEncoding";
 import { ChunkRefRegistry } from "../core/octree/chunkRefRegistry";
 import { ByteBudgetChunkCache } from "@/lib/zarr/caches/byteBudgetChunkCache";
 import {
@@ -32,7 +37,7 @@ import {
 } from "../core/octree/brickPoolState";
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
-import { buildPoolKey, buildStructureSignature } from "../core/octree/poolKey";
+import { buildPoolKey, buildStructureSignature, poolValueSemantics } from "../core/octree/poolKey";
 import { MIN_POOL_HEADROOM_SLOTS, resolvePoolBudget } from "../core/octree/poolBudget";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
@@ -179,6 +184,8 @@ type PoolDerivation = {
   structureSignature: string;
   sliceSignature: string;
   dataRange: readonly [number, number];
+  /** What a slot's contents mean; decides the EMPTY code width. */
+  valueSemantics: "intensity" | "labelIds";
   poolKey: string;
 };
 
@@ -186,6 +193,13 @@ export type LayerBrickPool = {
   /** Content address (see `buildPoolKey`) — the map key. NOT a layer id: every
    * layer whose data, slicing and value range match shares this one pool. */
   poolKey: string;
+  /**
+   * How wide an EMPTY (uniform) brick's value is encoded in its page entry —
+   * 8 bits for intensities, 24 for label ids. Derived from the pool key's
+   * `valueSemantics`, so every member agrees by construction, and carried here
+   * because both the write path and the CPU mirror need it at every call.
+   */
+  emptyBits: EmptyValueBits;
   /** Layer ids currently backed by this pool. Refcount: the pool is disposed
    * when the last member leaves. Never empty for a live pool. */
   members: Set<string>;
@@ -696,7 +710,11 @@ export class BrickResidencyManager {
         return {
           kind: "empty",
           level,
-          value: decodeEmptyValue(encodeEmptyValue(emptyValue, pool), pool),
+          value: decodeEmptyValue(
+            encodeEmptyValue(emptyValue, pool, pool.emptyBits),
+            pool,
+            pool.emptyBits,
+          ),
         };
       }
 
@@ -1393,6 +1411,7 @@ export class BrickResidencyManager {
 
     const dtype = geometry.levels[0].dtype;
     const dataRange = resolveLayerDataRange(layer, dtype);
+    const valueSemantics = poolValueSemantics(layer);
     return {
       layer,
       mode: plan.mode,
@@ -1402,6 +1421,7 @@ export class BrickResidencyManager {
       structureSignature,
       sliceSignature: plan.sliceSignature,
       dataRange,
+      valueSemantics,
       poolKey: buildPoolKey({
         mode: plan.mode,
         spec,
@@ -1409,6 +1429,7 @@ export class BrickResidencyManager {
         levels,
         sliceSignature: plan.sliceSignature,
         dataRange,
+        valueSemantics,
       }),
     };
   }
@@ -1542,11 +1563,22 @@ export class BrickResidencyManager {
     // Not a pool-key field: it is implied by dtype (keyed) plus "the range fell
     // back to the dtype's" (keyed as dataRange), so members always agree — see
     // the poolKey module doc.
+    // NEVER for a label pool, whatever its dtype. A float32-stored mask would
+    // otherwise mutate `minValue`/`maxValue` at runtime as bricks land — and the
+    // EMPTY encoding quantizes against exactly that range, so every already-
+    // written uniform brick would start decoding to a different id. The label
+    // range is a fixed `[0, LABEL_ID_CEILING]` for that reason.
     const autoRange =
-      (dtype === "float32" || dtype === "float64") && serverHistogramRange(layer) === null;
+      derivation.valueSemantics === "intensity" &&
+      (dtype === "float32" || dtype === "float64") &&
+      serverHistogramRange(layer) === null;
 
     const pool: LayerBrickPool = {
       poolKey,
+      // Ids must survive the page table EXACTLY (a mask is mostly uniform
+      // bricks); an intensity is about to be normalized anyway. See
+      // `EmptyValueBits`.
+      emptyBits: derivation.valueSemantics === "labelIds" ? 24 : 8,
       members: new Set(members.map((m) => m.id)),
       mode: derivation.mode,
       sliceSignature: derivation.sliceSignature,
@@ -1934,8 +1966,8 @@ export class BrickResidencyManager {
       // Encode the uniform value 8-bit-quantized in R (see brickTraversal).
       // Mapped even when the plan moved on: EMPTY costs no slot and is
       // valid fallback data.
-      const encoded = encodeEmptyValue(pending.uniformValue, pool);
-      setPageEntry(pool.pageTable, pending.level, pending.coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
+      const texel = encodeEmptyTexel(pending.uniformValue, pool, pool.emptyBits);
+      setPageEntry(pool.pageTable, pending.level, pending.coords, texel, PAGE_FLAG_EMPTY);
       pool.emptyValues.set(pending.key, pending.uniformValue);
       this.stats.emptyBricks += 1;
       progress.uploadedAny = true;
@@ -2381,7 +2413,7 @@ export class BrickResidencyManager {
         pool.pageTable,
         level,
         coords,
-        [encodeEmptyValue(value, pool), 0, 0],
+        encodeEmptyTexel(value, pool, pool.emptyBits),
         PAGE_FLAG_EMPTY,
       );
     }
@@ -2406,8 +2438,8 @@ export class BrickResidencyManager {
       const { level, coords } = parseNodeKey(result.token.key);
       // Uniform brick: the same EMPTY demotion the CPU path applies before
       // acquiring a slot — just deferred to the readback; the slot frees up.
-      const encoded = encodeEmptyValue(result.uniformValue, pool);
-      setPageEntry(pool.pageTable, level, coords, [encoded, 0, 0], PAGE_FLAG_EMPTY);
+      const texel = encodeEmptyTexel(result.uniformValue, pool, pool.emptyBits);
+      setPageEntry(pool.pageTable, level, coords, texel, PAGE_FLAG_EMPTY);
       pool.pool.release(result.token.key);
       pool.gpuStaleKeys.delete(result.token.key);
       pool.coarsestResident.delete(result.token.key);

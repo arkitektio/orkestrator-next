@@ -379,12 +379,31 @@ const findProjectionMode = (node: RenderNode): ProjectionMode | null => {
 };
 
 /**
+ * What the graph builders below actually read off a layer: its stored graph, its
+ * blending, its visibility and the lens' axis mapping.
+ *
+ * Typed structurally rather than as `ImageLayerFragment` so a normalized
+ * `LayerState` — whose `__typename` is now the wider `"ImageLayer" | "LabelLayer"`
+ * superset — satisfies it without a cast. These are only ever CALLED for an
+ * image (the render-graph editor never mounts for a label, and
+ * `normalizeLabelLayer` builds its degenerate fields directly), so widening the
+ * parameter admits no new behaviour; it just stops the superset from needing a
+ * narrowing that would mean nothing.
+ */
+type GraphSourceLayer = {
+  renderGraph?: ImageLayerFragment["renderGraph"];
+  blending?: ImageLayerFragment["blending"] | null;
+  visible?: boolean | null;
+  lens: { renderAxes?: ImageLayerFragment["lens"]["renderAxes"] };
+};
+
+/**
  * Build a default single-channel render graph for a layer that has no
  * `renderGraph` (e.g. legacy layers), so the renderer/editor always has a graph
  * to work with. The transfer uses defaults — the server no longer carries flat
  * clim/colormap/color/gamma fields; the render graph is the only source.
  */
-export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode => ({
+export const defaultLayerGraph = (layer: GraphSourceLayer): BlendRenderNode => ({
   type: "blend",
   kind: BLEND_KIND,
   label: null,
@@ -403,11 +422,11 @@ export const defaultLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
 });
 
 /** The render graph for a layer: its own graph, or the default fallback. */
-export const resolveLayerGraph = (layer: ImageLayerFragment): BlendRenderNode =>
+export const resolveLayerGraph = (layer: GraphSourceLayer): BlendRenderNode =>
   parseRenderGraph(layer.renderGraph) ?? defaultLayerGraph(layer);
 
 /** A fresh channel source, for the editor's "add node" menu. */
-export const newChannelNode = (layer: ImageLayerFragment): ChannelRenderNode => ({
+export const newChannelNode = (layer: GraphSourceLayer): ChannelRenderNode => ({
   type: "channel",
   kind: CHANNEL_KIND,
   label: null,
@@ -422,7 +441,7 @@ export const newChannelNode = (layer: ImageLayerFragment): ChannelRenderNode => 
  * server names the MICROTIME/SPECTRUM axis, if the data has one). Harmonic 1 is
  * the fundamental, and the one the lens' default `PhasorContext` resolves.
  */
-export const newPhasorNode = (layer: ImageLayerFragment): PhasorRenderNode => ({
+export const newPhasorNode = (layer: GraphSourceLayer): PhasorRenderNode => ({
   type: "phasor",
   kind: PHASOR_KIND,
   label: null,

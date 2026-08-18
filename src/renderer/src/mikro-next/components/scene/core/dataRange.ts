@@ -1,21 +1,58 @@
 import type { DataType } from "zarrita";
 import { mapDTypeToMinMax } from "@/lib/zarr/indexing/dtype";
-import type { ImageLayerFragment } from "./layerGuards";
+/**
+ * The shape both functions here read: a brick-backed layer's lens, whether that
+ * layer arrived as a fragment or already normalized into `LayerState`.
+ */
+type ValueRangeLayer = {
+  __typename?: string;
+  lens?: {
+    activeAnchors?: readonly {
+      valueHistogram?: { min?: number | null; max?: number | null } | null;
+    }[] | null;
+  } | null;
+};
 
 /**
- * The intensity range used to normalize sampled values to [0,1] before the
- * render graph's (normalized) contrast limits are applied.
+ * The largest integer a label id may take and still survive the brick atlas.
  *
+ * An `r32f` atlas stores float32, which represents integers EXACTLY up to 2^24 —
+ * the same ceiling fabriks uses for its object ordinals — and the 24-bit EMPTY
+ * page-table encoding is exact over precisely this range. Above it an id would
+ * quantize, and a quantized id is a different object.
+ */
+export const LABEL_ID_CEILING = 2 ** 24 - 1;
+
+/**
+ * The value range a layer's samples are interpreted against.
+ *
+ * For an IMAGE this is the intensity range used to normalize samples to [0,1]
+ * before the render graph's (normalized) contrast limits are applied.
  * `mapDTypeToMinMax` returns [0,1] for float dtypes, which is a poor proxy when
  * the data isn't normalized (e.g. float32 valued 0..255 would clamp to the top
  * of the colormap everywhere). For float layers we instead use the real range
  * from the value histogram when it is available. Integer dtypes keep their
  * dtype range so existing scenes render unchanged.
+ *
+ * For a LABEL mask it is `[0, LABEL_ID_CEILING]` regardless of dtype, and
+ * nothing normalizes against it. It is here because the range is ALSO what the
+ * EMPTY-brick encoding quantizes against, and over this range the 24-bit encode
+ * is exact — an id in a uniform brick survives the page table unchanged. A
+ * dtype range would not do: uint16's [0, 65535] through an 8-bit encode loses
+ * ~257 raw units per code, so every uniform brick of a mask would decode to a
+ * wrong id, and a mask is MOSTLY uniform bricks.
+ *
+ * This function is the SINGLE place that decision is made, and it has to be:
+ * `brickResidency.derivePool` and `nodePlanTracker` call it independently, and
+ * if the planner's byte accounting and the pool's allocation ever disagree the
+ * plan requests slots that do not exist (the same failure `atlasFormat.ts`
+ * documents for `atlasKindForGeometry`).
  */
 export function resolveLayerDataRange(
-  layer: ImageLayerFragment,
+  layer: ValueRangeLayer,
   dtype: string,
 ): [number, number] {
+  if (layer.__typename === "LabelLayer") return [0, LABEL_ID_CEILING];
   if (dtype === "float32" || dtype === "float64") {
     const range = serverHistogramRange(layer);
     if (range) return range;
@@ -30,7 +67,7 @@ export function resolveLayerDataRange(
  * saturates non-normalized data to white and that client auto-contrast covers.
  */
 export function serverHistogramRange(
-  layer: ImageLayerFragment,
+  layer: ValueRangeLayer,
 ): [number, number] | null {
   const vh = layer.lens?.activeAnchors?.find((a) => a.valueHistogram)
     ?.valueHistogram;

@@ -8,8 +8,6 @@ import {
   ColorMap,
   ColumnControl,
   useGetTableDatasetLazyQuery,
-  type MeshColorByFragment,
-  type MeshFilterByFragment,
 } from "@/mikro-next/api/graphql";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
@@ -19,11 +17,15 @@ import {
   type ColumnDomain,
 } from "@/mikro-next/lib/attributes/columnStats";
 import { COLORMAP_OPTIONS, colormapGradientCSS } from "./colormap-utils";
-import { controlForRole } from "./columnOptions";
+import { controlForRole, type ColorByEntry, type FilterByEntry } from "./columnOptions";
 
 /**
  * The configure step behind a stored colouring or rule: which colormap paints a
  * measure, which bound or which values a rule keeps.
+ *
+ * Serves BOTH layer kinds. Nothing here reads a mesh-only or label-only field:
+ * an entry is a table id plus a column name whichever type it came from, and
+ * `ColorByEntry` / `FilterByEntry` are the unions over both.
  *
  * A stored entry carries only its table ID and its column NAME — enough to
  * execute, not enough to draw a control — so this resolves the table lazily on
@@ -78,7 +80,7 @@ export const ColumnEntryEditor = ({
   mode,
   onCommit,
 }: {
-  entry: MeshColorByFragment | MeshFilterByFragment;
+  entry: ColorByEntry | FilterByEntry;
   mode: "color" | "filter";
   onCommit: (patch: Draft) => void;
 }) => {
@@ -106,7 +108,7 @@ export const ColumnEntryEditor = ({
   useEffect(() => {
     if (!open) return;
     void loadTable({ variables: { id: entry.table } }).catch((error) => {
-      console.warn("[mesh] could not resolve the entry's table:", error);
+      console.warn("[layer] could not resolve the entry's table:", error);
     });
   }, [open, entry.table, loadTable]);
 
@@ -135,8 +137,8 @@ export const ColumnEntryEditor = ({
   }, [open, service, table, column, control]);
 
   const isFilter = mode === "filter";
-  const rule = entry as MeshFilterByFragment;
-  const colouring = entry as MeshColorByFragment;
+  const rule = entry as FilterByEntry;
+  const colouring = entry as ColorByEntry;
   const selected = useMemo(() => new Set(rule.values ?? []), [rule.values]);
 
   // The stored rule is the truth again the moment the fold brings it back: a
@@ -170,9 +172,9 @@ export const ColumnEntryEditor = ({
       const next = new Set(selected);
       if (next.has(value)) next.delete(value);
       else next.add(value);
-      // Never empty: a rule naming no values is the one `updateMeshLayer`
-      // rejects ("matches every row, which is not a filter"), and "keep
-      // nothing" is what `exclude` expresses instead.
+      // Never empty: a rule naming no values is the one the write path rejects
+      // ("matches every row, which is not a filter"), and "keep nothing" is
+      // what `exclude` expresses instead.
       if (next.size === 0) return;
       onCommit({ values: [...next] });
     },

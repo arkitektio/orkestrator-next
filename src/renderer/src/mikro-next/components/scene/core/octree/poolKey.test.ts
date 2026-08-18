@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildPoolKey, buildStructureSignature, type PoolKeyInput } from "./poolKey";
+import {
+  buildPoolKey,
+  buildStructureSignature,
+  poolValueSemantics,
+  type PoolKeyInput,
+} from "./poolKey";
 import type { BrickSpec } from "./brickSpec";
 import type { LayerLevelGeometry, LevelSource, SlabDesc } from "./levelGeometry";
 
@@ -37,6 +42,7 @@ const base = (): PoolKeyInput => ({
   levels: LEVELS,
   sliceSignature: '{"xAxis":"x","yAxis":"y","zAxis":"z","selections":{},"slices":[]}',
   dataRange: [0, 255],
+  valueSemantics: "intensity",
 });
 
 describe("buildPoolKey — layers that must SHARE a pool", () => {
@@ -140,5 +146,52 @@ describe("buildStructureSignature", () => {
         levels: [{ ...LEVELS[0], storeId: "999" }, LEVELS[1]],
       }),
     ).not.toBe(buildStructureSignature(base()));
+  });
+});
+
+
+/**
+ * A label mask and an intensity image can be the SAME array read two ways, so
+ * the key has to keep their pools apart: `valueSemantics` decides the EMPTY code
+ * width, and a pool holding 24-bit ids read as 8-bit intensities (or the reverse)
+ * decodes every uniform brick to a wrong value.
+ */
+describe("buildPoolKey — label ids vs intensities", () => {
+  it("splits an image and a label over identical data, slices and spec", () => {
+    const image = base();
+    const label: PoolKeyInput = {
+      ...image,
+      valueSemantics: "labelIds",
+      dataRange: [0, 2 ** 24 - 1],
+    };
+    expect(buildPoolKey(label)).not.toBe(buildPoolKey(image));
+  });
+
+  it("splits on valueSemantics ALONE, with the range held equal", () => {
+    // The two guards are independent on purpose (see the module doc): even if a
+    // future change made a label's range coincide with an image's, the semantics
+    // field still keeps the pools apart.
+    const image = base();
+    const label: PoolKeyInput = { ...image, valueSemantics: "labelIds" };
+    expect(buildPoolKey(label)).not.toBe(buildPoolKey(image));
+  });
+
+  it("collides for two label layers over one mask — they SHARE the bricks", () => {
+    // Sharing the pool is the whole win; they render in separate passes, which
+    // `buildMergeMembers` is what arranges.
+    const label = (): PoolKeyInput => ({
+      ...base(),
+      valueSemantics: "labelIds",
+      dataRange: [0, 2 ** 24 - 1],
+    });
+    expect(buildPoolKey(label())).toBe(buildPoolKey(label()));
+  });
+});
+
+describe("poolValueSemantics", () => {
+  it("reads the layer's __typename, and defaults anything else to intensity", () => {
+    expect(poolValueSemantics({ __typename: "LabelLayer" })).toBe("labelIds");
+    expect(poolValueSemantics({ __typename: "ImageLayer" })).toBe("intensity");
+    expect(poolValueSemantics({})).toBe("intensity");
   });
 });

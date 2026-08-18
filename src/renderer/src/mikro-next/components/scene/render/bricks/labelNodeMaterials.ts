@@ -553,10 +553,13 @@ export function createLabelVolumeNodeMaterial(
       const pB = originB.add(rayT.mul(dirB)).toVar("lblPB");
       const lvl = int(rays.desiredLevelAt(pB, originB)).toVar("lblLvl");
 
-      // LOD-adaptive step: fine pitch where fine data is sampled.
+      // LOD-adaptive step: fine pitch where fine data is sampled. MAX spatial
+      // component — same axis rule as the planner/desiredLevelAt lockstep
+      // (identical to typical microscopy pyramids where x is the max factor).
+      const lvlScale = vec3(t.uLevelScale.element(lvl));
       const stepLen = max(
         max(float(uMinDelta), floorDelta),
-        float(0.75).mul(vec3(t.uLevelScale.element(lvl)).x),
+        float(0.75).mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z))),
       )
         .mul(max(float(uStepScale), 1.0))
         .toVar("lblStep");

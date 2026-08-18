@@ -94,6 +94,24 @@ const probeScratch = {
   world: new THREE.Vector3(),
 };
 
+/**
+ * Stable integer per layer-object IDENTITY (layers are replaced immutably on
+ * edit, so identity IS the edit signal). Lets a zustand selector express
+ * "re-render only when one of THESE layers changed" as a scalar key — the
+ * P9c/P17 idiom — without an equality-function variant of the store hook.
+ */
+let nextLayerIdentity = 1;
+const layerIdentityIds = new WeakMap<object, number>();
+const layerIdentityOf = (layer: object | undefined): number => {
+  if (!layer) return 0;
+  let id = layerIdentityIds.get(layer);
+  if (id === undefined) {
+    id = nextLayerIdentity++;
+    layerIdentityIds.set(layer, id);
+  }
+  return id;
+};
+
 export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   perfMonitor.countRender("BrickVolumeLayer"); // no-op unless a perf recording is armed
   const groupRef = useRef<THREE.Group>(null!);
@@ -136,9 +154,46 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // Quality tier / streaming flips are rare (P17-clean); re-runs the uniform
   // push below so uStepScale tracks the governor's profile.
 
-  const layers = useSceneStore((s) => s.layers);
-  const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const sceneStoreApi = useSceneStoreApi();
+  const pool = brickSystem?.getLayerPool(layerId) ?? null;
+  // Read out of the live Set every render (it holds a handful of ids) and key
+  // the memo on the CONTENT. `pool.members` is replaced wholesale on each
+  // reconcile without bumping poolsVersion, and a swap like {a,b,c,d} →
+  // {a,b,c,e} changes neither the pool identity nor the Set size — so keying on
+  // either would silently serve a stale membership.
+  const memberKey = pool ? [...pool.members].sort().join(",") : "";
+  const memberIds = useMemo(
+    () => (memberKey === "" ? [] : memberKey.split(",")),
+    [memberKey],
+  );
+
+  // P9c/P17: subscribing to the whole `layers` ARRAY re-rendered every volume
+  // layer on ANY layer edit — a contrast drag on one image re-rendered all N
+  // volume components per tick. The merged pass genuinely needs the array
+  // (member grouping + scene positions for the primary tie-break), so
+  // subscribe to a SCALAR key over exactly what grouping reads — each
+  // relevant layer's position and object identity — and read the array itself
+  // through the store api only when the key says something relevant changed.
+  // Unrelated structural changes (insert/remove elsewhere) shift the indices
+  // in the key, so scene-order changes still re-render.
+  const layersKey = useSceneStore((s) => {
+    let key = "";
+    for (const id of memberIds) {
+      const index = s.layers.findIndex((l) => l.id === id);
+      key += `${index}:${layerIdentityOf(index >= 0 ? s.layers[index] : undefined)},`;
+    }
+    if (!memberIds.includes(layerId)) {
+      const index = s.layers.findIndex((l) => l.id === layerId);
+      key += `${index}:${layerIdentityOf(index >= 0 ? s.layers[index] : undefined)}`;
+    }
+    return key;
+  });
+  const layers = useMemo(
+    () => sceneStoreApi.getState().layers,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layersKey, sceneStoreApi],
+  );
+  const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
   const interactionMode = useModeStore((s) => s.interactionMode);
   const probeFollowsCursor = useModeStore((s) => s.probeFollowsCursor);
   // A RENDER subscription, unlike the event-time `roiDrawingApi.getState()`
@@ -182,8 +237,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     [layer],
   );
 
-  const pool = brickSystem?.getLayerPool(layerId) ?? null;
-
   // --- Merged pass ------------------------------------------------------
   //
   // Layers sharing a pool share the atlas, page table, geometry and value
@@ -191,17 +244,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // component independently derives the same grouping from the same store
   // snapshot (planVolumeMergeGroups is pure), then the group's PRIMARY carries
   // the merged material and the rest render nothing. No provider, no shared
-  // state, no cross-component messaging.
-  // Read out of the live Set every render (it holds a handful of ids) and key
-  // the memo on the CONTENT. `pool.members` is replaced wholesale on each
-  // reconcile without bumping poolsVersion, and a swap like {a,b,c,d} →
-  // {a,b,c,e} changes neither the pool identity nor the Set size — so keying on
-  // either would silently serve a stale membership.
-  const memberKey = pool ? [...pool.members].sort().join(",") : "";
-  const memberIds = useMemo(
-    () => (memberKey === "" ? [] : memberKey.split(",")),
-    [memberKey],
-  );
+  // state, no cross-component messaging. (`pool` / `memberIds` are derived
+  // above, before the layers-key subscription that depends on them.)
   // Scalar selector: a joined string only changes identity when a member's
   // target level actually moves, so this does not re-render per replan.
   const memberLevelsKey = useViewerStore((s) =>

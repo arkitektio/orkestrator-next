@@ -23,6 +23,24 @@ import type { MergeMember } from "./volumeMergeGroups";
  */
 
 /**
+ * Affine identity for merge bucketing, quantized to 12 significant digits per
+ * element. The previous key joined the raw float64 elements, so two transforms
+ * that are numerically equal but not BITWISE equal — the same placement
+ * composed through a different edge order, a server round-trip through JSON —
+ * silently split a mergeable group into separate full-screen passes. 12
+ * significant digits collapse float-noise (~1e-16 relative) while preserving
+ * every real difference a renderer could show (sub-nanometer at cell scale).
+ * `-0` normalizes to `0` so the sign of a zero cannot split a bucket.
+ */
+export const quantizedAffineKey = (elements: readonly number[]): string =>
+  elements
+    .map((v) => {
+      const q = Number(v.toPrecision(12));
+      return Object.is(q, -0) ? "0" : String(q);
+    })
+    .join(",");
+
+/**
  * Members eligible for merging, in pool order.
  *
  * `order` is the layer's index in `layers`, which is what makes the primary
@@ -59,7 +77,7 @@ export const buildMergeMembers = ({
     members.push({
       layerId: id,
       order,
-      affineKey: buildAffineMatrix(memberLayer).elements.join(","),
+      affineKey: quantizedAffineKey(buildAffineMatrix(memberLayer).elements),
       sourceCount: (memberLayer.sources ?? memberLayer.channels ?? []).length,
       cursorCount: (memberLayer.phasors ?? []).reduce(
         (total, phasor) => total + (phasor.transfer.cursors?.length ?? 0),

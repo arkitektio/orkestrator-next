@@ -8,7 +8,11 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 
-import { qualityGovernor, resolveSmoothThreshold } from "../../core/qualityGovernor";
+import {
+  qualityGovernor,
+  resolveMaxRaySteps,
+  resolveSmoothThreshold,
+} from "../../core/qualityGovernor";
 import { isSmoothZoomEnabled } from "../../render/bricks/shaderFlags";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
@@ -37,13 +41,16 @@ export type VolumeRayUniformHandles = {
   uLodBias: { value: number };
   uPxPerVoxelAtUnitDist: { value: number };
   uMinDelta: { value: number };
-  uMaxSteps: { value: number };
 };
 
 /** The handles `useStepScaleUniform` drives. Separate: it is imperative.
+ * `uMaxSteps` lives HERE, not with the React-effect uniforms above: adaptive
+ * depth flips it on every activity edge (camera moving / streaming), which is
+ * exactly the cadence this vanilla subscription exists for.
  * `uSmoothThreshold` is optional — the label raymarcher has no smoothing. */
 export type StepScaleUniformHandle = {
   uStepScale: { value: number };
+  uMaxSteps: { value: number };
   uSmoothThreshold?: { value: number };
 };
 
@@ -98,7 +105,10 @@ export const useVolumeRayUniforms = (
   const minDelta = useMemo(() => {
     if (!pool || planTargetLevel === undefined) return 1;
     const level = pool.geometry.levels[Math.min(planTargetLevel, pool.geometry.levels.length - 1)];
-    return 0.5 * level.scale[0];
+    // MAX spatial component — the axis rule of the planner/shader lockstep
+    // (`wantFiner` / `desiredLevelAt`); identical on pyramids where x is the
+    // max factor.
+    return 0.5 * Math.max(level.scale[0], level.scale[1], level.scale[2]);
   }, [pool, planTargetLevel]);
 
   useEffect(() => {
@@ -107,7 +117,8 @@ export const useVolumeRayUniforms = (
     nodes.uLodBias.value = lodBias;
     nodes.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
     nodes.uMinDelta.value = minDelta;
-    nodes.uMaxSteps.value = qualityGovernor.getProfile().maxRaySteps;
+    // uMaxSteps is driven by `useStepScaleUniform` (adaptive depth flips it
+    // per activity edge — a vanilla-subscription cadence, not an effect one).
     invalidate();
   }, [
     nodes,
@@ -146,10 +157,15 @@ export const useVolumePassRegistration = (activePass: boolean): void => {
  * handlers and re-diffing the group tree. This writes the uniforms directly and
  * requests a frame.
  *
- * Two governor inputs fold in here:
+ * Three governor inputs fold in here:
  *  - the SCENE-LOAD factor (`getLoadFactor`): step scales stretch by √(pass
  *    count) so total sample cost across N concurrent raymarch passes grows
  *    ~√N instead of N — the feedforward half of the many-layers fix;
+ *  - ADAPTIVE DEPTH (`resolveMaxRaySteps`): the ray-step ceiling halves while
+ *    the camera angle is changing (or bricks stream) — in the zoom+tilt worst
+ *    case the ray always runs to the ceiling (the stride floor guarantees
+ *    full-ray coverage), so the CEILING, not the step scale, is what bounds
+ *    that cost; strides lengthen, nothing truncates, settle restores;
  *  - the tricubic gate (`resolveSmoothThreshold`): smoothing off while active
  *    and on TIER_LOW — zoom+tilt otherwise flips ~the whole step budget to
  *    8× taps exactly when the frame is already fragment-bound.
@@ -161,6 +177,7 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
   useEffect(() => {
     if (!nodes) return;
     let lastStep: number | null = null;
+    let lastMaxSteps: number | null = null;
     let lastSmooth: number | null = null;
     // Read once per effect, not per camera tick (localStorage): flipping the
     // flag rebuilds the material, which remounts this effect anyway.
@@ -172,13 +189,22 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
       const step =
         (active ? profile.activeStepScale : profile.settledStepScale) *
         qualityGovernor.getLoadFactor();
+      const maxSteps = resolveMaxRaySteps(
+        profile,
+        active,
+        qualityGovernor.getVolumePassCount(),
+      );
       const smooth = smoothZoom
         ? resolveSmoothThreshold(qualityGovernor.getTier(), active)
         : 0;
-      if (step === lastStep && smooth === lastSmooth) return; // flags flip far more often than the values
+      if (step === lastStep && maxSteps === lastMaxSteps && smooth === lastSmooth) {
+        return; // the flags flip far more often than the values
+      }
       lastStep = step;
+      lastMaxSteps = maxSteps;
       lastSmooth = smooth;
       nodes.uStepScale.value = step;
+      nodes.uMaxSteps.value = maxSteps;
       if (nodes.uSmoothThreshold) nodes.uSmoothThreshold.value = smooth;
       invalidate();
     };

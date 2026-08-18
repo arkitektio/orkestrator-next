@@ -1542,8 +1542,9 @@ export class BrickResidencyManager {
     const bytesPerVoxel = atlasBytesPerVoxel(atlasKind);
     const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
     const maxUsefulSlotsForBudget = totalBrickCount(geometry, spec);
+    const deviceBudgetBytes = getInitialVolumeTextureBudgetBytes();
     const { atlasBytes } = resolvePoolBudget({
-      deviceBudgetBytes: getInitialVolumeTextureBudgetBytes(),
+      deviceBudgetBytes,
       poolCount: planCount,
       slotBytes,
       totalBrickBytes: maxUsefulSlotsForBudget * slotBytes,
@@ -1561,9 +1562,26 @@ export class BrickResidencyManager {
       maxUsefulSlots,
       coarsestGrid[0] * coarsestGrid[1] * coarsestGrid[2] + MIN_POOL_HEADROOM_SLOTS,
     );
+    // Creation-order overshoot guard: shares divide by the CURRENT pool count
+    // and existing atlases are never resized, so pools created when few
+    // existed keep their large allocations and the SUM across pools could
+    // exceed the device budget as layers open (each atlas also exists twice —
+    // VRAM + its CPU backing — so overshoot hurts double on unified memory).
+    // Cap this pool's allocation to what the device budget has LEFT, never
+    // below the coarsest floor (the shader's fallback invariant, P18 —
+    // `assessPoolViability` already vetted the floor itself as affordable).
+    let allocatedAtlasBytes = 0;
+    for (const pool of this.pools.values()) {
+      allocatedAtlasBytes += pool.atlas.backing.byteLength;
+    }
+    const remainingBudgetBytes = Math.max(0, deviceBudgetBytes - allocatedAtlasBytes);
+    const cappedAtlasBytes = Math.min(
+      atlasBytes,
+      Math.max(remainingBudgetBytes, minSlots * slotBytes),
+    );
     const desiredSlots = Math.min(
       maxUsefulSlots,
-      Math.max(minSlots, Math.floor(atlasBytes / slotBytes)),
+      Math.max(minSlots, Math.floor(cappedAtlasBytes / slotBytes)),
     );
 
     const gpuRepacker = this.ensureGpuRepacker();

@@ -243,6 +243,34 @@ export function volumeLoadFactor(volumePasses: number): number {
   return Math.min(2, Math.sqrt(Math.max(1, volumePasses)));
 }
 
+/** Floor for the adaptive active-time ray-step ceiling — below this the
+ * coarse image visibly falls apart even mid-gesture. */
+export const MIN_ACTIVE_RAY_STEPS = 96;
+
+/**
+ * ADAPTIVE DEPTH: the per-fragment ray-step ceiling for the current activity
+ * state. In the zoom+tilt worst case the diagonal ray always runs to the
+ * `uMaxSteps` ceiling — the stride floor (`floorDelta = rayLen / uMaxSteps`)
+ * guarantees full-ray coverage whatever the per-sample LOD picks — so the
+ * step-SCALE knob does not bound that cost: the CEILING does. While the
+ * camera angle is changing (or bricks stream), the ceiling halves and divides
+ * by the scene-load factor; strides lengthen to keep covering the whole ray,
+ * so nothing truncates — the moving image just samples coarser, and the
+ * settle emission restores full depth. Settled frames keep the tier's full
+ * ceiling (the load factor already stretches their PITCH via uStepScale).
+ */
+export function resolveMaxRaySteps(
+  profile: QualityProfile,
+  active: boolean,
+  volumePasses = 1,
+): number {
+  if (!active) return profile.maxRaySteps;
+  return Math.max(
+    MIN_ACTIVE_RAY_STEPS,
+    Math.round(profile.maxRaySteps / (2 * volumeLoadFactor(volumePasses))),
+  );
+}
+
 /** Default px-per-voxel threshold past which tricubic zoom smoothing engages. */
 export const SMOOTH_ZOOM_THRESHOLD_PX = 3;
 

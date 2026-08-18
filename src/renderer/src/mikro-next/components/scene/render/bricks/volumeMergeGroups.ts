@@ -37,10 +37,15 @@ export const MERGE_MAX_SLOTS = MAX_CHANNELS;
 export const MERGE_MAX_CURSORS = MAX_CURSORS;
 /**
  * Members per merged pass. The shader unrolls per member, so each one costs a
- * live set of accumulator registers; too many and the shader spills, which
- * inverts the win. Start conservative and raise only on measured evidence.
+ * live set of accumulator registers (~10 floats); too many and the shader
+ * spills, which inverts the win. Raised 4 → 8: every extra member folded in
+ * removes an ENTIRE full-screen raymarch pass (the dominant per-layer frame
+ * cost), 8 × ~10 accumulator floats is well inside modern register budgets,
+ * and the slot/cursor ceilings (16/16) still bound per-step work. The
+ * `orkestrator.volumeMerge` kill switch below remains the A/B lever if a
+ * device ever shows spill regressions.
  */
-export const MAX_MERGED_MEMBERS = 4;
+export const MAX_MERGED_MEMBERS = 8;
 
 export type MergeMember = {
   layerId: string;

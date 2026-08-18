@@ -353,3 +353,24 @@ describe("resolveSmoothThreshold", () => {
     expect(resolveSmoothThreshold(TIER_LOW, true)).toBe(0);
   });
 });
+
+describe("resolveMaxRaySteps (adaptive depth)", () => {
+  it("keeps the tier's full ceiling while settled", async () => {
+    const { resolveMaxRaySteps, QUALITY_PROFILES, TIER_HIGH } = await import("./qualityGovernor");
+    expect(resolveMaxRaySteps(QUALITY_PROFILES[TIER_HIGH], false, 6)).toBe(512);
+  });
+
+  it("halves the ceiling while active and divides by the load factor", async () => {
+    const { resolveMaxRaySteps, QUALITY_PROFILES, TIER_HIGH } = await import("./qualityGovernor");
+    const profile = QUALITY_PROFILES[TIER_HIGH]; // 512 steps
+    expect(resolveMaxRaySteps(profile, true, 1)).toBe(256);
+    expect(resolveMaxRaySteps(profile, true, 4)).toBe(128); // load factor 2
+  });
+
+  it("never falls below the active floor", async () => {
+    const { resolveMaxRaySteps, MIN_ACTIVE_RAY_STEPS, QUALITY_PROFILES, TIER_LOW } =
+      await import("./qualityGovernor");
+    // LOW: 256 steps; halved + load 2 → 64 < floor 96.
+    expect(resolveMaxRaySteps(QUALITY_PROFILES[TIER_LOW], true, 16)).toBe(MIN_ACTIVE_RAY_STEPS);
+  });
+});

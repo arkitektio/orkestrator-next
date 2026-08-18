@@ -957,4 +957,37 @@ No longer deferred:
   burst-rung flooring, one mid-burst rung correction — P22), the tricubic
   activity/tier gate (`resolveSmoothThreshold`), the exact frustum∩box
   visible region (P21, `core/frustumClip.ts`), and the GLOBAL in-flight
-  fetch cap (§2.8).
+  fetch cap (§2.8);
+- **adaptive depth** (`resolveMaxRaySteps`): the ray-step CEILING halves while
+  the camera is moving or bricks stream (further divided by the load factor,
+  floored at `MIN_ACTIVE_RAY_STEPS`). This is the knob that actually bounds
+  the zoom+tilt worst case — there the diagonal ray always runs to the
+  ceiling (the `floorDelta` stride floor guarantees full-ray coverage), so
+  `uStepScale` lengthens strides without reducing the sample COUNT; only the
+  ceiling does. `uMaxSteps` moved from the React-effect uniforms to
+  `useStepScaleUniform`'s vanilla subscription, which owns every
+  activity-edge knob (step scale, smooth threshold, max steps);
+- **merge-rule loosening**: `MAX_MERGED_MEMBERS` 4 → 8 (every member folded
+  in removes an entire full-screen pass; slot/cursor ceilings still bound
+  per-step work; `orkestrator.volumeMerge` remains the A/B lever), and the
+  merge affine key is quantized to 12 significant digits
+  (`quantizedAffineKey`) so numerically-equal-but-not-bitwise transforms no
+  longer split a group into separate passes;
+- **atlas-sum creation cap** (`ensurePool`): a new pool's allocation is capped
+  to what the device budget has left across ALL live atlases (never below the
+  coarsest floor), fixing the creation-order overshoot where early pools kept
+  budget/2-sized atlases as more layers opened;
+- **step pitch on the MAX spatial scale component** (`levelPitch` — stepLen,
+  refStep, `uMinDelta`, the tricubic gate, and the label raymarcher), closing
+  the last `.x`-vs-max lockstep gap with `wantFiner`/`desiredLevelAt`;
+- `BrickVolumeLayer` subscribes to a scalar identity key over its GROUP's
+  layers instead of the whole `layers` array — an edit to an unrelated layer
+  no longer re-renders every volume component (the last P9c-shaped hazard).
+
+Assessed and NOT done, deliberately: an image+label merged pass. It would
+share only the loop scaffolding — the two pools still need two page walks per
+step — while requiring a dual-traversal material that cannot be verified
+without a GPU; the mask pass is already cheap in practice (its background is
+EMPTY-skipped brick-at-a-time, and the occupancy skip now covers its resident
+fringe). Revisit only with a measured recording showing the label pass's
+rasterization overhead matters.

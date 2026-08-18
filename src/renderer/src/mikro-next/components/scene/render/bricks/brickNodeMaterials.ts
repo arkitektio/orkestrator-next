@@ -1191,12 +1191,20 @@ export function createVolumeNodeMaterial(
     // trades step density for the same full-ray coverage.
     const floorDelta = rayLen.div(max(float(uMaxSteps), 1.0));
 
+    // MAX spatial component of a level's scale — the same axis rule as the
+    // planner's `wantFiner` and the shader's `desiredLevelAt` (documented
+    // lockstep). The previous `.x` tracked one axis: on a true-factor
+    // anisotropic pyramid whose max factor is not x, the pitch under-stepped
+    // relative to the LOD the sample actually resolves. On typical microscopy
+    // pyramids ([2ⁿ, 2ⁿ, 1]) x IS the max, so nothing changes.
+    const levelPitch = (level: any) => {
+      const s = vec3(t.uLevelScale.element(level));
+      return float(0.75).mul(max(s.x, max(s.y, s.z)));
+    };
+
     // Reference step for VOLUME opacity correction (see
     // core/opacityCorrection.ts — keep in lockstep).
-    const refStep = max(
-      max(float(uMinDelta), floorDelta),
-      float(0.75).mul(vec3(t.uLevelScale.element(uDesiredLevel)).x),
-    ).toVar();
+    const refStep = max(max(float(uMinDelta), floorDelta), levelPitch(uDesiredLevel)).toVar();
 
     // Jitter must not depend on rayLen or uStepScale (motion-invariant, P14).
     const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(uMinDelta)).toVar("rayT");
@@ -1240,10 +1248,7 @@ export function createVolumeNodeMaterial(
       const lvl = int(desiredLevelAt(pB, originB)).toVar();
 
       // LOD-adaptive step (P14): fine pitch where fine data is sampled.
-      const stepLen = max(
-        max(float(uMinDelta), floorDelta),
-        float(0.75).mul(vec3(t.uLevelScale.element(lvl)).x),
-      )
+      const stepLen = max(max(float(uMinDelta), floorDelta), levelPitch(lvl))
         .mul(max(float(uStepScale), 1.0))
         .toVar();
 
@@ -1399,9 +1404,10 @@ export function createVolumeNodeMaterial(
       let smoothActive: any = null;
       if (smoothZoom) {
         const stepDist = max(distance(pB, originB), 1.0);
+        const smoothScale = vec3(t.uLevelScale.element(resolved.residentLevel));
         const resolvedPxPerVoxel = float(uPxPerVoxelAtUnitDist)
           .div(stepDist)
-          .mul(vec3(t.uLevelScale.element(resolved.residentLevel)).x);
+          .mul(max(smoothScale.x, max(smoothScale.y, smoothScale.z)));
         smoothActive = uPxPerVoxelAtUnitDist
           .greaterThan(0.0)
           .and(uSmoothThreshold.greaterThan(0.0))

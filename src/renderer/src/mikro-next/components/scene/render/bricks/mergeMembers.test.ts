@@ -115,3 +115,24 @@ describe("buildMergeMembers", () => {
     expect(member.cursorCount).toBe(3);
   });
 });
+
+describe("quantizedAffineKey", () => {
+  it("collapses float-noise-only differences into one bucket", async () => {
+    const { quantizedAffineKey } = await import("./mergeMembers");
+    const a = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100.30000000000001, 0.1 + 0.2, 0, 1];
+    const b = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100.3, 0.3, 0, 1];
+    expect(quantizedAffineKey(a)).toBe(quantizedAffineKey(b));
+  });
+
+  it("preserves real differences", async () => {
+    const { quantizedAffineKey } = await import("./mergeMembers");
+    const a = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100.3, 0, 0, 1];
+    const b = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100.4, 0, 0, 1];
+    expect(quantizedAffineKey(a)).not.toBe(quantizedAffineKey(b));
+  });
+
+  it("normalizes -0 so a zero's sign cannot split a bucket", async () => {
+    const { quantizedAffineKey } = await import("./mergeMembers");
+    expect(quantizedAffineKey([-0, 1])).toBe(quantizedAffineKey([0, 1]));
+  });
+});

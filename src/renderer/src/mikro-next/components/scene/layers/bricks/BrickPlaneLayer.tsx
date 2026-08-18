@@ -8,7 +8,11 @@ import { buildAffineMatrix } from "../../core/worldTransform";
 import { useViewerStore } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { getBackendTexture, type SceneRenderer } from "../../render/gpu/sceneRenderer";
-import { useBrickPlaneLayer, useBrickPlaneProbe } from "./useBrickPlaneProbe";
+import { slabBaseZOf, useBrickLayer, useBrickPlaneProbe } from "./useBrickPlaneProbe";
+import {
+  useBrickMaterialBundle,
+  usePlaneTraversalUniforms,
+} from "./useBrickMaterialBundle";
 
 /**
  * Brick-pool replacement for `PlaneLayer` + per-chunk `ChunkPlane` meshes:
@@ -43,7 +47,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   const scene = useThree((state) => state.scene);
   const camera = useThree((state) => state.camera);
 
-  const layer = useBrickPlaneLayer(layerId);
+  const layer = useBrickLayer(layerId);
 
   const affineMatrix = useMemo(
     () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
@@ -87,38 +91,22 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // made WebGPU sample its default white texture → gray composites). The
   // bound texture is disposed with the bundle below.
 
-  /** INTEGER base-voxel z of the displayed slab. The shader's slab mode
-   * applies the planner's floor chain per level itself (nodePlanning
-   * `slabLevelZ` ↔ makeSampleBrickEx slabZ) — adding 0.5 here made the two
-   * disagree at non-integer z scales (fetched z=1, sampled z=2). planSlabZ is
-   * in level-0 slices; scale to base voxels like `slabLevelZ` does. */
-  const slabBaseZ = (planSlabZ ?? 0) * (pool?.geometry.levels[0]?.scale[2] ?? 1);
+  const slabBaseZ = slabBaseZOf(planSlabZ, pool);
 
   // TSL node material. Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
-  const bundle = useMemo(() => {
-    if (!pool) return null;
-    const created = createPlaneNodeMaterial(pool, pool, channelData);
-    created.nodes.uBaseShape.value.set(
-      pool.geometry.levels[0].spatialShape[0],
-      pool.geometry.levels[0].spatialShape[1],
-      pool.geometry.levels[0].spatialShape[2],
-    );
-    return created;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature]);
-
-  useEffect(() => {
-    const material = bundle?.material;
-    return () => {
-      material?.dispose();
+  const bundle = useBrickMaterialBundle(
+    pool,
+    (p) => createPlaneNodeMaterial(p, p, channelData),
+    (b) => {
       // Whatever textures are bound at teardown (adoption keeps them long-lived).
-      bundle?.nodes.colormapAtlas.value?.dispose();
-      bundle?.nodes.sourceParams.value?.dispose();
-      bundle?.nodes.cursorParams.value?.dispose();
-    };
-  }, [bundle]);
+      b.nodes.colormapAtlas.value?.dispose();
+      b.nodes.sourceParams.value?.dispose();
+      b.nodes.cursorParams.value?.dispose();
+    },
+  );
+
 
   // Push dynamic values straight to the uniform nodes (no material rebuild).
   useEffect(() => {
@@ -126,8 +114,6 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     updateChannelNodes(bundle.nodes, channelData);
     bundle.nodes.minValue.value = pool?.minValue ?? 0;
     bundle.nodes.maxValue.value = pool?.maxValue ?? 1;
-    bundle.nodes.uDesiredLevel.value = planTargetLevel;
-    bundle.nodes.uSlabBaseZ.value = slabBaseZ;
 
     // Channel-compositor diagnostic (debug overlay on): the exact uniform +
     // colormap-row state the shader consumes, one line per update. Pair with
@@ -166,6 +152,12 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, planTargetLevel, slabBaseZ, isDebug]);
+
+  // The traversal contract, shared with the other plane material.
+  usePlaneTraversalUniforms(bundle?.nodes, {
+    desiredLevel: planTargetLevel,
+    slabBaseZ,
+  });
 
   // Debug: dump the GENERATED fragment shader (WGSL on WebGPU) once per
   // material — ground truth for how TSL compiled the channel loop /

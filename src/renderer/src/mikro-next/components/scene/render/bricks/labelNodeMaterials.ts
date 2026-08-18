@@ -327,7 +327,9 @@ export function createLabelPlaneNodeMaterial(
     ).toVar("lblLut");
 
     // A filter drops the fragment entirely rather than dimming it: the object is
-    // not being de-emphasised, it is not being drawn.
+    // not being de-emphasised, it is not being drawn. Why visibility rides in
+    // ALPHA rather than as a colour sentinel, and why `uLutColorize` cannot be
+    // folded into the texel the same way: `columnLut.ts`'s header.
     Discard(uLutFilter.greaterThan(0.5).and(lutTexel.a.lessThan(0.5)));
 
     const hue = fract(id.add(uSeed).mul(GOLDEN_RATIO_CONJUGATE));
@@ -525,6 +527,12 @@ export function createLabelVolumeNodeMaterial(
     // Termination guarantee: uMaxSteps steps of at least this size always cross
     // the ray, whatever the per-sample LOD picks.
     const floorDelta = rayLen.div(max(float(uMaxSteps), 1.0));
+    // NO jitter, deliberately unlike the intensity raymarcher. There it
+    // dithers away the banding an accumulating projection shows at coarse
+    // steps. Here the result is a hard SURFACE, and jittering the start would
+    // move each pixel's hit point independently — turning a clean object
+    // boundary into a noisy one. Terracing is the honest artefact of a coarse
+    // step, and `stepLen` keeps it sub-voxel.
     const rayT = boundsX.toVar("lblRayT");
 
     const hitId = float(-1.0).toVar("lblHitId");
@@ -574,10 +582,30 @@ export function createLabelVolumeNodeMaterial(
 
       // A uniform brick of pure background is the mask's empty space — hop the
       // whole cell instead of stepping through it.
+      //
+      // ONLY when the EMPTY entry sits at the level we actually asked for
+      // (`hopLevel <= lvl`; levels run fine→coarse). If the walk FELL BACK to a
+      // coarser ancestor — which is the normal state while fine bricks are still
+      // streaming — that ancestor's "uniformly background" claim is a statement
+      // about the COARSE data only. An object thinner than a coarse voxel does
+      // not survive the downsample, so hopping the whole coarse cell skips
+      // straight past regions where the fine level does have objects, and they
+      // then pop into view one brick at a time as the fine data lands.
+      //
+      // The intensity raymarcher cannot hit this: for it, "EMPTY and skippable"
+      // means the uniform value normalizes to ~0, and a coarse brick over real
+      // signal is never uniform-zero. For a sparse mask, "EMPTY and background"
+      // is exactly what most of a COARSE level is, which is why the same skip
+      // that is a big win at the target level is a correctness bug above it.
+      //
+      // Falling through to a plain `stepLen` costs steps through background
+      // while streaming, and buys a mask that refines in place instead of
+      // assembling itself.
       If(
         resolved.status
           .greaterThan(1.5)
-          .and(id.sub(uBackground).abs().lessThan(0.5)),
+          .and(id.sub(uBackground).abs().lessThan(0.5))
+          .and(resolved.hopLevel.lessThanEqual(lvl)),
         () => {
           hopPastCell();
         },
@@ -609,6 +637,8 @@ export function createLabelVolumeNodeMaterial(
 
     const hue = fract(hitId.add(uSeed).mul(GOLDEN_RATIO_CONJUGATE));
     const hashed = emitHueColor(hue, uSaturation, uValue);
+    // A colouring REPLACES the hash rather than tinting it, and the hash is why
+    // this is a uniform and not another LUT channel — `columnLut.ts`'s header.
     const rgb = mix(hashed, lutTexel.rgb, uLutColorize);
 
     return vec4(rgb, uOpacity);

@@ -1,15 +1,11 @@
-import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
-import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
   createLabelPlaneNodeMaterial,
-  setLabelColorLut,
   updateLabelNodes,
 } from "../../render/bricks/labelNodeMaterials";
-import { buildLabelColorLut } from "../../render/labels/labelColorLut";
-import { level0StoreIdOf, systemIdOf } from "../../core/layerLevel0";
+import { useLabelColorLut } from "../../render/labels/useLabelColorLut";
 import {
   buildLabelUniformData,
   labelDataSignature,
@@ -17,7 +13,11 @@ import {
 import { buildAffineMatrix } from "../../core/worldTransform";
 import { useViewerStore } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
-import { useBrickPlaneLayer, useBrickPlaneProbe } from "./useBrickPlaneProbe";
+import { slabBaseZOf, useBrickLayer, useBrickPlaneProbe } from "./useBrickPlaneProbe";
+import {
+  useBrickMaterialBundle,
+  usePlaneTraversalUniforms,
+} from "./useBrickMaterialBundle";
 
 /**
  * A label mask drawn as ONE full-layer quad, the same shape as `BrickPlaneLayer`
@@ -51,7 +51,7 @@ export const BrickLabelPlaneLayer = ({ layerId }: { layerId: string }) => {
   useViewerStore((s) => s.poolsVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
 
-  const layer = useBrickPlaneLayer(layerId);
+  const layer = useBrickLayer(layerId);
 
   const affineMatrix = useMemo(
     () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
@@ -62,126 +62,37 @@ export const BrickLabelPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   const { groupRef, handlers } = useBrickPlaneProbe({ layerId, layer, pool });
 
-  const attributeService = useAttributeServiceOrNull();
-  const invalidate = useThree((state) => state.invalidate);
-
   const labelData = useMemo(() => buildLabelUniformData(layer), [layer]);
   // A string, so the update effect does not re-run on the record's identity
   // churning every render (same reason `channelDataSignature` exists).
   const labelSignature = labelDataSignature(labelData);
 
-  /** INTEGER base-voxel z of the displayed slab — see BrickPlaneLayer: the
-   * shader's slab mode applies the planner's floor chain per level itself, so
-   * no +0.5 here. planSlabZ is in level-0 slices; scale to base voxels. */
-  const slabBaseZ = (planSlabZ ?? 0) * (pool?.geometry.levels[0]?.scale[2] ?? 1);
+  const slabBaseZ = slabBaseZOf(planSlabZ, pool);
 
   // Recreated only when the pool is rebuilt (the mesh remounts on that key);
   // everything dynamic flows through the uniform NODES below.
-  const bundle = useMemo(() => {
-    if (!pool) return null;
-    const created = createLabelPlaneNodeMaterial(pool, pool, labelData);
-    created.nodes.uBaseShape.value.set(
-      pool.geometry.levels[0].spatialShape[0],
-      pool.geometry.levels[0].spatialShape[1],
-      pool.geometry.levels[0].spatialShape[2],
-    );
-    return created;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature]);
+  const bundle = useBrickMaterialBundle(
+    pool,
+    (p) => createLabelPlaneNodeMaterial(p, p, labelData),
+  );
 
-  useEffect(() => {
-    const material = bundle?.material;
-    // No bound textures of its own to dispose — the atlas and page table belong
-    // to the pool, which outlives this material.
-    return () => material?.dispose();
-  }, [bundle]);
 
   useEffect(() => {
     if (!bundle || planTargetLevel === undefined) return;
     updateLabelNodes(bundle.nodes, labelData);
-    bundle.nodes.uDesiredLevel.value = planTargetLevel;
-    bundle.nodes.uSlabBaseZ.value = slabBaseZ;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, labelSignature, planTargetLevel, slabBaseZ]);
 
-  // --- the colour LUT: a picked colouring / the active filter rules ---------
-  const render = layer?.labelRender;
-  const activeColorBy =
-    render?.activeColorBy != null ? (render.colorBys?.[render.activeColorBy] ?? null) : null;
-  const activeRules = useMemo(
-    () =>
-      (render?.activeFilterBys ?? [])
-        .map((index) => render?.filterBys?.[index])
-        .filter((rule): rule is NonNullable<typeof rule> => Boolean(rule)),
-    [render?.activeFilterBys, render?.filterBys],
-  );
+  // The traversal contract, shared with the other plane material.
+  usePlaneTraversalUniforms(bundle?.nodes, {
+    desiredLevel: planTargetLevel,
+    slabBaseZ,
+  });
 
-  /**
-   * A CONTENT key, not references. The card folds the server's answer in with
-   * `Object.assign` into an immer draft, so array identity is structural
-   * sharing's call and would re-run this effect for nothing — or miss a real
-   * change. (Same reasoning as `FabriksCollectionLayer`'s `lutKey`.)
-   */
-  const lutKey = useMemo(
-    () => JSON.stringify([activeColorBy, activeRules]),
-    [activeColorBy, activeRules],
-  );
-
-  const systemId = layer ? systemIdOf(layer) : null;
-  const storeId = layer ? level0StoreIdOf(layer) : null;
-
-  useEffect(() => {
-    if (!bundle) return;
-    const nothingActive = !activeColorBy && activeRules.length === 0;
-    if (!attributeService || !systemId || !storeId || nothingActive) {
-      setLabelColorLut(
-        bundle.nodes,
-        { texture: null, width: 0, height: 0, idOffset: 0 },
-        { colorize: false, filter: false },
-      );
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const plans = await attributeService.plansFor(systemId);
-      if (cancelled) return;
-      const lut = await buildLabelColorLut({
-        colorBy: activeColorBy,
-        filterBys: activeRules,
-        plans,
-        storeId,
-        engine: attributeService.engine,
-      });
-      // A superseded build must not reach the GPU, and its texture is ours to
-      // free — `setLabelColorLut` only ever disposes what it replaces.
-      if (cancelled) {
-        lut.texture?.dispose();
-        return;
-      }
-      if (lut.skipped.length > 0) {
-        console.warn("[label] picker entries that do not render yet:", lut.skipped);
-      }
-      setLabelColorLut(bundle.nodes, lut, {
-        colorize: activeColorBy !== null,
-        filter: activeRules.length > 0,
-      });
-      invalidate();
-    })().catch((error) => {
-      if (cancelled) return;
-      console.warn("[label] could not build the colour lookup:", error);
-      setLabelColorLut(
-        bundle.nodes,
-        { texture: null, width: 0, height: 0, idOffset: 0 },
-        { colorize: false, filter: false },
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-    // `activeColorBy` / `activeRules` are read inside; `lutKey` decides whether
-    // it re-runs. See the note on the key itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, attributeService, systemId, storeId, lutKey, invalidate]);
+  // The picked colouring and the active filter rules, resolved into the
+  // material's colour LUT. Shared with the other label mode — same table, same
+  // indexing; only what a texel is USED for differs.
+  useLabelColorLut(bundle?.nodes, layer);
 
   if (layer?.visible === false) return null;
   if (!planHasNodes || !pool || !bundle) return null;

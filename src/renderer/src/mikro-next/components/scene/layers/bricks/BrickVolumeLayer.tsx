@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { ProjectionMode } from "@/mikro-next/api/graphql";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
 import { perfMonitor } from "../../managers/perfMonitor";
-import { qualityGovernor } from "../../core/qualityGovernor";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
@@ -32,7 +31,6 @@ import {
 } from "../../store/roiDrawingStore";
 import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
-import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import {
   createVolumeNodeMaterial,
   updateChannelNodes,
@@ -40,6 +38,7 @@ import {
 } from "../../render/bricks/brickNodeMaterials";
 import { buildChannelDataSignature } from "../../render/bricks/channelDataSignature";
 import { buildMergeMembers } from "../../render/bricks/mergeMembers";
+import { useStepScaleUniform, useVolumeRayUniforms } from "./useVolumeRayUniforms";
 import { buildMergedChannelUniformData } from "../../render/bricks/mergedChannelUniforms";
 import {
   findMergeGroup,
@@ -75,7 +74,6 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
   }
 };
 
-const MAX_RAY_STEPS = 512;
 
 /**
  * Scratch for `probeFromRay`, shared across layer instances.
@@ -103,7 +101,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
 
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
-  const lodBias = useViewerStore((s) => s.lodBias);
   const isDebug = useViewerStore((s) => s.debug);
   // SCALAR plan subscriptions only (P9c/P17): the plan OBJECT gets a new
   // identity on every replan (≤5/s during a pan — its node list changes), but
@@ -124,11 +121,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // layers continuously. The footprint scale depends on fov + viewport
   // height alone (both constant while orbiting); the camera position reaches
   // the shader through vOrigin.
-  const pxPerVoxelAtUnitDistance = useViewStore((s) =>
-    s.cameraPose?.isPerspective && s.cameraPose.fovY > 0
-      ? s.viewportSize.height / (2 * Math.tan(s.cameraPose.fovY / 2))
-      : 0,
-  );
   // `cameraMoving` is deliberately NOT a React subscription. It flips true on
   // every leading camera emission and false on every settle (~23 flips over a
   // 10 s orbit), and it feeds exactly ONE uniform — uStepScale. Subscribing
@@ -137,13 +129,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // group/mesh tree, for a single float. The dedicated effect further down
   // writes it imperatively instead. (4df81eea decoupled cameraPose,
   // viewportSize, the plan object and layerViewRanges; this was the one left.)
-  const viewStoreApi = useViewStoreApi();
   // Quality tier / streaming flips are rare (P17-clean); re-runs the uniform
   // push below so uStepScale tracks the governor's profile.
-  const qualityVersion = useSyncExternalStore(
-    qualityGovernor.subscribe,
-    () => qualityGovernor.getVersion(),
-  );
 
   const layers = useSceneStore((s) => s.layers);
   const layer = useMemo(() => layers.find((l) => l.id === layerId), [layers, layerId]);
@@ -315,12 +302,6 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // level. The actual per-sample step adapts to the LOD sampled at that point
   // (see stepLen in the shader); the in-shader rayLen/MAX_STEPS floor
   // guarantees every ray reaches its exit within the loop bound.
-  const marchParams = useMemo(() => {
-    if (!pool || planTargetLevel === undefined) return { minDelta: 1, steps: 128 };
-    const level = pool.geometry.levels[Math.min(planTargetLevel, pool.geometry.levels.length - 1)];
-    return { minDelta: 0.5 * level.scale[0], steps: MAX_RAY_STEPS };
-  }, [pool, planTargetLevel]);
-
   // Which members carry phasor sources — a COMPILE-TIME input: the material
   // omits the phasor branch for members without them, so this key flipping
   // must rebuild the material (unlike ordinary channel edits, which flow
@@ -332,6 +313,12 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // TSL node material. Recreated only when
   // the pool is rebuilt (mesh remounts on that key); everything dynamic flows
   // through the uniform NODES below.
+  // NOT `useBrickMaterialBundle`, unlike the other three brick layers: this
+  // material rebuilds on more than the pool's structure — membership changes
+  // (the shader unrolls per member) and phasor gain/loss (compile-time
+  // specialization) — which the shared hook's fixed dependency list cannot
+  // express. Folding it in would have to either drop those triggers or hand the
+  // hook a dep array, and a hook that takes its own deps is not an abstraction.
   const bundle = useMemo(() => {
     if (!pool || !channelData) return null;
     // TSL node-graph construction is real JS work (per-member unrolled
@@ -388,13 +375,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     updateChannelNodes(n, channelData);
     n.minValue.value = pool?.minValue ?? 0;
     n.maxValue.value = pool?.maxValue ?? 1;
-    // The FINEST level any member planned: residency is shared and the walk
-    // goes coarser from here, so this is the finest data actually resident.
-    n.uDesiredLevel.value = mergeGroup?.targetLevel ?? planTargetLevel;
-    n.uLodBias.value = lodBias;
-    n.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
-    n.uMinDelta.value = marchParams.minDelta;
-    n.uMaxSteps.value = qualityGovernor.getProfile().maxRaySteps;
+    // The five RAY uniforms are pushed by `useVolumeRayUniforms` below —
+    // shared with the label raymarcher, and kept next to the shader half in
+    // `volumeRayNodes.ts` that they must stay in lockstep with.
     // Per-member projection/blend/slot range. For a lone layer this is the one
     // member and behaves exactly as the old single `projectionMode` write.
     updateMergedMemberNodes(
@@ -412,41 +395,17 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     );
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, channelData, planTargetLevel, lodBias, pxPerVoxelAtUnitDistance, qualityVersion, marchParams, layer?.projection, invalidate]);
+  }, [bundle, channelData, planTargetLevel, layer?.projection, invalidate]);
 
-  // uStepScale, driven IMPERATIVELY off the camera-motion flag.
-  //
-  // Coarser ray steps while ACTIVE (camera moving OR bricks streaming —
-  // streaming frames recur for seconds after a gesture and were the residual
-  // jank on slow GPUs, P19); the tier profile decides how coarse, and settling
-  // restores the tier's full quality. That is a single float, but `cameraMoving`
-  // flips on every leading emission and every settle, so reading it through a
-  // React selector re-rendered this component (and every sibling volume layer)
-  // ~23 times per orbit. A store subscription writes the uniform and invalidates
-  // directly: same visual behaviour, zero renders.
-  useEffect(() => {
-    if (!bundle) return;
-    const nodes = bundle.nodes;
-    let last: number | null = null;
-    const apply = () => {
-      const profile = qualityGovernor.getProfile();
-      const next =
-        viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming()
-          ? profile.activeStepScale
-          : profile.settledStepScale;
-      if (next === last) return; // the flag flips far more often than the value
-      last = next;
-      nodes.uStepScale.value = next;
-      invalidate();
-    };
-    apply();
-    const unsubscribeView = viewStoreApi.subscribe(apply);
-    const unsubscribeQuality = qualityGovernor.subscribe(apply);
-    return () => {
-      unsubscribeView();
-      unsubscribeQuality();
-    };
-  }, [bundle, viewStoreApi, invalidate]);
+  useVolumeRayUniforms(bundle?.nodes, {
+    pool,
+    // The FINEST level any member planned: residency is shared and the walk goes
+    // coarser from here, so this is the finest data actually resident.
+    desiredLevel: mergeGroup?.targetLevel ?? planTargetLevel,
+    planTargetLevel,
+  });
+
+  useStepScaleUniform(bundle?.nodes);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
   const probeFromRay = (ray: THREE.Ray, origin: ProbeOrigin): ProbeResult | null => {

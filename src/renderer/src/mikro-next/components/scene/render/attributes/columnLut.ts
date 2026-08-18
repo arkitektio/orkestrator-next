@@ -37,6 +37,41 @@ import { instanceHue } from "../fabriks/instanceColormaps";
  * per-object question and a second would be a second upload of the same walk:
  * `rgb` is the active colouring's colour (white = leave the base colour alone),
  * and `a` is visibility under the AND of every active rule.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY ONE TEXTURE, AND WHY TWO MODE UNIFORMS SURVIVE IT
+ *
+ * The fusion is the design and not a coincidence: colouring and filtering answer
+ * the same per-object question over the same relation, so they are ONE build
+ * pass, ONE upload and ONE `textureLoad` per fragment. A separate filter table
+ * would be a second walk of the same rows to say something this one says already.
+ *
+ * The filter is `a = 0` and NOT "paint it no colour". Black is a legitimate
+ * colormap output — it is the bottom of viridis — so an rgb sentinel cannot be
+ * told apart from a real value; and a filtered object is not being
+ * de-emphasised, it is not being drawn. Hence both materials `Discard` on alpha
+ * rather than dimming a colour.
+ *
+ * The identity fill (white, opaque) is what makes that safe: a slot no read
+ * covered renders exactly as it would with no LUT at all, so an id with no row in
+ * the table keeps its base colour and stays VISIBLE. A filter must never hide
+ * something it never saw.
+ *
+ * `uLutColorize` cannot be folded into the texture the way visibility was.
+ * "Invisible" has an in-band identity (`a = 1`); "no colouring" has none, because
+ * white is a legitimate colormap output too and there is no sentinel left to mean
+ * "leave the base colour alone". Baking the base colour into `rgb` instead would
+ * work — and would tie the texture to `uSeed` / `uSaturation` / `uValue` for a
+ * label mask, which are LIVE uniforms, so every seed tweak would rebuild and
+ * re-upload the whole table. One uniform and one `mix` is the cheap side of that
+ * trade.
+ *
+ * `uLutFilter` is, under this painter, redundant: `allocateColumnLut` fills alpha
+ * opaque and the visibility pass only zeroes it where a rule REJECTS, so with no
+ * active rules nothing is transparent, and the fallback is a 1x1 white opaque
+ * texel. It is kept as a deliberate one-branch statement of "alpha means
+ * visibility here", not as an invariant that rests on the painter never changing
+ * — worth knowing it is a choice rather than something load-bearing.
  */
 
 /** Texture width; the slot's low bits. A power of two by habit, not need. */

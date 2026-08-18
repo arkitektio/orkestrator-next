@@ -140,6 +140,8 @@ const composeColorNode = (handle: FabriksMaterialHandle, baseNode: unknown) =>
     // A rule that drops this object drops it here rather than by removing it
     // from the batch: the batch's slots and the LOD cache are planned by what
     // is RESIDENT, and a filter must not re-plan and re-fetch on every toggle.
+    // Visibility rides in ALPHA and the colouring in `rgb` — one table for both;
+    // `columnLut.ts`'s header says why that split rather than a colour sentinel.
     Discard(float(handle.uniforms.lutFilter).greaterThan(0.5).and(lut.a.lessThan(0.5)));
 
     // Float equality is exact here: ordinals are integers ≤ 2^24 on both sides.

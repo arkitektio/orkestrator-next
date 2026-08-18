@@ -626,6 +626,38 @@ describe("planLayerNodes fetch ordering (band + score)", () => {
     expect(byKey.get("0:2:2:0")?.fetchBand).toBe(2);
   });
 
+  /**
+   * The regression a LAYER THAT NEVER REGISTERS ITS GROUP REF produces.
+   *
+   * No registration → no `trackables` entry → `computeSceneVisibility` writes no
+   * `layerViewRanges[id]` → `nodePlanTracker` passes `viewRange: undefined` →
+   * `strictBox` is never built → the band-2 arm of `fetchBand` is unreachable and
+   * every non-root node lands in band 1. Off-screen prefetch then competes on
+   * equal footing with what is actually on screen, and the layer visibly fills in
+   * brick by brick instead of showing its coarse backdrop and refining.
+   *
+   * Nothing throws when this happens, which is why it is asserted here: the only
+   * symptom is streaming that feels wrong.
+   */
+  it("loses the margin band entirely without a view range", () => {
+    const unregistered = planLayerNodes({
+      layer: bigLayer,
+      geometry: bigGeo,
+      spec: bigSpec,
+      mode: "2D",
+      viewRange: undefined,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+    });
+    // Roots are still band 0 — the backdrop survives.
+    expect(unregistered.nodes.some((n) => n.fetchBand === 0)).toBe(true);
+    // …but nothing is ever deprioritized as margin-only.
+    expect(unregistered.nodes.some((n) => n.fetchBand === 2)).toBe(false);
+    // Which is the whole difference: WITH a view range, some node is.
+    expect(p.nodes.some((n) => n.fetchBand === 2)).toBe(true);
+  });
+
   it("dispatches roots, then the focus chain coarse→fine, then by distance, margin last", () => {
     const rootCount = p.nodes.filter((n) => n.fetchBand === 0).length;
     expect(rootCount).toBe(4);

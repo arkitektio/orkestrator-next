@@ -336,8 +336,28 @@ export const useBrickPlaneProbe = ({
 };
 
 /**
- * The scene store's layer lookup, so a plane component and its probe agree on
- * which layer they are for without the component threading it in twice.
+ * The scene store's layer lookup, so a component and its probe agree on which
+ * layer they are for without threading it in twice.
+ *
+ * Not "Plane" — the label VOLUME uses it too. `BrickVolumeLayer` deliberately
+ * does not: a merged pass needs the whole `layers` array to group members, so it
+ * subscribes to that and finds its own.
  */
-export const useBrickPlaneLayer = (layerId: string): LayerState | undefined =>
+export const useBrickLayer = (layerId: string): LayerState | undefined =>
   useSceneStore((s) => s.layers.find((l) => l.id === layerId));
+
+/**
+ * INTEGER base-voxel z of the displayed slab, for a 2D brick plane.
+ *
+ * One copy on purpose: the shader's slab mode applies the planner's floor chain
+ * per level itself (`nodePlanning.slabLevelZ` ↔ `emitResolveBrickResidency`'s
+ * `slabZ`), so there must be NO `+0.5` here. Adding one made the two disagree at
+ * non-integer z scales — the planner fetched z=1 while the shader sampled z=2,
+ * the lookup landed on an UNMAPPED entry, and the layer silently fell back to a
+ * coarser level in a way that flipped with zoom. `planSlabZ` is in level-0
+ * slices; scaling to base voxels is what `slabLevelZ` does.
+ */
+export const slabBaseZOf = (
+  planSlabZ: number | null | undefined,
+  pool: { geometry: { levels: readonly { scale: readonly number[] }[] } } | null,
+): number => (planSlabZ ?? 0) * (pool?.geometry.levels[0]?.scale[2] ?? 1);

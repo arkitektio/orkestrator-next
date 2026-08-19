@@ -124,15 +124,41 @@ describe("measureAnnotation", () => {
     expect(formatAnnotationMeasure(measure, "µm")).toBe("100 µm²");
   });
 
-  it("reuses the drawing conventions for the shared kinds", () => {
-    expect(
-      measureAnnotation("RECTANGLE", [{ x: 0, y: 0 }, { x: 10, y: 4 }]),
-    ).toEqual({ kind: "box", width: 10, height: 4 });
+  it("headlines a rectangle by its box and the area it encloses", () => {
+    const measure = measureAnnotation("RECTANGLE", [{ x: 0, y: 0 }, { x: 10, y: 4 }]);
+    expect(measure).toEqual({ kind: "boxArea", width: 10, height: 4, area: 40 });
+    expect(formatAnnotationMeasure(measure, "µm")).toBe("10.0 × 4.00 µm · 40.0 µm²");
+  });
+
+  it("headlines an ellipse by the ELLIPSE's area, not its bounding box's", () => {
+    const measure = measureAnnotation("ELLIPSE", [{ x: 0, y: 0 }, { x: 6, y: 8 }]);
+    expect(measure).toEqual({
+      kind: "boxArea",
+      width: 6,
+      height: 8,
+      area: (Math.PI / 4) * 6 * 8, // π·a·b with a=3, b=4
+    });
+  });
+
+  it("headlines a SPHERE by its radius and volume — not a bare length", () => {
+    const measure = measureAnnotation("SPHERE", [{ x: 0, y: 0 }, { x: 10, y: 10 }]);
+    expect(measure).toEqual({
+      kind: "sphere",
+      radius: 5,
+      volume: (4 / 3) * Math.PI * 125,
+    });
+    expect(formatAnnotationMeasure(measure, "µm")).toBe("r 5.00 µm · 524 µm³");
+  });
+
+  it("headlines a CUBE by its side and volume", () => {
+    const measure = measureAnnotation("CUBE", [{ x: 0, y: 0 }, { x: 10, y: 10 }]);
+    expect(measure).toEqual({ kind: "cube", side: 10, volume: 1000 });
+    expect(formatAnnotationMeasure(measure, "µm")).toBe("10.0 µm · 1000 µm³");
+  });
+
+  it("reuses the drawing conventions where length IS the feature", () => {
     expect(
       measureAnnotation("LINE", [{ x: 0, y: 0 }, { x: 3, y: 4 }]),
-    ).toEqual({ kind: "length", length: 5 });
-    expect(
-      measureAnnotation("SPHERE", [{ x: 0, y: 0 }, { x: 10, y: 10 }]),
     ).toEqual({ kind: "length", length: 5 });
   });
 

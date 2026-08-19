@@ -123,8 +123,31 @@ export function polygonArea(points: readonly OutlinePlanar[]): number {
 
 export type AnnotationMeasure =
   | DrawMeasure
-  | { kind: "area"; area: number; vertexCount: number };
+  | { kind: "area"; area: number; vertexCount: number }
+  | { kind: "boxArea"; width: number; height: number; area: number }
+  | { kind: "sphere"; radius: number; volume: number }
+  | { kind: "cube"; side: number; volume: number };
 
+/**
+ * A STORED annotation headlines the feature its geometry actually HAS, not
+ * the number the drawing gesture chose. The gesture readout (`measureDraw`)
+ * rightly reports the radius while you size a sphere — that is the number the
+ * drag controls — but a finished sphere IS a volume, an ellipse IS an area,
+ * and quoting a sphere as a bare length reads as a line's measure.
+ *
+ *  - RECTANGLE: width × height, plus the area they enclose.
+ *  - ELLIPSE: its bounding box, plus π/4·w·h — the ellipse's area, not the
+ *    box's.
+ *  - SPHERE: the radius (half the x extent, the corner-pair convention of
+ *    `core/primitiveDraw.ts`) and 4/3·π·r³.
+ *  - CUBE: the side (the full extent) and side³.
+ *  - POLYGON: shoelace area of the xy footprint.
+ *  - LINE / PATH: length, via `measureDraw` — length is already the feature.
+ *
+ * Same isotropy assumption as the whole module (see the top docblock): the
+ * 3D primitives read their extent off x alone, which the corner-pair
+ * convention guarantees equals y and z.
+ */
 export function measureAnnotation(
   roiKind: string,
   points: readonly OutlinePlanar[],
@@ -134,10 +157,25 @@ export function measureAnnotation(
   if (tool === "POLYGON" && points.length >= 3) {
     return { kind: "area", area: polygonArea(points), vertexCount: points.length };
   }
+  if (tool === "RECTANGLE" || tool === "ELLIPSE") {
+    const width = Math.abs(points[1].x - points[0].x);
+    const height = Math.abs(points[1].y - points[0].y);
+    const area = tool === "ELLIPSE" ? (Math.PI / 4) * width * height : width * height;
+    return { kind: "boxArea", width, height, area };
+  }
+  if (tool === "SPHERE") {
+    const radius = Math.abs(points[1].x - points[0].x) / 2;
+    return { kind: "sphere", radius, volume: (4 / 3) * Math.PI * radius ** 3 };
+  }
+  if (tool === "CUBE") {
+    const side = Math.abs(points[1].x - points[0].x);
+    return { kind: "cube", side, volume: side ** 3 };
+  }
   return measureDraw(tool, points);
 }
 
-/** e.g. "1 240 µm²" for a polygon; everything else via `formatDrawMeasure`. */
+/** e.g. "r 5.00 µm · 524 µm³" for a sphere, "10 × 4.00 µm · 40.0 µm²" for a
+ * rectangle, "1 240 µm²" for a polygon; lengths via `formatDrawMeasure`. */
 export function formatAnnotationMeasure(
   measure: AnnotationMeasure | null,
   unit: string,
@@ -145,6 +183,15 @@ export function formatAnnotationMeasure(
   if (!measure) return null;
   if (measure.kind === "area") {
     return `${formatSceneLength(measure.area)} ${unit}²`;
+  }
+  if (measure.kind === "boxArea") {
+    return `${formatSceneLength(measure.width)} × ${formatSceneLength(measure.height)} ${unit} · ${formatSceneLength(measure.area)} ${unit}²`;
+  }
+  if (measure.kind === "sphere") {
+    return `r ${formatSceneLength(measure.radius)} ${unit} · ${formatSceneLength(measure.volume)} ${unit}³`;
+  }
+  if (measure.kind === "cube") {
+    return `${formatSceneLength(measure.side)} ${unit} · ${formatSceneLength(measure.volume)} ${unit}³`;
   }
   return formatDrawMeasure(measure, unit);
 }

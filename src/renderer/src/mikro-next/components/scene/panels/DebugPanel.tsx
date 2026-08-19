@@ -2,7 +2,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Slider } from "@/components/ui/slider";
 import { ChevronDown, ClipboardCopy, Circle, Square } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
-import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import {
+  getInitialVolumeTextureBudgetBytes,
+  getReportedDeviceMemoryGiB,
+  getVolumeBudgetOverrideBytes,
+  setVolumeBudgetOverrideMB,
+} from "../core/lodPlanning";
+import {
+  getDecodeCacheOverrideBytes,
+  getDecodedChunkCacheBytes,
+  setDecodeCacheOverrideMB,
+} from "../core/octree/poolBudget";
 import {
   isAdaptiveDprEnabled,
   isSettleRefineEnabled,
@@ -84,6 +94,12 @@ export const DebugPanel = () => {
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
   const [earlyBricksOn, setEarlyBricksOn] = useState(isEarlyBricksEnabled);
+  const [volumeBudgetOverride, setVolumeBudgetOverride] = useState(
+    getVolumeBudgetOverrideBytes,
+  );
+  const [decodeCacheOverride, setDecodeCacheOverride] = useState(
+    getDecodeCacheOverrideBytes,
+  );
   const [anisoStrideOn, setAnisoStrideOn] = useState(isAnisoStrideEnabled);
   const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
   const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
@@ -246,6 +262,16 @@ export const DebugPanel = () => {
       lodBias: viewerState.lodBias,
       currentZ: viewerState.currentZ,
       budgetBytes: getInitialVolumeTextureBudgetBytes(),
+      /** Everything the LOD floor and the atlas sizing are derived from. The
+       * resolved budget alone cannot distinguish "big machine" from "override
+       * set", so the raw deviceMemory rides along. */
+      budget: {
+        deviceMemoryGiB: getReportedDeviceMemoryGiB(),
+        volumeBudgetBytes: getInitialVolumeTextureBudgetBytes(),
+        volumeBudgetOverrideBytes: getVolumeBudgetOverrideBytes(),
+        decodeCacheBytes: getDecodedChunkCacheBytes(),
+        decodeCacheOverrideBytes: getDecodeCacheOverrideBytes(),
+      },
       viewportSize: viewState.viewportSize,
       // CSS size alone cannot tell you the fragment count — the quality
       // governor modulates DPR per tier, so `pixels` is the number the
@@ -291,6 +317,11 @@ export const DebugPanel = () => {
               targetLevel: plan.targetLevel,
               budgetMinLevel: plan.budgetMinLevel,
               decodeBytesCharged: plan.decodeBytesCharged,
+              // The budget floor's own arithmetic, so "why is level N never
+              // selected?" is readable off the report instead of re-derived.
+              levelDecodeBytes: plan.levelDecodeBytes,
+              decodeFloorBytes: plan.decodeFloorBytes,
+              decodeAllowanceBytes: plan.decodeAllowanceBytes,
               slabZ: plan.slabZ,
               planBytes: plan.planBytes,
               nodeCount: plan.nodes.length,
@@ -365,6 +396,60 @@ export const DebugPanel = () => {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="space-y-3 border-t border-border/50 px-2 py-2">
+              {/* The two budgets that decide which pyramid level is reachable.
+                  They are separate physical resources — VRAM and JS heap — and
+                  a plane-chunked pyramid is usually blocked on the second. */}
+              {([
+                {
+                  label: "Volume budget (VRAM)",
+                  title:
+                    "Total GPU budget for brick atlases. Raises the per-pool slot budget, so the plan may cover more bricks. Auto = navigator.deviceMemory x 0.18. Applies to plans at the next replan and to atlases at the next scene open.",
+                  value: volumeBudgetOverride,
+                  apply: (mb: number | null) => {
+                    setVolumeBudgetOverrideMB(mb);
+                    setVolumeBudgetOverride(getVolumeBudgetOverrideBytes());
+                  },
+                },
+                {
+                  label: "Decode cache (heap)",
+                  title:
+                    "Decoded-chunk cache. This is what the LOD FLOOR is derived from: a level is only unlocked if its chunk working set fits. Raise it when a level you expect is never selected on a plane-chunked pyramid. Applies at the next scene open.",
+                  value: decodeCacheOverride,
+                  apply: (mb: number | null) => {
+                    setDecodeCacheOverrideMB(mb);
+                    setDecodeCacheOverride(getDecodeCacheOverrideBytes());
+                  },
+                },
+              ] as const).map((control) => (
+                <div className="space-y-1" key={control.label}>
+                  <div
+                    className="flex items-center justify-between text-[10px] text-muted-foreground font-medium"
+                    title={control.title}
+                  >
+                    <span>{control.label}</span>
+                    <span className="font-mono bg-accent px-1 rounded">
+                      {control.value === null
+                        ? "auto"
+                        : `${(control.value / (1024 * 1024)).toFixed(0)} MB`}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    {([null, 512, 1024, 2048, 4096] as const).map((mb) => (
+                      <button
+                        key={mb ?? "auto"}
+                        onClick={() => control.apply(mb)}
+                        className={`flex-1 rounded border px-1 py-0.5 text-[10px] hover:bg-accent ${
+                          (mb === null ? null : mb * 1024 * 1024) === control.value
+                            ? "border-primary bg-accent"
+                            : "border-border/50"
+                        }`}
+                      >
+                        {mb === null ? "auto" : `${mb >= 1024 ? mb / 1024 + "G" : mb + "M"}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
                   <span>LOD Aggressiveness</span>
@@ -690,6 +775,22 @@ export const DebugPanel = () => {
                   <span className="bg-accent px-1 rounded">{plan.mode}</span>
                   <span className="bg-accent px-1 rounded">target L{plan.targetLevel}</span>
                   <span className="bg-accent px-1 rounded">floor L{plan.budgetMinLevel}</span>
+                  {/* The floor's own arithmetic, inline: L0 needs X, floor allows Y. */}
+                  <span
+                    className="ml-1 opacity-70"
+                    title={plan.levelDecodeBytes
+                      .map(
+                        (bytes, level) =>
+                          `L${level}: ${(bytes / (1024 * 1024)).toFixed(0)} MB${
+                            bytes <= plan.decodeFloorBytes ? " (fits)" : ""
+                          }`,
+                      )
+                      .join("\n")}
+                  >
+                    floor {(plan.decodeFloorBytes / (1024 * 1024)).toFixed(0)} MB
+                    {plan.levelDecodeBytes[0] !== undefined &&
+                      ` · L0 needs ${(plan.levelDecodeBytes[0] / (1024 * 1024)).toFixed(0)} MB`}
+                  </span>
                   {plan.decodeBytesCharged > 0 && (
                     <span className="bg-accent px-1 rounded">
                       {(plan.decodeBytesCharged / (1024 * 1024)).toFixed(0)} MB decode

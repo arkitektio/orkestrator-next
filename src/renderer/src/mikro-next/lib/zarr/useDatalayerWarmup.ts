@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { createDefaultWorker } from "@/lib/zarr/runner";
 import { workerPool } from "@/mikro-next/workers/pool";
 import { assertWebGPUSupported } from "@/mikro-next/components/scene/render/gpu/webgpuSupport";
 import type { MikroClient } from "@/lib/zarr/store/types";
 import { getGeneralAccess } from "./access";
+import { useMikro } from "@/app/Arkitekt";
+import { coldOpenTimeline } from "@/mikro-next/components/scene/managers/coldOpenTimeline";
 
 /**
  * Start the scene's setup work that does NOT depend on the scene.
@@ -64,4 +66,35 @@ export const useDatalayerWarmup = (client: MikroClient): void => {
     // each to spawn and evaluate. Idempotent — only ever fills empty slots.
     workerPool.prewarm(createDefaultWorker, 8);
   }, [client]);
+};
+
+/**
+ * Open a scene: start the cold-open timeline and warm the datalayer.
+ *
+ * The two belong together and must fire exactly once per scene open, which is
+ * why they are one hook rather than two call sites. THREE pages mount a scene —
+ * `ScenePage`, `ArrayDatasetPage` and `AnnotationPage` — and the first version
+ * of this instrumentation was wired only into `ScenePage`. The consequence was
+ * not merely a blind timeline: on the dominant route (the home page and the
+ * standard side pane both link to `ArrayDatasetPage`) the warmup above never ran
+ * at all, so the credential grant, WebGPU probe and worker prewarm stayed
+ * serialized behind the scene query for exactly the users it was meant to help.
+ *
+ * Call it as early as the scene id is known. On `ScenePage` that is above the
+ * route's query gate, so the warmup overlaps `GetScene` itself; on the other two
+ * the id only exists after their own detail query resolves, so the timeline's
+ * origin there is "we know which scene to open" rather than "the page mounted".
+ *
+ * Exactly ONE call per page — a second `begin()` would reset the timeline and
+ * discard the stamps the first one collected.
+ */
+export const useSceneOpen = (sceneId: string | null | undefined): void => {
+  const client = useMikro();
+
+  // During render, not in an effect: the scene query fires in this same render
+  // pass (or a child's), so an effect would start the clock after the thing it
+  // is measuring. `useMemo` keyed on the id gives exactly one begin per scene.
+  useMemo(() => coldOpenTimeline.begin(sceneId ?? null), [sceneId]);
+
+  useDatalayerWarmup(client);
 };

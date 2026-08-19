@@ -8,8 +8,9 @@ import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "../core/octree/atlasFormat";
 import { totalBrickCount } from "../core/octree/nodeAddress";
 import {
+  MIN_POOL_HEADROOM_SLOTS,
   getDecodedChunkCacheBytes,
-  resolveDecodeAllowanceBytes,
+  resolveDecodeCacheShareBytes,
   resolvePoolBudget,
 } from "../core/octree/poolBudget";
 import { assessPoolViability } from "../core/octree/poolViability";
@@ -283,19 +284,35 @@ export function startNodePlanTracking({
         spec,
         atlasBytesPerVoxel(atlasKindForGeometry(geometry)),
       );
-      const { maxPlanBytes } = resolvePoolBudget({
+      const resolved = resolvePoolBudget({
         deviceBudgetBytes,
         poolCount: poolKeys.size,
         slotBytes,
         totalBrickBytes: totalBrickCount(geometry, spec) * slotBytes,
       });
-      const decodeAllowanceBytes = resolveDecodeAllowanceBytes({
-        maxPlanBytes,
-        // Each EQUIVALENCE CLASS runs its own plan and spends its own
-        // allowance; dividing by the (possibly smaller) pool count would let
-        // multiple classes on one pool exceed the shared-cache cap.
-        poolCount: Math.max(poolKeys.size, classes.size),
+      // Clamp to the atlas that ACTUALLY exists. `maxPlanBytes` scales with the
+      // pool count, so a pool allocated while 2 pools were open must not be
+      // planned against the larger share a later 1-pool replan computes — the
+      // plan would not fit its own atlas. Reading a static allocation size, NOT
+      // a replan trigger (P7).
+      const liveAtlasBytes =
+        viewerState.brickSystem?.poolAtlasBytes(members[0].poolKey) ?? null;
+      const maxPlanBytes =
+        liveAtlasBytes === null
+          ? resolved.maxPlanBytes
+          : Math.max(
+              slotBytes,
+              Math.min(
+                resolved.maxPlanBytes,
+                liveAtlasBytes - MIN_POOL_HEADROOM_SLOTS * slotBytes,
+              ),
+            );
+      // Each EQUIVALENCE CLASS runs its own plan and spends its own share of
+      // the decode cache; dividing by the (possibly smaller) pool count would
+      // let multiple classes on one pool exceed the shared-cache cap.
+      const decodeCacheShareBytes = resolveDecodeCacheShareBytes({
         decodedChunkCacheBytes: getDecodedChunkCacheBytes(),
+        poolCount: Math.max(poolKeys.size, classes.size),
       });
 
       let camera: NodeCamera | null = null;
@@ -388,12 +405,14 @@ export function startNodePlanTracking({
         currentZ: viewerState.currentZ,
         dimSelections: viewerState.dimSelections,
         maxPlanBytes,
+        decodeCacheShareBytes,
         // COLD-OPEN gate: plan #1 (no previous plan for this class) skips
         // the sub-floor decode allowance so the initial download is exactly
         // the pre-allowance set (coarse backdrop + free-floor refinement) —
         // time-to-first-image beats early fine detail. The sub-floor region
         // unlocks from the second replan (~500 ms later / next interaction).
-        decodeAllowanceBytes: prevRepresentative ? decodeAllowanceBytes : 0,
+        // `undefined` lets the planner derive it from the cache share above.
+        decodeAllowanceBytes: prevRepresentative ? undefined : 0,
         anisoLod: isAnisoLodEnabled(),
         previousBudgetMinLevel:
           prevRepresentative && prevRepresentative.mode === mode

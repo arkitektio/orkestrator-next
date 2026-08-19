@@ -220,9 +220,15 @@ after the flip). Slot depth is `stored.z × channelCount` (channel slabs
 stacked in z).
 
 Slot count: `min(totalBrickCount(geometry), max(minSlots, budgetShare /
-slotBytes))` where `budgetShare = min(MAX_LAYER_POOL_BYTES = 128 MB,
-globalBudget / plannableLayers)`. The `totalBrickCount` cap matters: a tiny
-4-brick debug layer must not allocate a 296-slot float32 atlas (pitfall P4).
+slotBytes))` where `budgetShare` is now DEVICE-SCALED rather than a flat cap:
+`min(share, max(MIN_LAYER_POOL_BYTES = 128 MB, POOL_PLAN_SHARE_FRACTION ×
+scaledShare))`, with `share = globalBudget / pools` and `scaledShare =
+globalBudget / max(pools, POOL_RESERVE_COUNT)`. 128 MB is the FLOOR, so the
+default 512 MB device budget reproduces the old ceiling exactly while a larger
+budget actually scales (see §6c — the flat cap is what pinned the LOD floor on
+plane-chunked pyramids). `orkestrator.volumeBudgetMB` overrides `globalBudget`.
+The `totalBrickCount` cap matters: a tiny 4-brick debug layer must not allocate
+a 296-slot float32 atlas (pitfall P4).
 
 `BrickPoolState` is a pure CPU class: Map-insertion-order LRU with a
 protected-key set. The current plan's `target` + `keep` nodes are protected
@@ -871,7 +877,7 @@ floor spans EVERY z slab (that is what makes z-scrubbing instant).
 The guard: `assessPoolViability` (`core/octree/poolViability.ts`) computes
 the coarsest-grid floor with the same helpers `ensurePool` uses and refuses
 the layer when it exceeds `getInitialVolumeTextureBudgetBytes()` — the
-device-scaled GLOBAL budget, NOT `MAX_LAYER_POOL_BYTES` (128 MB), which
+device-scaled GLOBAL budget, NOT `MIN_LAYER_POOL_BYTES` (128 MB), which
 known-good deep 2D stacks legitimately exceed (a 3000-slice SPIM stack floors
 at ~200 MB+ after P1's z-payload doubling). Enforced PRIMARILY in
 `nodePlanTracker` (it plans every visible store layer whether or not a mesh
@@ -986,6 +992,25 @@ while detached WITHOUT memoizing it (`gpuRepacker` stays `undefined`), or "no
 device yet" becomes "no device ever". The debug report distinguishes the
 legitimate pre-attach case as `lastRepackPath: "cpu:no-renderer"` — if every
 brick reads `cpu:*` after attach, this trap has fired.
+
+**P24 — Decode accounting must count every axis the FETCHER decodes, and a
+budget in one currency must not be spent in another.** Two bugs, one root.
+(a) `visibleBytesAtLevel` / `chunkDecodedBytes` multiplied spatial extents by
+bytes-per-voxel and stopped — but the fetcher pulls one chunk per (spatial,
+channel-chunk, phasor-chunk) and every chunk carries its full non-spatial
+extent, so a 4-channel layer was under-charged exactly 4× (`nonSpatialDecodeFactor`
+now mirrors `enumerateBrickChunkCoords`; the SLOT side had `channelCount` from
+day one via `brickSlotBytes`, which is what made the discrepancy invisible).
+(b) `maxPlanBytes` was compared against decoded CHUNK bytes by the budget-floor
+loop and against GPU SLOT bytes by `refineBudgetBytes`/atlas sizing — one
+number, two incompatible units. A level could therefore be unlocked on a slot
+budget the chunk cache could not feed: on a plane-chunked pyramid, by an order
+of magnitude, which is a 42 GB download rather than a slow frame. The floor is
+now `decodeFloorBytes`, derived from the decode cache, with the coupling
+`COARSE_CHAIN_RESERVE × floorLevel + allowance ≤ cacheShare` so any level the
+planner unlocks has a working set the cache can hold. Symptom to recognise:
+`decodeBytesCharged: 0` forever while `budgetMinLevel` sits one level above what
+the view obviously wants.
 
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
@@ -1237,6 +1262,49 @@ detects — circular), and caching a per-trackable local bounding box in
 static, and `VertexHandles`/annotation children rescale per frame; a wrong
 visible box corrupts `rootRange`). A LABEL-only cached render target — the
 proper fix for the asymmetry above — remains the follow-up named in §7 R1.
+
+---
+
+## 6c. LOD floor, budget currencies and the plane-chunk wall (2026-08-19)
+
+A user could never reach level 0 in 3D however far they zoomed. Root cause, and
+the reason zooming could not help: on a pyramid whose L0 chunks are full
+2456×2456 planes, `spatialChunks[x] == spatialShape[x]` forces
+`min(gridExtent, chunkCount) ≡ 1` on x and y, so `visibleBytesAtLevel(0)` is a
+CONSTANT under zoom and pan. P21's "the floor tracks the screen" mechanism is
+inert on plane-chunked data. 2D reaches L0 on the same dataset because
+`visibleBytesAtLevel` charges one z-chunk row there (`mode === "2D"`) instead of
+all sixteen — a factor of exactly 16, straddling the cap.
+
+What changed:
+
+- **`MAX_LAYER_POOL_BYTES` → `MIN_LAYER_POOL_BYTES`.** 128 MiB was a flat
+  CEILING, so a 2 GiB device planned exactly as coarsely as a 512 MiB one. It is
+  now the FLOOR of a device-scaled share (`POOL_PLAN_SHARE_FRACTION`, with
+  `POOL_RESERVE_COUNT` so pool #1 does not spend what pool #2 will need). The
+  default 512 MiB device is byte-identical to before — deliberately, and pinned
+  by test.
+- **The decode budget split off** — see P24. `resolveDecodeFloorBytes` /
+  `resolveDecodeAllowanceBytes` derive from the chunk cache;
+  `SUB_FLOOR_DECODE_FACTOR` is gone.
+- **Two user overrides**, `orkestrator.volumeBudgetMB` (VRAM) and
+  `orkestrator.decodeCacheMB` (heap), memoized per session so the planner and
+  `ensurePool` can never read different values mid-reconcile.
+- **`poolAtlasBytes` + a tracker clamp.** `maxPlanBytes` now scales with the pool
+  count, so closing a layer could size a plan for a share the existing atlas was
+  never allocated for. The clamp reads a static allocation size — NOT a replan
+  trigger (P7).
+- **Diagnosability:** `plans[].levelDecodeBytes` (per-level decode cost, the
+  exact quantity the floor compares) plus a `budget` block with the raw
+  `deviceMemory` and both overrides. This question previously required deriving
+  chunk arithmetic by hand.
+
+For that dataset the honest outcome: the defaults preserve L1 (corrected
+149.6 MiB) but do NOT reach L0 (1104.5 MiB) — the floor tops out at a quarter of
+the cache share. L0 is reached through the sub-floor ALLOWANCE with
+`decodeCacheMB` raised to 4 GiB, at a one-time ~1.08 GiB decode burst, because
+every L0 brick touches all 64 chunks of the level. The real fix remains
+re-chunking L0 with tiled x/y chunks upstream.
 
 ---
 

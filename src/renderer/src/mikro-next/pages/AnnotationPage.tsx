@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { useSceneOpen } from "../lib/zarr/useDatalayerWarmup";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Card } from "@/components/ui/card";
 import { MikroAnnotation } from "@/linkers";
@@ -34,6 +35,10 @@ const Page = asDetailQueryRoute(useGetAnnotationQuery, ({ data }) => {
   // `coordinateSystem` would be empty for essentially every annotation — a
   // fallback that never fires is worse than none.
   const scene = annotation.collection.scene ?? null;
+
+  // Same as ArrayDatasetPage: this page mounts the full scene stack, so it owns
+  // a cold open and must warm the datalayer for it.
+  useSceneOpen(scene?.id);
 
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: scene?.id as string },

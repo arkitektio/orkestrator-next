@@ -6,7 +6,8 @@ import type { LayerState } from "../layerModel";
 import type { LayerViewRange } from "../visibility";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "./atlasFormat";
 import { brickSlotBytes, type BrickSpec } from "./brickSpec";
-import type { LayerLevelGeometry, Vec3 } from "./levelGeometry";
+import { resolveDecodeAllowanceBytes, resolveDecodeFloorBytes } from "./poolBudget";
+import type { LayerLevelGeometry, LevelGeometry, Vec3 } from "./levelGeometry";
 import {
   brickGridForLevel,
   childrenOf,
@@ -67,6 +68,20 @@ export type LayerNodePlan = {
   budgetMinLevel: number;
   /** Decoded chunk bytes charged for sub-floor refinement (debug only). */
   decodeBytesCharged: number;
+  /**
+   * Chunk-aligned decoded bytes the VISIBLE region implies at each level,
+   * finest first — the exact quantity the budget floor compares against
+   * `decodeFloorBytes`. Debug only.
+   *
+   * Exists because answering "why is level 0 never selected?" otherwise means
+   * re-deriving this by hand from chunk shapes and view ranges. With it the
+   * answer is one line: L0 needs X, the floor allows Y.
+   */
+  levelDecodeBytes: number[];
+  /** The floor these were measured against (decode currency). Debug only. */
+  decodeFloorBytes: number;
+  /** Sub-floor allowance actually in force this plan. Debug only. */
+  decodeAllowanceBytes: number;
   /** 2D only: base-voxel z of the displayed slab (null in 3D / no z axis). */
   slabZ: number | null;
   nodes: PlannedNode[];
@@ -145,7 +160,31 @@ export type PlanLayerNodesInput = {
   currentZ: number | undefined;
   /** Scene-wide dim-slider selections (t, tau, …) — signature input only. */
   dimSelections?: Record<string, number>;
+  /** GPU ATLAS SLOT bytes the plan may spend. Slot currency only — see
+   * `decodeFloorBytes` for the level floor, which is a different currency. */
   maxPlanBytes?: number;
+  /**
+   * DECODED-CHUNK bytes the budget floor may spend, i.e. the largest level
+   * whose chunk-aligned visible set the pipeline is willing to pull.
+   *
+   * Split out of `maxPlanBytes` because that one number was being compared
+   * against two incompatible things: the floor loop measures decoded zarr
+   * chunks, while `refineBudgetBytes`/`planBytes`/atlas sizing measure GPU
+   * atlas slots. Conflating them meant a level could be unlocked on a slot
+   * budget the chunk cache could not feed — on plane-chunked pyramids, by
+   * more than an order of magnitude. Defaults to `maxPlanBytes` so existing
+   * callers and tests keep their exact behaviour.
+   */
+  decodeFloorBytes?: number;
+  /**
+   * This pool's share of the decoded-chunk cache. When given, the floor and the
+   * sub-floor allowance are DERIVED from it (see `resolveDecodeFloorBytes` /
+   * `resolveDecodeAllowanceBytes`), which is what keeps the coupling
+   * `COARSE_CHAIN_RESERVE x floorLevel + allowance <= cacheShare` true — i.e.
+   * any level the planner unlocks has a chunk working set the cache can hold.
+   * Explicit `decodeFloorBytes` / `decodeAllowanceBytes` override it.
+   */
+  decodeCacheShareBytes?: number;
   /** Decoded-chunk byte allowance for refinement BELOW the budget floor.
    * 0 (default) disables sub-floor refinement — the legacy all-or-nothing
    * floor. See `resolveDecodeAllowanceBytes` (poolBudget.ts). */
@@ -156,6 +195,53 @@ export type PlanLayerNodesInput = {
   /** The previous plan's budgetMinLevel (budget-floor hysteresis input). */
   previousBudgetMinLevel?: number;
 };
+
+/**
+ * How many times over the SPATIAL chunk volume a real fetch actually decodes.
+ *
+ * The spatial accounting below counts x/y/z voxels only, but the fetcher pulls
+ * one chunk per (spatial, channel-chunk, phasor-chunk) combination, and every
+ * chunk carries its full extent along the non-spatial axes too. On a 4-channel
+ * layer chunked one channel per chunk that is a factor of 4 — the budget floor
+ * and the sub-floor allowance were both under-charging by exactly that much.
+ *
+ * MUST mirror `BrickResidencyManager.enumerateBrickChunkCoords`, which is the
+ * function that decides what is actually decoded. Keep the two in lockstep:
+ *  - channels: `ceil(channelSlabCount / chunk[c])` chunks, each `chunk[c]` deep.
+ *    Uses `channelSlabCount` (real channels), NOT `channelCount` (which also
+ *    counts a phasor node's g/s/i slabs — those are derived by the repack, not
+ *    fetched);
+ *  - phasor: fetched WHOLE (every bin chunk), because the repack reduces the
+ *    entire profile;
+ *  - collapsed dims (t, tau, …): ONE chunk coordinate is fixed, but the whole
+ *    chunk decodes, so its extent still multiplies.
+ */
+export function nonSpatialDecodeFactor(
+  geometry: LayerLevelGeometry,
+  level: LevelGeometry,
+): number {
+  const { xPos, yPos, zPos, intensityPos, phasorPos } = geometry.axes;
+
+  const channelsPerChunk =
+    intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
+  const channelChunks =
+    intensityPos !== -1 ? Math.ceil(geometry.channelSlabCount / channelsPerChunk) : 1;
+
+  const binsPerChunk = phasorPos !== -1 ? Math.max(1, level.chunks[phasorPos] ?? 1) : 1;
+  const phasorChunks =
+    phasorPos !== -1 && geometry.phasorBins > 0
+      ? Math.ceil(geometry.phasorBins / binsPerChunk)
+      : 1;
+
+  let collapsed = 1;
+  for (let d = 0; d < level.chunks.length; d++) {
+    if (d === xPos || d === yPos || d === zPos) continue;
+    if (d === intensityPos || d === phasorPos) continue;
+    collapsed *= Math.max(1, level.chunks[d] ?? 1);
+  }
+
+  return channelChunks * channelsPerChunk * phasorChunks * binsPerChunk * collapsed;
+}
 
 /** Slack factor the budget floor tolerates to KEEP an already-unlocked finer
  * level (see budgetMinLevel hysteresis below). */
@@ -265,7 +351,9 @@ export function planLayerNodes({
   currentZ,
   dimSelections,
   maxPlanBytes = Number.POSITIVE_INFINITY,
-  decodeAllowanceBytes = 0,
+  decodeFloorBytes,
+  decodeCacheShareBytes,
+  decodeAllowanceBytes,
   anisoLod = false,
   previousBudgetMinLevel,
 }: PlanLayerNodesInput): LayerNodePlan {
@@ -281,6 +369,9 @@ export function planLayerNodes({
     targetLevel,
     budgetMinLevel: coarsest,
     decodeBytesCharged: 0,
+    levelDecodeBytes: [],
+    decodeFloorBytes: 0,
+    decodeAllowanceBytes: 0,
     slabZ,
     nodes: [],
     planBytes: 0,
@@ -450,11 +541,19 @@ export function planLayerNodes({
       }
       voxels *= Math.min(gridExtent, chunkCount) * chunkExtent;
     }
-    return voxels * decodedBytesPerVoxel;
+    return voxels * decodedBytesPerVoxel * nonSpatialDecodeFactor(geometry, level);
   };
+  // Decode currency, NOT slot currency. Precedence: an explicit floor, else the
+  // cache-derived one, else `maxPlanBytes` — so a caller that has not been
+  // taught the difference behaves exactly as before.
+  const floorBytes =
+    decodeFloorBytes ??
+    (decodeCacheShareBytes !== undefined
+      ? resolveDecodeFloorBytes({ decodeCacheShareBytes })
+      : maxPlanBytes);
   let budgetMinLevel = coarsest;
   for (let levelIndex = 0; levelIndex <= coarsest; levelIndex++) {
-    if (visibleBytesAtLevel(levelIndex) <= maxPlanBytes) {
+    if (visibleBytesAtLevel(levelIndex) <= floorBytes) {
       budgetMinLevel = levelIndex;
       break;
     }
@@ -471,10 +570,24 @@ export function planLayerNodes({
   if (
     previousBudgetMinLevel !== undefined &&
     previousBudgetMinLevel === budgetMinLevel - 1 &&
-    visibleBytesAtLevel(previousBudgetMinLevel) <= maxPlanBytes * BUDGET_FLOOR_HYSTERESIS
+    visibleBytesAtLevel(previousBudgetMinLevel) <= floorBytes * BUDGET_FLOOR_HYSTERESIS
   ) {
     budgetMinLevel = previousBudgetMinLevel;
   }
+
+  // The sub-floor allowance, derived AFTER the floor is known: the coarse
+  // fallback chain lives in the same cache and the shader reads it on every
+  // unmapped sample, so it is reserved before anything is handed to sub-floor
+  // refinement. Explicit `decodeAllowanceBytes` wins (tests, and the cold-open
+  // gate that passes 0 for a class's first plan).
+  const allowanceBytes =
+    decodeAllowanceBytes ??
+    (decodeCacheShareBytes !== undefined
+      ? resolveDecodeAllowanceBytes({
+          decodeCacheShareBytes,
+          floorLevelBytes: visibleBytesAtLevel(budgetMinLevel),
+        })
+      : 0);
 
   // --- Per-node screen footprint --------------------------------------------
   /** Per-axis world size of one base voxel — the metric every distance,
@@ -637,7 +750,10 @@ export function planLayerNodes({
       level.spatialChunks[0] *
       level.spatialChunks[1] *
       level.spatialChunks[2] *
-      decodedBytesPerVoxelOf(level.dtype)
+      decodedBytesPerVoxelOf(level.dtype) *
+      // `fresh.size` counts SPATIAL chunk keys, so the non-spatial factor
+      // applies per spatial column — consistent with the floor above.
+      nonSpatialDecodeFactor(geometry, level)
     );
   };
   const chargedChunks = new Set<string>();
@@ -651,7 +767,7 @@ export function planLayerNodes({
         if (!chargedChunks.has(key)) fresh.add(key);
       }
     const cost = fresh.size * chunkDecodedBytes(childLevel);
-    if (decodeBytesCharged + cost > decodeAllowanceBytes) return false;
+    if (decodeBytesCharged + cost > allowanceBytes) return false;
     for (const key of fresh) chargedChunks.add(key);
     decodeBytesCharged += cost;
     return true;
@@ -789,6 +905,9 @@ export function planLayerNodes({
     targetLevel,
     budgetMinLevel,
     decodeBytesCharged,
+    levelDecodeBytes: levels.map((_, i) => visibleBytesAtLevel(i)),
+    decodeFloorBytes: floorBytes,
+    decodeAllowanceBytes: allowanceBytes,
     slabZ: slabZOut,
     nodes,
     planBytes,

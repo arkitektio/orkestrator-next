@@ -58,7 +58,11 @@ export const MAX_RAY_STEPS = 512;
  *  - `uBaseShape` — base-level (level-0) spatial shape in voxels.
  *  - `uDesiredLevel` — floor on the per-sample level: never finer than the plan
  *    fetched.
- *  - `uLodBias` — multiplier on the px-per-voxel test; >1 biases coarser.
+ *  - `uLodBias` — multiplier on the px-per-voxel test; >1 biases FINER (the
+ *    test is `pxPerVoxel * lodBias >= 1`, so a larger multiplier lets a finer
+ *    level pass it). The DebugPanel exposes it as "LOD Aggressiveness",
+ *    default 1. This comment previously said "coarser", contradicting both
+ *    its own code below and `core/viewportPlanning.ts`'s `chooseLodForScale`.
  *  - `uPxPerVoxelAtUnitDist` — screen px per base voxel at unit distance; ≤0
  *    disables the per-sample LOD pick entirely.
  *  - `uVoxelWorldSize` — per-axis world length of one base voxel (the planner's

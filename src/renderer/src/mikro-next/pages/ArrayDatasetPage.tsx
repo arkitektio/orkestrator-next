@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from '@/app/routes/DetailQueryRoute'
+import { useSceneOpen } from "../lib/zarr/useDatalayerWarmup";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroArrayDataset } from '@/linkers'
 import { RefetchProvider } from '@/providers/refetch/RefetchContext'
@@ -35,6 +36,11 @@ export const ArrayDatasetPage = asDetailQueryRoute(useGetArrayDatasetQuery, ({ d
   // renderer needs layers and the world, so the active scene is fetched in
   // full the same way ScenePage does. Apollo caches it, so switching back
   // is free.
+  // Start the cold-open timeline and warm the datalayer the moment we know
+  // WHICH scene to open — this page mounts the scene stack exactly as
+  // ScenePage does, and is the route most users actually arrive through.
+  useSceneOpen(activeSceneId)
+
   const { data: sceneData, loading: sceneLoading } = useGetSceneQuery({
     variables: { id: activeSceneId as string },
     skip: !activeSceneId

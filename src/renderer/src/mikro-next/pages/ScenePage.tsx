@@ -1,16 +1,14 @@
-import { useMikro } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroScene } from "@/linkers";
 import { RefetchProvider } from "@/providers/refetch/RefetchContext";
-import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   useGetSceneQuery
 } from "../api/graphql";
 import { Scene } from "../components/scene/Scene";
 import { coldOpenTimeline } from "../components/scene/managers/coldOpenTimeline";
-import { useDatalayerWarmup } from "../lib/zarr/useDatalayerWarmup";
+import { useSceneOpen } from "../lib/zarr/useDatalayerWarmup";
 
 export type IRepresentationScreenProps = {};
 
@@ -71,16 +69,11 @@ const DetailPage = asDetailQueryRoute(
  */
 const Page = (props: { direct?: unknown }) => {
   const { id } = useParams<{ id: string }>();
-  const client = useMikro();
 
-  // Deliberately during render, not in an effect: the query fires in the child's
-  // render pass, so an effect would start the clock AFTER the thing it measures.
-  // `useMemo` keyed on the id gives exactly one begin() per scene open.
-  useMemo(() => coldOpenTimeline.begin(id ?? null), [id]);
-
-  // Credentials, the WebGPU adapter and the decode workers do not depend on the
-  // scene — start them now so they overlap the query instead of following it.
-  useDatalayerWarmup(client);
+  // Above the query gate, which is the whole point of this wrapper: credentials,
+  // the WebGPU adapter and the decode workers do not depend on the scene, so
+  // they overlap `GetScene` instead of queueing behind it.
+  useSceneOpen(id);
 
   return <DetailPage {...props} />;
 };

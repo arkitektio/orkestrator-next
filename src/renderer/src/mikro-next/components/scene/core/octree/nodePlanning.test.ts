@@ -10,6 +10,7 @@ import {
   anisoEffectiveFactor,
   compareFetchOrder,
   foveatedScore,
+  nonSpatialDecodeFactor,
   planLayerNodes,
   sameNodePlan,
   slabLevelZ,
@@ -1265,5 +1266,238 @@ describe("planLayerNodes world-metric LOD (orkestrator.worldLod)", () => {
     const legacy = plan(cameraAt(position));
     const world = plan(cameraAt(position, SPIM));
     expect(targetKeys(world)).toEqual(targetKeys(legacy));
+  });
+});
+
+/**
+ * The decode budget is spent on CHUNKS, and the fetcher pulls one chunk per
+ * (spatial, channel, phasor) combination — but the accounting counted spatial
+ * voxels only. A 4-channel layer therefore under-charged by 4x, which is how a
+ * level whose real chunk set was ~1.1 GiB passed a 276 MiB budget check.
+ *
+ * Mirrors `BrickResidencyManager.enumerateBrickChunkCoords`.
+ */
+describe("nonSpatialDecodeFactor", () => {
+  const geoWith = (dims: string[], levels: LevelSource[], layer: LayerState) =>
+    buildLayerLevelGeometry(dims, layer, levels)!;
+
+  const channelLayer = (channels: number) =>
+    ({
+      id: "layer-c",
+      affineMatrix: null,
+      xAxis: "x",
+      yAxis: "y",
+      zAxis: "z",
+      intensityAxis: "c",
+      fixedLOD: null,
+      lens: {
+        slices: [],
+        axisNames: ["c", "z", "y", "x"],
+        shape: [channels, 8, 64, 64],
+        dataset: { axisNames: ["c", "z", "y", "x"], dataArrays: [] },
+      },
+    }) as unknown as LayerState;
+
+  it("is 1 for a single-channel layer — the existing fixtures are a no-op", () => {
+    // This is why every pre-existing test in this file passes unchanged.
+    expect(nonSpatialDecodeFactor(flatGeo, flatGeo.levels[0])).toBe(1);
+  });
+
+  it("counts every channel a 4-channel layer decodes", () => {
+    const geo = geoWith(
+      ["c", "z", "y", "x"],
+      [{ shape: [4, 8, 64, 64], chunks: [1, 8, 64, 64], dtype: "uint8", storeId: "s0" }],
+      channelLayer(4),
+    );
+    expect(nonSpatialDecodeFactor(geo, geo.levels[0])).toBe(4);
+  });
+
+  it("is invariant to HOW the channel axis is chunked", () => {
+    // 4 chunks of 1 channel and 1 chunk of 4 channels decode the same bytes.
+    const perChannel = geoWith(
+      ["c", "z", "y", "x"],
+      [{ shape: [4, 8, 64, 64], chunks: [1, 8, 64, 64], dtype: "uint8", storeId: "s0" }],
+      channelLayer(4),
+    );
+    const allChannels = geoWith(
+      ["c", "z", "y", "x"],
+      [{ shape: [4, 8, 64, 64], chunks: [4, 8, 64, 64], dtype: "uint8", storeId: "s0" }],
+      channelLayer(4),
+    );
+    expect(nonSpatialDecodeFactor(perChannel, perChannel.levels[0])).toBe(4);
+    expect(nonSpatialDecodeFactor(allChannels, allChannels.levels[0])).toBe(4);
+  });
+
+  it("multiplies collapsed dims by their chunk extent — the whole chunk decodes", () => {
+    // One t coordinate is fixed, but the chunk spanning 5 timepoints still
+    // decodes in full. Same bug class as the channel undercount.
+    const layer = {
+      ...(channelLayer(1) as unknown as Record<string, unknown>),
+      lens: {
+        slices: [],
+        axisNames: ["t", "c", "z", "y", "x"],
+        shape: [10, 1, 8, 64, 64],
+        dataset: { axisNames: ["t", "c", "z", "y", "x"], dataArrays: [] },
+      },
+    } as unknown as LayerState;
+    const geo = geoWith(
+      ["t", "c", "z", "y", "x"],
+      [{ shape: [10, 1, 8, 64, 64], chunks: [5, 1, 8, 64, 64], dtype: "uint8", storeId: "s0" }],
+      layer,
+    );
+    expect(nonSpatialDecodeFactor(geo, geo.levels[0])).toBe(5);
+  });
+});
+
+/**
+ * The reported case, encoded from a real debug report: a 4-channel 2456²x47
+ * uint8 pyramid whose L0 chunks are FULL PLANES ([1, 3, 2456, 2456]).
+ *
+ * Level 0 was unreachable no matter how far the user zoomed. These pin why, and
+ * pin that the budget change does not demote them in the process of fixing it.
+ */
+describe("plane-chunked 4-channel pyramid (the reported case)", () => {
+  const MiB = 1024 * 1024;
+  const DIMS = ["c", "z", "y", "x"];
+  const layer = {
+    id: "layer-plane",
+    affineMatrix: null,
+    xAxis: "x",
+    yAxis: "y",
+    zAxis: "z",
+    intensityAxis: "c",
+    fixedLOD: null,
+    lens: {
+      slices: [],
+      axisNames: DIMS,
+      shape: [4, 47, 2456, 2456],
+      dataset: { axisNames: DIMS, dataArrays: [] },
+    },
+  } as unknown as LayerState;
+
+  const LEVELS: LevelSource[] = [
+    { shape: [4, 47, 2456, 2456], chunks: [1, 3, 2456, 2456], dtype: "uint8", storeId: "s0" },
+    {
+      shape: [4, 23, 1228, 1228],
+      chunks: [1, 13, 1228, 1228],
+      dtype: "uint8",
+      storeId: "s1",
+      scaleFactors: [2, 2, 2],
+    },
+    {
+      shape: [4, 11, 614, 614],
+      chunks: [4, 11, 614, 614],
+      dtype: "uint8",
+      storeId: "s2",
+      scaleFactors: [4, 4, 4],
+    },
+  ];
+  const geo = buildLayerLevelGeometry(DIMS, layer, LEVELS)!;
+  const spec = resolveBrickSpec(geo, "3D");
+  const view: LayerViewRange = {
+    xRange: [1223, 2456],
+    yRange: [612, 1918],
+    zRange: [0, 47],
+    scale: 1.0599,
+  };
+
+  const planWith = (decodeFloorBytes: number) =>
+    planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: view,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes: 512 * MiB,
+      decodeFloorBytes,
+    });
+
+  it("charges level 0 the WHOLE level, regardless of the view", () => {
+    // Full-plane chunks make min(gridExtent, chunkCount) identically 1 on x and
+    // y, so no amount of zooming shrinks this. That is the entire reason level 0
+    // was unreachable — not the zoom, not wantFiner, not the quality tier.
+    const p = planWith(256 * MiB);
+    expect(p.levelDecodeBytes[0]).toBe(2456 * 2456 * 48 * 4);
+
+    const zoomedIn = planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: { xRange: [1900, 2000], yRange: [900, 1000], zRange: [0, 47], scale: 8 },
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes: 512 * MiB,
+      decodeFloorBytes: 256 * MiB,
+    });
+    expect(zoomedIn.levelDecodeBytes[0]).toBe(p.levelDecodeBytes[0]);
+  });
+
+  it("counts all four channels — the undercount that made the budget optimistic", () => {
+    const p = planWith(256 * MiB);
+    // Spatial-only accounting said 276.1 MiB; the fetcher really pulls 4x that.
+    expect(p.levelDecodeBytes[0]).toBe(4 * (2456 * 2456 * 48));
+    expect(p.levelDecodeBytes[1]).toBe(4 * (1228 * 1228 * 26));
+  });
+
+  it("holds level 1 at the new floor — the regression the budget change prevents", () => {
+    // Corrected L1 is 149.6 MiB. Against today's flat 128 MiB it would NOT fit
+    // and the user would drop to L2; against the cache-derived 256 MiB it does.
+    expect(planWith(128 * MiB).budgetMinLevel).toBe(2);
+    expect(planWith(256 * MiB).budgetMinLevel).toBe(1);
+  });
+
+  it("reaches level 0 through the SUB-FLOOR ALLOWANCE on a large decode cache", () => {
+    // What the user's override actually buys. The floor stays at L1; the
+    // closest-first DFS then charges L0's whole chunk set (1104.5 MiB) against
+    // the allowance, which at a 4 GiB cache share is 2048 MiB.
+    const p = planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: view,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes: 512 * MiB,
+      decodeCacheShareBytes: 4096 * MiB,
+    });
+    expect(p.budgetMinLevel).toBe(1);
+    expect(p.decodeAllowanceBytes).toBe(2048 * MiB);
+    expect(p.decodeBytesCharged).toBe(2456 * 2456 * 48 * 4);
+    expect(p.targetLevel).toBe(0);
+  });
+
+  it("does NOT reach level 0 at the default cache share — the override is required", () => {
+    // 1 GiB share → allowance 512 MiB, well under L0's 1104.5 MiB. This is why
+    // the fix is a user override rather than a silent default bump.
+    const p = planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: view,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes: 512 * MiB,
+      decodeCacheShareBytes: 1024 * MiB,
+    });
+    expect(p.targetLevel).toBe(1);
+    expect(p.decodeBytesCharged).toBe(0);
+  });
+
+  it("still cannot reach level 0 on the FLOOR alone, at any allowed cache size", () => {
+    // The floor is a quarter of the cache share, and the cache is clamped at
+    // 4 GiB — so the floor tops out at 1024 MiB while L0 needs 1104.5 MiB.
+    // Reaching L0 is the sub-floor allowance's job, not the floor's.
+    expect(planWith(1024 * MiB).budgetMinLevel).toBe(1);
+    expect(planWith(1104 * MiB).budgetMinLevel).toBe(1);
+    expect(planWith(1105 * MiB).budgetMinLevel).toBe(0);
   });
 });

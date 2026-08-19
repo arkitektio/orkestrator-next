@@ -748,6 +748,25 @@ export class BrickResidencyManager {
   }
 
   /** Structured snapshot for the DebugPanel's copyable report. */
+  /**
+   * Bytes a LIVE pool's atlas was actually allocated at, or null if no such
+   * pool exists yet.
+   *
+   * The planner needs this because `maxPlanBytes` is now derived from the
+   * device budget divided by the pool count, so the tracker's view of that
+   * count and the count in force when the atlas was allocated can differ —
+   * close a layer and the next replan sizes a plan for a share the existing
+   * atlas was never built for, which is exactly the "plan bigger than its pool"
+   * eviction treadmill `poolBudget.ts` exists to prevent.
+   *
+   * This reports a STATIC allocation capacity, not streaming state. It must
+   * never be fed back into planning as a trigger — that is P7, the residency
+   * feedback loop that caused replan storms.
+   */
+  poolAtlasBytes(poolKey: string): number | null {
+    return this.pools.get(poolKey)?.atlas.byteLength ?? null;
+  }
+
   buildDebugReport(): Record<string, unknown> {
     let atlasBytesTotal = 0;
     for (const pool of this.pools.values()) atlasBytesTotal += pool.atlas.byteLength;

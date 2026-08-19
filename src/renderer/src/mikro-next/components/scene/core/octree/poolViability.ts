@@ -24,7 +24,7 @@ import {
  *
  * `assessPoolViability` computes that floor with the SAME helpers `ensurePool`
  * uses and compares it against the device-scaled global volume budget — NOT
- * `MAX_LAYER_POOL_BYTES` (128 MB), which known-good deep 2D stacks legitimately
+ * `MIN_LAYER_POOL_BYTES` (128 MB), which known-good deep 2D stacks legitimately
  * exceed (a 3000-slice SPIM stack floors at ~197 MB after P1's z-payload
  * doubling). Multi-level pyramids pass trivially; affordable single-level
  * cubes pass; oversized ones are refused upstream (nodePlanTracker) before any

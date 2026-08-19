@@ -36,6 +36,11 @@ describe("navigationActionForKey", () => {
     expect(navigationActionForKey("ArrowDown", true, mode)).toEqual({ kind: "zoom", direction: -1 });
   });
 
+  it.each(["2D", "3D"] as const)("frames the scene on F in %s, but not Shift+F", (mode) => {
+    expect(navigationActionForKey("KeyF", false, mode)).toEqual({ kind: "frame" });
+    expect(navigationActionForKey("KeyF", true, mode)).toBeNull();
+  });
+
   it("leaves every other key alone", () => {
     // The digit row belongs to the layer-visibility binding, and the numpad
     // arrows report their own codes — neither is claimed here.

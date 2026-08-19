@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SceneVolume } from "./layers/three_d/SceneVolume";
 import { BrushStrokeSession } from "./enhancers/paths/brushSkeleton/BrushStrokeSession";
+import { DoubleClickRecenter } from "./interactions/DoubleClickRecenter";
 import { ProbeAxisGuides } from "./interactions/ProbeAxisGuides";
 import { RoiDrawer } from "./interactions/RoiDrawer";
 import { VolumeCompositor } from "./managers/VolumeCompositor";
@@ -16,6 +17,9 @@ export const ThreeDScene = () => {
   return (
     <>
       {volumeTarget && <VolumeCompositor />}
+      {/* NAVIGATE double-click → recenter on the clicked content (3D-only by
+          construction: this component tree only mounts in 3D). */}
+      <DoubleClickRecenter />
       <SceneVolume />
       {/* Axis guides through the probed point — probing and 3D annotating are
           both probe-driven, so the guides serve as the anchor preview too. */}

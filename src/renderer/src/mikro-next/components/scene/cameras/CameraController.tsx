@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import { useModeStore, useModeStoreApi } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
@@ -12,6 +12,8 @@ import {
   orbitDepthAlongRay,
   resolvePanSpeed,
 } from "../core/panScale";
+import { gatherLayerWorldBoxes } from "../core/layerBoxes";
+import { computeSceneWorldBox } from "../core/sceneFit";
 import { useViewStoreApi } from "../store/viewStore";
 
 import {
@@ -156,6 +158,7 @@ const ProbeOrbitPivot = () => {
 const PanScaleSync = () => {
   const controls = useThree((s) => s.controls);
   const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
   const viewApi = useViewStoreApi();
   const viewerApi = useViewerStoreApi();
   const animationApi = useAnimationStoreApi();
@@ -168,33 +171,23 @@ const PanScaleSync = () => {
             target: THREE.Vector3;
             panSpeed: number;
             update: () => void;
+            minDistance?: number;
+            maxDistance?: number;
+            mouseButtons?: Record<string, number | undefined>;
           })
         : null;
     const perspective = camera as THREE.PerspectiveCamera;
     if (!ctrl || !perspective?.isPerspectiveCamera) return;
 
     const viewDirection = new THREE.Vector3();
-    const scratchBox = new THREE.Box3();
     const boxes: THREE.Box3[] = []; // pooled — grown once, reused per gather
 
     // Layer boxes are WORLD-space and camera-independent, so they are
-    // gathered on mount and on each settle (retarget) — not per camera
-    // emission: the setFromObject subtree walks were running at ~17 Hz per
-    // layer during a gesture for values that cannot change mid-gesture.
-    const gatherBoxes = () => {
-      const { trackables } = viewerApi.getState();
-      let count = 0;
-      for (const trackable of trackables) {
-        if (trackable.kind !== "layer") continue;
-        const object = trackable.ref.current;
-        if (!object || object.visible === false) continue;
-        scratchBox.setFromObject(object);
-        if (scratchBox.isEmpty()) continue;
-        (boxes[count] ??= new THREE.Box3()).copy(scratchBox);
-        count += 1;
-      }
-      boxes.length = count;
-    };
+    // gathered on mount and per retarget (settle / gesture start) — not per
+    // camera emission: the setFromObject subtree walks were running at
+    // ~17 Hz per layer during a gesture for values that cannot change
+    // mid-gesture.
+    const gatherBoxes = () => gatherLayerWorldBoxes(viewerApi.getState().trackables, boxes);
 
     const applyPanSpeed = () => {
       const targetDistance = perspective.position.distanceTo(ctrl.target);
@@ -222,11 +215,18 @@ const PanScaleSync = () => {
       gatherBoxes();
       const targetDistance = perspective.position.distanceTo(ctrl.target);
       perspective.getWorldDirection(viewDirection);
-      const depth = orbitDepthAlongRay(
+      let depth = orbitDepthAlongRay(
         perspective.position,
         viewDirection,
         boxes,
         targetDistance,
+      );
+      // Respect the controls' own distance limits: a target seated past
+      // maxDistance would make the next update() clamp the RADIUS by moving
+      // the camera — a visible jump on what must be a view-preserving slide.
+      depth = Math.min(
+        Math.max(depth, ctrl.minDistance ?? 0),
+        ctrl.maxDistance ?? Number.POSITIVE_INFINITY,
       );
       // 5% dead band: a settle right after a settle-retarget must be a no-op.
       if (!(depth > 0) || Math.abs(depth - targetDistance) <= 0.05 * targetDistance) return;
@@ -237,6 +237,30 @@ const PanScaleSync = () => {
       ctrl.update();
       applyPanSpeed(); // radius just became the content depth → ratio ≈ 1
     };
+
+    // Gesture-START retarget: rotating right after a zoom otherwise orbits
+    // the collapsed radius until the first settle. A DOM pointerdown — NOT
+    // the controls' "start" event, which three-stdlib fires on EVERY wheel
+    // tick and whose zoomToCursor branch seats the target itself; hooking it
+    // would re-base each wheel step onto the content depth and change zoom
+    // semantics. The retarget is view-preserving, so running it for any
+    // mapped button is safe: PAN is neutral (applyPanSpeed keeps
+    // panSpeed·targetDistance pinned to the content distance), DOLLY-drag
+    // becomes content-proportional like the settled state, ROTATE is the
+    // point. Wheel has no pointerdown; touch is out of scope (desktop app).
+    const onPointerDown = (event: PointerEvent) => {
+      const buttonAction =
+        event.button === 0
+          ? ctrl.mouseButtons?.LEFT
+          : event.button === 1
+            ? ctrl.mouseButtons?.MIDDLE
+            : event.button === 2
+              ? ctrl.mouseButtons?.RIGHT
+              : undefined;
+      if (buttonAction === undefined || buttonAction === null) return;
+      retarget();
+    };
+    gl.domElement.addEventListener("pointerdown", onPointerDown);
 
     gatherBoxes();
     applyPanSpeed();
@@ -255,10 +279,11 @@ const PanScaleSync = () => {
     });
     return () => {
       unsubscribe();
+      gl.domElement.removeEventListener("pointerdown", onPointerDown);
       // Leave stock behavior behind for the next controls consumer.
       ctrl.panSpeed = 1;
     };
-  }, [controls, camera, viewApi, viewerApi, animationApi, modeApi]);
+  }, [controls, camera, gl, viewApi, viewerApi, animationApi, modeApi]);
 
   return null;
 };
@@ -269,6 +294,27 @@ export const CameraController = () => {
   const zoomToCursor = useModeStore((s) => s.zoomToCursor);
   const frustumNear = useViewerStore((s) => s.frustumNear);
   const frustumFar = useViewerStore((s) => s.frustumFar);
+  const sceneApi = useSceneStoreApi();
+
+  // Orbit-distance limits from the metadata scene box, derived ONCE per store
+  // scope (same precedent and rationale as InitialCameraFit's box memo: layer
+  // reconciliation must not re-derive camera facts — and the 10× / 1e-4
+  // headroom means a late-arriving layer cannot make these bite). They cap
+  // plain dolly, keyboard zoom AND three's zoomToCursor radius (clampDistance
+  // covers all three), so extreme cursor-zooms stop collapsing the orbit
+  // radius toward zero. Explicit 0/Infinity fallbacks — never undefined, which
+  // R3F's applyProps would latch (see the mouseButtons note above). 3D only:
+  // the ortho camera has no radius pathology (pan divides by zoom).
+  const { minDistance, maxDistance } = useMemo(() => {
+    const box = computeSceneWorldBox(sceneApi.getState().layers);
+    if (!box) return { minDistance: 0, maxDistance: Number.POSITIVE_INFINITY };
+    const diagonal = box.getSize(new THREE.Vector3()).length();
+    if (!(diagonal > 0)) return { minDistance: 0, maxDistance: Number.POSITIVE_INFINITY };
+    return {
+      minDistance: Math.max(diagonal * 1e-4, frustumNear * 2),
+      maxDistance: diagonal * 10,
+    };
+  }, [sceneApi, frustumNear]);
 
   // Pan and rotate stay *enabled* in every mode; the button map alone decides
   // what a drag does. Disabling them was only ever a blunt way of neutering the
@@ -312,6 +358,8 @@ export const CameraController = () => {
           enablePan={true}
           enableZoom={true}
           zoomToCursor={zoomToCursor}
+          minDistance={minDistance}
+          maxDistance={maxDistance}
           mouseButtons={isNavigate ? NAVIGATE_BUTTONS_3D : TOOL_BUTTONS_3D}
         />
       ) : (

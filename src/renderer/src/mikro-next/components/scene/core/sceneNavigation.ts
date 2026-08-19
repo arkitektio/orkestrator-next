@@ -24,7 +24,9 @@ export type NavigationAction =
   /** Swing around the target. +1 turns the camera right, matching a drag right. */
   | { kind: "orbit"; direction: 1 | -1 }
   /** +1 walks towards `max`, -1 towards `min`. */
-  | { kind: "z"; direction: 1 | -1 };
+  | { kind: "z"; direction: 1 | -1 }
+  /** Re-frame the whole scene (the F key), both display modes. */
+  | { kind: "frame" };
 
 /**
  * The whole binding map: arrows pan, Shift+↑/↓ zooms, and Shift+←/→ does
@@ -60,6 +62,10 @@ export const navigationActionForKey = (
       return shiftKey ? { kind: "zoom", direction: 1 } : { kind: "pan", dx: 0, dy: 1 };
     case "ArrowDown":
       return shiftKey ? { kind: "zoom", direction: -1 } : { kind: "pan", dx: 0, dy: -1 };
+    case "KeyF":
+      // Frame the scene — mode-independent (the fit math handles both rigs).
+      // Shift+F stays unbound.
+      return shiftKey ? null : { kind: "frame" };
     default:
       return null;
   }

@@ -28,6 +28,8 @@ export const SCENE_SHORTCUTS: SceneShortcutGroup[] = [
       { keys: ["Shift", "↓"], description: "Zoom out" },
       { keys: ["Shift", "←"], description: "Turn left (3D)" },
       { keys: ["Shift", "→"], description: "Turn right (3D)" },
+      { keys: ["F"], description: "Frame the whole scene" },
+      { keys: ["double-click"], description: "Center on that point (3D)" },
     ],
   },
   {

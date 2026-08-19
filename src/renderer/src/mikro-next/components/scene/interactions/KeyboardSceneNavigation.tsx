@@ -8,6 +8,8 @@ import {
   panDistance,
   stepSceneZ,
 } from "../core/sceneNavigation";
+import { applyFitToCamera } from "../core/cameraFit";
+import { computeSceneWorldBox } from "../core/sceneFit";
 import { sceneZExtent } from "../core/worldTransform";
 import { useModeStoreApi } from "../store/modeStore";
 import { useSceneStoreApi } from "../store/sceneStore";
@@ -153,6 +155,24 @@ export const KeyboardSceneNavigation = () => {
         return;
       }
 
+      // F frames the whole scene. Deliberately NO claimCamera(): the fit IS
+      // the reset pose — pristine sessions keep their resize-refit, and an
+      // already-armed latch stays armed either way. applyFitToCamera
+      // invalidates itself. (While "orbit around probe" is on this moves the
+      // target off the probe until the next probe event — acceptable.)
+      if (action.kind === "frame") {
+        const box = computeSceneWorldBox(sceneApi.getState().layers);
+        if (box) {
+          applyFitToCamera(box, {
+            camera,
+            controls: ctrl,
+            size: { width: size.width, height: size.height },
+            invalidate,
+          });
+        }
+        return;
+      }
+
       if (action.kind === "pan") pan(action.dx, action.dy);
       else if (action.kind === "orbit") orbit(action.direction);
       else zoom(action.direction);
@@ -163,7 +183,8 @@ export const KeyboardSceneNavigation = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [camera, controls, size.height, invalidate, viewerApi, sceneApi, modeApi]);
+    // Both dimensions: the frame action reads size.width too (ortho fit).
+  }, [camera, controls, size.width, size.height, invalidate, viewerApi, sceneApi, modeApi]);
 
   return null; // Headless: a binding, not a control.
 };

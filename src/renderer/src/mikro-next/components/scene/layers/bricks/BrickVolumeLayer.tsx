@@ -488,6 +488,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // coarser from here, so this is the finest data actually resident.
     desiredLevel: mergeGroup?.targetLevel ?? planTargetLevel,
     planTargetLevel,
+    // Merged groups share one affine by construction (quantized affine keys
+    // in the merge grouping), so the primary's matrix speaks for the group.
+    worldMatrix: affineMatrix,
   });
 
   useStepScaleUniform(bundle?.nodes, /* settleRefine — image material */ true);

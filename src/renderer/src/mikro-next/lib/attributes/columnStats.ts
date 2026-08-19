@@ -40,6 +40,19 @@ export const DISTINCT_LIMIT = 64;
 const readParquet = (url: string) => `read_parquet(${escapeSqlLiteral(url)})`;
 
 /**
+ * The column as a NUMBER, for the arithmetic a bin index needs.
+ *
+ * A measure column is not always stored as one: a boolean flag is a perfectly
+ * good 0/1 measure and reads back with a 0…1 domain, but `bool - 0` is not a
+ * function DuckDB has, so binning it raised a binder error rather than drawing
+ * two bars. `TRY_CAST` is the deliberate choice over `CAST` — a column that has
+ * no numeric reading at all answers NULL per row instead of failing the whole
+ * query, and those rows are then excluded by the same `IS NOT NULL` that
+ * excludes genuine NULLs.
+ */
+const asNumber = (column: string) => `TRY_CAST(${column} AS DOUBLE)`;
+
+/**
  * The numeric bounds of a MEASURE column, or null when the column is empty or
  * holds no numbers. NULLs are skipped by `min`/`max` themselves.
  */
@@ -118,7 +131,7 @@ export const readColumnHistogram = async (
   domain: { min: number; max: number },
   binCount: number = HISTOGRAM_BINS,
 ): Promise<number[]> => {
-  const column = escapeSqlIdentifier(target.column.name);
+  const value = asNumber(escapeSqlIdentifier(target.column.name));
   const bins = new Array<number>(binCount).fill(0);
   const span = domain.max - domain.min;
   if (!(span > 0)) {
@@ -126,20 +139,24 @@ export const readColumnHistogram = async (
     const rows = await engine.readAcross([target.table.store], (urlOf) =>
       `SELECT count(*) AS n FROM ${readParquet(
         urlOf(target.table.store.id),
-      )} WHERE ${column} IS NOT NULL`,
+      )} WHERE ${value} IS NOT NULL`,
     );
     bins[Math.floor(binCount / 2)] = Number(rows[0]?.n ?? 0);
     return bins;
   }
   const width = span / binCount;
   const rows = await engine.readAcross([target.table.store], (urlOf) =>
-    `SELECT CAST(least(greatest(floor((${column} - ${domain.min}) / ${width}), 0), ${
+    `SELECT CAST(least(greatest(floor((${value} - ${domain.min}) / ${width}), 0), ${
       binCount - 1
     }) AS INTEGER) AS bin, count(*) AS n FROM ${readParquet(
       urlOf(target.table.store.id),
-    )} WHERE ${column} IS NOT NULL GROUP BY 1 ORDER BY 1`,
+    )} WHERE ${value} IS NOT NULL GROUP BY 1 ORDER BY 1`,
   );
   for (const row of rows) {
+    // A NULL bin cannot happen while the WHERE excludes uncastable rows, but
+    // `Number(null)` is 0 and would silently pile those rows onto the first
+    // bar, so the guard tests the raw value rather than trusting the coercion.
+    if (row.bin === null || row.bin === undefined) continue;
     const at = Number(row.bin);
     if (Number.isInteger(at) && at >= 0 && at < binCount) bins[at] += Number(row.n);
   }

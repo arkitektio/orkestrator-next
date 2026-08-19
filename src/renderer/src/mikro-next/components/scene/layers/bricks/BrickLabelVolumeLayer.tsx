@@ -111,6 +111,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     pool,
     desiredLevel: planTargetLevel,
     planTargetLevel,
+    worldMatrix: affineMatrix,
   });
   useStepScaleUniform(bundle?.nodes); // no settleRefine: canvas-pass material
   useVolumePassRegistration(!!bundle);

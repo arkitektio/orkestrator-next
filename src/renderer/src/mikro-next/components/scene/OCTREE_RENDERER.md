@@ -170,10 +170,24 @@ codes and the MIP maximum-culling never fires (F3). The load-bearing
 invariant is decode range ≡ encode range: the shader's `uOccDecodeMin/Range`
 uniforms are pushed on every `poolsVersion` bump (BrickVolumeLayer's
 decode-uniform effect), and a range PROMOTION runs a two-drain protocol —
-drain N blanks every texel to the sentinel (conservative under any uniforms)
-and promotes the encode range; drain N+1, after the uniforms had a frame to
-land, re-encodes the real texels from `brickRanges`. Bricks landing while a
-promotion is in flight write the sentinel too. `encodeOccupancyTexel`'s doc
+the promote drain blanks every texel to the sentinel (conservative under
+any uniforms), promotes the encode range and bumps poolsVersion
+unthrottled; the next drain, after the uniforms had a frame to land,
+re-encodes the real texels from `brickRanges`. Bricks landing while the
+re-encode is pending write the sentinel too.
+
+Promotion is decided at the **DRAINED EDGE only** (`occPromotionWorthwhile`
+in the drain flush loop, re-encode-first ordering): per-brick promotion
+cascaded during cold loads — the growing union re-promoted on nearly every
+drain (10–40 promotions/load), each one blanking the whole sidecar,
+starving the re-encode (culling dead for the entire load) and injecting
+off-cadence invalidates that defeated the streaming frame coalescer (~9×
+the intended rendered frames). During a stream, texels keep encoding
+against the current (possibly stale-but-conservative) range; the escape
+epsilon is relative to the OBSERVED span so a tiny early encode span cannot
+turn every union growth into an escape. Relatedly, plan #1 of a class skips
+the sub-floor decode allowance (`nodePlanTracker`) so the cold-open
+download matches the pre-allowance set. `encodeOccupancyTexel`'s doc
 comment carries the four-corner proof that even a stale encode range brackets
 conservatively. Three protocol guarantees added after the 2026-08-19 audit:
 the drain idle-latch respects pending encode work (`hasPendingEncodeWork` —
@@ -265,6 +279,30 @@ are provably unchanged. The shader's per-sample `desiredLevelAt`
 planner alone decides fetch and display; the residual divergence is stride
 only (bounded ≤ 1/λ = 2×, ≈1.46× on the target family).
 
+**The world-metric LOD contract** (`orkestrator.worldLod`, default ON, live
+at the next replan): every SCREEN question — footprint distance, the finer
+level's refinement factor, foveation angles, the aniso-discount direction —
+is measured in **world units**, by scaling voxel displacements per axis with
+`NodeCamera.voxelWorldSize` (= `voxelWorldSizeOf(affine)`, the affine's
+column norms). Every GRID question — frustum culling, position clamping,
+node boxes, the marching stride — stays in **voxel space**. The raw voxel
+metric is exact for isotropic affines (why every identity-affine test passes
+either way) but wrong by the affine's condition number, direction-
+dependently, for calibrated µm layers: under `diag(0.5, 0.5, 5)` the chosen
+level was off by up to κ = 10× per direction with the sign flipping between
+views — the refinement boundary was a world ellipsoid fixed in orientation
+instead of a view-centered sphere (side-on z permanently blocky, top-down
+over-fetched). The shader mirrors the same metric through the uniform-driven
+`uVoxelWorldSize` (`desiredLevelAt`, the tricubic gate) — identity = the
+legacy expressions bit-for-bit, so flag-off simply pushes `(1,1,1)`; planner/
+shader flag skew is safe (the shader clamps to `uDesiredLevel`). The
+foveation/aniso view direction is published in **score space** (voxel
+direction scaled by `voxelWorldSize`, renormalized — ≡ the world direction
+for rotation-free affines). Accepted, deliberately NOT addressed here:
+screen-centering the refinement set beyond distance-LOD (H3 —
+`FOVEA_WEIGHT` tuning is the knob), CSS-px vs DPR planning policy, and the
+repivot debounce.
+
 Culling happens in **layer voxel space**: the world frustum is pulled through
 `buildAffineMatrix(layer)⁻¹` (corner-anchored — voxel v sits at affine(v),
 COORDINATE_SYSTEMS.md §0) so the per-node test is a cheap AABB check
@@ -289,6 +327,18 @@ never admits or rejects a node; orthographic/2D fall back to plain distance.
 
 Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
 `viewProjectionMatrix`, and `displayMode`.
+
+**Camera/box coherence is structural.** The camera inputs (matrix, viewport,
+pose) come from `viewerStore.viewSnapshot` — published by the visibility
+tracker in the SAME store write as `layerViewRanges`, capturing the exact
+view emission the ranges were computed from — never from a live
+`viewStore.getState()`. A live read paired a fresh camera with
+one-visibility-hop-stale boxes on ~1 in 4 mid-orbit replans (and the box
+solely determines `rootRange`), with correctness resting on
+listener-insertion order. The tracker still subscribes to the live matrix
+for replan *pacing*, and to `viewSnapshot` identity so a snapshot published
+after a premature replan always triggers a corrective one; the live view is
+only consulted before the first visibility publish (ranges are empty then).
 
 **The layer set is dynamic.** `SceneProvider` no longer rebuilds the store scope
 when layers are added, removed or reordered (the server mints an

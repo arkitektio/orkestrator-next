@@ -158,11 +158,36 @@ const occEncodeRangeOf = (pool: LayerBrickPool): { minValue: number; maxValue: n
  * drain of the promotion protocol never runs under the demand frame loop
  * (exported for the vitest matrix). */
 export const hasPendingEncodeWork = (pool: {
-  occRangePromotePending: boolean;
   occReencodePending: boolean;
   autoRangeEncodeDirty: boolean;
-}): boolean =>
-  pool.occRangePromotePending || pool.occReencodePending || pool.autoRangeEncodeDirty;
+}): boolean => pool.occReencodePending || pool.autoRangeEncodeDirty;
+
+/**
+ * Whether a DRAINED-EDGE occupancy-range promotion is worth a sidecar
+ * rewrite: the observed union escaped the encode range, or tightened to
+ * under 80% of it. The escape epsilon is relative to the OBSERVED span —
+ * an epsilon on the (possibly tiny, post-first-promotion) encode span
+ * turned every union growth during a cold load into an escape, cascading
+ * 10-40 promotions per load. Pure, exported for the vitest matrix.
+ */
+export const occPromotionWorthwhile = (pool: {
+  occObservedInitialized: boolean;
+  occObservedMin: number;
+  occObservedMax: number;
+  occEncodeMin: number;
+  occEncodeMax: number;
+}): boolean => {
+  if (!pool.occObservedInitialized) return false;
+  const observedSpan = pool.occObservedMax - pool.occObservedMin;
+  if (!(observedSpan > 0)) return false;
+  const encodeSpan = Math.max(pool.occEncodeMax - pool.occEncodeMin, 1e-6);
+  const eps = observedSpan * 0.01;
+  const escaped =
+    pool.occObservedMin < pool.occEncodeMin - eps ||
+    pool.occObservedMax > pool.occEncodeMax + eps;
+  const tightened = observedSpan < encodeSpan * 0.8;
+  return escaped || tightened;
+};
 
 /** A decoded chunk plus its shared-cache key (doubles as the GPU-buffer key). */
 type GpuQueuedChunk = RepackChunk & { cacheKey: string };
@@ -300,19 +325,21 @@ export type LayerBrickPool = {
    * range the sidecar texels are CURRENTLY encoded against (the shader's
    * `uOccDecodeMin/Range` must always equal it — the lockstep invariant);
    * `occObserved*` is the running union that PROMOTES into it via a
-   * two-drain protocol (`occRangePromotePending` → blank all texels +
-   * promote + bump, then `occReencodePending` → re-encode next drain) so
-   * there is never a frame where texels are encoded against a range the
-   * shader uniforms don't hold — blanked texels are the "never skip"
-   * sentinel under ANY uniforms. Flag off: `occEncode*` mirrors the pool
-   * range (bit-identical to the legacy single-range behavior). */
+   * DRAINED-EDGE two-drain protocol (the drain flush loop promotes only
+   * when the pipeline is quiet AND `occPromotionWorthwhile`: blank all
+   * texels + promote + bump, then `occReencodePending` → re-encode next
+   * drain) so there is never a frame where texels are encoded against a
+   * range the shader uniforms don't hold — blanked texels are the "never
+   * skip" sentinel under ANY uniforms, and promotion happens at most ONCE
+   * per stream burst (per-brick promotion cascaded 10-40 sidecar rewrites
+   * + off-cadence frames per cold load). Flag off: `occEncode*` mirrors
+   * the pool range (bit-identical to the legacy single-range behavior). */
   occObservedRange: boolean;
   occObservedMin: number;
   occObservedMax: number;
   occObservedInitialized: boolean;
   occEncodeMin: number;
   occEncodeMax: number;
-  occRangePromotePending: boolean;
   occReencodePending: boolean;
   /** Hierarchical occupancy (R4, `orkestrator.occHierarchy`, captured at
    * pool creation). `measuredRanges` holds every brick's raw measured
@@ -1714,7 +1741,6 @@ export class BrickResidencyManager {
         movable.occObservedInitialized = false;
         movable.occEncodeMin = movable.minValue;
         movable.occEncodeMax = movable.maxValue;
-        movable.occRangePromotePending = false;
         movable.occReencodePending = false;
         this.wakeDrain();
       }
@@ -1883,7 +1909,6 @@ export class BrickResidencyManager {
       occObservedInitialized: false,
       occEncodeMin: minValue,
       occEncodeMax: maxValue,
-      occRangePromotePending: false,
       occReencodePending: false,
       occHierarchy: isOccHierarchyEnabled(),
       measuredRanges: new Map(),
@@ -2403,7 +2428,7 @@ export class BrickResidencyManager {
       pending.coords,
       acquired.slot.coords,
       PAGE_FLAG_RESIDENT,
-      pending.range && !pool.occReencodePending && !pool.occRangePromotePending
+      pending.range && !pool.occReencodePending
         ? encodeOccupancyTexel(pending.range[0], pending.range[1], occEncodeRangeOf(pool))
         : undefined,
     );
@@ -2509,6 +2534,14 @@ export class BrickResidencyManager {
     // the budget-exhausted invalidate below), apply any coalesced auto-range
     // EMPTY re-encode (one pass per frame, however many range moves landed —
     // see accumulateAutoRange), and flush dirty page tables.
+    //
+    // Drained-edge gate for the occupancy-range promotion: promoting while
+    // bricks still stream cascaded — the growing union re-promoted on nearly
+    // every drain (each one blanking the whole sidecar, starving the
+    // re-encode, and injecting off-cadence frames that defeated the
+    // streaming coalescer). At the drained edge the union is final for this
+    // burst, so promotion happens at most ONCE per burst.
+    const pipelineQuiet = !this.anyPipelineWork();
     for (const pool of this.pools.values()) {
       const part = partitions.get(pool);
       if (part) pool.queue = [...part.planned, ...part.stale];
@@ -2517,26 +2550,34 @@ export class BrickResidencyManager {
         this.reencodeEmptyEntries(pool);
         this.reencodeOccupancyEntries(pool);
       }
-      // Occupancy range promotion, two drains (see the occObservedRange field
-      // doc): drain N blanks every texel to the conservative sentinel and
-      // promotes the encode range (the poolsVersion bump pushing the new
-      // decode uniforms was scheduled by accumulateOccRange); drain N+1 —
-      // after the uniforms had a frame to land — writes the real texels.
-      if (pool.occRangePromotePending) {
-        pool.occRangePromotePending = false;
+      // Occupancy range promotion, two drains (see the occObservedRange
+      // field doc): the promote drain blanks every texel to the
+      // conservative sentinel, promotes the encode range and bumps
+      // poolsVersion (the decode uniforms ride it); the NEXT drain — after
+      // the uniforms had a frame to land — writes the real texels.
+      // RE-ENCODE FIRST: a pending re-encode always completes before a new
+      // promotion can be considered, so promotion can never starve it.
+      if (pool.occReencodePending) {
+        pool.occReencodePending = false;
+        this.reencodeOccupancyEntries(pool);
+      } else if (
+        pipelineQuiet &&
+        pool.occObservedRange &&
+        occPromotionWorthwhile(pool)
+      ) {
         pool.occEncodeMin = pool.occObservedMin;
         pool.occEncodeMax = pool.occObservedMax;
         this.blankOccupancyEntries(pool);
         pool.occReencodePending = true;
         this.wakeDrain();
-        // The re-encode needs a NEXT drain, and drains only run inside
-        // frames — request one explicitly (the demand loop may otherwise
-        // go idle right here, on the drained edge). The intervening render
-        // is sentinel-safe under any decode uniforms.
+        // Once per burst, so the unthrottled bump is cheap. The re-encode
+        // needs a NEXT drain, and drains only run inside frames — request
+        // one explicitly (the demand loop may otherwise go idle right
+        // here). The intervening render is sentinel-safe under any decode
+        // uniforms.
+        this.lastPoolsBumpAt = performance.now();
+        this.deps.viewerStore.getState().bumpPoolsVersion();
         this.deps.invalidate();
-      } else if (pool.occReencodePending) {
-        pool.occReencodePending = false;
-        this.reencodeOccupancyEntries(pool);
       }
       flushPageTable(this.deps.renderer, pool.pageTable);
     }
@@ -2795,14 +2836,16 @@ export class BrickResidencyManager {
   }
 
   /**
-   * Fold a landed brick range into the pool's occupancy OBSERVED range and
-   * decide whether it should PROMOTE into the encode range (see the
-   * `occObservedRange` field doc for the two-drain protocol). Promotion is
-   * worth a full sidecar rewrite only when it changes discrimination:
-   * the observed range escaped the encode range (encoded texels are
-   * clamping — culling weakens), or it tightened to under 80% of the encode
-   * span (finer codes — culling strengthens). Sub-1% growth is ignored like
-   * the auto-range wobble filter.
+   * Fold a landed brick range into the pool's occupancy OBSERVED range —
+   * UNION ONLY, no scheduling. The promotion decision moved to the drain
+   * flush loop's drained-edge check (`occPromotionWorthwhile`): promoting
+   * per landed brick cascaded during cold loads (the growing union
+   * re-promoted on nearly every drain, each one blanking the whole sidecar,
+   * starving the re-encode and injecting off-cadence frames that defeated
+   * the streaming coalescer — ~9× the intended rendered frames with
+   * occupancy culling dead the whole time). During a stream the texels
+   * simply keep encoding against the CURRENT range: stale-but-conservative
+   * by the four-corner clamp + byte-0 sentinel.
    */
   private accumulateOccRange(pool: LayerBrickPool, brickMin: number, brickMax: number): void {
     if (!pool.occObservedRange) return;
@@ -2815,29 +2858,6 @@ export class BrickResidencyManager {
       ? Math.max(pool.occObservedMax, brickMax)
       : brickMax;
     pool.occObservedInitialized = true;
-
-    if (pool.occRangePromotePending) return; // already scheduled
-    const encodeSpan = Math.max(pool.occEncodeMax - pool.occEncodeMin, 1e-6);
-    const observedSpan = pool.occObservedMax - pool.occObservedMin;
-    if (observedSpan <= 0) return; // degenerate union: nothing to encode against
-    const escaped =
-      pool.occObservedMin < pool.occEncodeMin - encodeSpan * 0.01 ||
-      pool.occObservedMax > pool.occEncodeMax + encodeSpan * 0.01;
-    const tightened = observedSpan < encodeSpan * 0.8;
-    if (!escaped && !tightened) return;
-
-    pool.occRangePromotePending = true;
-    this.wakeDrain();
-    // UNTHROTTLED bump (unlike the auto-range wobble path): the promotion's
-    // re-encode lands on the NEXT drain (~one frame), and the decode
-    // uniforms ride poolsVersion — a trailing-timer bump (up to 150 ms)
-    // would open a window where an ESCAPED promotion's texels decode
-    // against the old, narrower range with no sentinel protection and skip
-    // visible structure. Promotions are rare (a handful per load), so the
-    // immediate bump costs nothing.
-    this.lastPoolsBumpAt = performance.now();
-    this.deps.viewerStore.getState().bumpPoolsVersion();
-    this.deps.invalidate();
   }
 
   /** Re-encode every EMPTY page entry against the current pool range (the
@@ -2937,7 +2957,7 @@ export class BrickResidencyManager {
         pool.pageTable,
         parentLevel,
         cell,
-        pool.occReencodePending || pool.occRangePromotePending
+        pool.occReencodePending
           ? null
           : encodeOccupancyTexel(aggregate[0], aggregate[1], occEncodeRangeOf(pool)),
       );
@@ -2977,7 +2997,7 @@ export class BrickResidencyManager {
             slot.coords,
             PAGE_FLAG_RESIDENT,
             // "Unknown" while a promotion is in flight — see drainEntry.
-            pool.occReencodePending || pool.occRangePromotePending
+            pool.occReencodePending
               ? undefined
               : encodeOccupancyTexel(result.min, result.max, occEncodeRangeOf(pool)),
           );
@@ -3230,7 +3250,6 @@ export class BrickResidencyManager {
     pool.occObservedInitialized = false;
     pool.occEncodeMin = pool.minValue;
     pool.occEncodeMax = pool.maxValue;
-    pool.occRangePromotePending = false;
     pool.occReencodePending = false;
     // Measured ranges/aggregates describe the flushed slice's data — the ONE
     // event that invalidates them (they deliberately survive eviction).

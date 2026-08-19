@@ -34,12 +34,14 @@ import {
   isOccObservedRangeEnabled,
   isShaderFastPathEnabled,
   isSmoothZoomEnabled,
+  isWorldLodEnabled,
   setAnisoLodEnabled,
   setAnisoStrideEnabled,
   setOccHierarchyEnabled,
   setOccObservedRangeEnabled,
   setShaderFastPathEnabled,
   setSmoothZoomEnabled,
+  setWorldLodEnabled,
 } from "../render/bricks/shaderFlags";
 import {
   isVolumeCacheEnabled,
@@ -82,6 +84,7 @@ export const DebugPanel = () => {
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
   const [anisoStrideOn, setAnisoStrideOn] = useState(isAnisoStrideEnabled);
   const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
+  const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
   const [occHierarchyOn, setOccHierarchyOn] = useState(isOccHierarchyEnabled);
   const [settleRefineOn, setSettleRefineOn] = useState(isSettleRefineEnabled);
   const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
@@ -152,6 +155,11 @@ export const DebugPanel = () => {
     setAnisoStrideOn(next);
   };
 
+  const toggleWorldLod = () => {
+    const next = !worldLodOn;
+    setWorldLodEnabled(next);
+    setWorldLodOn(next);
+  };
   const toggleAnisoLod = () => {
     const next = !anisoLodOn;
     setAnisoLodEnabled(next);
@@ -585,6 +593,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 aniso lod: {anisoLodOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleWorldLod}
+                title="World-metric LOD: measure footprint distances, foveation angles and the aniso discount in world units (per-axis voxel size from the layer affine) instead of raw voxel space — keeps the refinement region view-centered on calibrated anisotropic (µm) layers. Planner: next replan; shader: next uniform push. Identity affines are unaffected either way."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                world lod: {worldLodOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleOccHierarchy}

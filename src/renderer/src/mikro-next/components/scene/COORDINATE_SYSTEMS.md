@@ -351,6 +351,19 @@ itself, and a second hover probe would only compete with it for the pointer
 event. `core/probe/probeGating.ts` makes this explicit with its
 `annotateProbes` flag rather than leaving each layer to re-derive it.
 
+**Which space answers which question** (the world-metric LOD contract —
+OCTREE_RENDERER.md §2.6, `orkestrator.worldLod`): the affine is generally
+ANISOTROPIC (calibrated µm voxels, e.g. 0.5×0.5×5), so voxel space preserves
+neither distances nor angles. Screen questions — LOD footprints, foveation
+angles, the planner's aniso-discount direction, the shader's
+`desiredLevelAt`/tricubic gate — are measured in WORLD units via the
+per-axis voxel world size (`voxelWorldSizeOf(affine)` = column norms).
+Grid questions — frustum culling, box clamping, brick addressing, the
+marching stride ("one sample per voxel crossing") — stay in voxel space.
+Mixing them is the bug class this contract exists to name: dividing a
+world-px focal length by a voxel distance made the refinement region a
+fixed-orientation world ellipsoid instead of a view-centered sphere.
+
 This IS the "scene-root frame normalization" this section used to track: the
 per-layer centering + y-flip frame (`voxelFrame.buildCenteringMatrix` /
 `buildVolumeVoxelToWorld`, both deleted) and the mesh layer's anchor-to-an-

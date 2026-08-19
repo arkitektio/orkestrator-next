@@ -91,15 +91,21 @@ export const CameraMatrixSync = ({
       camera.matrixWorldInverse
     );
 
-    // 3. Movement/Zoom check
-    let hasChanged = false;
+    // 3. Movement/Zoom check. The viewport SIZE is a dirty input in its own
+    // right: an aspect-preserving resize of a perspective camera changes no
+    // element of the VP matrix, yet every px-per-viewport-height consumer
+    // (`viewRange.scale`, the planner's pxPerVoxelAtUnitDistance) depends on
+    // the height — without this the store served a stale viewportSize until
+    // the camera next moved.
+    let hasChanged =
+      size.width !== pendingSize.current.width ||
+      size.height !== pendingSize.current.height;
     const cur = matrixRef.current.elements;
     const prev = previousFrameMatrix.current.elements;
 
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; !hasChanged && i < 16; i++) {
       if (Math.abs(cur[i] - prev[i]) > threshold) {
         hasChanged = true;
-        break;
       }
     }
 

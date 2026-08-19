@@ -44,14 +44,21 @@ const makeStores = () => {
 
   type ViewerSubset = Pick<
     ViewerState,
-    "trackables" | "visibleLayers" | "layerViewRanges" | "setVisible" | "setLayerViewRanges"
+    | "trackables"
+    | "visibleLayers"
+    | "layerViewRanges"
+    | "viewSnapshot"
+    | "setVisible"
+    | "setLayerViewRanges"
   >;
   const viewerStore = createStore<ViewerSubset>((set) => ({
     trackables: new Set([trackable]) as ViewerSubset["trackables"],
     visibleLayers: [],
     layerViewRanges: {},
+    viewSnapshot: null,
     setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
-    setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
+    setLayerViewRanges: (ranges, snapshot) =>
+      set(snapshot ? { layerViewRanges: ranges, viewSnapshot: snapshot } : { layerViewRanges: ranges }),
   })) as unknown as StoreApi<ViewerState>;
 
   const sceneStore = createStore<Pick<SceneState, "layers">>(() => ({
@@ -97,6 +104,31 @@ describe("startVisibilityTracking", () => {
 
     expect(notifications).toBe(0);
     unsubscribe();
+    stop();
+  });
+
+  it("publishes the view snapshot atomically with the ranges (W3 coherence)", async () => {
+    const stores = makeStores();
+    const stop = startVisibilityTracking(stores);
+    const matrix = makeMatrix();
+    stores.viewStore.setState({ viewProjectionMatrix: matrix });
+    await settle();
+
+    // The snapshot carries the EXACT emission the ranges were computed from.
+    const state = stores.viewerStore.getState();
+    expect(state.viewSnapshot?.viewProjectionMatrix).toBe(matrix);
+    expect(state.viewSnapshot?.viewportSize).toBe(stores.viewStore.getState().viewportSize);
+
+    // A NEW view producing the SAME ranges still refreshes the snapshot —
+    // the pair stays coherent (this view provably yields these ranges) and
+    // the planner reschedules off the snapshot identity.
+    const sameValueMatrix = makeMatrix();
+    stores.viewStore.setState({ viewProjectionMatrix: sameValueMatrix });
+    await settle();
+    const after = stores.viewerStore.getState();
+    expect(after.layerViewRanges).toBe(state.layerViewRanges); // unchanged, identity kept
+    expect(after.viewSnapshot?.viewProjectionMatrix).toBe(sameValueMatrix);
+
     stop();
   });
 

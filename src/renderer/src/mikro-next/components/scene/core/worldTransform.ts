@@ -50,6 +50,26 @@ export function buildAffineMatrix(layer: LayerState): THREE.Matrix4 {
   return affineToMatrix4(layer.affineMatrix);
 }
 
+/**
+ * World length of one voxel along each axis: the norms of the affine's
+ * column basis vectors (column-major elements). THE anisotropy input of the
+ * world-metric LOD contract (`orkestrator.worldLod`): distances/footprints
+ * measured in raw voxel space are wrong by the affine's condition number,
+ * direction-dependently — a 0.5/0.5/5 µm SPIM affine made the refinement
+ * boundary a world ellipsoid 10:1 elongated along z regardless of view.
+ * Identity affine → [1,1,1] → every consumer reduces to the legacy voxel
+ * metric exactly. (A twin of `enhancers/shared/planning.ts voxelWorldSize`,
+ * housed here so core/ needs no enhancers import.)
+ */
+export function voxelWorldSizeOf(affine: THREE.Matrix4): [number, number, number] {
+  const e = affine.elements; // column-major
+  return [
+    Math.hypot(e[0], e[1], e[2]) || 1,
+    Math.hypot(e[4], e[5], e[6]) || 1,
+    Math.hypot(e[8], e[9], e[10]) || 1,
+  ];
+}
+
 /** Get the number of Z voxels for a layer, or null if the layer has no Z dimension */
 export function getLayerZSize(layer: LayerState): number | null {
   if (!layer.zAxis) return null;

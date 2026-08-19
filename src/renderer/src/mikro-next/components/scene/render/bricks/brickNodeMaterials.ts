@@ -20,7 +20,6 @@ const {
   bool,
   clamp,
   cos,
-  distance,
   dot,
   exp,
   float,
@@ -1062,6 +1061,9 @@ export type VolumeMaterialNodes = TraversalNodesPublic &
     uDesiredLevel: UniformNodeLike<number>;
     uLodBias: UniformNodeLike<number>;
     uPxPerVoxelAtUnitDist: UniformNodeLike<number>;
+    /** Per-axis world size of one base voxel (world-metric LOD; (1,1,1) =
+     * legacy voxel metric — how `orkestrator.worldLod` off is pushed). */
+    uVoxelWorldSize: UniformNodeLike<THREE.Vector3>;
     uMinDelta: UniformNodeLike<number>;
     uStepScale: UniformNodeLike<number>;
     uMaxSteps: UniformNodeLike<number>;
@@ -1271,7 +1273,11 @@ export function createVolumeNodeMaterial(
     //  - OFF: the legacy MAX spatial component (kept for A/B).
     // Note the deliberate asymmetry with `wantFiner`/`desiredLevelAt`, which
     // stay max-based: LOD selection is a screen-footprint question, the
-    // pitch is a marching-density one.
+    // pitch is a marching-density one. For the SAME reason the pitch stays
+    // VOXEL-metric under world-metric LOD (uVoxelWorldSize): the ray marches
+    // and samples in base-voxel space, so "one sample per voxel crossing" is
+    // a voxel-space property — scaling it by the affine would under- or
+    // over-sample the data grid, not the screen.
     const levelPitch = (level: any) => {
       const s = vec3(t.uLevelScale.element(level));
       if (anisoStride) {
@@ -1633,8 +1639,14 @@ export function createVolumeNodeMaterial(
       // marching-density one — the stride projection does not apply here.
       let smoothActive: any = null;
       if (smoothZoom) {
-        const stepDist = max(distance(pB, originB), 1.0);
-        const smoothScale = vec3(t.uLevelScale.element(resolved.residentLevel));
+        // World metric, same uniform contract as desiredLevelAt: identity
+        // uVoxelWorldSize reduces to the legacy voxel expressions exactly.
+        const w = vec3(rayUniforms.uVoxelWorldSize);
+        const stepDist = max(
+          TSL.length(vec3(pB).sub(originB).mul(w)),
+          max(w.x, max(w.y, w.z)),
+        );
+        const smoothScale = vec3(t.uLevelScale.element(resolved.residentLevel)).mul(w);
         const resolvedPxPerVoxel = float(uPxPerVoxelAtUnitDist)
           .div(stepDist)
           .mul(max(smoothScale.x, max(smoothScale.y, smoothScale.z)));
@@ -1845,6 +1857,7 @@ export function createVolumeNodeMaterial(
       uDesiredLevel,
       uLodBias,
       uPxPerVoxelAtUnitDist,
+      uVoxelWorldSize: rayUniforms.uVoxelWorldSize,
       uMinDelta,
       uStepScale,
       uMaxSteps,

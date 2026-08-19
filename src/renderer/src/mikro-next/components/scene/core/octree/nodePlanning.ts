@@ -115,11 +115,21 @@ export type NodeCamera = {
   voxelFrustum: THREE.Frustum;
   /** Camera position in base voxels — null for orthographic cameras. */
   voxelPosition: Vec3 | null;
-  /** viewportHeight / (2·tan(fovY/2)): px per base voxel at voxel-distance 1. */
+  /** viewportHeight / (2·tan(fovY/2)): px per WORLD unit at world-distance 1
+   * (a pure pixel focal length — affine-independent). */
   pxPerVoxelAtUnitDistance: number;
-  /** Normalized view direction in base voxels (foveated ordering) — null for
-   * orthographic cameras or when it cannot be derived. Ordering-only input:
-   * it biases WHICH admitted node refines/fetches first, never the set. */
+  /** Per-axis WORLD length of one base voxel (`voxelWorldSizeOf` of the
+   * layer affine) — THE world-metric LOD input. Omitted/[1,1,1] = the
+   * legacy voxel metric (identity reduction; how `orkestrator.worldLod`
+   * off is expressed — the tracker passes [1,1,1]). */
+  voxelWorldSize?: Vec3;
+  /** Normalized view direction for the foveated ordering / aniso discount —
+   * null for orthographic cameras or when it cannot be derived. IN SCORE
+   * SPACE: the base-voxel direction scaled per axis by `voxelWorldSize` and
+   * renormalized (≡ the plain voxel direction under the identity metric, ≡
+   * the world direction for rotation-free affines) — it must live in the
+   * same metric the score displacements are measured in, or every angle is
+   * misread by the affine's condition number. */
   voxelViewDirection?: Vec3 | null;
 };
 
@@ -153,14 +163,6 @@ const BUDGET_FLOOR_HYSTERESIS = 1.15;
 
 // Scratch objects (single-threaded, one plan at a time).
 const scratchBox = new THREE.Box3();
-const scratchPoint = new THREE.Vector3();
-
-const boxDistance = (box: VoxelBox, point: Vec3): number => {
-  scratchBox.min.set(box.min[0], box.min[1], box.min[2]);
-  scratchBox.max.set(box.max[0], box.max[1], box.max[2]);
-  scratchPoint.set(point[0], point[1], point[2]);
-  return scratchBox.distanceToPoint(scratchPoint);
-};
 
 /** How much foveation penalizes off-axis nodes: at the view axis the score is
  * plain distance²; at 90° off-axis it is distance² × (1 + w)². */
@@ -221,10 +223,17 @@ export function foveatedScore(
   origin: Vec3,
   viewDirection: Vec3 | null | undefined,
   foveaWeight = FOVEA_WEIGHT,
+  /** Per-axis metric of the score space (the voxel WORLD size under
+   * worldLod). Angles are not preserved by anisotropic maps — scoring raw
+   * voxel displacements against a µm-anisotropic affine effectively
+   * switched foveation OFF for side views (a 45° world angle read as 5.7°)
+   * and over-penalized top-down ones. `viewDirection` must be normalized
+   * in the SAME space as the scaled displacement. */
+  axisScale?: Vec3,
 ): number {
-  const dx = center[0] - origin[0];
-  const dy = center[1] - origin[1];
-  const dz = center[2] - origin[2];
+  const dx = (center[0] - origin[0]) * (axisScale?.[0] ?? 1);
+  const dy = (center[1] - origin[1]) * (axisScale?.[1] ?? 1);
+  const dz = (center[2] - origin[2]) * (axisScale?.[2] ?? 1);
   const distSq = dx * dx + dy * dy + dz * dz;
   if (!viewDirection || distSq === 0) return distSq;
   const dist = Math.sqrt(distSq);
@@ -468,10 +477,36 @@ export function planLayerNodes({
   }
 
   // --- Per-node screen footprint --------------------------------------------
-  const footprintPxPerBaseVoxel = (baseBox: VoxelBox): number => {
-    if (camera?.voxelPosition) {
-      const distance = Math.max(1, boxDistance(baseBox, camera.voxelPosition));
-      return camera.pxPerVoxelAtUnitDistance / distance;
+  /** Per-axis world size of one base voxel — the metric every distance,
+   * angle and refinement factor below is measured in. `[1,1,1]` (no camera,
+   * or `worldLod` off — the tracker then passes no `voxelWorldSize`) makes
+   * every formula reduce to the legacy voxel metric bit-for-bit. */
+  const worldScale: Vec3 = camera?.voxelWorldSize ?? [1, 1, 1];
+  /** Screen pixels per WORLD unit at the node's nearest point: the pixel
+   * focal length over the WORLD distance (voxel-space clamp to the box,
+   * displacement scaled per axis). Dividing by the raw voxel distance was
+   * the core view-centering bug: for an anisotropic µm affine the ratio is
+   * off by the affine's condition number, direction-dependently — the
+   * refinement boundary was a world ellipsoid fixed in orientation (side-on
+   * views under-refined, top-down over-refined by ~κ levels). The min clamp
+   * is one world voxel (max axis), mirroring the legacy `max(1, dist)`.
+   * Without a perspective camera: `viewRange.scale`, which is px per BASE
+   * VOXEL (already affine-aware) — `finerFactorOf` matches that metric by
+   * skipping the world scaling in that branch. */
+  const footprintPxOf = (baseBox: VoxelBox): number => {
+    const position = camera?.voxelPosition;
+    if (position) {
+      const dx =
+        (Math.min(baseBox.max[0], Math.max(baseBox.min[0], position[0])) - position[0]) *
+        worldScale[0];
+      const dy =
+        (Math.min(baseBox.max[1], Math.max(baseBox.min[1], position[1])) - position[1]) *
+        worldScale[1];
+      const dz =
+        (Math.min(baseBox.max[2], Math.max(baseBox.min[2], position[2])) - position[2]) *
+        worldScale[2];
+      const minWorld = Math.max(worldScale[0], worldScale[1], worldScale[2]);
+      return camera.pxPerVoxelAtUnitDistance / Math.max(minWorld, Math.hypot(dx, dy, dz));
     }
     return viewRange?.scale ?? 0;
   };
@@ -495,9 +530,16 @@ export function planLayerNodes({
    * family, exactly 1× on [2ⁿ,2ⁿ,1] pyramids).
    */
   const finerFactorOf = (finerScale: Vec3, baseBox: VoxelBox): number => {
-    const maxFactor = Math.max(finerScale[0], finerScale[1], finerScale[2]);
-    if (!anisoLod) return maxFactor;
     const position = camera?.voxelPosition;
+    // Metric must match footprintPxOf's branch: WORLD sample sizes under a
+    // perspective camera (px/world · world/sample = px/sample), raw voxel
+    // factors for the orthographic viewRange.scale (px/voxel) fallback —
+    // where worldScale is identity anyway (no camera ⇒ no voxelWorldSize).
+    const fx = position ? finerScale[0] * worldScale[0] : finerScale[0];
+    const fy = position ? finerScale[1] * worldScale[1] : finerScale[1];
+    const fz = position ? finerScale[2] * worldScale[2] : finerScale[2];
+    const maxFactor = Math.max(fx, fy, fz);
+    if (!anisoLod) return maxFactor;
     if (!position) return maxFactor; // orthographic / 2D: conservative max
     if (
       position[0] >= baseBox.min[0] && position[0] <= baseBox.max[0] &&
@@ -507,12 +549,17 @@ export function planLayerNodes({
       return maxFactor; // camera inside the node: direction is ambiguous
     }
     const center = boxCenter(baseBox);
-    const dx = center[0] - position[0];
-    const dy = center[1] - position[1];
-    const dz = center[2] - position[2];
+    // WORLD displacement: the dominant-axis test asks which axis the view
+    // aligns with ON SCREEN — an angle, which anisotropic affines do not
+    // preserve. The voxel-space direction collapsed the ±45° window to
+    // ±atan(1/κ) under a κ-anisotropic affine, re-opening the over-fetch
+    // this discount exists to kill.
+    const dx = (center[0] - position[0]) * worldScale[0];
+    const dy = (center[1] - position[1]) * worldScale[1];
+    const dz = (center[2] - position[2]) * worldScale[2];
     const len = Math.hypot(dx, dy, dz);
     if (!(len > 1e-6)) return maxFactor;
-    return anisoEffectiveFactor(finerScale, [dx / len, dy / len, dz / len]);
+    return anisoEffectiveFactor([fx, fy, fz], [dx / len, dy / len, dz / len]);
   };
 
   const wantFiner = (level: number, baseBox: VoxelBox): boolean => {
@@ -521,9 +568,7 @@ export function planLayerNodes({
     if (level <= (fixedLOD ?? 0)) return false;
     if (fixedLOD !== null) return true; // refine all the way to the pinned LOD
     const finerScale = levels[level - 1].scale;
-    return (
-      footprintPxPerBaseVoxel(baseBox) * finerFactorOf(finerScale, baseBox) * lodBias >= 1
-    );
+    return footprintPxOf(baseBox) * finerFactorOf(finerScale, baseBox) * lodBias >= 1;
   };
 
   const focus: Vec3 = camera?.voxelPosition ??
@@ -534,10 +579,12 @@ export function planLayerNodes({
           (visibleBox.min[2] + visibleBox.max[2]) / 2,
         ]
       : [baseShape[0] / 2, baseShape[1] / 2, baseShape[2] / 2]);
-  /** Foveation axis — only meaningful with a real camera position. */
+  /** Foveation axis — only meaningful with a real camera position. Lives in
+   * the SAME metric as the worldScale-scaled score displacements (the WORLD
+   * direction under worldLod; NodeCamera.voxelViewDirection doc). */
   const viewAxis = camera?.voxelPosition ? camera.voxelViewDirection ?? null : null;
   const orderScore = (box: VoxelBox): number =>
-    foveatedScore(boxCenter(box), focus, viewAxis);
+    foveatedScore(boxCenter(box), focus, viewAxis, FOVEA_WEIGHT, worldScale);
 
   const clampToRange = (v: number, lo: number, hi: number) =>
     Math.min(hi, Math.max(lo, v));
@@ -555,6 +602,8 @@ export function planLayerNodes({
       ],
       focus,
       viewAxis,
+      FOVEA_WEIGHT,
+      worldScale,
     );
 
   // --- Coarsest-level reservation -------------------------------------------

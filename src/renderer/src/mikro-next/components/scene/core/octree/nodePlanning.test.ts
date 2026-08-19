@@ -1129,3 +1129,141 @@ describe("planLayerNodes anisotropy-aware LOD (Phase C, orkestrator.anisoLod)", 
     expect(sameNodePlan(withFlag, withoutFlag)).toBe(true);
   });
 });
+
+describe("foveatedScore axisScale (world-metric ordering)", () => {
+  const origin: [number, number, number] = [0, 0, 0];
+
+  it("scales displacements per axis before scoring (identity default)", () => {
+    expect(foveatedScore([2, 0, 0], origin, null, 1.5, [0.5, 1, 1])).toBe(1);
+    expect(foveatedScore([3, 4, 0], origin, null, 1.5, [1, 1, 1])).toBe(
+      foveatedScore([3, 4, 0], origin, null),
+    );
+  });
+
+  it("restores world angles under an anisotropic metric", () => {
+    // Voxel displacement [2, 0, 0.2] under diag(0.5, 0.5, 5) IS the world
+    // displacement [1, 0, 1] — a 45° world angle the raw voxel score read
+    // as ~5.7° (κ=10 collapse). Scored in the world metric it must equal
+    // the plain world-space score exactly.
+    const viewDirection: [number, number, number] = [0, 0, 1];
+    expect(
+      foveatedScore([2, 0, 0.2], origin, viewDirection, 1.5, [0.5, 0.5, 5]),
+    ).toBeCloseTo(foveatedScore([1, 0, 1], origin, viewDirection), 10);
+  });
+});
+
+describe("anisoEffectiveFactor with the world-metric view direction", () => {
+  it("a 20° WORLD tilt from face-on keeps the discount; the voxel-space direction lost it", () => {
+    // κ=10 metric diag(0.5, 0.5, 5), true-factor finer scale [2, 2, 9].
+    const t = THREE.MathUtils.degToRad(20);
+    const worldDir: [number, number, number] = [Math.sin(t), 0, Math.cos(t)];
+    // World direction (what the planner now passes): z still dominates the
+    // view (d_z² ≈ 0.88 > 0.5) ⇒ eff = max(2, 9·0.5) = 4.5.
+    expect(anisoEffectiveFactor([2, 2, 9], worldDir)).toBeCloseTo(4.5, 6);
+    // The SAME world tilt expressed as a voxel-space direction (world dir
+    // scaled by 1/s, renormalized): the κ=10 affine drags the direction off
+    // z (d_z² ≈ 0.07 < 0.5) ⇒ every weight is 1 ⇒ eff = 9 — the discount
+    // this fix exists to preserve had collapsed.
+    const vx = Math.sin(t) / 0.5;
+    const vz = Math.cos(t) / 5;
+    const len = Math.hypot(vx, vz);
+    expect(anisoEffectiveFactor([2, 2, 9], [vx / len, 0, vz / len])).toBeCloseTo(9, 6);
+  });
+});
+
+describe("planLayerNodes world-metric LOD (orkestrator.worldLod)", () => {
+  // Isotropic 256³ two-level pyramid; the ANISOTROPY lives in the calibrated
+  // metric — voxelWorldSize diag(0.5, 0.5, 5), the audit's κ=10 SPIM affine.
+  const volLayer = {
+    ...makeLayer({ zAxis: "z" }),
+    lens: {
+      slices: [],
+      axisNames: ["z", "y", "x"],
+      shape: [256, 256, 256],
+      dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
+    },
+  } as unknown as LayerState;
+  const LEVELS: LevelSource[] = [
+    { shape: [256, 256, 256], chunks: [64, 64, 64], dtype: "uint8", storeId: "w0" },
+    { shape: [128, 128, 128], chunks: [64, 64, 64], dtype: "uint8", storeId: "w1", scaleFactors: [2, 2, 2] },
+  ];
+  const geo = buildLayerLevelGeometry(["z", "y", "x"], volLayer, LEVELS)!;
+  const spec = resolveBrickSpec(geo, "3D"); // 64³ payload → L0 4³, L1 2³
+  const VIEW: LayerViewRange = { xRange: [0, 256], yRange: [0, 256], zRange: [0, 256], scale: 1 };
+  const SPIM: [number, number, number] = [0.5, 0.5, 5];
+
+  const cameraAt = (
+    position: [number, number, number],
+    voxelWorldSize?: [number, number, number],
+  ): NodeCamera => {
+    const cam = new THREE.PerspectiveCamera(60, 1, 1, 100000);
+    cam.position.set(...position);
+    cam.lookAt(128, 128, 128);
+    cam.updateMatrixWorld(true);
+    cam.updateProjectionMatrix();
+    const projScreen = new THREE.Matrix4().multiplyMatrices(
+      cam.projectionMatrix,
+      cam.matrixWorldInverse,
+    );
+    return {
+      voxelFrustum: new THREE.Frustum().setFromProjectionMatrix(projScreen),
+      voxelPosition: position,
+      // viewport height 100 px → 100 / (2·tan 30°) ≈ 86.6
+      pxPerVoxelAtUnitDistance: 100 / (2 * Math.tan(THREE.MathUtils.degToRad(60) / 2)),
+      voxelWorldSize,
+    };
+  };
+
+  const plan = (camera: NodeCamera) =>
+    planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VIEW,
+      camera,
+      lodBias: 1,
+      currentZ: undefined,
+    });
+
+  const targetKeys = (p: ReturnType<typeof planLayerNodes>) =>
+    new Set(p.nodes.filter((n) => n.role === "target").map((n) => n.key));
+
+  it("identity voxelWorldSize ≡ omitted (the legacy reduction, bit for bit)", () => {
+    const position: [number, number, number] = [-50, 128, 128];
+    const withIdentity = plan(cameraAt(position, [1, 1, 1]));
+    const without = plan(cameraAt(position));
+    expect(sameNodePlan(withIdentity, without)).toBe(true);
+    expect(withIdentity.nodes.map((n) => n.fetchScore)).toEqual(
+      without.nodes.map((n) => n.fetchScore),
+    );
+  });
+
+  it("side-on (across the thick z): the world metric refines what voxel distance under-refined", () => {
+    // Camera 50 base voxels off the x face. Voxel metric: far x-half sits at
+    // 178 voxels → 0.49 px/voxel < 1 → held coarse. World metric: 178·0.5 =
+    // 89 µm and the finer level's WORLD factor is max(0.5, 0.5, 5) = 5 →
+    // 0.97 px/µm · 5 ≈ 4.9 ≥ 1 → the whole volume earns refinement (the
+    // audit's worked example: side-on was ~κ under-refined).
+    const position: [number, number, number] = [-50, 128, 128];
+    const legacy = plan(cameraAt(position));
+    const world = plan(cameraAt(position, SPIM));
+    const legacyFine = legacy.nodes.filter((n) => n.role === "target" && n.level === 0);
+    const worldFine = world.nodes.filter((n) => n.role === "target" && n.level === 0);
+    expect(legacyFine.length).toBeGreaterThan(0);
+    expect(legacyFine.every((n) => n.coords[0] <= 1)).toBe(true); // near half only
+    expect(worldFine).toHaveLength(64); // every L0 brick
+  });
+
+  it("along the thick z itself: refinement is unchanged (the ratio is scale-invariant on-axis)", () => {
+    // Camera 50 voxels off the z face at the volume's x/y center: every
+    // nearest-point displacement is pure z, and for pure-z displacement the
+    // world footprint (px / (d·s_z)) · (finerScale_z · s_z) equals the voxel
+    // expression exactly — the metric cancels. Same admitted set, so the
+    // world fix cannot over-refine the view that was already correct.
+    const position: [number, number, number] = [128, 128, -50];
+    const legacy = plan(cameraAt(position));
+    const world = plan(cameraAt(position, SPIM));
+    expect(targetKeys(world)).toEqual(targetKeys(legacy));
+  });
+});

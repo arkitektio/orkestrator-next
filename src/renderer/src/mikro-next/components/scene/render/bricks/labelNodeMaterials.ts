@@ -437,6 +437,9 @@ export type LabelVolumeMaterialNodes = TraversalNodesPublic & {
   uDesiredLevel: UniformNodeLike<number>;
   uLodBias: UniformNodeLike<number>;
   uPxPerVoxelAtUnitDist: UniformNodeLike<number>;
+  /** Per-axis world size of one base voxel (world-metric LOD; (1,1,1) =
+   * legacy voxel metric — how `orkestrator.worldLod` off is pushed). */
+  uVoxelWorldSize: UniformNodeLike<THREE.Vector3>;
   uMinDelta: UniformNodeLike<number>;
   uStepScale: UniformNodeLike<number>;
   uMaxSteps: UniformNodeLike<number>;
@@ -670,6 +673,7 @@ export function createLabelVolumeNodeMaterial(
       uDesiredLevel,
       uLodBias: rayUniforms.uLodBias,
       uPxPerVoxelAtUnitDist: rayUniforms.uPxPerVoxelAtUnitDist,
+      uVoxelWorldSize: rayUniforms.uVoxelWorldSize,
       uMinDelta,
       uStepScale,
       uMaxSteps,

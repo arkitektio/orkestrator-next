@@ -22,6 +22,10 @@ export function VisibilityManager() {
   const modeStore = useModeStoreApi()
 
   useEffect(() => {
+    // Start order is NOT load-bearing: the planner reads its camera from the
+    // `viewSnapshot` the visibility tracker publishes atomically with the
+    // ranges (viewerStore), so camera/box coherence is structural rather than
+    // an artifact of which subscription was installed first.
     const stopVisibility = startVisibilityTracking({ viewStore, viewerStore, sceneStore })
     const stopNodePlans = startNodePlanTracking({ viewerStore, sceneStore, viewStore, modeStore })
     return () => {

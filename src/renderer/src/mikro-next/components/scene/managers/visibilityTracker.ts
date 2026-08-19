@@ -61,8 +61,26 @@ export function startVisibilityTracking({
     if (!sameVisibleIds(viewerState.visibleLayers, visibleIds)) {
       viewerState.setVisible(visibleIds);
     }
-    if (!sameViewRanges(viewerState.layerViewRanges, ranges)) {
-      viewerState.setLayerViewRanges(ranges);
+    // The view SNAPSHOT rides in the same write as the ranges (see
+    // `ViewSnapshot` in viewerStore): the node planner builds its camera
+    // from it, so camera and visible box are structurally same-moment —
+    // coherence no longer rests on this manager's subscription being
+    // installed before the planner's. Unchanged ranges with a NEWER view
+    // still publish the snapshot: the new view provably produces these very
+    // ranges, so the pair stays coherent (identity compares — viewStore
+    // preserves object identity on no-change emissions).
+    const prevSnapshot = viewerState.viewSnapshot;
+    const snapshotChanged =
+      !prevSnapshot ||
+      prevSnapshot.viewProjectionMatrix !== viewProjectionMatrix ||
+      prevSnapshot.viewportSize !== viewportSize ||
+      prevSnapshot.cameraPose !== cameraPose;
+    const rangesChanged = !sameViewRanges(viewerState.layerViewRanges, ranges);
+    if (rangesChanged || snapshotChanged) {
+      viewerState.setLayerViewRanges(
+        rangesChanged ? ranges : viewerState.layerViewRanges,
+        { viewProjectionMatrix, viewportSize, cameraPose },
+      );
     }
   };
 

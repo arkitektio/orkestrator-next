@@ -10,7 +10,6 @@ const {
   If,
   Loop,
   cameraPosition,
-  distance,
   float,
   floor,
   int,
@@ -62,12 +61,19 @@ export const MAX_RAY_STEPS = 512;
  *  - `uLodBias` — multiplier on the px-per-voxel test; >1 biases coarser.
  *  - `uPxPerVoxelAtUnitDist` — screen px per base voxel at unit distance; ≤0
  *    disables the per-sample LOD pick entirely.
+ *  - `uVoxelWorldSize` — per-axis world length of one base voxel (the planner's
+ *    `NodeCamera.voxelWorldSize`; `voxelWorldSizeOf(affine)`). Drives the
+ *    world-metric LOD pick in `desiredLevelAt` — UNIFORM-driven, no compile
+ *    branch: at the default (1,1,1) every expression reduces to the legacy
+ *    voxel metric exactly, which is also how `orkestrator.worldLod` OFF is
+ *    expressed (the push site sends identity).
  */
 export type VolumeRayUniforms = {
   uBaseShape: any;
   uDesiredLevel: any;
   uLodBias: any;
   uPxPerVoxelAtUnitDist: any;
+  uVoxelWorldSize: any;
 };
 
 export const makeVolumeRayUniforms = (): VolumeRayUniforms => ({
@@ -75,6 +81,7 @@ export const makeVolumeRayUniforms = (): VolumeRayUniforms => ({
   uDesiredLevel: TSL.uniform(0, "int"),
   uLodBias: TSL.uniform(1, "float"),
   uPxPerVoxelAtUnitDist: TSL.uniform(0, "float"),
+  uVoxelWorldSize: TSL.uniform(new THREE.Vector3(1, 1, 1), "vec3"),
 });
 
 export type VolumeRayNodes = {
@@ -116,8 +123,16 @@ export const makeVolumeRayNodes = (t: any, u: VolumeRayUniforms): VolumeRayNodes
     If(u.uPxPerVoxelAtUnitDist.lessThanEqual(0.0), () => {
       out.assign(u.uDesiredLevel);
     }).Else(() => {
-      const dist = max(distance(vec3(baseVoxel), vec3(cameraBase)), 1.0);
-      const pxPerBaseVoxel = float(u.uPxPerVoxelAtUnitDist).div(dist);
+      // WORLD-metric distance and level factors (planner lockstep — this
+      // mirrors `wantFiner`'s `footprintPxOf`/`finerFactorOf`, nodePlanning
+      // .ts): voxel displacement scaled per axis by uVoxelWorldSize, min
+      // clamp one world voxel (max axis; ≡ the legacy `max(dist, 1)` at the
+      // identity uniform).
+      const w = vec3(u.uVoxelWorldSize);
+      const worldDelta = vec3(baseVoxel).sub(vec3(cameraBase)).mul(w);
+      const minWorld = max(w.x, max(w.y, w.z));
+      const dist = max(TSL.length(worldDelta), minWorld);
+      const pxPerWorldUnit = float(u.uPxPerVoxelAtUnitDist).div(dist);
       // Unique iterator name: this Fn inlines into the ray loop (see the
       // emitResolveBrickResidency shadowing note).
       Loop(
@@ -133,9 +148,11 @@ export const makeVolumeRayNodes = (t: any, u: VolumeRayUniforms): VolumeRayNodes
           // is stride only (bounded ≤2×, ≈1.46× on true-factor pyramids).
           // `Break` on the first hit — this runs per SAMPLE per FRAGMENT,
           // and the previous flag-guarded loop always walked every level.
-          const lvlScale = vec3(t.uLevelScale.element(dlv));
+          // Factors are the level's WORLD sample sizes (lvlScale·w) to match
+          // pxPerWorldUnit; identity w ⇒ the legacy voxel factors.
+          const lvlScale = vec3(t.uLevelScale.element(dlv)).mul(w);
           If(
-            pxPerBaseVoxel
+            pxPerWorldUnit
               .mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)))
               .mul(u.uLodBias)
               .greaterThanEqual(1.0),

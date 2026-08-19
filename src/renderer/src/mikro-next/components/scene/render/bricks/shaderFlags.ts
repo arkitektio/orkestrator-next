@@ -74,6 +74,37 @@ const ANISO_STRIDE_STORAGE_KEY = "orkestrator.anisoStride";
 const ANISO_LOD_STORAGE_KEY = "orkestrator.anisoLod";
 
 /**
+ * World-metric LOD (same pattern): footprint distances, foveation angles and
+ * the anisoLod direction are measured in WORLD units (per-axis voxel world
+ * size from the layer affine) instead of raw voxel space. Voxel-space
+ * metrics are exact for isotropic affines but wrong by the affine's
+ * condition number — direction-dependently — for calibrated µm layers
+ * (0.5/0.5/5 µm SPIM: chosen level off by 10× per view, sign flipping with
+ * view direction; the refinement region a fixed world ellipsoid instead of
+ * view-centered). Planner side reads per replan; shader side is
+ * UNIFORM-driven (uVoxelWorldSize pushed as (1,1,1) when off) so the flag
+ * is live on both. Flag skew between sides is safe (the shader clamps to
+ * uDesiredLevel and falls back coarser).
+ */
+const WORLD_LOD_STORAGE_KEY = "orkestrator.worldLod";
+
+export function isWorldLodEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(WORLD_LOD_STORAGE_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setWorldLodEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(WORLD_LOD_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
+}
+
+/**
  * Hierarchical occupancy (R4): aggregate per-brick measured ranges up one
  * level (`core/octree/occupancyAggregate.ts`) and let the raymarcher hop a
  * whole COARSE cell when the aggregate proves every member invisible /

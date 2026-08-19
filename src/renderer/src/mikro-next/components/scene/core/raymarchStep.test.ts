@@ -351,6 +351,56 @@ describe("desiredLevelForDistance (the R4 hop's level-guard argument)", () => {
   });
 });
 
+describe("desiredLevelForDistance world metric (uVoxelWorldSize lockstep)", () => {
+  // κ=10 SPIM metric diag(0.5, 0.5, 5) over an isotropic [1,2,4,8] pyramid:
+  // per-level WORLD maxes = max_i(scale_i · w_i) — z carries every max.
+  const w: [number, number, number] = [0.5, 0.5, 5];
+  const levelScales: [number, number, number][] = [
+    [1, 1, 1],
+    [2, 2, 2],
+    [4, 4, 4],
+    [8, 8, 8],
+  ];
+  const worldMaxes = levelScales.map((s) =>
+    Math.max(s[0] * w[0], s[1] * w[1], s[2] * w[2]),
+  ); // [5, 10, 20, 40]
+  const minWorld = Math.max(...w); // one world voxel — the shader's min clamp
+  const pxPerUnit = 100;
+
+  it("goldens: the world call picks by px per WORLD unit", () => {
+    // px/world at d=400 → 0.25; 0.25·5 = 1.25 ≥ 1 ⇒ level 0.
+    expect(desiredLevelForDistance(400, pxPerUnit, worldMaxes, 1, 0, minWorld)).toBe(0);
+    // d=800 → 0.125; 0.125·5 < 1 but 0.125·10 = 1.25 ⇒ level 1.
+    expect(desiredLevelForDistance(800, pxPerUnit, worldMaxes, 1, 0, minWorld)).toBe(1);
+    // d=8000 → 0.0125; even the coarsest golden: 0.0125·40 = 0.5 < 1 ⇒ 3.
+    expect(desiredLevelForDistance(8000, pxPerUnit, worldMaxes, 1, 0, minWorld)).toBe(3);
+  });
+
+  it("clamps distances below one world voxel (max axis), mirroring max(dist, minWorld)", () => {
+    expect(desiredLevelForDistance(0.01, pxPerUnit, worldMaxes, 1, 0, minWorld)).toBe(
+      desiredLevelForDistance(minWorld, pxPerUnit, worldMaxes, 1, 0, minWorld),
+    );
+  });
+
+  it("stays monotone non-finer in world distance — the R4 hop argument survives the metric", () => {
+    let previous = 0;
+    for (let distance = 0.1; distance <= 200000; distance *= 1.3) {
+      const level = desiredLevelForDistance(distance, pxPerUnit, worldMaxes, 1, 0, minWorld);
+      expect(level).toBeGreaterThanOrEqual(previous);
+      previous = level;
+    }
+  });
+
+  it("identity metric defaults reproduce the legacy call exactly", () => {
+    const voxelMaxes = levelScales.map((s) => Math.max(...s));
+    for (let distance = 0.5; distance <= 20000; distance *= 2.1) {
+      expect(
+        desiredLevelForDistance(distance, pxPerUnit, voxelMaxes, 1, 0, 1),
+      ).toBe(desiredLevelForDistance(distance, pxPerUnit, voxelMaxes, 1, 0));
+    }
+  });
+});
+
 describe("aggregate hop predicate (R4 reuses residentBrickSkippable)", () => {
   it("hops a coarse cell whose AGGREGATE bounds prove every member skippable", () => {
     // Aggregate union [0, 150] on the dim-uint16 pool from the observed-range

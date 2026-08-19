@@ -46,11 +46,19 @@ export function directionProjectedPitch(
  * level otherwise; ortho (pxPerVoxelAtUnitDistance ≤ 0) is the constant
  * floor.
  *
+ * WORLD-metric LOD (uVoxelWorldSize ≠ identity): the caller passes the WORLD
+ * distance, per-level `max_i(scale_i · w_i)` as `levelMaxScales`, and
+ * `minDistance = max_i(w_i)` (one world voxel — the shader's min clamp). The
+ * defaults are the identity metric — bit-for-bit the legacy voxel formula.
+ *
  * This exists to PIN the soundness argument of the hierarchical-occupancy
  * coarse hop (R4): it is monotone NON-FINER in `distance`, and the ray
  * origin is the camera, so the finest desired level on any FORWARD ray
  * segment is at the segment's start — the hop at level `lvl` therefore
- * never skips a sample that would have desired finer than `lvl`.
+ * never skips a sample that would have desired finer than `lvl`. The world
+ * metric preserves the argument: world distance from the camera is monotone
+ * along a forward ray (a fixed positive-definite scaling of the same
+ * displacement), and the per-level factors stay distance-independent.
  */
 export function desiredLevelForDistance(
   distance: number,
@@ -58,10 +66,11 @@ export function desiredLevelForDistance(
   levelMaxScales: readonly number[],
   lodBias: number,
   floorLevel: number,
+  minDistance = 1,
 ): number {
   const coarsest = levelMaxScales.length - 1;
   if (pxPerVoxelAtUnitDistance <= 0) return Math.min(Math.max(floorLevel, 0), coarsest);
-  const pxPerBaseVoxel = pxPerVoxelAtUnitDistance / Math.max(distance, 1);
+  const pxPerBaseVoxel = pxPerVoxelAtUnitDistance / Math.max(distance, minDistance);
   for (let level = 0; level < coarsest; level++) {
     if (pxPerBaseVoxel * levelMaxScales[level] * lodBias >= 1) {
       return Math.min(Math.max(level, floorLevel), coarsest);

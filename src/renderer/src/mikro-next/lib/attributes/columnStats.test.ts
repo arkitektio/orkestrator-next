@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { AttributeLookupEngine } from "./lookupEngine";
 import {
   DISTINCT_LIMIT,
+  HISTOGRAM_BINS,
   readColumnDistinct,
   readColumnDomain,
+  readColumnHistogram,
   readDefaultFilterRule,
 } from "./columnStats";
 
@@ -65,6 +67,39 @@ describe("readColumnDistinct", () => {
     const { engine, sqls } = fakeEngine([]);
     await readColumnDistinct(engine, target, 8);
     expect(sqls[0]).toContain("LIMIT 9");
+  });
+});
+
+describe("readColumnHistogram", () => {
+  // A boolean flag column reads back as a 0…1 measure, and the binning SQL used
+  // to subtract from the column directly — which DuckDB rejects outright
+  // ("No function matches ... '-(BOOLEAN, INTEGER_LITERAL)'"), so configuring a
+  // colour-by on such a column failed instead of drawing two bars.
+  it("bins through a numeric cast so a boolean column is binnable", async () => {
+    const { engine, sqls } = fakeEngine([{ bin: 0, n: 7 }, { bin: 31, n: 3 }]);
+    const bins = await readColumnHistogram(engine, target, { min: 0, max: 1 });
+    expect(sqls[0]).toContain('TRY_CAST("area" AS DOUBLE)');
+    expect(sqls[0]).not.toMatch(/"area" -/);
+    // The NULL filter has to test the cast too, or rows with no numeric reading
+    // come back as a NULL bin.
+    expect(sqls[0]).toContain("TRY_CAST(\"area\" AS DOUBLE) IS NOT NULL");
+    expect(bins).toHaveLength(HISTOGRAM_BINS);
+    expect(bins[0]).toBe(7);
+    expect(bins[HISTOGRAM_BINS - 1]).toBe(3);
+  });
+
+  it("casts in the constant-column branch as well", async () => {
+    const { engine, sqls } = fakeEngine([{ n: 5 }]);
+    const bins = await readColumnHistogram(engine, target, { min: 1, max: 1 });
+    expect(sqls[0]).toContain('TRY_CAST("area" AS DOUBLE) IS NOT NULL');
+    expect(bins[HISTOGRAM_BINS / 2]).toBe(5);
+  });
+
+  it("drops a NULL bin rather than coercing it onto the first bar", async () => {
+    const { engine } = fakeEngine([{ bin: null, n: 9 }, { bin: 2, n: 4 }]);
+    const bins = await readColumnHistogram(engine, target, { min: 0, max: 1 });
+    expect(bins[0]).toBe(0);
+    expect(bins[2]).toBe(4);
   });
 });
 

@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { startNodePlanTracking } from "./nodePlanTracker";
@@ -276,6 +277,59 @@ describe("startNodePlanTracking", () => {
     expect(stores.viewerStore.getState().nodePlans[LAYER_ID]).toBeUndefined();
 
     stop();
+  });
+
+  it("builds the NodeCamera from the published viewSnapshot, not the live view", async () => {
+    // W3 coherence: the planner's camera must come from viewerStore's
+    // viewSnapshot (published atomically with the ranges) — a live viewStore
+    // read paired a fresh camera with one-visibility-hop-stale boxes.
+    const makeView = (position: [number, number, number]) => {
+      const cam = new THREE.PerspectiveCamera(60, 800 / 600, 1, 100000);
+      cam.position.set(...position);
+      cam.lookAt(256, 256, 0.5);
+      cam.updateMatrixWorld(true);
+      cam.updateProjectionMatrix();
+      return {
+        viewProjectionMatrix: new THREE.Matrix4().multiplyMatrices(
+          cam.projectionMatrix,
+          cam.matrixWorldInverse,
+        ),
+        viewportSize: { width: 800, height: 600 },
+        cameraPose: {
+          position,
+          isPerspective: true,
+          fovY: THREE.MathUtils.degToRad(60),
+          coordinateSystem: THREE.WebGLCoordinateSystem,
+        },
+      };
+    };
+    const near = makeView([-100, 256, 0.5]); // 100 voxels off the x face → refines
+    const far = makeView([20000, 256, 0.5]); // footprint ≪ 1 px → stays coarse
+
+    const planFor = async (
+      live: ReturnType<typeof makeView>,
+      snapshot: ReturnType<typeof makeView> | null,
+    ) => {
+      const stores = makeStores();
+      stores.modeStore.setState({ displayMode: "3D" } as never);
+      stores.viewStore.setState(live as never);
+      stores.viewerStore.setState({
+        layerViewRanges: { [LAYER_ID]: FULL_VIEW },
+        ...(snapshot ? { viewSnapshot: snapshot } : {}),
+      } as never);
+      const stop = startNodePlanTracking(stores);
+      await settle();
+      stop();
+      return stores.viewerStore.getState().nodePlans[LAYER_ID];
+    };
+
+    const nearLive = await planFor(near, null);
+    const farLive = await planFor(far, null);
+    expect(nearLive.targetLevel).not.toBe(farLive.targetLevel); // the two views are distinguishable
+    // Live view says FAR, snapshot says NEAR: the snapshot must win.
+    const snapshotWins = await planFor(far, near);
+    expect(snapshotWins.targetLevel).toBe(nearLive.targetLevel);
+    expect(snapshotWins.nodes.map((n) => n.key)).toEqual(nearLive.nodes.map((n) => n.key));
   });
 
   it("stops reacting after cleanup", async () => {

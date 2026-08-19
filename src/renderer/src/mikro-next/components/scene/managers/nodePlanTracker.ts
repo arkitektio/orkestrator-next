@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
-import { isAnisoLodEnabled } from "../render/bricks/shaderFlags";
+import { isAnisoLodEnabled, isWorldLodEnabled } from "../render/bricks/shaderFlags";
 import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "../core/octree/atlasFormat";
 import { totalBrickCount } from "../core/octree/nodeAddress";
@@ -27,7 +27,7 @@ import {
   type LayerNodePlan,
   type NodeCamera,
 } from "../core/octree/nodePlanning";
-import { buildAffineMatrix } from "../core/worldTransform";
+import { buildAffineMatrix, voxelWorldSizeOf } from "../core/worldTransform";
 import type { ModeState } from "../store/modeStore";
 import type { SceneState } from "../store/sceneStore";
 import type { UnplannableLayerInfo, ViewerState } from "../store/viewerStore";
@@ -139,7 +139,20 @@ export function startNodePlanTracking({
     const viewerState = viewerStore.getState();
     const layers = sceneStore.getState().layers;
     const mode = modeStore.getState().displayMode;
-    const { viewProjectionMatrix, viewportSize, cameraPose } = viewStore.getState();
+    // COHERENT VIEW SNAPSHOT: the camera inputs come from viewerStore's
+    // `viewSnapshot` — the very emission the CURRENT layerViewRanges were
+    // computed from — never from a live viewStore read. A live read paired a
+    // fresh camera with one-visibility-hop-stale visible boxes on ~1 in 4
+    // mid-orbit replans (the box also solely determines rootRange), and the
+    // coherence otherwise rested on listener-insertion order. Fallback to
+    // the live view only BEFORE the first visibility publish (ranges are
+    // empty then, so there is nothing to be incoherent with).
+    const snapshot = viewerState.viewSnapshot;
+    const liveView = viewStore.getState();
+    const viewProjectionMatrix = snapshot?.viewProjectionMatrix ?? liveView.viewProjectionMatrix;
+    const viewportSize = snapshot?.viewportSize ?? liveView.viewportSize;
+    const cameraPose = snapshot ? snapshot.cameraPose : liveView.cameraPose;
+    const worldLod = isWorldLodEnabled();
 
     const prevPlans = viewerState.nodePlans;
     const nextPlans: Record<string, LayerNodePlan> = {};
@@ -289,6 +302,11 @@ export function startNodePlanTracking({
         // Corner-anchored: voxel v sits at affine(v), so the frustum/camera
         // math below runs in plain voxel space.
         const voxelToWorld = buildAffineMatrix(layer);
+        // World-metric LOD (`orkestrator.worldLod`, read per replan — live
+        // toggle): hand the planner the per-axis world voxel size so its
+        // footprint/foveation/aniso math runs in world units. Off ⇒ omit ⇒
+        // the planner's identity fallback IS the legacy voxel metric.
+        const voxelWorldSize = worldLod ? voxelWorldSizeOf(voxelToWorld) : undefined;
         scratchVoxelVP.copy(viewProjectionMatrix).multiply(voxelToWorld);
         // Plane extraction must match the matrix's NDC z convention —
         // WebGPU maps z to [0,1]; the WebGL default would place the near
@@ -322,6 +340,22 @@ export function startNodePlanTracking({
               axisPoint.z - cameraPose.position[2],
             )
             .transformDirection(inverse);
+          // The planner measures foveation displacements in SCORE space —
+          // voxel deltas scaled per axis by voxelWorldSize. The axis must be
+          // normalized in that same space: scale the voxel-space direction
+          // by s and renormalize (≡ the world direction for rotation-free
+          // affines; exactly the voxel direction when s is identity). A raw
+          // voxel-space axis against scaled displacements misreads angles by
+          // the affine's condition number.
+          if (voxelWorldSize) {
+            direction
+              .set(
+                direction.x * voxelWorldSize[0],
+                direction.y * voxelWorldSize[1],
+                direction.z * voxelWorldSize[2],
+              )
+              .normalize();
+          }
           if (Number.isFinite(direction.x) && direction.lengthSq() > 1e-12) {
             voxelViewDirection = [direction.x, direction.y, direction.z];
           }
@@ -330,6 +364,7 @@ export function startNodePlanTracking({
           voxelFrustum: scratchFrustum,
           voxelPosition,
           pxPerVoxelAtUnitDistance,
+          voxelWorldSize,
           voxelViewDirection,
         };
       }
@@ -352,7 +387,12 @@ export function startNodePlanTracking({
         currentZ: viewerState.currentZ,
         dimSelections: viewerState.dimSelections,
         maxPlanBytes,
-        decodeAllowanceBytes,
+        // COLD-OPEN gate: plan #1 (no previous plan for this class) skips
+        // the sub-floor decode allowance so the initial download is exactly
+        // the pre-allowance set (coarse backdrop + free-floor refinement) —
+        // time-to-first-image beats early fine detail. The sub-floor region
+        // unlocks from the second replan (~500 ms later / next interaction).
+        decodeAllowanceBytes: prevRepresentative ? decodeAllowanceBytes : 0,
         anisoLod: isAnisoLodEnabled(),
         previousBudgetMinLevel:
           prevRepresentative && prevRepresentative.mode === mode
@@ -438,17 +478,25 @@ export function startNodePlanTracking({
   // churn the main thread while bricks stream in.
   const initialViewer = viewerStore.getState();
   let lastViewRanges = initialViewer.layerViewRanges;
+  let lastViewSnapshot = initialViewer.viewSnapshot;
   let lastLodBias = initialViewer.lodBias;
   let lastCurrentZ = initialViewer.currentZ;
   let lastDimSelections = initialViewer.dimSelections;
   const unsubscribeViewer = viewerStore.subscribe((state) => {
     if (
       state.layerViewRanges !== lastViewRanges ||
+      // A snapshot can move with UNCHANGED ranges (e.g. a view change that
+      // produces the same boxes). recompute() reads the snapshot, so it must
+      // reschedule then too — the viewStore matrix trigger below can fire a
+      // replan BEFORE visibility publishes, which would otherwise be the
+      // last word despite consuming the previous snapshot.
+      state.viewSnapshot !== lastViewSnapshot ||
       state.lodBias !== lastLodBias ||
       state.currentZ !== lastCurrentZ ||
       state.dimSelections !== lastDimSelections
     ) {
       lastViewRanges = state.layerViewRanges;
+      lastViewSnapshot = state.viewSnapshot;
       lastLodBias = state.lodBias;
       lastCurrentZ = state.currentZ;
       lastDimSelections = state.dimSelections;

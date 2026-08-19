@@ -38,6 +38,24 @@ export interface TrackableObject {
 // for the store's many consumers.
 export type { LayerViewRange } from "../core/visibility";
 import type { LayerViewRange } from "../core/visibility";
+import type { CameraPose } from "./viewStore";
+
+/**
+ * The exact view the CURRENT `layerViewRanges` were computed from — published
+ * by `visibilityTracker` in the SAME store write as the ranges. The node
+ * planner builds its `NodeCamera` from this instead of a live
+ * `viewStore.getState()`, which made camera/box coherence rest on zustand
+ * listener-insertion order + rAF FIFO: ~1 in 4 mid-orbit replans paired a
+ * fresh camera with one-emission-stale ranges (the stale box also solely
+ * determines `rootRange`). With the snapshot the pairing is STRUCTURAL —
+ * whatever the plan's age, camera and box describe the same moment.
+ * Fields carry viewStore's object identities (write-if-changed friendly).
+ */
+export type ViewSnapshot = {
+  viewProjectionMatrix: THREE.Matrix4;
+  viewportSize: { width: number; height: number };
+  cameraPose: CameraPose | null;
+};
 import type { LayerNodePlan } from "../core/octree/nodePlanning";
 import type { BrickResidencyManager } from "../managers/brickResidency";
 import type { FabriksCollectionManager } from "../render/fabriks/fabriksManager";
@@ -166,6 +184,9 @@ export interface ViewerState {
   visibleLayers: string[]
   // Visible image-coordinate ranges per layer
   layerViewRanges: Record<string, LayerViewRange>
+  /** See `ViewSnapshot`: the view the ranges above were computed from. Null
+   * until the first visibility recompute. */
+  viewSnapshot: ViewSnapshot | null
   /**
    * The live probe. **A HOT field: vanilla subscribers only.**
    *
@@ -255,7 +276,13 @@ export interface ViewerState {
   register: (ref: TrackableObject) => void
   unregister: (ref: TrackableObject) => void
   setVisible: (visibleSet: Set<string>) => void
-  setLayerViewRanges: (ranges: Record<string, LayerViewRange>) => void
+  /** `snapshot` is optional so range-only callers (tests, tools) keep
+   * working; `visibilityTracker` — the production writer — always passes it,
+   * in the same atomic write as the ranges. */
+  setLayerViewRanges: (
+    ranges: Record<string, LayerViewRange>,
+    snapshot?: ViewSnapshot,
+  ) => void
   setProbedCoordinate: (coordinate: ProbedCoordinate | null) => void
   /** Written ONLY by `ProbeReadoutSettler`; everything else writes the hot
    * field and lets the settler decide when the HUD sees it. */
@@ -337,6 +364,7 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     trackables: new Set(),
     visibleLayers: [],
     layerViewRanges: {},
+    viewSnapshot: null,
     probedCoordinate: null,
     probeThreshold: 0.01,
     lodBias: 1,
@@ -379,7 +407,8 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
       return { trackables };
     }),
     setVisible: (visibleSet) => set({ visibleLayers: Array.from(visibleSet) }),
-    setLayerViewRanges: (ranges) => set({ layerViewRanges: ranges }),
+    setLayerViewRanges: (ranges, snapshot) =>
+      set(snapshot ? { layerViewRanges: ranges, viewSnapshot: snapshot } : { layerViewRanges: ranges }),
     setProbedCoordinate: (coordinate) => set({ probedCoordinate: coordinate }),
     probeReadout: null,
     setProbeReadout: (coordinate) =>

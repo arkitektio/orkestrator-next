@@ -13,7 +13,9 @@ import {
   resolveMaxRaySteps,
   resolveSmoothThreshold,
 } from "../../core/qualityGovernor";
-import { isSmoothZoomEnabled } from "../../render/bricks/shaderFlags";
+import { isSmoothZoomEnabled, isWorldLodEnabled } from "../../render/bricks/shaderFlags";
+import { voxelWorldSizeOf } from "../../core/worldTransform";
+import type * as THREE from "three";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
@@ -40,6 +42,7 @@ export type VolumeRayUniformHandles = {
   uDesiredLevel: { value: number };
   uLodBias: { value: number };
   uPxPerVoxelAtUnitDist: { value: number };
+  uVoxelWorldSize: { value: THREE.Vector3 };
   uMinDelta: { value: number };
 };
 
@@ -85,11 +88,18 @@ export const useVolumeRayUniforms = (
     pool,
     desiredLevel,
     planTargetLevel,
+    worldMatrix,
   }: {
     pool: LayerBrickPool | null;
     /** Usually `planTargetLevel`; a merged pass passes its group's level. */
     desiredLevel: number | undefined;
     planTargetLevel: number | undefined;
+    /** The layer's voxel→world affine, for `uVoxelWorldSize` (world-metric
+     * LOD in `desiredLevelAt` / the tricubic gate). Omitted ⇒ identity ⇒
+     * legacy voxel metric — also what `orkestrator.worldLod` OFF pushes.
+     * The flag is read here at push time, so it is live per effect run
+     * (planner lockstep: nodePlanTracker reads it per replan). */
+    worldMatrix?: THREE.Matrix4 | null;
   },
 ): void => {
   const lodBias = useViewerStore((s) => s.lodBias);
@@ -128,6 +138,10 @@ export const useVolumeRayUniforms = (
     nodes.uDesiredLevel.value = desiredLevel;
     nodes.uLodBias.value = lodBias;
     nodes.uPxPerVoxelAtUnitDist.value = pxPerVoxelAtUnitDistance;
+    const worldSize =
+      worldMatrix && isWorldLodEnabled() ? voxelWorldSizeOf(worldMatrix) : null;
+    if (worldSize) nodes.uVoxelWorldSize.value.set(worldSize[0], worldSize[1], worldSize[2]);
+    else nodes.uVoxelWorldSize.value.set(1, 1, 1);
     nodes.uMinDelta.value = minDelta;
     // uMaxSteps is driven by `useStepScaleUniform` (adaptive depth flips it
     // per activity edge — a vanilla-subscription cadence, not an effect one).
@@ -139,6 +153,7 @@ export const useVolumeRayUniforms = (
     lodBias,
     pxPerVoxelAtUnitDistance,
     minDelta,
+    worldMatrix,
     qualityVersion,
     invalidate,
     viewerStoreApi,

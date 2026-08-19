@@ -23,8 +23,8 @@ export const PagePage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <DokumentsPage.Komments object={data.page} />
+            <Sidebars.Tab label="Knowledge">
+              <DokumentsPage.Knowledge object={data.page} />
             </Sidebars.Tab>
           </Sidebars>
         }

@@ -151,15 +151,11 @@ const buildSelfActions = (_model: Identifier) => {
   };
 };
 
-const buildKomments = <T extends Object> (model: Identifier) => {
-  return ({ ...props }: ObjectProps<T>) => {
-    return getSmartBuilderAdapters().renderKomments({
-      identifier: model,
-      object: props.object,
-    });
-  };
-};
-
+/**
+ * The claims made about this object and the discussion about it are one
+ * surface (`KnowledgeSidebar`), so there is one builder for them. The old
+ * `Komments` half is gone — pages ask for `Knowledge` and get both.
+ */
 const buildKnowledge = <T extends Object>(model: Identifier) => {
   return ({ ...props }: ObjectProps<T>) => {
     return getSmartBuilderAdapters().renderKnowledge({
@@ -269,7 +265,6 @@ export const buildSmart = <T extends Object>(
     Smart: buildSmartModel<T>(model),
     Drop: buildDropModel<T>(model),
     Actions: buildSelfActions(model),
-    Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),
     EnhanceButton: buildEnhanceButton(model),
     TinyKnowledge: buildTinyKnowledge(model),

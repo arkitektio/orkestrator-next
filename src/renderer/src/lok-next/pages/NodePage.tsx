@@ -13,7 +13,7 @@ export const ClientPage = asDetailQueryRoute(useDetailClientQuery, ({ data }) =>
       object={data.client}
       actions={<LokClient.Actions object={data?.client} />}
       title={data?.client?.release.app.identifier}
-      sidebars={<LokClient.Komments object={data?.client} />}
+      sidebars={<LokClient.Knowledge object={data?.client} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

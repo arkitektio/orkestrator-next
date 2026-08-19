@@ -25,8 +25,8 @@ export const DatasetPage = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => 
       }
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <ElektroDataset.Komments object={dataset} />
+          <Sidebars.Tab label="Knowledge">
+            <ElektroDataset.Knowledge object={dataset} />
           </Sidebars.Tab>
         </Sidebars>
       }

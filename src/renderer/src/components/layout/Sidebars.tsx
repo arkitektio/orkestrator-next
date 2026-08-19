@@ -138,7 +138,7 @@ const SidebarsRoot = (props: {
  * The page-rail tab stack, composed from children instead of a keyed map:
  *
  *   <Sidebars sidebarKey="SceneDetail" defaultTab="Layers">
- *     <Sidebars.Tab label="Comments"><Komments … /></Sidebars.Tab>
+ *     <Sidebars.Tab label="Knowledge"><KnowledgeSidebar … /></Sidebars.Tab>
  *     <Sidebars.Tab label="Layers"><SceneLayersSidebar /></Sidebars.Tab>
  *   </Sidebars>
  *

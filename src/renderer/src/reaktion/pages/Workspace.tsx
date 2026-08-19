@@ -28,8 +28,8 @@ export const Page = asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
       object={data.workspace}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <FlussWorkspace.Komments object={data.workspace} />
+          <Sidebars.Tab label="Knowledge">
+            <FlussWorkspace.Knowledge object={data.workspace} />
           </Sidebars.Tab>
           <Sidebars.Tab label="Versions">
             <div className="p-4 flex flex-col gap-2">

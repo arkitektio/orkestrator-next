@@ -1,20 +1,23 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { createDefaultWorker } from "@/lib/zarr/runner";
-import { workerPool } from "../../../workers/pool";
-import { createRepackDispatcher } from "../core/octree/repackDispatcher";
 import type { SceneRenderer } from "../render/gpu/sceneRenderer";
 import { useSceneStoreApi } from "../store/sceneStore";
 import { useViewerStoreApi } from "../store/viewerStore";
 import { useViewStoreApi } from "../store/viewStore";
-import { BrickResidencyManager } from "./brickResidency";
+import type { BrickResidencyManager } from "./brickResidency";
+import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
 
 /**
- * Owns the brick residency manager's lifecycle. Lives INSIDE the R3F canvas
- * because the manager needs the renderer for its 3D-texture uploads and the
- * demand-frameloop `invalidate`. The per-frame `useFrame` drain applies
- * the byte-budgeted upload batch; the manager itself re-invalidates while
- * work remains, so `frameloop="demand"` keeps ticking until the queue is dry.
+ * The brick system's FRAME DRIVER, inside the R3F canvas.
+ *
+ * The manager itself is started by `BrickSystemHost`, outside the canvas, so
+ * fetching can begin before `renderer.init()` resolves. This component supplies
+ * the two things that genuinely need a live canvas — the renderer (atlas writes,
+ * page-table flushes, GPU repack) and the demand-frameloop `invalidate` — and
+ * runs the per-frame byte-budgeted drain.
+ *
+ * When `orkestrator.earlyBricks` is off it also CONSTRUCTS the system, exactly
+ * as it used to, so the flag reverts the whole hoist rather than half of it.
  */
 export function BrickSystemProvider() {
   const gl = useThree((state) => state.gl);
@@ -24,40 +27,33 @@ export function BrickSystemProvider() {
   const viewStore = useViewStoreApi();
   const managerRef = useRef<BrickResidencyManager | null>(null);
 
-  useEffect(() => {
-    // Pre-warm the zarr decode pool: module workers (zstd/blosc bundles) cost
-    // tens of ms each to spawn+eval, and lazily they serialize in front of
-    // the FIRST chunk fetches of a cold scene. Warm them now so spawn
-    // overlaps metadata fetch/plan. Capped: machines with many cores still
-    // lazy-spawn the rest under real load. The module-level pool outlives
-    // scene mounts, so this is effectively once per app session.
-    workerPool.prewarm(createDefaultWorker, 8);
+  // Must match the host's decision for this mount — read once, same as there.
+  const earlyRef = useRef<boolean | null>(null);
+  if (earlyRef.current === null) earlyRef.current = isEarlyBricksEnabled();
 
-    // Repack workers live exactly as long as the manager they serve.
-    const repack = createRepackDispatcher();
-    const manager = new BrickResidencyManager({
-      // R3F types `gl` as WebGLRenderer; the Canvas factory actually creates a
-      // WebGPURenderer (Scene.tsx) — the manager reaches the device only
-      // through sceneRenderer.ts.
-      renderer: gl as unknown as SceneRenderer,
-      viewerStore,
-      sceneStore,
-      invalidate,
-      repack,
-      // The streaming render-cadence gate and its off-frame pump read this at
-      // fire time (gestures started after a timer was armed still drain under
-      // the trickle policy).
-      isInteracting: () => viewStore.getState().cameraMoving,
-    });
+  useEffect(() => {
+    // The host (outside the canvas) normally built and registered the manager
+    // long before this effect runs — R3F awaits the async `gl` factory, so this
+    // component mounts well after the host's effect.
+    //
+    // Own one only if there isn't one: the legacy path (flag off, no host), and
+    // as a safety net if the host somehow did not register. Falling back is the
+    // difference between "slightly later than optimal" and "a blank scene".
+    const existing = earlyRef.current ? viewerStore.getState().brickSystem : null;
+    const owned = existing ? null : createBrickSystem({ viewerStore, sceneStore, viewStore });
+    const manager = existing ?? owned!.manager;
+
     managerRef.current = manager;
-    const stop = manager.start();
-    viewerStore.getState().registerBrickSystem(manager);
+    // R3F types `gl` as WebGLRenderer; the Canvas factory actually creates a
+    // WebGPURenderer (SceneViewport) — the manager reaches the device only
+    // through sceneRenderer.ts.
+    manager.attachRenderer(gl as unknown as SceneRenderer, invalidate);
+
     return () => {
-      stop();
-      viewerStore.getState().registerBrickSystem(null);
-      manager.dispose();
-      repack.dispose();
+      // Detach BEFORE disposing: GPU resources belong to the departing device.
+      manager.detachRenderer();
       managerRef.current = null;
+      owned?.dispose();
     };
   }, [gl, invalidate, viewerStore, sceneStore, viewStore]);
 

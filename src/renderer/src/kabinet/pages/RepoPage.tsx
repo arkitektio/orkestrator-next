@@ -18,8 +18,8 @@ const RepoPage = asDetailQueryRoute(useGetRepoQuery, ({ data, refetch }) => {
       object={repo}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KabinetRepo.Komments object={repo} />
+          <Sidebars.Tab label="Knowledge">
+            <KabinetRepo.Knowledge object={repo} />
           </Sidebars.Tab>
         </Sidebars>
       }

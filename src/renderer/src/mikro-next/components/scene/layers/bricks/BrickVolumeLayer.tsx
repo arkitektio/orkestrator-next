@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { ProjectionMode } from "@/mikro-next/api/graphql";
 import { marchResidentBricks } from "../../core/octree/brickSampling";
 import { perfMonitor } from "../../managers/perfMonitor";
+import { coldOpenTimeline } from "../../managers/coldOpenTimeline";
 import { climToUnit } from "../../core/dataRange";
 import { intersectLocalVolumeBox } from "../../core/probeMath";
 import { resolveProbeStrategy } from "../../core/probe/probeModes";
@@ -385,6 +386,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     const buildStartedAt = performance.now();
     const created = createVolumeNodeMaterial(pool, pool, channelData, groupMemberIds.length);
     const buildMs = performance.now() - buildStartedAt;
+    coldOpenTimeline.stamp("materialBuilt");
     if (buildMs >= 40) {
       console.warn(
         `[scene-perf] volume material build (${groupMemberIds.length} member(s)) took ${buildMs.toFixed(0)} ms`,

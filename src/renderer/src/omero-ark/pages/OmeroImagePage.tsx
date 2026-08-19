@@ -8,7 +8,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { OmeroArkImage } from "@/linkers";
-import { Komments } from "@/kraph/components/komments/Komments";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
 
@@ -19,10 +19,13 @@ const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data, id }) => {
       pageActions={<OmeroArkImage.Actions object={data?.image} />}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
+          <Sidebars.Tab label="Knowledge">
             <Guard.Kraph>
               {data?.image ? (
-                <Komments identifier="@omero-ark/image" object={data.image} />
+                <KnowledgeSidebar
+                  identifier="@omero-ark/image"
+                  object={data.image}
+                />
               ) : null}
             </Guard.Kraph>
           </Sidebars.Tab>

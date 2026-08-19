@@ -54,8 +54,8 @@ export const DefinitionPage = asDetailQueryRoute(
         object={data?.definition}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KabinetDefinition.Komments object={data?.definition} />
+            <Sidebars.Tab label="Knowledge">
+              <KabinetDefinition.Knowledge object={data?.definition} />
             </Sidebars.Tab>
           </Sidebars>
         }

@@ -42,8 +42,8 @@ export const RecordingPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroSimulation.Komments object={data.recording} />
+            <Sidebars.Tab label="Knowledge">
+              <ElektroSimulation.Knowledge object={data.recording} />
             </Sidebars.Tab>
           </Sidebars>
         }

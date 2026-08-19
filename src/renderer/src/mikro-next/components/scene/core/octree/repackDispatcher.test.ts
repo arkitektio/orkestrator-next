@@ -158,3 +158,44 @@ describe("createBufferFreeList", () => {
     expect(list.take(16)).toBeUndefined();
   });
 });
+
+/**
+ * `prewarm` exists so the FIRST brick of a cold scene does not pay worker
+ * spawn + module evaluation on top of its own decode. Under vitest there is no
+ * `Worker`, so `createRepackDispatcher` returns the sync implementation — which
+ * is exactly the contract being pinned here: prewarm is optional, and calling it
+ * (or not) must never change repack behaviour.
+ */
+describe("RepackDispatcher.prewarm", () => {
+  it("is safe to call, repeatedly, on whichever implementation is live", () => {
+    const dispatcher = createRepackDispatcher();
+    expect(() => {
+      dispatcher.prewarm?.();
+      dispatcher.prewarm?.();
+      dispatcher.prewarm?.();
+    }).not.toThrow();
+    dispatcher.dispose();
+  });
+
+  it("the sync fallback exposes no prewarm — callers must optional-call it", () => {
+    // If this ever becomes defined, `repack.prewarm?.()` at the call sites is
+    // still correct; the assertion documents why the `?.` is there.
+    expect(createSyncRepackDispatcher().prewarm).toBeUndefined();
+  });
+
+  it("leaves repack results identical after prewarming", async () => {
+    const job = buildJob([1, 1, 0]);
+    const dispatcher = createRepackDispatcher();
+    dispatcher.prewarm?.();
+    const outcome = await dispatcher.repack(job);
+
+    const reference = new Float32Array(job.elementCount);
+    const referenceResult = repackBrick({ ...job.input, output: reference });
+
+    expect(outcome.min).toBe(referenceResult.min);
+    expect(outcome.max).toBe(referenceResult.max);
+    expect(outcome.uniformValue).toBe(referenceResult.uniformValue);
+    expect(Array.from(outcome.data)).toEqual(Array.from(reference));
+    dispatcher.dispose();
+  });
+});

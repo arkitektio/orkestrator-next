@@ -14,6 +14,7 @@ import { Equal, Microscope, Tag } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AssertionEvidence } from "../AssertionEvidence";
+import { Komments } from "../komments/Komments";
 import { AssignedEntity, EntityAssigner } from "../EntityAssigner";
 import { TermAssigner } from "../TermAssigner";
 import { MetricsTable } from "../tables/MetricsTable";
@@ -103,6 +104,12 @@ const Section = ({
  *   (`linkStructureToEntity`). It says this object informs that entity — the
  *   identity claim, not a fresh one. Entities are graph-scoped, so this one
  *   does need a concrete row picked out of a specific graph.
+ *
+ * The discussion lives here too, as the last block. A comment is the same act
+ * as the two above — a claim about this structure, recorded in the same
+ * evidence log — so splitting it into its own rail tab made one subject look
+ * like two, and left each tab half empty. One column, one scroll: what is
+ * claimed, then what is said about it.
  */
 export const KnowledgeSidebar = ({ identifier, object }: KnowledgeSidebarProps) => {
   // There is no organization-wide read for a structure by identifier + object
@@ -294,6 +301,10 @@ export const KnowledgeSidebar = ({ identifier, object }: KnowledgeSidebarProps) 
           {loadingEvidence ? "Loading…" : "Show recorded measurements"}
         </Button>
       )}
+
+      <Separator />
+
+      <Komments identifier={identifier} object={object} />
     </div>
   );
 };

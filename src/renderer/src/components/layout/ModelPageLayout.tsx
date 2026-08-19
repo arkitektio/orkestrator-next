@@ -13,11 +13,18 @@ import {
 } from "react";
 import { Sidebars } from "./Sidebars";
 import { PageLayout, PageVariant } from "./PageLayout";
-import { Komments } from "@/kraph/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 
 /** Label of the rail tab holding this structure's conversations. */
 const CHAT_TAB_LABEL = "Chat";
+
+/**
+ * Label of the rail tab holding everything kraph records about this structure —
+ * the claims made about it AND the discussion. One tab, because a comment is a
+ * claim in the same evidence log; two tabs asked the reader to know which kind
+ * of remark they were about to make before they made it.
+ */
+const KNOWLEDGE_TAB_LABEL = "Knowledge";
 
 /**
  * Most model pages hand in their own rail instead of using the default below,
@@ -27,7 +34,7 @@ const CHAT_TAB_LABEL = "Chat";
  * - a `<Sidebars>` rail gets the tab appended (`collectTabs` dedups by label,
  *   so a rail already spelling out its own "Chat" keeps winning);
  * - a bare component as the rail (a handful of pages pass just their
- *   `Komments`) is promoted to a two-tab rail, since a tabless rail has
+ *   `Knowledge`) is promoted to a two-tab rail, since a tabless rail has
  *   nowhere for the chat to go.
  */
 const withChatTab = (
@@ -49,7 +56,7 @@ const withChatTab = (
 
   return (
     <Sidebars sidebarKey={sidebarKey}>
-      <Sidebars.Tab label="Comments">{rail}</Sidebars.Tab>
+      <Sidebars.Tab label={KNOWLEDGE_TAB_LABEL}>{rail}</Sidebars.Tab>
       {chatTab}
     </Sidebars>
   );
@@ -98,9 +105,6 @@ export const ModelPageLayout = ({
   pageActions,
 }: ModelPageLayoutProps) => {
   const objects = useMemo(() => [{ identifier, object }], [identifier, object]);
-  const kommentsSidebar = (
-    <Komments identifier={identifier} object={object} />
-  );
   const knowledgeSidebar = (
     <KnowledgeSidebar identifier={identifier} object={object} />
   );
@@ -122,10 +126,7 @@ export const ModelPageLayout = ({
           defaultTab={defaultSidebar}
           variant={overlay ? "overlay" : "default"}
         >
-          <Sidebars.Tab label="Comments">
-            <Guard.Kraph>{kommentsSidebar}</Guard.Kraph>
-          </Sidebars.Tab>
-          <Sidebars.Tab label="Knowledge">
+          <Sidebars.Tab label={KNOWLEDGE_TAB_LABEL}>
             <Guard.Kraph>{knowledgeSidebar}</Guard.Kraph>
           </Sidebars.Tab>
           {additionalSidebars}

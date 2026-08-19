@@ -125,7 +125,19 @@ export function ladderFeedforwardPassCount(
  * traversal. */
 export type VolumeFrameKey = {
   cameraElements: readonly number[];
-  structureKey: string;
+  /**
+   * Null = "not computed this frame".
+   *
+   * Building it walks every volume mesh and stringifies its world matrix, and
+   * during a gesture the camera compare above it fails on essentially every
+   * frame — so the string was built and thrown away ~60×/s. `decideVolumeFrame`
+   * now resolves it lazily, leaving this null when it never got that far.
+   *
+   * Null is treated as CHANGED on both sides of the compare, so a skipped
+   * computation can only ever cause an extra render, never a missed one —
+   * the "any doubt → render" rule the whole cache is built on.
+   */
+  structureKey: string | null;
   residencyVersion: number;
   poolsVersion: number;
   qualityVersion: number;
@@ -157,28 +169,49 @@ export function decideVolumeFrame(input: {
    * is throttled on a SEPARATE timer, so keying on the version alone lets a
    * streamed frame arrive with an unchanged version and show stale bricks. */
   streaming: boolean;
-  key: VolumeFrameKey;
+  /** `structureKey` is a THUNK: only called if the cheaper checks all pass. */
+  key: Omit<VolumeFrameKey, "structureKey"> & { structureKey: () => string };
   trackerReason: string;
   previous: VolumeFrameKey | null;
-}): VolumeFrameDecision {
+}): VolumeFrameDecision & {
+  /** The key to remember for the next frame, with `structureKey` resolved iff
+   * the decision actually needed it. */
+  resolved: VolumeFrameKey;
+} {
   const { cacheEnabled, hasTargetContent, streaming, key, trackerReason, previous } = input;
-  if (!cacheEnabled) return { render: true, reason: "cache-off" };
-  if (!hasTargetContent) return { render: true, reason: "no-content" };
-  if (previous === null) return { render: true, reason: "no-previous" };
-  if (streaming) return { render: true, reason: "streaming" };
+  let structureKey: string | null = null;
+  const resolve = (): string => (structureKey ??= key.structureKey());
+  const out = (decision: VolumeFrameDecision) => ({
+    ...decision,
+    resolved: { ...key, structureKey },
+  });
+  if (!cacheEnabled) return out({ render: true, reason: "cache-off" });
+  if (!hasTargetContent) return out({ render: true, reason: "no-content" });
+  if (previous === null) return out({ render: true, reason: "no-previous" });
+  if (streaming) return out({ render: true, reason: "streaming" });
   if (key.targetWidth !== previous.targetWidth || key.targetHeight !== previous.targetHeight)
-    return { render: true, reason: "resize" };
-  if (!key.cameraElements.every(Number.isFinite)) return { render: true, reason: "camera-invalid" };
+    return out({ render: true, reason: "resize" });
+  if (!key.cameraElements.every(Number.isFinite))
+    return out({ render: true, reason: "camera-invalid" });
   if (!sameElements(key.cameraElements, previous.cameraElements))
-    return { render: true, reason: "camera" };
-  if (key.structureKey !== previous.structureKey) return { render: true, reason: "structure" };
+    return out({ render: true, reason: "camera" });
+  // Everything below here needs the structure key. Resolve BEFORE comparing:
+  // `||` short-circuits, so testing `previous.structureKey === null` first left
+  // this frame's key unresolved too — and the next frame would then see null
+  // again and re-render, forever. The cache would never re-establish after a
+  // single gesture frame.
+  const currentStructure = resolve();
+  // A previous frame that skipped the computation counts as changed.
+  if (previous.structureKey === null || currentStructure !== previous.structureKey)
+    return out({ render: true, reason: "structure" });
   if (key.residencyVersion !== previous.residencyVersion)
-    return { render: true, reason: "residency" };
-  if (key.poolsVersion !== previous.poolsVersion) return { render: true, reason: "pools" };
-  if (key.qualityVersion !== previous.qualityVersion) return { render: true, reason: "quality" };
+    return out({ render: true, reason: "residency" });
+  if (key.poolsVersion !== previous.poolsVersion) return out({ render: true, reason: "pools" });
+  if (key.qualityVersion !== previous.qualityVersion)
+    return out({ render: true, reason: "quality" });
   if (key.trackerVersion !== previous.trackerVersion)
-    return { render: true, reason: `uniforms:${trackerReason}` };
-  return { render: false, reason: "cached" };
+    return out({ render: true, reason: `uniforms:${trackerReason}` });
+  return out({ render: false, reason: "cached" });
 }
 
 // ---------------------------------------------------------------------------

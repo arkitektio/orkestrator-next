@@ -28,8 +28,8 @@ export const AnalogSignalChannelPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroAnalogSignalChannel.Komments
+            <Sidebars.Tab label="Knowledge">
+              <ElektroAnalogSignalChannel.Knowledge
                 object={data.analogSignalChannel}
               />
             </Sidebars.Tab>

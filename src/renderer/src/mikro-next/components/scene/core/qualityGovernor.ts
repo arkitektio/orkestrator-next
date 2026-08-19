@@ -263,6 +263,51 @@ export const MAX_RAY_STEPS_CEILING = 2048;
 export const MAX_SETTLE_REFINE_STAGES = 2;
 
 /**
+ * Extra stride multiplier for CANVAS-PASS volumes (labels/masks) while the
+ * camera moves.
+ *
+ * Image volumes raymarch into the compositor's render target, which drops to
+ * `resolveVolumeScale` = 0.5 linear — a QUARTER of the fragments — for the
+ * duration of a gesture. Label volumes cannot share that target (their
+ * NormalBlending cannot ride an additive-delta buffer), so they raymarch live
+ * in the canvas pass at full buffer resolution on every rendered frame. They
+ * get the active step scale and adaptive depth like everything else, but not
+ * the resolution cut, so during a gesture a mask layer costs ~4× the fragments
+ * of the image underneath it.
+ *
+ * This recovers part of that asymmetry the only way a canvas-pass material can:
+ * longer strides. Deliberately modest — masks are nearest-sampled, so an
+ * aggressive stride starts stepping over thin structures, and unlike a
+ * resolution cut that is a CORRECTNESS artifact (a label that vanishes), not
+ * just a softer image. Settled frames are untouched.
+ *
+ * Applied to LABEL materials only, which is narrower than the name suggests:
+ * with `orkestrator.volumeTarget` off, image volumes also render in the canvas
+ * pass and also miss the resolution cut — but that flag exists to reproduce
+ * pre-compositor behaviour exactly, so it deliberately gets no compensation.
+ */
+export const CANVAS_PASS_ACTIVE_STEP_SCALE = 1.5;
+
+/**
+ * The step scale a material should actually use.
+ *
+ * Pure so the asymmetry above is stated once and testable, rather than being an
+ * inline `* 1.5` at a uniform-write site.
+ */
+export function resolveStepScale(input: {
+  /** `activeStepScale` or `settledStepScale`, already load-factored. */
+  base: number;
+  /** cameraMoving || streaming. */
+  active: boolean;
+  /** True for materials that render in the canvas pass (labels), false for
+   * those that render into the compositor's reduced-resolution target. */
+  canvasPass: boolean;
+}): number {
+  if (!input.active || !input.canvasPass) return input.base;
+  return input.base * CANVAS_PASS_ACTIVE_STEP_SCALE;
+}
+
+/**
  * ADAPTIVE DEPTH: the per-fragment ray-step ceiling for the current activity
  * state. In the zoom+tilt worst case the diagonal ray always runs to the
  * `uMaxSteps` ceiling — the stride floor (`floorDelta = rayLen / uMaxSteps`)

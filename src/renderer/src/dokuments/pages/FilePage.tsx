@@ -72,8 +72,8 @@ export const FilePage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <LovekitStream.Komments object={file} />
+            <Sidebars.Tab label="Knowledge">
+              <LovekitStream.Knowledge object={file} />
             </Sidebars.Tab>
           </Sidebars>
         }

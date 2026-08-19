@@ -100,8 +100,8 @@ export const ExperimentPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroExperiment.Komments object={data.experiment} />
+            <Sidebars.Tab label="Knowledge">
+              <ElektroExperiment.Knowledge object={data.experiment} />
             </Sidebars.Tab>
           </Sidebars>
         }

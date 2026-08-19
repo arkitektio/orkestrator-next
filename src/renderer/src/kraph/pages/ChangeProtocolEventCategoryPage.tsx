@@ -243,8 +243,8 @@ export default asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphProtocolStepTemplate.Komments
+            <Sidebars.Tab label="Knowledge">
+              <KraphProtocolStepTemplate.Knowledge
                 object={{ id: data.protocolEventCategory.id }}
               />
             </Sidebars.Tab>

@@ -320,9 +320,12 @@ export const VolumeCompositor = () => {
       .copy(camera.projectionMatrix)
       .multiply(scratchView.copy(camera.matrixWorld).invert());
     const viewer = viewerStoreApi.getState();
-    const key: VolumeFrameKey = {
+    const key = {
       cameraElements: scratchVP.elements.slice(),
-      structureKey: buildStructureKey(sets),
+      // Thunk: `decideVolumeFrame` calls this only if the camera/size/version
+      // compares all pass. During a gesture they never do, so the per-frame
+      // string build below simply does not happen.
+      structureKey: () => buildStructureKey(sets),
       residencyVersion: viewer.residencyVersion,
       poolsVersion: viewer.poolsVersion,
       qualityVersion: qualityGovernor.getVersion(),
@@ -339,7 +342,10 @@ export const VolumeCompositor = () => {
       previous: previousKeyRef.current,
     });
     stats.onFrame(decision);
-    previousKeyRef.current = key;
+    // The RESOLVED key, not the thunk-bearing input: it carries structureKey
+    // only when the decision actually needed it (null otherwise, which the next
+    // frame reads as "changed").
+    previousKeyRef.current = decision.resolved;
 
     // --- Volume pass into the target ---------------------------------------
     if (decision.render) {

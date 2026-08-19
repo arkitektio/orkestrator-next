@@ -22,8 +22,8 @@ export const FlavourPage = asDetailQueryRoute(
         object={flavour}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KabinetFlavour.Komments object={flavour} />
+            <Sidebars.Tab label="Knowledge">
+              <KabinetFlavour.Knowledge object={flavour} />
             </Sidebars.Tab>
           </Sidebars>
         }

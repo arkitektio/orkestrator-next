@@ -48,8 +48,8 @@ export const DocumentPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <LovekitStream.Komments object={document} />
+            <Sidebars.Tab label="Knowledge">
+              <LovekitStream.Knowledge object={document} />
             </Sidebars.Tab>
           </Sidebars>
         }

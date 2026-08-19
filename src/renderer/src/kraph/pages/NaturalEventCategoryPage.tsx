@@ -243,8 +243,8 @@ export default asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphNaturalEventCategory.Komments
+            <Sidebars.Tab label="Knowledge">
+              <KraphNaturalEventCategory.Knowledge
                 object={{ id: data.naturalEventCategory.id }}
               />
             </Sidebars.Tab>

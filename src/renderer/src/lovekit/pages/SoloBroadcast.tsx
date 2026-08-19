@@ -23,8 +23,8 @@ export default asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <LovekitSoloBroadcast.Komments object={data.soloBroadcast} />
+            <Sidebars.Tab label="Knowledge">
+              <LovekitSoloBroadcast.Knowledge object={data.soloBroadcast} />
             </Sidebars.Tab>
           </Sidebars>
         }

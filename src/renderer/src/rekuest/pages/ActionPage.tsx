@@ -178,8 +178,8 @@ export const ActionPage = asDetailQueryRoute(useDetailActionQuery, ({ data }) =>
       object={data.action}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestAction.Komments object={data?.action} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestAction.Knowledge object={data?.action} />
           </Sidebars.Tab>
         </Sidebars>
       }

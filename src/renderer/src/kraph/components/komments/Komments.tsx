@@ -15,6 +15,11 @@ import { KommentProps } from "./types";
  * every other claim, so `commentOnStructure` mints the structure if this is the
  * first sight of the object. Nothing has to be ensured beforehand — the call
  * sites keep passing plain `(identifier, object)`.
+ *
+ * A block, not a pane: the discussion is the bottom half of `KnowledgeSidebar`
+ * (the rail's single kraph tab), which owns the height and the scrolling. So
+ * this flows at its natural height instead of claiming `h-full` — otherwise it
+ * would fight the claims above it for the same column.
  */
 export const Komments = ({ identifier, object }: KommentProps) => {
   const { data, error } = useCommentsForQuery({
@@ -48,8 +53,8 @@ export const Komments = ({ identifier, object }: KommentProps) => {
   });
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="">
+    <div className="flex flex-col gap-2">
+      <div>
         <CommentEdit
           identifier={identifier}
           object={object.id}
@@ -57,7 +62,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
         />
       </div>
       {error && (
-        <div className="px-4">
+        <div>
           <Alert variant="destructive">
             <AlertDescription>
               Failed to load comments: {error.message}
@@ -65,7 +70,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
           </Alert>
         </div>
       )}
-      <div className="flex-1 px-4 pb-4">
+      <div>
         {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
       </div>
     </div>

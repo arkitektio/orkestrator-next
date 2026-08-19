@@ -17,8 +17,8 @@ export default asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <LovekitStream.Komments object={data.stream} />
+            <Sidebars.Tab label="Knowledge">
+              <LovekitStream.Knowledge object={data.stream} />
             </Sidebars.Tab>
           </Sidebars>
         }

@@ -61,6 +61,7 @@ import type { BrickResidencyManager } from "../managers/brickResidency";
 import type { FabriksCollectionManager } from "../render/fabriks/fabriksManager";
 
 import { probeAfterPinChange } from "../core/probe/probeTargeting";
+import { coldOpenTimeline } from "../managers/coldOpenTimeline";
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../core/probe/probeTypes";
 import {
   applyAttributeRows,
@@ -526,6 +527,7 @@ export async function createViewerStore(
 ) {
   const storesById = await createConfiguredSceneStores(scene, client, datalayer);
   const arraysByStoreId = await openSceneArrays(storesById);
+  coldOpenTimeline.stamp("arraysOpen");
   return createViewerStoreInternal(arraysByStoreId);
 }
 

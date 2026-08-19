@@ -1,6 +1,7 @@
 import type { Chunk, DataType } from "zarrita";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
+import { coldOpenTimeline } from "./coldOpenTimeline";
 import {
   DRAIN_PUMP_MS,
   FRAME_UPLOAD_BUDGET,
@@ -11,6 +12,7 @@ import {
   resolveStreamFrameAction,
   shouldContinueDrain,
   shouldContinueStaleDrain,
+  shouldDispatchFetch,
 } from "./uploadBudget";
 import { qualityGovernor } from "../core/qualityGovernor";
 import { getMax3DTextureSize, type SceneRenderer } from "../render/gpu/sceneRenderer";
@@ -371,10 +373,8 @@ export type LayerBrickPool = {
 };
 
 type Deps = {
-  renderer: SceneRenderer;
   viewerStore: StoreApi<ViewerState>;
   sceneStore: StoreApi<SceneState>;
-  invalidate: () => void;
   /** Runs `repackBrick` off the UI thread (worker pool; sync in tests). */
   repack: RepackDispatcher;
   /** Live camera-gesture state (viewStore.cameraMoving) — read by the
@@ -612,12 +612,82 @@ export class BrickResidencyManager {
   /** Last few timeToSharpMs values (newest last) for variance eyeballing. */
   private readonly timeToSharpRing: number[] = [];
 
+  /**
+   * The renderer is LATE-BOUND: the manager is constructed (and starts
+   * fetching) outside the R3F canvas, before `renderer.init()` has resolved.
+   * Null means "no device yet" — fetch, decode and repack all run regardless,
+   * and their results wait in `pool.queue` for the first drain after attach.
+   * See `attachRenderer`.
+   */
+  private renderer: SceneRenderer | null = null;
+  private invalidateFn: (() => void) | null = null;
+
   constructor(private readonly deps: Deps) {}
 
+  /** Request a frame. A no-op while detached — there is no frameloop to ask. */
+  private invalidate(): void {
+    this.invalidateFn?.();
+  }
+
+  /**
+   * Bind the renderer once the canvas has one, and drain whatever accumulated
+   * while there was no device.
+   *
+   * Pools created before this point never had their backend texture realized
+   * (`initTexture` is a no-op without a renderer), so every existing atlas is
+   * re-initialized here — otherwise the first `writeTexture` would race the
+   * lazy creation the eager call exists to prevent.
+   */
+  attachRenderer(renderer: SceneRenderer, invalidate: () => void): void {
+    if (this.disposed) return;
+    this.renderer = renderer;
+    this.invalidateFn = invalidate;
+    for (const pool of this.pools.values()) {
+      (
+        renderer as unknown as { initTexture?: (texture: unknown) => void }
+      ).initTexture?.(pool.atlas.texture);
+    }
+    // Anything fetched pre-attach is sitting in the upload queues.
+    this.wakeDrain();
+    // Re-reconcile against the CURRENT plans. Load-bearing on a canvas REMOUNT
+    // (2D<->3D is not one, but a scope rebuild is): `detachRenderer` disposed
+    // every pool, and the plan subscription only fires when plans CHANGE — so
+    // without this the scene would sit empty until the next replan happened to
+    // move something.
+    this.reconcileAll(this.deps.viewerStore.getState().nodePlans);
+    this.invalidate();
+  }
+
+  /**
+   * Unbind the renderer — the canvas is going away.
+   *
+   * Every GPU resource dies with the device that made it, so this disposes the
+   * pools as well. Hoisting the manager out of the canvas is about starting
+   * EARLIER, not about surviving a canvas teardown; a remount re-fetches from
+   * the decoded-chunk cache, which is the same cost the previous
+   * unmount-the-whole-manager arrangement paid.
+   */
+  detachRenderer(): void {
+    this.gpuRepacker?.dispose();
+    // undefined, not null: null MEMOIZES "unavailable", and the next attach
+    // must be free to try again.
+    this.gpuRepacker = undefined;
+    this.gpuSkeletonizer?.dispose();
+    this.gpuSkeletonizer = undefined;
+    for (const pool of this.pools.values()) this.disposePool(pool);
+    this.pools.clear();
+    this.layerToPoolKey.clear();
+    this.renderer = null;
+    this.invalidateFn = null;
+  }
+
   private ensureGpuRepacker(): GpuRepacker<GpuBrickToken> | null {
+    // Deliberately not memoized while detached: caching `null` here would make
+    // "no device yet" permanent for the whole session.
+    if (this.renderer === null) return null;
     if (this.gpuRepacker === undefined) {
       this.gpuRepacker = isGpuRepackEnabled()
-        ? createGpuRepacker<GpuBrickToken>(this.deps.renderer)
+        ? createGpuRepacker<GpuBrickToken>(this.renderer)
         : null;
     }
     return this.gpuRepacker;
@@ -630,20 +700,27 @@ export class BrickResidencyManager {
    * page table hang off it rather than threading the renderer through React.
    */
   getGpuSkeletonizer(): GpuSkeletonizer | null {
+    if (this.renderer === null) return null;
     if (this.gpuSkeletonizer === undefined) {
-      this.gpuSkeletonizer = createGpuSkeletonizer(this.deps.renderer);
+      this.gpuSkeletonizer = createGpuSkeletonizer(this.renderer);
     }
     return this.gpuSkeletonizer;
   }
 
   /** Dev-only (DebugPanel): GPU↔CPU repack parity check on the live renderer. */
   runGpuRepackSelfTest(): Promise<GpuRepackSelfTestResult> {
-    return runGpuRepackSelfTest(this.deps.renderer);
+    if (this.renderer === null) {
+      return Promise.reject(new Error("No renderer attached"));
+    }
+    return runGpuRepackSelfTest(this.renderer);
   }
 
   /** Dev-only (DebugPanel): GPU↔CPU skeleton-extraction parity check. */
   runGpuSkeletonSelfTest(): Promise<GpuSkeletonSelfTestResult> {
-    return runGpuSkeletonSelfTest(this.deps.renderer);
+    if (this.renderer === null) {
+      return Promise.reject(new Error("No renderer attached"));
+    }
+    return runGpuSkeletonSelfTest(this.renderer);
   }
 
   /** Debug-report probe: every channel slab's raw value at two fixed voxels
@@ -676,6 +753,10 @@ export class BrickResidencyManager {
     for (const pool of this.pools.values()) atlasBytesTotal += pool.atlas.byteLength;
     return {
       stats: { ...this.stats, chunkCacheBytes: this.chunkCache.sizeBytes },
+      /** Time-to-first-voxel decomposition for THIS scene open. The only
+       * instrumentation that can see the cold open — perfMonitor only arms
+       * once the scene is already up. See coldOpenTimeline. */
+      coldOpen: coldOpenTimeline.buildReport(),
       /** Pools, NOT layers. Fewer pools than layers means sharing is working;
        * one pool per layer over the same image means the key is splitting on
        * something it should not (compare the `poolKey`s). */
@@ -1209,7 +1290,7 @@ export class BrickResidencyManager {
     if (action === "invalidate") {
       this.lastStreamInvalidateAt = now;
       this.pendingStreamFrame = false;
-      this.deps.invalidate();
+      this.invalidate();
       return;
     }
     this.stats.streamFramesCoalesced += 1;
@@ -1541,7 +1622,14 @@ export class BrickResidencyManager {
     while (
       pool.inFlight.size < maxInflight &&
       globalInFlight < globalLimit &&
-      pool.pendingFetch.length > 0
+      pool.pendingFetch.length > 0 &&
+      // Pre-attach there is no drain, so the queue only grows — hold it at the
+      // in-flight ceiling until a renderer arrives to consume it.
+      shouldDispatchFetch({
+        detached: this.renderer === null,
+        queuedBricks: pool.queue.length,
+        cap: maxInflight,
+      })
     ) {
       const node = pool.pendingFetch.pop()!;
       if (
@@ -1554,6 +1642,7 @@ export class BrickResidencyManager {
         continue;
       }
       globalInFlight += 1;
+      coldOpenTimeline.stamp("firstBrickRequested");
       void this.fetchBrick(pool, node);
     }
   }
@@ -1756,7 +1845,7 @@ export class BrickResidencyManager {
       // ride poolsVersion — without this bump a moved range left EMPTY
       // bricks decoding at wrong intensities indefinitely.
       this.deps.viewerStore.getState().bumpPoolsVersion();
-      this.deps.invalidate();
+      this.invalidate();
       return movable;
     }
 
@@ -1780,9 +1869,12 @@ export class BrickResidencyManager {
       totalBrickBytes: maxUsefulSlotsForBudget * slotBytes,
     });
     const coarsestGrid = brickGridForLevel(geometry, spec, geometry.levels.length - 1);
+    // `PAGE_TEXTURE_MAX_EXTENT` is 2048 and 2048 is also the WebGPU spec
+    // MINIMUM for `maxTextureDimension3D`, so the detached fallback below is
+    // not a guess — it is the same number the min would have produced anyway.
     const maxTextureExtent = Math.min(
       PAGE_TEXTURE_MAX_EXTENT,
-      getMax3DTextureSize(this.deps.renderer),
+      this.renderer === null ? PAGE_TEXTURE_MAX_EXTENT : getMax3DTextureSize(this.renderer),
     );
     // The pool can never need more slots than the pyramid has bricks — cap
     // there so small datasets get small atlases (the budget share only binds
@@ -1814,7 +1906,10 @@ export class BrickResidencyManager {
       Math.max(minSlots, Math.floor(cappedAtlasBytes / slotBytes)),
     );
 
-    const gpuRepacker = this.ensureGpuRepacker();
+    // Called for its side effect only — build the repacker now, while we are
+    // already off the hot path. Its RESULT must not decide the atlas usage
+    // flags (see `computeStorage` below).
+    this.ensureGpuRepacker();
     const atlas = createBrickAtlas({
       spec,
       dtype: geometry.levels[0].dtype,
@@ -1827,7 +1922,12 @@ export class BrickResidencyManager {
       filter: spec.border > 0 ? "linear" : "nearest",
       // A phasor layer never repacks on the GPU (the kernel cannot reduce), so
       // it has no use for the storage-binding usage flag either.
-      computeStorage: gpuRepacker !== null && !hasPhasorSlabs(geometry),
+      // MUST NOT be `gpuRepacker !== null`: a pool created before the
+      // renderer attaches would see null and allocate an atlas WITHOUT the
+      // storage binding — permanently, silently disabling GPU repack for this
+      // pool's whole life. Decide from the flag + geometry, which do not
+      // depend on whether the device exists yet. (OCTREE_RENDERER.md P23.)
+      computeStorage: isGpuRepackEnabled() && !hasPhasorSlabs(geometry),
     });
     const pageTable = createPageTableTexture(layout);
 
@@ -1838,9 +1938,11 @@ export class BrickResidencyManager {
     // data to re-spec from, so `writeTexture` must always find the texture
     // already created. WebGPU textures are zero-initialized by spec, so the
     // eager creation costs no upload.
+    // No-op while detached; `attachRenderer` re-runs it for every pool that
+    // was created before the device existed.
     (
-      this.deps.renderer as unknown as { initTexture?: (texture: unknown) => void }
-    ).initTexture?.(atlas.texture);
+      this.renderer as unknown as { initTexture?: (texture: unknown) => void } | null
+    )?.initTexture?.(atlas.texture);
 
     const { fixedChunkCoords, fixedOffsets } = this.computeFixedIndices(
       layer,
@@ -1934,6 +2036,7 @@ export class BrickResidencyManager {
     // Pool LIFECYCLE event (not streaming progress): this is what layer
     // components re-render on — see viewerStore.poolsVersion.
     this.deps.viewerStore.getState().bumpPoolsVersion();
+    coldOpenTimeline.stamp("poolCreated");
     return pool;
   }
 
@@ -2155,11 +2258,16 @@ export class BrickResidencyManager {
         ? "gpu"
         : reducesPhasor
           ? "cpu:phasor"
-          : gpuRepacker === null
-            ? "cpu:no-repacker"
-            : !gpuRepacker.ready()
-              ? `cpu:${gpuRepacker.status()}`
-              : `cpu:unsupported:${pool.atlas.kind}`;
+          : this.renderer === null
+            ? // Pre-attach bricks legitimately take the CPU path; keep it
+              // distinguishable from a genuinely unavailable repacker so the
+              // debug report cannot be misread as the `computeStorage` trap.
+              "cpu:no-renderer"
+            : gpuRepacker === null
+              ? "cpu:no-repacker"
+              : !gpuRepacker.ready()
+                ? `cpu:${gpuRepacker.status()}`
+                : `cpu:unsupported:${pool.atlas.kind}`;
       if (useGpu) {
         // GPU path: the repack IS the upload (a compute dispatch straight
         // into the atlas slot at drain time) — only chunk handles queue here.
@@ -2208,6 +2316,7 @@ export class BrickResidencyManager {
         };
       }
       this.stats.bricksFetched += 1;
+      coldOpenTimeline.stamp("firstBrickDecoded");
 
       this.wakeDrain();
       pool.queue.push(pending);
@@ -2379,7 +2488,7 @@ export class BrickResidencyManager {
       this.stats.gpuBricks += 1;
       pool.gpuStaleKeys.add(pending.key);
     } else {
-      writeBrickToAtlas(this.deps.renderer, pool.atlas, acquired.slot.coords, pending.data!);
+      writeBrickToAtlas(this.renderer!, pool.atlas, acquired.slot.coords, pending.data!);
       pool.gpuStaleKeys.add(pending.key);
       if (pool.atlas.backing) {
         // Legacy eager-mirror mode only (orkestrator.atlasMirror = "on"): the
@@ -2435,6 +2544,7 @@ export class BrickResidencyManager {
     progress.bytes += frameCostBytes;
     progress.bricks += 1;
     this.stats.bricksUploaded += 1;
+    coldOpenTimeline.stamp("firstBrickUploaded");
     this.stats.bytesUploaded += pending.bytes;
     if (!planned) this.stats.staleUploads += 1;
     progress.uploadedAny = true;
@@ -2448,6 +2558,10 @@ export class BrickResidencyManager {
    * the deferred backlog drains at full budget on the first settled frame. */
   drainUploads(interacting = false): void {
     if (this.disposed) return;
+    // No device, no uploads. Belt-and-braces — the only caller is the canvas
+    // frame driver, which by construction has a renderer — but every GPU write
+    // below dereferences `this.renderer` non-null on the strength of it.
+    if (this.renderer === null) return;
     // Idle fast path: a previous drain saw the whole pipeline empty and no
     // GPU flush in flight — skip the pool walks and per-frame allocations
     // until wakeDrain() signals new work.
@@ -2577,9 +2691,9 @@ export class BrickResidencyManager {
         // uniforms.
         this.lastPoolsBumpAt = performance.now();
         this.deps.viewerStore.getState().bumpPoolsVersion();
-        this.deps.invalidate();
+        this.invalidate();
       }
-      flushPageTable(this.deps.renderer, pool.pageTable);
+      flushPageTable(this.renderer!, pool.pageTable);
     }
 
     // Submit this frame's compute-repack batch (before R3F renders, so the
@@ -2750,7 +2864,7 @@ export class BrickResidencyManager {
         if (this.disposed) return;
         if (!this.anyPipelineWork()) {
           qualityGovernor.setStreaming(false);
-          this.deps.invalidate(); // render one settled-quality frame
+          this.invalidate(); // render one settled-quality frame
         }
       }, BrickResidencyManager.STREAMING_CLEAR_MS);
     }
@@ -2820,7 +2934,7 @@ export class BrickResidencyManager {
     if (now - this.lastPoolsBumpAt > AUTO_RANGE_BUMP_MS) {
       this.lastPoolsBumpAt = now;
       this.deps.viewerStore.getState().bumpPoolsVersion();
-      this.deps.invalidate();
+      this.invalidate();
     } else if (this.poolsBumpTimer === null) {
       this.poolsBumpTimer = setTimeout(
         () => {
@@ -2828,7 +2942,7 @@ export class BrickResidencyManager {
           if (this.disposed) return;
           this.lastPoolsBumpAt = performance.now();
           this.deps.viewerStore.getState().bumpPoolsVersion();
-          this.deps.invalidate();
+          this.invalidate();
         },
         Math.max(0, AUTO_RANGE_BUMP_MS - (now - this.lastPoolsBumpAt)),
       );
@@ -3273,7 +3387,7 @@ export class BrickResidencyManager {
     // PREVIOUS timepoint from the cached composite until streaming
     // happened to emit (or forever, if the refetch fails).
     this.deps.viewerStore.getState().volumeInputs.bump("pool-flush");
-    this.deps.invalidate();
+    this.invalidate();
   }
 
   private disposePool(pool: LayerBrickPool): void {
@@ -3312,6 +3426,8 @@ export class BrickResidencyManager {
     this.gpuSkeletonizer = null;
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
+    this.renderer = null;
+    this.invalidateFn = null;
     // Don't leave the governor thinking a torn-down scene is still streaming.
     qualityGovernor.setStreaming(false);
   }

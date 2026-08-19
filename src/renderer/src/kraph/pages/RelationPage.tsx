@@ -10,7 +10,7 @@ export default asDetailQueryRoute(useGetRelationQuery, ({ data }) => {
     <KraphRelation.ModelPage
       object={{ id: data.relation.id }}
       title={data?.relation.category?.label ?? data?.relation.label}
-      sidebars={<KraphReagent.Komments object={{ id: data.relation.id }} />}
+      sidebars={<KraphReagent.Knowledge object={{ id: data.relation.id }} />}
       pageActions={
         <div className="flex flex-row gap-2">
           <>

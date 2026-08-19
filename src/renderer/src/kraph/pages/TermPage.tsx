@@ -20,8 +20,8 @@ const Page = asDetailQueryRoute(useGetTermQuery, ({ data, refetch }) => {
       title={term.key}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KraphTerm.Komments object={{ id: term.id }} />
+          <Sidebars.Tab label="Knowledge">
+            <KraphTerm.Knowledge object={{ id: term.id }} />
           </Sidebars.Tab>
         </Sidebars>
       }

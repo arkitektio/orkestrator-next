@@ -63,6 +63,30 @@ export function shouldContinueStaleDrain(
   );
 }
 
+/**
+ * Whether a pool may dispatch ANOTHER brick fetch right now.
+ *
+ * The manager starts fetching before the canvas has a renderer (see
+ * `BrickResidencyManager.attachRenderer`), and nothing drains until one
+ * attaches — so pre-attach the upload queue only grows. The in-flight caps
+ * already bound it indirectly; this makes the bound explicit and testable.
+ *
+ * It withholds NEW dispatches only. It never touches an in-flight decode:
+ * cancelling shared in-progress decodes is the 13× refetch amplification
+ * (OCTREE_RENDERER.md P8), and this predicate is deliberately incapable of it.
+ */
+export function shouldDispatchFetch(input: {
+  /** True while no renderer is bound — i.e. nothing can drain the queue. */
+  detached: boolean;
+  /** Bricks already decoded and waiting for a drain. */
+  queuedBricks: number;
+  /** Ceiling to hold while detached. */
+  cap: number;
+}): boolean {
+  if (!input.detached) return true;
+  return input.queuedBricks < input.cap;
+}
+
 /** Stale entries kept queued per pool awaiting leftover budget; beyond this
  * the oldest are dropped (their decoded chunks stay cached, so a flip-back
  * refetches cheaply — holding many ~MB repacked payloads is the real cost). */

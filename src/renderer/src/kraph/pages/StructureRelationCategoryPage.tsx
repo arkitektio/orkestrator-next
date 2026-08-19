@@ -44,8 +44,8 @@ const Page = asDetailQueryRoute(
         title={data?.structureRelationCategory.label}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphStructureRelationCategory.Komments
+            <Sidebars.Tab label="Knowledge">
+              <KraphStructureRelationCategory.Knowledge
                 object={{ id: data.structureRelationCategory.id }}
               />
             </Sidebars.Tab>

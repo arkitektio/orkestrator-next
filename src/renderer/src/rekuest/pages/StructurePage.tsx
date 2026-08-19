@@ -14,8 +14,8 @@ export const StructurePage = asDetailQueryRoute(useGetStructureQuery, ({ data })
       object={data.structure}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestStructure.Komments object={data?.structure} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestStructure.Knowledge object={data?.structure} />
           </Sidebars.Tab>
         </Sidebars>
       }

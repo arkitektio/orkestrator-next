@@ -54,8 +54,8 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       }
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <ElektroFile.Komments object={file} />
+          <Sidebars.Tab label="Knowledge">
+            <ElektroFile.Knowledge object={file} />
           </Sidebars.Tab>
         </Sidebars>
       }

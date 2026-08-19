@@ -101,8 +101,8 @@ export const TaskSpacePage = asDetailQueryRoute(useDetailTaskQuery, ({ data, id 
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <RekuestTask.Komments object={data?.task} />
+            <Sidebars.Tab label="Knowledge">
+              <RekuestTask.Knowledge object={data?.task} />
             </Sidebars.Tab>
           </Sidebars>
         }

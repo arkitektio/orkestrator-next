@@ -1,17 +1,26 @@
+import { useMikro } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroScene } from "@/linkers";
 import { RefetchProvider } from "@/providers/refetch/RefetchContext";
+import { useMemo } from "react";
+import { useParams } from "react-router-dom";
 import {
   useGetSceneQuery
 } from "../api/graphql";
 import { Scene } from "../components/scene/Scene";
+import { coldOpenTimeline } from "../components/scene/managers/coldOpenTimeline";
+import { useDatalayerWarmup } from "../lib/zarr/useDatalayerWarmup";
 
 export type IRepresentationScreenProps = {};
 
-const Page = asDetailQueryRoute(
+const DetailPage = asDetailQueryRoute(
   useGetSceneQuery,
   ({ data, id }) => {
+    // The query has resolved by the time this renders — everything above this
+    // point was the route gate. Repeat stamps are dropped by the timeline, so
+    // a re-render costs nothing and needs no guard here.
+    coldOpenTimeline.stamp("sceneQuery");
     return (
       // The provider wraps the WHOLE ModelPage so the scene stores reach the
       // right-rail sidebar too — the rail is a sibling panel of the content
@@ -50,5 +59,30 @@ const Page = asDetailQueryRoute(
     );
   },
 );
+
+/**
+ * Wrapper that exists to sit ABOVE the query gate.
+ *
+ * `asDetailQueryRoute` renders `<LoadingPage/>` until `GetScene` resolves, so
+ * nothing inside it can observe — or overlap — that round trip. This is the
+ * outermost point that knows a scene is being opened, which makes it the honest
+ * origin for the cold-open timeline (and, in a later phase, the place to warm
+ * the datalayer while the query is still in flight).
+ */
+const Page = (props: { direct?: unknown }) => {
+  const { id } = useParams<{ id: string }>();
+  const client = useMikro();
+
+  // Deliberately during render, not in an effect: the query fires in the child's
+  // render pass, so an effect would start the clock AFTER the thing it measures.
+  // `useMemo` keyed on the id gives exactly one begin() per scene open.
+  useMemo(() => coldOpenTimeline.begin(id ?? null), [id]);
+
+  // Credentials, the WebGPU adapter and the decode workers do not depend on the
+  // scene — start them now so they overlap the query instead of following it.
+  useDatalayerWarmup(client);
+
+  return <DetailPage {...props} />;
+};
 
 export default Page;

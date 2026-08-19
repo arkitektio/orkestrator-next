@@ -11,7 +11,7 @@ const Page = asDetailQueryRoute(useGetStructureRelationQuery, ({ data }) => {
     <KraphStructureRelation.ModelPage
       object={{ id: data?.structureRelation.id }}
       title={data?.structureRelation.category?.label ?? data?.structureRelation.label}
-      sidebars={<KraphStructureRelation.Komments object={{ id: data.structureRelation.id }} />}
+      sidebars={<KraphStructureRelation.Knowledge object={{ id: data.structureRelation.id }} />}
       pageActions={
         <div className="flex flex-row gap-2">
           <>

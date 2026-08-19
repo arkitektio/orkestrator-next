@@ -21,8 +21,8 @@ const Page = () => {
       title={data?.me?.username}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Komments">
-            <LokUser.Komments object={data.me} />
+          <Sidebars.Tab label="Knowledge">
+            <LokUser.Knowledge object={data.me} />
           </Sidebars.Tab>
         </Sidebars>
       }

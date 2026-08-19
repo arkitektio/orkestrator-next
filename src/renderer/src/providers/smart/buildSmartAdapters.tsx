@@ -53,7 +53,6 @@ export type SmartEnhanceButtonProps<T extends Object = Object> = {
 };
 
 export interface SmartBuilderAdapters {
-  renderKomments: (context: SmartObjectContext) => React.ReactNode;
   renderKnowledge: (context: SmartObjectContext) => React.ReactNode;
   renderTinyKnowledge: (context: SmartObjectContext) => React.ReactNode;
   renderHover: (context: SmartObjectContext) => React.ReactNode;
@@ -78,7 +77,6 @@ export interface SmartBuilderAdapters {
 }
 
 let smartBuilderAdapters: SmartBuilderAdapters = {
-  renderKomments: () => null,
   renderKnowledge: () => null,
   renderTinyKnowledge: () => <>Not implemented right now</>,
   renderHover: () => null,

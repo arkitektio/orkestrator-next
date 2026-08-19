@@ -13,6 +13,7 @@ import {
   type QualityTier,
 } from "../core/qualityGovernor";
 import { perfMonitor, type PerfSessionReport } from "../managers/perfMonitor";
+import { isEarlyBricksEnabled, setEarlyBricksEnabled } from "../managers/brickSystem";
 import type { FabriksCollectionManager } from "../render/fabriks/fabriksManager";
 import { isGpuRepackEnabled, setGpuRepackEnabled } from "../render/bricks/computeRepack";
 import {
@@ -82,6 +83,7 @@ export const DebugPanel = () => {
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
+  const [earlyBricksOn, setEarlyBricksOn] = useState(isEarlyBricksEnabled);
   const [anisoStrideOn, setAnisoStrideOn] = useState(isAnisoStrideEnabled);
   const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
   const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
@@ -141,6 +143,12 @@ export const DebugPanel = () => {
     const next = !atlasMirrorOn;
     setAtlasMirrorEnabled(next);
     setAtlasMirrorOn(next);
+  };
+
+  const toggleEarlyBricks = () => {
+    const next = !earlyBricksOn;
+    setEarlyBricksEnabled(next);
+    setEarlyBricksOn(next);
   };
 
   const toggleOccObservedRange = () => {
@@ -572,6 +580,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 atlas mirror: {atlasMirrorOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleEarlyBricks}
+                title="Early bricks: start the brick residency system OUTSIDE the canvas so chunk fetch/decode/repack overlap WebGPU device creation instead of waiting for it. Off restores the old arrangement (the system is built inside the canvas, after renderer.init). Takes effect on the next scene open."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                early bricks: {earlyBricksOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleOccObservedRange}

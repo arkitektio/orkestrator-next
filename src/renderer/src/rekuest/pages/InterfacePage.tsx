@@ -12,8 +12,8 @@ export const InterfacePage = asDetailQueryRoute(useGetInterfaceQuery, ({ data })
       object={data.interface}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestToolbox.Komments object={data?.interface} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestToolbox.Knowledge object={data?.interface} />
           </Sidebars.Tab>
         </Sidebars>
       }

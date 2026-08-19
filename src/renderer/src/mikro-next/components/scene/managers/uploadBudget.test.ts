@@ -5,6 +5,7 @@ import {
   resolveDrainPolicy,
   shouldContinueDrain,
   shouldContinueStaleDrain,
+  shouldDispatchFetch,
   type DrainBudget,
 } from "./uploadBudget";
 
@@ -252,5 +253,33 @@ describe("resolveStreamFrameAction (streaming render-cadence gate)", () => {
     }
     expect(frames).toBeLessThanOrEqual(5); // 61 wakeups → ≤5 rendered frames
     expect(frames).toBeGreaterThanOrEqual(4); // still shows regular progress
+  });
+});
+
+/**
+ * The brick system now starts OUTSIDE the canvas, so between `manager.start()`
+ * and `attachRenderer` there is a window with no drain: fetches complete and
+ * pile up in `pool.queue` with nothing consuming them. This is the explicit
+ * bound on that window.
+ */
+describe("shouldDispatchFetch", () => {
+  it("never restricts dispatch once a renderer is attached", () => {
+    // Attached, the drain runs every frame — the in-flight caps are the only
+    // relevant limit and this predicate must stay out of the way entirely.
+    expect(
+      shouldDispatchFetch({ detached: false, queuedBricks: 9999, cap: 4 }),
+    ).toBe(true);
+  });
+
+  it("holds the pre-attach queue at the cap", () => {
+    expect(shouldDispatchFetch({ detached: true, queuedBricks: 0, cap: 4 })).toBe(true);
+    expect(shouldDispatchFetch({ detached: true, queuedBricks: 3, cap: 4 })).toBe(true);
+    expect(shouldDispatchFetch({ detached: true, queuedBricks: 4, cap: 4 })).toBe(false);
+    expect(shouldDispatchFetch({ detached: true, queuedBricks: 5, cap: 4 })).toBe(false);
+  });
+
+  it("a zero cap stops pre-attach dispatch entirely without affecting attached pools", () => {
+    expect(shouldDispatchFetch({ detached: true, queuedBricks: 0, cap: 0 })).toBe(false);
+    expect(shouldDispatchFetch({ detached: false, queuedBricks: 0, cap: 0 })).toBe(true);
   });
 });

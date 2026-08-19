@@ -23,8 +23,8 @@ const Page = asDetailQueryRoute(
         title={data?.protocolEvent.label}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphProtocolEvent.Komments object={{ id: data.protocolEvent.id }} />
+            <Sidebars.Tab label="Knowledge">
+              <KraphProtocolEvent.Knowledge object={{ id: data.protocolEvent.id }} />
             </Sidebars.Tab>
           </Sidebars>
         }

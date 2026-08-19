@@ -44,7 +44,7 @@ import {
 import { Sidebars } from "@/components/layout/Sidebars";
 import { MikroArrayDataset, MikroFile, MikroFolder, MikroTableDataset } from "@/linkers";
 import { Guard } from "@/app/Arkitekt";
-import { Komments } from "@/kraph/components/komments/Komments";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import {
   ChildrenQuery,
   FolderFragment,
@@ -285,9 +285,12 @@ export const FolderTableExplorer = (props: {
       actions={<MikroFolder.Actions object={props.folder} />}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
+          <Sidebars.Tab label="Knowledge">
             <Guard.Kraph>
-              <Komments identifier="@mikro/folder" object={props.folder} />
+              <KnowledgeSidebar
+                identifier="@mikro/folder"
+                object={props.folder}
+              />
             </Guard.Kraph>
           </Sidebars.Tab>
           <Sidebars.Tab label="Provenance">

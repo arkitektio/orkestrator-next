@@ -53,7 +53,7 @@ export const TableDatasetPage = asDetailQueryRoute(
         }
         defaultSidebar="Info"
         // Own key, like the scene pages: with the app-wide one a remembered
-        // "Comments" would beat `defaultSidebar` and the rail would open on a
+        // "Knowledge" would beat `defaultSidebar` and the rail would open on a
         // tab this page did not choose.
         sidebarKey="TableDatasetDetail"
       >

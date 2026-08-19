@@ -11,6 +11,7 @@ import { useEffect, useMemo, useSyncExternalStore } from "react";
 import {
   qualityGovernor,
   resolveMaxRaySteps,
+  resolveStepScale,
   resolveSmoothThreshold,
 } from "../../core/qualityGovernor";
 import { isSmoothZoomEnabled, isWorldLodEnabled } from "../../render/bricks/shaderFlags";
@@ -208,6 +209,11 @@ export const useStepScaleUniform = (
    * tax every overlay frame with nothing amortizing it. A primitive param
    * on purpose: the effect dep list must not churn on object identity. */
   settleRefine = false,
+  /** True for materials that render in the CANVAS pass (labels), which never
+   * get the compositor's motion-time resolution cut — see
+   * `CANVAS_PASS_ACTIVE_STEP_SCALE`. Primitive, like `settleRefine`, so the
+   * effect dep list cannot churn. */
+  canvasPass = false,
 ): void => {
   const viewStoreApi = useViewStoreApi();
   const viewerStoreApi = useViewerStoreApi();
@@ -225,9 +231,13 @@ export const useStepScaleUniform = (
       const profile = qualityGovernor.getProfile();
       const active =
         viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming();
-      const step =
-        (active ? profile.activeStepScale : profile.settledStepScale) *
-        qualityGovernor.getLoadFactor();
+      const step = resolveStepScale({
+        base:
+          (active ? profile.activeStepScale : profile.settledStepScale) *
+          qualityGovernor.getLoadFactor(),
+        active,
+        canvasPass,
+      });
       const maxSteps = resolveMaxRaySteps(
         profile,
         active,
@@ -258,5 +268,5 @@ export const useStepScaleUniform = (
       unsubscribeView();
       unsubscribeQuality();
     };
-  }, [nodes, settleRefine, viewStoreApi, viewerStoreApi, invalidate]);
+  }, [nodes, settleRefine, canvasPass, viewStoreApi, viewerStoreApi, invalidate]);
 };

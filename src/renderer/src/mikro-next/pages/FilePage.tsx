@@ -98,8 +98,8 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
       }
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <MikroFile.Komments object={file} />
+          <Sidebars.Tab label="Knowledge">
+            <MikroFile.Knowledge object={file} />
           </Sidebars.Tab>
           <Sidebars.Tab label="Provenance">
             <ProvenanceSidebar items={file.provenanceEntries} />

@@ -55,8 +55,8 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
       </>}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KraphEntity.Komments object={{ id: data.entity.id }} />
+          <Sidebars.Tab label="Knowledge">
+            <KraphEntity.Knowledge object={{ id: data.entity.id }} />
           </Sidebars.Tab>
           <Sidebars.Tab label="Evidence">
             <InformingStructures entityId={data.entity.id} />

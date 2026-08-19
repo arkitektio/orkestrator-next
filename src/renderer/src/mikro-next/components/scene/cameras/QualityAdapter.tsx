@@ -147,8 +147,11 @@ export const QualityAdapter = () => {
             )
           : 1;
       } else if (
-        isAdaptiveDprEnabled() &&
+        // Ref check FIRST: `isAdaptiveDprEnabled` reads localStorage, and as the
+        // leading operand it was read on EVERY frame of a gesture (forever, if
+        // the correction never fires). The two are order-independent.
         !burstCorrectedRef.current &&
+        isAdaptiveDprEnabled() &&
         now - activeSinceRef.current >= MID_BURST_CORRECT_AFTER_MS &&
         shouldStepBurstRungDown(qualityGovernor.getEmaMs(), burstLadderScaleRef.current)
       ) {

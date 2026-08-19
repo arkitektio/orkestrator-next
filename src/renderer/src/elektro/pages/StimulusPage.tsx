@@ -20,8 +20,8 @@ export const StimulusPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroStimulus.Komments object={data.stimulus} />
+            <Sidebars.Tab label="Knowledge">
+              <ElektroStimulus.Knowledge object={data.stimulus} />
             </Sidebars.Tab>
           </Sidebars>
         }

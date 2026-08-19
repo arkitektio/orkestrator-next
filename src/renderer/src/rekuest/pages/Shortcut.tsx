@@ -164,8 +164,8 @@ export const TPage = asDetailQueryRoute(useShortcutQuery, ({ data }) => {
       object={data.shortcut}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestShortcut.Komments object={data?.shortcut} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestShortcut.Knowledge object={data?.shortcut} />
           </Sidebars.Tab>
         </Sidebars>
       }

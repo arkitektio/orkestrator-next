@@ -19,8 +19,8 @@ export const SpacePage = asDetailQueryRoute(useSpaceQuery, ({ data }) => {
       }
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestSpace.Komments object={data?.space} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestSpace.Knowledge object={data?.space} />
           </Sidebars.Tab>
         </Sidebars>
       }

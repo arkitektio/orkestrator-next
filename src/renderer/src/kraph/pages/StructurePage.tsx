@@ -15,8 +15,8 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
       title={data?.structure.identifier}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KraphStructure.Komments object={{ id: data.structure.id }} />
+          <Sidebars.Tab label="Knowledge">
+            <KraphStructure.Knowledge object={{ id: data.structure.id }} />
           </Sidebars.Tab>
         </Sidebars>
       }

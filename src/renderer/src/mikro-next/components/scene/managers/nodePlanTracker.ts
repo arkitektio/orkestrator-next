@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
+import { coldOpenTimeline } from "./coldOpenTimeline";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { isAnisoLodEnabled, isWorldLodEnabled } from "../render/bricks/shaderFlags";
 import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
@@ -467,6 +468,7 @@ export function startNodePlanTracking({
         lastRecomputeAt = performance.now();
         perfMonitor.markReplan(); // no-op unless a perf recording is armed
         recompute();
+        coldOpenTimeline.stamp("firstPlan");
       }
     });
   };

@@ -18,8 +18,8 @@ export const MemoryShelvePage = asDetailQueryRoute(
         object={data.memoryShelve}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <RekuestMemoryShelve.Komments object={data?.memoryShelve} />
+            <Sidebars.Tab label="Knowledge">
+              <RekuestMemoryShelve.Knowledge object={data?.memoryShelve} />
             </Sidebars.Tab>
           </Sidebars>
         }

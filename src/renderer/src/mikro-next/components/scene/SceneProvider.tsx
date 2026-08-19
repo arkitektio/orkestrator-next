@@ -45,6 +45,7 @@ import {
 import { ViewStoreContext, createViewStore } from "./store/viewStore";
 import { ViewerStoreContext, createViewerStore } from "./store/viewerStore";
 import { SceneBrandTheme } from "./theme/SceneBrandTheme";
+import { coldOpenTimeline } from "./managers/coldOpenTimeline";
 
 /**
  * The scene's store scope: one vanilla zustand store per concern, all created
@@ -209,6 +210,7 @@ export const SceneProvider = (props: {
         // at all, so fail here rather than mount a Canvas that would silently
         // downgrade itself to a backend we no longer support.
         await assertWebGPUSupported();
+        coldOpenTimeline.stamp("webgpuDevice");
 
         if (!datalayer) {
           throw new Error("No datalayer endpoint configured");

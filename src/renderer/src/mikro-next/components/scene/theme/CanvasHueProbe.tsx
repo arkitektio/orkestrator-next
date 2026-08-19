@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import type { BrandTarget } from "@/providers/settings/brandTheme";
 import { useViewerStoreApi } from "../store/viewerStore";
+import { useViewStoreApi } from "../store/viewStore";
 import { majorityHueFromPixels, sameBrandTarget } from "./majorityHue";
 
 /** Edge of the square the frame is downscaled to before reading. 1024 pixels
@@ -18,6 +19,19 @@ const QUIET_MS = 750;
  * never arrives — sample at least this often so the tint still follows,
  * unhurried. */
 const MAX_WAIT_MS = 4000;
+
+/**
+ * Minimum gap between CAPTURES while the camera is moving.
+ *
+ * The capture is a GPU blit and cheap in isolation, but it runs in an
+ * after-effect on every rendered frame — i.e. ~60×/s during exactly the
+ * gesture the user is complaining feels heavy, to feed a tint that by its own
+ * design updates at most every `MAX_WAIT_MS`. Throttling to ~4 Hz while moving
+ * keeps the tint following a long orbit while dropping ~93% of the blits.
+ * Settled frames are NOT throttled: the first frame after a gesture should tint
+ * exactly, immediately.
+ */
+const MOVING_CAPTURE_INTERVAL_MS = 250;
 
 type Scratch = {
   canvas: OffscreenCanvas;
@@ -66,6 +80,7 @@ const makeScratch = (options?: CanvasRenderingContext2DSettings): Scratch | null
 export const CanvasHueProbe = () => {
   const gl = useThree((state) => state.gl);
   const viewerApi = useViewerStoreApi();
+  const viewApi = useViewStoreApi();
   const { settings } = useSettings();
   const enabled = settings.sceneThemeSync !== false;
 
@@ -81,6 +96,8 @@ export const CanvasHueProbe = () => {
     /** The snapshot canvas holds a real frame (not its initial blank). */
     snapshotValid: false,
     lastFrameAt: 0,
+    /** When the last CAPTURE ran — the throttle clock while moving. */
+    lastCaptureAt: 0,
     /** When the first unanalysed frame landed; null = nothing pending. */
     dirtySince: null as number | null,
     timer: null as ReturnType<typeof setTimeout> | null,
@@ -156,6 +173,17 @@ export const CanvasHueProbe = () => {
       clock.framePending = false;
       if (!enabledRef.current) return;
 
+      // Throttle only while the camera moves — see MOVING_CAPTURE_INTERVAL_MS.
+      // Read imperatively: this is an after-effect, never a React subscription.
+      const captureAt = performance.now();
+      if (
+        viewApi.getState().cameraMoving &&
+        captureAt - clock.lastCaptureAt < MOVING_CAPTURE_INTERVAL_MS
+      ) {
+        return;
+      }
+      clock.lastCaptureAt = captureAt;
+
       const source = gl.domElement;
       if (!source || source.width === 0 || source.height === 0) return;
       if (snapshotRef.current === null) {
@@ -176,7 +204,7 @@ export const CanvasHueProbe = () => {
     // check/sample are stable in behaviour (all state lives in refs); gl is
     // the one real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gl]);
+  }, [gl, viewApi]);
 
   // Turning the setting off mid-scene hands the tint back to the colormap
   // estimate immediately rather than freezing the last sample.

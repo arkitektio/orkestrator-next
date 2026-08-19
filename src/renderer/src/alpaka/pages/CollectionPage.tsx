@@ -98,8 +98,8 @@ const TPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <AlpakaCollection.Komments object={data.chromaCollection} />
+            <Sidebars.Tab label="Knowledge">
+              <AlpakaCollection.Knowledge object={data.chromaCollection} />
             </Sidebars.Tab>
           </Sidebars>
         }

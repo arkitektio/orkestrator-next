@@ -157,8 +157,8 @@ export const AgentPage = asDetailQueryRoute(
         variant={"black"}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <RekuestAgent.Komments object={data?.agent} />
+            <Sidebars.Tab label="Knowledge">
+              <RekuestAgent.Knowledge object={data?.agent} />
             </Sidebars.Tab>
             <Sidebars.Tab label="States">
               <>

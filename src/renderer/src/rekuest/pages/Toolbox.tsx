@@ -11,8 +11,8 @@ export const ToolboxPage = asDetailQueryRoute(useToolboxQuery, ({ data }) => {
       object={data.toolbox}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestToolbox.Komments object={data?.toolbox} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestToolbox.Knowledge object={data?.toolbox} />
           </Sidebars.Tab>
         </Sidebars>
       }

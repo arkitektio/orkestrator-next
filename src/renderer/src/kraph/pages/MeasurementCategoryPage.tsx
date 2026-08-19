@@ -45,8 +45,8 @@ const Page = asDetailQueryRoute(
         title={data?.measurementCategory.label}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphMetricKind.Komments
+            <Sidebars.Tab label="Knowledge">
+              <KraphMetricKind.Knowledge
                 object={{ id: data.measurementCategory.id }}
               />
             </Sidebars.Tab>

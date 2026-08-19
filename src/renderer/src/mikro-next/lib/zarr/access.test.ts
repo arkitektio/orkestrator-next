@@ -219,3 +219,60 @@ describe("fabriks credentials are a separate kind", () => {
     expect((await getGeneralAccess(client)).grant.accessKey).toBe(zarr.grant.accessKey);
   });
 });
+
+/**
+ * The prefetch in `useDatalayerWarmup` starts the grant before the scene query
+ * returns, then the scope build awaits the same function. These two cases pin
+ * the semantics that argument rests on — they are why the warmup needs no kill
+ * switch.
+ */
+describe("getGeneralAccess as a prefetch", () => {
+  it("a warm followed by the scope build costs ONE round-trip", async () => {
+    const { client, calls } = fakeClient();
+
+    // The warm: fire-and-forget, rejection swallowed on a DERIVED promise.
+    const warm = getGeneralAccess(client).catch(() => {});
+    // The scope build, arriving while the warm is still in flight.
+    const real = await getGeneralAccess(client);
+    await warm;
+
+    expect(calls()).toBe(1);
+    expect(real.grant.accessKey).toBe("key-1");
+  });
+
+  it("a REJECTED warm leaves no poisoned state — the next caller re-mints", async () => {
+    let attempt = 0;
+    const client: MikroClient = {
+      mutate: async () => {
+        attempt += 1;
+        if (attempt === 1) throw new Error("network down");
+        return {
+          data: { requestGeneralZarrAccess: grant(`key-${attempt}`, 3600) },
+        };
+      },
+    };
+
+    // Warm fails exactly as the hook would swallow it.
+    await getGeneralAccess(client).catch(() => {});
+
+    // The scope build must still be able to mint: `inFlight` is cleared in a
+    // `finally`, so a failed warm cannot strand every later caller.
+    const real = await getGeneralAccess(client);
+    expect(real.grant.accessKey).toBe("key-2");
+    expect(attempt).toBe(2);
+  });
+
+  it("still surfaces the rejection to the real caller when the grant is genuinely down", async () => {
+    const client: MikroClient = {
+      mutate: async () => {
+        throw new Error("network down");
+      },
+    };
+
+    // The hook swallows its own copy...
+    await getGeneralAccess(client).catch(() => {});
+    // ...but the scope build's await still rejects, so `phase: "error"` is
+    // reached exactly as it is today.
+    await expect(getGeneralAccess(client)).rejects.toThrow("network down");
+  });
+});

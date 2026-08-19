@@ -38,8 +38,8 @@ export const ModelCollectionPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroModelCollection.Komments object={data.modelCollection} />
+            <Sidebars.Tab label="Knowledge">
+              <ElektroModelCollection.Knowledge object={data.modelCollection} />
             </Sidebars.Tab>
           </Sidebars>
         }

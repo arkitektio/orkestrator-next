@@ -30,6 +30,8 @@ import { AttributeProbeTracker } from "./managers/AttributeProbeTracker";
 import { ProbeReadoutSettler } from "./managers/ProbeReadoutSettler";
 import { BrickSystemProvider } from "./managers/BrickSystemProvider";
 import { VisibilityManager } from "./managers/VisibilityManager";
+import { coldOpenTimeline } from "./managers/coldOpenTimeline";
+import { BrickSystemHost } from "./managers/BrickSystemHost";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { SceneModeControls } from "./overlays/SceneModeControls";
 import { SceneShortcuts } from "./overlays/SceneShortcuts";
@@ -203,6 +205,8 @@ const SceneWrapper = ({ children }: { children: ReactNode }) => {
           }
 
           console.info("[scene] renderer initialized — backend: WebGPU");
+          // The device is live: everything above this was pre-GPU cold open.
+          coldOpenTimeline.stamp("canvasMount");
           return renderer;
         }}>{children}</Canvas>;
 };
@@ -309,6 +313,11 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         <KeyboardModeController />
         <KeyboardLayerVisibility />
         <ModeCompatGuard />
+        {/* OUTSIDE <SceneWrapper> deliberately: the canvas awaits
+            renderer.init() before mounting any child, and brick fetch/decode/
+            repack need no device — starting here overlaps the network with
+            GPU setup. BrickSystemProvider (inside) binds the renderer. */}
+        <BrickSystemHost />
         <SceneWrapper>
           <LongCommitProfiler id="scene-canvas">
           <ambientLight intensity={0.7} />

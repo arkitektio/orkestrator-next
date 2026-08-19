@@ -17,7 +17,7 @@ export const LayerPage = asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {
       object={data.layer}
       actions={<LokLayer.Actions object={data?.layer} />}
       title={data?.layer?.name}
-      sidebars={<LokLayer.Komments object={data?.layer} />}
+      sidebars={<LokLayer.Knowledge object={data?.layer} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

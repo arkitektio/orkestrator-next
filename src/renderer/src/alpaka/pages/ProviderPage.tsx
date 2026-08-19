@@ -45,8 +45,8 @@ export const TPage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <AlpakaProvider.Komments object={provider} />
+            <Sidebars.Tab label="Knowledge">
+              <AlpakaProvider.Knowledge object={provider} />
             </Sidebars.Tab>
           </Sidebars>
         }

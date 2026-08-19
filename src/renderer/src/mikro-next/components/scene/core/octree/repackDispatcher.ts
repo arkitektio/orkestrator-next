@@ -39,6 +39,15 @@ export interface RepackDispatcher {
    * or overflowing buffers just fall to GC, exactly as before.
    */
   release(data: BrickArray): void;
+  /**
+   * Spawn the worker pool now rather than on the first brick.
+   *
+   * Workers are otherwise lazy, so the FIRST brick of a cold scene pays
+   * `new Worker` + module evaluation on top of its own decode — right at the
+   * moment the user is waiting for the first voxels. Optional: the sync
+   * dispatcher has no workers to warm.
+   */
+  prewarm?(): void;
   dispose(): void;
 }
 
@@ -185,6 +194,17 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
   };
 
   return {
+    prewarm: () => {
+      if (disposed) return;
+      // Idempotent by construction: acquireWorker only creates while the pool
+      // is under REPACK_WORKER_COUNT, and round-robins once it is full.
+      try {
+        while (workers.length < REPACK_WORKER_COUNT) acquireWorker();
+      } catch {
+        // Worker construction unavailable — repack falls back to the sync path
+        // per job, exactly as it does today.
+      }
+    },
     repack: (job) => {
       if (disposed) return Promise.reject(new Error("repack dispatcher disposed"));
       let worker: Worker;

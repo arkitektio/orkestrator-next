@@ -13,8 +13,8 @@ export const ReleasePage = asDetailQueryRoute(useGetReleaseQuery, ({ data, refet
       object={data?.release}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KabinetRelease.Komments object={data?.release} />
+          <Sidebars.Tab label="Knowledge">
+            <KabinetRelease.Knowledge object={data?.release} />
           </Sidebars.Tab>
         </Sidebars>
       }

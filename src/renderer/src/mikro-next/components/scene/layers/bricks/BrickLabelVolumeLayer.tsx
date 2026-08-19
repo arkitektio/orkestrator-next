@@ -113,7 +113,11 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     planTargetLevel,
     worldMatrix: affineMatrix,
   });
-  useStepScaleUniform(bundle?.nodes); // no settleRefine: canvas-pass material
+  // canvasPass=true: this material renders live in the canvas pass at full
+  // buffer resolution, so it never gets the compositor's motion-time 0.5×
+  // resolution cut and compensates with stride instead. No settleRefine for
+  // the same reason — nothing amortizes a boosted budget here.
+  useStepScaleUniform(bundle?.nodes, false, true);
   useVolumePassRegistration(!!bundle);
 
   // The picked colouring and the active filter rules, resolved into the

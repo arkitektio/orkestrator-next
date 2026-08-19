@@ -8,6 +8,7 @@ import { SceneFragment } from "@/mikro-next/api/graphql";
 import { isBrickLayer } from "../core/layerGuards";
 import { buildS3FetchConfig, getGeneralAccess } from "@/mikro-next/lib/zarr/access";
 import { openZarrArray, type OpenedZarrArray } from "./arrayRegistry";
+import { coldOpenTimeline } from "../managers/coldOpenTimeline";
 
 export { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
 
@@ -69,6 +70,7 @@ export async function createConfiguredSceneStores(
 ): Promise<Map<string, ZarrStore>> {
   const descriptors = collectSceneStoreDescriptors(scene);
   const initial = await getGeneralAccess(client);
+  coldOpenTimeline.stamp("credentials");
 
   const stores = await Promise.all(
     Array.from(descriptors.values()).map(
@@ -79,6 +81,7 @@ export async function createConfiguredSceneStores(
         ] as const,
     ),
   );
+  coldOpenTimeline.stamp("storeMetadata");
 
   return new Map(stores);
 }

@@ -153,8 +153,8 @@ export const ResolutionPage = asDetailQueryRoute(useGetResolutionQuery, ({ data 
       object={data.resolution}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <RekuestToolbox.Komments object={data?.resolution} />
+          <Sidebars.Tab label="Knowledge">
+            <RekuestToolbox.Knowledge object={data?.resolution} />
           </Sidebars.Tab>
         </Sidebars>
       }

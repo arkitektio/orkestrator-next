@@ -67,8 +67,8 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       }
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KraphGraph.Komments object={data.graph} />
+          <Sidebars.Tab label="Knowledge">
+            <KraphGraph.Knowledge object={data.graph} />
           </Sidebars.Tab>
           <Sidebars.Tab label="Plots">
             {(

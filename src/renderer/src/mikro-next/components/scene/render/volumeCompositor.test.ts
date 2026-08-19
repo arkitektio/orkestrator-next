@@ -27,7 +27,16 @@ const baseKey = (overrides: Partial<VolumeFrameKey> = {}): VolumeFrameKey => ({
   ...overrides,
 });
 
-const decide = (
+/**
+ * `structureKey` is a thunk in the input (see `decideVolumeFrame`), so the
+ * helper wraps the fixture's string and reports whether it was ever called —
+ * that is the laziness the gesture path depends on.
+ *
+ * Returns just `{render, reason}` so the existing assertions keep reading as
+ * they did; `decideResolved` below is for the cases that care about the
+ * resolved key.
+ */
+const decideFull = (
   key: VolumeFrameKey,
   previous: VolumeFrameKey | null,
   overrides: Partial<{
@@ -36,15 +45,34 @@ const decide = (
     streaming: boolean;
     trackerReason: string;
   }> = {},
-) =>
-  decideVolumeFrame({
+) => {
+  let structureCalls = 0;
+  const result = decideVolumeFrame({
     cacheEnabled: overrides.cacheEnabled ?? true,
     hasTargetContent: overrides.hasTargetContent ?? true,
     streaming: overrides.streaming ?? false,
-    key,
+    key: {
+      ...key,
+      structureKey: () => {
+        structureCalls += 1;
+        if (key.structureKey === null) throw new Error("fixture has no structure key");
+        return key.structureKey;
+      },
+    },
     trackerReason: overrides.trackerReason ?? "test",
     previous,
   });
+  return { ...result, structureCalls };
+};
+
+const decide = (
+  key: VolumeFrameKey,
+  previous: VolumeFrameKey | null,
+  overrides: Parameters<typeof decideFull>[2] = {},
+) => {
+  const { render, reason } = decideFull(key, previous, overrides);
+  return { render, reason };
+};
 
 describe("resolveVolumeScale", () => {
   it("is full resolution settled (the cache makes settled frames free) and half-res active", () => {
@@ -277,5 +305,61 @@ describe("decideSettleRefine (settle refinement ladder)", () => {
     expect(decide({ cameraMoving: true, stage })).toBe("reset");
     stage = 0;
     expect(decide({ stage })).toBe("advance");
+  });
+});
+
+/**
+ * The structure key walks every volume mesh and stringifies its world matrix.
+ * During a gesture the camera compare above it fails on essentially every
+ * frame, so building it eagerly was ~60 wasted string builds per second.
+ * `decideVolumeFrame` resolves it lazily; these pin that the shortcut can only
+ * ever cost an extra render, never a missed one.
+ */
+describe("decideVolumeFrame — lazy structure key", () => {
+  it("does NOT build the structure key when the camera moved", () => {
+    const moved = baseKey({ cameraElements: [...IDENTITY.slice(0, 12), 9, 9, 9, 1] });
+    const result = decideFull(moved, baseKey());
+
+    expect(result.reason).toBe("camera");
+    expect(result.structureCalls).toBe(0);
+    // Not computed ⇒ not remembered.
+    expect(result.resolved.structureKey).toBeNull();
+  });
+
+  it("skips it for every check that short-circuits earlier", () => {
+    expect(decideFull(baseKey(), null).structureCalls).toBe(0);
+    expect(decideFull(baseKey(), baseKey(), { streaming: true }).structureCalls).toBe(0);
+    expect(decideFull(baseKey(), baseKey(), { cacheEnabled: false }).structureCalls).toBe(0);
+    expect(decideFull(baseKey(), baseKey(), { hasTargetContent: false }).structureCalls).toBe(0);
+    expect(decideFull(baseKey({ targetWidth: 801 }), baseKey()).structureCalls).toBe(0);
+  });
+
+  it("builds it exactly once when the cheap checks all pass", () => {
+    const result = decideFull(baseKey(), baseKey());
+    expect(result.reason).toBe("cached");
+    expect(result.structureCalls).toBe(1);
+    expect(result.resolved.structureKey).toBe("1|42:m");
+  });
+
+  it("treats an UNRESOLVED previous key as changed — the safe direction", () => {
+    // The frame before was a gesture frame that skipped the computation. We
+    // cannot know whether the structure moved, so we must render.
+    const result = decideFull(baseKey(), baseKey({ structureKey: null }));
+    expect(result).toMatchObject({ render: true, reason: "structure" });
+    // ...and it resolves the key this time, so the NEXT frame can cache again.
+    expect(result.resolved.structureKey).toBe("1|42:m");
+  });
+
+  it("a settled frame after a gesture re-establishes the cache in two frames", () => {
+    // Frame 1: camera still moving — no structure key.
+    const gesture = decideFull(baseKey({ cameraElements: [...IDENTITY] }), baseKey());
+    // Frame 2: camera identical to frame 1, but frame 1 left structureKey null.
+    const settling = decideFull(baseKey(), gesture.resolved);
+    expect(settling.render).toBe(true);
+    // Frame 3: now both sides have a resolved key and it caches.
+    expect(decideFull(baseKey(), settling.resolved)).toMatchObject({
+      render: false,
+      reason: "cached",
+    });
   });
 });

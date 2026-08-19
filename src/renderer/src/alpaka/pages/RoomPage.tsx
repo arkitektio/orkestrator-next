@@ -50,8 +50,8 @@ export const RoomPage =  asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <AlpakaRoom.Komments object={data.room} />
+            <Sidebars.Tab label="Knowledge">
+              <AlpakaRoom.Knowledge object={data.room} />
             </Sidebars.Tab>
           </Sidebars>
         }

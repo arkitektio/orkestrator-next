@@ -16,8 +16,8 @@ export const TPage = asDetailQueryRoute(
         object={data.structurePackage}
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <RekuestToolbox.Komments object={data?.structurePackage} />
+            <Sidebars.Tab label="Knowledge">
+              <RekuestToolbox.Knowledge object={data?.structurePackage} />
             </Sidebars.Tab>
           </Sidebars>
         }

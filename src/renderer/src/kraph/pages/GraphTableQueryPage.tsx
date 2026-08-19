@@ -64,8 +64,8 @@ const Page = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <KraphGraphView.Komments object={{ id: data.graphTableQuery.id }} />
+            <Sidebars.Tab label="Knowledge">
+              <KraphGraphView.Knowledge object={{ id: data.graphTableQuery.id }} />
             </Sidebars.Tab>
             <Sidebars.Tab label="Cypher">
               <CypherSidebar cypher={data.graphTableQuery.query || ""} />

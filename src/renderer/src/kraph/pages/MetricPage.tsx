@@ -16,8 +16,8 @@ export default asDetailQueryRoute(useGetMetricQuery, ({ data }) => {
       title={data?.metric.kind?.label || data?.metric.kind?.key || data?.metric.key || "Metric"}
       sidebars={
         <Sidebars>
-          <Sidebars.Tab label="Comments">
-            <KraphMetric.Komments object={{ id: data.metric.id }} />
+          <Sidebars.Tab label="Knowledge">
+            <KraphMetric.Knowledge object={{ id: data.metric.id }} />
           </Sidebars.Tab>
         </Sidebars>
       }

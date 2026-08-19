@@ -12,6 +12,8 @@ import {
   TIER_LOW,
   TIER_MEDIUM,
   type QualityStorage,
+  CANVAS_PASS_ACTIVE_STEP_SCALE,
+  resolveStepScale,
 } from "./qualityGovernor";
 
 const fakeStorage = (): QualityStorage & { data: Map<string, string> } => {
@@ -432,5 +434,32 @@ describe("resolveMaxRaySteps (settle refinement ladder)", () => {
     governor.setSettleRefineStage(-5);
     expect(governor.getSettleRefineStage()).toBe(0);
     expect(emits).toBe(3);
+  });
+});
+
+describe("resolveStepScale (canvas-pass compensation)", () => {
+  it("is the identity for target-rendered materials in every state", () => {
+    // Image volumes ride the compositor's 0.5× target during motion; touching
+    // their stride as well would double-charge them for the same gesture.
+    expect(resolveStepScale({ base: 2, active: true, canvasPass: false })).toBe(2);
+    expect(resolveStepScale({ base: 1, active: false, canvasPass: false })).toBe(1);
+  });
+
+  it("is the identity for canvas-pass materials once settled", () => {
+    // The asymmetry it compensates for only exists while the target is reduced.
+    expect(resolveStepScale({ base: 1, active: false, canvasPass: true })).toBe(1);
+  });
+
+  it("lengthens the stride only for canvas-pass materials in motion", () => {
+    expect(resolveStepScale({ base: 2, active: true, canvasPass: true })).toBe(
+      2 * CANVAS_PASS_ACTIVE_STEP_SCALE,
+    );
+  });
+
+  it("stays well below the resolution cut it compensates for", () => {
+    // The target drops to a QUARTER of the fragments; matching that with stride
+    // would step over thin masks, which is a correctness artifact, not blur.
+    expect(CANVAS_PASS_ACTIVE_STEP_SCALE).toBeGreaterThan(1);
+    expect(CANVAS_PASS_ACTIVE_STEP_SCALE).toBeLessThan(4);
   });
 });

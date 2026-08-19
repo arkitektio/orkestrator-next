@@ -20,8 +20,8 @@ export const TracePage = asDetailQueryRoute(
         }
         sidebars={
           <Sidebars>
-            <Sidebars.Tab label="Comments">
-              <ElektroTrace.Komments object={data.trace} />
+            <Sidebars.Tab label="Knowledge">
+              <ElektroTrace.Knowledge object={data.trace} />
             </Sidebars.Tab>
           </Sidebars>
         }

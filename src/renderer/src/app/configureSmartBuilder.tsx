@@ -16,7 +16,6 @@ import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { useLiveTask } from "@/rekuest/hooks/useTasks";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { ComponentType, ReactNode } from "react";
-import { Komments } from "@/kraph/components/komments/Komments";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import ArrayDatasetHoverCard from "@/mikro-next/components/hovers/ArrayDatasetHoverCard";
 import FileHoverCard from "@/mikro-next/components/hovers/FileHoverCard";
@@ -77,17 +76,15 @@ const hoverCards: Record<string, HoverCardEntry> = {
 };
 
 configureSmartBuilder({
-  renderKomments: ({ identifier, object }) => {
-    // Comments moved to kraph, so the discussion surface is module-specific
-    // now: the guard has to sit outside, since the query fires on mount.
+  renderKnowledge: ({ identifier, object }) => {
+    // Claims and comments both live in kraph, so this whole surface is
+    // module-specific: the guard has to sit outside, since the queries fire on
+    // mount.
     return (
       <Guard.Kraph>
-        <Komments identifier={identifier} object={object} />
+        <KnowledgeSidebar identifier={identifier} object={object} />
       </Guard.Kraph>
     );
-  },
-  renderKnowledge: ({ identifier, object }) => {
-    return <KnowledgeSidebar identifier={identifier} object={object} />;
   },
   renderHover: ({ identifier, object }) => {
     const entry = hoverCards[identifier];

@@ -1,0 +1,202 @@
+import { describe, expect, it } from "vitest";
+import { TIER_HIGH, TIER_LOW, TIER_MEDIUM } from "../core/qualityGovernor";
+import {
+  createCompositorStats,
+  createVolumeInputsTracker,
+  decideVolumeFrame,
+  ladderFeedforwardPassCount,
+  needsTargetResize,
+  resolveVolumeScale,
+  resolveVolumeTargetSize,
+  type VolumeFrameKey,
+} from "./volumeCompositor";
+
+const IDENTITY = Object.freeze([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+
+const baseKey = (overrides: Partial<VolumeFrameKey> = {}): VolumeFrameKey => ({
+  cameraElements: [...IDENTITY],
+  structureKey: "1|42:m",
+  residencyVersion: 3,
+  poolsVersion: 1,
+  qualityVersion: 7,
+  trackerVersion: 5,
+  targetWidth: 800,
+  targetHeight: 600,
+  ...overrides,
+});
+
+const decide = (
+  key: VolumeFrameKey,
+  previous: VolumeFrameKey | null,
+  overrides: Partial<{
+    cacheEnabled: boolean;
+    hasTargetContent: boolean;
+    streaming: boolean;
+    trackerReason: string;
+  }> = {},
+) =>
+  decideVolumeFrame({
+    cacheEnabled: overrides.cacheEnabled ?? true,
+    hasTargetContent: overrides.hasTargetContent ?? true,
+    streaming: overrides.streaming ?? false,
+    key,
+    trackerReason: overrides.trackerReason ?? "test",
+    previous,
+  });
+
+describe("resolveVolumeScale", () => {
+  it("is full resolution settled (the cache makes settled frames free) and half-res active", () => {
+    expect(resolveVolumeScale(TIER_HIGH, false)).toBe(1);
+    expect(resolveVolumeScale(TIER_MEDIUM, false)).toBe(1);
+    expect(resolveVolumeScale(TIER_LOW, false)).toBe(1);
+    expect(resolveVolumeScale(TIER_HIGH, true)).toBe(0.5);
+    expect(resolveVolumeScale(TIER_MEDIUM, true)).toBe(0.5);
+    expect(resolveVolumeScale(TIER_LOW, true)).toBe(0.5);
+  });
+});
+
+describe("resolveVolumeTargetSize", () => {
+  it("anchors to the settled dpr, not the live buffer", () => {
+    const size = resolveVolumeTargetSize({
+      cssWidth: 1000,
+      cssHeight: 800,
+      settledDpr: 1.5,
+      bufferWidth: 1500,
+      bufferHeight: 1200,
+      scale: 0.5,
+    });
+    expect(size).toEqual({ width: 750, height: 600 });
+  });
+
+  it("clamps to the live buffer so ladder drops never double-downscale", () => {
+    // Canvas mid-gesture at ladder 0.5 (dpr 0.75 of settled 1.5): the volume
+    // target must not exceed the canvas' own pixels.
+    const size = resolveVolumeTargetSize({
+      cssWidth: 1000,
+      cssHeight: 800,
+      settledDpr: 1.5,
+      bufferWidth: 700, // smaller than 0.75 × settled
+      bufferHeight: 560,
+      scale: 0.75,
+    });
+    expect(size).toEqual({ width: 700, height: 560 });
+  });
+
+  it("rounds and never returns less than one pixel", () => {
+    const size = resolveVolumeTargetSize({
+      cssWidth: 1,
+      cssHeight: 1,
+      settledDpr: 0.4,
+      bufferWidth: 1,
+      bufferHeight: 1,
+      scale: 0.5,
+    });
+    expect(size).toEqual({ width: 1, height: 1 });
+  });
+
+  it("degrades NaN/zero inputs to a 1px-safe size instead of poisoning the target", () => {
+    const size = resolveVolumeTargetSize({
+      cssWidth: 1000,
+      cssHeight: 800,
+      settledDpr: Number.NaN,
+      bufferWidth: 0,
+      bufferHeight: Number.NaN,
+      scale: 0.5,
+    });
+    expect(Number.isFinite(size.width) && size.width >= 1).toBe(true);
+    expect(Number.isFinite(size.height) && size.height >= 1).toBe(true);
+  });
+});
+
+describe("needsTargetResize", () => {
+  it("resizes from null and on any dimension change, not on equality", () => {
+    expect(needsTargetResize(null, { width: 10, height: 10 })).toBe(true);
+    expect(needsTargetResize({ width: 10, height: 10 }, { width: 10, height: 10 })).toBe(false);
+    expect(needsTargetResize({ width: 10, height: 10 }, { width: 11, height: 10 })).toBe(true);
+    expect(needsTargetResize({ width: 10, height: 10 }, { width: 10, height: 11 })).toBe(true);
+  });
+});
+
+describe("decideVolumeFrame", () => {
+  it("renders when the cache is disabled", () => {
+    const key = baseKey();
+    expect(decide(key, key, { cacheEnabled: false })).toEqual({
+      render: true,
+      reason: "cache-off",
+    });
+  });
+
+  it("renders on first frame / after target loss", () => {
+    const key = baseKey();
+    expect(decide(key, key, { hasTargetContent: false }).reason).toBe("no-content");
+    expect(decide(key, null).reason).toBe("no-previous");
+  });
+
+  it("skips when nothing changed", () => {
+    expect(decide(baseKey(), baseKey())).toEqual({ render: false, reason: "cached" });
+  });
+
+  it("always renders while bricks stream, even with an unchanged key", () => {
+    // residencyVersion is throttled on a separate timer from the streaming
+    // invalidates — an unchanged key must not hide freshly landed bricks.
+    expect(decide(baseKey(), baseKey(), { streaming: true })).toEqual({
+      render: true,
+      reason: "streaming",
+    });
+  });
+
+  it("renders with the right reason for each changed input", () => {
+    const previous = baseKey();
+    const nudged = [...IDENTITY];
+    nudged[12] = 0.0001; // any element, any magnitude — exact compare
+    expect(decide(baseKey({ cameraElements: nudged }), previous).reason).toBe("camera");
+    expect(decide(baseKey({ structureKey: "2|42:m|43:n" }), previous).reason).toBe("structure");
+    expect(decide(baseKey({ residencyVersion: 4 }), previous).reason).toBe("residency");
+    expect(decide(baseKey({ poolsVersion: 2 }), previous).reason).toBe("pools");
+    expect(decide(baseKey({ qualityVersion: 8 }), previous).reason).toBe("quality");
+    expect(
+      decide(baseKey({ trackerVersion: 6 }), previous, { trackerReason: "step-uniforms" }).reason,
+    ).toBe("uniforms:step-uniforms");
+    expect(decide(baseKey({ targetWidth: 801 }), previous).reason).toBe("resize");
+  });
+
+  it("renders when the camera matrix is not finite", () => {
+    const broken = [...IDENTITY];
+    broken[0] = Number.NaN;
+    expect(decide(baseKey({ cameraElements: broken }), baseKey()).reason).toBe(
+      "camera-invalid",
+    );
+  });
+});
+
+describe("createVolumeInputsTracker", () => {
+  it("bumps the version and records the reason", () => {
+    const tracker = createVolumeInputsTracker();
+    expect(tracker.version).toBe(0);
+    expect(tracker.lastReason).toBe("init");
+    tracker.bump("channel-uniforms");
+    tracker.bump("step-uniforms");
+    expect(tracker.version).toBe(2);
+    expect(tracker.lastReason).toBe("step-uniforms");
+  });
+});
+
+describe("createCompositorStats", () => {
+  it("counts renders and cached composites, remembers the last render reason", () => {
+    const stats = createCompositorStats();
+    stats.onFrame({ render: true, reason: "camera" });
+    stats.onFrame({ render: false, reason: "cached" });
+    stats.onFrame({ render: false, reason: "cached" });
+    stats.onFrame({ render: true, reason: "residency" });
+    expect(stats.volumeRenders()).toBe(2);
+    expect(stats.cachedComposites()).toBe(2);
+    expect(stats.lastRenderReason()).toBe("residency");
+  });
+});
+
+describe("ladderFeedforwardPassCount", () => {
+  it("reports one pass to the DPR ladder while the volume target owns raymarch cost", () => {
+    expect(ladderFeedforwardPassCount(true, 6)).toBe(1);
+    expect(ladderFeedforwardPassCount(false, 6)).toBe(6);
+  });
+});

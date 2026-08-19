@@ -341,6 +341,8 @@ export const useBrushSkeleton = () => {
           minValue: dataWindow.min,
           maxValue: dataWindow.max,
           emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
+          poolMin: pool.minValue,
+          poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
           payload: pool.spec.payload,
           border: pool.spec.border,
           storedZ: pool.spec.stored[2],
@@ -375,30 +377,13 @@ export const useBrushSkeleton = () => {
       }
       picked = cpuPicked;
       const { box, step, spacing, worldToLevelVoxel } = cpuPicked;
-      // Normalize with the pool's own running range — the same range the
-      // raymarcher's minValue/maxValue uniforms carry (`brickSampling.ts`),
-      // minus clim/gamma: those are display state, not data.
-      const range = Math.max(pool.maxValue - pool.minValue, 1e-5);
       const built = buildCostField({
         box,
         strokeLevelPts: strokeWorld.map(worldToLevelVoxel),
         radiusWorld,
         spacing,
         weights,
-        sample: (levelVoxel) => {
-          const raw = brickSystem.sampleResident(
-            strokeLayerId,
-            [
-              levelVoxel[0] * step[0],
-              levelVoxel[1] * step[1],
-              levelVoxel[2] * step[2],
-            ],
-            cpuPicked.level,
-            channel,
-          );
-          if (raw === null) return null;
-          return Math.min(1, Math.max(0, (raw - pool.minValue) / range));
-        },
+        sample: samplerFor(cpuPicked),
       });
       holes = built.holes;
       field = geodesicField({
@@ -411,6 +396,26 @@ export const useBrushSkeleton = () => {
         levelTube = marchTube({
           cost: built.cost,
           box,
+          iso: tubeIso,
+          maxVertices: CPU_MAX_TUBE_VERTICES,
+        });
+      }
+    } else if (tubeEnabled && !levelTube && picked) {
+      // The GPU delivered the centerline but not the tube (dead/latched tube
+      // pipeline): march the CPU twin over the same corridor rather than
+      // silently answering "just a path".
+      if (corridorVoxelCount(picked.box) <= CPU_MAX_CORRIDOR_VOXELS) {
+        const built = buildCostField({
+          box: picked.box,
+          strokeLevelPts: strokeWorld.map(picked.worldToLevelVoxel),
+          radiusWorld,
+          spacing: picked.spacing,
+          weights,
+          sample: samplerFor(picked),
+        });
+        levelTube = marchTube({
+          cost: built.cost,
+          box: picked.box,
           iso: tubeIso,
           maxVertices: CPU_MAX_TUBE_VERTICES,
         });
@@ -500,6 +505,8 @@ export const useBrushSkeleton = () => {
     const levelSteps = traceLevelSteps(layer);
     const radiusWorld =
       brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...voxelSize);
+    // Same display-window normalization as the release-time extraction.
+    const dataWindow = climWindow(layer, pool);
     const tubeIso = voxelCost(brush.tubeThreshold, brush.weights);
     const startLevel = Math.min(
       Math.max(viewerStoreApi.getState().nodePlans[strokeLayerId]?.targetLevel ?? 0, 0),
@@ -531,9 +538,11 @@ export const useBrushSkeleton = () => {
       radiusWorld,
       weights: brush.weights,
       channel: traceChannelSlab(layer),
-      minValue: pool.minValue,
-      maxValue: pool.maxValue,
+      minValue: dataWindow.min,
+      maxValue: dataWindow.max,
       emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
+      poolMin: pool.minValue,
+      poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
       payload: pool.spec.payload,
       border: pool.spec.border,
       storedZ: pool.spec.stored[2],

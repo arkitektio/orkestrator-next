@@ -9,7 +9,7 @@ import {
 import { buildLabelUniformData, labelDataSignature } from "../../render/bricks/labelUniforms";
 import { useLabelColorLut } from "../../render/labels/useLabelColorLut";
 import { buildAffineMatrix } from "../../core/worldTransform";
-import { useViewerStore } from "../../store/viewerStore";
+import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import { perfMonitor } from "../../managers/perfMonitor";
 import { useBrickLayer } from "./useBrickPlaneProbe";
 import { useBrickMaterialBundle } from "./useBrickMaterialBundle";
@@ -78,6 +78,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     return () => unregister(refProxy);
   }, [layerId, register, unregister]);
   const invalidate = useThree((state) => state.invalidate);
+  const viewerStoreApi = useViewerStoreApi();
 
   const affineMatrix = useMemo(
     () => (layer ? buildAffineMatrix(layer) : new THREE.Matrix4().identity()),
@@ -101,6 +102,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
   useEffect(() => {
     if (!bundle) return;
     updateLabelVolumeNodes(bundle.nodes, labelData);
+    viewerStoreApi.getState().volumeInputs.bump("label-uniforms");
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, labelSignature, invalidate]);
@@ -134,6 +136,12 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
           spans [0..shape] and voxel v renders at exactly affine(v) —
           COORDINATE_SYSTEMS.md "Coordinate conventions". `renderOrder` 2 puts the
           mask above an image volume's 1, matching the 2D pair. */}
+      {/* NOT tagged VOLUME_PASS_OBJECT: the compositor's offscreen target is
+          an ADDITIVE-DELTA buffer (see brickNodeMaterials' blending note) and
+          this material's NormalBlending cannot share it — the label raymarch
+          renders live in the canvas pass, drawn AFTER the composite quad
+          (renderOrder 2 > 1) exactly as it draws after image volumes today.
+          Folding labels into their own cached target is a noted follow-up. */}
       <mesh
         key={pool.structureSignature}
         scale={volumeSize}

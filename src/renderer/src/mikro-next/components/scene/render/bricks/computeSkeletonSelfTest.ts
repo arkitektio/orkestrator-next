@@ -186,6 +186,8 @@ export async function runGpuSkeletonSelfTest(
       minValue: MIN_VALUE,
       maxValue: MAX_VALUE,
       emptyCeiling: 0xff,
+      poolMin: MIN_VALUE,
+      poolRange: RANGE,
       payload: SPEC.payload,
       border: SPEC.border,
       storedZ: SPEC.stored[2],

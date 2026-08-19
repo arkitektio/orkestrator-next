@@ -1,0 +1,359 @@
+/* eslint-disable react-hooks/immutability --
+ * This component's whole job is imperative render orchestration: it drives
+ * renderer state (targets, autoClear, clear color), toggles scene-graph
+ * visibility inside the frame callback, and mutates its own render target —
+ * all deliberately outside React's data flow (see useVolumeRayUniforms for
+ * the same contract on uniforms). */
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
+import { NodeMaterial } from "three/webgpu";
+import { screenUV, texture } from "three/tsl";
+import { EXCLUDE_FROM_CAPTURE } from "../core/captureVisibility";
+import {
+  COMPOSITOR_INTERNAL,
+  collectPassSets,
+  disableColorWrite,
+  hideObjects,
+  type PassSets,
+} from "../core/passVisibility";
+import { qualityGovernor, resolveDpr } from "../core/qualityGovernor";
+import {
+  createCompositorStats,
+  decideVolumeFrame,
+  needsTargetResize,
+  resolveVolumeScale,
+  resolveVolumeTargetSize,
+  type VolumeFrameKey,
+} from "../render/volumeCompositor";
+import {
+  isVolumeCacheEnabled,
+  isVolumeDepthPrepassEnabled,
+} from "../render/volumeTargetFlags";
+import { useViewStoreApi } from "../store/viewStore";
+import { useViewerStoreApi } from "../store/viewerStore";
+
+/**
+ * The volume compositor (OCTREE_RENDERER.md §7 R1+R2): renders the tagged
+ * volume raymarch meshes into a dedicated reduced-resolution render target
+ * and composites the upsampled result into the canvas frame — re-rendering
+ * the target only when a volume input changed.
+ *
+ * Mounted by `ThreeDScene` (3D only) behind `orkestrator.volumeTarget`. The
+ * priority-1 `useFrame` is R3F's documented render takeover: with a
+ * nonzero-priority subscriber R3F skips its own `gl.render`, so this
+ * callback owns the frame — (1) optional volume pass into the target,
+ * (2) canvas pass with volume meshes hidden and the composite quad shown.
+ * Three's internal output pass (tone map + sRGB) still runs once, on the
+ * canvas render, so tone mapping stays single and final. On unmount (2D
+ * switch, flag off) the subscription drops and R3F's own render resumes.
+ *
+ * All decisions live in the pure core (`render/volumeCompositor.ts`); this
+ * shell only executes renders and restores state in `finally` (the
+ * SceneScreenshot contract).
+ */
+
+/** The WebGPURenderer subset this drives (R3F types `gl` as WebGLRenderer). */
+interface CompositorRenderer {
+  autoClear: boolean;
+  getPixelRatio: () => number;
+  getRenderTarget: () => THREE.RenderTarget | null;
+  setRenderTarget: (target: THREE.RenderTarget | null) => void;
+  render: (scene: THREE.Object3D, camera: THREE.Camera) => void;
+  setClearColor: (color: THREE.ColorRepresentation, alpha?: number) => void;
+  getClearColor: (target: THREE.Color) => THREE.Color;
+  getClearAlpha: () => number;
+}
+
+const scratchView = new THREE.Matrix4();
+const scratchVP = new THREE.Matrix4();
+const scratchClearColor = new THREE.Color();
+const scratchQuadLocal = new THREE.Matrix4();
+
+/**
+ * Fit the composite quad's WORLD matrix to exactly fill the camera frustum
+ * just past the near plane. The quad then rides the standard MVP vertex path
+ * — no custom vertex stage, which is the construction three's own fullscreen
+ * passes avoid too (QuadMesh uses a dedicated ortho camera instead); a
+ * bespoke `vertexNode` is precisely the kind of node-graph edge that fails
+ * SILENTLY on the WebGPU backend (the object is just skipped). depthTest is
+ * off, so the chosen distance never occludes.
+ */
+const fitQuadToCamera = (quad: THREE.Mesh, camera: THREE.Camera): void => {
+  const perspective = camera as THREE.PerspectiveCamera;
+  const orthographic = camera as THREE.OrthographicCamera;
+  let distance: number;
+  let halfWidth: number;
+  let halfHeight: number;
+  if ((perspective as { isPerspectiveCamera?: boolean }).isPerspectiveCamera) {
+    distance = perspective.near * 2;
+    halfHeight =
+      distance * Math.tan(THREE.MathUtils.degToRad(perspective.fov) / 2);
+    halfWidth = halfHeight * perspective.aspect;
+  } else {
+    distance = orthographic.near + (orthographic.far - orthographic.near) * 0.001;
+    const zoom = orthographic.zoom || 1;
+    halfWidth = (orthographic.right - orthographic.left) / 2 / zoom;
+    halfHeight = (orthographic.top - orthographic.bottom) / 2 / zoom;
+  }
+  scratchQuadLocal.makeScale(halfWidth, halfHeight, 1);
+  scratchQuadLocal.setPosition(0, 0, -distance);
+  quad.matrixWorld.multiplyMatrices(camera.matrixWorld, scratchQuadLocal);
+};
+
+/** Tagged-mesh count + material ids + world matrices: catches structural
+ * changes (mount/unmount, material rebuild, affine edit) no counter covers. */
+const buildStructureKey = (sets: PassSets): string => {
+  let key = `${sets.volumeMeshes.length}`;
+  for (const mesh of sets.volumeMeshes) {
+    const material = mesh.material as THREE.Material;
+    key += `|${material.id}:${mesh.matrixWorld.elements.join(",")}`;
+  }
+  return key;
+};
+
+export const VolumeCompositor = () => {
+  const viewStoreApi = useViewStoreApi();
+  const viewerStoreApi = useViewerStoreApi();
+  const stats = useMemo(() => createCompositorStats(), []);
+
+  const target = useMemo(
+    () =>
+      new THREE.RenderTarget(2, 2, {
+        depthBuffer: true,
+        type: THREE.HalfFloatType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        generateMipmaps: false,
+      }),
+    [],
+  );
+
+  // Fullscreen composite quad: a camera-fitted plane (see fitQuadToCamera)
+  // sampling the target at screenUV — resolution-independent, so the low-res
+  // target upsamples bilinearly. The target is an ADDITIVE-DELTA buffer:
+  // image volumes render into it with plain AdditiveBlending (rgb
+  // (SrcAlpha, One), alpha (One, One)) over a (0,0,0,0) clear, so each texel
+  // holds exactly the rgb+alpha delta the direct path would have added to
+  // the canvas. Compositing with (One, One) on BOTH channels reproduces that
+  // bit-for-bit over any background — including the transparent canvas,
+  // where the accumulated ALPHA is what makes volumes visible at all (the
+  // scene background is a DOM div behind the canvas).
+  const quad = useMemo(() => {
+    const material = new NodeMaterial();
+    material.colorNode = texture(target.texture, screenUV);
+    material.transparent = true;
+    material.blending = THREE.CustomBlending;
+    material.blendEquation = THREE.AddEquation;
+    material.blendSrc = THREE.OneFactor;
+    material.blendDst = THREE.OneFactor;
+    material.blendEquationAlpha = THREE.AddEquation;
+    material.blendSrcAlpha = THREE.OneFactor;
+    material.blendDstAlpha = THREE.OneFactor;
+    material.depthTest = false;
+    material.depthWrite = false;
+    material.side = THREE.DoubleSide;
+    material.fog = false;
+    material.lights = false;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    mesh.frustumCulled = false;
+    // The image volumes' slot: labels (2, live in the canvas pass), fabriks
+    // slab overlays (3) and interaction overlays (8+) must draw OVER the
+    // composited volumes, exactly as they draw over direct volumes today.
+    mesh.renderOrder = 1;
+    mesh.visible = false; // shown only inside the canvas pass
+    mesh.raycast = () => {};
+    // The world matrix is written directly by fitQuadToCamera every frame —
+    // nothing may recompute it from parents.
+    mesh.matrixAutoUpdate = false;
+    mesh.matrixWorldAutoUpdate = false;
+    mesh.userData[COMPOSITOR_INTERNAL] = true;
+    mesh.userData[EXCLUDE_FROM_CAPTURE] = true;
+    return mesh;
+  }, [target]);
+
+  useEffect(
+    () => () => {
+      target.dispose();
+      quad.geometry.dispose();
+      (quad.material as THREE.Material).dispose();
+    },
+    [target, quad],
+  );
+
+  const lastScaleRef = useRef(0);
+  const brokenRef = useRef(false);
+  const lastErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    viewerStoreApi.getState().registerVolumeCompositor(() => ({
+      enabled: true,
+      cacheEnabled: isVolumeCacheEnabled(),
+      depthPrepass: isVolumeDepthPrepassEnabled(),
+      broken: brokenRef.current,
+      lastError: lastErrorRef.current,
+      targetWidth: target.width,
+      targetHeight: target.height,
+      scale: lastScaleRef.current,
+      volumeRenders: stats.volumeRenders(),
+      cachedComposites: stats.cachedComposites(),
+      lastRenderReason: stats.lastRenderReason(),
+    }));
+    return () => viewerStoreApi.getState().registerVolumeCompositor(null);
+  }, [viewerStoreApi, target, stats]);
+
+  const previousKeyRef = useRef<VolumeFrameKey | null>(null);
+  const hasContentRef = useRef(false);
+
+  useFrame((state) => {
+    const gl = state.gl as unknown as CompositorRenderer;
+    const { scene, camera } = state;
+
+    // Fail-safe: after any compositor error, fall back to plain rendering
+    // for the rest of the session — the feature must never blank the scene.
+    if (brokenRef.current) {
+      gl.render(scene, camera);
+      return;
+    }
+    try {
+      renderCompositedFrame(state);
+    } catch (error) {
+      brokenRef.current = true;
+      lastErrorRef.current = String(error);
+      console.warn("[scene] volume compositor disabled after error:", error);
+      quad.visible = false;
+      try {
+        gl.setRenderTarget(null);
+      } catch {
+        /* renderer state already unusable — plain render below still runs */
+      }
+      gl.render(scene, camera);
+    }
+  }, 1);
+
+  type FrameState = Parameters<Parameters<typeof useFrame>[0]>[0];
+  const renderCompositedFrame = (state: FrameState) => {
+    const gl = state.gl as unknown as CompositorRenderer;
+    const { scene, camera } = state;
+
+    // World matrices BEFORE key derivation — the renderer would refresh them
+    // mid-render, which is too late for a frame-accurate structure compare.
+    scene.updateMatrixWorld();
+    camera.updateMatrixWorld();
+
+    const sets = collectPassSets(scene);
+    if (sets.volumeMeshes.length === 0) {
+      // No volume passes mounted: plain frame, forget the cache.
+      hasContentRef.current = false;
+      previousKeyRef.current = null;
+      gl.render(scene, camera);
+      return;
+    }
+
+    // --- Target sizing (settled-DPR anchor, live-buffer clamp) -------------
+    // Scale keys on CAMERA MOTION only — streaming keeps full resolution so
+    // progressive LOD sharpening stays visible (see resolveVolumeScale).
+    const profile = qualityGovernor.getProfile();
+    const scale = resolveVolumeScale(
+      qualityGovernor.getTier(),
+      viewStoreApi.getState().cameraMoving,
+    );
+    lastScaleRef.current = scale;
+    const dpr = gl.getPixelRatio();
+    const nextSize = resolveVolumeTargetSize({
+      cssWidth: state.size.width,
+      cssHeight: state.size.height,
+      settledDpr: resolveDpr(profile, state.viewport.initialDpr, false),
+      bufferWidth: state.size.width * dpr,
+      bufferHeight: state.size.height * dpr,
+      scale,
+    });
+    if (
+      needsTargetResize({ width: target.width, height: target.height }, nextSize)
+    ) {
+      target.setSize(nextSize.width, nextSize.height);
+      hasContentRef.current = false;
+    }
+
+    // --- Frame decision (R1) ------------------------------------------------
+    scratchVP
+      .copy(camera.projectionMatrix)
+      .multiply(scratchView.copy(camera.matrixWorld).invert());
+    const viewer = viewerStoreApi.getState();
+    const key: VolumeFrameKey = {
+      cameraElements: scratchVP.elements.slice(),
+      structureKey: buildStructureKey(sets),
+      residencyVersion: viewer.residencyVersion,
+      poolsVersion: viewer.poolsVersion,
+      qualityVersion: qualityGovernor.getVersion(),
+      trackerVersion: viewer.volumeInputs.version,
+      targetWidth: nextSize.width,
+      targetHeight: nextSize.height,
+    };
+    const decision = decideVolumeFrame({
+      cacheEnabled: isVolumeCacheEnabled(),
+      hasTargetContent: hasContentRef.current,
+      streaming: qualityGovernor.isStreaming(),
+      key,
+      trackerReason: viewer.volumeInputs.lastReason,
+      previous: previousKeyRef.current,
+    });
+    stats.onFrame(decision);
+    previousKeyRef.current = key;
+
+    // --- Volume pass into the target ---------------------------------------
+    if (decision.render) {
+      const prevTarget = gl.getRenderTarget();
+      const prevAutoClear = gl.autoClear;
+      gl.getClearColor(scratchClearColor);
+      const prevClearAlpha = gl.getClearAlpha();
+      const restoreOthers = hideObjects(sets.otherRenderables);
+      let restoreOccluders: (() => void) | null = null;
+      try {
+        gl.setClearColor(0x000000, 0);
+        gl.setRenderTarget(target);
+        if (isVolumeDepthPrepassEnabled() && sets.occluders.length > 0) {
+          // Depth-only prepass: occluders alone with their OWN materials and
+          // colorWrite off (never scene.overrideMaterial — a plain override
+          // corrupts BatchedMesh multi-draw ranges), then volumes on top of
+          // the surviving depth (autoClear off keeps it).
+          const restoreVolumes = hideObjects(sets.volumeMeshes);
+          const restoreColorWrite = disableColorWrite(sets.occluders);
+          gl.autoClear = true;
+          try {
+            gl.render(scene, camera);
+          } finally {
+            restoreColorWrite();
+            restoreVolumes();
+          }
+          restoreOccluders = hideObjects(sets.occluders);
+          gl.autoClear = false;
+          gl.render(scene, camera);
+        } else {
+          restoreOccluders = hideObjects(sets.occluders);
+          gl.autoClear = true;
+          gl.render(scene, camera);
+        }
+        hasContentRef.current = true;
+      } finally {
+        restoreOccluders?.();
+        restoreOthers();
+        gl.autoClear = prevAutoClear;
+        gl.setClearColor(scratchClearColor, prevClearAlpha);
+        gl.setRenderTarget(prevTarget);
+      }
+    }
+
+    // --- Canvas pass: everything but volumes, plus the composite quad ------
+    const restoreVolumes = hideObjects(sets.volumeMeshes);
+    quad.visible = hasContentRef.current;
+    if (quad.visible) fitQuadToCamera(quad, camera);
+    try {
+      gl.render(scene, camera);
+    } finally {
+      quad.visible = false;
+      restoreVolumes();
+    }
+  };
+
+  return <primitive object={quad} />;
+};

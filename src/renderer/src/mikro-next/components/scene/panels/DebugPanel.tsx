@@ -31,6 +31,14 @@ import {
   setShaderFastPathEnabled,
   setSmoothZoomEnabled,
 } from "../render/bricks/shaderFlags";
+import {
+  isVolumeCacheEnabled,
+  isVolumeDepthPrepassEnabled,
+  isVolumeTargetEnabled,
+  setVolumeCacheEnabled,
+  setVolumeDepthPrepassEnabled,
+  setVolumeTargetEnabled,
+} from "../render/volumeTargetFlags";
 import { usePerfRecording } from "../PerfFrameProbe";
 import { useModeStore } from "../store/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../store/viewerStore";
@@ -61,6 +69,11 @@ export const DebugPanel = () => {
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
+  const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
+  const [volumeCacheOn, setVolumeCacheOn] = useState(isVolumeCacheEnabled);
+  const [volumeDepthPrepassOn, setVolumeDepthPrepassOn] = useState(
+    isVolumeDepthPrepassEnabled,
+  );
   // Applied drawing-buffer DPR (CanvasSync re-registers the canvas on every
   // dpr change, so this chip tracks the interaction ladder live).
   const canvasDpr = useViewerStore((s) => s.canvas?.dpr);
@@ -110,6 +123,24 @@ export const DebugPanel = () => {
     const next = !atlasMirrorOn;
     setAtlasMirrorEnabled(next);
     setAtlasMirrorOn(next);
+  };
+
+  const toggleVolumeTarget = () => {
+    const next = !volumeTargetOn;
+    setVolumeTargetEnabled(next);
+    setVolumeTargetOn(next);
+  };
+
+  const toggleVolumeCache = () => {
+    const next = !volumeCacheOn;
+    setVolumeCacheEnabled(next);
+    setVolumeCacheOn(next);
+  };
+
+  const toggleVolumeDepthPrepass = () => {
+    const next = !volumeDepthPrepassOn;
+    setVolumeDepthPrepassEnabled(next);
+    setVolumeDepthPrepassOn(next);
   };
 
   const runGpuSelfTest = () => {
@@ -181,6 +212,7 @@ export const DebugPanel = () => {
         merging: isVolumeMergeEnabled(),
         shaderFastPath: isShaderFastPathEnabled(),
       },
+      volumeCompositor: viewerState.volumeCompositorReport?.() ?? null,
       fidelity: qualityGovernor.getFidelity(),
       cameraPose: viewState.cameraPose,
       layerViewRanges: viewerState.layerViewRanges,
@@ -485,6 +517,27 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 atlas mirror: {atlasMirrorOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleVolumeTarget}
+                title="Volume compositor (R2): raymarch image volumes into a dedicated render target — full-res settled, half-res while the camera moves or bricks stream — and composite the upsampled result. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                volume target: {volumeTargetOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleVolumeCache}
+                title="Cached volume compositing (R1): skip re-raymarching when no volume input changed; composite the cached texture. Read per frame — flips live."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                volume cache: {volumeCacheOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleVolumeDepthPrepass}
+                title="Depth-only prepass of opaque meshes into the volume target, preserving mesh-over-volume occlusion. Off = volumes composite over meshes (documented fallback). Read per frame."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                depth prepass: {volumeDepthPrepassOn ? "on" : "off"}
               </button>
               {typeof canvasDpr === "number" && (
                 <span className="px-1 rounded border border-border/50 text-muted-foreground">
@@ -803,13 +856,14 @@ const PerfSessionSummary = ({ report }: { report: PerfSessionReport }) => {
             ? `${report.gpuMs.avg.toFixed(1)}/${report.gpuMs.max.toFixed(0)}ms`
             : "n/a"}
         </span>
-        {/* Baseline 5: main scene + gizmo hud, each followed by the renderer's
-            tone-map/colour output pass (itself a counted render), plus one more
-            for the Hud's clearDepth. Above that, something is rasterizing an
-            extra time and the fps below is not the real one. */}
+        {/* Baseline: 2 (main + tone-map output pass) on a plain or
+            cached-composite frame; the volume compositor adds 1 for a volume
+            target render and 1 more for the occluder depth prepass → 4 max.
+            Above that, something is rasterizing an extra time and the fps
+            below is not the real one. */}
         <span
           className={`rounded border px-1 ${
-            report.renderCalls.max > 5
+            report.renderCalls.max > 4
               ? "border-amber-500/50 text-amber-300"
               : "border-border/50"
           }`}

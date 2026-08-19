@@ -926,7 +926,10 @@ export const commonMaterialSettings = (material: NodeMaterial) => {
   // `needsFrameBufferTarget`, which is on because R3F applies ACES + sRGB — so
   // this material's additive result IS tone-mapped and sRGB-encoded regardless.
   // Kept only as a declaration of intent, and because it would matter if the
-  // WebGL2 fallback path is ever exercised.
+  // WebGL2 fallback path is ever exercised. Under the volume compositor
+  // (orkestrator.volumeTarget) the volume passes render into a LINEAR
+  // offscreen target and only the canvas composite goes through that output
+  // pass — tone mapping still applies exactly once, at the end.
   material.toneMapped = false;
 };
 
@@ -1190,6 +1193,16 @@ export function createVolumeNodeMaterial(
   // blending is additive, so front+back would each march the ray and composite
   // the volume at double brightness.
   material.side = THREE.BackSide;
+  // NOTE for the volume compositor (orkestrator.volumeTarget): this material
+  // deliberately keeps PLAIN AdditiveBlending there too. Additive factors are
+  // rgb (SrcAlpha, One) / alpha (One, One), and the alpha half is
+  // load-bearing: the canvas is TRANSPARENT over the scene's DOM background
+  // div, so a volume is visible only because it accumulates canvas ALPHA as
+  // it draws. The compositor's offscreen target starts at (0,0,0,0), so after
+  // this pass it holds exactly the rgb+alpha DELTA the direct path would
+  // have added to the canvas — which the composite quad then adds with
+  // (One, One) on both channels. Pinning alpha here (an earlier design)
+  // left volume pixels at canvas alpha 0: invisible on a transparent canvas.
 
   // The ray, the base-voxel map, the per-sample LOD pick and the empty-space hop
   // — shared with the label raymarcher (`volumeRayNodes.ts`).

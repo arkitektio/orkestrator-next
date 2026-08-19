@@ -16,7 +16,7 @@ import {
 import { isSmoothZoomEnabled } from "../../render/bricks/shaderFlags";
 import type { LayerBrickPool } from "../../managers/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../store/viewStore";
-import { useViewerStore } from "../../store/viewerStore";
+import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 
 /**
  * The CPU side of `volumeRayNodes`' uniforms — what actually drives the ray
@@ -95,6 +95,7 @@ export const useVolumeRayUniforms = (
   const lodBias = useViewerStore((s) => s.lodBias);
   const pxPerVoxelAtUnitDistance = usePxPerVoxelAtUnitDistance();
   const invalidate = useThree((state) => state.invalidate);
+  const viewerStoreApi = useViewerStoreApi();
   // Quality tier / streaming flips are rare (P17-clean); re-runs the push so
   // `uMaxSteps` tracks the governor's profile.
   const qualityVersion = useSyncExternalStore(
@@ -119,6 +120,7 @@ export const useVolumeRayUniforms = (
     nodes.uMinDelta.value = minDelta;
     // uMaxSteps is driven by `useStepScaleUniform` (adaptive depth flips it
     // per activity edge — a vanilla-subscription cadence, not an effect one).
+    viewerStoreApi.getState().volumeInputs.bump("ray-uniforms");
     invalidate();
   }, [
     nodes,
@@ -128,6 +130,7 @@ export const useVolumeRayUniforms = (
     minDelta,
     qualityVersion,
     invalidate,
+    viewerStoreApi,
   ]);
 };
 
@@ -172,6 +175,7 @@ export const useVolumePassRegistration = (activePass: boolean): void => {
  */
 export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): void => {
   const viewStoreApi = useViewStoreApi();
+  const viewerStoreApi = useViewerStoreApi();
   const invalidate = useThree((state) => state.invalidate);
 
   useEffect(() => {
@@ -206,6 +210,9 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
       nodes.uStepScale.value = step;
       nodes.uMaxSteps.value = maxSteps;
       if (nodes.uSmoothThreshold) nodes.uSmoothThreshold.value = smooth;
+      // Value-deduped edge — exactly the cadence the volume compositor's
+      // cache must re-render on (adaptive depth / tricubic / step changes).
+      viewerStoreApi.getState().volumeInputs.bump("step-uniforms");
       invalidate();
     };
     apply();
@@ -215,5 +222,5 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
       unsubscribeView();
       unsubscribeQuality();
     };
-  }, [nodes, viewStoreApi, invalidate]);
+  }, [nodes, viewStoreApi, viewerStoreApi, invalidate]);
 };

@@ -9,6 +9,8 @@ import {
   shouldStepBurstRungDown,
 } from "../core/qualityGovernor";
 import { getGpuKey, type SceneRenderer } from "../render/gpu/sceneRenderer";
+import { ladderFeedforwardPassCount } from "../render/volumeCompositor";
+import { isVolumeTargetEnabled } from "../render/volumeTargetFlags";
 import { useViewStoreApi } from "../store/viewStore";
 
 /**
@@ -136,7 +138,12 @@ export const QualityAdapter = () => {
           ? predictBurstLadderScale(
               qualityGovernor.getEmaMs(),
               lastBurstRungRef.current,
-              qualityGovernor.getVolumePassCount(),
+              // With the volume compositor on, raymarch fill lives in the
+              // low-res target — the canvas ladder must not also drop for it.
+              ladderFeedforwardPassCount(
+                isVolumeTargetEnabled(),
+                qualityGovernor.getVolumePassCount(),
+              ),
             )
           : 1;
       } else if (

@@ -446,6 +446,8 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         range,
         dataScale: job.atlas.dataScale,
         emptyCeiling: job.emptyCeiling,
+        poolMin: job.poolMin,
+        poolRange: job.poolRange,
         weights: job.weights,
       }),
     );
@@ -585,6 +587,8 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         range,
         dataScale: job.atlas.dataScale,
         emptyCeiling: job.emptyCeiling,
+        poolMin: job.poolMin,
+        poolRange: job.poolRange,
         weights: job.weights,
       }),
     );

@@ -20,6 +20,7 @@ import {
 } from "../../core/probe/probeTargeting";
 import type { ProbeOrigin, ProbeResult } from "../../core/probe/probeTypes";
 import { buildAffineMatrix } from "../../core/worldTransform";
+import { VOLUME_PASS_OBJECT } from "../../core/passVisibility";
 import { DRAG_THRESHOLD_PX } from "../../core/drawGesture";
 import { useCreateSceneAnnotation } from "../../interactions/useCreateSceneAnnotation";
 import { useModeStore } from "../../store/modeStore";
@@ -446,6 +447,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         isoThreshold: 0.5,
       })),
     );
+    viewerStoreApi.getState().volumeInputs.bump("channel-uniforms");
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, planTargetLevel, layer?.projection, invalidate]);
@@ -767,6 +769,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         position={[volumeSize[0] / 2, volumeSize[1] / 2, volumeSize[2] / 2]}
         renderOrder={1}
         visible={isPrimary}
+        userData={{ [VOLUME_PASS_OBJECT]: true }}
       >
         <boxGeometry args={[1, 1, 1]} />
         {/* TSL node raymarcher — see brickNodeMaterials.ts (WGSL + GLSL). */}

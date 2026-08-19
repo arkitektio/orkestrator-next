@@ -61,6 +61,8 @@ describe("packCostParams", () => {
     range: 900,
     dataScale: 65535,
     emptyCeiling: 255,
+    poolMin: 50,
+    poolRange: 2000,
     weights: { intensity: 1.5, exponent: 2 },
   };
 
@@ -87,6 +89,8 @@ describe("packCostParams", () => {
     expect(f32[28]).toBeCloseTo(1.5); // w_intensity
     expect(f32[30]).toBeCloseTo(SKELETON_BASE_COST); // base_cost
     expect(f32[31]).toBe(Math.fround(INF_COST)); // inf_cost survives f32
+    expect(f32[32]).toBe(50); // pool_min (EMPTY decode range ≠ window)
+    expect(f32[33]).toBe(2000); // pool_range
   });
 });
 

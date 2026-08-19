@@ -1054,22 +1054,62 @@ above). What follows is what is STILL structurally behind Neuroglancer /
 BigVolumeViewer, ranked by expected impact. Each item is its own future plan;
 do them in this order unless a measurement says otherwise.
 
-**R1 — Cached volume compositing (finish the progressive-rendering gap).**
-Frame cost is still O(scene) per rendered frame: every frame re-raymarches
-every volume pass, even when only an annotation or HUD element changed. The
-streaming render cadence (§2.8) fixed the *frequency* of such frames during
-bursts; this fixes their *cost*: render the volume passes into an offscreen
-target re-rendered only when their inputs change (camera, uniforms,
-residency), and composite that texture per frame. Makes annotation/overlay
-interaction free. Needs three.js WebGPU render-target plumbing; GPU-verify.
+**R1 + R2 — Volume compositor — DONE (2026-08-19).** One mechanism for both:
+`managers/VolumeCompositor.tsx` (mounted by `ThreeDScene`, 3D-only) takes
+over rendering with a priority-1 `useFrame` (R3F's render takeover) and per
+frame (a) re-renders the `VOLUME_PASS_OBJECT`-tagged raymarch meshes into a
+persistent reduced-resolution `RenderTarget` when — and only when — a volume
+input changed, then (b) renders the canvas frame with volumes hidden and a
+fullscreen composite quad shown. All decisions live in the pure, tested core
+`render/volumeCompositor.ts`.
 
-**R2 — Half-res volume target (resolution decoupling).** Neuroglancer-family
-viewers draw volumes at reduced resolution into their own target and
-upsample, keeping lines/annotations/HUD crisp. Our DPR ladder downscales the
-WHOLE canvas, and only while active. A dedicated 0.5–0.75× volume target with
-a smart upsample is ~2–4× *permanent* fragment relief — the biggest
-settled-state lever for many-layer scenes. Shares the render-target plumbing
-with R1; consider building them together.
+- *R2 (resolution decoupling):* target = `resolveVolumeScale` (FULL res
+  settled — under the demand loop + cache a settled frame raymarches once,
+  so reducing it would trade fidelity for savings the cache already gives —
+  0.5 during CAMERA MOTION only; streaming stays full-res, or slow-network
+  sessions would sit blurry for the whole drain and hide the progressive
+  LOD sharpening) × the SETTLED-dpr buffer, clamped to the live buffer so
+  the active-DPR ladder can never double-downscale; the ladder's
+  volume-pass feedforward is neutralized while the flag is on
+  (`ladderFeedforwardPassCount`). Bilinear upsample; bicubic/depth-aware is
+  a possible follow-up.
+- *R1 (cached compositing):* the frame key is an exact 16-element VP-matrix
+  compare (computed in-frame — viewStore's camera is throttled and must not
+  key a cache) + `residencyVersion` + `poolsVersion` +
+  `qualityGovernor.getVersion()` + the non-reactive
+  `viewerStore.volumeInputs` bump tracker (fed at the uniform-write sites:
+  ray/step/channel/label uniforms, label LUT) + a structural key (tagged-mesh
+  count, material ids, world matrices). While `isStreaming()`, EVERY
+  invalidated frame re-renders — the streaming invalidates are already
+  coalesced upstream, and `residencyVersion`'s separate throttle would
+  otherwise let a streamed frame show stale bricks. Any doubt → render.
+  Note the cache's payoff is overlay/ROI interaction and label edits; during
+  pure orbiting every frame is legitimately dirty (`reason: camera`).
+- *Compositing math (additive delta):* image volume materials are UNTOUCHED
+  (plain AdditiveBlending — rgb (SrcAlpha, One), alpha (One, One)). Over the
+  target's (0,0,0,0) clear that accumulates exactly the rgb+alpha delta the
+  direct path would have added to the canvas, and the quad composites it
+  with (One, One) on both channels — bit-for-bit identical over any
+  background. The ALPHA half is load-bearing: the canvas is transparent over
+  the scene's DOM background div, so volumes are only visible because they
+  accumulate canvas alpha (an earlier alpha-pinning design rendered them
+  invisible). LABEL volumes are NOT in the target — NormalBlending cannot
+  share an additive-delta buffer — they raymarch live in the canvas pass
+  after the quad (renderOrder 2 > 1); folding them into their own cached
+  target is a follow-up. The target stays LINEAR; three's output pass
+  tone-maps once, on the canvas render.
+- *Occlusion:* a depth-only prepass draws opaque depth-writing MESHES into
+  the target's depth so meshes still occlude volumes per-fragment. The
+  occluders render with their OWN materials and `colorWrite = false`
+  (`disableColorWrite`) — never `scene.overrideMaterial`: a plain override
+  material corrupts BatchedMesh multi-draw ranges (out-of-range DrawIndexed
+  on the fabriks layer). Lines/points/sprites are never occluders.
+- Kill switches (DebugPanel toggles): `orkestrator.volumeTarget` (remount),
+  `orkestrator.volumeCache` (live), `orkestrator.volumeDepthPrepass` (live —
+  the escape hatch if the prepass ever misbehaves). Debug
+  report: `volumeCompositor` (target size/scale, volumeRenders,
+  cachedComposites, lastRenderReason). Expected renderCalls: 2 cached
+  frame / 3 volume frame / 4 with prepass.
 
 **R3 — R16 atlases + lazy backing mirror — DONE (2026-08-18).** uint16
 intensity pools store `raw/65535` half floats in `r16float` atlases

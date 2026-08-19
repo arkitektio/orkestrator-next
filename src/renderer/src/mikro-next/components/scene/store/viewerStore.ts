@@ -8,6 +8,11 @@ import type { BrandTarget } from "@/providers/settings/brandTheme";
 import { createConfiguredSceneStores } from "../sources/zarrSources";
 import { openSceneArrays, type OpenedZarrArray } from "../sources/arrayRegistry";
 import { fitCameraToObject } from "../core/cameraFit";
+import {
+  createVolumeInputsTracker,
+  type VolumeCompositorReport,
+  type VolumeInputsTracker,
+} from "../render/volumeCompositor";
 
 /** The subset of the R3F root state we need for camera operations */
 export interface CanvasContext {
@@ -218,6 +223,16 @@ export interface ViewerState {
   /** Handle to the brick residency manager (owned by BrickSystemProvider). */
   brickSystem: BrickResidencyManager | null;
   registerBrickSystem: (manager: BrickResidencyManager | null) => void;
+  /** NON-REACTIVE bump tracker for "the volume image changed" edges the
+   * VolumeCompositor's cache key cannot derive from store counters (uniform
+   * writes: ray/step/channel/label uniforms, label LUT). A plain mutable
+   * object like `brickSystem` — components call `volumeInputs.bump(reason)`
+   * alongside their existing `invalidate()`; the compositor reads
+   * `version`/`lastReason` imperatively per frame. Never subscribe to it. */
+  volumeInputs: VolumeInputsTracker;
+  /** Debug-report hook registered by the VolumeCompositor (DebugPanel). */
+  volumeCompositorReport: (() => VolumeCompositorReport) | null;
+  registerVolumeCompositor: (report: (() => VolumeCompositorReport) | null) => void;
   /** Per-MeshLayer fabriks managers (owned by FabriksCollectionLayer), for
    * debug consumers — the mesh twin of `brickSystem`. */
   meshSystems: Record<string, FabriksCollectionManager>;
@@ -338,6 +353,9 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     bumpPoolsVersion: () => set((state) => ({ poolsVersion: state.poolsVersion + 1 })),
     brickSystem: null,
     registerBrickSystem: (manager) => set({ brickSystem: manager }),
+    volumeInputs: createVolumeInputsTracker(),
+    volumeCompositorReport: null,
+    registerVolumeCompositor: (report) => set({ volumeCompositorReport: report }),
     meshSystems: {},
     registerMeshSystem: (layerId, manager) =>
       set((state) => {

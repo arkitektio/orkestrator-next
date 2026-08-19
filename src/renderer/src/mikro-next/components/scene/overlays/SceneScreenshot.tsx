@@ -38,6 +38,12 @@ interface CaptureRenderer {
  * origin crosshair) are hidden for the pass. HTML overlays and the gizmo were
  * never in `scene` to begin with.
  *
+ * Volume compositor interplay: the compositor's composite quad is
+ * EXCLUDE_FROM_CAPTURE-tagged and its visibility toggling happens only inside
+ * its frame callback, so at capture time the volume meshes are visible and
+ * the quad is not — the capture re-raymarches the volumes live at the capture
+ * resolution, exactly like the pre-compositor path.
+ *
  * Callers must repaint afterwards: the offscreen pass leaves the renderer's
  * target restored but the live frame clobbered.
  */

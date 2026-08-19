@@ -24,13 +24,16 @@ import { useViewStoreApi } from "./store/viewStore";
  * the recording measures the same pipeline the user experiences when idle.
  *
  * `renderCalls` is reported per frame so this can never regress silently again.
- * The expected value is 5, not 2, and the decomposition is worth knowing:
- * `needsFrameBufferTarget` is true (R3F applies ACES tone mapping + sRGB
- * output), so three renders into an offscreen target and then runs a
- * full-screen output pass — and that pass is itself a counted `render()`.
- * `clear()` runs one too. drei's Hud does render(main) -> clearDepth() ->
- * render(hud), giving main(1) + output(2) + clearDepth-output(3) + hud(4) +
- * output(5). Three of the five are tone-map/colour blits.
+ * The decomposition is worth knowing: `needsFrameBufferTarget` is true (R3F
+ * applies ACES tone mapping + sRGB output), so three renders into an
+ * offscreen target and then runs a full-screen output pass — and that pass is
+ * itself a counted `render()`. With no drei Hud mounted (the historical
+ * baseline of 5 included one) the plain frame is 2: main(1) + output(2).
+ * Under the volume compositor (`orkestrator.volumeTarget`) a frame that
+ * re-renders the volume target counts 3 (volume RT + main + output), or 4
+ * with the occluder depth prepass; a cached-composite frame stays at 2.
+ * NOTE: a SECOND priority>0 useFrame subscriber (e.g. drei Hud) would
+ * double-render alongside the compositor's takeover — keep it the only one.
  */
 
 /** React subscription to the monitor's recording flag. */

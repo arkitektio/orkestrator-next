@@ -12,6 +12,7 @@ import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/Attribute
 import { level0StoreIdOf, systemIdOf } from "../../core/layerLevel0";
 import type { LayerState } from "../../core/layerModel";
 import { setLabelColorLut, type LabelLutNodes } from "../bricks/labelNodeMaterials";
+import { useViewerStoreApi } from "../../store/viewerStore";
 import { buildLabelColorLut } from "./labelColorLut";
 
 /**
@@ -34,6 +35,7 @@ export const useLabelColorLut = (
 ): void => {
   const attributeService = useAttributeServiceOrNull();
   const invalidate = useThree((state) => state.invalidate);
+  const viewerStoreApi = useViewerStoreApi();
 
   const render = layer?.labelRender;
   const activeColorBy =
@@ -62,12 +64,14 @@ export const useLabelColorLut = (
 
   useEffect(() => {
     if (!nodes) return;
-    const off = () =>
+    const off = () => {
       setLabelColorLut(
         nodes,
         { texture: null, width: 0, height: 0, idOffset: 0 },
         { colorize: false, filter: false },
       );
+      viewerStoreApi.getState().volumeInputs.bump("label-lut");
+    };
 
     const nothingActive = !activeColorBy && activeRules.length === 0;
     if (!attributeService || !systemId || !storeId || nothingActive) {
@@ -100,6 +104,7 @@ export const useLabelColorLut = (
         colorize: activeColorBy !== null,
         filter: activeRules.length > 0,
       });
+      viewerStoreApi.getState().volumeInputs.bump("label-lut");
       invalidate();
     })().catch((error) => {
       if (cancelled) return;

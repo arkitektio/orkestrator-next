@@ -36,6 +36,14 @@ vi.mock("../../core/layerLevel0", () => ({
   level0StoreIdOf: () => "store-1",
 }));
 
+// The hook bumps the volume compositor's input tracker alongside invalidate.
+const volumeInputsBump = vi.fn();
+vi.mock("../../store/viewerStore", () => ({
+  useViewerStoreApi: () => ({
+    getState: () => ({ volumeInputs: { bump: volumeInputsBump } }),
+  }),
+}));
+
 const { useLabelColorLut } = await import("./useLabelColorLut");
 
 const NODES = { uLutColorize: { value: 0 } } as never;

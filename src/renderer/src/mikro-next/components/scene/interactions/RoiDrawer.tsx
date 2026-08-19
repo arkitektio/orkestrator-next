@@ -114,8 +114,10 @@ export const RoiDrawer = () => {
   const pendingPrimitiveAnchor = useRoiDrawingStore((s) => s.pendingPrimitiveAnchor);
   const setPendingPrimitiveAnchor = useRoiDrawingStore((s) => s.setPendingPrimitiveAnchor);
   const setPrimitiveSessionActive = useRoiDrawingStore((s) => s.setPrimitiveSessionActive);
-  const vectorEnhance = useRoiDrawingStore((s) => s.vectorEnhance);
-  const setTraceMessage = useRoiDrawingStore((s) => s.setTraceMessage);
+  const vectorEnhance = useRoiDrawingStore(
+    (s) => s.enhancersOn["vector-trace"] ?? false,
+  );
+  const setTraceMessage = useRoiDrawingStore((s) => s.setEnhancerMessage);
   const spatialUnit = useSceneStore((s) => s.spatialUnit);
   const currentZ = useViewerStore((s) => s.currentZ);
   const viewerStoreApi = useViewerStoreApi();

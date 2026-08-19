@@ -30,8 +30,11 @@ const SLIDERS: {
 ];
 
 export const VectorEnhancerPanel = () => {
-  const vectorEnhance = useRoiDrawingStore((s) => s.vectorEnhance);
-  const setVectorEnhance = useRoiDrawingStore((s) => s.setVectorEnhance);
+  const vectorEnhance = useRoiDrawingStore(
+    (s) => s.enhancersOn["vector-trace"] ?? false,
+  );
+  const setEnhancerOn = useRoiDrawingStore((s) => s.setEnhancerOn);
+  const setVectorEnhance = (on: boolean) => setEnhancerOn("vector-trace", on);
   const weights = useRoiDrawingStore((s) => s.traceWeights);
   const setTraceWeights = useRoiDrawingStore((s) => s.setTraceWeights);
 

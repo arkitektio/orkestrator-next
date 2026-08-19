@@ -10,6 +10,7 @@ import type { LayerLevelGeometry, Vec3 } from "./levelGeometry";
 import {
   brickGridForLevel,
   childrenOf,
+  chunksTouchingBrick,
   nodeBaseBox,
   nodeKey,
   totalBrickCount,
@@ -61,6 +62,11 @@ export type LayerNodePlan = {
   sliceSignature: string;
   /** Finest level the plan requests anywhere (the shader's ortho LOD hint). */
   targetLevel: number;
+  /** Floor of FREE refinement — finer levels were decode-charged (hysteresis
+   * feedback input, see PlanLayerNodesInput.previousBudgetMinLevel). */
+  budgetMinLevel: number;
+  /** Decoded chunk bytes charged for sub-floor refinement (debug only). */
+  decodeBytesCharged: number;
   /** 2D only: base-voxel z of the displayed slab (null in 3D / no z axis). */
   slabZ: number | null;
   nodes: PlannedNode[];
@@ -130,8 +136,12 @@ export type PlanLayerNodesInput = {
   /** Scene-wide dim-slider selections (t, tau, …) — signature input only. */
   dimSelections?: Record<string, number>;
   maxPlanBytes?: number;
-  /** The previous plan's targetLevel (budget-floor hysteresis input). */
-  previousTargetLevel?: number;
+  /** Decoded-chunk byte allowance for refinement BELOW the budget floor.
+   * 0 (default) disables sub-floor refinement — the legacy all-or-nothing
+   * floor. See `resolveDecodeAllowanceBytes` (poolBudget.ts). */
+  decodeAllowanceBytes?: number;
+  /** The previous plan's budgetMinLevel (budget-floor hysteresis input). */
+  previousBudgetMinLevel?: number;
 };
 
 /** Slack factor the budget floor tolerates to KEEP an already-unlocked finer
@@ -202,7 +212,8 @@ export function planLayerNodes({
   currentZ,
   dimSelections,
   maxPlanBytes = Number.POSITIVE_INFINITY,
-  previousTargetLevel,
+  decodeAllowanceBytes = 0,
+  previousBudgetMinLevel,
 }: PlanLayerNodesInput): LayerNodePlan {
   const sliceSignature = buildSliceSignature(layer, dimSelections);
   const levels = geometry.levels;
@@ -214,6 +225,8 @@ export function planLayerNodes({
     mode,
     sliceSignature,
     targetLevel,
+    budgetMinLevel: coarsest,
+    decodeBytesCharged: 0,
     slabZ,
     nodes: [],
     planBytes: 0,
@@ -343,20 +356,30 @@ export function planLayerNodes({
   }
 
   // --- Budget floor on refinement -------------------------------------------
-  // The finest level a plan may request is bounded by the DECODED CHUNK BYTES
-  // the visible region implies at that level, not just by GPU slot bytes:
-  // fetch granularity is the zarr chunk, so with pathological chunkings
-  // (e.g. plane-chunked SPIM stacks, [2,2048,2048]) any fine-level brick pull
-  // decodes whole 2048² planes and an eager plan streams the entire
-  // full-resolution volume. Counting chunk-aligned coverage at decode width
-  // (the worker promotes everything except uint8 to float32) keeps first-view
-  // loads at the coarse levels; zooming in shrinks the visible box and
-  // unlocks finer levels naturally. An explicit fixedLOD overrides the floor.
+  // The finest level a plan may request FREELY is bounded by the DECODED
+  // CHUNK BYTES the visible region implies at that level, not just by GPU
+  // slot bytes: fetch granularity is the zarr chunk, so with pathological
+  // chunkings (e.g. plane-chunked SPIM stacks, [2,2048,2048]) any fine-level
+  // brick pull decodes whole 2048² planes and an eager plan streams the
+  // entire full-resolution volume. Counting chunk-aligned coverage at decode
+  // width (the worker promotes everything except uint8 to float32) keeps
+  // first-view loads at the coarse levels.
+  //
+  // The floor is two-tier: levels at/coarser than `budgetMinLevel` refine
+  // freely; FINER levels may still be admitted by the closest-first DFS, but
+  // each admission is charged against `decodeAllowanceBytes` — the deduped
+  // decoded bytes of the zarr chunks the admitted children require (see
+  // `tryChargeChildren`). On plane-chunked pyramids the visible box's
+  // chunk-aligned cost barely shrinks with zoom (chunks span the full x/y
+  // extent, and a 3D frustum sees ~the whole depth), so the all-or-nothing
+  // floor alone pinned refinement at a coarse level forever; the allowance
+  // buys a bounded, focus-first chunk set past it. An explicit fixedLOD
+  // overrides both tiers.
+  const decodedBytesPerVoxelOf = (dtype: string): number =>
+    dtype.includes("u1") || dtype.includes("i1") || dtype.includes("8") ? 1 : 4;
   const visibleBytesAtLevel = (levelIndex: number): number => {
     const level = levels[levelIndex];
-    const dtype = level.dtype;
-    const decodedBytesPerVoxel =
-      dtype.includes("u1") || dtype.includes("i1") || dtype.includes("8") ? 1 : 4;
+    const decodedBytesPerVoxel = decodedBytesPerVoxelOf(level.dtype);
     let voxels = 1;
     for (const axis of [0, 1, 2] as const) {
       const chunkExtent = Math.max(1, level.spatialChunks[axis]);
@@ -387,15 +410,17 @@ export function planLayerNodes({
   // replans, and each flip replaces (fetches + evicts) the ENTIRE finest
   // level set. A finer level the previous plan already unlocked stays
   // unlocked while its visible bytes remain within the slack factor; real
-  // zoom-outs blow past the slack and re-coarsen normally.
+  // zoom-outs blow past the slack and re-coarsen normally. Keyed on the
+  // previous FLOOR, not targetLevel: with a decode allowance, targetLevel
+  // can sit below the floor via charged refinement, and keying on it would
+  // ratchet a partial unlock into a full-floor unlock the view never earned.
   if (
-    previousTargetLevel !== undefined &&
-    previousTargetLevel === budgetMinLevel - 1 &&
-    visibleBytesAtLevel(previousTargetLevel) <= maxPlanBytes * BUDGET_FLOOR_HYSTERESIS
+    previousBudgetMinLevel !== undefined &&
+    previousBudgetMinLevel === budgetMinLevel - 1 &&
+    visibleBytesAtLevel(previousBudgetMinLevel) <= maxPlanBytes * BUDGET_FLOOR_HYSTERESIS
   ) {
-    budgetMinLevel = previousTargetLevel;
+    budgetMinLevel = previousBudgetMinLevel;
   }
-  const minLevel = fixedLOD ?? budgetMinLevel;
 
   // --- Per-node screen footprint --------------------------------------------
   const footprintPxPerBaseVoxel = (baseBox: VoxelBox): number => {
@@ -407,7 +432,9 @@ export function planLayerNodes({
   };
 
   const wantFiner = (level: number, baseBox: VoxelBox): boolean => {
-    if (level <= minLevel) return false;
+    // Desire is purely footprint-driven; the budget floor gates ADMISSION in
+    // `visit` (free above the floor, decode-charged below it).
+    if (level <= (fixedLOD ?? 0)) return false;
     if (fixedLOD !== null) return true; // refine all the way to the pinned LOD
     // MAX spatial factor: refine while ANY axis of the finer level still
     // resolves ≥1 px. True-factor pyramids are anisotropic (z can diverge
@@ -468,6 +495,39 @@ export function planLayerNodes({
       ? maxPlanBytes
       : Math.max(0, maxPlanBytes - coarsestReserveBytes);
 
+  // --- Sub-floor decode accounting ------------------------------------------
+  // Charged in the currency the fetcher actually pays: whole decoded zarr
+  // chunks, deduped plan-wide (`chunksTouchingBrick` is the fetch path's own
+  // mapping). On plane-chunked levels one charged chunk covers the full x/y
+  // extent, so every other brick in it refines at zero marginal cost — the
+  // fine region grows chunk-aligned, which also keeps it stable under small
+  // focus motion.
+  const chunkDecodedBytes = (levelIndex: number): number => {
+    const level = levels[levelIndex];
+    return (
+      level.spatialChunks[0] *
+      level.spatialChunks[1] *
+      level.spatialChunks[2] *
+      decodedBytesPerVoxelOf(level.dtype)
+    );
+  };
+  const chargedChunks = new Set<string>();
+  let decodeBytesCharged = 0;
+  /** All-or-nothing: charge every NEW chunk the children need, or admit none. */
+  const tryChargeChildren = (childLevel: number, children: Vec3[]): boolean => {
+    const fresh = new Set<string>();
+    for (const child of children)
+      for (const chunk of chunksTouchingBrick(geometry, spec, childLevel, child)) {
+        const key = `${childLevel}:${chunk[0]}:${chunk[1]}:${chunk[2]}`;
+        if (!chargedChunks.has(key)) fresh.add(key);
+      }
+    const cost = fresh.size * chunkDecodedBytes(childLevel);
+    if (decodeBytesCharged + cost > decodeAllowanceBytes) return false;
+    for (const key of fresh) chargedChunks.add(key);
+    decodeBytesCharged += cost;
+    return true;
+  };
+
   // --- Closest-first refinement ---------------------------------------------
   const nodes: PlannedNode[] = [];
   let planBytes = 0;
@@ -512,7 +572,7 @@ export function planLayerNodes({
     if (!nodeVisible(baseBox)) return;
 
     let children: Vec3[] = [];
-    if (level > minLevel && wantFiner(level, baseBox)) {
+    if (wantFiner(level, baseBox)) {
       const childSlab = slabBrickZ(level - 1);
       // 2D with a real z axis: a child level that doesn't cover the slab
       // (childSlab null) must not be refined into — its bricks would show a
@@ -530,6 +590,16 @@ export function planLayerNodes({
       if (
         children.length === 0 ||
         refineBytes + pendingSelfBytes + childBytes > refineBudgetBytes
+      ) {
+        children = [];
+      }
+      // Sub-floor admission: charged against the decode allowance, AFTER the
+      // slot check so slot-rejected refinement never consumes allowance.
+      if (
+        children.length !== 0 &&
+        fixedLOD === null &&
+        level - 1 < budgetMinLevel &&
+        !tryChargeChildren(level - 1, children)
       ) {
         children = [];
       }
@@ -584,7 +654,16 @@ export function planLayerNodes({
   roots.sort((a, b) => a.dist - b.dist);
   for (const root of roots) visit(rootLevel, root.coords);
 
-  return { mode, sliceSignature, targetLevel, slabZ: slabZOut, nodes, planBytes };
+  return {
+    mode,
+    sliceSignature,
+    targetLevel,
+    budgetMinLevel,
+    decodeBytesCharged,
+    slabZ: slabZOut,
+    nodes,
+    planBytes,
+  };
 }
 
 /**
@@ -615,6 +694,7 @@ export function sameNodePlan(a: LayerNodePlan, b: LayerNodePlan): boolean {
     a.mode === b.mode &&
     a.sliceSignature === b.sliceSignature &&
     a.targetLevel === b.targetLevel &&
+    a.budgetMinLevel === b.budgetMinLevel &&
     a.slabZ === b.slabZ &&
     a.nodes.length === b.nodes.length &&
     a.nodes.every((node, i) => node.key === b.nodes[i].key && node.role === b.nodes[i].role)

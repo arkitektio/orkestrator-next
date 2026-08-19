@@ -29,6 +29,7 @@ import {
   useRoiDrawingStore,
   useRoiDrawingStoreApi,
 } from "../../store/roiDrawingStore";
+import { useBrushSkeletonStoreApi } from "../../store/brushSkeletonStore";
 import { useSceneStore, useSceneStoreApi } from "../../store/sceneStore";
 import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
 import {
@@ -119,6 +120,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
+  const brushApi = useBrushSkeletonStoreApi();
   const { createPointAnnotation } = useCreateSceneAnnotation();
 
   const register = useViewerStore((s) => s.register);
@@ -205,6 +207,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     interactionMode,
     probeFollowsCursor,
     drawingToolActive: isDrawingTool(activeTool),
+    // The skeleton brush paints THROUGH this volume's probe march, so the
+    // volume is the one layer that arms for it.
+    brushToolActive: activeTool === "BRUSH",
     // The volume answers ANNOTATE hover: inside a volume there is no draw
     // plane, so the probe IS the placement for every shape tool.
     annotateProbes: true,
@@ -606,6 +611,25 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       // exactly as much as for a sphere's center, and the drawer's rubber band
       // follows the published probe.
       onPointerMove={!hoverEnabled ? undefined : (e) => {
+        // A live brush stroke owns the drag: paint through the probe march
+        // instead of bailing to OrbitControls (which the stroke session has
+        // disabled for the stroke's duration).
+        const brush = brushApi.getState();
+        if (brush.status === "painting" && brush.strokeLayerId === layerId) {
+          e.stopPropagation();
+          const ray = e.ray.clone();
+          probeCoalescer.schedule(() => {
+            const probe = probeFromRay(ray, "hover");
+            // Off-data moves paint nothing; the corridor tolerates gaps.
+            if (probe?.worldPos) {
+              brushApi.getState().addSample({
+                world: probe.worldPos,
+                voxel: probe.voxelIndex,
+              });
+            }
+          });
+          return;
+        }
         if (e.buttons !== 0) return;
         // Declined BEFORE stopPropagation, so the event falls through to the
         // target layer behind this one instead of being swallowed here.
@@ -635,6 +659,28 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         }
         if (
           interactionMode === "ANNOTATE" &&
+          roiDrawingApi.getState().activeTool === "BRUSH"
+        ) {
+          // The brush stroke: capture the pointer so the paint keeps landing
+          // here even when the ray leaves the volume box mid-stroke, and so
+          // the release always reaches onPointerUp below. Same single-layer
+          // rule as placement — decline WITHOUT stopPropagation so the event
+          // falls through to the probe target behind this one.
+          if (!answersProbe()) return;
+          const probe = probeFromRay(e.ray, "click");
+          // The stroke must START on the data — its first probed voxel seeds
+          // the geodesic.
+          if (!probe?.worldPos) return;
+          e.stopPropagation();
+          (e.target as { setPointerCapture?: (id: number) => void })
+            .setPointerCapture?.(e.pointerId);
+          const brush = brushApi.getState();
+          brush.beginStroke(layerId);
+          brush.addSample({ world: probe.worldPos, voxel: probe.voxelIndex });
+          return;
+        }
+        if (
+          interactionMode === "ANNOTATE" &&
           isDrawingTool(roiDrawingApi.getState().activeTool)
         ) {
           // The probe target must answer annotation placement too — every 3D
@@ -649,6 +695,27 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           // drag-guards via e.delta.
           updateProbe(probeFromRay(e.ray, "click"), false);
         }
+      }}
+      onPointerUp={!clickEnabled ? undefined : (e) => {
+        // The stroke's release: extraction is triggered by the store's
+        // painting → extracting transition (`BrushStrokeSession`). Guarded on
+        // OUR live stroke so an unrelated pointerup is ignored.
+        const brush = brushApi.getState();
+        if (brush.status !== "painting" || brush.strokeLayerId !== layerId) return;
+        e.stopPropagation();
+        (e.target as { releasePointerCapture?: (id: number) => void })
+          .releasePointerCapture?.(e.pointerId);
+        probeCoalescer.cancel();
+        brush.endStroke();
+      }}
+      onLostPointerCapture={!clickEnabled ? undefined : () => {
+        // Belt-and-braces: a cancelled pointer (tab switch, OS gesture) must
+        // not leave a stroke painting forever. After a normal release this is
+        // a no-op — endStroke() already moved the status on.
+        const brush = brushApi.getState();
+        if (brush.status !== "painting" || brush.strokeLayerId !== layerId) return;
+        probeCoalescer.cancel();
+        brush.endStroke();
       }}
       onClick={!clickEnabled ? undefined : (e) => {
         if (interactionMode === "ANNOTATE") {

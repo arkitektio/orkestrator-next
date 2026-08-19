@@ -75,7 +75,7 @@ describe("availableAnnotateTools", () => {
     ]);
   });
 
-  it("offers every shape tool in 3D — only the marquee drops out", () => {
+  it("offers every shape tool plus the brush in 3D — only the marquee drops out", () => {
     const tools = availableAnnotateTools(ctx3D);
     expect(tools).toEqual([
       "RECTANGLE",
@@ -86,6 +86,7 @@ describe("availableAnnotateTools", () => {
       "POINT",
       "LINE",
       "PATH",
+      "BRUSH",
     ]);
     expect(tools).not.toContain("SELECT");
   });
@@ -105,6 +106,9 @@ describe("availableAnnotateTools", () => {
     expect(isAnnotateToolAvailable("SPHERE", ctx3D)).toBe(true);
     expect(isAnnotateToolAvailable("CUBE", ctx3D)).toBe(true);
     expect(isAnnotateToolAvailable("PATH", ctx3D)).toBe(true);
+    // The skeleton brush paints through the volume probe — 3D only.
+    expect(isAnnotateToolAvailable("BRUSH", ctx2D)).toBe(false);
+    expect(isAnnotateToolAvailable("BRUSH", ctx3D)).toBe(true);
   });
 });
 

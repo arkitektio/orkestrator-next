@@ -29,6 +29,7 @@ const ALL_TOOLS: AnnotateTool[] = [
   "POINT",
   "LINE",
   "PATH",
+  "BRUSH",
 ];
 
 /**
@@ -44,6 +45,14 @@ const FLAT_ONLY_TOOLS = new Set<AnnotateTool>(["SELECT"]);
 
 /** The volumetric tools: anchored by a probe click on the volume — 3D only. */
 const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
+
+/**
+ * The skeleton brush: a stroke painted onto the volume via the probe march —
+ * 3D only. Kept out of `VOLUMETRIC_TOOLS`, whose membership drives the
+ * anchor-then-size gesture (`isPrimitiveTool`); the brush has its own session
+ * (`interactions/BrushStrokeSession.tsx`).
+ */
+const BRUSH_TOOLS = new Set<AnnotateTool>(["BRUSH"]);
 
 /** Where a coercion lands. Never null: a null tool leaves ANNOTATE inert. */
 export const FALLBACK_MODE: InteractionMode = "NAVIGATE";
@@ -102,7 +111,8 @@ export function isAnnotateToolAvailable(
   ctx: Pick<ModeContext, "displayMode">,
 ): boolean {
   if (FLAT_ONLY_TOOLS.has(tool)) return ctx.displayMode === "2D";
-  if (VOLUMETRIC_TOOLS.has(tool)) return ctx.displayMode === "3D";
+  if (VOLUMETRIC_TOOLS.has(tool) || BRUSH_TOOLS.has(tool))
+    return ctx.displayMode === "3D";
   return true;
 }
 

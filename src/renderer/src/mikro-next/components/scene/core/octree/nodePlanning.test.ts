@@ -4,6 +4,7 @@ import type { LayerState } from "../layerModel";
 import type { LayerViewRange } from "../visibility";
 import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
+import { chunksTouchingBrick } from "./nodeAddress";
 import {
   adjacentSlabBrickZ,
   compareFetchOrder,
@@ -767,7 +768,7 @@ describe("planLayerNodes budget-floor hysteresis", () => {
   const geo = buildLayerLevelGeometry(["y", "x", "c"], layer, levels)!;
   const spec = resolveBrickSpec(geo, "2D");
   const smallView: LayerViewRange = { xRange: [0, 100], yRange: [0, 100], zRange: null, scale: 2 };
-  const planWith = (previousTargetLevel: number | undefined) =>
+  const planWith = (previousBudgetMinLevel: number | undefined) =>
     planLayerNodes({
       layer,
       geometry: geo,
@@ -779,12 +780,190 @@ describe("planLayerNodes budget-floor hysteresis", () => {
       currentZ: 0,
       // Below the 262 144 B decoded floor for L0, but within its 15% slack.
       maxPlanBytes: 240_000,
-      previousTargetLevel,
+      previousBudgetMinLevel,
     });
 
   it("keeps a previously-unlocked finer level within the slack", () => {
     expect(planWith(undefined).targetLevel).toBe(1); // floor binds afresh
+    expect(planWith(undefined).budgetMinLevel).toBe(1);
     expect(planWith(0).targetLevel).toBe(0); // hysteresis holds the unlock
+    expect(planWith(0).budgetMinLevel).toBe(0);
+  });
+
+  it("2D: an allowance unlocks the whole-image-chunked fine level", () => {
+    const p = planLayerNodes({
+      layer,
+      geometry: geo,
+      spec,
+      mode: "2D",
+      viewRange: smallView,
+      camera: null,
+      lodBias: 1,
+      currentZ: 0,
+      maxPlanBytes: 240_000,
+      decodeAllowanceBytes: 262_144, // one whole-image L0 chunk
+    });
+    expect(p.budgetMinLevel).toBe(1);
+    expect(p.targetLevel).toBe(0);
+    expect(p.decodeBytesCharged).toBe(262_144);
+  });
+});
+
+describe("planLayerNodes sub-floor decode allowance (plane-chunked pyramid)", () => {
+  // Modeled on a real SPIM stack whose chunks span the FULL x/y extent at
+  // every fine level: view culling in x/y cannot reduce the chunk-aligned
+  // decode cost, and in 3D the frustum sees ~the whole depth, so the
+  // all-or-nothing floor pinned targetLevel at L3 at every zoom. dtype
+  // uint16 decodes at 4 B/voxel. Dim order [z, y, x].
+  const LEVELS: LevelSource[] = [
+    { shape: [960, 2048, 1920], chunks: [40, 2048, 1920], dtype: "uint16", storeId: "p0" },
+    { shape: [480, 1024, 960], chunks: [40, 1024, 960], dtype: "uint16", storeId: "p1", scaleFactors: [2, 2, 2] },
+    { shape: [240, 512, 480], chunks: [40, 512, 480], dtype: "uint16", storeId: "p2", scaleFactors: [4, 4, 4] },
+    { shape: [120, 256, 240], chunks: [40, 256, 240], dtype: "uint16", storeId: "p3", scaleFactors: [8, 8, 8] },
+    { shape: [60, 128, 120], chunks: [60, 128, 120], dtype: "uint16", storeId: "p4", scaleFactors: [16, 16, 16] },
+  ];
+  const volLayer = {
+    ...makeLayer({ zAxis: "z" }),
+    lens: {
+      slices: [],
+      axisNames: ["z", "y", "x"],
+      shape: [960, 2048, 1920],
+      dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
+    },
+  } as unknown as LayerState;
+  const geo = buildLayerLevelGeometry(["z", "y", "x"], volLayer, LEVELS)!;
+  const spec = resolveBrickSpec(geo, "3D");
+
+  // A zoomed-in 3D view (real session ranges): x/y cropped, z ~the full
+  // stack. visibleBytesAtLevel: L3 ≈ 29.5 MB ≤ 128 MiB, L2 = 6 z-chunk-rows
+  // × 39 321 600 B ≈ 236 MB > 128 MiB → legacy floor = L3.
+  const VIEW: LayerViewRange = {
+    xRange: [150, 1000],
+    yRange: [1586, 2048],
+    zRange: [0, 894],
+    scale: 3.38,
+  };
+  const L2_CHUNK_BYTES = 480 * 512 * 40 * 4; // 39 321 600
+  const MiB = 1024 * 1024;
+
+  const plan = (
+    overrides: Partial<{
+      decodeAllowanceBytes: number;
+      previousBudgetMinLevel: number;
+      maxPlanBytes: number;
+      viewRange: LayerViewRange;
+    }> = {},
+  ) =>
+    planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: overrides.viewRange ?? VIEW,
+      camera: null,
+      lodBias: 1,
+      currentZ: undefined,
+      maxPlanBytes: overrides.maxPlanBytes ?? 128 * MiB,
+      decodeAllowanceBytes: overrides.decodeAllowanceBytes,
+      previousBudgetMinLevel: overrides.previousBudgetMinLevel,
+    });
+
+  /** Deduped chunk keys the plan's sub-floor nodes imply — the independent
+   * recomputation of what `tryChargeChildren` should have charged. */
+  const subFloorChunkKeys = (p: ReturnType<typeof plan>): Set<string> => {
+    const keys = new Set<string>();
+    for (const node of p.nodes.filter((n) => n.level < p.budgetMinLevel))
+      for (const chunk of chunksTouchingBrick(geo, spec, node.level, node.coords))
+        keys.add(`${node.level}:${chunk[0]}:${chunk[1]}:${chunk[2]}`);
+    return keys;
+  };
+
+  it("legacy parity: no allowance reproduces the all-or-nothing floor", () => {
+    const p = plan();
+    expect(p.budgetMinLevel).toBe(3);
+    expect(p.targetLevel).toBe(3);
+    expect(p.nodes.every((n) => n.level >= 3)).toBe(true);
+    expect(p.decodeBytesCharged).toBe(0);
+  });
+
+  it("unlocks the visible L2 set within the allowance, floor unchanged", () => {
+    const p = plan({ decodeAllowanceBytes: 256 * MiB }); // ≥ all 6 z rows
+    expect(p.budgetMinLevel).toBe(3);
+    expect(p.targetLevel).toBe(2);
+    const fine = p.nodes.filter((n) => n.role === "target" && n.level === 2);
+    expect(fine.length).toBeGreaterThan(0);
+    // The brick under the plan focus is fine (foveated: score 0 = contains it).
+    expect(Math.min(...fine.map((n) => n.fetchScore))).toBe(0);
+    // L1 would cost another whole 157 MB chunk row — allowance rejects it.
+    expect(p.nodes.every((n) => n.level >= 2)).toBe(true);
+  });
+
+  it("bounds the charged chunk set by the allowance", () => {
+    // 160 MiB covers the first refinement's 4 z-chunk-rows (157 286 400 B)
+    // but not the far rows: the fine region stops there.
+    const p = plan({ decodeAllowanceBytes: 160 * MiB });
+    expect(p.decodeBytesCharged).toBeLessThanOrEqual(160 * MiB);
+    const keys = subFloorChunkKeys(p);
+    expect(keys.size * L2_CHUNK_BYTES).toBe(p.decodeBytesCharged);
+    expect(keys.size).toBeLessThanOrEqual(4);
+  });
+
+  it("keeps the far region coarse when the allowance runs out", () => {
+    const p = plan({ decodeAllowanceBytes: 160 * MiB });
+    const fine = p.nodes.filter((n) => n.role === "target" && n.level === 2);
+    const coarse = p.nodes.filter((n) => n.role === "target" && n.level === 3);
+    expect(fine.length).toBeGreaterThan(0);
+    expect(coarse.length).toBeGreaterThan(0);
+    // Foveated: the fine set sits over the focus, the coarse remainder farther.
+    expect(Math.min(...fine.map((n) => n.fetchScore))).toBe(0);
+  });
+
+  it("emits the full ancestor keep chain for sub-floor targets", () => {
+    const p = plan({ decodeAllowanceBytes: 256 * MiB });
+    const byKey = new Map(p.nodes.map((n) => [n.key, n]));
+    for (const n of p.nodes.filter((x) => x.role === "target" && x.level === 2)) {
+      const parent = byKey.get(
+        `3:${Math.floor(n.coords[0] / 2)}:${Math.floor(n.coords[1] / 2)}:${Math.floor(n.coords[2] / 2)}`,
+      );
+      const grandparent = byKey.get(
+        `4:${Math.floor(n.coords[0] / 4)}:${Math.floor(n.coords[1] / 4)}:${Math.floor(n.coords[2] / 4)}`,
+      );
+      expect(parent?.role).toBe("keep");
+      expect(grandparent?.role).toBe("keep");
+    }
+  });
+
+  it("is deterministic and chunk-granular-stable under small focus motion", () => {
+    const a = plan({ decodeAllowanceBytes: 160 * MiB });
+    const b = plan({ decodeAllowanceBytes: 160 * MiB });
+    expect(sameNodePlan(a, b)).toBe(true);
+    // A few voxels of x/y pan re-charges the SAME chunk rows (x/y chunks span
+    // the full extent), so the fine set does not thrash.
+    const nudged = plan({
+      decodeAllowanceBytes: 160 * MiB,
+      viewRange: { ...VIEW, xRange: [154, 1004], yRange: [1590, 2048] },
+    });
+    expect(subFloorChunkKeys(nudged)).toEqual(subFloorChunkKeys(a));
+  });
+
+  it("does not ratchet the floor through hysteresis under mixed plans", () => {
+    // Sub-floor L2 targets must not drag budgetMinLevel to 2 on the next
+    // replan: hysteresis keys on the previous FLOOR, and even a claimed
+    // previous floor of 2 fails the slack test (236 MB > 128 MiB × 1.15).
+    expect(
+      plan({ decodeAllowanceBytes: 256 * MiB, previousBudgetMinLevel: 3 }).budgetMinLevel,
+    ).toBe(3);
+    expect(
+      plan({ decodeAllowanceBytes: 256 * MiB, previousBudgetMinLevel: 2 }).budgetMinLevel,
+    ).toBe(3);
+  });
+
+  it("stays slot-capped: a huge allowance cannot bypass the GPU budget", () => {
+    // 3 MB of slots affords no refinement (one L4→L3 fan-out is ~4.6 MB), so
+    // the slot check rejects BEFORE any allowance is consumed.
+    const p = plan({ maxPlanBytes: 3_000_000, decodeAllowanceBytes: 1024 * MiB });
+    expect(p.nodes.every((n) => n.level === 4)).toBe(true);
+    expect(p.decodeBytesCharged).toBe(0);
   });
 });
 

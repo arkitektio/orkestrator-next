@@ -59,22 +59,30 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, AnnotationKind> = {
 
 /**
  * What the pointer does in ANNOTATE mode. "SELECT" is the marquee pointer
- * (`interactions/RectangleDrawer.tsx`); every other value is a shape the
- * `RoiDrawer` draws.
+ * (`interactions/RectangleDrawer.tsx`); "BRUSH" is the intensity-skeleton
+ * brush (`interactions/BrushStrokeSession.tsx` — a painted stroke, not a
+ * clicked shape); every other value is a shape the `RoiDrawer` draws.
  *
  * Deliberately a separate union from `DrawingTool`: `DRAWING_TOOL_TO_ROI_KIND`
  * is a *total* `Record<DrawingTool, AnnotationKind>` that the drawer indexes unguarded,
  * so widening `DrawingTool` would force either a lying `AnnotationKind` entry for
- * SELECT or a partial map for all six real tools.
+ * SELECT/BRUSH or a partial map for all the real tools.
  *
- * Drawing and marquee are then mutually exclusive by construction: exactly one
- * of `activeTool === "SELECT"` and `isDrawingTool(activeTool)` can hold.
+ * Drawing and the pointer tools are then mutually exclusive by construction:
+ * `isDrawingTool(activeTool)` holds exactly when a shape tool is armed.
  */
-export type AnnotateTool = "SELECT" | DrawingTool;
+export type AnnotateTool = "SELECT" | "BRUSH" | DrawingTool;
 
 export const isDrawingTool = (
   tool: AnnotateTool | null | undefined,
-): tool is DrawingTool => tool != null && tool !== "SELECT";
+): tool is DrawingTool => tool != null && tool in DRAWING_TOOL_TO_ROI_KIND;
+
+/**
+ * The annotation enhancers. Declared here, not in `overlays/enhancerRegistry`,
+ * because the registry's panels consume this store — the id union living with
+ * the state keeps the import graph acyclic.
+ */
+export type AnnotationEnhancerId = "vector-trace" | "intensity-skeleton";
 
 /**
  * A shape the user just drew, held only until the server confirms it. Drawing
@@ -148,12 +156,12 @@ export interface RoiDrawingState {
    */
   primitiveSessionActive: boolean;
   /**
-   * Whether the vector enhancer is on: each clicked edge of an enhanceable
-   * tool (LINE/POLYGON/PATH) is traced through the data instead of drawn
-   * straight. Off by default — plain clicking must stay plain.
+   * Which enhancers are on. For "vector-trace": each clicked edge of an
+   * enhanceable tool (LINE/POLYGON/PATH) is traced through the data instead of
+   * drawn straight. All off by default — plain clicking must stay plain.
    */
-  vectorEnhance: boolean;
-  setVectorEnhance: (on: boolean) => void;
+  enhancersOn: Partial<Record<AnnotationEnhancerId, boolean>>;
+  setEnhancerOn: (id: AnnotationEnhancerId, on: boolean) => void;
   /**
    * What the vector enhancer's A* considers cheap to travel through. Held here
    * (not in a component) because the panel edits them while a chain is
@@ -163,11 +171,12 @@ export interface RoiDrawingState {
   traceWeights: TraceWeights;
   setTraceWeights: (weights: Partial<TraceWeights>) => void;
   /**
-   * Why the last enhanced edge fell back to a straight segment, or null. The
-   * toolbar shows it: a silently un-enhanced edge just looks broken.
+   * The active enhancer's status line — why the last enhanced edge fell back
+   * to a straight segment, why an extraction detoured, or null. The toolbar
+   * shows it: a silently degraded result just looks broken.
    */
-  traceMessage: string | null;
-  setTraceMessage: (message: string | null) => void;
+  enhancerMessage: string | null;
+  setEnhancerMessage: (message: string | null) => void;
   setActiveTool: (tool: AnnotateTool | null) => void;
   addDrawnRoi: (roi: DrawnRoi) => void;
   removeDrawnRoi: (id: string) => void;
@@ -209,20 +218,20 @@ export const createRoiDrawingStore = () =>
       pendingPathSeed: null,
       pendingPrimitiveAnchor: null,
       primitiveSessionActive: false,
-      vectorEnhance: false,
-      setVectorEnhance: (on) =>
+      enhancersOn: {},
+      setEnhancerOn: (id, on) =>
         set((state) => {
-          state.vectorEnhance = on;
+          state.enhancersOn[id] = on;
         }),
       traceWeights: DEFAULT_TRACE_WEIGHTS,
       setTraceWeights: (weights) =>
         set((state) => {
           state.traceWeights = { ...state.traceWeights, ...weights };
         }),
-      traceMessage: null,
-      setTraceMessage: (message) =>
+      enhancerMessage: null,
+      setEnhancerMessage: (message) =>
         set((state) => {
-          state.traceMessage = message;
+          state.enhancerMessage = message;
         }),
       setActiveTool: (tool) =>
         set((state) => {

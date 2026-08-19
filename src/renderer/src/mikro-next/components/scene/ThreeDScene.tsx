@@ -1,4 +1,5 @@
 import { SceneVolume } from "./layers/three_d/SceneVolume";
+import { BrushStrokeSession } from "./interactions/BrushStrokeSession";
 import { ProbeAxisGuides } from "./interactions/ProbeAxisGuides";
 import { RoiDrawer } from "./interactions/RoiDrawer";
 
@@ -12,6 +13,10 @@ export const ThreeDScene = () => {
       {/* No RectangleDrawer: the marquee is 2D-only, and the toolbar hides its
           tool in 3D — mounting it here only ever rendered null. */}
       <RoiDrawer />
+      {/* The skeleton brush's session: stroke/centerline previews, controls
+          suspension, extraction trigger. The capture itself lives in
+          BrickVolumeLayer's pointer handlers. */}
+      <BrushStrokeSession />
     </>
   );
 };

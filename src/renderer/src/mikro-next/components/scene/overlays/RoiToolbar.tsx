@@ -12,13 +12,14 @@ import {
   Circle,
   CircleDot,
   Box,
+  Brush,
   Crosshair,
   Minus,
   MousePointer2,
   Pentagon,
   Pencil,
 } from "lucide-react";
-import { VectorEnhancerPanel } from "./VectorEnhancerPanel";
+import { applicableEnhancers } from "./enhancerRegistry";
 
 /**
  * Select sits first because it is the non-destructive tool — and because it is
@@ -41,6 +42,9 @@ const TOOLS: {
   { tool: "POINT", label: "Point", icon: Crosshair },
   { tool: "LINE", label: "Line", icon: Minus },
   { tool: "PATH", label: "Path", icon: Pencil },
+  // The skeleton brush (3D-only): paint a stroke over a bright structure,
+  // the extracted centerline becomes a PATH annotation.
+  { tool: "BRUSH", label: "Brush", icon: Brush },
 ];
 
 export const RoiToolbar = () => {
@@ -48,32 +52,40 @@ export const RoiToolbar = () => {
   const displayMode = useModeStore((s) => s.displayMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const setActiveTool = useRoiDrawingStore((s) => s.setActiveTool);
-  const vectorEnhance = useRoiDrawingStore((s) => s.vectorEnhance);
-  const traceMessage = useRoiDrawingStore((s) => s.traceMessage);
+  const vectorEnhance = useRoiDrawingStore(
+    (s) => s.enhancersOn["vector-trace"] ?? false,
+  );
+  const enhancerMessage = useRoiDrawingStore((s) => s.enhancerMessage);
 
   if (interactionMode !== "ANNOTATE") return null;
 
   const tools = TOOLS.filter(({ tool }) =>
     isAnnotateToolAvailable(tool, { displayMode }),
   );
+  const enhancers = applicableEnhancers({ tool: activeTool, displayMode });
 
   return (
     <div className="absolute bottom-12 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1">
       {/* Shapes land in the scene's own coordinate system, so there is nothing
           to arm and no per-layer constraint to describe. */}
-      {isEnhanceableTool(activeTool) && <VectorEnhancerPanel />}
+      {enhancers.map(({ id, ParamsPanel }) => (
+        <ParamsPanel key={id} />
+      ))}
       {/* The 3D line is not decoration: the gesture genuinely differs — each
           click places the point the volume probed, so a click off the data
           places nothing. A fallen-back enhanced edge speaks here too: a
           straight edge where a traced one was asked for has to say why, or the
-          enhancer reads as broken. */}
+          enhancer reads as broken. (The brush panel carries its own status
+          line, so its messages are not repeated here.) */}
       <span className="text-[10px] text-white/50">
-        {traceMessage && isEnhanceableTool(activeTool) ? (
-          <span className="text-amber-300/90">{traceMessage}</span>
+        {enhancerMessage && isEnhanceableTool(activeTool) ? (
+          <span className="text-amber-300/90">{enhancerMessage}</span>
         ) : isEnhanceableTool(activeTool) && vectorEnhance ? (
           "Click points — each edge follows the data. Double-click to finish"
         ) : activeTool === "SELECT" ? (
           "Drag to select annotations"
+        ) : activeTool === "BRUSH" ? (
+          "Drag over the volume to paint a stroke along the structure"
         ) : displayMode === "3D" ? (
           "Click the volume to place each point — probed onto the data"
         ) : (

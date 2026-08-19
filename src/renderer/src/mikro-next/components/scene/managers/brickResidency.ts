@@ -41,7 +41,11 @@ import {
 import type { BrickArray, RepackChunk } from "../core/octree/brickRepack";
 import { assessPoolViability } from "../core/octree/poolViability";
 import { buildPoolKey, buildStructureSignature, poolValueSemantics } from "../core/octree/poolKey";
-import { MIN_POOL_HEADROOM_SLOTS, resolvePoolBudget } from "../core/octree/poolBudget";
+import {
+  MIN_POOL_HEADROOM_SLOTS,
+  getDecodedChunkCacheBytes,
+  resolvePoolBudget,
+} from "../core/octree/poolBudget";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
@@ -91,6 +95,14 @@ import {
   type GpuRepacker,
 } from "../render/bricks/computeRepack";
 import {
+  createGpuSkeletonizer,
+  type GpuSkeletonizer,
+} from "../render/bricks/computeSkeleton";
+import {
+  runGpuSkeletonSelfTest,
+  type GpuSkeletonSelfTestResult,
+} from "../render/bricks/computeSkeletonSelfTest";
+import {
   runGpuRepackSelfTest,
   type GpuRepackSelfTestResult,
 } from "../render/bricks/computeRepackSelfTest";
@@ -119,20 +131,7 @@ const PAGE_TEXTURE_MAX_EXTENT = 2048;
 // In-flight fetch count, residency-bump throttle and upload time budget are
 // TIER-scaled — read from the quality governor's profile at use sites (P19).
 
-/** Byte cap for decoded chunks held for repacking (the runner's default
- * cache is count-bounded and can pin GBs of plane-chunked SABs). Sized above
- * a typical plane-chunked working set, scaled down on low-RAM machines
- * (8 GiB Macs hit GC pauses with the full 512 MB alongside the atlases). */
-const DECODED_CHUNK_CACHE_BYTES = (() => {
-  const nav =
-    typeof navigator !== "undefined"
-      ? (navigator as Navigator & { deviceMemory?: number })
-      : undefined;
-  const memoryGiB = nav?.deviceMemory;
-  return typeof memoryGiB === "number" && memoryGiB > 0 && memoryGiB <= 8
-    ? 256 * 1024 * 1024
-    : 512 * 1024 * 1024;
-})();
+const DECODED_CHUNK_CACHE_BYTES = getDecodedChunkCacheBytes();
 
 /** A decoded chunk plus its shared-cache key (doubles as the GPU-buffer key). */
 type GpuQueuedChunk = RepackChunk & { cacheKey: string };
@@ -510,6 +509,8 @@ export class BrickResidencyManager {
    * disabled via the localStorage kill switch) — the CPU worker path then
    * handles every brick. */
   private gpuRepacker: GpuRepacker<GpuBrickToken> | null | undefined;
+  /** Lazy like `gpuRepacker`: undefined = not yet attempted, null = no device. */
+  private gpuSkeletonizer: GpuSkeletonizer | null | undefined;
   /** Wall-clock start of the current streaming burst (null = idle). Set when
    * a reconcile enqueues work while idle; NOT reset by mid-burst replans, so
    * timeToSharpMs measures interaction → fully-sharp. */
@@ -528,9 +529,27 @@ export class BrickResidencyManager {
     return this.gpuRepacker;
   }
 
+  /**
+   * The skeleton-brush compute engine (`computeSkeleton.ts`), created lazily
+   * on the manager's renderer like the repacker above — the manager is the
+   * one sanctioned holder of the renderer, so GPU consumers of the atlas +
+   * page table hang off it rather than threading the renderer through React.
+   */
+  getGpuSkeletonizer(): GpuSkeletonizer | null {
+    if (this.gpuSkeletonizer === undefined) {
+      this.gpuSkeletonizer = createGpuSkeletonizer(this.deps.renderer);
+    }
+    return this.gpuSkeletonizer;
+  }
+
   /** Dev-only (DebugPanel): GPU↔CPU repack parity check on the live renderer. */
   runGpuRepackSelfTest(): Promise<GpuRepackSelfTestResult> {
     return runGpuRepackSelfTest(this.deps.renderer);
+  }
+
+  /** Dev-only (DebugPanel): GPU↔CPU skeleton-extraction parity check. */
+  runGpuSkeletonSelfTest(): Promise<GpuSkeletonSelfTestResult> {
+    return runGpuSkeletonSelfTest(this.deps.renderer);
   }
 
   /** Debug-report probe: every channel slab's raw value at two fixed voxels
@@ -2917,6 +2936,8 @@ export class BrickResidencyManager {
     this.mirrorQueue.length = 0;
     this.gpuRepacker?.dispose();
     this.gpuRepacker = null;
+    this.gpuSkeletonizer?.dispose();
+    this.gpuSkeletonizer = null;
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
     // Don't leave the governor thinking a torn-down scene is still streaming.

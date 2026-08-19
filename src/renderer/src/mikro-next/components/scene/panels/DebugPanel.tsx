@@ -123,6 +123,17 @@ export const DebugPanel = () => {
     });
   };
 
+  const runSkeletonSelfTest = () => {
+    const manager = viewerStoreApi.getState().brickSystem;
+    if (!manager) return;
+    setGpuSelfTest("skeleton: running…");
+    void manager.runGpuSkeletonSelfTest().then((result) => {
+      setGpuSelfTest(
+        `skeleton: ${result.supported ? (result.pass ? "PASS" : "FAIL") : "n/a"} — ${result.detail}`,
+      );
+    });
+  };
+
   const togglePerfRecording = () => {
     if (perfMonitor.isRecording()) {
       perfMonitor.stopRecording();
@@ -185,6 +196,8 @@ export const DebugPanel = () => {
             {
               mode: plan.mode,
               targetLevel: plan.targetLevel,
+              budgetMinLevel: plan.budgetMinLevel,
+              decodeBytesCharged: plan.decodeBytesCharged,
               slabZ: plan.slabZ,
               planBytes: plan.planBytes,
               nodeCount: plan.nodes.length,
@@ -485,6 +498,13 @@ export const DebugPanel = () => {
               >
                 parity self-test
               </button>
+              <button
+                onClick={runSkeletonSelfTest}
+                title="Extract a synthetic skeleton on GPU and CPU; compare distance fields."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                skeleton self-test
+              </button>
               {gpuSelfTest && (
                 <span className="basis-full text-muted-foreground">{gpuSelfTest}</span>
               )}
@@ -504,6 +524,12 @@ export const DebugPanel = () => {
                 <div className="flex flex-wrap items-center gap-1 text-[9px]">
                   <span className="bg-accent px-1 rounded">{plan.mode}</span>
                   <span className="bg-accent px-1 rounded">target L{plan.targetLevel}</span>
+                  <span className="bg-accent px-1 rounded">floor L{plan.budgetMinLevel}</span>
+                  {plan.decodeBytesCharged > 0 && (
+                    <span className="bg-accent px-1 rounded">
+                      {(plan.decodeBytesCharged / (1024 * 1024)).toFixed(0)} MB decode
+                    </span>
+                  )}
                   {plan.slabZ !== null && (
                     <span className="bg-accent px-1 rounded">slab z {plan.slabZ}</span>
                   )}

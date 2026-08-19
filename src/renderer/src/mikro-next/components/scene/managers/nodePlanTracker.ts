@@ -5,7 +5,11 @@ import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "../core/octree/atlasFormat";
 import { totalBrickCount } from "../core/octree/nodeAddress";
-import { resolvePoolBudget } from "../core/octree/poolBudget";
+import {
+  getDecodedChunkCacheBytes,
+  resolveDecodeAllowanceBytes,
+  resolvePoolBudget,
+} from "../core/octree/poolBudget";
 import { assessPoolViability } from "../core/octree/poolViability";
 import { buildPlanInputSignature } from "../core/octree/planInputSignature";
 import { buildPoolKey, poolValueSemantics } from "../core/octree/poolKey";
@@ -270,6 +274,11 @@ export function startNodePlanTracking({
         slotBytes,
         totalBrickBytes: totalBrickCount(geometry, spec) * slotBytes,
       });
+      const decodeAllowanceBytes = resolveDecodeAllowanceBytes({
+        maxPlanBytes,
+        poolCount: poolKeys.size,
+        decodedChunkCacheBytes: getDecodedChunkCacheBytes(),
+      });
 
       let camera: NodeCamera | null = null;
       if (mode === "3D" && viewProjectionMatrix) {
@@ -339,9 +348,10 @@ export function startNodePlanTracking({
         currentZ: viewerState.currentZ,
         dimSelections: viewerState.dimSelections,
         maxPlanBytes,
-        previousTargetLevel:
+        decodeAllowanceBytes,
+        previousBudgetMinLevel:
           prevRepresentative && prevRepresentative.mode === mode
-            ? prevRepresentative.targetLevel
+            ? prevRepresentative.budgetMinLevel
             : undefined,
       });
 

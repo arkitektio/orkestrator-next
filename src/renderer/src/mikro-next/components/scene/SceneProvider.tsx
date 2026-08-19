@@ -20,6 +20,10 @@ import {
   AnimationStoreContext,
   createAnimationStore,
 } from "./store/animationStore";
+import {
+  BrushSkeletonStoreContext,
+  createBrushSkeletonStore,
+} from "./store/brushSkeletonStore";
 import { ModeStoreContext, createModeStore } from "./store/modeStore";
 import {
   RoiDrawSessionStoreContext,
@@ -57,6 +61,7 @@ export type SceneScope = {
   roiDrawingStore: ReturnType<typeof createRoiDrawingStore>;
   roiDrawSessionStore: ReturnType<typeof createRoiDrawSessionStore>;
   roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
+  brushSkeletonStore: ReturnType<typeof createBrushSkeletonStore>;
 };
 
 /**
@@ -230,6 +235,7 @@ export const SceneProvider = (props: {
           roiDrawingStore: createRoiDrawingStore(),
           roiDrawSessionStore: createRoiDrawSessionStore(),
           roiSelectionStore: createRoiSelectionStore(),
+          brushSkeletonStore: createBrushSkeletonStore(),
         };
 
         if (!cancelled) {
@@ -388,6 +394,7 @@ export const SceneProvider = (props: {
                   <RoiDrawingStoreContext.Provider value={scope?.roiDrawingStore ?? null}>
                     <RoiDrawSessionStoreContext.Provider value={scope?.roiDrawSessionStore ?? null}>
                       <RoiSelectionStoreContext.Provider value={scope?.roiSelectionStore ?? null}>
+                       <BrushSkeletonStoreContext.Provider value={scope?.brushSkeletonStore ?? null}>
                         {/* Reads the scene stores, so it can only mount once
                             the scope exists — and unmounting it when the scope
                             goes is exactly what eases the app back to the
@@ -400,6 +407,7 @@ export const SceneProvider = (props: {
                         <AttributeServiceProvider>
                           {props.children}
                         </AttributeServiceProvider>
+                       </BrushSkeletonStoreContext.Provider>
                       </RoiSelectionStoreContext.Provider>
                     </RoiDrawSessionStoreContext.Provider>
                   </RoiDrawingStoreContext.Provider>

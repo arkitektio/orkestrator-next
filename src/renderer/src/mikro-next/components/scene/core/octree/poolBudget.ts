@@ -41,6 +41,47 @@ import { MAX_LAYER_POOL_BYTES } from "../lodPlanning";
  */
 export const MIN_POOL_HEADROOM_SLOTS = 64;
 
+/** Byte cap for decoded chunks held for repacking (the runner's default
+ * cache is count-bounded and can pin GBs of plane-chunked SABs). Sized above
+ * a typical plane-chunked working set, scaled down on low-RAM machines
+ * (8 GiB Macs hit GC pauses with the full 512 MB alongside the atlases).
+ * Lives here — not in brickResidency — so the planner's sub-floor decode
+ * allowance and the residency cache agree on one number. */
+export function getDecodedChunkCacheBytes(): number {
+  const nav =
+    typeof navigator !== "undefined"
+      ? (navigator as Navigator & { deviceMemory?: number })
+      : undefined;
+  const memoryGiB = nav?.deviceMemory;
+  return typeof memoryGiB === "number" && memoryGiB > 0 && memoryGiB <= 8
+    ? 256 * 1024 * 1024
+    : 512 * 1024 * 1024;
+}
+
+/** Sub-floor decode allowance as a multiple of the pool's plan bytes. */
+export const SUB_FLOOR_DECODE_FACTOR = 2;
+
+/**
+ * Decoded-chunk bytes one replan may spend refining BELOW the budget floor
+ * (`planLayerNodes` `decodeAllowanceBytes`). The floor keeps whole-view
+ * refinement affordable, but on plane-chunked pyramids the chunk-aligned cost
+ * of the visible box barely shrinks with zoom, so the floor alone pins the
+ * plan at a coarse level forever; the allowance lets the closest-first DFS
+ * buy a bounded, focus-first chunk set past it. Capped at half the shared
+ * decode cache (split across pools) so a zoom burst cannot evict the coarse
+ * working set the fallback chain depends on.
+ */
+export function resolveDecodeAllowanceBytes(input: {
+  maxPlanBytes: number;
+  poolCount: number;
+  decodedChunkCacheBytes: number;
+}): number {
+  return Math.min(
+    SUB_FLOOR_DECODE_FACTOR * input.maxPlanBytes,
+    Math.floor(input.decodedChunkCacheBytes / 2 / Math.max(1, input.poolCount)),
+  );
+}
+
 export type PoolBudget = {
   /** Bytes to allocate the atlas at. */
   atlasBytes: number;

@@ -33,6 +33,12 @@ export interface ProbeGateInput {
   /** `isDrawingTool(roiDrawingStore.activeTool)`: a shape tool is armed. */
   drawingToolActive: boolean;
   /**
+   * The skeleton brush is armed (`activeTool === "BRUSH"`). Only the 3D
+   * volume passes this: the brush paints through the volume's probe march,
+   * so no other layer has any business arming for it.
+   */
+  brushToolActive?: boolean;
+  /**
    * Whether this layer answers ANNOTATE-mode probing at all. True for the 3D
    * volume and the mesh collection — there the probe IS the placement, since a
    * volume has no draw plane. False for the 2D plane layer, where the
@@ -57,10 +63,13 @@ export const hoverProbeEnabled = ({
   interactionMode,
   probeFollowsCursor,
   drawingToolActive,
+  brushToolActive = false,
   annotateProbes,
 }: ProbeGateInput): boolean =>
   (interactionMode === "PROBE" && probeFollowsCursor) ||
-  (annotateProbes && interactionMode === "ANNOTATE" && drawingToolActive);
+  (annotateProbes &&
+    interactionMode === "ANNOTATE" &&
+    (drawingToolActive || brushToolActive));
 
 /**
  * Click probing: PROBE mode always — the follow-cursor modifier governs the
@@ -70,7 +79,10 @@ export const hoverProbeEnabled = ({
 export const clickProbeEnabled = ({
   interactionMode,
   drawingToolActive,
+  brushToolActive = false,
   annotateProbes,
 }: ProbeGateInput): boolean =>
   interactionMode === "PROBE" ||
-  (annotateProbes && interactionMode === "ANNOTATE" && drawingToolActive);
+  (annotateProbes &&
+    interactionMode === "ANNOTATE" &&
+    (drawingToolActive || brushToolActive));

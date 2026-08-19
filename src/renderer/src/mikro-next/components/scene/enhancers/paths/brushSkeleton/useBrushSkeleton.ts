@@ -2,83 +2,71 @@ import { useCallback } from "react";
 import * as THREE from "three";
 
 import { AnnotationKind } from "@/mikro-next/api/graphql";
-import { buildAffineMatrix } from "../core/worldTransform";
-import { simplifyPath, type PathPoint } from "../core/trace/pathSimplify";
-import { voxelWorldSize } from "../core/trace/traceBox";
-import { traceChannelSlab, traceLayerShape, traceLevelSteps } from "../core/trace/traceLayer";
-import {
-  buildCostField,
-  connectivityFromCost,
-  maskFieldByDistance,
-  voxelCost,
-} from "../core/skeleton/corridorCost";
-import { smoothCostField } from "../core/skeleton/fieldSmooth";
-import { marchTube, tubeClampValue } from "../core/skeleton/tubeMarch";
+import { buildAffineMatrix } from "../../../core/worldTransform";
+import { voxelWorldSize } from "../../shared/planning";
+import { traceChannelSlab, traceLayerShape, traceLevelSteps } from "../../shared/traceLayer";
+import { voxelCost, type SkeletonWeights } from "../../shared/corridorCost";
+import { corridorVoxelCount } from "../../shared/corridorPlan";
+import { backtrackPath } from "../../shared/geodesicReference";
+import { tubeClampValue } from "../../meshes/tubeMarch";
 import {
   MAX_TUBE_SAVE_TRIANGLES,
   MESH_KIND,
   tubeVectors,
-} from "../core/skeleton/tubePersist";
+} from "../../meshes/tubePersist";
+import { resampleStroke, type BrushSample, type Vec3 } from "../../shared/strokeModel";
+import type {
+  CenterlineResult,
+  LevelTube,
+  SkeletonEngine,
+  SkeletonEngineContext,
+  TubeOptions,
+} from "../../shared/engine";
+import { createCpuSkeletonEngine } from "../../shared/cpuEngine";
+import { createGpuSkeletonEngine } from "../../shared/gpuEngine";
 import {
-  MAX_CORRIDOR_VOXELS,
-  corridorVoxelCount,
-  planCorridor,
-  type CorridorBox,
-} from "../core/skeleton/corridorPlan";
-import { climToUnit } from "../core/dataRange";
-import {
-  backtrackPath,
-  geodesicField,
-  type GeodesicField,
-} from "../core/skeleton/geodesicReference";
-import { resampleStroke, type Vec3 } from "../core/skeleton/strokeModel";
+  boxRelative,
+  centerlineToWorld,
+  climWindow,
+  pickCorridor,
+  soupToWorld,
+  touchesBoundary,
+  type PickedCorridor,
+} from "../../shared/planning";
 import {
   useBrushSkeletonStoreApi,
   type TubeSurface,
-} from "../store/brushSkeletonStore";
-import { useSceneStoreApi } from "../store/sceneStore";
-import { useViewerStoreApi } from "../store/viewerStore";
-import { useCreateSceneAnnotation } from "./useCreateSceneAnnotation";
+} from "../../../store/brushSkeletonStore";
+import { useSceneStoreApi } from "../../../store/sceneStore";
+import { useViewerStoreApi } from "../../../store/viewerStore";
+import { useCreateSceneAnnotation } from "../../../interactions/useCreateSceneAnnotation";
 
 /**
- * The impure shell of the skeleton brush: stroke in the store → corridor →
- * cost field → geodesic → centerline candidate → PATH annotation. All
- * arithmetic lives in `core/skeleton/`; this decides WHICH layer, channel and
- * pyramid level, reads voxels out of the residency manager, and moves the
- * session through the store.
+ * The GESTURE orchestration of the skeleton brush and the smooth blob:
+ * stroke/click in the store → engine extraction → candidate → annotations.
  *
- * Nothing here subscribes (the `useTraceHop` rule): every input is read from
- * a store API when the gesture calls it. Usable on BOTH sides of the Canvas
- * boundary — the in-canvas stroke session and the DOM toolbar panel share it.
+ * The division of labour after the engine refactor:
+ * - `enhancers/shared/`      — pure arithmetic (fields, geodesics, marching).
+ * - `skeleton/planning`   — level/corridor choice and coordinate plumbing.
+ * - `skeleton/cpuEngine`  — the reference pipeline on the main thread.
+ * - `skeleton/gpuEngine`  — the same pipeline on the WGSL kernels.
+ * - here                  — store transitions, the grow loop, persistence.
  *
- * v1 runs the CPU reference (`geodesicReference`) directly; the GPU compute
- * path slots in front of it without changing this hook's contract.
+ * Extraction walks the engine list (GPU first when a device is alive, CPU
+ * always last), each planned at its own corridor budget; an engine answering
+ * null simply passes to the next. Nothing here subscribes (the `useTraceHop`
+ * rule): every input is read from a store API when the gesture calls it, so
+ * the hook is usable on BOTH sides of the Canvas boundary.
  */
 
 /** The stroke polyline the corridor test walks per voxel — kept small. */
 const MAX_STROKE_POINTS = 128;
 
-/**
- * Corridor ceiling for the CPU engine — deliberately under
- * `MAX_CORRIDOR_VOXELS`: Dijkstra over the corridor runs on the click, on
- * the main thread.
- */
-const CPU_MAX_CORRIDOR_VOXELS = 1_000_000;
-
 /** Default brush radius, in level voxels at the extraction level. */
 const DEFAULT_RADIUS_VOXELS = 4;
 
-/** Same simplification allowance the vector trace uses, in node steps. */
-const SIMPLIFY_TOLERANCE_STEPS = 0.5;
-
 /** How long a saved centerline stays as a local preview (poll is ~5s). */
 const SAVED_PREVIEW_CLEAR_MS = 6_000;
-
-/** Tube vertex caps: preview budgets, not persistence budgets (that one is
- * `MAX_TUBE_SAVE_TRIANGLES`). GPU appends into a preallocated buffer; the
- * CPU twin marches on the main thread, so it gets a smaller ceiling. */
-const GPU_MAX_TUBE_VERTICES = 600_000;
-const CPU_MAX_TUBE_VERTICES = 240_000;
 
 /** Live-drag budgets: smaller than the release-time ones so every re-mesh
  * stays a few milliseconds of GPU. GPU-only — a per-drag CPU march would
@@ -92,141 +80,90 @@ const GROW_FACTOR = 1.5;
 const MAX_GROW_STEPS = 10;
 
 /**
- * Whether the surface still reaches the search sphere's boundary — the grow
- * loop's stop test. The tube closes flat against the corridor wall
- * (`tubeMarch`), parking those vertices just inside `radius`, so "any vertex
- * within `margin` of the boundary" is exactly "still clipped by it".
+ * Everything an extraction needs about the target layer, resolved once per
+ * gesture from the stores. Null when the scene can no longer answer.
  */
-function touchesBoundary(
-  positions: Float32Array,
-  seedWorld: Vec3,
-  radius: number,
-  margin: number,
-): boolean {
-  const limit = Math.max(0, radius - margin);
-  const limitSq = limit * limit;
-  for (let i = 0; i < positions.length; i += 3) {
-    const dx = positions[i] - seedWorld[0];
-    const dy = positions[i + 1] - seedWorld[1];
-    const dz = positions[i + 2] - seedWorld[2];
-    if (dx * dx + dy * dy + dz * dz >= limitSq) return true;
-  }
-  return false;
-}
-
-type PickedCorridor = {
-  level: number;
-  box: CorridorBox;
-  step: readonly [number, number, number];
-  spacing: Vec3;
-  worldToLevelVoxel: (world: Vec3) => Vec3;
-};
-
-const pickScratch = new THREE.Vector3();
-
-/**
- * Choose the corridor: start at the on-screen level and coarsen until the
- * stroke's dilated tube fits `maxVoxels` (`traceBox.chooseTraceLevel`
- * restated over a stroke tube). Shared by the release-time extraction and
- * the live drag preview.
- */
-function pickCorridor(opts: {
-  strokeWorld: readonly Vec3[];
-  radiusWorld: number;
+type ExtractionContext = {
+  layerId: string;
+  affine: THREE.Matrix4;
   inverse: THREE.Matrix4;
   voxelSize: readonly [number, number, number];
   levelSteps: readonly (readonly [number, number, number])[];
   shape: readonly [number, number, number];
   startLevel: number;
-  maxVoxels: number;
-}): PickedCorridor | null {
-  const { strokeWorld, radiusWorld, inverse, voxelSize, levelSteps, shape } = opts;
-  for (let level = opts.startLevel; level < levelSteps.length; level += 1) {
-    const step = levelSteps[level];
-    const spacing: Vec3 = [
-      voxelSize[0] * step[0],
-      voxelSize[1] * step[1],
-      voxelSize[2] * step[2],
-    ];
-    const worldToLevelVoxel = (world: Vec3): Vec3 => {
-      // The layer's local frame IS corner-anchored level-0 voxel space
-      // (COORDINATE_SYSTEMS.md), so a level voxel is local / step.
-      pickScratch.set(world[0], world[1], world[2]).applyMatrix4(inverse);
-      return [pickScratch.x / step[0], pickScratch.y / step[1], pickScratch.z / step[2]];
-    };
-    const levelShape: Vec3 = [
-      Math.max(1, Math.ceil(shape[0] / step[0])),
-      Math.max(1, Math.ceil(shape[1] / step[1])),
-      Math.max(1, Math.ceil(shape[2] / step[2])),
-    ];
-    const box = planCorridor({
-      strokeWorld: strokeWorld as Vec3[],
-      radiusWorld,
-      worldToLevelVoxel,
-      levelVoxelWorldSize: spacing,
-      levelShape,
-      maxVoxels: opts.maxVoxels,
-    });
-    if (box) return { level, box, step, spacing, worldToLevelVoxel };
-  }
-  return null;
-}
-
-/**
- * The layer's DISPLAY window in raw units — clim bounds resolved against the
- * pool's data range (`climToUnit`, the raymarcher's own convention).
- *
- * The brush normalizes intensity through THIS window, not the full data
- * range, on purpose: the user paints over what they SEE, and what they see
- * is clim-windowed. Wide-dtype data (uint16 microscopy) routinely lives in a
- * few percent of its dtype range — full-range normalization would make every
- * structure "dark" (a flat cost field, and a Wrap threshold that never
- * selects anything). Gamma stays out: it reshapes contrast monotonically, so
- * it moves no isosurface the slider can't reach.
- */
-function climWindow(
-  layer: unknown,
-  pool: { minValue: number; maxValue: number },
-): { min: number; max: number } {
-  const range = Math.max(pool.maxValue - pool.minValue, 1e-5);
-  const clim = layer as { climMin?: number | null; climMax?: number | null };
-  const c0 = climToUnit(clim.climMin ?? null, pool.minValue, pool.maxValue, 0);
-  const c1 = climToUnit(clim.climMax ?? null, pool.minValue, pool.maxValue, 1);
-  return {
-    min: pool.minValue + c0 * range,
-    max: pool.minValue + Math.max(c1, c0 + 1e-3) * range,
-  };
-}
-
-const soupScratch = new THREE.Vector3();
-
-/** Level-voxel triangle soup → world, the volume's own index→physical map. */
-function soupToWorld(
-  levelPositions: Float32Array,
-  step: readonly [number, number, number],
-  affine: THREE.Matrix4,
-): Float32Array {
-  const out = new Float32Array(levelPositions.length);
-  for (let i = 0; i < levelPositions.length; i += 3) {
-    soupScratch
-      .set(
-        levelPositions[i] * step[0],
-        levelPositions[i + 1] * step[1],
-        levelPositions[i + 2] * step[2],
-      )
-      .applyMatrix4(affine);
-    out[i] = soupScratch.x;
-    out[i + 1] = soupScratch.y;
-    out[i + 2] = soupScratch.z;
-  }
-  return out;
-}
+  engineContext: SkeletonEngineContext;
+  /** GPU first when alive, CPU always last. */
+  engines: SkeletonEngine[];
+  plan: (opts: {
+    strokeWorld: readonly Vec3[];
+    radiusWorld: number;
+    maxVoxels: number;
+  }) => PickedCorridor | null;
+};
 
 export const useBrushSkeleton = () => {
   const sceneStoreApi = useSceneStoreApi();
   const viewerStoreApi = useViewerStoreApi();
   const brushApi = useBrushSkeletonStoreApi();
   const { createSceneAnnotation } = useCreateSceneAnnotation();
+
+  const resolveContext = useCallback(
+    (layerId: string): ExtractionContext | null => {
+      const layer = sceneStoreApi
+        .getState()
+        .layers.find((candidate) => candidate.id === layerId);
+      const brickSystem = viewerStoreApi.getState().brickSystem;
+      const shape = layer ? traceLayerShape(layer) : null;
+      if (!layer || !brickSystem || !shape) return null;
+      const pool = brickSystem.getLayerPool(layerId);
+      if (!pool) return null;
+
+      const affine = buildAffineMatrix(layer);
+      const inverse = affine.clone().invert();
+      const voxelSize = voxelWorldSize(affine);
+      const levelSteps = traceLevelSteps(layer);
+      const startLevel = Math.min(
+        Math.max(viewerStoreApi.getState().nodePlans[layerId]?.targetLevel ?? 0, 0),
+        Math.max(0, levelSteps.length - 1),
+      );
+
+      const engineContext: SkeletonEngineContext = {
+        channel: traceChannelSlab(layer),
+        window: climWindow(layer, pool),
+        pool,
+        sampleResident: (baseVoxel, level, channel) =>
+          brickSystem.sampleResident(layerId, baseVoxel, level, channel),
+      };
+      const engines: SkeletonEngine[] = [];
+      const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
+      if (skeletonizer) engines.push(createGpuSkeletonEngine(engineContext, skeletonizer));
+      engines.push(createCpuSkeletonEngine(engineContext));
+
+      return {
+        layerId,
+        affine,
+        inverse,
+        voxelSize,
+        levelSteps,
+        shape,
+        startLevel,
+        engineContext,
+        engines,
+        plan: ({ strokeWorld, radiusWorld, maxVoxels }) =>
+          pickCorridor({
+            strokeWorld,
+            radiusWorld,
+            inverse,
+            voxelSize,
+            levelSteps,
+            shape,
+            startLevel,
+            maxVoxels,
+          }),
+      };
+    },
+    [sceneStoreApi, viewerStoreApi],
+  );
 
   /**
    * Fill the store's blank radius from the layer's own scale — world units
@@ -251,105 +188,22 @@ export const useBrushSkeleton = () => {
   const extract = useCallback(async () => {
     const brush = brushApi.getState();
     const { stroke, strokeLayerId } = brush;
-    // One sample = the GROW gesture (expand a sphere from the probed point);
-    // two or more = the stroke gesture. Zero = nothing to do.
     if (!strokeLayerId || stroke.length < 1) return;
     brush.setExtracting();
 
-    const layer = sceneStoreApi
-      .getState()
-      .layers.find((candidate) => candidate.id === strokeLayerId);
-    const brickSystem = viewerStoreApi.getState().brickSystem;
-    const shape = layer ? traceLayerShape(layer) : null;
-    if (!layer || !brickSystem || !shape) {
+    const ctx = resolveContext(strokeLayerId);
+    if (!ctx) {
       brush.fail("The stroke's layer is no longer in the scene");
       return;
     }
-    const pool = brickSystem.getLayerPool(strokeLayerId);
-    if (!pool) {
-      brush.fail("No data resident for this layer yet — let it stream in");
-      return;
-    }
-
-    const affine = buildAffineMatrix(layer);
-    const inverse = affine.clone().invert();
-    const voxelSize = voxelWorldSize(affine);
-    const levelSteps = traceLevelSteps(layer);
-    const channel = traceChannelSlab(layer);
     const radiusWorld =
-      brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...voxelSize);
-    const strokeWorld = resampleStroke(stroke, MAX_STROKE_POINTS);
+      brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...ctx.voxelSize);
     const weights = brush.weights;
-    const tubeEnabled = brush.tubeEnabled;
-    // Brightness is normalized through the DISPLAY window (see climWindow):
-    // the brush operates on what the user sees.
-    const dataWindow = climWindow(layer, pool);
-    const windowRange = Math.max(dataWindow.max - dataWindow.min, 1e-5);
     // A threshold τ on windowed intensity IS a cost-space iso value: cost is
     // monotone in brightness, so the tube surface and the geodesic run on
     // the SAME field.
     const tubeIso = voxelCost(brush.tubeThreshold, weights);
-    /** Windowed-intensity sampler over a picked corridor's level. */
-    const samplerFor =
-      (p: PickedCorridor) =>
-      (levelVoxel: Vec3): number | null => {
-        const raw = brickSystem.sampleResident(
-          strokeLayerId,
-          [
-            levelVoxel[0] * p.step[0],
-            levelVoxel[1] * p.step[1],
-            levelVoxel[2] * p.step[2],
-          ],
-          p.level,
-          channel,
-        );
-        if (raw === null) return null;
-        return Math.min(1, Math.max(0, (raw - dataWindow.min) / windowRange));
-      };
-
-    // Start at what is on screen and coarsen until the corridor fits the
-    // budget — the same reasoning as `traceBox.chooseTraceLevel`, restated
-    // over a stroke tube.
-    const startLevel = Math.min(
-      Math.max(viewerStoreApi.getState().nodePlans[strokeLayerId]?.targetLevel ?? 0, 0),
-      Math.max(0, levelSteps.length - 1),
-    );
-
-    const scratch = new THREE.Vector3();
-    const planAtBudget = (maxVoxels: number): PickedCorridor | null =>
-      pickCorridor({
-        strokeWorld,
-        radiusWorld,
-        inverse,
-        voxelSize,
-        levelSteps,
-        shape,
-        startLevel,
-        maxVoxels,
-      });
-
-    // Seed and target: the stroke's first/last PROBED voxels — they were on
-    // the data when painted — brought to box-relative level coordinates.
-    const boxRelative = (
-      voxel: Vec3,
-      box: CorridorBox,
-      step: readonly [number, number, number],
-    ): Vec3 => [
-      Math.min(
-        box.size[0] - 1,
-        Math.max(0, Math.floor(voxel[0] / step[0]) - box.origin[0]),
-      ),
-      Math.min(
-        box.size[1] - 1,
-        Math.max(0, Math.floor(voxel[1] / step[1]) - box.origin[1]),
-      ),
-      Math.min(
-        box.size[2] - 1,
-        Math.max(0, Math.floor(voxel[2] / step[2]) - box.origin[2]),
-      ),
-    ];
-
-    const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
+    const stale = () => brushApi.getState().status !== "extracting";
 
     // --- The smooth-blob GROW gesture: one probed point, no stroke. Expand
     // the search sphere step by step, re-meshing the threshold surface each
@@ -357,289 +211,125 @@ export const useBrushSkeleton = () => {
     // the budget allows, or runs out of steps. Each intermediate surface is
     // published as the live tube, so the expansion is visible. --------------
     if (brush.strokeMode === "blob") {
-      const smoothVoxels = Math.max(0, Math.floor(brush.blobSmoothness));
-      const gapVoxels = Math.max(0, Math.floor(brush.blobGap));
-      const seedWorld = stroke[0].world;
-      const gpuTube = skeletonizer?.tubeReady() ?? false;
-      const corridorBudget = gpuTube ? MAX_CORRIDOR_VOXELS : CPU_MAX_CORRIDOR_VOXELS;
-      let radius = radiusWorld;
-      let grown: { tube: TubeSurface; level: number } | null = null;
-      let closed = false;
-
-      for (let step = 0; step < MAX_GROW_STEPS; step += 1) {
-        if (brushApi.getState().status !== "extracting") return; // cancelled
-        const grownPick = pickCorridor({
-          strokeWorld: [seedWorld],
-          radiusWorld: radius,
-          inverse,
-          voxelSize,
-          levelSteps,
-          shape,
-          startLevel,
-          maxVoxels: corridorBudget,
-        });
-        if (!grownPick) break; // outgrew every level's budget: keep the last
-        const seedLevelPt = grownPick.worldToLevelVoxel(seedWorld);
-        const seedBoxRel = boxRelative(stroke[0].voxel, grownPick.box, grownPick.step);
-        // Gap N bridges dark gaps up to ~N voxels: crossing a one-voxel gap
-        // costs about one voxel of world length in the connectivity metric
-        // (two half-priced boundary edges), and the +0.75 tolerates a seed
-        // that probed a hair off the bright core.
-        const gapLimitWorld = (gapVoxels + 0.75) * Math.max(...grownPick.spacing);
-
-        let stepTube: { positions: Float32Array; triangles: number; truncated: boolean } | null =
-          null;
-        if (gpuTube && pool.pageTable.layout.levelOffset[grownPick.level]) {
-          stepTube = await skeletonizer!.extractTube({
-            atlas: pool.atlas,
-            pageTable: pool.pageTable,
-            level: grownPick.level,
-            box: grownPick.box,
-            strokeLevelPts: [seedLevelPt],
-            radiusWorld: radius,
-            weights,
-            channel,
-            minValue: dataWindow.min,
-            maxValue: dataWindow.max,
-            emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
-            poolMin: pool.minValue,
-            poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
-            payload: pool.spec.payload,
-            border: pool.spec.border,
-            storedZ: pool.spec.stored[2],
-            spacing: grownPick.spacing,
-            tube: {
-              iso: tubeIso,
-              clampValue: tubeClampValue(tubeIso),
-              maxVertices: GPU_MAX_TUBE_VERTICES,
-              smoothVoxels,
-              connectivity: {
-                tau: brush.tubeThreshold,
-                gapLimitWorld,
-                seed: seedBoxRel,
-              },
-            },
-          });
-          if (brushApi.getState().status !== "extracting") return;
-        }
-        if (!stepTube) {
-          if (corridorVoxelCount(grownPick.box) > CPU_MAX_CORRIDOR_VOXELS) break;
-          const built = buildCostField({
-            box: grownPick.box,
-            strokeLevelPts: [seedLevelPt],
-            radiusWorld: radius,
-            spacing: grownPick.spacing,
-            weights,
-            sample: samplerFor(grownPick),
-          });
-          const clampValue = tubeClampValue(tubeIso);
-          let field =
-            smoothVoxels >= 1
-              ? smoothCostField({
-                  cost: built.cost,
-                  box: grownPick.box,
-                  radius: smoothVoxels,
-                  clampValue,
-                })
-              : built.cost;
-          // The Gap, CPU twin of the GPU chain: binary field → geodesic dark
-          // distance from the seed → mask the (smoothed) field.
-          const connectDist = geodesicField({
-            cost: connectivityFromCost(built.cost, tubeIso),
-            box: grownPick.box,
-            spacing: grownPick.spacing,
-            seed: seedBoxRel,
-          });
-          field = maskFieldByDistance(field, connectDist.dist, gapLimitWorld, clampValue);
-          stepTube = marchTube({
-            cost: field,
-            box: grownPick.box,
-            iso: tubeIso,
-            maxVertices: CPU_MAX_TUBE_VERTICES,
-          });
-        }
-
-        const worldTube: TubeSurface = {
-          positions: soupToWorld(stepTube.positions, grownPick.step, affine),
-          triangles: stepTube.triangles,
-          truncated: stepTube.truncated,
-        };
-        grown = { tube: worldTube, level: grownPick.level };
-        const margin = 2 * Math.max(...grownPick.spacing);
-        if (worldTube.triangles > 0 && !touchesBoundary(worldTube.positions, seedWorld, radius, margin)) {
-          closed = true;
-          break;
-        }
-        if (worldTube.truncated) break; // growing further only truncates more
-        brushApi.getState().setLiveTube(worldTube); // the expansion animation
-        radius *= GROW_FACTOR;
-      }
-
-      const grownAfter = brushApi.getState();
-      if (grownAfter.status !== "extracting") return;
-      if (!grown || grown.tube.triangles === 0) {
-        grownAfter.fail(
+      const outcome = await runGrowLoop({
+        ctx,
+        seed: stroke[0],
+        startRadius: radiusWorld,
+        weights,
+        tubeIso,
+        smoothVoxels: Math.max(0, Math.floor(brush.blobSmoothness)),
+        gapVoxels: Math.max(0, Math.floor(brush.blobGap)),
+        tau: brush.tubeThreshold,
+        stale,
+        publishLive: (tube) => brushApi.getState().setLiveTube(tube),
+      });
+      if (stale()) return;
+      const after = brushApi.getState();
+      if (!outcome || outcome.tube.triangles === 0) {
+        after.fail(
           "Nothing brighter than the Wrap threshold near the probe point — lower Wrap and try again",
         );
         return;
       }
-      grownAfter.setCandidate(
-        { points: [], layerId: strokeLayerId, level: grown.level, holes: 0, tube: grown.tube },
-        closed
+      after.setCandidate(
+        {
+          points: [],
+          layerId: strokeLayerId,
+          level: outcome.level,
+          holes: 0,
+          tube: outcome.tube,
+        },
+        outcome.closed
           ? null
           : "Surface still touches the search boundary — the structure may extend further",
       );
       return;
     }
 
-    // --- GPU first: the corridor budget is larger because the field lives
-    // and relaxes on the device; only dist/pred come back. ------------------
-    let field: GeodesicField | null = null;
-    let holes = 0;
-    let picked: PickedCorridor | null = null;
-    /** Tube surface in LEVEL-voxel coords at `picked`'s level, or null. */
-    let levelTube: { positions: Float32Array; triangles: number; truncated: boolean } | null =
-      null;
-
-    if (skeletonizer?.ready()) {
-      const gpuPicked = planAtBudget(MAX_CORRIDOR_VOXELS);
-      const pageOffset = gpuPicked
-        ? pool.pageTable.layout.levelOffset[gpuPicked.level]
-        : undefined;
-      if (gpuPicked && pageOffset) {
-        const result = await skeletonizer.run({
-          atlas: pool.atlas,
-          pageTable: pool.pageTable,
-          level: gpuPicked.level,
-          box: gpuPicked.box,
-          strokeLevelPts: strokeWorld.map(gpuPicked.worldToLevelVoxel),
-          radiusWorld,
-          weights,
-          channel,
-          minValue: dataWindow.min,
-          maxValue: dataWindow.max,
-          emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
-          poolMin: pool.minValue,
-          poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
-          payload: pool.spec.payload,
-          border: pool.spec.border,
-          storedZ: pool.spec.stored[2],
-          spacing: gpuPicked.spacing,
-          seed: boxRelative(stroke[0].voxel, gpuPicked.box, gpuPicked.step),
-          tube: tubeEnabled
-            ? {
-                iso: tubeIso,
-                clampValue: tubeClampValue(tubeIso),
-                maxVertices: GPU_MAX_TUBE_VERTICES,
-              }
-            : undefined,
-        });
-        if (result) {
-          field = { dist: result.dist, pred: result.pred };
-          holes = result.holes;
-          picked = gpuPicked;
-          levelTube = result.tube;
+    // --- The stroke gesture: centerline (+ optional tube) over the painted
+    // corridor. Engines in order, each at its own budget. -------------------
+    const strokeWorld = resampleStroke(stroke, MAX_STROKE_POINTS);
+    const tubeOptions: TubeOptions | null = brush.tubeEnabled
+      ? {
+          iso: tubeIso,
+          clampValue: tubeClampValue(tubeIso),
+          smoothVoxels: 0,
+          connectivity: null,
         }
+      : null;
+
+    let picked: PickedCorridor | null = null;
+    let result: CenterlineResult | null = null;
+    for (const engine of ctx.engines) {
+      const enginePick = ctx.plan({
+        strokeWorld,
+        radiusWorld,
+        maxVoxels: engine.maxCorridorVoxels,
+      });
+      if (!enginePick) continue;
+      result = await engine.centerline({
+        picked: enginePick,
+        strokeLevelPts: strokeWorld.map(enginePick.worldToLevelVoxel),
+        radiusWorld,
+        weights,
+        seed: boxRelative(stroke[0].voxel, enginePick.box, enginePick.step),
+        tube: tubeOptions,
+      });
+      if (stale()) return;
+      if (result) {
+        picked = enginePick;
+        break;
       }
     }
-    // The extraction awaited the device; a new stroke may own the session now.
-    if (brushApi.getState().status !== "extracting") return;
+    if (!picked || !result) {
+      brush.fail("The stroke spans too much data — paint a shorter stroke");
+      return;
+    }
 
-    // --- CPU reference fallback (no device, pipelines broken, unconverged,
-    // or the corridor outgrew the GPU) — over its own smaller budget. -------
-    if (!field) {
-      const cpuPicked = planAtBudget(CPU_MAX_CORRIDOR_VOXELS);
-      if (!cpuPicked) {
-        brush.fail("The stroke spans too much data — paint a shorter stroke");
-        return;
-      }
-      picked = cpuPicked;
-      const { box, step, spacing, worldToLevelVoxel } = cpuPicked;
-      const built = buildCostField({
-        box,
-        strokeLevelPts: strokeWorld.map(worldToLevelVoxel),
-        radiusWorld,
-        spacing,
-        weights,
-        sample: samplerFor(cpuPicked),
-      });
-      holes = built.holes;
-      field = geodesicField({
-        cost: built.cost,
-        box,
-        spacing,
-        seed: boxRelative(stroke[0].voxel, box, step),
-      });
-      if (tubeEnabled) {
-        levelTube = marchTube({
-          cost: built.cost,
-          box,
-          iso: tubeIso,
-          maxVertices: CPU_MAX_TUBE_VERTICES,
-        });
-      }
-    } else if (tubeEnabled && !levelTube && picked) {
-      // The GPU delivered the centerline but not the tube (dead/latched tube
-      // pipeline): march the CPU twin over the same corridor rather than
-      // silently answering "just a path".
-      if (corridorVoxelCount(picked.box) <= CPU_MAX_CORRIDOR_VOXELS) {
-        const built = buildCostField({
-          box: picked.box,
+    // Tube asked for but not delivered (e.g. the GPU's tube pipeline is dead
+    // while its centerline works): ask the CPU engine for the tube alone
+    // rather than silently answering "just a path".
+    let levelTube: LevelTube | null = result.tube;
+    if (tubeOptions && !levelTube) {
+      const cpu = ctx.engines.find((engine) => engine.kind === "cpu");
+      if (cpu && corridorVoxelCount(picked.box) <= cpu.maxCorridorVoxels) {
+        levelTube = await cpu.tube({
+          picked,
           strokeLevelPts: strokeWorld.map(picked.worldToLevelVoxel),
           radiusWorld,
-          spacing: picked.spacing,
           weights,
-          sample: samplerFor(picked),
+          tube: tubeOptions,
         });
-        levelTube = marchTube({
-          cost: built.cost,
-          box: picked.box,
-          iso: tubeIso,
-          maxVertices: CPU_MAX_TUBE_VERTICES,
-        });
+        if (stale()) return;
       }
     }
 
-    const { level, box, step, spacing } = picked!;
-    const target = boxRelative(stroke[stroke.length - 1].voxel, box, step);
-    const nodes = backtrackPath(field, box, target);
+    const target = boxRelative(stroke[stroke.length - 1].voxel, picked.box, picked.step);
+    const nodes = backtrackPath(result.field, picked.box, target);
     if (!nodes) {
       brush.fail(
-        holes > 0
+        result.holes > 0
           ? "Could not connect the stroke's ends — data is still streaming in, try again"
           : "Could not connect the stroke's ends — try a larger radius",
       );
       return;
     }
-
-    // Level-voxel centers → the layer's local frame → world: the IDENTICAL
-    // index→physical map the volume itself renders through.
-    const world = nodes.map((node) => {
-      scratch
-        .set(node[0] * step[0], node[1] * step[1], node[2] * step[2])
-        .applyMatrix4(affine);
-      return [scratch.x, scratch.y, scratch.z] as PathPoint;
-    });
-    const tolerance =
-      SIMPLIFY_TOLERANCE_STEPS * Math.min(spacing[0], spacing[1], spacing[2]);
-    const points = simplifyPath(world, tolerance) as Vec3[];
-
-    // Level-voxel triangle soup → world, the same map as the centerline.
+    const points = centerlineToWorld(nodes, picked, ctx.affine);
     const tube: TubeSurface | null = levelTube
       ? {
-          positions: soupToWorld(levelTube.positions, step, affine),
+          positions: soupToWorld(levelTube.positions, picked.step, ctx.affine),
           triangles: levelTube.triangles,
           truncated: levelTube.truncated,
         }
       : null;
 
     const notes: string[] = [];
-    if (holes > 0) {
+    if (result.holes > 0) {
       notes.push(
-        `Centerline may detour around ${holes} unloaded region${holes === 1 ? "" : "s"} — let streaming settle and re-extract`,
+        `Centerline may detour around ${result.holes} unloaded region${result.holes === 1 ? "" : "s"} — let streaming settle and re-extract`,
       );
     }
-    if (tubeEnabled && !tube) {
+    if (tubeOptions && !tube) {
       notes.push("Tube surface unavailable (GPU tube kernel failed)");
     }
     if (tube?.truncated) {
@@ -649,17 +339,23 @@ export const useBrushSkeleton = () => {
     const after = brushApi.getState();
     if (after.status !== "extracting") return; // a new stroke took over
     after.setCandidate(
-      { points, layerId: strokeLayerId, level, holes, tube },
+      {
+        points,
+        layerId: strokeLayerId,
+        level: picked.level,
+        holes: result.holes,
+        tube,
+      },
       notes.length > 0 ? notes.join("; ") : null,
     );
-  }, [brushApi, sceneStoreApi, viewerStoreApi]);
+  }, [brushApi, resolveContext]);
 
   /**
    * The live drag preview: re-mesh the tube around the stroke AS PAINTED —
-   * cost + tube kernels only (`extractTube`), no geodesic, so one round
-   * answers in milliseconds. GPU-only by design; without a device the tube
-   * still arrives on release via the CPU twin. Results landing after the
-   * stroke ended are dropped by the store (`setLiveTube` guards on painting).
+   * the GPU engine's tube-only path, no geodesic, so one round answers in
+   * milliseconds. GPU-only by design; without a device the tube still
+   * arrives on release via the CPU engine. Results landing after the stroke
+   * ended are dropped by the store (`setLiveTube` guards the status).
    */
   const previewLiveTube = useCallback(async () => {
     const brush = brushApi.getState();
@@ -667,67 +363,33 @@ export const useBrushSkeleton = () => {
     const { stroke, strokeLayerId } = brush;
     if (!strokeLayerId || stroke.length < 2) return;
 
-    const layer = sceneStoreApi
-      .getState()
-      .layers.find((candidate) => candidate.id === strokeLayerId);
-    const brickSystem = viewerStoreApi.getState().brickSystem;
-    const shape = layer ? traceLayerShape(layer) : null;
-    if (!layer || !brickSystem || !shape) return;
-    const pool = brickSystem.getLayerPool(strokeLayerId);
-    const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
-    if (!pool || !skeletonizer?.tubeReady()) return;
+    const ctx = resolveContext(strokeLayerId);
+    const gpu = ctx?.engines.find((engine) => engine.kind === "gpu");
+    if (!ctx || !gpu) return;
 
-    const affine = buildAffineMatrix(layer);
-    const inverse = affine.clone().invert();
-    const voxelSize = voxelWorldSize(affine);
-    const levelSteps = traceLevelSteps(layer);
     const radiusWorld =
-      brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...voxelSize);
-    // Same display-window normalization as the release-time extraction.
-    const dataWindow = climWindow(layer, pool);
+      brush.radiusWorld ?? DEFAULT_RADIUS_VOXELS * Math.min(...ctx.voxelSize);
     const tubeIso = voxelCost(brush.tubeThreshold, brush.weights);
-    const startLevel = Math.min(
-      Math.max(viewerStoreApi.getState().nodePlans[strokeLayerId]?.targetLevel ?? 0, 0),
-      Math.max(0, levelSteps.length - 1),
-    );
     // ONE snapshot of the stroke for both the plan and the kernel — samples
     // landing mid-call belong to the next preview round.
     const strokeWorld = resampleStroke(stroke, MAX_STROKE_POINTS);
-    const picked = pickCorridor({
+    const picked = ctx.plan({
       strokeWorld,
       radiusWorld,
-      inverse,
-      voxelSize,
-      levelSteps,
-      shape,
-      startLevel,
       maxVoxels: LIVE_MAX_CORRIDOR_VOXELS,
     });
     if (!picked) return;
-    const pageOffset = pool.pageTable.layout.levelOffset[picked.level];
-    if (!pageOffset) return;
 
-    const result = await skeletonizer.extractTube({
-      atlas: pool.atlas,
-      pageTable: pool.pageTable,
-      level: picked.level,
-      box: picked.box,
+    const result = await gpu.tube({
+      picked,
       strokeLevelPts: strokeWorld.map(picked.worldToLevelVoxel),
       radiusWorld,
       weights: brush.weights,
-      channel: traceChannelSlab(layer),
-      minValue: dataWindow.min,
-      maxValue: dataWindow.max,
-      emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
-      poolMin: pool.minValue,
-      poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
-      payload: pool.spec.payload,
-      border: pool.spec.border,
-      storedZ: pool.spec.stored[2],
-      spacing: picked.spacing,
       tube: {
         iso: tubeIso,
         clampValue: tubeClampValue(tubeIso),
+        smoothVoxels: 0,
+        connectivity: null,
         maxVertices: LIVE_MAX_TUBE_VERTICES,
       },
     });
@@ -735,11 +397,11 @@ export const useBrushSkeleton = () => {
     const after = brushApi.getState();
     if (after.status !== "painting" || after.strokeLayerId !== strokeLayerId) return;
     after.setLiveTube({
-      positions: soupToWorld(result.positions, picked.step, affine),
+      positions: soupToWorld(result.positions, picked.step, ctx.affine),
       triangles: result.triangles,
       truncated: result.truncated,
     });
-  }, [brushApi, sceneStoreApi, viewerStoreApi]);
+  }, [brushApi, resolveContext]);
 
   const save = useCallback(async () => {
     const brush = brushApi.getState();
@@ -802,3 +464,88 @@ export const useBrushSkeleton = () => {
 
   return { initRadiusForLayer, extract, previewLiveTube, save };
 };
+
+/**
+ * The blob's grow loop: expand the search sphere, extract the (smoothed,
+ * connectivity-masked) surface each round via the first engine that answers,
+ * stop when the surface closes. Kept OUTSIDE the hook so its inputs are
+ * explicit — it touches no store beyond the injected callbacks.
+ */
+async function runGrowLoop(opts: {
+  ctx: ExtractionContext;
+  seed: BrushSample;
+  startRadius: number;
+  weights: SkeletonWeights;
+  tubeIso: number;
+  smoothVoxels: number;
+  gapVoxels: number;
+  tau: number;
+  stale: () => boolean;
+  publishLive: (tube: TubeSurface) => void;
+}): Promise<{ tube: TubeSurface; level: number; closed: boolean } | null> {
+  const { ctx, seed, weights, tubeIso, stale } = opts;
+  const seedWorld = seed.world;
+  let radius = opts.startRadius;
+  let grown: { tube: TubeSurface; level: number } | null = null;
+
+  for (let step = 0; step < MAX_GROW_STEPS; step += 1) {
+    if (stale()) return null;
+
+    let stepTube: LevelTube | null = null;
+    let stepPick: PickedCorridor | null = null;
+    for (const engine of ctx.engines) {
+      const picked = ctx.plan({
+        strokeWorld: [seedWorld],
+        radiusWorld: radius,
+        maxVoxels: engine.maxCorridorVoxels,
+      });
+      if (!picked) continue;
+      // Gap N bridges dark gaps up to ~N voxels: crossing a one-voxel gap
+      // costs about one voxel of world length in the connectivity metric
+      // (two half-priced boundary edges), and the +0.75 tolerates a seed
+      // that probed a hair off the bright core.
+      const gapLimitWorld = (opts.gapVoxels + 0.75) * Math.max(...picked.spacing);
+      stepTube = await engine.tube({
+        picked,
+        strokeLevelPts: [picked.worldToLevelVoxel(seedWorld)],
+        radiusWorld: radius,
+        weights,
+        tube: {
+          iso: tubeIso,
+          clampValue: tubeClampValue(tubeIso),
+          smoothVoxels: opts.smoothVoxels,
+          connectivity: {
+            tau: opts.tau,
+            gapLimitWorld,
+            seed: boxRelative(seed.voxel, picked.box, picked.step),
+          },
+        },
+      });
+      if (stale()) return null;
+      if (stepTube) {
+        stepPick = picked;
+        break;
+      }
+    }
+    if (!stepTube || !stepPick) break; // every engine declined: keep the last
+
+    const worldTube: TubeSurface = {
+      positions: soupToWorld(stepTube.positions, stepPick.step, ctx.affine),
+      triangles: stepTube.triangles,
+      truncated: stepTube.truncated,
+    };
+    grown = { tube: worldTube, level: stepPick.level };
+    const margin = 2 * Math.max(...stepPick.spacing);
+    if (
+      worldTube.triangles > 0 &&
+      !touchesBoundary(worldTube.positions, seedWorld, radius, margin)
+    ) {
+      return { ...grown, closed: true };
+    }
+    if (worldTube.truncated) break; // growing further only truncates more
+    opts.publishLive(worldTube); // the expansion animation
+    radius *= GROW_FACTOR;
+  }
+
+  return grown ? { ...grown, closed: false } : null;
+}

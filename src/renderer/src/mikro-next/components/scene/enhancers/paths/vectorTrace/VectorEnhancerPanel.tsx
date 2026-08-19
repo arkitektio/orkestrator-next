@@ -1,7 +1,7 @@
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
-import { useRoiDrawingStore } from "../store/roiDrawingStore";
-import { MAX_TRACE_COST, type TraceWeights } from "../core/trace/traceCost";
+import { useRoiDrawingStore } from "../../../store/roiDrawingStore";
+import { MAX_TRACE_COST, type TraceWeights } from "./traceCost";
 
 /**
  * The vector enhancer: a master toggle, and what its A* search treats as

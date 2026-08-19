@@ -3,7 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import { AnnotationKind } from "@/mikro-next/api/graphql";
 import { SPHERE_KIND } from "../core/primitiveDraw";
-import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "../core/trace/traceCost";
+import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "../enhancers/paths/vectorTrace/traceCost";
 
 /**
  * The drawing tool types the drawer implements. Each maps to a AnnotationKind for
@@ -39,7 +39,7 @@ export const isProbeDerivedTool = (
 /**
  * The tools the vector enhancer applies to: their vertices are clicked one by
  * one, so each edge is a candidate for being traced through the data
- * (`core/trace/`) instead of drawn straight.
+ * (`enhancers/paths/vectorTrace/`) instead of drawn straight.
  */
 export const isEnhanceableTool = (
   tool: AnnotateTool | null | undefined,
@@ -60,7 +60,7 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, AnnotationKind> = {
 /**
  * What the pointer does in ANNOTATE mode. "SELECT" is the marquee pointer
  * (`interactions/RectangleDrawer.tsx`); "BRUSH" is the intensity-skeleton
- * brush (`interactions/BrushStrokeSession.tsx` — a painted stroke, not a
+ * brush (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx` — a painted stroke, not a
  * clicked shape); every other value is a shape the `RoiDrawer` draws.
  *
  * Deliberately a separate union from `DrawingTool`: `DRAWING_TOOL_TO_ROI_KIND`
@@ -78,7 +78,7 @@ export const isDrawingTool = (
 ): tool is DrawingTool => tool != null && tool in DRAWING_TOOL_TO_ROI_KIND;
 
 /**
- * The annotation enhancers. Declared here, not in `overlays/enhancerRegistry`,
+ * The annotation enhancers. Declared here, not in `enhancers/registry`,
  * because the registry's panels consume this store — the id union living with
  * the state keeps the import graph acyclic.
  */

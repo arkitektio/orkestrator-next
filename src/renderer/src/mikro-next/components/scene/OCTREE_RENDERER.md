@@ -175,7 +175,19 @@ and promotes the encode range; drain N+1, after the uniforms had a frame to
 land, re-encodes the real texels from `brickRanges`. Bricks landing while a
 promotion is in flight write the sentinel too. `encodeOccupancyTexel`'s doc
 comment carries the four-corner proof that even a stale encode range brackets
-conservatively.
+conservatively. Three protocol guarantees added after the 2026-08-19 audit:
+the drain idle-latch respects pending encode work (`hasPendingEncodeWork` —
+without it a promotion landing on the drained edge stranded every texel at
+the sentinel for the whole idle period), the promote branch requests its own
+frame (drains only run inside frames), and the promotion's `poolsVersion`
+bump is UNTHROTTLED (the trailing-timer path opened a window where an
+escaped promotion decoded against the old range with no sentinel
+protection). The decode-uniform effect (`BrickVolumeLayer`) also bumps the
+compositor's `volumeInputs` tracker — the frame that consumed the new
+`poolsVersion` in its cache key ran BEFORE the uniforms committed, and
+without a tracker delta the stale-uniform composite was cached
+indefinitely. `flushPool` bumps the tracker too (a t/z slice change
+otherwise kept serving the previous timepoint from cache).
 
 ### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
 

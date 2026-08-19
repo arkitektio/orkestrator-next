@@ -93,3 +93,25 @@ describe("buildLayerLevelGeometry", () => {
     ).toBeNull();
   });
 });
+
+describe("MAX_BRICK_LEVELS cap (deep pyramids)", () => {
+  it("caps the level list at 10 — deeper levels are unreachable by the shader", async () => {
+    const { MAX_BRICK_LEVELS } = await import("./brickEncoding");
+    // 12-level dyadic pyramid; the shader's traversal uniform arrays and
+    // residency walk are sized to MAX_BRICK_LEVELS, so an uncapped geometry
+    // made the planner root its backdrop at a level the shader cannot read
+    // (deep pyramids rendered invisible with permanent holes).
+    const deep: LevelSource[] = Array.from({ length: 12 }, (_, i) => ({
+      shape: [3, 40, Math.max(1, 4096 >> i), Math.max(1, 4096 >> i)],
+      chunks: [1, 16, 128, 128],
+      dtype: "uint8",
+      storeId: `d${i}`,
+      scaleFactors: [1, 1, 2 ** i, 2 ** i],
+    }));
+    const geo = buildLayerLevelGeometry(DIMS, LAYER, deep)!;
+    expect(geo.levels.length).toBe(MAX_BRICK_LEVELS);
+    // The kept levels are the FINEST ten (the dropped tail is coarser).
+    expect(geo.levels[0].spatialShape[0]).toBe(4096);
+    expect(geo.levels[MAX_BRICK_LEVELS - 1].spatialShape[0]).toBe(4096 >> 9);
+  });
+});

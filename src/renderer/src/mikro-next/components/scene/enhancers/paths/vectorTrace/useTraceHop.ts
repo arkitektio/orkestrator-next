@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 import * as THREE from "three";
 
-import { buildAffineMatrix } from "../core/worldTransform";
-import { effectiveProbeLayerId } from "../core/probe/probeTargeting";
-import { simplifyPath, type PathPoint } from "../core/trace/pathSimplify";
-import { buildTraceCost, type TraceWeights } from "../core/trace/traceCost";
+import { buildAffineMatrix } from "../../../core/worldTransform";
+import { effectiveProbeLayerId } from "../../../core/probe/probeTargeting";
+import { simplifyPath, type PathPoint } from "../../shared/pathSimplify";
+import { buildTraceCost, type TraceWeights } from "./traceCost";
 import {
   extractTraceValues,
   layerLocalToVoxel,
@@ -12,25 +12,25 @@ import {
   traceNodeOf,
   traceVoxelOf,
   voxelToLayerLocal,
-  voxelWorldSize,
   type Voxel,
-} from "../core/trace/traceBox";
-import { findTracePath } from "../core/trace/traceSearch";
+} from "./traceBox";
+import { voxelWorldSize } from "../../shared/planning";
+import { findTracePath } from "./traceSearch";
 import {
   traceChannelSlab,
   traceLayerShape,
   traceLevelSteps,
   type TraceHopFailure,
-} from "../core/trace/traceLayer";
-import { useRoiDrawingStoreApi } from "../store/roiDrawingStore";
-import { useSceneStoreApi } from "../store/sceneStore";
-import { useViewerStoreApi } from "../store/viewerStore";
+} from "../../shared/traceLayer";
+import { useRoiDrawingStoreApi } from "../../../store/roiDrawingStore";
+import { useSceneStoreApi } from "../../../store/sceneStore";
+import { useViewerStoreApi } from "../../../store/viewerStore";
 
 /**
  * One edge of the vector enhancer: two probed waypoints in, the path the data
  * suggests between them out, in world coordinates.
  *
- * This is the impure shell around `core/trace/` — it decides WHICH layer, WHICH
+ * This is the impure shell around `enhancers/paths/vectorTrace/` — it decides WHICH layer, WHICH
  * channel and WHICH pyramid level to ask about, reads the voxels out of the
  * residency manager, and converts the answer back to world space. All of the
  * arithmetic lives in the pure modules.
@@ -195,4 +195,4 @@ export const useTraceWaypoints = () => {
   return { fromProbe, fromWorld };
 };
 
-export { traceFailureMessage } from "../core/trace/traceLayer";
+export { traceFailureMessage } from "../../shared/traceLayer";

@@ -3,8 +3,8 @@ import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import {
   DEFAULT_SKELETON_WEIGHTS,
   type SkeletonWeights,
-} from "../core/skeleton/corridorCost";
-import { appendSample, type BrushSample, type Vec3 } from "../core/skeleton/strokeModel";
+} from "../enhancers/shared/corridorCost";
+import { appendSample, type BrushSample, type Vec3 } from "../enhancers/shared/strokeModel";
 
 /**
  * The skeleton brush's session state: the stroke being painted, the extracted

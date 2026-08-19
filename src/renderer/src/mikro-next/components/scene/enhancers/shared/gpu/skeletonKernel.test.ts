@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   INF_COST,
   SKELETON_BASE_COST,
-} from "../../core/skeleton/corridorCost";
-import { NEIGHBOUR_OFFSETS } from "../../core/skeleton/geodesicReference";
+} from "../corridorCost";
+import { NEIGHBOUR_OFFSETS } from "../geodesicReference";
 import {
   COST_PARAMS_BYTES,
   RELAX_ITERS_PER_SUBMIT,

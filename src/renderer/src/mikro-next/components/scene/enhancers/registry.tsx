@@ -5,9 +5,9 @@ import {
   type AnnotateTool,
   type AnnotationEnhancerId,
 } from "../store/roiDrawingStore";
-import { VectorEnhancerPanel } from "./VectorEnhancerPanel";
-import { BrushSkeletonPanel } from "./BrushSkeletonPanel";
-import { SmoothBlobPanel } from "./SmoothBlobPanel";
+import { VectorEnhancerPanel } from "./paths/vectorTrace/VectorEnhancerPanel";
+import { BrushSkeletonPanel } from "./paths/brushSkeleton/BrushSkeletonPanel";
+import { SmoothBlobPanel } from "./meshes/smoothBlob/SmoothBlobPanel";
 
 /**
  * The annotation enhancers: tools-adjacent features that turn a gesture into
@@ -37,7 +37,7 @@ export const ANNOTATION_ENHANCERS: readonly AnnotationEnhancer[] = [
     id: "vector-trace",
     title: "Vector enhancer",
     // Click-per-vertex tools: each edge is a candidate for tracing through
-    // the data (`core/trace/`). Works in 2D and 3D alike.
+    // the data (`enhancers/paths/vectorTrace/`). Works in 2D and 3D alike.
     appliesTo: ({ tool }) => isEnhanceableTool(tool),
     ParamsPanel: VectorEnhancerPanel,
   },

@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 
-import { effectiveProbeLayerId } from "../core/probe/probeTargeting";
+import { effectiveProbeLayerId } from "../../../core/probe/probeTargeting";
 import { useBrushSkeleton } from "./useBrushSkeleton";
-import { PreviewLine, type PreviewLineHandle } from "./PreviewLine";
-import { useBrushSkeletonStore, useBrushSkeletonStoreApi } from "../store/brushSkeletonStore";
-import { useModeStore } from "../store/modeStore";
-import { useRoiDrawingStore } from "../store/roiDrawingStore";
-import { useSceneStoreApi } from "../store/sceneStore";
-import { useViewerStoreApi } from "../store/viewerStore";
+import { PreviewLine, type PreviewLineHandle } from "../../../interactions/PreviewLine";
+import { useBrushSkeletonStore, useBrushSkeletonStoreApi } from "../../../store/brushSkeletonStore";
+import { useModeStore } from "../../../store/modeStore";
+import { useRoiDrawingStore } from "../../../store/roiDrawingStore";
+import { useSceneStoreApi } from "../../../store/sceneStore";
+import { useViewerStoreApi } from "../../../store/viewerStore";
 
 /**
  * The skeleton brush's in-canvas session: everything around the stroke that

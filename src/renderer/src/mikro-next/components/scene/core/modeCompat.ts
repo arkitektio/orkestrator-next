@@ -51,7 +51,7 @@ const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
  * The skeleton brush and the smooth blob: probe-driven gestures on the
  * volume — 3D only. Kept out of `VOLUMETRIC_TOOLS`, whose membership drives
  * the anchor-then-size gesture (`isPrimitiveTool`); these have their own
- * session (`interactions/BrushStrokeSession.tsx`).
+ * session (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`).
  */
 const BRUSH_TOOLS = new Set<AnnotateTool>(["BRUSH", "BLOB"]);
 

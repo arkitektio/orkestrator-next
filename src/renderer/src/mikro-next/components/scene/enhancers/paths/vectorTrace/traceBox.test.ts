@@ -8,7 +8,6 @@ import {
   traceNodeOf,
   traceVoxelOf,
   voxelToLayerLocal,
-  voxelWorldSize,
   type TraceBox,
 } from "./traceBox";
 
@@ -251,26 +250,5 @@ describe("layerLocalToVoxel", () => {
     // Just past the last voxel's centre by more than half a voxel.
     expect(layerLocalToVoxel(voxelToLayerLocal([7, 0, 0], shape), shape)).not.toBeNull();
     expect(layerLocalToVoxel([shape[0] + 0.5, 2, 2], shape)).toBeNull();
-  });
-});
-
-describe("voxelWorldSize", () => {
-  it("reads the affine's basis lengths — anisotropy included", () => {
-    const affine = new THREE.Matrix4().makeScale(0.32, 0.32, 2);
-    expect(voxelWorldSize(affine)).toEqual([0.32, 0.32, 2]);
-  });
-
-  it("is rotation-invariant: a rotated voxel is the same size", () => {
-    const affine = new THREE.Matrix4()
-      .makeRotationZ(Math.PI / 3)
-      .multiply(new THREE.Matrix4().makeScale(0.5, 0.5, 4));
-    const size = voxelWorldSize(affine);
-    expect(size[0]).toBeCloseTo(0.5, 10);
-    expect(size[1]).toBeCloseTo(0.5, 10);
-    expect(size[2]).toBeCloseTo(4, 10);
-  });
-
-  it("never returns zero — a degenerate axis would make every step free", () => {
-    expect(voxelWorldSize(new THREE.Matrix4().makeScale(1, 1, 0))).toEqual([1, 1, 1]);
   });
 });

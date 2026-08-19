@@ -19,8 +19,8 @@ import {
   useTraceHop,
   useTraceWaypoints,
   type TraceWaypoint,
-} from "./useTraceHop";
-import { closingInsert, hopExtension } from "../core/vectorEnhance";
+} from "../enhancers/paths/vectorTrace/useTraceHop";
+import { closingInsert, hopExtension } from "../enhancers/paths/vectorTrace/vectorEnhance";
 import { planarRadius, primitiveCornerVectors } from "../core/primitiveDraw";
 import { useRoiDrawSessionStoreApi } from "../store/roiDrawSessionStore";
 import { useSceneStore } from "../store/sceneStore";
@@ -147,7 +147,7 @@ export const RoiDrawer = () => {
   const isPrimitive = isPrimitiveTool(tool);
   /**
    * Vector enhancer active for this tool: each clicked edge is traced through
-   * the data (`core/trace/`) instead of drawn straight. The toggle moves at
+   * the data (`enhancers/paths/vectorTrace/`) instead of drawn straight. The toggle moves at
    * click cadence at worst, so a plain subscription costs nothing (P17).
    */
   const enhanceOn = vectorEnhance && isEnhanceableTool(tool);

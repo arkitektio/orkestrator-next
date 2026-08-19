@@ -217,13 +217,21 @@ export function decideSettleRefine(input: {
   cacheEnabled: boolean;
   renderedThisFrame: boolean;
   scale: number;
+  /** Live drawing-buffer DPR has reached the settled DPR. Until
+   * QualityAdapter's 500 ms restore lands, the target is clamped to the
+   * reduced buffer — boosted ladder renders spent there would be thrown
+   * away by the restore's resize re-render, degenerating the progressive
+   * de-graining into one un-amortized heavy frame. HOLD (don't reset):
+   * the restore's own invalidate produces the full-res render that then
+   * arms the ladder. */
+  atSettledDpr: boolean;
   stage: number;
   maxStages: number;
 }): SettleRefineAction {
   const { cameraMoving, streaming, enabled, cacheEnabled } = input;
   if (!enabled || !cacheEnabled) return input.stage > 0 ? "reset" : "hold";
   if (cameraMoving || streaming) return input.stage > 0 ? "reset" : "hold";
-  if (!input.renderedThisFrame || input.scale !== 1) return "hold";
+  if (!input.renderedThisFrame || input.scale !== 1 || !input.atSettledDpr) return "hold";
   if (input.stage >= input.maxStages) return "hold";
   return "advance";
 }

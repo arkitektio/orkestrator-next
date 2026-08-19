@@ -104,8 +104,14 @@ export const useVolumeRayUniforms = (
   );
 
   const minDelta = useMemo(() => {
-    if (!pool || planTargetLevel === undefined) return 1;
-    const level = pool.geometry.levels[Math.min(planTargetLevel, pool.geometry.levels.length - 1)];
+    // Derived from `desiredLevel` — the level the SHADER actually marches
+    // (a merged pass uses its group's finest planned level) — NOT the
+    // member's own planTargetLevel: a merged primary can plan coarser than
+    // another member, and a coarser-level uMinDelta floored the legacy
+    // stride/refStep/jitter ~1.33× too long at the group's finest level.
+    const levelIndex = desiredLevel ?? planTargetLevel;
+    if (!pool || levelIndex === undefined) return 1;
+    const level = pool.geometry.levels[Math.min(levelIndex, pool.geometry.levels.length - 1)];
     // MAX spatial component — the axis rule of the planner/shader lockstep
     // (`wantFiner` / `desiredLevelAt`); identical on pyramids where x is the
     // max factor.
@@ -115,7 +121,7 @@ export const useVolumeRayUniforms = (
     // back to the legacy rule exactly on face-on thin slabs). It keeps being
     // pushed for the legacy (flag-off) emission.
     return 0.5 * Math.max(level.scale[0], level.scale[1], level.scale[2]);
-  }, [pool, planTargetLevel]);
+  }, [pool, desiredLevel, planTargetLevel]);
 
   useEffect(() => {
     if (!nodes || desiredLevel === undefined) return;

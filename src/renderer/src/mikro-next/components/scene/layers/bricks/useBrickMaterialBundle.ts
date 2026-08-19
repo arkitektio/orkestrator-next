@@ -5,6 +5,7 @@
  * material. The rule reads that as mutating a hook argument; treating these as
  * React state instead would mean recompiling the shader on every change, which
  * is exactly what the uniform-push contract exists to avoid. */
+import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 
 /**
@@ -75,9 +76,14 @@ export const usePlaneTraversalUniforms = (
   nodes: { uDesiredLevel: { value: number }; uSlabBaseZ: { value: number } } | undefined,
   { desiredLevel, slabBaseZ }: { desiredLevel: number | undefined; slabBaseZ: number },
 ): void => {
+  const invalidate = useThree((state) => state.invalidate);
   useEffect(() => {
     if (!nodes || desiredLevel === undefined) return;
     nodes.uDesiredLevel.value = desiredLevel;
     nodes.uSlabBaseZ.value = slabBaseZ;
-  }, [nodes, desiredLevel, slabBaseZ]);
+    // Demand frameloop: a plan-only change (new target level / slab with no
+    // residency churn) must request its own frame — its 3D sibling
+    // (useVolumeRayUniforms) has always done so.
+    invalidate();
+  }, [nodes, desiredLevel, slabBaseZ, invalidate]);
 };

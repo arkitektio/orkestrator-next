@@ -473,8 +473,14 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     n.uOccDecodeMin.value = pool.occEncodeMin;
     n.uOccDecodeRange.value = pool.occEncodeMax - pool.occEncodeMin;
     /* eslint-enable react-hooks/immutability */
+    // MUST bump the compositor tracker, not just invalidate: the frame that
+    // consumed the new poolsVersion in its cache key ran BEFORE this effect
+    // committed (priority-0 drain bumps, priority-1 compositor renders, in
+    // the same rAF) — without a tracker delta the stale-uniform composite
+    // would be served from cache indefinitely.
+    viewerStoreApi.getState().volumeInputs.bump("pool-range");
     invalidate();
-  }, [bundle, pool, poolsVersion, invalidate]);
+  }, [bundle, pool, poolsVersion, invalidate, viewerStoreApi]);
 
   useVolumeRayUniforms(bundle?.nodes, {
     pool,

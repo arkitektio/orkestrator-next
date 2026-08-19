@@ -1,42 +1,42 @@
-import type { BrickSpec } from "../../core/octree/brickSpec";
-import type { LayerLevelGeometry } from "../../core/octree/levelGeometry";
+import type { BrickSpec } from "../../../core/octree/brickSpec";
+import type { LayerLevelGeometry } from "../../../core/octree/levelGeometry";
 import {
   decodeEmptyValue,
   encodeEmptyValue,
-} from "../../core/octree/brickEncoding";
+} from "../../../core/octree/brickEncoding";
 import {
   PAGE_FLAG_EMPTY,
   PAGE_FLAG_RESIDENT,
   buildPageTableLayout,
-} from "../../core/octree/pageTableLayout";
+} from "../../../core/octree/pageTableLayout";
 import {
   DEFAULT_SKELETON_WEIGHTS,
   buildCostField,
   connectivityFromCost,
   maskFieldByDistance,
   voxelCost,
-} from "../../core/skeleton/corridorCost";
-import { smoothCostField } from "../../core/skeleton/fieldSmooth";
-import { marchTube, tubeClampValue } from "../../core/skeleton/tubeMarch";
-import { planCorridor } from "../../core/skeleton/corridorPlan";
-import { backtrackPath, geodesicField } from "../../core/skeleton/geodesicReference";
-import type { Vec3 } from "../../core/skeleton/strokeModel";
-import { getWebGPUDevice, type SceneRenderer } from "../gpu/sceneRenderer";
-import { createBrickAtlas, disposeBrickAtlas, writeBrickToAtlas } from "./brickAtlas";
+} from "../corridorCost";
+import { smoothCostField } from "../fieldSmooth";
+import { marchTube, tubeClampValue } from "../../meshes/tubeMarch";
+import { planCorridor } from "../corridorPlan";
+import { backtrackPath, geodesicField } from "../geodesicReference";
+import type { Vec3 } from "../strokeModel";
+import { getWebGPUDevice, type SceneRenderer } from "../../../render/gpu/sceneRenderer";
+import { createBrickAtlas, disposeBrickAtlas, writeBrickToAtlas } from "../../../render/bricks/brickAtlas";
 import { createGpuSkeletonizer } from "./computeSkeleton";
 import {
   createPageTableTexture,
   disposePageTable,
   flushPageTable,
   setPageEntry,
-} from "./pageTableTexture";
+} from "../../../render/bricks/pageTableTexture";
 
 /**
  * Dev-only GPU↔CPU skeleton parity check, run from the DebugPanel on the
  * LIVE renderer (`computeRepackSelfTest.ts` structure): builds a synthetic
  * one-level pool — a bright tube that SHIFTS at a brick seam, one EMPTY
  * uniform brick, one UNMAPPED brick — runs the GPU extraction
- * (`computeSkeleton`) and the CPU reference (`core/skeleton`) over the same
+ * (`computeSkeleton`) and the CPU reference (`enhancers/shared`) over the same
  * corridor, and compares hole counts, distance fields (small float
  * tolerance: the two accumulate in f64 vs f32) and the backtracked
  * centerline's endpoints. The vitest suite pins the packing math; this pins

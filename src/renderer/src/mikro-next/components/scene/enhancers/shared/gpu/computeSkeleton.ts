@@ -3,13 +3,13 @@ import {
   getBackendTexture,
   getWebGPUDevice,
   type SceneRenderer,
-} from "../gpu/sceneRenderer";
-import type { CorridorBox } from "../../core/skeleton/corridorPlan";
-import { corridorVoxelCount } from "../../core/skeleton/corridorPlan";
-import { INF_COST, type SkeletonWeights } from "../../core/skeleton/corridorCost";
-import type { Vec3 } from "../../core/skeleton/strokeModel";
-import type { BrickAtlas } from "./brickAtlas";
-import type { PageTableTexture } from "./pageTableTexture";
+} from "../../../render/gpu/sceneRenderer";
+import type { CorridorBox } from "../corridorPlan";
+import { corridorVoxelCount } from "../corridorPlan";
+import { INF_COST, type SkeletonWeights } from "../corridorCost";
+import type { Vec3 } from "../strokeModel";
+import type { BrickAtlas } from "../../../render/bricks/brickAtlas";
+import type { PageTableTexture } from "../../../render/bricks/pageTableTexture";
 import {
   COST_PARAMS_BYTES,
   MAX_RELAX_ITERS,

@@ -277,7 +277,10 @@ export function startNodePlanTracking({
       });
       const decodeAllowanceBytes = resolveDecodeAllowanceBytes({
         maxPlanBytes,
-        poolCount: poolKeys.size,
+        // Each EQUIVALENCE CLASS runs its own plan and spends its own
+        // allowance; dividing by the (possibly smaller) pool count would let
+        // multiple classes on one pool exceed the shared-cache cap.
+        poolCount: Math.max(poolKeys.size, classes.size),
         decodedChunkCacheBytes: getDecodedChunkCacheBytes(),
       });
 

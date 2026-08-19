@@ -1,11 +1,13 @@
-import type { LayerState } from "../layerModel";
-import type { TraceFailure } from "./traceSearch";
+import type { LayerState } from "../../core/layerModel";
+// Type-only reach into the vector-trace strategy: `TraceHopFailure` extends
+// the A* search's failure union, and a type import cannot cycle.
+import type { TraceFailure } from "../paths/vectorTrace/traceSearch";
 
 /**
  * What a trace needs to know about the LAYER it is tracing through: which
  * channel to read, how big the data is, and what to say when a hop fails.
  *
- * Pure, and separate from the hook that uses it (`interactions/useTraceHop`),
+ * Pure, and separate from the hook that uses it (`enhancers/paths/vectorTrace/useTraceHop`),
  * because these are the decisions most likely to be quietly wrong — the channel
  * mapping especially — and they are worth testing without a scene.
  */
@@ -48,7 +50,7 @@ export type TraceLayerShape = Pick<
 
 /**
  * Level-0 spatial extent in RENDER-axis order (x, y, z) — the order every
- * voxel coordinate in `core/trace/` is stated in, and the order the probe
+ * voxel coordinate in `enhancers/paths/vectorTrace/` is stated in, and the order the probe
  * reports `voxelIndex` in.
  *
  * A layer with no z axis is one slab deep rather than unsupported: that is the

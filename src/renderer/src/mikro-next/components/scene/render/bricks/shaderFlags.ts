@@ -6,6 +6,9 @@
  * order without a rebuild. Read at material-build time, so toggling takes
  * effect on the next scene mount. This is the only practical way to bisect a
  * visual regression in a shader that cannot be unit-tested against a GPU.
+ * NOTE: the EMPTY hop, the per-brick occupancy skip AND the occHierarchy
+ * coarse hop are all emitted inside this flag's region — turning fastPath
+ * off for a bisect also mutes all three skips.
  */
 const SHADER_FAST_PATH_STORAGE_KEY = "orkestrator.shaderFastPath";
 
@@ -79,7 +82,9 @@ const ANISO_LOD_STORAGE_KEY = "orkestrator.anisoLod";
  * other switches this one defaults conservative: it is the largest new
  * shader surface of the anisotropy overhaul. CPU aggregation is captured at
  * pool creation; the shader hop at material build — reopen the scene after
- * toggling.
+ * toggling. COUPLING: the hop (like the per-brick occupancy skip) is emitted
+ * only inside the `orkestrator.shaderFastPath` region — fastPath off mutes
+ * this flag entirely.
  */
 const OCC_HIERARCHY_STORAGE_KEY = "orkestrator.occHierarchy";
 

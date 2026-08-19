@@ -6,10 +6,11 @@
  *
  *  - `orkestrator.volumeTarget` — R2: raymarch image volume passes into a
  *    dedicated render target (full-res settled, half-res while active) and
- *    composite the upsampled result.
- *    Read at mount AND at material-build time (the image materials switch to
- *    separate-alpha blending under the target — see `useBrickMaterialBundle`),
- *    so toggling takes effect on the next scene mount.
+ *    composite the upsampled result additively. The image materials keep
+ *    plain AdditiveBlending in BOTH paths (an earlier separate-alpha design
+ *    was reverted — the target is an additive-DELTA buffer, see
+ *    brickNodeMaterials' blending note). Read once at scene mount
+ *    (ThreeDScene), so toggling takes effect on the next scene mount.
  *  - `orkestrator.volumeCache` — R1: skip re-rendering the volume target when
  *    no volume input changed, compositing the cached texture instead. Read
  *    per frame, so it can be A/B'd live without a remount.

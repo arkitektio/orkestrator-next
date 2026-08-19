@@ -1,6 +1,6 @@
-import type { CorridorBox } from "./corridorPlan";
-import { corridorIndex } from "./corridorPlan";
-import { TET_CORNERS, TET_TRIANGLE_TABLE } from "./tetTable";
+import type { CorridorBox } from "../shared/corridorPlan";
+import { corridorIndex } from "../shared/corridorPlan";
+import { TET_CORNERS, TET_TRIANGLE_TABLE } from "./marchingTets";
 
 /**
  * CPU tube-surface extraction: the isosurface of the corridor cost field via

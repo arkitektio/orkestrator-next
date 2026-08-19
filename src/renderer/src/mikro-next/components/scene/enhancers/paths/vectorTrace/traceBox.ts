@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 /**
  * The window one hop searches in, and how to read it.
  *
@@ -253,21 +251,4 @@ export function layerLocalToVoxel(
     if (voxel[axis] < 0 || voxel[axis] > shape[axis] - 1) return null;
   }
   return voxel;
-}
-
-/**
- * World length of one level-0 voxel along each axis: the lengths of the affine's
- * basis vectors. This is what makes the search anisotropy-aware — z spacing is
- * routinely several times xy, and a lattice that ignored it would prefer z-hops
- * because they cover more ground for the same price.
- */
-export function voxelWorldSize(
-  affine: THREE.Matrix4,
-): [number, number, number] {
-  const e = affine.elements; // column-major
-  return [
-    Math.hypot(e[0], e[1], e[2]) || 1,
-    Math.hypot(e[4], e[5], e[6]) || 1,
-    Math.hypot(e[8], e[9], e[10]) || 1,
-  ];
 }

@@ -68,6 +68,7 @@ import {
   isShaderFastPathEnabled,
   isSmoothZoomEnabled,
 } from "./shaderFlags";
+import { ensureAggregate } from "./pageTableTexture";
 import {
   emitVolumeRayBounds,
   makeVolumeRayNodes,
@@ -197,7 +198,9 @@ export function makeTraversalNodes(
     occupancy: pool.pageTable.occupancy,
     /** RG8 hierarchical-occupancy aggregate (R4, orkestrator.occHierarchy):
      * texel at (level h, cell) bounds the level-(h−1) measured ranges under
-     * that cell. Referenced only when the flag emits the coarse hop. */
+     * that cell. LAZILY allocated; referenced only when the flag emits the
+     * coarse hop, and the hop emission calls ensureAggregate first — null
+     * here is fine for every other material. */
     aggregate: pool.pageTable.aggregate,
     brickAtlas: pool.atlas.texture,
     uNumLevels: uniform(Math.min(pool.geometry.levels.length, MAX_BRICK_LEVELS), "int"),
@@ -1134,7 +1137,11 @@ export function createVolumeNodeMaterial(
   // legacy max-axis pitch, verbatim.
   const anisoStride = isAnisoStrideEnabled();
   // Hierarchical-occupancy coarse hop (R4, default OFF); off = not emitted.
+  // The aggregate sidecar is lazily allocated — ensure it exists BEFORE
+  // makeTraversalNodes captures the texture reference (a pool created while
+  // the flag was off would otherwise hand the emission a null texture).
   const occHierarchy = isOccHierarchyEnabled();
+  if (occHierarchy) ensureAggregate(pool.pageTable);
   const t = makeTraversalNodes(pool, dataRange);
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
@@ -1286,8 +1293,12 @@ export function createVolumeNodeMaterial(
 
     // Jitter must not depend on rayLen or uStepScale (motion-invariant, P14).
     // Under anisoStride the amplitude is the projected pitch of the plan
-    // target — like uMinDelta it changes only on replan, and it matches the
-    // actual stride (the legacy amplitude straddled ~5 face-on strides).
+    // target — like uMinDelta it changes only on replan. NOTE it matches the
+    // UNSCALED pitch, not the actual stride: the stride multiplies by
+    // uStepScale (2–3× while active), which P14 forbids in the amplitude —
+    // motion frames are deliberately under-dithered rather than flickery.
+    // (The legacy amplitude straddled ~5 face-on strides; this one matches
+    // the settled stride exactly.)
     const jitterAmp = anisoStride ? levelPitch(uDesiredLevel) : float(uMinDelta);
     const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(jitterAmp)).toVar("rayT");
 
@@ -1529,6 +1540,12 @@ export function createVolumeNodeMaterial(
         // 0.995 early-out dim fluorescence never reaches — a way to stop
         // paying full per-slot sampling through visually black or already-
         // beaten bricks.
+        // KNOWN 0.1% BAND (phasor sources with weightByIntensity off): the
+        // invisible predicate treats norm ≤ 0.001 as black, but such a
+        // phasor paints ANY norm > 0 at full opacity — voxels in (0, 0.001]
+        // are skipped here that the legacy (non-fastPath) emission would
+        // have painted. Accepted as beneath quantization; documented, not
+        // accidental.
         If(resolved.status.greaterThanEqual(0.5).and(resolved.status.lessThan(1.5)), () => {
           const occ = vec4(
             texture3DLoad(t.occupancy, ivec3(resolved.pageTexel)),

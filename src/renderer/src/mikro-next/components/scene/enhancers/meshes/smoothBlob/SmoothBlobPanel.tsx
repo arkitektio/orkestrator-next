@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useBrushSkeleton } from "../interactions/useBrushSkeleton";
-import { useBrushSkeletonStore } from "../store/brushSkeletonStore";
+import { useBrushSkeleton } from "../../paths/brushSkeleton/useBrushSkeleton";
+import { useBrushSkeletonStore } from "../../../store/brushSkeletonStore";
 
 /**
  * The smooth-blob tool's panel — the `smooth-blob` entry's `ParamsPanel` in

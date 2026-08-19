@@ -211,6 +211,7 @@ describe("decideSettleRefine (settle refinement ladder)", () => {
     cacheEnabled: true,
     renderedThisFrame: true,
     scale: 1,
+    atSettledDpr: true,
     stage: 0,
     maxStages: 2,
   };
@@ -243,6 +244,16 @@ describe("decideSettleRefine (settle refinement ladder)", () => {
   it("only a completed FULL-RES render arms an advance", () => {
     expect(decide({ renderedThisFrame: false })).toBe("hold");
     expect(decide({ scale: 0.5 })).toBe("hold");
+  });
+
+  it("waits (holds, not resets) for the DPR restore before spending boosted renders", () => {
+    // Before QualityAdapter's 500 ms restore the target is clamped to the
+    // reduced buffer — boosted renders there would be thrown away by the
+    // restore's resize re-render.
+    expect(decide({ atSettledDpr: false })).toBe("hold");
+    expect(decide({ atSettledDpr: false, stage: 1 })).toBe("hold");
+    // The restore's own resize render then arms the ladder.
+    expect(decide({ atSettledDpr: true, stage: 1 })).toBe("advance");
   });
 
   it("terminates structurally: folding over frames reaches max and holds", () => {

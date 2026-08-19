@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { SceneVolume } from "./layers/three_d/SceneVolume";
-import { BrushStrokeSession } from "./interactions/BrushStrokeSession";
+import { BrushStrokeSession } from "./enhancers/paths/brushSkeleton/BrushStrokeSession";
 import { ProbeAxisGuides } from "./interactions/ProbeAxisGuides";
 import { RoiDrawer } from "./interactions/RoiDrawer";
 import { VolumeCompositor } from "./managers/VolumeCompositor";
 import { isVolumeTargetEnabled } from "./render/volumeTargetFlags";
 
 export const ThreeDScene = () => {
-  // Read once per mount (like smoothZoom): the flag also switches the image
-  // materials' blend mode, so a flip must re-enter through a scene remount.
+  // Read once per mount (like smoothZoom): mounting/unmounting the
+  // compositor mid-session would flip the render-loop ownership under R3F's
+  // feet, so a flip re-enters through a scene remount. (The image materials'
+  // blending is IDENTICAL in both paths — plain AdditiveBlending; the old
+  // "flag switches the blend mode" rationale was a reverted design.)
   const [volumeTarget] = useState(isVolumeTargetEnabled);
   return (
     <>

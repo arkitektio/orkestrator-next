@@ -3,7 +3,7 @@
 // that module's Apollo hooks barrel touches `window` on load)
 import { describe, expect, it } from "vitest";
 
-import { ANNOTATION_ENHANCERS, applicableEnhancers } from "./enhancerRegistry";
+import { ANNOTATION_ENHANCERS, applicableEnhancers } from "./registry";
 
 describe("enhancer registry", () => {
   it("offers the vector trace for click-per-vertex tools in both views", () => {

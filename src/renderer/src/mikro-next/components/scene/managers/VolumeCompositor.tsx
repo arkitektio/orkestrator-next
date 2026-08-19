@@ -347,9 +347,18 @@ export const VolumeCompositor = () => {
       const prevAutoClear = gl.autoClear;
       gl.getClearColor(scratchClearColor);
       const prevClearAlpha = gl.getClearAlpha();
+      // The additive-delta invariant REQUIRES the target to clear to
+      // (0,0,0,0). On the WebGPU renderer a `scene.background` overrides the
+      // clear color — nothing in this tree sets one today (the scene
+      // background is a DOM div behind the transparent canvas), but a future
+      // `<color attach="background">` would be additively composited over
+      // the whole canvas. Enforce the invariant instead of assuming it.
+      const sceneWithBackground = scene as THREE.Scene;
+      const prevBackground = sceneWithBackground.background;
       const restoreOthers = hideObjects(sets.otherRenderables);
       let restoreOccluders: (() => void) | null = null;
       try {
+        sceneWithBackground.background = null;
         gl.setClearColor(0x000000, 0);
         gl.setRenderTarget(target);
         if (isVolumeDepthPrepassEnabled() && sets.occluders.length > 0) {
@@ -378,6 +387,7 @@ export const VolumeCompositor = () => {
       } finally {
         restoreOccluders?.();
         restoreOthers();
+        sceneWithBackground.background = prevBackground;
         gl.autoClear = prevAutoClear;
         gl.setClearColor(scratchClearColor, prevClearAlpha);
         gl.setRenderTarget(prevTarget);
@@ -394,6 +404,10 @@ export const VolumeCompositor = () => {
       cacheEnabled: isVolumeCacheEnabled(),
       renderedThisFrame: decision.render,
       scale,
+      // Wait for QualityAdapter's DPR restore before spending boosted
+      // renders — see decideSettleRefine's atSettledDpr doc.
+      atSettledDpr:
+        dpr >= resolveDpr(profile, state.viewport.initialDpr, false) - 1e-6,
       stage: qualityGovernor.getSettleRefineStage(),
       maxStages: MAX_SETTLE_REFINE_STAGES,
     });

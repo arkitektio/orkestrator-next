@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
-import { useBrushSkeleton } from "../interactions/useBrushSkeleton";
-import { useBrushSkeletonStore } from "../store/brushSkeletonStore";
+import { useBrushSkeleton } from "./useBrushSkeleton";
+import { useBrushSkeletonStore } from "../../../store/brushSkeletonStore";
 
 /**
  * The skeleton brush's params/status/confirm panel — the `intensity-skeleton`
  * entry's `ParamsPanel` in `enhancerRegistry`. Shown whenever the BRUSH tool
  * is armed; the stroke itself is captured in-canvas
- * (`interactions/BrushStrokeSession.tsx`), so this panel only reads
+ * (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`), so this panel only reads
  * gesture-cadence state and issues verdicts (save / discard / re-extract).
  */
 export const BrushSkeletonPanel = () => {

@@ -1,5 +1,6 @@
 import { resolveAxisIndices, type AxisIndices, type LayerAxisDims } from "../dims";
 import type { TransformLike } from "@/mikro-next/lib/coords/transformGraph";
+import { MAX_BRICK_LEVELS } from "./brickEncoding";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in
@@ -233,12 +234,21 @@ export function buildLayerLevelGeometry(
   // ancestor-chain logic would treat the duplicate as a distinct LOD. Keep
   // the first entry per unique spatial shape.
   const seenShapes = new Set<string>();
-  const levels = allLevels.filter((level) => {
+  const deduped = allLevels.filter((level) => {
     const shapeKey = `${axisExtent(level.shape, xPos)}:${axisExtent(level.shape, yPos)}:${axisExtent(level.shape, zPos)}`;
     if (seenShapes.has(shapeKey)) return false;
     seenShapes.add(shapeKey);
     return true;
   });
+  // HARD CAP at MAX_BRICK_LEVELS: the shader's traversal uniform arrays
+  // (uPageOffset/uLevelShape/uLevelScale) and its residency walk are sized
+  // to exactly this many levels, and `uNumLevels` is min-clamped to it. An
+  // uncapped geometry made the planner root its fetchBand-0 backdrop at a
+  // level the shader could never read — deep (≥11-level) pyramids rendered
+  // INVISIBLE until refinement reached level 9, with permanent holes
+  // wherever it stopped coarser. Dropping the deepest levels merely makes
+  // the coarsest available level level 9 — still a tiny backdrop.
+  const levels = deduped.slice(0, MAX_BRICK_LEVELS);
   if (levels.length === 0) return null;
 
   const channelSlabCount =

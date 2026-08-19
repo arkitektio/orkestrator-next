@@ -114,6 +114,14 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     updateChannelNodes(bundle.nodes, channelData);
     bundle.nodes.minValue.value = pool?.minValue ?? 0;
     bundle.nodes.maxValue.value = pool?.maxValue ?? 1;
+    // EMPTY page entries are re-encoded against the pool range whenever it
+    // moves (auto-contrast float pools) — the decode uniforms must follow or
+    // uniform-fill bricks render at increasingly wrong intensities. The 3D
+    // path does the same in BrickVolumeLayer's decode-uniform effect; this
+    // effect re-runs on range moves via the channelData memo + the
+    // poolsVersion subscription above.
+    bundle.nodes.uEmptyDecodeMin.value = pool?.minValue ?? 0;
+    bundle.nodes.uEmptyDecodeRange.value = (pool?.maxValue ?? 1) - (pool?.minValue ?? 0);
 
     // Channel-compositor diagnostic (debug overlay on): the exact uniform +
     // colormap-row state the shader consumes, one line per update. Pair with

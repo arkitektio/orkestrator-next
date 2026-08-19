@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBrushSkeletonStore } from "./brushSkeletonStore";
-import type { BrushSample } from "../core/skeleton/strokeModel";
+import type { BrushSample } from "../enhancers/shared/strokeModel";
 
 const sample = (x: number): BrushSample => ({
   world: [x, 0, 0],

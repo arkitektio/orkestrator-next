@@ -2,7 +2,7 @@ import type { Vec3 } from "./strokeModel";
 
 /**
  * The corridor: the box of level voxels the skeleton extraction is allowed to
- * work in. Like `core/trace/traceBox` it exists because a 3D search grows
+ * work in. Like `enhancers/paths/vectorTrace/traceBox` it exists because a 3D search grows
  * cubically — but a stroke is tube-shaped, not endpoint-pair-shaped, so the
  * box is the stroke's dilated bounding box and the CORRIDOR TEST
  * (`corridorCost.inCorridor`) is what keeps the working set tube-thin inside

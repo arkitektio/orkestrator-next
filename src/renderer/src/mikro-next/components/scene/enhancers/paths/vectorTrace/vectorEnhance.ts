@@ -1,6 +1,6 @@
 /**
  * Splice arithmetic for the vector enhancer: how the points of one traced hop
- * (`interactions/useTraceHop.ts`) merge into a vertex chain the drawer is
+ * (`enhancers/paths/vectorTrace/useTraceHop.ts`) merge into a vertex chain the drawer is
  * building. Kept pure so the off-by-one at each joint — the only real bug
  * surface — is testable without a scene.
  *

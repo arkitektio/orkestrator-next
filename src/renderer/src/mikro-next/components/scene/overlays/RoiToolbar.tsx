@@ -20,7 +20,7 @@ import {
   Pentagon,
   Pencil,
 } from "lucide-react";
-import { applicableEnhancers } from "./enhancerRegistry";
+import { applicableEnhancers } from "../enhancers/registry";
 
 /**
  * Select sits first because it is the non-destructive tool — and because it is

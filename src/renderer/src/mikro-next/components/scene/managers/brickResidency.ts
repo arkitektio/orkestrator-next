@@ -106,11 +106,11 @@ import {
 import {
   createGpuSkeletonizer,
   type GpuSkeletonizer,
-} from "../render/bricks/computeSkeleton";
+} from "../enhancers/shared/gpu/computeSkeleton";
 import {
   runGpuSkeletonSelfTest,
   type GpuSkeletonSelfTestResult,
-} from "../render/bricks/computeSkeletonSelfTest";
+} from "../enhancers/shared/gpu/computeSkeletonSelfTest";
 import {
   runGpuRepackSelfTest,
   type GpuRepackSelfTestResult,
@@ -119,6 +119,7 @@ import {
   clearPageTable,
   createPageTableTexture,
   disposePageTable,
+  ensureAggregate,
   flushPageTable,
   setAggregateEntry,
   setPageEntry,
@@ -150,6 +151,18 @@ const occEncodeRangeOf = (pool: LayerBrickPool): { minValue: number; maxValue: n
   minValue: pool.occEncodeMin,
   maxValue: pool.occEncodeMax,
 });
+
+/** Encode work a drain still owes a pool: the two-drain occupancy-range
+ * promotion (either phase) or a pending auto-range EMPTY re-encode. The
+ * drain idle-latch must NOT clear while any of these is set, or the second
+ * drain of the promotion protocol never runs under the demand frame loop
+ * (exported for the vitest matrix). */
+export const hasPendingEncodeWork = (pool: {
+  occRangePromotePending: boolean;
+  occReencodePending: boolean;
+  autoRangeEncodeDirty: boolean;
+}): boolean =>
+  pool.occRangePromotePending || pool.occReencodePending || pool.autoRangeEncodeDirty;
 
 /** A decoded chunk plus its shared-cache key (doubles as the GPU-buffer key). */
 type GpuQueuedChunk = RepackChunk & { cacheKey: string };
@@ -1471,6 +1484,9 @@ export class BrickResidencyManager {
       setPageEntry(pool.pageTable, level, coords, null, PAGE_FLAG_UNMAPPED);
       pool.gpuStaleKeys.delete(key);
       pool.coarsestResident.delete(key);
+      // Same bookkeeping as eviction: brickRanges is bounded by slot count
+      // only if released keys leave it (measuredRanges deliberately stays).
+      pool.brickRanges.delete(key);
       this.stats.trimmed += 1;
     }
     // The page writes land in the dirty region; drainUploads flushes every
@@ -1682,9 +1698,39 @@ export class BrickResidencyManager {
         movable.minValue = derivation.dataRange[0];
         movable.maxValue = derivation.dataRange[1];
         movable.autoRangeEncodeDirty = true;
+        // A range move also re-derives everything the fresh-pool branch
+        // derives from the range: the auto-range policy (a server histogram
+        // landing late is exactly this path — autoRange must turn OFF), and
+        // the occupancy encode/observed state, which must restart from the
+        // NEW pool range (flushPool above reset it against the OLD one —
+        // ordering matters). Encode ≡ decode stays intact because the
+        // decode uniforms ride the poolsVersion bump below.
+        movable.autoRange =
+          derivation.valueSemantics === "intensity" &&
+          (geometry.levels[0].dtype === "float32" ||
+            geometry.levels[0].dtype === "float64") &&
+          serverHistogramRange(layer) === null;
+        movable.autoRangeInitialized = false;
+        movable.occObservedInitialized = false;
+        movable.occEncodeMin = movable.minValue;
+        movable.occEncodeMax = movable.maxValue;
+        movable.occRangePromotePending = false;
+        movable.occReencodePending = false;
+        this.wakeDrain();
       }
+      // Re-capture the pool-creation-time flags: a toggle followed by a
+      // slice/range change would otherwise pin this pool on the old policy
+      // for its whole life.
+      movable.occObservedRange =
+        derivation.valueSemantics === "intensity" && isOccObservedRangeEnabled();
+      movable.occHierarchy = isOccHierarchyEnabled();
       movable.poolKey = poolKey;
       this.pools.set(poolKey, movable);
+      // The decode uniforms (minValue/maxValue, uEmptyDecode*, uOccDecode*)
+      // ride poolsVersion — without this bump a moved range left EMPTY
+      // bricks decoding at wrong intensities indefinitely.
+      this.deps.viewerStore.getState().bumpPoolsVersion();
+      this.deps.invalidate();
       return movable;
     }
 
@@ -1842,11 +1888,13 @@ export class BrickResidencyManager {
       occHierarchy: isOccHierarchyEnabled(),
       measuredRanges: new Map(),
       aggregateRanges: new Map(),
+      // (aggregate sidecar is allocated below only when the flag is on)
       gpuStaleKeys: new Set(),
       minTargetLevel: 0,
       lastRepackPath: null,
       nodeKeys: createNodeKeyMemo(geometry.levels.length),
     };
+    if (pool.occHierarchy) ensureAggregate(pool.pageTable);
     this.pools.set(poolKey, pool);
     // Warm the sync-probe chunk-key encoders for every level now — the debug
     // report's channel-slab probe runs synchronously and cannot await the
@@ -2215,6 +2263,11 @@ export class BrickResidencyManager {
       const texel = encodeEmptyTexel(pending.uniformValue, pool, pool.emptyBits);
       setPageEntry(pool.pageTable, pending.level, pending.coords, texel, PAGE_FLAG_EMPTY);
       pool.emptyValues.set(pending.key, pending.uniformValue);
+      // Uniform values fold into the occupancy OBSERVED range too — Phase D
+      // aggregates union them, and an out-of-range uniform would otherwise
+      // clamp its aggregate to the "unbounded" sentinel (lost discrimination
+      // on mostly-uniform volumes).
+      this.accumulateOccRange(pool, pending.uniformValue, pending.uniformValue);
       this.recordMeasuredRange(
         pool,
         pending.key,
@@ -2476,6 +2529,11 @@ export class BrickResidencyManager {
         this.blankOccupancyEntries(pool);
         pool.occReencodePending = true;
         this.wakeDrain();
+        // The re-encode needs a NEXT drain, and drains only run inside
+        // frames — request one explicitly (the demand loop may otherwise
+        // go idle right here, on the drained edge). The intervening render
+        // is sentinel-safe under any decode uniforms.
+        this.deps.invalidate();
       } else if (pool.occReencodePending) {
         pool.occReencodePending = false;
         this.reencodeOccupancyEntries(pool);
@@ -2555,7 +2613,21 @@ export class BrickResidencyManager {
     // this method, so gpuFlush === null proves none are in flight; the
     // min/max readback continuation does its own page-table flush and bumps).
     // The streaming→idle edge above already ran in this same pass.
-    if (!streaming && !progress.uploadedAny && gpuFlush === null) this.drainNeeded = false;
+    //
+    // MUST also respect PENDING ENCODE WORK: the occupancy-range promotion
+    // is a TWO-drain protocol (blank this pass, re-encode next pass). The
+    // promote branch above may have just set `occReencodePending` — clearing
+    // the latch here would strand every occupancy/aggregate texel at the
+    // "never skip" sentinel for the whole idle period (Phase A/D silently
+    // dead exactly when settled). See hasPendingEncodeWork.
+    if (
+      !streaming &&
+      !progress.uploadedAny &&
+      gpuFlush === null &&
+      ![...this.pools.values()].some(hasPendingEncodeWork)
+    ) {
+      this.drainNeeded = false;
+    }
   }
 
   /** Per idle callback, how long mirror copies may run. */
@@ -2756,7 +2828,16 @@ export class BrickResidencyManager {
 
     pool.occRangePromotePending = true;
     this.wakeDrain();
-    this.schedulePoolsBump();
+    // UNTHROTTLED bump (unlike the auto-range wobble path): the promotion's
+    // re-encode lands on the NEXT drain (~one frame), and the decode
+    // uniforms ride poolsVersion — a trailing-timer bump (up to 150 ms)
+    // would open a window where an ESCAPED promotion's texels decode
+    // against the old, narrower range with no sentinel protection and skip
+    // visible structure. Promotions are rare (a handful per load), so the
+    // immediate bump costs nothing.
+    this.lastPoolsBumpAt = performance.now();
+    this.deps.viewerStore.getState().bumpPoolsVersion();
+    this.deps.invalidate();
   }
 
   /** Re-encode every EMPTY page entry against the current pool range (the
@@ -2914,6 +2995,8 @@ export class BrickResidencyManager {
       pool.coarsestResident.delete(result.token.key);
       pool.brickRanges.delete(result.token.key);
       pool.emptyValues.set(result.token.key, result.uniformValue);
+      // See the CPU EMPTY-demotion site: uniforms feed the observed range.
+      this.accumulateOccRange(pool, result.uniformValue, result.uniformValue);
       this.recordMeasuredRange(
         pool,
         result.token.key,
@@ -3165,6 +3248,13 @@ export class BrickResidencyManager {
     );
     pool.fixedChunkCoords = fixedChunkCoords;
     pool.fixedOffsets = fixedOffsets;
+    // A flush changes what the volume LOOKS like (the previous slice's
+    // bricks are gone) but moves none of the compositor's cache-key
+    // counters — without this bump a t/z-slider change kept serving the
+    // PREVIOUS timepoint from the cached composite until streaming
+    // happened to emit (or forever, if the refetch fails).
+    this.deps.viewerStore.getState().volumeInputs.bump("pool-flush");
+    this.deps.invalidate();
   }
 
   private disposePool(pool: LayerBrickPool): void {

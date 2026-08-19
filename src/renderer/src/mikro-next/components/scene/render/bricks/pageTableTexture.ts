@@ -62,9 +62,9 @@ export type PageTableTexture = {
    * survive eviction and are only cleared on a pool flush. Same dirty-box
    * flush as the other two textures.
    */
-  aggregate: THREE.Data3DTexture;
-  aggMirrors: Uint8Array[];
-  aggBacking: Uint8Array;
+  aggregate: THREE.Data3DTexture | null;
+  aggMirrors: Uint8Array[] | null;
+  aggBacking: Uint8Array | null;
 };
 
 const configureTexture = (texture: THREE.Data3DTexture, format: THREE.PixelFormat) => {
@@ -89,9 +89,6 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
   configureTexture(texture, THREE.RGBAFormat);
   const occupancy = new THREE.Data3DTexture(occBacking, w, h, d);
   configureTexture(occupancy, THREE.RGFormat);
-  const aggBacking = new Uint8Array(w * h * d * 2); // all zero = unknown, never hop
-  const aggregate = new THREE.Data3DTexture(aggBacking, w, h, d);
-  configureTexture(aggregate, THREE.RGFormat);
 
   return {
     texture,
@@ -106,12 +103,30 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
       (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
     ),
     occBacking,
-    aggregate,
-    aggMirrors: layout.levelGrid.map(
-      (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
-    ),
-    aggBacking,
+    // LAZY: allocated by ensureAggregate on first use (pool has
+    // orkestrator.occHierarchy on) — the third texture and its per-level
+    // flush upload must cost nothing while the default-off flag is off.
+    aggregate: null,
+    aggMirrors: null,
+    aggBacking: null,
   };
+}
+
+/** Allocate the aggregate sidecar on first use (idempotent). Called at pool
+ * creation when `orkestrator.occHierarchy` is on and defensively from
+ * `setAggregateEntry`/the material builder. */
+export function ensureAggregate(pageTable: PageTableTexture): THREE.Data3DTexture {
+  if (pageTable.aggregate) return pageTable.aggregate;
+  const [w, h, d] = pageTable.layout.size;
+  const aggBacking = new Uint8Array(w * h * d * 2); // all zero = unknown, never hop
+  const aggregate = new THREE.Data3DTexture(aggBacking, w, h, d);
+  configureTexture(aggregate, THREE.RGFormat);
+  pageTable.aggregate = aggregate;
+  pageTable.aggBacking = aggBacking;
+  pageTable.aggMirrors = pageTable.layout.levelGrid.map(
+    (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
+  );
+  return aggregate;
 }
 
 /**
@@ -126,12 +141,13 @@ export function setAggregateEntry(
   cell: Vec3,
   texel: readonly [number, number] | null,
 ): void {
+  ensureAggregate(pageTable);
   const grid = pageTable.layout.levelGrid[level];
   const entry = pageEntryIndex(grid, cell);
   const r = texel?.[0] ?? 0;
   const g = texel?.[1] ?? 0;
-  pageTable.aggMirrors[level][entry * 2] = r;
-  pageTable.aggMirrors[level][entry * 2 + 1] = g;
+  pageTable.aggMirrors![level][entry * 2] = r;
+  pageTable.aggMirrors![level][entry * 2 + 1] = g;
   const box = pageTable.dirty[level];
   if (box === null) {
     pageTable.dirty[level] = {
@@ -148,8 +164,8 @@ export function setAggregateEntry(
   const [w, h] = [pageTable.layout.size[0], pageTable.layout.size[1]];
   const flat =
     ((offset[2] + cell[2]) * h + (offset[1] + cell[1])) * w + (offset[0] + cell[0]);
-  pageTable.aggBacking[flat * 2] = r;
-  pageTable.aggBacking[flat * 2 + 1] = g;
+  pageTable.aggBacking![flat * 2] = r;
+  pageTable.aggBacking![flat * 2 + 1] = g;
 }
 
 export function setPageEntry(
@@ -245,19 +261,22 @@ export function flushPageTable(
         rowsPerImage: grid[1],
       },
     );
-    const aggOk = uploadTexSubImage3D(
-      renderer,
-      pageTable.aggregate,
-      "rg8",
-      dest,
-      [extent[0], extent[1], extent[2]],
-      pageTable.aggMirrors[level],
-      {
-        offsetBytes: ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
-        bytesPerRow: grid[0] * 2,
-        rowsPerImage: grid[1],
-      },
-    );
+    const aggOk = pageTable.aggregate
+      ? uploadTexSubImage3D(
+          renderer,
+          pageTable.aggregate,
+          "rg8",
+          dest,
+          [extent[0], extent[1], extent[2]],
+          pageTable.aggMirrors![level],
+          {
+            offsetBytes:
+              ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
+            bytesPerRow: grid[0] * 2,
+            rowsPerImage: grid[1],
+          },
+        )
+      : true; // not allocated (flag off): nothing to upload
     if (pageOk && occOk && aggOk) {
       pageTable.dirty[level] = null;
       uploaded = true;
@@ -270,12 +289,12 @@ export function flushPageTable(
 export function clearPageTable(pageTable: PageTableTexture): void {
   pageTable.backing.fill(0);
   pageTable.occBacking.fill(0);
-  pageTable.aggBacking.fill(0);
+  pageTable.aggBacking?.fill(0);
   for (let level = 0; level < pageTable.mirrors.length; level++) {
     const grid = pageTable.layout.levelGrid[level];
     pageTable.mirrors[level].fill(0);
     pageTable.occMirrors[level].fill(0);
-    pageTable.aggMirrors[level].fill(0);
+    pageTable.aggMirrors?.[level].fill(0);
     pageTable.dirty[level] = {
       min: [0, 0, 0],
       max: [grid[0] - 1, grid[1] - 1, grid[2] - 1],
@@ -286,5 +305,5 @@ export function clearPageTable(pageTable: PageTableTexture): void {
 export function disposePageTable(pageTable: PageTableTexture): void {
   pageTable.texture.dispose();
   pageTable.occupancy.dispose();
-  pageTable.aggregate.dispose();
+  pageTable.aggregate?.dispose();
 }

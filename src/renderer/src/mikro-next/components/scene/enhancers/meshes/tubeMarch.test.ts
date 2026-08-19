@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { CorridorBox } from "./corridorPlan";
-import { corridorIndex } from "./corridorPlan";
-import { TET_CORNERS, TET_TRIANGLE_TABLE, tetTableWGSL } from "./tetTable";
+import type { CorridorBox } from "../shared/corridorPlan";
+import { corridorIndex } from "../shared/corridorPlan";
+import { TET_CORNERS, TET_TRIANGLE_TABLE, tetTableWGSL } from "./marchingTets";
 import { marchTube, tubeClampValue } from "./tubeMarch";
-import { INF_COST } from "./corridorCost";
+import { INF_COST } from "../shared/corridorCost";
 
 /**
  * The load-bearing invariants of the GENERATED tet table are proved here on

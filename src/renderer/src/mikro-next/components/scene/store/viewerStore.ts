@@ -148,6 +148,9 @@ export interface ViewerState {
   showScaleGrid: boolean;
   /** The red-X/green-Y origin crosshair (`layers/SceneAxis.tsx`). */
   showSceneAxis: boolean;
+  /** The pyramid level under the viewport's center
+   * (`overlays/CenterLodReadout.tsx`). */
+  showLodReadout: boolean;
   worldUnitsPerPixel: number;
   getArrayForStoreId: (storeId: string) => OpenedZarrArray;
   /** Whether this store's array is already open — the reconcile's diff input. */
@@ -336,6 +339,7 @@ export interface ViewerState {
   setShowScaleBar: (show: boolean) => void;
   setShowScaleGrid: (show: boolean) => void;
   setShowSceneAxis: (show: boolean) => void;
+  setShowLodReadout: (show: boolean) => void;
   setWorldUnitsPerPixel: (v: number) => void;
   setCurrentZ: (z: number) => void;
   registerCanvas: (ctx: CanvasContext) => void;
@@ -466,6 +470,7 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     showScaleBar: true,
     showScaleGrid: false,
     showSceneAxis: true,
+    showLodReadout: true,
     worldUnitsPerPixel: 1,
     frustumNear: 0.1,
     frustumFar: 100000,
@@ -516,6 +521,7 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setShowScaleBar: (show) => set({ showScaleBar: show }),
     setShowScaleGrid: (show) => set({ showScaleGrid: show }),
     setShowSceneAxis: (show) => set({ showSceneAxis: show }),
+    setShowLodReadout: (show) => set({ showLodReadout: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
   }));
 }

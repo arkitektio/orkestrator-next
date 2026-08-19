@@ -391,6 +391,27 @@ Two structural costs were removed from the replan itself:
 
 A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
 
+- **It starts OUTSIDE the canvas, and the renderer is LATE-BOUND**
+  (`orkestrator.earlyBricks`, default ON). `managers/BrickSystemHost.tsx`
+  builds the system (via the single construction site
+  `managers/brickSystem.ts`) as a sibling of `<SceneWrapper>`;
+  `BrickSystemProvider` stays inside the canvas and is now only the FRAME
+  DRIVER — it calls `attachRenderer(gl, invalidate)` and runs the per-frame
+  drain. Why: the canvas `gl` factory awaits `renderer.init()` and R3F mounts
+  no canvas child until it resolves, so the whole fetch pipeline used to wait
+  on WebGPU device creation — while the planner (outside the canvas) had
+  already emitted plan #1, the entire coarsest level, with no debounce and no
+  camera dependency. Nothing in fetch → decode → repack touches the renderer
+  (the result is a CPU buffer parked in `pool.queue`), so it now overlaps the
+  device setup. `detachRenderer()` disposes the pools and the gpu repacker
+  (GPU resources die with their device) and `attachRenderer` re-runs
+  `initTexture` for pre-existing atlases and RE-RECONCILES against current
+  plans — the plan subscription only fires on CHANGE, so without that a canvas
+  remount would sit empty until something happened to replan. While detached,
+  `shouldDispatchFetch` (`uploadBudget.ts`) holds the undrainable queue at the
+  in-flight ceiling; it withholds new dispatches only and never cancels a
+  shared in-progress decode (P8).
+
 - **Shared in-flight chunk fetches** (`fetchChunkShared`): a promise map keyed
   `storeId:chunkCoords`. Without it, 12 concurrent bricks touching the same
   plane chunk each triggered their own 14 MB decode — a measured **73×
@@ -578,6 +599,7 @@ Keep the two in sync when touching either.
 | Materials | `layers/bricks/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
 | Registry entries | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
 | Debug | `panels/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `overlays/BrickResidencyOverlay.tsx` (per-level wireframes) |
+| Center LOD badge | `core/octree/centerLod.ts` (+ `.test.ts`) — center-pixel ray → base voxel; `overlays/CenterLodReadout.tsx` — the level `BrickResidencyManager.residentLevelAt` serves there, vs. the plan's target. Not debug-gated: silent coarse fallback is invisible without it |
 | Store | `store/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `store/viewStore.ts` (`cameraPose`, `cameraMoving`) |
 | Cache | `zarr/caches/byteBudgetChunkCache.ts` |
 
@@ -950,6 +972,21 @@ raymarch) at 25–50 ms. The governor:
 The decoded-chunk cache also halves on ≤8 GiB machines (GC pressure). A
 dedicated GPU stays at High forever — zero behavior change.
 
+**P23 — Never derive a GPU resource's USAGE FLAGS from whether a lazy helper
+exists yet.** `ensurePool` chose the atlas's storage binding with
+`computeStorage: gpuRepacker !== null`. That was fine while the manager could
+not exist without a renderer — but once it starts before the device (§2.8), a
+pool created pre-attach sees `null` and allocates an atlas **without the
+storage binding, permanently**: GPU repack is then silently dead for that
+pool's whole life, with no error, just a quiet fall back to the CPU worker path
+and a slower scene. Usage flags must come from inputs that do not depend on
+initialization ORDER — here `isGpuRepackEnabled() && !hasPhasorSlabs(geometry)`,
+the flag plus the geometry. Related: `ensureGpuRepacker()` must return `null`
+while detached WITHOUT memoizing it (`gpuRepacker` stays `undefined`), or "no
+device yet" becomes "no device ever". The debug report distinguishes the
+legitimate pre-attach case as `lastRepackPath: "cpu:no-renderer"` — if every
+brick reads `cpu:*` after attach, this trap has fired.
+
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
 handler, and the raycast runs BEFORE the handler does — so a handler that
@@ -1151,6 +1188,55 @@ without a GPU; the mask pass is already cheap in practice (its background is
 EMPTY-skipped brick-at-a-time, and the occupancy skip now covers its resident
 fringe). Revisit only with a measured recording showing the label pass's
 rasterization overhead matters.
+
+---
+
+## 6b. Cold open & in-motion latency (2026-08-19)
+
+The §6/§7 work above all targets STEADY-STATE frame cost with data already
+resident. Two separate axes got their own pass:
+
+**Time to first voxel.** The cold open was one serial chain: `GetScene` →
+WebGPU adapter → the general zarr grant → one `/zarr.json` per level → open
+arrays → canvas → `renderer.init()` → first fetch. Three things came off it:
+`mikro-next/lib/zarr/useDatalayerWarmup.ts` (mounted ABOVE the query gate in
+`ScenePage`, since `DetailQueryRoute` renders `<LoadingPage/>` and mounts
+nothing below it during the round trip) starts the credential grant, the
+WebGPU probe and the zarr worker prewarm in parallel with `GetScene`; the
+repack dispatcher gained `prewarm()` so the first brick no longer pays worker
+spawn + module eval; and the brick system moved outside the canvas (§2.8). No
+kill switch on the warmup: `getGeneralAccess` collapses in-flight callers and
+clears `inFlight` in a `finally`, so a failed warm cannot poison the scope
+build, which still awaits, still re-mints, and still surfaces the error.
+
+**Measuring it.** `managers/coldOpenTimeline.ts` — always on, ~13 stamps per
+scene open, `performance.mark`/`measure` so the phases also show in a Chrome
+trace, surfaced as `coldOpen` in the debug report. `perfMonitor` structurally
+cannot see this window: it only arms once the scene is already up.
+
+**In-motion.** Two asymmetries: (a) image volumes raymarch into the
+compositor's target at 0.5 linear scale during a gesture, but LABEL volumes
+cannot share that target (NormalBlending vs an additive-delta buffer) and so
+render live in the canvas pass at FULL buffer resolution every frame —
+`CANVAS_PASS_ACTIVE_STEP_SCALE` recovers part of that with stride, kept modest
+because masks are nearest-sampled and an over-long stride steps over thin
+structures (a correctness artifact, not blur); (b) the compositor built its
+`structureKey` — a string over every volume mesh's world matrix — eagerly,
+every frame, including the gesture frames where the camera compare above it
+guarantees a render. It is now a thunk `decideVolumeFrame` resolves only if the
+cheaper checks pass, with an unresolved key on EITHER side counting as changed,
+so the shortcut can only cost an extra render. Also: `CanvasHueProbe`'s
+per-frame canvas blit is throttled to ~4 Hz while the camera moves (the tint
+updates at most every 4 s by its own design), and `QualityAdapter`'s mid-burst
+branch no longer reads `localStorage` on every frame of a gesture.
+
+**Assessed and NOT done** (would need a measurement first): caching
+`collectPassSets` (its invalidation conditions are exactly what `structureKey`
+detects — circular), and caching a per-trackable local bounding box in
+`computeSceneVisibility` (only valid if a layer's internal transforms are
+static, and `VertexHandles`/annotation children rescale per frame; a wrong
+visible box corrupts `rootRange`). A LABEL-only cached render target — the
+proper fix for the asymmetry above — remains the follow-up named in §7 R1.
 
 ---
 

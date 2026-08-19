@@ -187,11 +187,13 @@ export const SceneSettings = () => {
   const showScaleBar = useViewerStore((state) => state.showScaleBar);
   const showScaleGrid = useViewerStore((state) => state.showScaleGrid);
   const showSceneAxis = useViewerStore((state) => state.showSceneAxis);
+  const showLodReadout = useViewerStore((state) => state.showLodReadout);
 
   const setDebug = useViewerStore((state) => state.setDebug);
   const setShowScaleBar = useViewerStore((state) => state.setShowScaleBar);
   const setShowScaleGrid = useViewerStore((state) => state.setShowScaleGrid);
   const setShowSceneAxis = useViewerStore((state) => state.setShowSceneAxis);
+  const setShowLodReadout = useViewerStore((state) => state.setShowLodReadout);
 
   const captureScreenshot = useViewerStore((state) => state.captureScreenshot);
 
@@ -254,6 +256,11 @@ export const SceneSettings = () => {
             label="Origin axis"
             checked={showSceneAxis}
             onChange={setShowSceneAxis}
+          />
+          <SettingRow
+            label="LOD readout"
+            checked={showLodReadout}
+            onChange={setShowLodReadout}
           />
           <SettingRow label="Debug" checked={isDebug} onChange={setDebug} />
         </div>

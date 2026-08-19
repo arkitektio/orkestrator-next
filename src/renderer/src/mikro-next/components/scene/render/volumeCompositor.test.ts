@@ -351,13 +351,20 @@ describe("decideVolumeFrame — lazy structure key", () => {
   });
 
   it("a settled frame after a gesture re-establishes the cache in two frames", () => {
-    // Frame 1: camera still moving — no structure key.
-    const gesture = decideFull(baseKey({ cameraElements: [...IDENTITY] }), baseKey());
-    // Frame 2: camera identical to frame 1, but frame 1 left structureKey null.
-    const settling = decideFull(baseKey(), gesture.resolved);
-    expect(settling.render).toBe(true);
-    // Frame 3: now both sides have a resolved key and it caches.
-    expect(decideFull(baseKey(), settling.resolved)).toMatchObject({
+    // Frame 1: mid-gesture — the camera differs from the frame before it, so
+    // the decision short-circuits at "camera" and never builds a structure key.
+    const moved = baseKey({ cameraElements: [...IDENTITY.slice(0, 12), 9, 9, 9, 1] });
+    const gesture = decideFull(moved, baseKey());
+    expect(gesture.reason).toBe("camera");
+    expect(gesture.resolved.structureKey).toBeNull();
+
+    // Frame 2: the gesture ended, so the camera now matches frame 1 — but
+    // frame 1 left structureKey null, so this frame must render, not cache.
+    const settling = decideFull(moved, gesture.resolved);
+    expect(settling).toMatchObject({ render: true, reason: "structure" });
+    // Frame 3: both sides now carry a resolved key, so the cache is back —
+    // one extra render is the entire cost of the shortcut.
+    expect(decideFull(moved, settling.resolved)).toMatchObject({
       render: false,
       reason: "cached",
     });

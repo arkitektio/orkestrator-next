@@ -1043,6 +1043,24 @@ export class BrickResidencyManager {
   }
 
   /**
+   * The LEVEL the shader would sample at a base voxel — the finest resident
+   * brick at or coarser than `desiredLevel` — without reading any value.
+   * Null when nothing is resident at any level (the walk fell off the top).
+   *
+   * Deliberately NOT `sampleResidentEx(...)?.level`: that answers null when
+   * the value is unavailable, which for a GPU-repacked brick (no CPU mirror,
+   * chunk evicted from the decode cache) it routinely is — reporting "nothing
+   * resident" for a brick that is on screen. The level is settled by the
+   * page-table walk alone, so a level-only question must not be gated on a
+   * value read. Consumer: `overlays/CenterLodReadout.tsx`.
+   */
+  residentLevelAt(layerId: string, baseVoxel: Vec3, desiredLevel: number): number | null {
+    const pool = this.poolFor(layerId);
+    if (!pool) return null;
+    return this.resolveResidentRead(pool, baseVoxel, desiredLevel)?.level ?? null;
+  }
+
+  /**
    * "Phase D" probe read: a voxel value straight from the DECODED CHUNK
    * CACHE, synchronously. This is the CPU-side answer for GPU-repacked
    * bricks — their data never reaches the atlas CPU mirror, but the decoded

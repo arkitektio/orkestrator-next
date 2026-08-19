@@ -35,6 +35,7 @@ import { BrickSystemHost } from "./managers/BrickSystemHost";
 import { BrickResidencyOverlay } from "./overlays/BrickResidencyOverlay";
 import { SceneModeControls } from "./overlays/SceneModeControls";
 import { SceneShortcuts } from "./overlays/SceneShortcuts";
+import { CenterLodReadout } from "./overlays/CenterLodReadout";
 import { DrawSizeReadout } from "./overlays/DrawSizeReadout";
 import { RoiToolbar } from "./overlays/RoiToolbar";
 import { SceneScreenshot } from "./overlays/SceneScreenshot";
@@ -385,6 +386,9 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
           <AttributeProbeTracker />
           <ProbeReadoutSettler />
           <ScaleBar />
+          {/* Bottom-left, under the scale bar: both answer "what am I
+              actually looking at" — one in world units, one in pixels. */}
+          <CenterLodReadout />
           <DrawSizeReadout />
           {/* Both dock bottom-right: the probe readout sits directly above the
               mode controls that turn probing on. */}

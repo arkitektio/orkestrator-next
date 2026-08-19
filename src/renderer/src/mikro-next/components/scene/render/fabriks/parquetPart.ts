@@ -90,7 +90,7 @@ export class ParquetPart {
 
   constructor(
     readonly path: string,
-    private readonly byteLength: number,
+    readonly byteLength: number,
     private readonly read: RangeReader,
   ) {
     this.file = asyncBufferFor(path, byteLength, read);
@@ -140,6 +140,50 @@ export class ParquetPart {
     range?: { rowStart: number; rowEnd: number },
   ): Promise<Record<string, unknown>[]> {
     return this.readWith(this.file, columns, range);
+  }
+
+  /**
+   * Everything a decoder on ANY thread needs to read one row group: the
+   * parsed footer, the group's row range, and its whole byte span in ONE
+   * ranged read (through the transport's cache and credential rotation, which
+   * is why this half stays on the main thread — see `fabriksDecodeCore.ts`).
+   */
+  async rowGroupPayload(rowGroup: number): Promise<{
+    metadata: FileMetaData;
+    rowStart: number;
+    rowEnd: number;
+    spanStart: number;
+    spanBytes: Uint8Array;
+  }> {
+    const metadata = await this.metadata();
+    const range = await this.rowRange(rowGroup);
+    const span = rowGroupByteSpan(metadata.row_groups[rowGroup]);
+    const spanBytes = await this.read(this.path, span.start, span.end);
+    return {
+      metadata,
+      rowStart: range.rowStart,
+      rowEnd: range.rowEnd,
+      spanStart: span.start,
+      spanBytes,
+    };
+  }
+
+  /**
+   * The degenerate payload for a part with NO row-group locator (legal, if
+   * unusual): the whole file as one span — correct and merely slow, exactly
+   * what "reading the part whole" promises.
+   */
+  async wholePayload(): Promise<{
+    metadata: FileMetaData;
+    rowStart: number;
+    rowEnd: number;
+    spanStart: number;
+    spanBytes: Uint8Array;
+  }> {
+    const metadata = await this.metadata();
+    const spanBytes = await this.read(this.path, 0, this.byteLength);
+    const rowEnd = metadata.row_groups.reduce((sum, group) => sum + Number(group.num_rows), 0);
+    return { metadata, rowStart: 0, rowEnd, spanStart: 0, spanBytes };
   }
 
   /**

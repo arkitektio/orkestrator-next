@@ -82,6 +82,9 @@ export type ColumnLutEntryColorBy = {
   column: string;
   colormap?: ColorMap | null;
   classColors?: unknown;
+  /** Clims: the ramp runs between these instead of the data's own min/max. */
+  min?: number | null;
+  max?: number | null;
   joinPath?: readonly { table: string; column: string }[] | null;
 };
 
@@ -257,12 +260,21 @@ export const resolveColumnValues = async ({
   plans,
   engine,
   want,
+  readColumn = readColumnByObjectId,
 }: {
   colorBy: ColumnLutEntryColorBy | null;
   filterBys: readonly ColumnLutEntryFilterBy[];
   plans: readonly AttributePlanLike[];
   engine: AttributeLookupEngine;
   want: PlanWant;
+  /** The column reader — injectable so callers on a rebuild-heavy path can
+   * pass the cached one (`columnValueCache.ts`) while this module stays pure
+   * and its tests stay stub-only. Defaults to the direct scan. */
+  readColumn?: (
+    engine: AttributeLookupEngine,
+    access: TableAccess,
+    column: string,
+  ) => Promise<Map<number, unknown>>;
 }): Promise<ResolvedColumnValues> => {
   const skipped: string[] = [];
 
@@ -279,7 +291,7 @@ export const resolveColumnValues = async ({
       skipped.push(`${what} ${entry.column}: no attribute plan reaches table ${entry.table}`);
       return null;
     }
-    return readColumnByObjectId(engine, access, entry.column);
+    return readColumn(engine, access, entry.column);
   };
 
   const [colorValues, ruleValues] = await Promise.all([
@@ -346,9 +358,11 @@ export const paintColumnLut = ({
   if (colorBy && colorValues) {
     const present = [...colorValues.values()];
     if (looksNumeric(present)) {
-      // The range comes from the DATA, not from the entry: a colour-by entry
-      // carries a colormap and no bounds, and a colormap over an unknown range
-      // would paint every object the same end of the ramp.
+      // The range comes from the DATA unless the entry carries CLIMS: a
+      // colormap over an unknown range would paint every object the same end
+      // of the ramp, so the data's min/max is the fallback — and an entry
+      // that names its own bounds means "run the ramp between THESE", with
+      // values outside clamped to the ends rather than wrapped or hidden.
       let min = Number.POSITIVE_INFINITY;
       let max = Number.NEGATIVE_INFINITY;
       for (const value of present) {
@@ -357,6 +371,8 @@ export const paintColumnLut = ({
         if (candidate < min) min = candidate;
         if (candidate > max) max = candidate;
       }
+      if (colorBy.min != null && Number.isFinite(colorBy.min)) min = colorBy.min;
+      if (colorBy.max != null && Number.isFinite(colorBy.max)) max = colorBy.max;
       const span = max - min;
       for (const target of targets) {
         const raw = colorValues.get(target.objectId);
@@ -365,7 +381,7 @@ export const paintColumnLut = ({
         if (!Number.isFinite(value)) continue;
         // A constant column is not a gradient; put it mid-ramp rather than
         // dividing by a zero span.
-        const t = span > 0 ? (value - min) / span : 0.5;
+        const t = span > 0 ? Math.min(Math.max((value - min) / span, 0), 1) : 0.5;
         // `sampleColorMapRgb` answers in 0..1 floats (it feeds shader uniforms
         // and CSS gradients); this texture is RGBA8, and writing the float
         // straight into a Uint8Array truncates every channel to black.

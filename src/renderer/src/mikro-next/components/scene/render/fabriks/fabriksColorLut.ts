@@ -12,6 +12,7 @@ import {
   type ColumnLutEntryFilterBy,
   type TableAccess,
 } from "../attributes/columnLut";
+import { readColumnByObjectIdCached } from "../attributes/columnValueCache";
 import type { FabriksObjectEntry } from "./fabriksCatalogs";
 
 export { LUT_WIDTH } from "../attributes/columnLut";
@@ -99,6 +100,10 @@ export const buildColorLut = async (request: ColorLutRequest): Promise<ColorLutR
     plans,
     engine,
     want: { kind: "mesh" },
+    // Cached: the LUT rebuilds on every knob nudge (colormap, clim, rule
+    // bound), and the column VALUES change with none of them — only the
+    // paint does. The full-table scan runs once per column per engine.
+    readColumn: readColumnByObjectIdCached,
   });
 
   const ordinalCeiling = objects.reduce((max, object) => Math.max(max, object.ordinal), -1);

@@ -8,6 +8,9 @@ overrides:
   vite: ^7.2.6
   react-router: 6.30.4
 
+patchedDependencies:
+  three: 8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777
+
 importers:
 
   .:
@@ -240,16 +243,16 @@ importers:
         version: 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@react-spring/three':
         specifier: ^10.0.3
-        version: 10.0.3(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(react@19.2.7)(three@0.184.0)
+        version: 10.0.3(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       '@react-three/drei':
         specifier: ^10.7.7
-        version: 10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(@types/react@19.2.14)(@types/three@0.184.1)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)
+        version: 10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(@types/react@19.2.14)(@types/three@0.184.1)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       '@react-three/fiber':
         specifier: ^9.6.1
-        version: 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)
+        version: 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       '@react-three/postprocessing':
         specifier: ^3.0.4
-        version: 3.0.4(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(@types/three@0.184.1)(react@19.2.7)(three@0.184.0)
+        version: 3.0.4(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(@types/three@0.184.1)(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       '@semantic-release/changelog':
         specifier: ^6.0.3
         version: 6.0.3(semantic-release@24.2.9(typescript@5.9.3))
@@ -606,7 +609,7 @@ importers:
         version: 1.0.7(tailwindcss@4.3.0)
       three:
         specifier: ^0.184.0
-        version: 0.184.0
+        version: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -12808,10 +12811,10 @@ snapshots:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  '@monogrid/gainmap-js@3.4.0(three@0.184.0)':
+  '@monogrid/gainmap-js@3.4.0(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))':
     dependencies:
       promise-worker-transferable: 1.0.4
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   '@mswjs/interceptors@0.41.9':
     dependencies:
@@ -14418,40 +14421,40 @@ snapshots:
       '@react-spring/types': 10.0.3
       react: 19.2.7
 
-  '@react-spring/three@10.0.3(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(react@19.2.7)(three@0.184.0)':
+  '@react-spring/three@10.0.3(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))':
     dependencies:
       '@react-spring/animated': 10.0.3(react@19.2.7)
       '@react-spring/core': 10.0.3(react@19.2.7)
       '@react-spring/shared': 10.0.3(react@19.2.7)
       '@react-spring/types': 10.0.3
-      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)
+      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       react: 19.2.7
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   '@react-spring/types@10.0.3': {}
 
-  '@react-three/drei@10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(@types/react@19.2.14)(@types/three@0.184.1)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)':
+  '@react-three/drei@10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(@types/react@19.2.14)(@types/three@0.184.1)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))':
     dependencies:
       '@babel/runtime': 7.29.2
       '@mediapipe/tasks-vision': 0.10.17
-      '@monogrid/gainmap-js': 3.4.0(three@0.184.0)
-      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)
+      '@monogrid/gainmap-js': 3.4.0(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       '@use-gesture/react': 10.3.1(react@19.2.7)
-      camera-controls: 3.1.2(three@0.184.0)
+      camera-controls: 3.1.2(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       cross-env: 7.0.3
       detect-gpu: 5.0.70
       glsl-noise: 0.0.0
       hls.js: 1.6.16
-      maath: 0.10.8(@types/three@0.184.1)(three@0.184.0)
-      meshline: 3.3.1(three@0.184.0)
+      maath: 0.10.8(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      meshline: 3.3.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       react: 19.2.7
-      stats-gl: 2.4.2(@types/three@0.184.1)(three@0.184.0)
+      stats-gl: 2.4.2(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       stats.js: 0.17.0
       suspend-react: 0.1.3(react@19.2.7)
-      three: 0.184.0
-      three-mesh-bvh: 0.8.3(three@0.184.0)
-      three-stdlib: 2.36.1(three@0.184.0)
-      troika-three-text: 0.52.4(three@0.184.0)
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
+      three-mesh-bvh: 0.8.3(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      three-stdlib: 2.36.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      troika-three-text: 0.52.4(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       tunnel-rat: 0.1.2(@types/react@19.2.14)(immer@10.2.0)(react@19.2.7)
       use-sync-external-store: 1.6.0(react@19.2.7)
       utility-types: 3.11.0
@@ -14463,7 +14466,7 @@ snapshots:
       - '@types/three'
       - immer
 
-  '@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)':
+  '@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))':
     dependencies:
       '@babel/runtime': 7.29.2
       '@types/webxr': 0.5.24
@@ -14474,7 +14477,7 @@ snapshots:
       react-use-measure: 2.1.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       scheduler: 0.27.0
       suspend-react: 0.1.3(react@19.2.7)
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
       use-sync-external-store: 1.6.0(react@19.2.7)
       zustand: 5.0.14(@types/react@19.2.14)(immer@10.2.0)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
     optionalDependencies:
@@ -14483,14 +14486,14 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@react-three/postprocessing@3.0.4(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0))(@types/three@0.184.1)(react@19.2.7)(three@0.184.0)':
+  '@react-three/postprocessing@3.0.4(@react-three/fiber@9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(@types/three@0.184.1)(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))':
     dependencies:
-      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0)
-      maath: 0.6.0(@types/three@0.184.1)(three@0.184.0)
-      n8ao: 1.10.2(postprocessing@6.39.1(three@0.184.0))(three@0.184.0)
-      postprocessing: 6.39.1(three@0.184.0)
+      '@react-three/fiber': 9.6.1(@types/react@19.2.14)(immer@10.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      maath: 0.6.0(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      n8ao: 1.10.2(postprocessing@6.39.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      postprocessing: 6.39.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       react: 19.2.7
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
     transitivePeerDependencies:
       - '@types/three'
 
@@ -15927,9 +15930,9 @@ snapshots:
 
   camelcase@5.3.1: {}
 
-  camera-controls@3.1.2(three@0.184.0):
+  camera-controls@3.1.2(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   caniuse-lite@1.0.30001792: {}
 
@@ -18605,15 +18608,15 @@ snapshots:
 
   lz-string@1.5.0: {}
 
-  maath@0.10.8(@types/three@0.184.1)(three@0.184.0):
+  maath@0.10.8(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
       '@types/three': 0.184.1
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
-  maath@0.6.0(@types/three@0.184.1)(three@0.184.0):
+  maath@0.6.0(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
       '@types/three': 0.184.1
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   magic-string@0.30.21:
     dependencies:
@@ -18806,9 +18809,9 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.19
 
-  meshline@3.3.1(three@0.184.0):
+  meshline@3.3.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   meshoptimizer@1.1.1: {}
 
@@ -19128,10 +19131,10 @@ snapshots:
       object-assign: 4.1.1
       thenify-all: 1.6.0
 
-  n8ao@1.10.2(postprocessing@6.39.1(three@0.184.0))(three@0.184.0):
+  n8ao@1.10.2(postprocessing@6.39.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)))(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      postprocessing: 6.39.1(three@0.184.0)
-      three: 0.184.0
+      postprocessing: 6.39.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   nanoid@3.3.12: {}
 
@@ -19630,9 +19633,9 @@ snapshots:
       commander: 9.5.0
     optional: true
 
-  postprocessing@6.39.1(three@0.184.0):
+  postprocessing@6.39.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   potpack@1.0.2: {}
 
@@ -20731,10 +20734,10 @@ snapshots:
 
   state-local@1.0.7: {}
 
-  stats-gl@2.4.2(@types/three@0.184.1)(three@0.184.0):
+  stats-gl@2.4.2(@types/three@0.184.1)(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
       '@types/three': 0.184.1
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   stats.js@0.17.0: {}
 
@@ -20992,11 +20995,11 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
-  three-mesh-bvh@0.8.3(three@0.184.0):
+  three-mesh-bvh@0.8.3(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
-  three-stdlib@2.36.1(three@0.184.0):
+  three-stdlib@2.36.1(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
       '@types/draco3d': 1.4.10
       '@types/offscreencanvas': 2019.7.3
@@ -21004,9 +21007,9 @@ snapshots:
       draco3d: 1.5.7
       fflate: 0.6.10
       potpack: 1.0.2
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
-  three@0.184.0: {}
+  three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777): {}
 
   throttleit@2.1.0: {}
 
@@ -21086,17 +21089,17 @@ snapshots:
 
   traverse@0.6.8: {}
 
-  troika-three-text@0.52.4(three@0.184.0):
+  troika-three-text@0.52.4(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
       bidi-js: 1.0.3
-      three: 0.184.0
-      troika-three-utils: 0.52.4(three@0.184.0)
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
+      troika-three-utils: 0.52.4(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777))
       troika-worker-utils: 0.52.0
       webgl-sdf-generator: 1.1.1
 
-  troika-three-utils@0.52.4(three@0.184.0):
+  troika-three-utils@0.52.4(three@0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)):
     dependencies:
-      three: 0.184.0
+      three: 0.184.0(patch_hash=8228e62189dddbd7c5b0eb11cda9e7444b5f50c8986266572d1062ef6d471777)
 
   troika-worker-utils@0.52.0: {}
 

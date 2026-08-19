@@ -167,6 +167,30 @@ export class FabriksBatchRenderer {
     if (this.batch && this.slots.size === 0) this.batch.visible = false;
   }
 
+  /**
+   * Reclaim appended-then-deleted space at a PLAN BOUNDARY — after the stale
+   * cells of a replan are unmounted, before new mounts stream in — so the
+   * mid-mount `optimize()` inside `ensureRoom` (a synchronous full-buffer
+   * copy in the middle of a drain) stays the rare fallback. Compacts only
+   * when waste exceeds ~25% of capacity: below that the copy costs more than
+   * the space is worth.
+   */
+  compact(): void {
+    if (!this.batch) return;
+    const wastedVertices = this.tailVertices - this.liveVertices;
+    const wastedIndices = this.tailIndices - this.liveIndices;
+    if (
+      wastedVertices * 4 <= this.capacityVertices &&
+      wastedIndices * 4 <= this.capacityIndices
+    ) {
+      return;
+    }
+    this.batch.optimize();
+    this.optimizes++;
+    this.tailVertices = this.liveVertices;
+    this.tailIndices = this.liveIndices;
+  }
+
   /** Draw order for the batch (kept across rebuilds). */
   setRenderOrder(order: number): void {
     this.renderOrder = order;

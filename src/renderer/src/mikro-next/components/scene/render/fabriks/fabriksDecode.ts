@@ -76,6 +76,12 @@ export type DecodedCell = {
    * to 2^24, which is also the format's own ordinal ceiling.
    */
   objectOrdinals: Float32Array;
+  /**
+   * Smooth per-vertex normals, present ONLY when the decode request asked for
+   * them (`computeNormals` — the smooth-shading mode). Flat mode shades from
+   * screen-space derivatives and carries nothing.
+   */
+  normals?: Float32Array;
   /** Approximate CPU/GPU footprint, for the cell cache's byte accounting. */
   bytes: number;
 };
@@ -222,6 +228,59 @@ const expandOrdinals = (row: FabriksGeometryRow): Float32Array => {
   }
   return out;
 };
+
+/**
+ * Smooth per-vertex normals over raw arrays — `BufferGeometry.
+ * computeVertexNormals`'s exact math (area-weighted face-normal accumulation,
+ * `cb × ab` winding, zero vectors left zero by the `length() || 1` normalize),
+ * without the geometry object, so it runs in the decode worker. Kept in
+ * LOCKSTEP with three's implementation: the manager still calls three's
+ * version as the fallback when a normals-mode toggle races a fetch, and the
+ * two must not disagree across cells.
+ *
+ * Same per-CELL limitation as three's: a border vertex only sees this cell's
+ * triangles, so normals seam at cell boundaries. Only the writer, with the
+ * whole object's connectivity, could do better.
+ */
+export function computeSmoothNormals(
+  positions: Float32Array,
+  indices: Uint32Array | Uint16Array,
+): Float32Array {
+  const normals = new Float32Array(positions.length);
+  for (let i = 0; i < indices.length; i += 3) {
+    const a = indices[i] * 3;
+    const b = indices[i + 1] * 3;
+    const c = indices[i + 2] * 3;
+    const abx = positions[a] - positions[b];
+    const aby = positions[a + 1] - positions[b + 1];
+    const abz = positions[a + 2] - positions[b + 2];
+    const cbx = positions[c] - positions[b];
+    const cby = positions[c + 1] - positions[b + 1];
+    const cbz = positions[c + 2] - positions[b + 2];
+    const nx = cby * abz - cbz * aby;
+    const ny = cbz * abx - cbx * abz;
+    const nz = cbx * aby - cby * abx;
+    normals[a] += nx;
+    normals[a + 1] += ny;
+    normals[a + 2] += nz;
+    normals[b] += nx;
+    normals[b + 1] += ny;
+    normals[b + 2] += nz;
+    normals[c] += nx;
+    normals[c + 1] += ny;
+    normals[c + 2] += nz;
+  }
+  for (let v = 0; v < normals.length; v += 3) {
+    const x = normals[v];
+    const y = normals[v + 1];
+    const z = normals[v + 2];
+    const length = Math.sqrt(x * x + y * y + z * z) || 1;
+    normals[v] = x / length;
+    normals[v + 1] = y / length;
+    normals[v + 2] = z / length;
+  }
+  return normals;
+}
 
 /** Decode one geometry row into voxel-space arrays. Throws on a malformed row. */
 export function decodeGeometryRow(

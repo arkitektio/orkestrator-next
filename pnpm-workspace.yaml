@@ -41,3 +41,6 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   msw: false
+
+patchedDependencies:
+  three: patches/three.patch

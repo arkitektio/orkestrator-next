@@ -10,6 +10,7 @@ import {
   type ColumnLutEntryColorBy,
   type ColumnLutEntryFilterBy,
 } from "../attributes/columnLut";
+import { readColumnByObjectIdCached } from "../attributes/columnValueCache";
 
 export { LUT_WIDTH } from "../attributes/columnLut";
 
@@ -110,6 +111,9 @@ export const buildLabelColorLut = async (
     plans,
     engine,
     want: { kind: "array", storeId },
+    // Cached for the same reason as the mesh builder: knob nudges rebuild the
+    // LUT, the column values change with none of them.
+    readColumn: readColumnByObjectIdCached,
   });
 
   const present = idsPresent(colorValues, ruleValues);

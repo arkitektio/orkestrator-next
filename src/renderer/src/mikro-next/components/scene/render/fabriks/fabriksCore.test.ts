@@ -14,9 +14,15 @@ import { cellExtent, cellGridBox, maskedChildren, mortonChildren, mortonParent }
 import { encodeMorton3, decodeMorton3, meshCellKey } from "./mortonCell";
 import { buildFabriksCellIndex, maxAxisScale, parseCellRow, type FabriksCellRow } from "./fabriksCatalogs";
 import { groupByRowGroup, planFabriksCells, screenError } from "./fabriksPlanner";
-import { objectRange, positionStride, indexStride } from "./fabriksDecode";
+import { computeSmoothNormals, objectRange, positionStride, indexStride } from "./fabriksDecode";
 import { FabriksBatchRenderer } from "./fabriksBatch";
 import { FabriksCollection, type FabriksTransport } from "./fabriksCollection";
+import { decodeRowGroupSpan } from "./fabriksDecodeCore";
+import {
+  createFabriksDecodeDispatcher,
+  createSyncFabriksDecodeDispatcher,
+  type FabriksDecodeDispatcher,
+} from "./fabriksDecodeDispatcher";
 import { FabriksCollectionManager } from "./fabriksManager";
 import { createFabriksMaterial, setInstanceColoring } from "./fabriksMaterial";
 import { INSTANCE_COLORMAPS } from "./instanceColormaps";
@@ -383,6 +389,108 @@ describe("FabriksCollection against fixtures written by fabriks itself", () => {
 });
 
 // --------------------------------------------------------------------------
+describe("fabriksDecodeCore across the worker boundary", () => {
+  const planFirstGroup = async (collection: FabriksCollection) => {
+    const rows = await collection.loadCellCatalog();
+    const index = buildFabriksCellIndex(rows, collection.manifest, new THREE.Matrix4());
+    const plan = planFabriksCells({
+      index, frustum: null, cameraPosition: [100, 100, 200],
+      focalPixels: 540, pixelBudget: 1, maxCells: 512,
+    });
+    return groupByRowGroup(plan.cells)[0];
+  };
+
+  for (const variant of ["raw", "zstd", "meshopt"] as const) {
+    it(`the ${variant} decode request survives structuredClone — the worker contract`, async () => {
+      const collection = await FabriksCollection.open(fixtureTransport(variant));
+      const group = await planFirstGroup(collection);
+      const decoder =
+        collection.manifest.encoding.codec === "MESHOPT"
+          ? (await import("three/examples/jsm/libs/meshopt_decoder.module.js")).MeshoptDecoder
+          : null;
+      if (decoder) await (decoder as unknown as { ready: Promise<void> }).ready;
+
+      // Once inline, once through the exact copy a worker would receive.
+      const direct = await collection.readFetchGroupVia(group, (request) =>
+        decodeRowGroupSpan(request, decoder),
+      );
+      const cloned = await collection.readFetchGroupVia(group, (request) =>
+        decodeRowGroupSpan(structuredClone(request), decoder),
+      );
+      expect(direct.size).toBeGreaterThan(0);
+      expect(cloned.size).toBe(direct.size);
+      for (const [key, cell] of direct) {
+        const twin = cloned.get(key)!;
+        expect(twin.positions).toEqual(cell.positions);
+        expect(twin.indices).toEqual(cell.indices);
+        expect(twin.objectOrdinals).toEqual(cell.objectOrdinals);
+        expect(twin.bytes).toBe(cell.bytes);
+      }
+    });
+  }
+
+  it("computeSmoothNormals: CCW triangle → +z, unreferenced vertices stay zero", () => {
+    // One CCW triangle in the xy-plane; a fourth vertex no index touches must
+    // keep a ZERO normal (three's `length() || 1` normalize), not NaN.
+    const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 5, 5]);
+    const normals = computeSmoothNormals(positions, new Uint32Array([0, 1, 2]));
+    for (const v of [0, 1, 2]) {
+      expect(normals[v * 3]).toBeCloseTo(0);
+      expect(normals[v * 3 + 1]).toBeCloseTo(0);
+      expect(normals[v * 3 + 2]).toBeCloseTo(1);
+    }
+    expect([...normals.slice(9)]).toEqual([0, 0, 0]);
+  });
+
+  it("computes smooth normals in the decode, matching three's computeVertexNormals", async () => {
+    const collection = await FabriksCollection.open(fixtureTransport("raw"));
+    const group = await planFirstGroup(collection);
+
+    const plain = await collection.readFetchGroupVia(group, (request) =>
+      decodeRowGroupSpan(request, null),
+    );
+    const withNormals = await collection.readFetchGroupVia(
+      group,
+      (request) => decodeRowGroupSpan(request, null),
+      { computeNormals: true },
+    );
+
+    expect(withNormals.size).toBe(plain.size);
+    for (const [key, cell] of withNormals) {
+      const bare = plain.get(key)!;
+      // Flat requests carry no normals at all; smooth requests carry one per
+      // vertex and account for them in the cache bytes.
+      expect(bare.normals).toBeUndefined();
+      expect(cell.normals).toHaveLength(cell.positions.length);
+      expect(cell.bytes).toBe(bare.bytes + cell.normals!.byteLength);
+
+      // Parity with three: the worker math and the main-thread fallback must
+      // never disagree across cells.
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(cell.positions, 3));
+      geometry.setIndex(new THREE.BufferAttribute(cell.indices, 1));
+      geometry.computeVertexNormals();
+      const reference = geometry.getAttribute("normal").array as Float32Array;
+      for (let i = 0; i < reference.length; i++) {
+        expect(cell.normals![i]).toBeCloseTo(reference[i], 5);
+      }
+      geometry.dispose();
+    }
+  });
+
+  it("falls back to the sync dispatcher where Worker does not exist (vitest/node)", async () => {
+    expect(typeof Worker).toBe("undefined");
+    const dispatcher = createFabriksDecodeDispatcher();
+    const collection = await FabriksCollection.open(fixtureTransport("raw"));
+    const group = await planFirstGroup(collection);
+    const decoded = await collection.readFetchGroupVia(group, (request) =>
+      dispatcher.decode(request, async () => null),
+    );
+    expect(decoded.size).toBeGreaterThan(0);
+  });
+});
+
+// --------------------------------------------------------------------------
 describe("FabriksCollectionManager against the raw fixture", () => {
   const VIEW = {
     frustum: null,
@@ -433,6 +541,110 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     );
     expect(batches).toHaveLength(1);
     expect(batches[0].visible).toBe(true);
+    manager.dispose();
+  });
+
+  it("smooth-mode streaming takes its normals from the decode, not the main thread", async () => {
+    const manager = await openManager();
+    manager.setFlatNormals(false); // BEFORE the plan: every decode carries normals
+    manager.updatePlan(VIEW);
+    await drained(manager);
+
+    const report = manager.buildDebugReport();
+    expect(report.mountedCells).toBe(report.lastPlan!.cellCount);
+    // `normalsMs` brackets the main-thread computeVertexNormals FALLBACK
+    // (toggle races) and the toggle retrofit — a clean smooth-mode stream
+    // must never enter either.
+    expect(report.stats.normalsMs).toBe(0);
+    manager.dispose();
+  });
+
+  it("a replan mid-decode abandons the stale drain and still completes the new plan", async () => {
+    const collection = await FabriksCollection.open(fixtureTransport("raw"));
+    let inFlight = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const sync = createSyncFabriksDecodeDispatcher();
+    // Every decode hangs on the gate until released — a stand-in for slow
+    // workers, so the replan reliably lands mid-drain.
+    const dispatcher: FabriksDecodeDispatcher = {
+      decode: async (request, loadDecoder) => {
+        inFlight++;
+        await gate;
+        return sync.decode(request, loadDecoder);
+      },
+      dispose: () => {},
+    };
+    const manager = new FabriksCollectionManager({
+      collection,
+      loadDecoder: async () => null,
+      onInvalidate: () => {},
+      decodeDispatcher: dispatcher,
+    });
+    await manager.ensureIndex();
+    manager.updatePlan(VIEW);
+    for (let i = 0; i < 200 && inFlight === 0; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    expect(inFlight).toBeGreaterThan(0);
+
+    // Supersede while the decodes hang, then let everything through.
+    manager.updatePlan({ ...VIEW, cameraPosition: [10, 10, 20] });
+    release();
+    await drained(manager);
+
+    const report = manager.buildDebugReport();
+    expect(report.stats.abortedDrains).toBeGreaterThan(0);
+    // The replacement plan is COMPLETE: the abandoned drain neither mounted
+    // stale work nor stranded the new plan's missing cells (the drain loop
+    // continues into `pendingView` on staleness rather than exiting).
+    expect(report.stats.plans).toBe(2);
+    expect(report.mountedCells).toBe(report.lastPlan!.cellCount);
+    manager.dispose();
+  });
+
+  it("hide/show keeps every byte: no refetch, remount straight from cache", async () => {
+    const transport = fixtureTransport("raw");
+    let rangeGets = 0;
+    const counting: FabriksTransport = {
+      get: transport.get,
+      getRange: async (path, start, end) => {
+        rangeGets++;
+        return transport.getRange(path, start, end);
+      },
+    };
+    const collection = await FabriksCollection.open(counting);
+    const manager = new FabriksCollectionManager({
+      collection,
+      loadDecoder: async () => null,
+      onInvalidate: () => {},
+    });
+    await manager.ensureIndex();
+    manager.updatePlan(VIEW);
+    await drained(manager);
+    const mounted = manager.buildDebugReport().mountedCells;
+    expect(mounted).toBeGreaterThan(0);
+    const fetchedWhileVisible = rangeGets;
+
+    manager.setVisible(false);
+    expect(manager.group.visible).toBe(false);
+    // Settles while hidden are RECORDED (for the re-show) but never planned,
+    // fetched or decoded.
+    const plansBefore = manager.buildDebugReport().stats.plans;
+    manager.updatePlan(VIEW);
+    expect(manager.buildDebugReport().stats.plans).toBe(plansBefore);
+    expect(rangeGets).toBe(fetchedWhileVisible);
+
+    manager.setVisible(true);
+    expect(manager.group.visible).toBe(true);
+    // The re-show replays the recorded settle from the caches: same cells
+    // mounted, and NOT ONE more ranged GET — this is what keeping the manager
+    // alive across `visible: false` buys.
+    expect(manager.buildDebugReport().stats.plans).toBe(plansBefore + 1);
+    expect(manager.buildDebugReport().mountedCells).toBe(mounted);
+    expect(rangeGets).toBe(fetchedWhileVisible);
     manager.dispose();
   });
 
@@ -579,8 +791,11 @@ describe("FabriksCollectionManager against the raw fixture", () => {
 
   it("the selection hull is the catalog bbox in the instance's hue, latest-wins", async () => {
     const manager = await openManager();
+    // The hull's objects persist for the manager's lifetime (a fresh material
+    // per selection would compile a pipeline per hover); VISIBILITY is what
+    // selection toggles.
     const hulls = () =>
-      manager.group.children.filter((c) => c.name === "__fabriks-selection-hull__");
+      manager.group.children.filter((c) => c.name === "__fabriks-selection-hull__" && c.visible);
     const until = async (predicate: () => boolean) => {
       for (let i = 0; i < 200 && !predicate(); i++) {
         await new Promise((resolve) => setTimeout(resolve, 5));
@@ -594,6 +809,8 @@ describe("FabriksCollectionManager against the raw fixture", () => {
     const fillOf = (hull: THREE.Object3D) =>
       hull.children.find((c): c is THREE.Mesh => c instanceof THREE.Mesh)!;
     expect(fillOf(hulls()[0]).position.x).toBeCloseTo((entry0.bboxMin[0] + entry0.bboxMax[0]) / 2);
+    const firstHull = hulls()[0];
+    const firstFillMaterial = fillOf(firstHull).material;
 
     // Latest-wins under rapid re-selection: the hull must land on ordinal 2.
     manager.setSelection({ ordinal: 1, isolate: false });
@@ -605,9 +822,16 @@ describe("FabriksCollectionManager against the raw fixture", () => {
         Math.abs(fillOf(hulls()[0]).position.x - (entry2.bboxMin[0] + entry2.bboxMax[0]) / 2) <
           1e-6,
     );
+    // Reuse, not rebuild: same group, same material instance across selections.
+    expect(hulls()[0]).toBe(firstHull);
+    expect(fillOf(hulls()[0]).material).toBe(firstFillMaterial);
 
     manager.setSelection(null);
     expect(hulls()).toHaveLength(0);
+    // Re-selecting shows the SAME objects again.
+    manager.setSelection({ ordinal: 0, isolate: false });
+    await until(() => hulls().length === 1);
+    expect(hulls()[0]).toBe(firstHull);
     manager.dispose();
   });
 

@@ -16,7 +16,7 @@ import {
   type ProbeGateInput,
 } from "../../core/probe/probeGating";
 import { useSceneStore, type MeshLayerSessionState } from "../../store/sceneStore";
-import { useViewerStore, useViewerStoreApi } from "../../store/viewerStore";
+import { useViewerStoreApi } from "../../store/viewerStore";
 import { useViewStoreApi } from "../../store/viewStore";
 import { FabriksCollection } from "../../render/fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "../../render/fabriks/fabriksManager";
@@ -46,15 +46,27 @@ export const FabriksCollectionLayer = ({ layerId }: { layerId: string }) => {
     s.sceneLayers.find((candidate) => candidate.id === layerId),
   );
   if (!layer || layer.__typename !== "MeshLayer") return null;
-  if (!layer.collection || layer.visible === false) return null;
+  if (!layer.collection) return null;
+  // `visible: false` stays MOUNTED: the group survives with its manager, so
+  // the open footers, byte cache and geometry LRU are all still warm and a
+  // re-show is a cache replay, not a re-download. (It used to unmount here,
+  // which disposed everything and made hide/show the most expensive toggle on
+  // the card.) The manager stops planning while hidden — see `setVisible`.
   return <FabriksCollectionGroup layer={layer} collection={layer.collection} />;
 };
 
 /** The fragment plus the card's session-local render state. */
 type MeshLayerView = MeshLayerVariant & MeshLayerSessionState;
 
-/** The card's LOD presets → the planner's pixel-error budget. */
-const DETAIL_BUDGETS = { fine: 1, balanced: 2, fast: 4 } as const;
+/**
+ * The card's LOD presets → the planner's pixel-error budget.
+ *
+ * Deliberately loose: mesh surfaces read fine at 2-4 px of screen-space error,
+ * and every extra pixel of tolerance settles regions coarser — fewer cells
+ * fetched, fewer indices resident. "fine" is for close inspection, not the
+ * default; layers without an explicit preset get "balanced".
+ */
+const DETAIL_BUDGETS = { fine: 2, balanced: 4, fast: 8 } as const;
 
 const FabriksCollectionGroup = ({
   layer,
@@ -101,12 +113,20 @@ const FabriksCollectionGroup = ({
   // Matrix4 — downstream effects key on it, and a fresh-but-equal instance
   // used to rebuild the whole manager and refetch every cell.
   const matrixRef = useRef<THREE.Matrix4 | null>(null);
+  // The inverse is constant per placement, and `resolveMeshHit` needs it per
+  // hover/click event — cached here so the pick path never pays a 4×4 invert.
+  const inverseRef = useRef<THREE.Matrix4>(new THREE.Matrix4());
   const matrix = useMemo(() => {
     const next = resolveCollectionMatrix(layer, collection, transformContext);
     if (matrixRef.current?.equals(next)) return matrixRef.current;
     matrixRef.current = next;
+    inverseRef.current.copy(next).invert();
     return next;
-  }, [layer, collection, transformContext]);
+    // `layer.pathToWorld` is ALL resolveCollectionMatrix reads from the layer
+    // (collectionPlacement.ts). Depending on the whole `layer` re-composed the
+    // transform chain on every patchSceneLayer tick — an opacity drag included.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer.pathToWorld, collection, transformContext]);
 
   // Opening reads fabriks.json and nothing else; the catalogs come with the
   // first plan. Collections are immutable per version, so the open survives as
@@ -270,8 +290,13 @@ const FabriksCollectionGroup = ({
 
   // Per-layer LOD preset: replans immediately against the last settle.
   useEffect(() => {
-    manager?.setPlanConfig({ pixelBudget: DETAIL_BUDGETS[layer.detail ?? "fine"] });
+    manager?.setPlanConfig({ pixelBudget: DETAIL_BUDGETS[layer.detail ?? "balanced"] });
   }, [manager, layer.detail]);
+
+  const visible = layer.visible !== false;
+  useEffect(() => {
+    manager?.setVisible(visible);
+  }, [manager, visible]);
 
   useEffect(() => {
     manager?.setFlatNormals(layer.flatNormals ?? true);
@@ -279,17 +304,27 @@ const FabriksCollectionGroup = ({
   }, [manager, layer.flatNormals, invalidate]);
 
   // The scene-wide picked instance, pushed into this layer's shader uniforms
-  // (highlight/isolate) — uniform writes only, never a recompile.
-  const meshSelection = useViewerStore((s) => s.meshSelection);
+  // (highlight/isolate) — uniform writes only, never a recompile. A VANILLA
+  // subscription (the plan effect's idiom): selection changes at hover cadence
+  // under probe-marking, and a render subscription re-rendered this whole
+  // group — placement memo, lutKey stringify, fresh handler closures — per
+  // hovered instance.
   useEffect(() => {
     if (!manager) return;
-    manager.setSelection(
-      meshSelection && meshSelection.layerId === layer.id
-        ? { ordinal: meshSelection.ordinal, isolate: meshSelection.isolate }
-        : null,
-    );
-    invalidate();
-  }, [manager, meshSelection, layer.id, invalidate]);
+    const apply = () => {
+      const selection = viewerApi.getState().meshSelection;
+      manager.setSelection(
+        selection && selection.layerId === layer.id
+          ? { ordinal: selection.ordinal, isolate: selection.isolate }
+          : null,
+      );
+      invalidate();
+    };
+    apply();
+    return viewerApi.subscribe((state, prev) => {
+      if (state.meshSelection !== prev.meshSelection) apply();
+    });
+  }, [manager, viewerApi, layer.id, invalidate]);
 
   // Planning cadence: once the cell index is in, plan on mount and on every
   // camera SETTLE — never per camera tick.
@@ -346,23 +381,35 @@ const FabriksCollectionGroup = ({
   // (the placement matrix's z basis length). Z-scrub mutates only the plane
   // constants — no replan, no pipeline rebuild.
   const displayMode = useModeStore((s) => s.displayMode);
-  const currentZ = useViewerStore((s) => s.currentZ);
-  const imageLayers = useSceneStore((s) => s.layers);
+  // A PRIMITIVE selector: `s.layers` churns identity on every brick-layer
+  // LOD/visibility write, but the step it yields is a number — Object.is
+  // equality suppresses the re-render this group used to pay for each of them.
+  const slabStep = useSceneStore((s) => sceneZExtent(s.layers)?.step);
   const slabThickness = useMemo(() => {
-    const step = sceneZExtent(imageLayers)?.step;
     const base =
-      step && Number.isFinite(step)
-        ? step
+      slabStep && Number.isFinite(slabStep)
+        ? slabStep
         : Math.max(new THREE.Vector3().setFromMatrixColumn(matrix, 2).length(), 1e-3);
     return base * (layer.slabScale ?? 1);
-  }, [imageLayers, matrix, layer.slabScale]);
+  }, [slabStep, matrix, layer.slabScale]);
+  // z-scrub via a VANILLA subscription: setSlabClip mutates plane constants
+  // only, so a scrub tick must not re-render the group to reach the manager.
   useEffect(() => {
     if (!manager) return;
-    manager.setSlabClip(
-      displayMode === "3D" ? null : { z: currentZ, thickness: slabThickness },
-    );
-    invalidate();
-  }, [manager, displayMode, currentZ, slabThickness, invalidate]);
+    const apply = () => {
+      manager.setSlabClip(
+        displayMode === "3D"
+          ? null
+          : { z: viewerApi.getState().currentZ, thickness: slabThickness },
+      );
+      invalidate();
+    };
+    apply();
+    if (displayMode === "3D") return; // 3D ignores z; nothing to track
+    return viewerApi.subscribe((state, prev) => {
+      if (state.currentZ !== prev.currentZ) apply();
+    });
+  }, [manager, displayMode, slabThickness, viewerApi, invalidate]);
 
   // --- Instance picking: click (PROBE) + debounced hover (PROBE follow /
   // ANNOTATE drawing tools — the brick layers' etiquette). Reads the hit's
@@ -385,10 +432,12 @@ const FabriksCollectionGroup = ({
     drawingToolActive: isDrawingTool(activeTool),
     annotateProbes: true,
   };
-  const hoverEnabled = hoverProbeEnabled(gate);
+  // A hidden layer must not raycast either — `visible` gates the handler
+  // props the same way the probe gates do.
+  const hoverEnabled = visible && hoverProbeEnabled(gate);
   // Picking a mesh instance is a PROBE-mode act only: in ANNOTATE the click
   // belongs to the shape being drawn.
-  const pickEnabled = clickProbeEnabled(gate) && interactionMode === "PROBE";
+  const pickEnabled = visible && clickProbeEnabled(gate) && interactionMode === "PROBE";
   const hoverCoalescer = useMemo(() => createRafCoalescer<() => void>((run) => run()), []);
   useEffect(() => () => hoverCoalescer.cancel(), [hoverCoalescer]);
   const lastHover = useRef<string | null>(null);
@@ -402,7 +451,7 @@ const FabriksCollectionGroup = ({
     // Mesh-local IS collection voxel space (corner-anchored), so the hit
     // point through the inverse placement is the voxel coordinate.
     const worldPos: [number, number, number] = [event.point.x, event.point.y, event.point.z];
-    const local = event.point.clone().applyMatrix4(matrix.clone().invert());
+    const local = event.point.clone().applyMatrix4(inverseRef.current);
     const voxelIndex: [number, number, number] = [
       Math.floor(local.x),
       Math.floor(local.y),

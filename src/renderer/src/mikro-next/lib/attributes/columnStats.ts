@@ -92,6 +92,60 @@ export const readColumnDistinct = async (
   return { values: values.slice(0, limit), truncated: values.length > limit };
 };
 
+/** Bars a clim / bound slider draws behind itself; enough to see the shape,
+ * few enough that each bar is still a visible strip in a card. */
+export const HISTOGRAM_BINS = 32;
+
+/**
+ * The DISTRIBUTION of a MEASURE column over a known domain: `bins` equal-width
+ * counts from `domain.min` to `domain.max`.
+ *
+ * Exists so a clim or bound slider is set against the data's shape rather than
+ * blind between two endpoints — the domain says where the values END, the
+ * histogram says where they LIVE, and a clim placed without that routinely
+ * clips the bulk of the ramp into one bin's worth of colour.
+ *
+ * One aggregation pass in DuckDB, not a row fetch: the bin index is computed
+ * in SQL and only `bins` rows come back. Values exactly at `domain.max` land
+ * in the last bin (the `least`), and the `greatest` guards float noise below
+ * the minimum. Callers pass the domain they already read — the same
+ * `readColumnDomain` answer the slider is bounded by, so bars and thumbs
+ * cannot disagree about where the axis starts.
+ */
+export const readColumnHistogram = async (
+  engine: AttributeLookupEngine,
+  target: ColumnStatsTarget,
+  domain: { min: number; max: number },
+  binCount: number = HISTOGRAM_BINS,
+): Promise<number[]> => {
+  const column = escapeSqlIdentifier(target.column.name);
+  const bins = new Array<number>(binCount).fill(0);
+  const span = domain.max - domain.min;
+  if (!(span > 0)) {
+    // A constant column has no distribution; one bar mid-axis says so.
+    const rows = await engine.readAcross([target.table.store], (urlOf) =>
+      `SELECT count(*) AS n FROM ${readParquet(
+        urlOf(target.table.store.id),
+      )} WHERE ${column} IS NOT NULL`,
+    );
+    bins[Math.floor(binCount / 2)] = Number(rows[0]?.n ?? 0);
+    return bins;
+  }
+  const width = span / binCount;
+  const rows = await engine.readAcross([target.table.store], (urlOf) =>
+    `SELECT CAST(least(greatest(floor((${column} - ${domain.min}) / ${width}), 0), ${
+      binCount - 1
+    }) AS INTEGER) AS bin, count(*) AS n FROM ${readParquet(
+      urlOf(target.table.store.id),
+    )} WHERE ${column} IS NOT NULL GROUP BY 1 ORDER BY 1`,
+  );
+  for (const row of rows) {
+    const at = Number(row.bin);
+    if (Number.isInteger(at) && at >= 0 && at < binCount) bins[at] += Number(row.n);
+  }
+  return bins;
+};
+
 /**
  * A rule that is legal the moment it is created.
  *

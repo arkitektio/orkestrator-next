@@ -13,6 +13,7 @@ import {
   type MeshFilterByFragment,
   type MeshFilterByInput,
 } from "@/mikro-next/api/graphql";
+import { paletteOfClassColors } from "./colormap-utils";
 
 /**
  * The bridge between what the server OFFERS and what a MESH OR LABEL layer
@@ -68,6 +69,15 @@ export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
  */
 export type ColorByInputLike = MeshColorByInput & LabelColorByInput;
 export type FilterByInputLike = MeshFilterByInput & LabelFilterByInput;
+
+/**
+ * CLIMS a colouring may carry: the bounds the colormap ramp runs between,
+ * instead of the column's own min/max. Typed locally because the backend
+ * fields are still landing — the editor already authors them, the entry→input
+ * mapper already round-trips them, and the moment codegen picks the server
+ * fields up this alias becomes redundant rather than wrong.
+ */
+export type ColorByClims = { min?: number | null; max?: number | null };
 
 /**
  * The equivalence the two aliases above rest on, asserted at compile time.
@@ -179,12 +189,17 @@ export const describeFilterRule = (rule: {
 export const describeColouring = (entry: {
   colormap?: ColorMap | null;
   classColors?: unknown;
-}): string =>
-  entry.colormap
-    ? `${entry.colormap.toLowerCase()} over the column's range`
-    : entry.classColors
-      ? "explicit colours per value"
-      : "a colour per distinct value";
+}): string => {
+  if (entry.colormap) {
+    const clims = entry as ColorByClims;
+    return clims.min != null || clims.max != null
+      ? `${entry.colormap.toLowerCase()} over ${clims.min ?? "…"} … ${clims.max ?? "…"}`
+      : `${entry.colormap.toLowerCase()} over the column's range`;
+  }
+  const palette = paletteOfClassColors(entry.classColors);
+  if (palette) return `"${palette}" palette per value`;
+  return entry.classColors ? "explicit colours per value" : "a colour per distinct value";
+};
 
 /**
  * A joined entry is stored and honoured by the server, but neither renderer
@@ -241,14 +256,24 @@ export const toFilterByInput = (
 
 // ----------------------------------------------------------------- entry → input
 
-export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
-  table: entry.table,
-  column: entry.column,
-  joinPath: entryJoinPath(entry),
-  colormap: entry.colormap ?? null,
-  classColors: entry.classColors ?? null,
-  label: entry.label ?? null,
-});
+export const colorByEntryToInput = (
+  entry: ColorByEntry,
+): ColorByInputLike & ColorByClims => {
+  // The fragments predate the clim fields; read them structurally so a server
+  // that already returns them round-trips, and one that does not sends none.
+  const clims = entry as ColorByClims;
+  return {
+    table: entry.table,
+    column: entry.column,
+    joinPath: entryJoinPath(entry),
+    colormap: entry.colormap ?? null,
+    classColors: entry.classColors ?? null,
+    label: entry.label ?? null,
+    ...(clims.min != null || clims.max != null
+      ? { min: clims.min ?? null, max: clims.max ?? null }
+      : {}),
+  };
+};
 
 export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike => ({
   table: entry.table,

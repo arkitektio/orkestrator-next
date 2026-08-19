@@ -6,12 +6,15 @@ import {
   type FabriksCellRow,
   type FabriksObjectEntry,
 } from "./fabriksCatalogs";
-import { decodeGeometryRow, type FabriksGeometryRow, type MeshoptDecoderLike } from "./fabriksDecode";
-import { cellGridBox } from "./fabriksGrid";
+import type { DecodedCell, MeshoptDecoderLike } from "./fabriksDecode";
+import {
+  decodeRowGroupSpan,
+  type FabriksDecodeRequest,
+  type FabriksDecodedCell,
+} from "./fabriksDecodeCore";
 import { levelParts, MANIFEST_NAME, parseFabriksManifest, type FabriksFileEntry, type FabriksManifest } from "./fabriksManifest";
 import type { FabriksFetchGroup } from "./fabriksPlanner";
 import { ParquetPart, type RangeReader } from "./parquetPart";
-import { toBytes, toNumber, toNumberArray } from "./rowValues";
 
 /**
  * One fabriks collection: the manifest, the catalogs, and the open parts.
@@ -50,33 +53,6 @@ export type FabriksTransport = {
   getRange: RangeReader;
   stats?: FabriksTransportStats;
 };
-
-const GEOMETRY_COLUMNS = [
-  "level",
-  "cell",
-  "positions",
-  "indices",
-  "vertex_count",
-  "index_count",
-  "object_ids",
-  "object_ordinals",
-  "object_vertex_offsets",
-  "object_index_offsets",
-];
-
-/** A geometry row keyed for lookup, before decode. */
-const parseGeometryRow = (row: Record<string, unknown>): FabriksGeometryRow => ({
-  level: toNumber(row.level, "level"),
-  cell: toNumber(row.cell, "cell"),
-  positions: toBytes(row.positions, "positions"),
-  indices: toBytes(row.indices, "indices"),
-  vertexCount: toNumber(row.vertex_count, "vertex_count"),
-  indexCount: toNumber(row.index_count, "index_count"),
-  objectIds: toNumberArray(row.object_ids, "object_ids"),
-  objectOrdinals: toNumberArray(row.object_ordinals, "object_ordinals"),
-  objectVertexOffsets: toNumberArray(row.object_vertex_offsets, "object_vertex_offsets"),
-  objectIndexOffsets: toNumberArray(row.object_index_offsets, "object_index_offsets"),
-});
 
 export class FabriksCollection {
   private readonly parts = new Map<string, ParquetPart>();
@@ -160,17 +136,39 @@ export class FabriksCollection {
   }
 
   /**
-   * Fetch and decode one row group's worth of planned cells.
-   *
-   * The unit is the ROW GROUP rather than the cell: a row group is the
-   * smallest thing a reader can fetch, and a plan routinely puts several cells
-   * in one. A null locator (legal, if unusual) degrades to reading the part
-   * whole, which is correct and merely slow — so it warns.
+   * Fetch and decode one row group's worth of planned cells — the decode
+   * running INLINE on this thread. The manager streams through
+   * `readFetchGroupVia` with a worker dispatcher instead; this signature
+   * survives for the fixture tests, which pin the byte contract without a
+   * Worker in sight, and the two share every line via `decodeRowGroupSpan`.
    */
   async readFetchGroup(
     group: FabriksFetchGroup,
     decoder: MeshoptDecoderLike | null,
-  ): Promise<Map<string, ReturnType<typeof decodeGeometryRow>>> {
+  ): Promise<Map<string, DecodedCell>> {
+    return this.readFetchGroupVia(group, (request) => decodeRowGroupSpan(request, decoder));
+  }
+
+  /**
+   * Fetch one row group's bytes and hand the CPU-bound half — parse, filter,
+   * decode — to `decode` (a worker dispatcher in production, inline for
+   * tests).
+   *
+   * The unit is the ROW GROUP rather than the cell: a row group is the
+   * smallest thing a reader can fetch, and a plan routinely puts several cells
+   * in one. A null locator (legal, if unusual) degrades to reading the part
+   * whole, which is correct and merely slow — so it warns. The FETCH stays
+   * here in every case: the span goes through the transport's byte cache and
+   * credential rotation, which no worker holds.
+   */
+  async readFetchGroupVia(
+    group: FabriksFetchGroup,
+    decode: (request: FabriksDecodeRequest) => Promise<FabriksDecodedCell[]>,
+    options?: {
+      /** Smooth-shading mode: normals come back precomputed per cell. */
+      computeNormals?: boolean;
+    },
+  ): Promise<Map<string, DecodedCell>> {
     const partIndex = group.part ?? 0;
     const entry = levelParts(this.manifest, group.level)[partIndex];
     if (!entry) {
@@ -180,26 +178,27 @@ export class FabriksCollection {
     }
 
     const part = this.openPart(entry);
-    let rows: Record<string, unknown>[];
+    let payload;
     if (group.rowGroup === null) {
       console.warn(
         `[fabriks] ${entry.path} has no row-group locator for these cells; reading the part whole ` +
           `(${entry.bytes ?? "unknown"} bytes).`,
       );
-      rows = await part.readRows(GEOMETRY_COLUMNS);
+      payload = await part.wholePayload();
     } else {
-      rows = await part.readRowGroup(group.rowGroup, GEOMETRY_COLUMNS);
+      payload = await part.rowGroupPayload(group.rowGroup);
     }
 
-    const wanted = new Set(group.cells.map((cell) => cell.cell));
-    const decoded = new Map<string, ReturnType<typeof decodeGeometryRow>>();
-    for (const raw of rows) {
-      const row = parseGeometryRow(raw);
-      if (!wanted.has(row.cell)) continue; // a shared row group carries neighbours too
-      const gridBox = cellGridBox(this.manifest.grid, row.level, row.cell);
-      decoded.set(`${row.level}:${row.cell}`, decodeGeometryRow(row, this.manifest.encoding, gridBox, decoder));
-    }
-    return decoded;
+    const cells = await decode({
+      path: entry.path,
+      fileByteLength: part.byteLength,
+      ...payload,
+      wantedCells: group.cells.map((cell) => cell.cell),
+      grid: this.manifest.grid,
+      encoding: this.manifest.encoding,
+      computeNormals: options?.computeNormals ?? false,
+    });
+    return new Map(cells.map(({ key, ...cell }) => [key, cell]));
   }
 
   /**

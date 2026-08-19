@@ -219,8 +219,9 @@ const MeshLayerSection = ({
   const [query, setQuery] = useState("");
 
   // The catalog is immutable per (collection, version), so one load per mounted
-  // manager — and no synchronous reset when the manager is replaced (a hide /
-  // show cycle): the answer cannot have changed, and clearing the list first
+  // manager — and no synchronous reset when the manager is replaced (a scene
+  // remount; a hide/show cycle now keeps the manager alive, so the list simply
+  // survives it): the answer cannot have changed, and clearing the list first
   // would only flash "Loading…". A collection without an object catalog
   // REJECTS — the picking callers swallow that, a list has to say so.
   useEffect(() => {

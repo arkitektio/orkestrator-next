@@ -189,6 +189,26 @@ describe("buildColorLut", () => {
     ]);
   });
 
+  it("re-reads nothing when only the colormap changes — the column values are cached", async () => {
+    const { engine, reads } = fakeEngine({ area: { 10: 0, 20: 5, 30: 10 } });
+    const request = (colormap: ColorMap) => ({
+      objects: OBJECTS,
+      colorBy: { table: "t1", column: "area", colormap, joinPath: [] },
+      filterBys: [],
+      plans,
+      engine,
+    });
+    const first = await buildColorLut(request(ColorMap.Viridis));
+    expect(reads).toHaveLength(1);
+    // A knob change is a REPAINT, not a rescan: same engine, same column, no
+    // second full-table SELECT.
+    const second = await buildColorLut(request(ColorMap.Inferno));
+    expect(reads).toHaveLength(1);
+    expect(rgbAt(second.texture.image.data as Uint8Array, 0)).not.toEqual(
+      rgbAt(first.texture.image.data as Uint8Array, 0),
+    );
+  });
+
   it("skips a joined entry rather than guessing its join, and reads nothing for it", async () => {
     const { engine, reads } = fakeEngine({ area: { 10: 1 } });
     const lut = await buildColorLut({

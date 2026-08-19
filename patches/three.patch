@@ -1,0 +1,54 @@
+diff --git a/build/three.webgpu.js b/build/three.webgpu.js
+index da6128d25f3443904c6be038b761365b7c884168..a12deb71ed927d6432e29c7cd23f39e1b256c6cd 100644
+--- a/build/three.webgpu.js
++++ b/build/three.webgpu.js
+@@ -18253,11 +18253,19 @@ class BatchNode extends Node {
+ 
+ 		positionLocal.assign( batchingMatrix.mul( positionLocal ) );
+ 
+-		const transformedNormal = normalLocal.div( vec3( bm[ 0 ].dot( bm[ 0 ] ), bm[ 1 ].dot( bm[ 1 ] ), bm[ 2 ].dot( bm[ 2 ] ) ) );
++		// PATCHED (orkestrator): guard like `tangent` below — building
++		// normalLocal on a geometry with no `normal` attribute warns
++		// ("TSL: Vertex attribute \"normal\" not found on geometry") and
++		// yields a constant nothing consumes under flat shading.
++		if ( builder.hasGeometryAttribute( 'normal' ) ) {
++
++			const transformedNormal = normalLocal.div( vec3( bm[ 0 ].dot( bm[ 0 ] ), bm[ 1 ].dot( bm[ 1 ] ), bm[ 2 ].dot( bm[ 2 ] ) ) );
+ 
+-		const batchingNormal = bm.mul( transformedNormal ).xyz;
++			const batchingNormal = bm.mul( transformedNormal ).xyz;
+ 
+-		normalLocal.assign( batchingNormal );
++			normalLocal.assign( batchingNormal );
++
++		}
+ 
+ 		if ( builder.hasGeometryAttribute( 'tangent' ) ) {
+ 
+diff --git a/src/nodes/accessors/BatchNode.js b/src/nodes/accessors/BatchNode.js
+index 9138e54d3b7089ed72b1609b34a407e361f5864d..c62d7a167dfa6199b1ddc196f1c1f992c0d458ad 100644
+--- a/src/nodes/accessors/BatchNode.js
++++ b/src/nodes/accessors/BatchNode.js
+@@ -134,11 +134,19 @@ class BatchNode extends Node {
+ 
+ 		positionLocal.assign( batchingMatrix.mul( positionLocal ) );
+ 
+-		const transformedNormal = normalLocal.div( vec3( bm[ 0 ].dot( bm[ 0 ] ), bm[ 1 ].dot( bm[ 1 ] ), bm[ 2 ].dot( bm[ 2 ] ) ) );
++		// PATCHED (orkestrator): guard like `tangent` below — building
++		// normalLocal on a geometry with no `normal` attribute warns
++		// ("TSL: Vertex attribute \"normal\" not found on geometry") and
++		// yields a constant nothing consumes under flat shading.
++		if ( builder.hasGeometryAttribute( 'normal' ) ) {
+ 
+-		const batchingNormal = bm.mul( transformedNormal ).xyz;
++			const transformedNormal = normalLocal.div( vec3( bm[ 0 ].dot( bm[ 0 ] ), bm[ 1 ].dot( bm[ 1 ] ), bm[ 2 ].dot( bm[ 2 ] ) ) );
+ 
+-		normalLocal.assign( batchingNormal );
++			const batchingNormal = bm.mul( transformedNormal ).xyz;
++
++			normalLocal.assign( batchingNormal );
++
++		}
+ 
+ 		if ( builder.hasGeometryAttribute( 'tangent' ) ) {
+ 

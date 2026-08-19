@@ -22,6 +22,10 @@
  * the card harder to read than the setting it adds is worth.
  */
 
+import { ChevronDown } from "lucide-react";
+import { memo } from "react";
+import { Slider } from "@/components/ui/slider";
+
 /** Fixed-width row label, aligning every control row. */
 export const RowLabel = ({ children }: { children: React.ReactNode }) => (
   <span className="w-11 shrink-0 text-[9px] font-medium uppercase tracking-[0.08em] text-white/35">
@@ -68,57 +72,86 @@ export const CardSection = ({
  *
  * The label area is the CHOICE (one button, the whole row), and `actions` are
  * deliberately outside it — a configure or a remove is not a re-pick, and
- * nesting them in the same button made both ambiguous.
+ * nesting them in the same button made both ambiguous. `leadingAction` sits
+ * outside it too, at the front: an apply-toggle for a rule whose row click
+ * unfolds settings rather than toggling.
+ *
+ * A row with `children` UNFOLDS: the settings behind the entry (a colormap, a
+ * range, a value set) render inline under the row when `expanded`, inside the
+ * same border — a chevron on the row says so. Configuration happens where the
+ * entry lives instead of in a popover beside it.
  */
 export const EntryRow = ({
   active,
   title,
   onClick,
   leading,
+  leadingAction,
   label,
   detail,
   actions,
+  expanded,
+  children,
 }: {
   active: boolean;
   title: string;
   onClick: () => void;
   /** A swatch, a colormap chip, an icon — what this entry looks like. */
   leading?: React.ReactNode;
+  /** A clickable affordance BEFORE the row button — its own click target. */
+  leadingAction?: React.ReactNode;
   label: React.ReactNode;
   /** The second line: what the entry currently does. */
   detail?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Whether the settings body below the row is unfolded. */
+  expanded?: boolean;
+  /** The entry's settings, rendered inline when `expanded`. */
+  children?: React.ReactNode;
 }) => (
   <div
-    className={`flex items-center gap-1.5 rounded-md border px-1.5 py-1 transition-colors ${
+    className={`rounded-md border transition-colors ${
       active
         ? "border-sky-400/40 bg-sky-400/15"
         : "border-white/10 bg-black/30 hover:border-white/20 hover:bg-white/5"
     }`}
   >
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
-    >
-      {leading}
-      <span className="min-w-0 flex-1">
-        <span
-          className={`block truncate text-[10px] leading-tight ${
-            active ? "font-medium text-sky-100" : "text-white/70"
-          }`}
-        >
-          {label}
-        </span>
-        {detail && (
-          <span className="block truncate text-[9px] leading-tight text-white/35">
-            {detail}
+    <div className="flex items-center gap-1.5 px-1.5 py-1">
+      {leadingAction}
+      <button
+        type="button"
+        title={title}
+        onClick={onClick}
+        className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+      >
+        {leading}
+        <span className="min-w-0 flex-1">
+          <span
+            className={`block truncate text-[10px] leading-tight ${
+              active ? "font-medium text-sky-100" : "text-white/70"
+            }`}
+          >
+            {label}
           </span>
+          {detail && (
+            <span className="block truncate text-[9px] leading-tight text-white/35">
+              {detail}
+            </span>
+          )}
+        </span>
+        {children != null && (
+          <ChevronDown
+            className={`h-2.5 w-2.5 shrink-0 text-white/30 transition-transform ${
+              expanded ? "rotate-180" : ""
+            }`}
+          />
         )}
-      </span>
-    </button>
-    {actions}
+      </button>
+      {actions}
+    </div>
+    {expanded && children != null && (
+      <div className="border-t border-white/10 bg-black/20 px-1.5 py-1.5">{children}</div>
+    )}
   </div>
 );
 
@@ -206,6 +239,48 @@ export const IconToggle = ({
     {label}
   </button>
 );
+
+/**
+ * The opacity block every layer card ends with. Memoized with primitive props
+ * and (required-to-be) stable callbacks so a drag re-renders THIS row per
+ * tick and nothing else in the card: the tick's store write changes the layer
+ * object, the card body re-runs, and every other memoized section skips.
+ *
+ * `onCommit` is for cards whose live value and persisted value differ (the
+ * label card folds per tick and saves on release); a card whose opacity is
+ * session-only passes `onChange` alone.
+ */
+export const OpacityRow = memo(function OpacityRow({
+  opacity,
+  step = 1,
+  onChange,
+  onCommit,
+}: {
+  opacity: number;
+  step?: number;
+  onChange: (opacity: number) => void;
+  onCommit?: (opacity: number) => void;
+}) {
+  const percent = Math.round(opacity * 100);
+  return (
+    <CardSection title="opacity">
+      <div className="flex items-center gap-1.5">
+        <Slider
+          min={0}
+          max={100}
+          step={step}
+          value={[percent]}
+          onValueChange={([value]) => onChange(value / 100)}
+          onValueCommit={onCommit ? ([value]) => onCommit(value / 100) : undefined}
+          className="flex-1 py-1"
+        />
+        <span className="w-7 shrink-0 text-right font-mono text-[9px] text-white/40">
+          {percent}%
+        </span>
+      </div>
+    </CardSection>
+  );
+});
 
 /** A fact the card states rather than a control. */
 export const Badge = ({

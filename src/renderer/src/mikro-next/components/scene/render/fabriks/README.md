@@ -72,15 +72,32 @@ FabriksCollectionManager.updatePlan()
 ## Why there is no DuckDB here
 
 The v1 renderer issued SQL against a list of Parquet shards. fabriks's cell
-catalog names the `(part, row_group)` holding every cell, and its manifest
-records every file's length — and **DuckDB cannot address a row group**, so SQL
-structurally cannot use the locator that is the point of the format.
+catalog names the `(part, row_group)` holding every cell, and this path reads
+exactly that locator with `hyparquet` instead of SQL.
 
-Reading it directly with `hyparquet` also removed three problems the SQL path
-had: DuckDB-wasm cannot cancel a `query()`, every fetch re-opened a connection
-and re-installed secrets, and each query re-read footers. DuckDB is still the
-app's Parquet engine for the table UI and `lib/attributes` — it just is not on
-the render path.
+Two arguments this section used to make are **no longer true** and must not be
+re-cited (re-verified 2026-08): DuckDB ≥ 1.2 pushes filters on the
+`file_row_number` virtual column down to row-group pruning
+(duckdb/duckdb#15736), so a `WHERE file_row_number BETWEEN …` over the row
+ranges from `parquet_metadata()` does address a row group; and duckdb-wasm can
+cancel streamed queries (`cancelPendingQuery` / `cancelSent` — though a
+materializing `query()` still cannot be cancelled). The reasons that DO still
+hold, and are why the render path stays SQL-free:
+
+- **The heavy decode is not SQL's to run.** Meshopt decode, uint16→float32
+  dequantization and ordinal expansion are the dominant cost, and they operate
+  on BLOB columns DuckDB can only hand back verbatim — the engine would only
+  relocate the parquet-decompress slice.
+- **Transport control.** `parquetPart` reads a row group as ONE ranged GET
+  served from `FabriksStore`'s range-keyed byte LRU, with the 403-rotate-retry
+  and range-ignored-gateway guards; DuckDB's httpfs issues its own footer and
+  per-column reads outside all of that.
+- **Contention.** The attribute engine serializes work on one connection;
+  geometry streaming would queue behind hover lookups and LUT scans, and its
+  cancellation is per-connection, not per-cell.
+
+DuckDB is still the app's Parquet engine for the table UI and
+`lib/attributes` — it just is not on the render path.
 
 ## The colour LUT — where DuckDB *is* on this path
 
@@ -153,11 +170,15 @@ What is load-bearing:
   manager and refetch every cell), and `setVoxelToWorld` rebuilds only the
   world-space index from kept catalog rows — the caches hold voxel-space
   geometry and survive any placement.
-- **No normals by default.** `computeVertexNormals` was the largest main-thread
-  cost on the streaming path and per-cell smooth normals seam at cell borders;
-  the material shades flat via screen-space derivatives instead (a debug-panel
-  toggle restores smooth). Bounding volumes come from the catalog's boxes, not
-  a walk over positions.
+- **No normals by default.** Per-cell smooth normals seam at cell borders
+  (only the writer, with whole-object connectivity, could fix that), so the
+  material shades flat via screen-space derivatives and carries no normals at
+  all. Smooth mode computes them in the DECODE WORKERS
+  (`computeSmoothNormals` in `fabriksDecode.ts` — three's
+  `computeVertexNormals` math exactly, kept in lockstep because the manager
+  still uses three's as the fallback when a toggle races a fetch); only the
+  flat→smooth retrofit of already-cached cells runs on the main thread.
+  Bounding volumes come from the catalog's boxes, not a walk over positions.
 - **One render object per collection.** Mounted cells live in a single
   `THREE.BatchedMesh` (`fabriksBatch.ts`): on the WebGPU backend that is one
   pipeline + bind group with a per-range draw loop and PER-INSTANCE frustum
@@ -284,11 +305,21 @@ Regenerate with `python __fixtures__/generate.py <out>` in an environment with
   `resolveCollectionMatrix` derives spatial axes from the coordinate system's
   names. A collection whose components run `(z, y, x)` renders transposed with
   no error anywhere. Needs one such collection to test against.
-- **Decode is main-thread.** The whole path is `await` over network I/O, so this
-  is deliberate for now; `WorkerPool` (`lib/zarr/pool/`) is the vehicle if
-  profiles say otherwise — but give fabriks its **own pool instance**, because
-  pool slots are untyped and a recycled zarr codec worker cannot answer fabriks
-  messages.
+- ~~Decode is main-thread.~~ **Closed**: the CPU half of a row-group read —
+  hyparquet parse, per-blob decompress, meshopt decode, dequantize, ordinal
+  expansion — runs in fabriks's **own** small worker pool
+  (`fabriksDecodeCore.ts` / `fabriksDecode-worker.ts` /
+  `fabriksDecodeDispatcher.ts`; not the zarr `WorkerPool`, whose slots are
+  untyped and cannot answer fabriks messages). The FETCH stays main-thread:
+  the span goes through `FabriksStore`'s byte cache and credential rotation,
+  and it structured-clones to the worker — never transfers, which would
+  detach the cached bytes. Node/vitest (no `Worker`) falls back to the same
+  pure decode inline.
 - **A colouring or rule reached through a JOIN does not render.** See the
   colour-LUT section above: direct entries only, joined ones are authored,
   stored and badged but not executed.
+- **A hidden layer keeps its memory.** `visible: false` goes through
+  `FabriksCollectionManager.setVisible`, which stops planning and abandons the
+  in-flight drain but deliberately retains the byte cache, geometry LRU, open
+  footers and batch — that is what makes a re-show a cache replay instead of a
+  re-download. Unmounting the layer (scene close) still disposes everything.

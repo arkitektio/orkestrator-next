@@ -1,28 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Toggle } from "@/components/ui/toggle";
 import { useBrushSkeleton } from "../interactions/useBrushSkeleton";
 import { useBrushSkeletonStore } from "../store/brushSkeletonStore";
 
 /**
- * The skeleton brush's params/status/confirm panel — the `intensity-skeleton`
- * entry's `ParamsPanel` in `enhancerRegistry`. Shown whenever the BRUSH tool
- * is armed; the stroke itself is captured in-canvas
- * (`interactions/BrushStrokeSession.tsx`), so this panel only reads
- * gesture-cadence state and issues verdicts (save / discard / re-extract).
+ * The smooth-blob tool's panel — the `smooth-blob` entry's `ParamsPanel` in
+ * `enhancerRegistry`. One click on the volume grows a surface from the
+ * probed point; the sliders govern where it stops (Wrap), where it starts
+ * (Radius) and how rounded the result is (Smooth — a box blur of the field
+ * before the surface is marched, so the geometry itself smooths, not just
+ * the shading).
  */
-export const BrushSkeletonPanel = () => {
+export const SmoothBlobPanel = () => {
   const status = useBrushSkeletonStore((s) => s.status);
   const message = useBrushSkeletonStore((s) => s.message);
   const radiusWorld = useBrushSkeletonStore((s) => s.radiusWorld);
   const radiusBounds = useBrushSkeletonStore((s) => s.radiusBounds);
   const setRadiusWorld = useBrushSkeletonStore((s) => s.setRadiusWorld);
-  const weights = useBrushSkeletonStore((s) => s.weights);
-  const setWeights = useBrushSkeletonStore((s) => s.setWeights);
-  const tubeEnabled = useBrushSkeletonStore((s) => s.tubeEnabled);
-  const setTubeEnabled = useBrushSkeletonStore((s) => s.setTubeEnabled);
   const tubeThreshold = useBrushSkeletonStore((s) => s.tubeThreshold);
   const setTubeThreshold = useBrushSkeletonStore((s) => s.setTubeThreshold);
+  const blobSmoothness = useBrushSkeletonStore((s) => s.blobSmoothness);
+  const setBlobSmoothness = useBrushSkeletonStore((s) => s.setBlobSmoothness);
+  const blobGap = useBrushSkeletonStore((s) => s.blobGap);
+  const setBlobGap = useBrushSkeletonStore((s) => s.setBlobGap);
   const candidate = useBrushSkeletonStore((s) => s.candidate);
   const clear = useBrushSkeletonStore((s) => s.clear);
   const { extract, save } = useBrushSkeleton();
@@ -32,7 +32,7 @@ export const BrushSkeletonPanel = () => {
       {radiusWorld !== null && radiusBounds !== null && (
         <div
           className="flex items-center gap-2"
-          title="How far around the stroke the centerline may search"
+          title="Starting search radius — the sphere grows from here until the surface closes"
         >
           <span className="w-12 select-none text-right text-[10px] font-medium uppercase text-muted-foreground">
             Radius
@@ -53,55 +53,64 @@ export const BrushSkeletonPanel = () => {
       )}
       <div
         className="flex items-center gap-2"
-        title="How strongly the centerline is pulled toward bright voxels"
+        title="Brightness threshold the surface wraps — lower includes dimmer voxels"
       >
         <span className="w-12 select-none text-right text-[10px] font-medium uppercase text-muted-foreground">
-          Bright
+          Wrap
+        </span>
+        <div className="w-32">
+          <Slider
+            min={0.05}
+            max={0.95}
+            step={0.01}
+            value={[tubeThreshold]}
+            onValueChange={([value]) => setTubeThreshold(value)}
+          />
+        </div>
+        <span className="w-8 select-none text-[10px] tabular-nums text-muted-foreground">
+          {tubeThreshold.toFixed(2)}
+        </span>
+      </div>
+      <div
+        className="flex items-center gap-2"
+        title="Rounds the surface: blurs the brightness field (in voxels) before it is meshed"
+      >
+        <span className="w-12 select-none text-right text-[10px] font-medium uppercase text-muted-foreground">
+          Smooth
         </span>
         <div className="w-32">
           <Slider
             min={0}
             max={4}
-            step={0.05}
-            value={[weights.intensity]}
-            onValueChange={([value]) => setWeights({ intensity: value })}
+            step={1}
+            value={[blobSmoothness]}
+            onValueChange={([value]) => setBlobSmoothness(value)}
           />
         </div>
         <span className="w-8 select-none text-[10px] tabular-nums text-muted-foreground">
-          {weights.intensity.toFixed(2)}
+          {blobSmoothness.toFixed(0)}
         </span>
       </div>
-      <Toggle
-        size="sm"
-        pressed={tubeEnabled}
-        onPressedChange={setTubeEnabled}
-        className="h-6 text-[10px]"
-        title="Also extract the structure's surface around the centerline as a tube mesh (isosurface of the same brightness field)"
+      <div
+        className="flex items-center gap-2"
+        title="How wide a dark gap may be (in voxels) and still count as connected — 0 keeps only the structure the click landed on"
       >
-        Tube
-      </Toggle>
-      {tubeEnabled && (
-        <div
-          className="flex items-center gap-2"
-          title="Brightness threshold the tube surface wraps — lower includes dimmer voxels"
-        >
-          <span className="w-12 select-none text-right text-[10px] font-medium uppercase text-muted-foreground">
-            Wrap
-          </span>
-          <div className="w-32">
-            <Slider
-              min={0.05}
-              max={0.95}
-              step={0.01}
-              value={[tubeThreshold]}
-              onValueChange={([value]) => setTubeThreshold(value)}
-            />
-          </div>
-          <span className="w-8 select-none text-[10px] tabular-nums text-muted-foreground">
-            {tubeThreshold.toFixed(2)}
-          </span>
+        <span className="w-12 select-none text-right text-[10px] font-medium uppercase text-muted-foreground">
+          Gap
+        </span>
+        <div className="w-32">
+          <Slider
+            min={0}
+            max={8}
+            step={1}
+            value={[blobGap]}
+            onValueChange={([value]) => setBlobGap(value)}
+          />
         </div>
-      )}
+        <span className="w-8 select-none text-[10px] tabular-nums text-muted-foreground">
+          {blobGap.toFixed(0)}
+        </span>
+      </div>
       {(status === "preview" || status === "saving") && candidate && (
         <div className="flex items-center gap-1">
           <Button
@@ -117,9 +126,9 @@ export const BrushSkeletonPanel = () => {
             variant="outline"
             disabled={status === "saving"}
             onClick={() => void extract()}
-            title="Run the extraction again — e.g. after more data streamed in"
+            title="Grow again from the same point — e.g. after moving a slider"
           >
-            Re-extract
+            Re-grow
           </Button>
           <Button
             size="xs"
@@ -139,19 +148,12 @@ export const BrushSkeletonPanel = () => {
       <span className="text-[10px] text-white/50">
         {message ? (
           <span className="text-amber-300/90">{message}</span>
-        ) : status === "painting" ? (
-          "Painting — release to extract the centerline"
         ) : status === "extracting" ? (
-          "Extracting centerline…"
+          "Growing the surface…"
         ) : status === "preview" && candidate ? (
-          candidate.points.length < 2 ? (
-            `Grown surface: ${candidate.tube?.triangles ?? 0} triangles at level ${candidate.level}`
-          ) : (
-            `Centerline: ${candidate.points.length} points at level ${candidate.level}` +
-            (candidate.tube ? ` — tube: ${candidate.tube.triangles} triangles` : "")
-          )
+          `Surface: ${candidate.tube?.triangles ?? 0} triangles at level ${candidate.level}`
         ) : (
-          "Drag along a bright structure to trace its centerline"
+          "Click a bright structure to grow a surface around it"
         )}
       </span>
     </div>

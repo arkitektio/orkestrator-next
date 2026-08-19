@@ -98,6 +98,45 @@ export function inCorridor(
   return false;
 }
 
+/**
+ * The CONNECTIVITY field for the smooth-blob's Gap: bright voxels (cost at
+ * or below the iso, i.e. intensity at or above τ — cost is monotone) travel
+ * for FREE, dark voxels cost their world length, walls stay impassable. A
+ * geodesic over this field therefore measures the minimal total DARK
+ * distance from the seed — "how much gap must be crossed to reach here" —
+ * which is what the Gap slider thresholds. CPU twin of the cost kernel's
+ * binary mode (`binary_tau`).
+ */
+export function connectivityFromCost(
+  cost: Float32Array,
+  iso: number,
+): Float32Array {
+  const out = new Float32Array(cost.length);
+  for (let i = 0; i < cost.length; i += 1) {
+    out[i] = cost[i] >= INF_COST ? INF_COST : cost[i] <= iso ? 0 : 1;
+  }
+  return out;
+}
+
+/**
+ * Mask a (smoothed) field by the connectivity distance: voxels farther than
+ * `gapLimit` from the seed's component read as OUTSIDE (`clampValue`), so
+ * the marched surface simply cannot exist there. CPU twin of the tube
+ * kernel's `gap_limit` corner test.
+ */
+export function maskFieldByDistance(
+  field: Float32Array,
+  dist: Float32Array,
+  gapLimit: number,
+  clampValue: number,
+): Float32Array {
+  const out = new Float32Array(field.length);
+  for (let i = 0; i < field.length; i += 1) {
+    out[i] = dist[i] > gapLimit ? clampValue : field[i];
+  }
+  return out;
+}
+
 export type CostFieldResult = {
   /** Per-voxel travel resistance; `INF_COST` = impassable. x-fastest. */
   cost: Float32Array;

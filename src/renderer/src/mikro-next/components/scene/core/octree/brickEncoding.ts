@@ -95,7 +95,9 @@ export function encodeEmptyTexel(
 /**
  * Per-brick occupancy texel `[r, g]` (RG8) for the page table's occupancy
  * sidecar: `r` is the brick's raw MIN, `g` its raw MAX, both 8-bit quantized
- * over the pool data range — with CONSERVATIVE rounding and an INVERTED max:
+ * over the ENCODE range (`dataRange` — the pool data range, or under
+ * `orkestrator.occObservedRange` the pool's observed value range) — with
+ * CONSERVATIVE rounding and an INVERTED max:
  *
  *  - `r = floor(minFrac·255)` — decodes to a value ≤ the true min,
  *  - `g = 255 − ceil(maxFrac·255)` — decodes to a value ≥ the true max,
@@ -105,6 +107,21 @@ export function encodeEmptyTexel(
  * not yet known — e.g. a GPU-repacked brick before its min/max readback lands)
  * decode to the FULL data range: "could be anything, never skip". The shader's
  * occupancy skip and `decodeOccupancyBounds` must stay in lockstep.
+ *
+ * STALE-RANGE SAFETY (why encoding against a range that no longer contains
+ * the brick is still conservative, given the byte-0 sentinel decode): the
+ * clamps bracket from the outside in all four corners —
+ *  - brick min below the range: minFrac clamps to 0 → r = 0 → sentinel →
+ *    decodes to the POOL min ≤ true min;
+ *  - brick min above the range: minFrac clamps to 1 → r = 255 → decodes to
+ *    the encode-range max, which is < true min in this case — still ≤;
+ *  - brick max above the range: maxFrac clamps to 1 → g = 0 → sentinel →
+ *    decodes to the POOL max ≥ true max;
+ *  - brick max below the range: maxFrac clamps to 0 → g = 255 → decodes to
+ *    the encode-range min, which is > true max in this case — still ≥.
+ * (The sentinel is over-broad for a genuinely-at-the-endpoint value —
+ * decoding to the pool endpoint instead of the encode endpoint — which is
+ * conservative by the same containment argument.)
  */
 export function encodeOccupancyTexel(
   minValue: number,
@@ -126,14 +143,29 @@ export function encodeOccupancyTexel(
 }
 
 /** CPU mirror of the shader's occupancy decode: the conservative raw-value
- * bracket `[min, max]` an occupancy texel declares for its brick. */
+ * bracket `[min, max]` an occupancy texel declares for its brick.
+ *
+ * Byte 0 on either channel is the "unbounded on that side" SENTINEL and
+ * decodes to the POOL range endpoint, never the encode range's: the all-zero
+ * texel (fresh texture / range not yet known) must mean "could be anything,
+ * never skip" even while the observed encode range lags a brick whose async
+ * min/max readback has not landed. `poolRange` defaults to `encodeRange`,
+ * which reproduces the legacy single-range behavior bit-for-bit (a 0 byte
+ * then decodes to the same endpoint either way). */
 export function decodeOccupancyBounds(
   texel: readonly [number, number],
-  dataRange: { minValue: number; maxValue: number },
+  encodeRange: { minValue: number; maxValue: number },
+  poolRange: { minValue: number; maxValue: number } = encodeRange,
 ): { minValue: number; maxValue: number } {
-  const range = dataRange.maxValue - dataRange.minValue;
+  const range = encodeRange.maxValue - encodeRange.minValue;
   return {
-    minValue: dataRange.minValue + (texel[0] / 255) * range,
-    maxValue: dataRange.minValue + ((255 - texel[1]) / 255) * range,
+    minValue:
+      texel[0] === 0
+        ? poolRange.minValue
+        : encodeRange.minValue + (texel[0] / 255) * range,
+    maxValue:
+      texel[1] === 0
+        ? poolRange.maxValue
+        : encodeRange.minValue + ((255 - texel[1]) / 255) * range,
   };
 }

@@ -17,9 +17,16 @@ import {
   hideObjects,
   type PassSets,
 } from "../core/passVisibility";
-import { qualityGovernor, resolveDpr } from "../core/qualityGovernor";
 import {
+  MAX_SETTLE_REFINE_STAGES,
+  isSettleRefineEnabled,
+  qualityGovernor,
+  resolveDpr,
+} from "../core/qualityGovernor";
+import {
+  SETTLE_REFINE_DELAY_MS,
   createCompositorStats,
+  decideSettleRefine,
   decideVolumeFrame,
   needsTargetResize,
   resolveVolumeScale,
@@ -197,12 +204,46 @@ export const VolumeCompositor = () => {
       volumeRenders: stats.volumeRenders(),
       cachedComposites: stats.cachedComposites(),
       lastRenderReason: stats.lastRenderReason(),
+      settleRefineStage: qualityGovernor.getSettleRefineStage(),
     }));
     return () => viewerStoreApi.getState().registerVolumeCompositor(null);
   }, [viewerStoreApi, target, stats]);
 
   const previousKeyRef = useRef<VolumeFrameKey | null>(null);
   const hasContentRef = useRef(false);
+
+  // --- Settle refinement ladder (sole driver) ------------------------------
+  const refineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearRefineTimer = () => {
+    if (refineTimerRef.current !== null) {
+      clearTimeout(refineTimerRef.current);
+      refineTimerRef.current = null;
+    }
+  };
+  const scheduleRefine = (nextStage: number) => {
+    // Clear-and-reschedule: the ladder waits for SETTLE_REFINE_DELAY_MS of
+    // true quiet after the LAST qualifying settled render.
+    clearRefineTimer();
+    refineTimerRef.current = setTimeout(() => {
+      refineTimerRef.current = null;
+      if (!isSettleRefineEnabled() || !isVolumeCacheEnabled()) return;
+      if (viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming()) return;
+      // The emit runs the whole chain: useStepScaleUniform recomputes the
+      // boosted uMaxSteps (image material only), bumps volumeInputs and
+      // invalidates; the next frame re-renders the target exactly once.
+      qualityGovernor.setSettleRefineStage(nextStage);
+    }, SETTLE_REFINE_DELAY_MS);
+  };
+  useEffect(
+    () => () => {
+      // A boosted stage must NOT survive into the direct (non-composited)
+      // render path (2D switch, flag off): there is no cache to amortize it
+      // and every frame would pay the 4× budget.
+      clearRefineTimer();
+      qualityGovernor.setSettleRefineStage(0);
+    },
+    [],
+  );
 
   useFrame((state) => {
     const gl = state.gl as unknown as CompositorRenderer;
@@ -220,6 +261,8 @@ export const VolumeCompositor = () => {
       brokenRef.current = true;
       lastErrorRef.current = String(error);
       console.warn("[scene] volume compositor disabled after error:", error);
+      clearRefineTimer();
+      qualityGovernor.setSettleRefineStage(0);
       quad.visible = false;
       try {
         gl.setRenderTarget(null);
@@ -253,10 +296,8 @@ export const VolumeCompositor = () => {
     // Scale keys on CAMERA MOTION only — streaming keeps full resolution so
     // progressive LOD sharpening stays visible (see resolveVolumeScale).
     const profile = qualityGovernor.getProfile();
-    const scale = resolveVolumeScale(
-      qualityGovernor.getTier(),
-      viewStoreApi.getState().cameraMoving,
-    );
+    const cameraMoving = viewStoreApi.getState().cameraMoving;
+    const scale = resolveVolumeScale(qualityGovernor.getTier(), cameraMoving);
     lastScaleRef.current = scale;
     const dpr = gl.getPixelRatio();
     const nextSize = resolveVolumeTargetSize({
@@ -341,6 +382,29 @@ export const VolumeCompositor = () => {
         gl.setClearColor(scratchClearColor, prevClearAlpha);
         gl.setRenderTarget(prevTarget);
       }
+    }
+
+    // --- Settle refinement ladder seam -------------------------------------
+    // "A volume render just completed while settled at full res" is literally
+    // true here; advance is deferred by the quiet timer, reset is immediate.
+    const refine = decideSettleRefine({
+      cameraMoving,
+      streaming: qualityGovernor.isStreaming(),
+      enabled: isSettleRefineEnabled(),
+      cacheEnabled: isVolumeCacheEnabled(),
+      renderedThisFrame: decision.render,
+      scale,
+      stage: qualityGovernor.getSettleRefineStage(),
+      maxStages: MAX_SETTLE_REFINE_STAGES,
+    });
+    if (refine === "reset") {
+      clearRefineTimer();
+      // Emit mid-frame is safe (the setStreaming precedent): listeners write
+      // uniforms + invalidate; during motion the step-uniform dedupe blocks
+      // (active values are stage-independent) so this costs no extra render.
+      qualityGovernor.setSettleRefineStage(0);
+    } else if (refine === "advance") {
+      scheduleRefine(qualityGovernor.getSettleRefineStage() + 1);
     }
 
     // --- Canvas pass: everything but volumes, plus the composite quad ------

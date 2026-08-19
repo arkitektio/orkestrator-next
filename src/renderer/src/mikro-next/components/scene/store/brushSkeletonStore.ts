@@ -70,6 +70,19 @@ export interface BrushSkeletonState {
   stroke: BrushSample[];
   strokeVersion: number;
   strokeLayerId: string | null;
+  /**
+   * Which gesture owns the session: "stroke" (the brush — paint, extract a
+   * centerline) or "blob" (the smooth-blob tool — one probed point, grow a
+   * surface). Set by `beginStroke` and read by the extraction.
+   */
+  strokeMode: "stroke" | "blob";
+  /** Smooth-blob only: box-blur radius (level voxels) applied to the field
+   * before the surface is marched — the "Smooth" slider. */
+  blobSmoothness: number;
+  /** Smooth-blob only: the "Gap" slider (level voxels). The surface is
+   * restricted to the seed's CONNECTED component, bridging dark gaps up to
+   * roughly this many voxels wide — 0 = strictly connected. */
+  blobGap: number;
   candidate: SkeletonCandidate | null;
   /**
    * The live tube preview while PAINTING: re-meshed on the GPU as the stroke
@@ -84,13 +97,16 @@ export interface BrushSkeletonState {
   setWeights: (weights: Partial<SkeletonWeights>) => void;
   setTubeEnabled: (on: boolean) => void;
   setTubeThreshold: (threshold: number) => void;
-  beginStroke: (layerId: string) => void;
+  setBlobSmoothness: (radius: number) => void;
+  setBlobGap: (voxels: number) => void;
+  beginStroke: (layerId: string, mode?: "stroke" | "blob") => void;
   /** Returns whether the sample was kept (`strokeModel.appendSample`). */
   addSample: (sample: BrushSample) => boolean;
   /** The pointer lifted: hand over to extraction. No-op unless painting. */
   endStroke: () => void;
   setExtracting: (message?: string | null) => void;
-  /** Ignored unless painting — a result landing after release is stale. */
+  /** Ignored unless painting or extracting — the grow loop animates its
+   * expansion through this while "extracting"; anything later is stale. */
   setLiveTube: (tube: TubeSurface) => void;
   setCandidate: (candidate: SkeletonCandidate, message: string | null) => void;
   setSaving: () => void;
@@ -108,9 +124,12 @@ export const createBrushSkeletonStore = () =>
     weights: DEFAULT_SKELETON_WEIGHTS,
     tubeEnabled: false,
     tubeThreshold: 0.5,
+    blobSmoothness: 1,
+    blobGap: 0,
     stroke: [],
     strokeVersion: 0,
     strokeLayerId: null,
+    strokeMode: "stroke" as const,
     candidate: null,
     liveTube: null,
 
@@ -129,13 +148,16 @@ export const createBrushSkeletonStore = () =>
       set((state) => ({ weights: { ...state.weights, ...weights } })),
     setTubeEnabled: (tubeEnabled) => set({ tubeEnabled }),
     setTubeThreshold: (tubeThreshold) => set({ tubeThreshold }),
+    setBlobSmoothness: (blobSmoothness) => set({ blobSmoothness }),
+    setBlobGap: (blobGap) => set({ blobGap }),
 
-    beginStroke: (layerId) => {
+    beginStroke: (layerId, mode = "stroke") => {
       const stroke = get().stroke;
       stroke.length = 0;
       set({
         status: "painting",
         strokeLayerId: layerId,
+        strokeMode: mode,
         strokeVersion: 0,
         candidate: null,
         liveTube: null,
@@ -153,7 +175,13 @@ export const createBrushSkeletonStore = () =>
     endStroke: () => {
       const state = get();
       if (state.status !== "painting") return;
-      if (state.stroke.length < 2) {
+      if (state.stroke.length === 0) {
+        set({ status: "error", message: "The click landed off the data" });
+        return;
+      }
+      // The blob gesture grows from ONE probed point; the brush needs a
+      // painted stroke to extract a centerline from.
+      if (state.strokeMode === "stroke" && state.stroke.length < 2) {
         set({
           status: "error",
           message: "Paint a stroke along the structure — a click is not enough",
@@ -164,7 +192,11 @@ export const createBrushSkeletonStore = () =>
     },
     setExtracting: (message = null) => set({ status: "extracting", message }),
     setLiveTube: (tube) =>
-      set((state) => (state.status === "painting" ? { liveTube: tube } : state)),
+      set((state) =>
+        state.status === "painting" || state.status === "extracting"
+          ? { liveTube: tube }
+          : state,
+      ),
     setCandidate: (candidate, message) =>
       set({ status: "preview", candidate, message, liveTube: null }),
     setSaving: () => set({ status: "saving" }),

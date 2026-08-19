@@ -30,6 +30,7 @@ const ALL_TOOLS: AnnotateTool[] = [
   "LINE",
   "PATH",
   "BRUSH",
+  "BLOB",
 ];
 
 /**
@@ -47,12 +48,12 @@ const FLAT_ONLY_TOOLS = new Set<AnnotateTool>(["SELECT"]);
 const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
 
 /**
- * The skeleton brush: a stroke painted onto the volume via the probe march —
- * 3D only. Kept out of `VOLUMETRIC_TOOLS`, whose membership drives the
- * anchor-then-size gesture (`isPrimitiveTool`); the brush has its own session
- * (`interactions/BrushStrokeSession.tsx`).
+ * The skeleton brush and the smooth blob: probe-driven gestures on the
+ * volume — 3D only. Kept out of `VOLUMETRIC_TOOLS`, whose membership drives
+ * the anchor-then-size gesture (`isPrimitiveTool`); these have their own
+ * session (`interactions/BrushStrokeSession.tsx`).
  */
-const BRUSH_TOOLS = new Set<AnnotateTool>(["BRUSH"]);
+const BRUSH_TOOLS = new Set<AnnotateTool>(["BRUSH", "BLOB"]);
 
 /** Where a coercion lands. Never null: a null tool leaves ANNOTATE inert. */
 export const FALLBACK_MODE: InteractionMode = "NAVIGATE";

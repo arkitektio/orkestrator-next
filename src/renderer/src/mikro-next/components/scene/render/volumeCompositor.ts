@@ -182,6 +182,53 @@ export function decideVolumeFrame(input: {
 }
 
 // ---------------------------------------------------------------------------
+// Settle refinement ladder (progressive settled quality)
+// ---------------------------------------------------------------------------
+
+/** Quiet time between ladder stages: longer than a frame and the 150 ms
+ * cameraMoving trailing debounce (a resumed gesture never queues behind a
+ * 4× frame), shorter than QualityAdapter's 500 ms DPR restore so the ladder
+ * interleaves with the restore's resize render — each qualifying render
+ * clears and re-arms the timer, so a stage fires only after 200 ms of true
+ * quiet following the LAST settled render. */
+export const SETTLE_REFINE_DELAY_MS = 200;
+
+export type SettleRefineAction = "reset" | "advance" | "hold";
+
+/**
+ * Per-frame ladder decision, evaluated by the compositor AFTER the render
+ * block. "advance": schedule stage+1 after SETTLE_REFINE_DELAY_MS (the shell
+ * re-checks motion/streaming when the timer fires). "reset": drop to stage 0
+ * immediately. Gates:
+ *  - `!enabled` must RESET a held stage, not hold it — otherwise toggling
+ *    the flag off freezes the boosted budget;
+ *  - `!cacheEnabled` likewise: with the R1 cache off every invalidated frame
+ *    re-renders, and a boosted budget would tax all of them with nothing
+ *    amortizing it;
+ *  - motion/streaming reset (the resumed gesture pays the normal active
+ *    budget — resolveMaxRaySteps ignores the stage while active — but the
+ *    NEXT settle must restart the ladder from 0, not jump to 4×);
+ *  - only a completed FULL-RES render (scale 1) arms an advance.
+ */
+export function decideSettleRefine(input: {
+  cameraMoving: boolean;
+  streaming: boolean;
+  enabled: boolean;
+  cacheEnabled: boolean;
+  renderedThisFrame: boolean;
+  scale: number;
+  stage: number;
+  maxStages: number;
+}): SettleRefineAction {
+  const { cameraMoving, streaming, enabled, cacheEnabled } = input;
+  if (!enabled || !cacheEnabled) return input.stage > 0 ? "reset" : "hold";
+  if (cameraMoving || streaming) return input.stage > 0 ? "reset" : "hold";
+  if (!input.renderedThisFrame || input.scale !== 1) return "hold";
+  if (input.stage >= input.maxStages) return "hold";
+  return "advance";
+}
+
+// ---------------------------------------------------------------------------
 // Stats (DebugPanel report)
 // ---------------------------------------------------------------------------
 
@@ -198,6 +245,8 @@ export type VolumeCompositorReport = {
   volumeRenders: number;
   cachedComposites: number;
   lastRenderReason: string;
+  /** Settle refinement ladder stage the governor currently holds. */
+  settleRefineStage: number;
 };
 
 export type VolumeCompositorStats = {

@@ -140,6 +140,9 @@ export type PlanLayerNodesInput = {
    * 0 (default) disables sub-floor refinement — the legacy all-or-nothing
    * floor. See `resolveDecodeAllowanceBytes` (poolBudget.ts). */
   decodeAllowanceBytes?: number;
+  /** Anisotropy-aware LOD criterion (`anisoEffectiveFactor`) — the caller
+   * passes `isAnisoLodEnabled()`; false (default) = the legacy max rule. */
+  anisoLod?: boolean;
   /** The previous plan's budgetMinLevel (budget-floor hysteresis input). */
   previousBudgetMinLevel?: number;
 };
@@ -162,6 +165,47 @@ const boxDistance = (box: VoxelBox, point: Vec3): number => {
 /** How much foveation penalizes off-axis nodes: at the view axis the score is
  * plain distance²; at 90° off-axis it is distance² × (1 + w)². */
 export const FOVEA_WEIGHT = 1.5;
+
+/** Floor of the dominant-axis discount (`anisoEffectiveFactor`): even a
+ * fully view-aligned axis keeps HALF its refinement pressure — its detail
+ * still reaches the pixel through along-ray compositing (a mean-downsampled
+ * coarse-z MIP column stores dimmer peaks), just not through screen
+ * sampling. Also bounds the shader's stride overshoot at 1/λ = 2×. */
+export const ANISO_LOD_ALONG_RAY_WEIGHT = 0.5;
+
+/**
+ * Anisotropy-aware refinement factor (`orkestrator.anisoLod`): the finer
+ * level's per-axis factor, each axis weighted by how much it faces the
+ * SCREEN, maxed. An axis keeps weight 1 until the view direction aligns
+ * with it past 45° (`d_i² > 0.5` — at most ONE axis can), then ramps
+ * smoothly down to λ:
+ *
+ *   w_i = max(min(1, sqrt(2·(1 − d_i²))), λ);   eff = max_i(scale_i · w_i)
+ *
+ * Properties (pinned by tests):
+ *  - no axis dominates the view (any diagonal) ⇒ every w = 1 ⇒ eff ≡ the
+ *    legacy max — plans are unchanged for diagonal views on EVERY pyramid;
+ *  - isotropic and [2ⁿ,2ⁿ,1] pyramids ⇒ eff ≡ max for EVERY view (the
+ *    discounted axis never carries the max alone there) — no-op families;
+ *  - true-factor pyramids viewed along the divergent axis (face-on SPIM,
+ *    scale [16,16,23.5]) ⇒ eff = max(16, 23.5·λ) = 16 — refinement keys to
+ *    the screen-dominant axes instead of admitting a whole level early;
+ *  - a HUGE divergence (say 32× z) still forces refinement at half weight —
+ *    a 32× z-blurred composite is visibly wrong even face-on.
+ */
+export function anisoEffectiveFactor(
+  finerScale: Vec3 | readonly number[],
+  viewDir: readonly [number, number, number],
+  alongRayWeight = ANISO_LOD_ALONG_RAY_WEIGHT,
+): number {
+  let eff = 0;
+  for (const axis of [0, 1, 2] as const) {
+    const d2 = viewDir[axis] * viewDir[axis];
+    const w = Math.max(Math.min(1, Math.sqrt(Math.max(2 * (1 - d2), 0))), alongRayWeight);
+    eff = Math.max(eff, finerScale[axis] * w);
+  }
+  return eff;
+}
 
 /**
  * Foveated ordering score (squared-distance space): distance to `origin`,
@@ -213,6 +257,7 @@ export function planLayerNodes({
   dimSelections,
   maxPlanBytes = Number.POSITIVE_INFINITY,
   decodeAllowanceBytes = 0,
+  anisoLod = false,
   previousBudgetMinLevel,
 }: PlanLayerNodesInput): LayerNodePlan {
   const sliceSignature = buildSliceSignature(layer, dimSelections);
@@ -431,19 +476,54 @@ export function planLayerNodes({
     return viewRange?.scale ?? 0;
   };
 
+  /**
+   * The finer level's refinement factor for a node. Legacy: the MAX spatial
+   * component — refine while ANY axis still resolves ≥1 px, so z-dominant
+   * views on true-factor pyramids are never under-refined. Under `anisoLod`
+   * (with a real camera outside the node) the max is tempered by the
+   * DOMINANT-AXIS DISCOUNT (`anisoEffectiveFactor`): the axis the view is
+   * aligned with reaches the pixel only through along-ray compositing, not
+   * screen sampling, so it counts at reduced weight — killing the max rule's
+   * whole-level-early admission (~8× bricks over ~55% of the zoom range on a
+   * [16,16,23.5]-style pyramid viewed face-on) while any across-view axis
+   * keeps full weight (the original protection, for the physically right
+   * reason). DELIBERATE ASYMMETRY with the shader: `desiredLevelAt` stays
+   * max-based — it clamps to `uDesiredLevel` and falls back per-sample to
+   * resident coarser data, so the planner alone decides fetch AND display;
+   * the shader may "desire" finer than admitted and the fallback closes the
+   * gap (bounded stride overshoot ≤ 1/λ = 2×, actual ≈1.46× on the target
+   * family, exactly 1× on [2ⁿ,2ⁿ,1] pyramids).
+   */
+  const finerFactorOf = (finerScale: Vec3, baseBox: VoxelBox): number => {
+    const maxFactor = Math.max(finerScale[0], finerScale[1], finerScale[2]);
+    if (!anisoLod) return maxFactor;
+    const position = camera?.voxelPosition;
+    if (!position) return maxFactor; // orthographic / 2D: conservative max
+    if (
+      position[0] >= baseBox.min[0] && position[0] <= baseBox.max[0] &&
+      position[1] >= baseBox.min[1] && position[1] <= baseBox.max[1] &&
+      position[2] >= baseBox.min[2] && position[2] <= baseBox.max[2]
+    ) {
+      return maxFactor; // camera inside the node: direction is ambiguous
+    }
+    const center = boxCenter(baseBox);
+    const dx = center[0] - position[0];
+    const dy = center[1] - position[1];
+    const dz = center[2] - position[2];
+    const len = Math.hypot(dx, dy, dz);
+    if (!(len > 1e-6)) return maxFactor;
+    return anisoEffectiveFactor(finerScale, [dx / len, dy / len, dz / len]);
+  };
+
   const wantFiner = (level: number, baseBox: VoxelBox): boolean => {
     // Desire is purely footprint-driven; the budget floor gates ADMISSION in
     // `visit` (free above the floor, decode-charged below it).
     if (level <= (fixedLOD ?? 0)) return false;
     if (fixedLOD !== null) return true; // refine all the way to the pinned LOD
-    // MAX spatial factor: refine while ANY axis of the finer level still
-    // resolves ≥1 px. True-factor pyramids are anisotropic (z can diverge
-    // from xy), so testing x alone under-refines z-dominant views. MIRRORED
-    // by the shader's `desiredLevelAt` (brickNodeMaterials.ts) — keep in
-    // lockstep.
     const finerScale = levels[level - 1].scale;
-    const finerFactor = Math.max(finerScale[0], finerScale[1], finerScale[2]);
-    return footprintPxPerBaseVoxel(baseBox) * finerFactor * lodBias >= 1;
+    return (
+      footprintPxPerBaseVoxel(baseBox) * finerFactorOf(finerScale, baseBox) * lodBias >= 1
+    );
   };
 
   const focus: Vec3 = camera?.voxelPosition ??

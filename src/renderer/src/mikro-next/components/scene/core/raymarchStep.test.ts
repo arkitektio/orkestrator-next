@@ -6,6 +6,8 @@ import {
   STATUS_UNMAPPED,
   attenuatedMipDone,
   attenuationAt,
+  desiredLevelForDistance,
+  directionProjectedPitch,
   emptyStepMaxNorm,
   normalizeSlotValue,
   occupancyUpperNorm,
@@ -210,5 +212,171 @@ describe("residentBrickSkippable", () => {
       if (!residentBrickSkippable([m])) continue;
       expect(upper).toBeLessThanOrEqual(Math.max(best, 0.001));
     }
+  });
+});
+
+describe("occupancy observed-range golden (dim uint16, the F3 fix)", () => {
+  // Dim fluorescence: uint16 pool, data peaks at ~2000 of 65535, clim window
+  // [200, 1800] raw. Encoded against the DTYPE range every brick collapses
+  // into a handful of 257-raw-unit codes and the skip predicates lose their
+  // discrimination; against the OBSERVED range they regain it. The decode
+  // path mirrors the shader exactly: decodeOccupancyBounds → occupancyUpperNorm.
+  const pool = { minValue: 0, maxValue: 65535 };
+  const observed = { minValue: 0, maxValue: 2000 };
+  const dimSlot = slot({ climMin: 200 / 65535, climMax: 1800 / 65535 });
+
+  const upperFor = async (
+    brick: [number, number],
+    encodeRange: { minValue: number; maxValue: number },
+  ): Promise<number> => {
+    const { encodeOccupancyTexel, decodeOccupancyBounds } = await import(
+      "./octree/brickEncoding"
+    );
+    const bounds = decodeOccupancyBounds(
+      encodeOccupancyTexel(brick[0], brick[1], encodeRange),
+      encodeRange,
+      pool,
+    );
+    return occupancyUpperNorm(bounds.minValue, bounds.maxValue, pool.minValue, pool.maxValue, [
+      dimSlot,
+    ]);
+  };
+
+  it("sub-window bricks become invisible (dtype encoding missed them)", async () => {
+    // True brick max 150 sits below the clim window (200): truly invisible.
+    // The dtype-range code inflates the decoded max past the window edge —
+    // the skip never fires; the observed-range code keeps it below.
+    expect(await upperFor([0, 150], pool)).toBeGreaterThan(0.001);
+    expect(await upperFor([0, 150], observed)).toBeLessThanOrEqual(0.001);
+  });
+
+  it("MIP maximum-culling discriminates near the accumulator (dtype did not)", async () => {
+    const bestNorm = 0.83; // ray already saw a brighter brick
+    // True upper of a [0,1500] brick ≈ 0.812 — beatable. The dtype code
+    // inflates it to ≈0.839 (not beaten); the observed code stays ≈0.816.
+    expect((await upperFor([0, 1500], pool)) <= bestNorm).toBe(false);
+    expect((await upperFor([0, 1500], observed)) <= bestNorm).toBe(true);
+  });
+
+  it("feeds residentBrickSkippable end to end", async () => {
+    const upper = await upperFor([0, 1500], observed);
+    const member: MemberSkipState = {
+      projectionMode: 0,
+      upperNorm: upper,
+      bestNorm: 0.83,
+      isoThreshold: 0.5,
+      done: false,
+    };
+    expect(residentBrickSkippable([member])).toBe(true);
+  });
+});
+
+describe("directionProjectedPitch (Phase B stride rule)", () => {
+  const unit = (v: [number, number, number]): [number, number, number] => {
+    const n = Math.hypot(v[0], v[1], v[2]);
+    return [v[0] / n, v[1] / n, v[2] / n];
+  };
+  const randomUnit = (): [number, number, number] =>
+    unit([Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1]);
+
+  it("axis-aligned rays step by that axis' scale", () => {
+    const scale: [number, number, number] = [8, 8, 1];
+    expect(directionProjectedPitch([1, 0, 0], scale)).toBeCloseTo(0.75 * 8, 6);
+    expect(directionProjectedPitch([0, 1, 0], scale)).toBeCloseTo(0.75 * 8, 6);
+    // The face-on fix: down z the pitch is the z scale, not the xy factor.
+    expect(directionProjectedPitch([0, 0, 1], scale)).toBeCloseTo(0.75 * 1, 6);
+  });
+
+  it("reduces exactly to the legacy rule on isotropic levels, any direction", () => {
+    for (let i = 0; i < 200; i++) {
+      const s = 1 + Math.random() * 30;
+      expect(directionProjectedPitch(randomUnit(), [s, s, s])).toBeCloseTo(0.75 * s, 4);
+    }
+  });
+
+  it("never oversamples the coarsest axis and never undersamples any axis", () => {
+    for (let i = 0; i < 500; i++) {
+      const scale: [number, number, number] = [
+        1 + Math.random() * 30,
+        1 + Math.random() * 30,
+        1 + Math.random() * 30,
+      ];
+      const dir = randomUnit();
+      const pitch = directionProjectedPitch(dir, scale);
+      // ≤ legacy max-axis pitch (the never-oversample bound)…
+      expect(pitch).toBeLessThanOrEqual(0.75 * Math.max(...scale) + 1e-9);
+      // …and ≤ the per-axis crossing distance on EVERY axis (≥ ~one sample
+      // per voxel crossing — strictly stronger than Amanatides).
+      for (const axis of [0, 1, 2] as const) {
+        if (Math.abs(dir[axis]) < 1e-6) continue;
+        expect(pitch).toBeLessThanOrEqual(
+          (0.75 * scale[axis]) / Math.abs(dir[axis]) + 1e-9,
+        );
+      }
+    }
+  });
+
+  it("keeps the uMaxSteps termination guarantee arithmetic intact", () => {
+    // floorDelta = rayLen / uMaxSteps stays in the stepLen max under both
+    // stride rules, so uMaxSteps steps of ≥ floorDelta always cross rayLen.
+    const rayLen = 3473;
+    const uMaxSteps = 512;
+    const floorDelta = rayLen / uMaxSteps;
+    const stepLen = Math.max(floorDelta, directionProjectedPitch([1, 0, 0], [1, 1, 1]));
+    expect(stepLen * uMaxSteps).toBeGreaterThanOrEqual(rayLen);
+  });
+});
+
+describe("desiredLevelForDistance (the R4 hop's level-guard argument)", () => {
+  const maxScales = [1, 2, 4.5, 9, 23.5];
+
+  it("is monotone non-finer in distance — so the finest desired level on a forward ray segment is at its start", () => {
+    const pxPerUnit = 500;
+    let previous = 0;
+    for (let distance = 1; distance <= 20000; distance *= 1.3) {
+      const level = desiredLevelForDistance(distance, pxPerUnit, maxScales, 1, 0);
+      expect(level).toBeGreaterThanOrEqual(previous);
+      previous = level;
+    }
+  });
+
+  it("clamps to the desired floor and to the coarsest level", () => {
+    expect(desiredLevelForDistance(1, 500, maxScales, 1, 2)).toBe(2);
+    expect(desiredLevelForDistance(1e9, 500, maxScales, 1, 0)).toBe(maxScales.length - 1);
+  });
+
+  it("orthographic (pxPerUnit ≤ 0) is the constant floor — trivially segment-safe", () => {
+    expect(desiredLevelForDistance(1, 0, maxScales, 1, 3)).toBe(3);
+    expect(desiredLevelForDistance(1e6, 0, maxScales, 1, 3)).toBe(3);
+  });
+});
+
+describe("aggregate hop predicate (R4 reuses residentBrickSkippable)", () => {
+  it("hops a coarse cell whose AGGREGATE bounds prove every member skippable", () => {
+    // Aggregate union [0, 150] on the dim-uint16 pool from the observed-range
+    // golden above: below the clim window ⇒ invisible ⇒ whole cell hops.
+    const member: MemberSkipState = {
+      projectionMode: 0,
+      upperNorm: occupancyUpperNorm(0, 150, 0, 65535, [
+        slot({ climMin: 200 / 65535, climMax: 1800 / 65535 }),
+      ]),
+      bestNorm: 0,
+      isoThreshold: 0.5,
+      done: false,
+    };
+    expect(residentBrickSkippable([member])).toBe(true);
+  });
+
+  it("an unknown aggregate (full-range decode) never hops", () => {
+    const member: MemberSkipState = {
+      projectionMode: 0,
+      upperNorm: occupancyUpperNorm(0, 65535, 0, 65535, [
+        slot({ climMin: 200 / 65535, climMax: 1800 / 65535 }),
+      ]),
+      bestNorm: 0.9,
+      isoThreshold: 0.5,
+      done: false,
+    };
+    expect(residentBrickSkippable([member])).toBe(false);
   });
 });

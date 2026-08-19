@@ -112,7 +112,7 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     desiredLevel: planTargetLevel,
     planTargetLevel,
   });
-  useStepScaleUniform(bundle?.nodes);
+  useStepScaleUniform(bundle?.nodes); // no settleRefine: canvas-pass material
   useVolumePassRegistration(!!bundle);
 
   // The picked colouring and the active filter rules, resolved into the

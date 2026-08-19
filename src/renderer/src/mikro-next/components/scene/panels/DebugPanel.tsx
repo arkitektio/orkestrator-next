@@ -5,8 +5,10 @@ import { useState, useSyncExternalStore } from "react";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
 import {
   isAdaptiveDprEnabled,
+  isSettleRefineEnabled,
   qualityGovernor,
   setAdaptiveDprEnabled,
+  setSettleRefineEnabled,
   TIER_LABELS,
   type QualityTier,
 } from "../core/qualityGovernor";
@@ -26,8 +28,16 @@ import {
   setVolumeMergeEnabled,
 } from "../render/bricks/volumeMergeGroups";
 import {
+  isAnisoLodEnabled,
+  isAnisoStrideEnabled,
+  isOccHierarchyEnabled,
+  isOccObservedRangeEnabled,
   isShaderFastPathEnabled,
   isSmoothZoomEnabled,
+  setAnisoLodEnabled,
+  setAnisoStrideEnabled,
+  setOccHierarchyEnabled,
+  setOccObservedRangeEnabled,
   setShaderFastPathEnabled,
   setSmoothZoomEnabled,
 } from "../render/bricks/shaderFlags";
@@ -69,6 +79,11 @@ export const DebugPanel = () => {
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
+  const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
+  const [anisoStrideOn, setAnisoStrideOn] = useState(isAnisoStrideEnabled);
+  const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
+  const [occHierarchyOn, setOccHierarchyOn] = useState(isOccHierarchyEnabled);
+  const [settleRefineOn, setSettleRefineOn] = useState(isSettleRefineEnabled);
   const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
   const [volumeCacheOn, setVolumeCacheOn] = useState(isVolumeCacheEnabled);
   const [volumeDepthPrepassOn, setVolumeDepthPrepassOn] = useState(
@@ -123,6 +138,36 @@ export const DebugPanel = () => {
     const next = !atlasMirrorOn;
     setAtlasMirrorEnabled(next);
     setAtlasMirrorOn(next);
+  };
+
+  const toggleOccObservedRange = () => {
+    const next = !occObservedRangeOn;
+    setOccObservedRangeEnabled(next);
+    setOccObservedRangeOn(next);
+  };
+
+  const toggleAnisoStride = () => {
+    const next = !anisoStrideOn;
+    setAnisoStrideEnabled(next);
+    setAnisoStrideOn(next);
+  };
+
+  const toggleAnisoLod = () => {
+    const next = !anisoLodOn;
+    setAnisoLodEnabled(next);
+    setAnisoLodOn(next);
+  };
+
+  const toggleOccHierarchy = () => {
+    const next = !occHierarchyOn;
+    setOccHierarchyEnabled(next);
+    setOccHierarchyOn(next);
+  };
+
+  const toggleSettleRefine = () => {
+    const next = !settleRefineOn;
+    setSettleRefineEnabled(next);
+    setSettleRefineOn(next);
   };
 
   const toggleVolumeTarget = () => {
@@ -257,6 +302,8 @@ export const DebugPanel = () => {
             : null,
         emaFrameMs: Number(qualityGovernor.getEmaMs().toFixed(2)),
         streaming: qualityGovernor.isStreaming(),
+        settleRefineStage: qualityGovernor.getSettleRefineStage(),
+        settleRefine: isSettleRefineEnabled() ? "on" : "off",
       },
     };
     const json = JSON.stringify(report, null, 2);
@@ -517,6 +564,41 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 atlas mirror: {atlasMirrorOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleOccObservedRange}
+                title="Occupancy observed-range encoding: quantize the per-brick min/max sidecar against the pool's observed value range instead of the full dtype range, so MIP maximum-culling discriminates on dim data. Takes effect for pools created after the toggle (reopen the scene)."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                occ range: {occObservedRangeOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleAnisoStride}
+                title="Direction-projected ray stride: march at the ellipsoidal voxel-crossing distance along the ray instead of the max-axis pitch. Fixes the face-on z-undersample on anisotropic pyramids (thin structures dropping from MIP). Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                aniso stride: {anisoStrideOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleAnisoLod}
+                title="Anisotropy-aware planner LOD: discount the view-aligned axis in the refinement criterion so face-on views of true-factor pyramids stop fetching a whole finer level early (~8× the bricks). Takes effect at the next replan."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                aniso lod: {anisoLodOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleOccHierarchy}
+                title="Hierarchical occupancy (R4): aggregate brick min/max one level up and hop whole coarse cells the aggregate proves invisible or mip-beaten. Default OFF until live-validated. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                occ hierarchy: {occHierarchyOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleSettleRefine}
+                title="Settle refinement ladder: after the camera settles, re-render the cached volume 1–2 more times with doubled step budgets — progressive de-graining of saturated (edge-on/diagonal) rays. Takes effect at the next settle."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                settle refine: {settleRefineOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleVolumeTarget}

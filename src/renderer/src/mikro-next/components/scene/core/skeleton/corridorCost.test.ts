@@ -7,7 +7,9 @@ import {
   INF_COST,
   SKELETON_BASE_COST,
   buildCostField,
+  connectivityFromCost,
   inCorridor,
+  maskFieldByDistance,
   segmentDistanceSq,
   voxelCost,
 } from "./corridorCost";
@@ -70,6 +72,31 @@ describe("inCorridor", () => {
   it("handles a single-point stroke as a sphere", () => {
     expect(inCorridor([5, 5, 5], [[5.5, 5.5, 5.5]], 1, [1, 1, 1])).toBe(true);
     expect(inCorridor([8, 5, 5], [[5.5, 5.5, 5.5]], 1, [1, 1, 1])).toBe(false);
+  });
+});
+
+describe("connectivityFromCost", () => {
+  it("binarizes: bright travels free, dark costs 1, walls stay walls", () => {
+    // Values chosen to be exactly representable in f32.
+    const iso = 0.5;
+    const cost = Float32Array.from([0.25, 0.5, 0.75, 1.5, INF_COST]);
+    expect(Array.from(connectivityFromCost(cost, iso))).toEqual([
+      0,
+      0, // exactly at iso is inside — matches the tube's `<= iso`
+      1,
+      1,
+      INF_COST,
+    ]);
+  });
+});
+
+describe("maskFieldByDistance", () => {
+  it("walls off voxels beyond the gap limit, passes the rest through", () => {
+    const field = Float32Array.from([0.25, 0.5, 0.75]);
+    const dist = Float32Array.from([0, 1.5, INF_COST]);
+    const out = maskFieldByDistance(field, dist, 1.0, 9);
+    expect(Array.from(out)).toEqual([0.25, 9, 9]);
+    expect(field[1]).toBe(0.5); // input untouched
   });
 });
 

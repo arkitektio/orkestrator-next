@@ -40,9 +40,6 @@ import { CanvasHueProbe } from "./theme/CanvasHueProbe";
 import { DebugPanel } from "./panels/DebugPanel";
 import { DimSliderPanel } from "./panels/DimSliderPanel";
 import { SelectedPointPanel } from "./panels/SelectedPointPanel";
-import { SelectionAnchorProjector } from "./panels/SelectionAnchorProjector";
-import { SelectionInfoPanel } from "./panels/SelectionInfoPanel";
-import { SelectionAnchorProvider } from "./panels/selectionAnchorChannel";
 import { RoiDeleteKeybinding } from "./interactions/RoiDeleteKeybinding";
 import { ZSliderPanel } from "./panels/ZSliderPanel";
 import { WebGPUUnavailableError } from "./render/gpu/webgpuSupport";
@@ -309,10 +306,6 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
         className="relative h-full w-full overflow-hidden rounded-lg bg-black"
         style={backgroundStyle(status.scene.backgroundColor)}
       >
-        {/* Spans BOTH ends of the selection-anchor channel: the projector runs
-            on the canvas's frame loop, the panel it positions is DOM chrome
-            outside the canvas. */}
-        <SelectionAnchorProvider>
         <KeyboardModeController />
         <KeyboardLayerVisibility />
         <ModeCompatGuard />
@@ -323,9 +316,6 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
 
           {/* The Camera Matrix Sync ensures that we can access the view matrix outside in html world */}
           <CameraMatrixSync />
-          {/* Pins the selection panel to its object. Reads the LIVE camera
-              (not the throttled matrix above) and writes one DOM transform. */}
-          <SelectionAnchorProjector />
           <PointerMoveGate />
           <PerfFrameProbe />
           <CameraController />
@@ -378,14 +368,10 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
             outside every profiler, which made a HUD re-render storm show up
             as unexplained main-thread time. */}
         <LongCommitProfiler id="scene-overlays">
-          {/* The FULL annotation and mesh lists live in their sidebar tabs;
-              the viewport keeps the readout for what is currently SELECTED
-              (`SelectionInfoPanel`, anchored to the selection itself) plus the
-              Backspace-delete keybinding — sidebar tabs unmount when inactive,
-              and neither a selection readout nor a keybinding may go with
-              them. */}
+          {/* The annotation and mesh lists live in their sidebar tabs; the
+              viewport keeps the Backspace-delete keybinding — sidebar tabs
+              unmount when inactive, and a keybinding may not go with them. */}
           <RoiDeleteKeybinding />
-          <SelectionInfoPanel />
           <VisibilityManager />
           <AttributeProbeTracker />
           <ProbeReadoutSettler />
@@ -401,7 +387,6 @@ export const SceneViewport = (props: { children?: ReactNode }) => {
               everything it documents. */}
           <SceneShortcuts />
         </LongCommitProfiler>
-        </SelectionAnchorProvider>
       </div>
     </SceneGuard>
   );

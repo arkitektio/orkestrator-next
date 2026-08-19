@@ -42,8 +42,9 @@ describe("flushPageTable dirty-box uploads", () => {
     setPageEntry(pageTable, 0, [2, 3, 1], [1, 0, 0], PAGE_FLAG_RESIDENT);
 
     expect(flushPageTable(renderer, pageTable)).toBe(true);
-    // One write for the page mirror, one for the RG8 occupancy sidecar.
-    expect(writeTexture).toHaveBeenCalledTimes(2);
+    // One write each for the page mirror, the RG8 occupancy sidecar and the
+    // RG8 hierarchical-occupancy aggregate sidecar.
+    expect(writeTexture).toHaveBeenCalledTimes(3);
 
     const [destination, data, layout, extent] = writeTexture.mock.calls[0];
     // Box spans bricks [1..2, 1..3, 0..1]; texture origin adds the level offset.
@@ -76,12 +77,12 @@ describe("flushPageTable dirty-box uploads", () => {
     setPageEntry(pageTable, 0, [0, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT);
     expect(flushPageTable(renderer, pageTable)).toBe(true);
     expect(flushPageTable(renderer, pageTable)).toBe(false);
-    expect(writeTexture).toHaveBeenCalledTimes(2); // page + occupancy
+    expect(writeTexture).toHaveBeenCalledTimes(3); // page + occupancy + aggregate
 
     // A single new entry dirties only its own 1×1×1 box.
     setPageEntry(pageTable, 0, [3, 2, 1], [0, 1, 0], PAGE_FLAG_RESIDENT);
     expect(flushPageTable(renderer, pageTable)).toBe(true);
-    const [destination, , , extent] = writeTexture.mock.calls[2];
+    const [destination, , , extent] = writeTexture.mock.calls[3];
     expect(destination.origin).toEqual([16 + 3, 2, 1]);
     expect(extent).toEqual([1, 1, 1]);
   });
@@ -126,5 +127,31 @@ describe("occupancy sidecar", () => {
     clearPageTable(pageTable);
     expect(pageTable.occMirrors[0].every((byte) => byte === 0)).toBe(true);
     expect(pageTable.occBacking.every((byte) => byte === 0)).toBe(true);
+  });
+});
+
+describe("hierarchical-occupancy aggregate sidecar", () => {
+  it("writes, resets and clears aggregate texels with the shared dirty box", async () => {
+    const { setAggregateEntry } = await import("./pageTableTexture");
+    const pageTable = createPageTableTexture(LAYOUT);
+
+    setAggregateEntry(pageTable, 0, [1, 0, 0], [42, 99]);
+    expect(pageTable.aggMirrors[0][2]).toBe(42);
+    expect(pageTable.aggMirrors[0][3]).toBe(99);
+    const texel = (0 * 4 + 0) * 20 + 17; // level offset [16,0,0] + cell [1,0,0]
+    expect(pageTable.aggBacking[texel * 2]).toBe(42);
+    expect(pageTable.aggBacking[texel * 2 + 1]).toBe(99);
+    // The write dirtied the level (shared box) so a flush picks it up.
+    expect(pageTable.dirty[0]).not.toBeNull();
+
+    // null = back to the all-zero "unknown, never hop" sentinel.
+    setAggregateEntry(pageTable, 0, [1, 0, 0], null);
+    expect(pageTable.aggMirrors[0][2]).toBe(0);
+    expect(pageTable.aggMirrors[0][3]).toBe(0);
+
+    setAggregateEntry(pageTable, 0, [2, 1, 1], [7, 9]);
+    clearPageTable(pageTable);
+    expect(pageTable.aggMirrors[0].every((byte) => byte === 0)).toBe(true);
+    expect(pageTable.aggBacking.every((byte) => byte === 0)).toBe(true);
   });
 });

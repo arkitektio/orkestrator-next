@@ -152,14 +152,30 @@ consumes **no atlas slot**; its fill value is encoded 8-bit into the R channel
 flags; dirty levels are re-uploaded whole (they are tiny).
 
 **Occupancy sidecar.** A second RG8 texture with the same layout carries each
-RESIDENT brick's raw `[min, max]`, 8-bit-quantized against the pool range with
-conservative rounding and an INVERTED max byte (`encodeOccupancyTexel` in
-`core/octree/brickEncoding.ts`) — so the all-zero texel (fresh texture, or a
-GPU-repacked brick whose async min/max readback has not landed yet) decodes to
-the full data range: "unknown, never skip". The min/max comes from the repack
-scan both paths already run; `pool.brickRanges` keeps the raw values so an
-auto-range move re-encodes the sidecar exactly like the EMPTY entries. This
-feeds the raymarcher's resident-brick skip (§2.10).
+RESIDENT brick's raw `[min, max]`, 8-bit-quantized against the pool's
+**occupancy encode range** with conservative rounding and an INVERTED max byte
+(`encodeOccupancyTexel` in `core/octree/brickEncoding.ts`) — a byte of 0 on
+either channel is the "unbounded on that side" sentinel decoding to the POOL
+endpoint, so the all-zero texel (fresh texture, or a GPU-repacked brick whose
+async min/max readback has not landed yet) means "unknown, never skip". The
+min/max comes from the repack scan both paths already run; `pool.brickRanges`
+keeps the raw values so any range move re-encodes the sidecar exactly like
+the EMPTY entries. This feeds the raymarcher's resident-brick skip (§2.10).
+
+Under `orkestrator.occObservedRange` (default ON, captured at pool creation,
+intensity pools only) the encode range is the running union of every landed
+brick range instead of the pool/dtype range — on dim integer data the
+dtype-range encoding collapses every brick into a handful of 257-raw-unit
+codes and the MIP maximum-culling never fires (F3). The load-bearing
+invariant is decode range ≡ encode range: the shader's `uOccDecodeMin/Range`
+uniforms are pushed on every `poolsVersion` bump (BrickVolumeLayer's
+decode-uniform effect), and a range PROMOTION runs a two-drain protocol —
+drain N blanks every texel to the sentinel (conservative under any uniforms)
+and promotes the encode range; drain N+1, after the uniforms had a frame to
+land, re-encodes the real texels from `brickRanges`. Bricks landing while a
+promotion is in flight write the sentinel too. `encodeOccupancyTexel`'s doc
+comment carries the four-corner proof that even a stale encode range brackets
+conservatively.
 
 ### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
 
@@ -223,9 +239,19 @@ says finer data would be visible **and** the byte budget allows. Closest-first
 ordering means budget exhaustion degrades *distant* regions first.
 `finerFactor` is the **MAX spatial component** of the finer level's scale —
 true-factor pyramids are anisotropic (z can diverge from xy), so testing x
-alone under-refines z-dominant views. The shader's per-sample
-`desiredLevelAt` (`brickNodeMaterials.ts`) uses the same max-component test;
-keep the two in lockstep.
+alone under-refines z-dominant views. Under `orkestrator.anisoLod`
+(default ON, live at the next replan) the max is tempered per node by the
+**dominant-axis discount** (`anisoEffectiveFactor`): an axis keeps weight 1
+until the view direction aligns with it past 45°, then ramps smoothly to the
+λ = 0.5 floor — so a face-on view of a [16,16,23.5]-style pyramid keys
+refinement to the screen-dominant xy axes instead of admitting a whole finer
+level ~1.46× early (~8× the bricks/decodes over ~55% of the zoom range),
+while isotropic and [2ⁿ,2ⁿ,1] pyramids and all across-view/diagonal cases
+are provably unchanged. The shader's per-sample `desiredLevelAt`
+(`volumeRayNodes.ts`) DELIBERATELY stays max-based: it clamps to
+`uDesiredLevel` and falls back per-sample to resident coarser data, so the
+planner alone decides fetch and display; the residual divergence is stride
+only (bounded ≤ 1/λ = 2×, ≈1.46× on the target family).
 
 Culling happens in **layer voxel space**: the world frustum is pulled through
 `buildAffineMatrix(layer)⁻¹` (corner-anchored — voxel v sits at affine(v),
@@ -627,11 +653,27 @@ monolithic texture was coarse and linear-filtered); (b) the jitter offset was
 length and the moving↔settled `uStepScale` toggle — so the noise realization
 changed every frame during motion and swapped wholesale on drag start/end
 (shimmer + full-screen "flicker"). Fixes: **step length must be LOD-adaptive
-per sample** (`stepLen = max(max(uMinDelta, rayLen/MAX_STEPS), 0.75 ·
-uLevelScale[lvl].x) · uStepScale` — fine pitch only where fine data is
-sampled, so 512 steps stay affordable), and **jitter must be
-motion-invariant** (`t = bounds.x + rand(gl_FragCoord) · uMinDelta` — no
-rayLen, no uStepScale).
+per sample** (fine pitch only where fine data is sampled, so 512 steps stay
+affordable), and **jitter must be motion-invariant** (no rayLen, no
+uStepScale in the amplitude).
+
+The per-level pitch itself went through two generations: `.x` → the MAX
+spatial scale component → (2026-08-19, `orkestrator.anisoStride`, default ON)
+the **direction-projected ellipsoidal crossing distance**
+`0.75 / |dirB / uLevelScale[lvl]|` (CPU mirror
+`core/raymarchStep.ts directionProjectedPitch`). The max rule never
+oversampled the coarsest axis but under-sampled every finer one: on
+[2ⁿ,2ⁿ,1] pyramids (z never downsampled) a face-on ray stepped by the xy
+factor straight through the z planes — a 6× undersample that dropped thin
+structures from MIP. The projected pitch is identical on isotropic levels
+for every direction, bounded above by the max rule, and guarantees ~one
+sample per voxel crossing on every axis. Under the flag `uMinDelta` is inert
+(its max-axis floor would pin the projection back to the legacy rule) — the
+stride floor is `rayLen/uMaxSteps` alone (termination guarantee unchanged)
+and the jitter amplitude is the projected pitch of `uDesiredLevel` (still
+replan-cadence, still motion-invariant). LOD selection
+(`wantFiner`/`desiredLevelAt`) and the tricubic gate deliberately STAY
+max-based — those are screen-footprint questions, not marching-density ones.
 
 Consequence for VOLUME projection: since `stepLen` varies with per-sample LOD
 and `uStepScale`, front-to-back opacity accumulation must be **step-size
@@ -1016,7 +1058,10 @@ No longer deferred:
   budget/2-sized atlases as more layers opened;
 - **step pitch on the MAX spatial scale component** (`levelPitch` — stepLen,
   refStep, `uMinDelta`, the tricubic gate, and the label raymarcher), closing
-  the last `.x`-vs-max lockstep gap with `wantFiner`/`desiredLevelAt`;
+  the last `.x`-vs-max lockstep gap with `wantFiner`/`desiredLevelAt` —
+  since superseded for the STRIDE by the direction-projected pitch
+  (`orkestrator.anisoStride`, P14; LOD selection and the tricubic gate stay
+  max-based);
 - `BrickVolumeLayer` subscribes to a scalar identity key over its GROUP's
   layers instead of the whole `layers` array — an edit to an unrelated layer
   no longer re-renders every volume component (the last P9c-shaped hazard);
@@ -1104,6 +1149,20 @@ fullscreen composite quad shown. All decisions live in the pure, tested core
   (`disableColorWrite`) — never `scene.overrideMaterial`: a plain override
   material corrupts BatchedMesh multi-draw ranges (out-of-range DrawIndexed
   on the fabriks layer). Lines/points/sprites are never occluders.
+- *Settle refinement ladder* (`orkestrator.settleRefine`, default ON, live):
+  after the camera settles and streaming drains, the compositor drives
+  `qualityGovernor.setSettleRefineStage` 0→1→2 (200 ms of quiet between
+  stages), each stage DOUBLING the settled `uMaxSteps` of the IMAGE
+  raymarcher (384→768→1536 standard; ceiling `MAX_RAY_STEPS_CEILING` = 2048,
+  now the image material's compile loop bound) and re-rendering the cached
+  target exactly once — `floorDelta = rayLen/uMaxSteps` halves per stage, so
+  only saturated (edge-on/diagonal) rays pay more; non-saturated rays exit
+  at bounds bit-identically. The stage rides the existing transport
+  (governor emit → `useStepScaleUniform` dedupe → `volumeInputs.bump` →
+  one cache-keyed re-render); it is IGNORED while active, reset on
+  motion/streaming/flag-off/cache-off and on compositor unmount (a boosted
+  budget must never reach the uncached direct-render path). Labels are never
+  boosted (canvas-pass material). Pure decision: `decideSettleRefine`.
 - Kill switches (DebugPanel toggles): `orkestrator.volumeTarget` (remount),
   `orkestrator.volumeCache` (live), `orkestrator.volumeDepthPrepass` (live —
   the escape hatch if the prepass ever misbehaves). Debug
@@ -1120,13 +1179,30 @@ path all GPU-repacked bricks already used. ≈4× memory for uint16 data.
 Kill switches: `orkestrator.r16Atlas`, `orkestrator.atlasMirror` (DebugPanel
 toggles). See §2.5.
 
-**R4 — Hierarchical occupancy.** The §2.10 occupancy skip hops one
-resolved-level cell at a time; propagating brick min/max UP the tree would
-let rays hop coarse cells across large dead regions. Caveat that shapes the
-design: mean-downsampled pyramid data does NOT bound fine data, so parent
-occupancy must be aggregated from FINE bricks as they land (exact only when
-children known; conservative full-range default otherwise). Medium win — the
-per-brick skip already covers the common case.
+**R4 — Hierarchical occupancy — SHIPPED DARK (2026-08-19,
+`orkestrator.occHierarchy`, default OFF pending live validation).**
+CPU: every landed brick range (uniform bricks as [v,v]) goes into a per-pool
+`measuredRanges` map that SURVIVES EVICTION (data statements, invalidated
+only by a pool flush); each landing writes any parent cell whose child set
+just completed into a third RG8 page-table sidecar (`aggregate` in
+`pageTableTexture.ts`) as the conservative union — pure helpers in
+`core/octree/occupancyAggregate.ts`, straddle-aware for non-dyadic pyramids
+(`parentCellsOf` is DEFINED by `childrenOf` membership, so completeness and
+aggregation can never disagree). All-zero = unknown = never hop; texels
+encode against Phase A's occupancy range and ride the same blank/re-encode
+promotion protocol. Shader: before the per-brick skip, the fast path reads
+the level-(lvl+1) aggregate and hops the whole COARSE cell when the same
+predicate (`residentBrickSkippable`, aggregate bounds) clears every member.
+NO explicit level guard is needed: the ray origin IS the camera, so
+`desiredLevelAt` is monotone non-finer along the ray — the finest desired
+level on any forward segment is at its start (= `lvl`, exactly what the
+aggregate bounds); pinned by `desiredLevelForDistance` in raymarchStep.ts.
+Coarser-fallback samples stay within the level-lvl hull up to downsampling
+boundary bleed (beneath quantization slack, documented at the emission
+site). Ray-entry/exit tightening (a prologue walking coarse cells before
+the march) is DEFERRED — the in-march hop already crosses entry regions
+cell-by-cell. Debug: pool report `occHierarchy {measured,
+aggregatesComplete}` + `stats.aggregateWrites`.
 
 **R5 — Governor rework.** The tier is still a persisted frame-time-streak
 machine label: a mixed 20↔30 ms scene never demotes (one in-band frame resets

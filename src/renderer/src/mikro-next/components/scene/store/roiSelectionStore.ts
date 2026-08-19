@@ -44,9 +44,8 @@ interface RoiSelectionState {
    * Drop every selection belonging to layers that have left the scene.
    *
    * A selection outlives its layer otherwise, and a selected shape with no
-   * layer is worse than nothing: `SelectionInfoPanel` resolves the collection
-   * matrix by `layerId`, so it computes no anchor and the info panel parks in
-   * the corner describing something that is no longer in the scene.
+   * layer is worse than nothing: everything that resolves the collection by
+   * `layerId` keeps describing something that is no longer in the scene.
    */
   dropLayerSelections: (layerIds: readonly string[]) => void;
   setVisibleLayerRois: (layerId: string, rois: VisibleRoi[]) => void;

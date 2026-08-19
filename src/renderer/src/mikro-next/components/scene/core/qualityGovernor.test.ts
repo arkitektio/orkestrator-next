@@ -374,3 +374,63 @@ describe("resolveMaxRaySteps (adaptive depth)", () => {
     expect(resolveMaxRaySteps(QUALITY_PROFILES[TIER_LOW], true, 16)).toBe(MIN_ACTIVE_RAY_STEPS);
   });
 });
+
+describe("resolveMaxRaySteps (settle refinement ladder)", () => {
+  it("doubles the SETTLED ceiling per stage, clamped at the compile ceiling", async () => {
+    const {
+      resolveMaxRaySteps,
+      MAX_RAY_STEPS_CEILING,
+      QUALITY_PROFILES,
+      STANDARD_QUALITY_PROFILES,
+      TIER_HIGH,
+      TIER_LOW,
+    } = await import("./qualityGovernor");
+    const high = QUALITY_PROFILES[TIER_HIGH]; // 512
+    expect(resolveMaxRaySteps(high, false, 1, 1)).toBe(1024);
+    expect(resolveMaxRaySteps(high, false, 1, 2)).toBe(2048);
+    expect(resolveMaxRaySteps(high, false, 1, 3)).toBe(MAX_RAY_STEPS_CEILING); // clamp
+    const standardHigh = STANDARD_QUALITY_PROFILES[TIER_HIGH]; // capped 384
+    expect(resolveMaxRaySteps(standardHigh, false, 1, 1)).toBe(768);
+    expect(resolveMaxRaySteps(standardHigh, false, 1, 2)).toBe(1536);
+    const low = QUALITY_PROFILES[TIER_LOW]; // 256
+    expect(resolveMaxRaySteps(low, false, 1, 2)).toBe(1024);
+  });
+
+  it("stage 0 / omitted argument reproduces today's values exactly", async () => {
+    const { resolveMaxRaySteps, QUALITY_PROFILES, TIER_HIGH } = await import("./qualityGovernor");
+    const profile = QUALITY_PROFILES[TIER_HIGH];
+    expect(resolveMaxRaySteps(profile, false, 6)).toBe(512);
+    expect(resolveMaxRaySteps(profile, false, 6, 0)).toBe(512);
+    expect(resolveMaxRaySteps(profile, false, 1, -1)).toBe(512); // negative clamps
+  });
+
+  it("the ACTIVE branch ignores the stage — a resumed gesture pays the normal budget", async () => {
+    const { resolveMaxRaySteps, QUALITY_PROFILES, TIER_HIGH, MIN_ACTIVE_RAY_STEPS, TIER_LOW } =
+      await import("./qualityGovernor");
+    const profile = QUALITY_PROFILES[TIER_HIGH];
+    expect(resolveMaxRaySteps(profile, true, 1, 2)).toBe(resolveMaxRaySteps(profile, true, 1));
+    expect(resolveMaxRaySteps(QUALITY_PROFILES[TIER_LOW], true, 16, 2)).toBe(
+      MIN_ACTIVE_RAY_STEPS,
+    );
+  });
+
+  it("the governor stage knob clamps, dedupes and emits once per change", async () => {
+    const { QualityGovernor, MAX_SETTLE_REFINE_STAGES } = await import("./qualityGovernor");
+    const governor = new QualityGovernor();
+    let emits = 0;
+    governor.subscribe(() => {
+      emits += 1;
+    });
+    expect(governor.getSettleRefineStage()).toBe(0);
+    governor.setSettleRefineStage(1);
+    expect(governor.getSettleRefineStage()).toBe(1);
+    expect(emits).toBe(1);
+    governor.setSettleRefineStage(1); // idempotent: no emit
+    expect(emits).toBe(1);
+    governor.setSettleRefineStage(99);
+    expect(governor.getSettleRefineStage()).toBe(MAX_SETTLE_REFINE_STAGES);
+    governor.setSettleRefineStage(-5);
+    expect(governor.getSettleRefineStage()).toBe(0);
+    expect(emits).toBe(3);
+  });
+});

@@ -248,6 +248,21 @@ export function volumeLoadFactor(volumePasses: number): number {
 export const MIN_ACTIVE_RAY_STEPS = 96;
 
 /**
+ * Compile-time ceiling of the IMAGE raymarcher's step loop — the settle
+ * refinement ladder may raise `uMaxSteps` up to here. Exactly
+ * max(profile.maxRaySteps) << MAX_SETTLE_REFINE_STAGES = 512·4. Exported
+ * from core (not volumeRayNodes) because the resolve function below needs it
+ * and render→core is the established import direction; the label
+ * raymarcher's loop keeps the plain MAX_RAY_STEPS bound (labels render live
+ * in the canvas pass, outside the compositor cache — never boosted).
+ */
+export const MAX_RAY_STEPS_CEILING = 2048;
+
+/** Settle refinement ladder depth: two doublings = 4× stride-floor density,
+ * bounding the worst single refinement frame at ~4× a settled frame. */
+export const MAX_SETTLE_REFINE_STAGES = 2;
+
+/**
  * ADAPTIVE DEPTH: the per-fragment ray-step ceiling for the current activity
  * state. In the zoom+tilt worst case the diagonal ray always runs to the
  * `uMaxSteps` ceiling — the stride floor (`floorDelta = rayLen / uMaxSteps`)
@@ -263,8 +278,18 @@ export function resolveMaxRaySteps(
   profile: QualityProfile,
   active: boolean,
   volumePasses = 1,
+  /** Settle refinement ladder stage (governor `getSettleRefineStage`) —
+   * doubles the SETTLED ceiling per stage up to MAX_RAY_STEPS_CEILING.
+   * IGNORED while active: a resumed gesture instantly pays the normal
+   * budget, whatever stage the ladder had reached. */
+  refineStage = 0,
 ): number {
-  if (!active) return profile.maxRaySteps;
+  if (!active) {
+    return Math.min(
+      profile.maxRaySteps << Math.max(0, refineStage),
+      MAX_RAY_STEPS_CEILING,
+    );
+  }
   return Math.max(
     MIN_ACTIVE_RAY_STEPS,
     Math.round(profile.maxRaySteps / (2 * volumeLoadFactor(volumePasses))),
@@ -332,6 +357,34 @@ export function setAdaptiveDprEnabled(enabled: boolean): void {
   }
 }
 
+/**
+ * Kill switch (localStorage, default ON, same live-read pattern as
+ * `adaptiveDpr`) for the SETTLE REFINEMENT LADDER: after the camera settles
+ * and streaming drains, the volume compositor drives the governor's
+ * `settleRefineStage` 0 → 1 → 2, each stage doubling the settled `uMaxSteps`
+ * budget of the image raymarcher and re-rendering the cached target once —
+ * progressive de-graining of floorDelta-bound rays while the scene is idle.
+ * Read per advance by the compositor, so toggling takes effect at the next
+ * settle with no remount.
+ */
+const SETTLE_REFINE_STORAGE_KEY = "orkestrator.settleRefine";
+
+export function isSettleRefineEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(SETTLE_REFINE_STORAGE_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setSettleRefineEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(SETTLE_REFINE_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
+}
+
 /** Frame delta above this counts toward demotion (≈ can't hold ~40 fps). */
 const DEMOTE_FRAME_MS = 24;
 /** Frame delta below this counts toward promotion (≈ comfortably >80 fps). */
@@ -367,6 +420,8 @@ export class QualityGovernor {
   private streaming = false;
   private volumePasses = 0;
   private version = 0;
+  /** Settle refinement ladder stage — see setSettleRefineStage. */
+  private settleRefineStage = 0;
   private readonly listeners = new Set<() => void>();
   private storage: QualityStorage | null = null;
   private storageKey: string | null = null;
@@ -499,6 +554,27 @@ export class QualityGovernor {
   setStreaming(streaming: boolean): void {
     if (streaming === this.streaming) return;
     this.streaming = streaming;
+    this.emit();
+  }
+
+  getSettleRefineStage(): number {
+    return this.settleRefineStage;
+  }
+
+  /**
+   * Settle refinement ladder stage — TRANSIENT, never persisted, driven only
+   * by the VolumeCompositor (advance after a settled full-res render, reset
+   * on motion/streaming/flag-off/unmount). The emit reaches
+   * `useStepScaleUniform` which recomputes `uMaxSteps` (image material only)
+   * and requests one frame; the compositor's `qualityVersion` cache key
+   * makes that exactly one volume re-render per stage. A tier/fidelity emit
+   * while a stage is held simply re-renders once at the new profile's
+   * boosted-but-ceiling-clamped budget — a correct settled image.
+   */
+  setSettleRefineStage(stage: number): void {
+    const next = Math.min(MAX_SETTLE_REFINE_STAGES, Math.max(0, Math.round(stage)));
+    if (next === this.settleRefineStage) return;
+    this.settleRefineStage = next;
     this.emit();
   }
 

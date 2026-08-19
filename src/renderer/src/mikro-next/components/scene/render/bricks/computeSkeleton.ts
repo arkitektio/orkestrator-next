@@ -18,10 +18,13 @@ import {
   RELAX_PARAMS_BYTES,
   SKELETON_COST_WGSL,
   SKELETON_RELAX_WGSL,
+  SKELETON_SMOOTH_WGSL,
   SKELETON_TUBE_WGSL,
+  SMOOTH_PARAMS_BYTES,
   TUBE_PARAMS_BYTES,
   packCostParams,
   packRelaxParams,
+  packSmoothParams,
   packStrokePoints,
   packTubeParams,
   skeletonWorkgroups,
@@ -134,8 +137,15 @@ export type SkeletonRunJob = {
   /** BOX-relative seed voxel. */
   seed: Vec3;
   /** Also extract the tube surface (`SKELETON_TUBE_WGSL`) from the cost
-   * field: `iso`/`clampValue` come from `voxelCost`/`tubeClampValue`. */
-  tube?: { iso: number; clampValue: number; maxVertices: number };
+   * field: `iso`/`clampValue` come from `voxelCost`/`tubeClampValue`.
+   * `smoothVoxels` ≥ 1 box-blurs a COPY of the field first (Kernel D) —
+   * the smooth-blob slider; the geodesic never sees the blur. */
+  tube?: {
+    iso: number;
+    clampValue: number;
+    maxVertices: number;
+    smoothVoxels?: number;
+  };
 };
 
 export type SkeletonTubeResult = {
@@ -159,7 +169,16 @@ export type SkeletonRunResult = {
  * relaxation batches — so it answers in one submit plus readbacks.
  */
 export type SkeletonTubeJob = Omit<SkeletonRunJob, "seed" | "tube"> & {
-  tube: { iso: number; clampValue: number; maxVertices: number };
+  tube: NonNullable<SkeletonRunJob["tube"]> & {
+    /**
+     * The Gap: restrict the surface to the seed's connected component. A
+     * binary cost pass + the geodesic relax measure each voxel's minimal
+     * DARK distance from `seed` (box-relative); corners farther than
+     * `gapLimitWorld` read as outside. `tau` is the windowed-intensity
+     * inside threshold (the same τ the iso derives from).
+     */
+    connectivity?: { tau: number; gapLimitWorld: number; seed: Vec3 };
+  };
 };
 
 export interface GpuSkeletonizer {
@@ -180,15 +199,19 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
   private costPipeline: GpuComputePipeline | null = null;
   private relaxPipeline: GpuComputePipeline | null = null;
   private tubePipeline: GpuComputePipeline | null = null;
+  private smoothPipeline: GpuComputePipeline | null = null;
   private broken = false;
   /** Tube-kernel failure only — must not take the centerline path down. */
   private tubeBroken = false;
+  /** Smooth-kernel failure only — tubes still extract, just unsmoothed. */
+  private smoothBroken = false;
   private disposed = false;
 
   private readonly costGroup0Layout: GpuBindGroupLayout;
   private readonly costGroup1Layout: GpuBindGroupLayout;
   private readonly relaxGroup0Layout: GpuBindGroupLayout;
   private readonly tubeGroup0Layout: GpuBindGroupLayout;
+  private readonly smoothGroup0Layout: GpuBindGroupLayout;
 
   private costParams: GpuBuffer | null = null;
   private relaxParams: GpuBuffer | null = null;
@@ -214,6 +237,14 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
   private tubeVertexCapacity = 0;
   private tubeStaging: GpuBuffer | null = null;
   private tubeStagingCapacity = 0;
+  /** One 32-byte uniform per blur axis, written per run. */
+  private smoothParams: [GpuBuffer, GpuBuffer, GpuBuffer] | null = null;
+  private smoothBuffer: GpuBuffer | null = null;
+  private smoothCapacity = 0;
+  /** The binary-mode cost params + connectivity field (the Gap geodesic). */
+  private costParamsBinary: GpuBuffer | null = null;
+  private connectBuffer: GpuBuffer | null = null;
+  private connectCapacity = 0;
 
   /** Serializes runs — see the module comment. */
   private chain: Promise<unknown> = Promise.resolve();
@@ -281,6 +312,20 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         { binding: 1, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "read-only-storage" } },
         { binding: 2, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "storage" } },
         { binding: 3, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "storage" } },
+        // The Gap connectivity distances; a dummy (never read) when gap_limit < 0.
+        { binding: 4, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "read-only-storage" } },
+      ],
+    });
+    this.smoothGroup0Layout = device.createBindGroupLayout({
+      label: "skeleton-smooth group0",
+      entries: [
+        {
+          binding: 0,
+          visibility: SHADER_STAGE_COMPUTE,
+          buffer: { type: "uniform", minBindingSize: SMOOTH_PARAMS_BYTES },
+        },
+        { binding: 1, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "read-only-storage" } },
+        { binding: 2, visibility: SHADER_STAGE_COMPUTE, buffer: { type: "storage" } },
       ],
     });
 
@@ -343,6 +388,25 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
       .catch((error) => {
         this.tubeBroken = true;
         console.warn("[skeleton] tube pipeline failed to build; tube uses CPU path", error);
+      });
+    const smoothModule = device.createShaderModule({
+      label: "skeleton-smooth",
+      code: SKELETON_SMOOTH_WGSL,
+    });
+    device
+      .createComputePipelineAsync({
+        label: "skeleton-smooth",
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [this.smoothGroup0Layout],
+        }),
+        compute: { module: smoothModule, entryPoint: "main" },
+      })
+      .then((pipeline) => {
+        this.smoothPipeline = pipeline;
+      })
+      .catch((error) => {
+        this.smoothBroken = true;
+        console.warn("[skeleton] smooth pipeline failed to build; tubes stay unsmoothed", error);
       });
   }
 
@@ -453,18 +517,47 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     );
     device.queue.writeBuffer(this.strokeBuffer!, 0, packStrokePoints(job.strokeLevelPts));
     device.queue.writeBuffer(this.holesBuffer!, 0, new Uint32Array([0]));
-    device.queue.writeBuffer(
-      this.tubeParams!,
-      0,
-      packTubeParams({
-        boxOrigin: job.box.origin,
-        boxSize: job.box.size,
-        capacity: tubeCapacity,
-        iso: job.tube.iso,
-        clampValue: job.tube.clampValue,
-      }),
-    );
     device.queue.writeBuffer(this.tubeCountBuffer!, 0, new Uint32Array([0]));
+
+    // The Gap needs the relax pipeline (the connectivity geodesic runs on
+    // it); without one, degrade to an unmasked surface rather than nothing.
+    const connectivity =
+      job.tube.connectivity && this.relaxPipeline !== null
+        ? job.tube.connectivity
+        : undefined;
+    if (connectivity) {
+      this.ensureConnectBuffers(voxels);
+      device.queue.writeBuffer(
+        this.costParamsBinary!,
+        0,
+        packCostParams({
+          boxOrigin: job.box.origin,
+          boxSize: job.box.size,
+          strokeCount: job.strokeLevelPts.length,
+          channel: job.channel,
+          pageOffset: job.pageTable.layout.levelOffset[job.level],
+          payload: job.payload,
+          border: job.border,
+          storedZ: job.storedZ,
+          slotSize: job.atlas.slotSize,
+          spacing: job.spacing,
+          radiusWorld: job.radiusWorld,
+          minValue: job.minValue,
+          range,
+          dataScale: job.atlas.dataScale,
+          emptyCeiling: job.emptyCeiling,
+          poolMin: job.poolMin,
+          poolRange: job.poolRange,
+          weights: job.weights,
+          binaryTau: connectivity.tau,
+        }),
+      );
+      device.queue.writeBuffer(
+        this.relaxParams!,
+        0,
+        packRelaxParams(job.box.size, job.spacing),
+      );
+    }
 
     const costGroup0 = device.createBindGroup({
       label: "skeleton-cost group0",
@@ -484,19 +577,11 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         { binding: 1, resource: this.view3d(atlasTexture) },
       ],
     });
-    const tubeGroup0 = device.createBindGroup({
-      label: "skeleton-tube group0",
-      layout: this.tubeGroup0Layout,
-      entries: [
-        { binding: 0, resource: { buffer: this.tubeParams! } },
-        { binding: 1, resource: { buffer: this.costBuffer! } },
-        { binding: 2, resource: { buffer: this.tubeVertexBuffer! } },
-        { binding: 3, resource: { buffer: this.tubeCountBuffer! } },
-      ],
-    });
-
     const workgroups = skeletonWorkgroups(job.box.size);
     const cells = tubeWorkgroups(job.box.size);
+
+    // --- Submit 1: the field(s). The binary connectivity field rides the
+    // same submit; its geodesic then relaxes in its own batched submits. ----
     {
       const encoder = device.createCommandEncoder();
       const pass = encoder.beginComputePass();
@@ -505,6 +590,72 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
       pass.setBindGroup(1, costGroup1);
       pass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
       pass.end();
+      if (connectivity) {
+        const binaryGroup0 = device.createBindGroup({
+          label: "skeleton-cost group0 (binary)",
+          layout: this.costGroup0Layout,
+          entries: [
+            { binding: 0, resource: { buffer: this.costParamsBinary! } },
+            { binding: 1, resource: { buffer: this.connectBuffer! } },
+            { binding: 2, resource: { buffer: this.holesBuffer! } },
+            { binding: 3, resource: { buffer: this.strokeBuffer! } },
+          ],
+        });
+        const binaryPass = encoder.beginComputePass();
+        binaryPass.setPipeline(this.costPipeline!);
+        binaryPass.setBindGroup(0, binaryGroup0);
+        binaryPass.setBindGroup(1, costGroup1);
+        binaryPass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
+        binaryPass.end();
+      }
+      device.queue.submit([encoder.finish()]);
+    }
+
+    // --- The Gap geodesic: minimal dark distance from the seed. Distances
+    // land in distA. An unconverged field must NOT mask — it would wrongly
+    // exclude genuinely connected regions — so the Gap turns off instead.
+    let gapLimit = -1;
+    if (connectivity) {
+      this.seedDistanceField(
+        voxels,
+        connectivity.seed[0] +
+          connectivity.seed[1] * job.box.size[0] +
+          connectivity.seed[2] * job.box.size[0] * job.box.size[1],
+      );
+      const converged = await this.relaxToConvergence(this.connectBuffer!, workgroups);
+      if (converged) gapLimit = connectivity.gapLimitWorld;
+    }
+    device.queue.writeBuffer(
+      this.tubeParams!,
+      0,
+      packTubeParams({
+        boxOrigin: job.box.origin,
+        boxSize: job.box.size,
+        capacity: tubeCapacity,
+        iso: job.tube.iso,
+        clampValue: job.tube.clampValue,
+        gapLimit,
+      }),
+    );
+
+    // --- Submit 2: smoothing + the march. ---------------------------------
+    {
+      const encoder = device.createCommandEncoder();
+      const marchSource = this.encodeSmoothPasses(encoder, job.box.size, job.tube);
+      const tubeGroup0 = device.createBindGroup({
+        label: "skeleton-tube group0",
+        layout: this.tubeGroup0Layout,
+        entries: [
+          { binding: 0, resource: { buffer: this.tubeParams! } },
+          { binding: 1, resource: { buffer: marchSource } },
+          { binding: 2, resource: { buffer: this.tubeVertexBuffer! } },
+          { binding: 3, resource: { buffer: this.tubeCountBuffer! } },
+          {
+            binding: 4,
+            resource: { buffer: gapLimit >= 0 ? this.distA! : this.costBuffer! },
+          },
+        ],
+      });
       const tubePass = encoder.beginComputePass();
       tubePass.setPipeline(this.tubePipeline!);
       tubePass.setBindGroup(0, tubeGroup0);
@@ -600,13 +751,10 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     device.queue.writeBuffer(this.strokeBuffer!, 0, packStrokePoints(job.strokeLevelPts));
 
     // dist/pred seeding: INF everywhere, 0 at the seed; NO_PRED throughout.
-    const distInit = new Float32Array(voxels).fill(INF_COST);
-    const seedIndex =
-      job.seed[0] + job.seed[1] * job.box.size[0] + job.seed[2] * job.box.size[0] * job.box.size[1];
-    distInit[seedIndex] = 0;
-    device.queue.writeBuffer(this.distA!, 0, distInit);
-    const predInit = new Uint32Array(voxels).fill(NO_PRED_WORD);
-    device.queue.writeBuffer(this.predA!, 0, predInit);
+    this.seedDistanceField(
+      voxels,
+      job.seed[0] + job.seed[1] * job.box.size[0] + job.seed[2] * job.box.size[0] * job.box.size[1],
+    );
     device.queue.writeBuffer(this.holesBuffer!, 0, new Uint32Array([0]));
 
     // Tube stage setup: rides the same submit as the cost pass (it reads the
@@ -662,14 +810,17 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
       pass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
       pass.end();
       if (tube) {
+        const marchSource = this.encodeSmoothPasses(encoder, job.box.size, tube);
         const tubeGroup0 = device.createBindGroup({
           label: "skeleton-tube group0",
           layout: this.tubeGroup0Layout,
           entries: [
             { binding: 0, resource: { buffer: this.tubeParams! } },
-            { binding: 1, resource: { buffer: this.costBuffer! } },
+            { binding: 1, resource: { buffer: marchSource } },
             { binding: 2, resource: { buffer: this.tubeVertexBuffer! } },
             { binding: 3, resource: { buffer: this.tubeCountBuffer! } },
+            // No Gap on the stroke tube: gap_limit < 0, the binding is a dummy.
+            { binding: 4, resource: { buffer: this.costBuffer! } },
           ],
         });
         const cells = tubeWorkgroups(job.box.size);
@@ -717,33 +868,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     }
 
     // --- Relaxation batches ---------------------------------------------
-    // A→B then B→A per pair; RELAX_ITERS_PER_SUBMIT is even, so every batch
-    // ends with the newest field back in the A buffers.
-    const groupAB = this.relaxBindGroup(this.distA!, this.predA!, this.distB!, this.predB!);
-    const groupBA = this.relaxBindGroup(this.distB!, this.predB!, this.distA!, this.predA!);
-    let iterations = 0;
-    let converged = false;
-    while (iterations < MAX_RELAX_ITERS) {
-      device.queue.writeBuffer(this.changedBuffer!, 0, new Uint32Array([0]));
-      const encoder = device.createCommandEncoder();
-      const pass = encoder.beginComputePass();
-      pass.setPipeline(this.relaxPipeline!);
-      for (let i = 0; i < RELAX_ITERS_PER_SUBMIT; i += 1) {
-        pass.setBindGroup(0, i % 2 === 0 ? groupAB : groupBA);
-        pass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
-      }
-      pass.end();
-      encoder.copyBufferToBuffer(this.changedBuffer!, 0, this.flagStaging!, 0, 4);
-      device.queue.submit([encoder.finish()]);
-      await this.flagStaging!.mapAsync(MAP_MODE_READ);
-      const changed = new Uint32Array(this.flagStaging!.getMappedRange().slice(0, 4))[0];
-      this.flagStaging!.unmap();
-      iterations += RELAX_ITERS_PER_SUBMIT;
-      if (changed === 0) {
-        converged = true;
-        break;
-      }
-    }
+    const converged = await this.relaxToConvergence(this.costBuffer!, workgroups);
     if (!converged) return finish(null); // partial distances must not be backtracked
 
     // --- Field readback --------------------------------------------------
@@ -764,7 +889,100 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     });
   }
 
+  /**
+   * Encode the separable box blur (axis x → y → z) into `encoder`; returns
+   * the buffer whose field the tube pass should march. Falls back to the
+   * PRISTINE cost buffer when smoothing is off or its pipeline is dead. The
+   * y-pass scratch reuses `distB`, which nothing reads before the first
+   * relax pass rewrites it wholesale.
+   */
+  private encodeSmoothPasses(
+    encoder: GpuCommandEncoder,
+    boxSize: Vec3,
+    tube: { smoothVoxels?: number; clampValue: number },
+  ): GpuBuffer {
+    const radius = Math.floor(tube.smoothVoxels ?? 0);
+    if (radius < 1 || this.smoothPipeline === null || this.smoothBroken) {
+      return this.costBuffer!;
+    }
+    const device = this.device;
+    this.ensureSmoothBuffers(boxSize[0] * boxSize[1] * boxSize[2]);
+    const workgroups = skeletonWorkgroups(boxSize);
+    const chain: [GpuBuffer, GpuBuffer][] = [
+      [this.costBuffer!, this.smoothBuffer!],
+      [this.smoothBuffer!, this.distB!],
+      [this.distB!, this.smoothBuffer!],
+    ];
+    for (const axis of [0, 1, 2] as const) {
+      device.queue.writeBuffer(
+        this.smoothParams![axis],
+        0,
+        packSmoothParams({ boxSize, axis, radius, clampValue: tube.clampValue }),
+      );
+      const group = device.createBindGroup({
+        label: `skeleton-smooth axis ${axis}`,
+        layout: this.smoothGroup0Layout,
+        entries: [
+          { binding: 0, resource: { buffer: this.smoothParams![axis] } },
+          { binding: 1, resource: { buffer: chain[axis][0] } },
+          { binding: 2, resource: { buffer: chain[axis][1] } },
+        ],
+      });
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(this.smoothPipeline);
+      pass.setBindGroup(0, group);
+      pass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
+      pass.end();
+    }
+    return this.smoothBuffer!;
+  }
+
+  private ensureConnectBuffers(voxels: number): void {
+    const device = this.device;
+    if (!this.costParamsBinary) {
+      this.costParamsBinary = device.createBuffer({
+        label: "skeleton cost params (binary)",
+        size: COST_PARAMS_BYTES,
+        usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
+      });
+    }
+    const bytes = voxels * 4;
+    if (this.connectCapacity < bytes) {
+      this.connectBuffer?.destroy();
+      this.connectCapacity = bytes;
+      this.connectBuffer = device.createBuffer({
+        label: "skeleton connectivity field",
+        size: bytes,
+        usage: BufferUsage.STORAGE,
+      });
+    }
+  }
+
+  private ensureSmoothBuffers(voxels: number): void {
+    const device = this.device;
+    if (!this.smoothParams) {
+      const make = (axis: number) =>
+        device.createBuffer({
+          label: `skeleton smooth params ${axis}`,
+          size: SMOOTH_PARAMS_BYTES,
+          usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
+        });
+      this.smoothParams = [make(0), make(1), make(2)];
+    }
+    const bytes = voxels * 4;
+    if (this.smoothCapacity < bytes) {
+      this.smoothBuffer?.destroy();
+      this.smoothCapacity = bytes;
+      this.smoothBuffer = device.createBuffer({
+        label: "skeleton smooth field",
+        size: bytes,
+        usage: BufferUsage.STORAGE,
+      });
+    }
+  }
+
   private relaxBindGroup(
+    costSource: GpuBuffer,
     distIn: GpuBuffer,
     predIn: GpuBuffer,
     distOut: GpuBuffer,
@@ -775,7 +993,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
       layout: this.relaxGroup0Layout,
       entries: [
         { binding: 0, resource: { buffer: this.relaxParams! } },
-        { binding: 1, resource: { buffer: this.costBuffer! } },
+        { binding: 1, resource: { buffer: costSource } },
         { binding: 2, resource: { buffer: distIn } },
         { binding: 3, resource: { buffer: predIn } },
         { binding: 4, resource: { buffer: distOut } },
@@ -783,6 +1001,50 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
         { binding: 6, resource: { buffer: this.changedBuffer! } },
       ],
     });
+  }
+
+  /**
+   * The batched ping-pong relaxation over `costSource`, seeded by whatever
+   * the caller already wrote into distA/predA. A→B then B→A per pair;
+   * `RELAX_ITERS_PER_SUBMIT` is even, so the newest field always ends back
+   * in the A buffers. Returns whether the field converged.
+   */
+  private async relaxToConvergence(
+    costSource: GpuBuffer,
+    workgroups: Vec3,
+  ): Promise<boolean> {
+    const device = this.device;
+    const groupAB = this.relaxBindGroup(costSource, this.distA!, this.predA!, this.distB!, this.predB!);
+    const groupBA = this.relaxBindGroup(costSource, this.distB!, this.predB!, this.distA!, this.predA!);
+    let iterations = 0;
+    while (iterations < MAX_RELAX_ITERS) {
+      device.queue.writeBuffer(this.changedBuffer!, 0, new Uint32Array([0]));
+      const encoder = device.createCommandEncoder();
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(this.relaxPipeline!);
+      for (let i = 0; i < RELAX_ITERS_PER_SUBMIT; i += 1) {
+        pass.setBindGroup(0, i % 2 === 0 ? groupAB : groupBA);
+        pass.dispatchWorkgroups(workgroups[0], workgroups[1], workgroups[2]);
+      }
+      pass.end();
+      encoder.copyBufferToBuffer(this.changedBuffer!, 0, this.flagStaging!, 0, 4);
+      device.queue.submit([encoder.finish()]);
+      await this.flagStaging!.mapAsync(MAP_MODE_READ);
+      const changed = new Uint32Array(this.flagStaging!.getMappedRange().slice(0, 4))[0];
+      this.flagStaging!.unmap();
+      iterations += RELAX_ITERS_PER_SUBMIT;
+      if (changed === 0) return true;
+    }
+    return false;
+  }
+
+  /** Seed distA/predA for a relaxation: INF/NO_PRED everywhere, 0 at `seed`. */
+  private seedDistanceField(voxels: number, seedIndex: number): void {
+    const distInit = new Float32Array(voxels).fill(INF_COST);
+    distInit[seedIndex] = 0;
+    this.device.queue.writeBuffer(this.distA!, 0, distInit);
+    const predInit = new Uint32Array(voxels).fill(NO_PRED_WORD);
+    this.device.queue.writeBuffer(this.predA!, 0, predInit);
   }
 
   private ensureBuffers(voxels: number, strokePoints: number): void {
@@ -936,6 +1198,10 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
       this.tubeCountBuffer,
       this.tubeVertexBuffer,
       this.tubeStaging,
+      this.smoothBuffer,
+      ...(this.smoothParams ?? []),
+      this.costParamsBinary,
+      this.connectBuffer,
     ]) {
       buffer?.destroy();
     }
@@ -955,6 +1221,10 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
     this.tubeCountBuffer = null;
     this.tubeVertexBuffer = null;
     this.tubeStaging = null;
+    this.smoothBuffer = null;
+    this.smoothParams = null;
+    this.costParamsBinary = null;
+    this.connectBuffer = null;
   }
 }
 

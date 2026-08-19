@@ -123,12 +123,16 @@ export const makeVolumeRayNodes = (t: any, u: VolumeRayUniforms): VolumeRayNodes
       Loop(
         { start: int(0), end: int(t.uNumLevels).sub(1), type: "int", condition: "<", name: "dlv" },
         ({ dlv }: any) => {
-          // MAX spatial factor — mirrors the planner's `wantFiner`
-          // (nodePlanning.ts): a level counts as resolvable while ANY of its
-          // axes still spans ≥1 px (true-factor pyramids are anisotropic).
-          // Keep the two in lockstep. `Break` on the first hit — this runs
-          // per SAMPLE per FRAGMENT, and the previous flag-guarded loop
-          // always walked every level.
+          // MAX spatial factor — DELIBERATELY stays max-based even when the
+          // planner's `wantFiner` runs the anisotropy-aware criterion
+          // (`orkestrator.anisoLod`, nodePlanning.ts `anisoEffectiveFactor`):
+          // this clamps to uDesiredLevel below and falls back per-sample to
+          // resident coarser data, so the planner alone decides what is
+          // fetched AND displayed — a max-based "desire" finer than the
+          // admission just resolves to the fetched level. The residual cost
+          // is stride only (bounded ≤2×, ≈1.46× on true-factor pyramids).
+          // `Break` on the first hit — this runs per SAMPLE per FRAGMENT,
+          // and the previous flag-guarded loop always walked every level.
           const lvlScale = vec3(t.uLevelScale.element(dlv));
           If(
             pxPerBaseVoxel

@@ -87,7 +87,11 @@ struct CostParams {
   // min_value/range, which are the (clim-windowed) NORMALIZATION window.
   pool_min: f32,
   pool_range: f32,
-  _pad1: f32,
+  // >= 0 switches the kernel to CONNECTIVITY mode: instead of the shaped
+  // cost, write the binary field (windowed intensity >= binary_tau → 0,
+  // else 1; walls stay INF) the Gap geodesic runs on. Binary passes never
+  // count holes — the normal pass over the same corridor already did.
+  binary_tau: f32,
   _pad2: f32,
 }
 `;
@@ -150,7 +154,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   if (flag == 0u) { // UNMAPPED: missing data is a wall, and worth reporting.
     cost[index] = P.inf_cost;
-    atomicAdd(&holes, 1u);
+    if (P.binary_tau < 0.0) { atomicAdd(&holes, 1u); }
     return;
   }
 
@@ -172,7 +176,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     normalized = clamp((raw - P.min_value) / P.range, 0.0, 1.0);
   }
 
-  cost[index] = P.base_cost + P.w_intensity * pow(1.0 - normalized, P.exponent);
+  if (P.binary_tau >= 0.0) {
+    cost[index] = select(1.0, 0.0, normalized >= P.binary_tau);
+  } else {
+    cost[index] = P.base_cost + P.w_intensity * pow(1.0 - normalized, P.exponent);
+  }
 }
 `;
 
@@ -242,6 +250,69 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 /** Words in the packed TubeParams struct. */
 export const TUBE_PARAMS_BYTES = 48;
 
+/** Words in the packed SmoothParams struct. */
+export const SMOOTH_PARAMS_BYTES = 32;
+
+/**
+ * ## Kernel D — field smoothing (`SKELETON_SMOOTH_WGSL`)
+ *
+ * One axis of the separable box blur behind the smooth-blob "Smooth"
+ * slider; `core/skeleton/fieldSmooth.ts` is the CPU twin and documents the
+ * shared semantics (clamp first, edge replication, 2r+1 window). Run three
+ * times (axis 0, 1, 2) ping-ponging buffers; the tube kernel then marches
+ * the blurred copy while the geodesic keeps the pristine cost buffer — INF
+ * walls must stay impassable.
+ */
+export const SKELETON_SMOOTH_WGSL = /* wgsl */ `
+struct SmoothParams {
+  box_size: vec3<u32>,
+  axis: u32,
+  radius: i32,
+  clamp_value: f32,
+  _pad0: f32,
+  _pad1: f32,
+}
+@group(0) @binding(0) var<uniform> P: SmoothParams;
+@group(0) @binding(1) var<storage, read> src: array<f32>;
+@group(0) @binding(2) var<storage, read_write> dst: array<f32>;
+
+fn index_of(v: vec3<u32>) -> u32 {
+  return v.x + v.y * P.box_size.x + v.z * P.box_size.x * P.box_size.y;
+}
+
+@compute @workgroup_size(${SKELETON_WORKGROUP_SIZE}, ${SKELETON_WORKGROUP_SIZE}, ${SKELETON_WORKGROUP_SIZE})
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  if (any(gid >= P.box_size)) { return; }
+  let extent = i32(P.box_size[P.axis]);
+  var sum = 0.0;
+  for (var k = -P.radius; k <= P.radius; k = k + 1) {
+    var sample = vec3<i32>(gid);
+    sample[P.axis] = clamp(sample[P.axis] + k, 0, extent - 1);
+    sum = sum + min(src[index_of(vec3<u32>(sample))], P.clamp_value);
+  }
+  dst[index_of(gid)] = sum / f32(2 * P.radius + 1);
+}
+`;
+
+export function packSmoothParams(input: {
+  boxSize: Vec3;
+  axis: 0 | 1 | 2;
+  radius: number;
+  clampValue: number;
+}): ArrayBuffer {
+  const buffer = new ArrayBuffer(SMOOTH_PARAMS_BYTES);
+  const u32 = new Uint32Array(buffer);
+  const i32 = new Int32Array(buffer);
+  const f32 = new Float32Array(buffer);
+  u32[0] = input.boxSize[0];
+  u32[1] = input.boxSize[1];
+  u32[2] = input.boxSize[2];
+  u32[3] = input.axis;
+  i32[4] = Math.max(1, Math.floor(input.radius));
+  f32[5] = input.clampValue;
+  return buffer;
+}
+
 /**
  * ## Kernel C — tube surface (`SKELETON_TUBE_WGSL`)
  *
@@ -263,13 +334,18 @@ struct TubeParams {
   _pad0: u32,
   iso: f32,
   clamp_value: f32,
-  _pad1: f32,
+  // >= 0 enables the Gap connectivity mask: corners whose geodesic dark
+  // distance from the seed (connect_dist) exceeds this read as OUTSIDE, so
+  // the surface cannot exist across an unbridged gap. < 0 disables (the
+  // connect_dist binding then carries a dummy buffer, never read).
+  gap_limit: f32,
   _pad2: f32,
 }
 @group(0) @binding(0) var<uniform> P: TubeParams;
 @group(0) @binding(1) var<storage, read> cost: array<f32>;
 @group(0) @binding(2) var<storage, read_write> vertices: array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read_write> vertex_count: atomic<u32>;
+@group(0) @binding(4) var<storage, read> connect_dist: array<f32>;
 
 ${tetTableWGSL()}
 
@@ -289,6 +365,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let v = gid + o;
     let index = v.x + v.y * P.box_size.x + v.z * P.box_size.x * P.box_size.y;
     values[c] = min(cost[index], P.clamp_value);
+    if (P.gap_limit >= 0.0 && connect_dist[index] > P.gap_limit) {
+      values[c] = P.clamp_value; // unconnected: outside, whatever it looked like
+    }
     if (values[c] <= P.iso) { cell_mask = cell_mask | (1u << c); }
   }
   if (cell_mask == 0u || cell_mask == 255u) { return; }
@@ -328,6 +407,8 @@ export function packTubeParams(input: {
   capacity: number;
   iso: number;
   clampValue: number;
+  /** >= 0 enables the Gap connectivity mask (world units). */
+  gapLimit?: number;
 }): ArrayBuffer {
   const buffer = new ArrayBuffer(TUBE_PARAMS_BYTES);
   const i32 = new Int32Array(buffer);
@@ -343,6 +424,7 @@ export function packTubeParams(input: {
   u32[7] = 0;
   f32[8] = input.iso;
   f32[9] = input.clampValue;
+  f32[10] = input.gapLimit ?? -1;
   return buffer;
 }
 
@@ -392,6 +474,8 @@ export type CostParamsInput = {
   poolMin: number;
   poolRange: number;
   weights: { intensity: number; exponent: number };
+  /** >= 0 switches the kernel to the binary connectivity field. */
+  binaryTau?: number;
 };
 
 /** Pack the cost kernel's uniform struct (layout mirrors CostParams). */
@@ -434,6 +518,7 @@ export function packCostParams(input: CostParamsInput): ArrayBuffer {
   f32[31] = INF_COST;
   f32[32] = input.poolMin;
   f32[33] = input.poolRange;
+  f32[34] = input.binaryTau ?? -1;
   return buffer;
 }
 

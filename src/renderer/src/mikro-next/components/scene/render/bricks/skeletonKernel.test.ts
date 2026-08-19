@@ -11,10 +11,13 @@ import {
   RELAX_PARAMS_BYTES,
   SKELETON_COST_WGSL,
   SKELETON_RELAX_WGSL,
+  SKELETON_SMOOTH_WGSL,
   SKELETON_TUBE_WGSL,
+  SMOOTH_PARAMS_BYTES,
   TUBE_PARAMS_BYTES,
   packCostParams,
   packRelaxParams,
+  packSmoothParams,
   packStrokePoints,
   packTubeParams,
   skeletonWorkgroups,
@@ -91,6 +94,12 @@ describe("packCostParams", () => {
     expect(f32[31]).toBe(Math.fround(INF_COST)); // inf_cost survives f32
     expect(f32[32]).toBe(50); // pool_min (EMPTY decode range ≠ window)
     expect(f32[33]).toBe(2000); // pool_range
+    expect(f32[34]).toBe(-1); // binary_tau defaults to disabled
+  });
+
+  it("packs the binary connectivity mode when asked", () => {
+    const packed = packCostParams({ ...input, binaryTau: 0.47 });
+    expect(new Float32Array(packed)[34]).toBeCloseTo(0.47);
   });
 });
 
@@ -138,7 +147,12 @@ describe("tube kernel", () => {
     // …) — Tint rejects the whole module at CreateShaderModule. Bit us once
     // with `let from = …`; a vitest failure beats a runtime pipeline latch.
     const reserved = ["from", "to", "of", "with", "await", "async", "do", "new"];
-    for (const source of [SKELETON_COST_WGSL, SKELETON_RELAX_WGSL, SKELETON_TUBE_WGSL]) {
+    for (const source of [
+      SKELETON_COST_WGSL,
+      SKELETON_RELAX_WGSL,
+      SKELETON_TUBE_WGSL,
+      SKELETON_SMOOTH_WGSL,
+    ]) {
       for (const word of reserved) {
         expect(source).not.toMatch(new RegExp(`\\b(let|var|const)\\s+${word}\\b`));
         expect(source).not.toMatch(new RegExp(`\\bfor\\s*\\(\\s*var\\s+${word}\\b`));
@@ -163,9 +177,52 @@ describe("tube kernel", () => {
     expect([u32[4], u32[5], u32[6]]).toEqual([10, 20, 30]);
     expect(f32[8]).toBe(0.75);
     expect(f32[9]).toBe(1.5);
+    expect(f32[10]).toBe(-1); // gap_limit defaults to disabled
+  });
+
+  it("packs the Gap limit and binds the connectivity distances", () => {
+    const packed = packTubeParams({
+      boxOrigin: [0, 0, 0],
+      boxSize: [1, 1, 1],
+      capacity: 3,
+      iso: 0.5,
+      clampValue: 1,
+      gapLimit: 2.5,
+    });
+    expect(new Float32Array(packed)[10]).toBe(2.5);
+    expect(SKELETON_TUBE_WGSL).toContain("connect_dist");
   });
 
   it("dispatches over the CELL grid — one less than the voxel grid", () => {
     expect(tubeWorkgroups([5, 9, 1])).toEqual([1, 2, 1]);
+  });
+});
+
+describe("smooth kernel", () => {
+  it("packs SmoothParams at the declared size, fields where WGSL reads them", () => {
+    const packed = packSmoothParams({
+      boxSize: [10, 20, 30],
+      axis: 2,
+      radius: 3,
+      clampValue: 0.75,
+    });
+    expect(packed.byteLength).toBe(SMOOTH_PARAMS_BYTES);
+    const u32 = new Uint32Array(packed);
+    const i32 = new Int32Array(packed);
+    const f32 = new Float32Array(packed);
+    expect([u32[0], u32[1], u32[2]]).toEqual([10, 20, 30]);
+    expect(u32[3]).toBe(2); // axis
+    expect(i32[4]).toBe(3); // radius
+    expect(f32[5]).toBe(0.75); // clamp_value
+  });
+
+  it("floors fractional radii and never packs zero", () => {
+    const packed = packSmoothParams({
+      boxSize: [1, 1, 1],
+      axis: 0,
+      radius: 0.4,
+      clampValue: 1,
+    });
+    expect(new Int32Array(packed)[4]).toBe(1);
   });
 });

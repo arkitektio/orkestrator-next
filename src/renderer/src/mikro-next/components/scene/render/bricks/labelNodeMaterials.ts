@@ -19,6 +19,7 @@ import {
   MAX_RAY_STEPS,
 } from "./volumeRayNodes";
 import type { LabelUniformData } from "./labelUniforms";
+import { isAnisoStrideEnabled } from "./shaderFlags";
 
 // Same dynamic-typing bargain as `brickNodeMaterials.ts`: three's TSL TypeScript
 // surface lags the runtime API (int/ivec3 uniforms, node-valued Loop bounds,
@@ -40,6 +41,7 @@ const {
   int,
   ivec2,
   ivec3,
+  length,
   max,
   mix,
   texture,
@@ -491,6 +493,8 @@ export function createLabelVolumeNodeMaterial(
   dataRange: { minValue: number; maxValue: number },
   labelData: LabelUniformData,
 ): LabelVolumeMaterialBundle {
+  // Read ONCE per material build (kill switch — see shaderFlags.ts).
+  const anisoStride = isAnisoStrideEnabled();
   const t = makeTraversalNodes(pool, dataRange);
   const rayUniforms = makeVolumeRayUniforms();
   const { uBaseShape, uDesiredLevel } = rayUniforms;
@@ -557,13 +561,20 @@ export function createLabelVolumeNodeMaterial(
       const pB = originB.add(rayT.mul(dirB)).toVar("lblPB");
       const lvl = int(rays.desiredLevelAt(pB, originB)).toVar("lblLvl");
 
-      // LOD-adaptive step: fine pitch where fine data is sampled. MAX spatial
-      // component — same axis rule as the planner/desiredLevelAt lockstep
-      // (identical to typical microscopy pyramids where x is the max factor).
+      // LOD-adaptive step: fine pitch where fine data is sampled. Under
+      // orkestrator.anisoStride the pitch is the direction-projected
+      // ellipsoidal voxel-crossing distance (see the intensity raymarcher's
+      // levelPitch note — same rule, same rationale: a face-on ray through a
+      // z-undownsampled mask stepped straight through the z planes and could
+      // miss thin label slabs). Legacy: MAX spatial component. No jitter
+      // either way (see above).
       const lvlScale = vec3(t.uLevelScale.element(lvl));
-      const stepLen = max(
-        max(float(uMinDelta), floorDelta),
-        float(0.75).mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z))),
+      const lblPitch = anisoStride
+        ? float(0.75).div(max(float(length(dirB.div(lvlScale))), 1e-6))
+        : float(0.75).mul(max(lvlScale.x, max(lvlScale.y, lvlScale.z)));
+      const stepLen = (anisoStride
+        ? max(float(floorDelta), lblPitch)
+        : max(max(float(uMinDelta), floorDelta), lblPitch)
       )
         .mul(max(float(uStepScale), 1.0))
         .toVar("lblStep");

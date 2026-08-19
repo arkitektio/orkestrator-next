@@ -10,6 +10,66 @@ export const STATUS_UNMAPPED = 0;
 export const STATUS_RESIDENT = 1;
 export const STATUS_EMPTY = 2;
 
+/** The 0.75-of-a-voxel sampling density both stride rules share. */
+export const RAY_PITCH_FACTOR = 0.75;
+
+/**
+ * Mirror of the shader's direction-projected marching pitch
+ * (`orkestrator.anisoStride`, `levelPitch` in brickNodeMaterials.ts /
+ * `lblPitch` in labelNodeMaterials.ts): the ELLIPSOIDAL voxel-crossing
+ * distance along a unit ray direction `dir` (base-voxel space) through a
+ * level with per-axis scale `scale` —
+ *
+ *   pitch = 0.75 / |dir / scale|
+ *
+ * Properties the tests pin (and the shader relies on):
+ *  - axis-aligned rays: pitch = 0.75·scale_axis (fixes the face-on
+ *    z-undersample of the legacy max rule on [2ⁿ,2ⁿ,1] pyramids);
+ *  - isotropic levels: pitch = 0.75·s for EVERY direction (identical to the
+ *    legacy rule — visual diffs are confined to anisotropic pyramids);
+ *  - never exceeds the legacy 0.75·max(scale) (never oversamples the
+ *    coarsest axis) and never exceeds 0.75·scale_i/|dir_i| on any axis
+ *    (≥ ~one sample per voxel crossing everywhere).
+ */
+export function directionProjectedPitch(
+  dir: readonly [number, number, number],
+  scale: readonly [number, number, number],
+): number {
+  const norm = Math.hypot(dir[0] / scale[0], dir[1] / scale[1], dir[2] / scale[2]);
+  return RAY_PITCH_FACTOR / Math.max(norm, 1e-6);
+}
+
+/**
+ * Mirror of the shader's `desiredLevelAt` (volumeRayNodes.ts) as a function
+ * of camera distance: the first level whose MAX per-axis scale still resolves
+ * ≥1 px, clamped no finer than `floorLevel` (uDesiredLevel), the coarsest
+ * level otherwise; ortho (pxPerVoxelAtUnitDistance ≤ 0) is the constant
+ * floor.
+ *
+ * This exists to PIN the soundness argument of the hierarchical-occupancy
+ * coarse hop (R4): it is monotone NON-FINER in `distance`, and the ray
+ * origin is the camera, so the finest desired level on any FORWARD ray
+ * segment is at the segment's start — the hop at level `lvl` therefore
+ * never skips a sample that would have desired finer than `lvl`.
+ */
+export function desiredLevelForDistance(
+  distance: number,
+  pxPerVoxelAtUnitDistance: number,
+  levelMaxScales: readonly number[],
+  lodBias: number,
+  floorLevel: number,
+): number {
+  const coarsest = levelMaxScales.length - 1;
+  if (pxPerVoxelAtUnitDistance <= 0) return Math.min(Math.max(floorLevel, 0), coarsest);
+  const pxPerBaseVoxel = pxPerVoxelAtUnitDistance / Math.max(distance, 1);
+  for (let level = 0; level < coarsest; level++) {
+    if (pxPerBaseVoxel * levelMaxScales[level] * lodBias >= 1) {
+      return Math.min(Math.max(level, floorLevel), coarsest);
+    }
+  }
+  return coarsest;
+}
+
 /**
  * The empty-space skip predicate: an unmapped chain always skips; a uniform
  * EMPTY brick skips when no visible channel would contribute. Residents are
@@ -119,6 +179,10 @@ export type MemberSkipState = {
  * reaches, or already done. Conservative by construction: a skipped brick
  * cannot change any member's accumulator.
  */
+/** NOTE: this predicate is ALSO the hierarchical-occupancy coarse hop's
+ * (R4): the aggregate hop feeds the same shape with `upperNorm` computed
+ * from the AGGREGATE bounds instead of the brick's own — one predicate, two
+ * granularities, kept in lockstep by construction. */
 export function residentBrickSkippable(members: readonly MemberSkipState[]): boolean {
   return members.every((member) => {
     if (member.done) return true;

@@ -109,6 +109,11 @@ export const useVolumeRayUniforms = (
     // MAX spatial component — the axis rule of the planner/shader lockstep
     // (`wantFiner` / `desiredLevelAt`); identical on pyramids where x is the
     // max factor.
+    // Under orkestrator.anisoStride this uniform is INERT: the shader's
+    // stride floor and jitter amplitude both moved to the in-shader
+    // direction-projected pitch (a max-axis floor would pin the projection
+    // back to the legacy rule exactly on face-on thin slabs). It keeps being
+    // pushed for the legacy (flag-off) emission.
     return 0.5 * Math.max(level.scale[0], level.scale[1], level.scale[2]);
   }, [pool, planTargetLevel]);
 
@@ -173,7 +178,16 @@ export const useVolumePassRegistration = (activePass: boolean): void => {
  *    and on TIER_LOW — zoom+tilt otherwise flips ~the whole step budget to
  *    8× taps exactly when the frame is already fragment-bound.
  */
-export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): void => {
+export const useStepScaleUniform = (
+  nodes: StepScaleUniformHandle | undefined,
+  /** IMAGE material only: apply the governor's settle-refinement stage to
+   * uMaxSteps (its compile loop bound is MAX_RAY_STEPS_CEILING). Label
+   * volumes must stay false — they render live in the canvas pass every
+   * frame, outside the compositor's cache, so a boosted label budget would
+   * tax every overlay frame with nothing amortizing it. A primitive param
+   * on purpose: the effect dep list must not churn on object identity. */
+  settleRefine = false,
+): void => {
   const viewStoreApi = useViewStoreApi();
   const viewerStoreApi = useViewerStoreApi();
   const invalidate = useThree((state) => state.invalidate);
@@ -197,6 +211,7 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
         profile,
         active,
         qualityGovernor.getVolumePassCount(),
+        settleRefine ? qualityGovernor.getSettleRefineStage() : 0,
       );
       const smooth = smoothZoom
         ? resolveSmoothThreshold(qualityGovernor.getTier(), active)
@@ -222,5 +237,5 @@ export const useStepScaleUniform = (nodes: StepScaleUniformHandle | undefined): 
       unsubscribeView();
       unsubscribeQuality();
     };
-  }, [nodes, viewStoreApi, viewerStoreApi, invalidate]);
+  }, [nodes, settleRefine, viewStoreApi, viewerStoreApi, invalidate]);
 };

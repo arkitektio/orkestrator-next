@@ -41,13 +41,37 @@ describe("brushSkeletonStore", () => {
     expect(store.getState().strokeVersion).toBe(0);
   });
 
-  it("rejects a stroke too short to extract", () => {
+  it("rejects a brush click — a stroke needs at least two samples", () => {
     const store = createBrushSkeletonStore();
     store.getState().beginStroke("layer:1");
     store.getState().addSample(sample(0));
     store.getState().endStroke();
     expect(store.getState().status).toBe("error");
     expect(store.getState().message).toMatch(/stroke/i);
+  });
+
+  it("a blob-mode click is the grow gesture — one probed point extracts", () => {
+    const store = createBrushSkeletonStore();
+    store.getState().beginStroke("layer:1", "blob");
+    expect(store.getState().strokeMode).toBe("blob");
+    store.getState().addSample(sample(0));
+    store.getState().endStroke();
+    expect(store.getState().status).toBe("extracting");
+  });
+
+  it("an empty stroke never extracts, in either mode", () => {
+    const store = createBrushSkeletonStore();
+    store.getState().beginStroke("layer:1", "blob");
+    store.getState().endStroke();
+    expect(store.getState().status).toBe("error");
+  });
+
+  it("beginStroke defaults back to stroke mode after a blob session", () => {
+    const store = createBrushSkeletonStore();
+    store.getState().beginStroke("layer:1", "blob");
+    store.getState().clear();
+    store.getState().beginStroke("layer:2");
+    expect(store.getState().strokeMode).toBe("stroke");
   });
 
   it("hands a real stroke over to extraction, then preview, then idle", () => {
@@ -102,6 +126,12 @@ describe("brushSkeletonStore", () => {
     store.getState().addSample(sample(10));
     store.getState().endStroke();
     expect(store.getState().liveTube).toBe(tube);
+
+    // ...and keeps updating while EXTRACTING — the grow loop animates its
+    // expansion through this slot.
+    const growing = { positions: new Float32Array(18), triangles: 2, truncated: false };
+    store.getState().setLiveTube(growing);
+    expect(store.getState().liveTube).toBe(growing);
 
     // ...and yields to the final candidate.
     store.getState().setCandidate(

@@ -29,6 +29,7 @@ const {
   int,
   ivec2,
   ivec3,
+  length,
   max,
   mix,
   oneMinus,
@@ -59,8 +60,14 @@ export type UniformNodeLike<T> = { value: T };
 export type UniformArrayNodeLike<T> = { array: T[] };
 
 import { MAX_BRICK_LEVELS } from "../../core/octree/brickEncoding";
+import { MAX_RAY_STEPS_CEILING } from "../../core/qualityGovernor";
 import { NameScope } from "./tslNames";
-import { isShaderFastPathEnabled, isSmoothZoomEnabled } from "./shaderFlags";
+import {
+  isAnisoStrideEnabled,
+  isOccHierarchyEnabled,
+  isShaderFastPathEnabled,
+  isSmoothZoomEnabled,
+} from "./shaderFlags";
 import {
   emitVolumeRayBounds,
   makeVolumeRayNodes,
@@ -124,6 +131,13 @@ export type TraversalNodesPublic = {
    */
   uEmptyCodeWeights: UniformNodeLike<THREE.Vector3>;
   uEmptyCodeMax: UniformNodeLike<number>;
+  /** The range occupancy texels are quantized against (`pool.occEncodeMin/
+   * Max`) — the pool range, or under `orkestrator.occObservedRange` the
+   * observed value range. MUST track the pool's encode range on every
+   * `poolsVersion` bump (BrickVolumeLayer's decode-uniform effect) — the
+   * decode-≡-encode-range lockstep invariant. */
+  uOccDecodeMin: UniformNodeLike<number>;
+  uOccDecodeRange: UniformNodeLike<number>;
 };
 
 /** Public (consumer-facing) shape of the channel-compositor nodes.
@@ -181,6 +195,10 @@ export function makeTraversalNodes(
     /** RG8 occupancy sidecar (per-brick min/max bracket) — only the volume
      * raymarcher's skip block samples it; inert elsewhere. */
     occupancy: pool.pageTable.occupancy,
+    /** RG8 hierarchical-occupancy aggregate (R4, orkestrator.occHierarchy):
+     * texel at (level h, cell) bounds the level-(h−1) measured ranges under
+     * that cell. Referenced only when the flag emits the coarse hop. */
+    aggregate: pool.pageTable.aggregate,
     brickAtlas: pool.atlas.texture,
     uNumLevels: uniform(Math.min(pool.geometry.levels.length, MAX_BRICK_LEVELS), "int"),
     uPageOffset: uniformArray(pageOffsets, "ivec3"),
@@ -199,6 +217,8 @@ export function makeTraversalNodes(
       "vec3",
     ),
     uEmptyCodeMax: uniform(pool.emptyBits === 24 ? 0xffffff : 0xff, "float"),
+    uOccDecodeMin: uniform(pool.occEncodeMin, "float"),
+    uOccDecodeRange: uniform(pool.occEncodeMax - pool.occEncodeMin, "float"),
   };
 }
 
@@ -1110,6 +1130,11 @@ export function createVolumeNodeMaterial(
   // Zoom smoothing (tricubic reconstruction past uSmoothThreshold px/voxel);
   // off = the filter is not emitted at all.
   const smoothZoom = isSmoothZoomEnabled();
+  // Direction-projected stride (Phase B, see shaderFlags.ts); off = the
+  // legacy max-axis pitch, verbatim.
+  const anisoStride = isAnisoStrideEnabled();
+  // Hierarchical-occupancy coarse hop (R4, default OFF); off = not emitted.
+  const occHierarchy = isOccHierarchyEnabled();
   const t = makeTraversalNodes(pool, dataRange);
   const c = makeChannelNodes(channelData);
   c.minValue.value = dataRange.minValue;
@@ -1174,7 +1199,12 @@ export function createVolumeNodeMaterial(
   const uSmoothThreshold = uniform(3, "float");
   // Per-tier hard iteration ceiling (quality profile `maxRaySteps`). Capping
   // steps LENGTHENS the stride (see floorDelta) rather than cutting the far
-  // volume; MAX_RAY_STEPS stays the compile-time loop bound.
+  // volume. The compile-time loop bound of THIS material is
+  // MAX_RAY_STEPS_CEILING, not MAX_RAY_STEPS: the settle refinement ladder
+  // (qualityGovernor.setSettleRefineStage) may raise the uniform up to 4×
+  // the settled budget while idle; runtime cost stays bounded by the
+  // uMaxSteps Break either way. The default here is overwritten at mount by
+  // useStepScaleUniform.
   const uMaxSteps = uniform(MAX_RAY_STEPS, "float");
   // Back-compat aliases: the single-layer call site writes `projectionMode` /
   // `isoThreshold` directly, which is member 0.
@@ -1220,23 +1250,46 @@ export function createVolumeNodeMaterial(
     // trades step density for the same full-ray coverage.
     const floorDelta = rayLen.div(max(float(uMaxSteps), 1.0));
 
-    // MAX spatial component of a level's scale — the same axis rule as the
-    // planner's `wantFiner` and the shader's `desiredLevelAt` (documented
-    // lockstep). The previous `.x` tracked one axis: on a true-factor
-    // anisotropic pyramid whose max factor is not x, the pitch under-stepped
-    // relative to the LOD the sample actually resolves. On typical microscopy
-    // pyramids ([2ⁿ, 2ⁿ, 1]) x IS the max, so nothing changes.
+    // Marching pitch per level. Two rules behind orkestrator.anisoStride
+    // (CPU mirror: core/raymarchStep.ts `directionProjectedPitch` — keep in
+    // lockstep):
+    //  - ON (default): the ELLIPSOIDAL voxel-crossing distance along the ray,
+    //    0.75 / |dirB / scale|. Identical to the max rule on isotropic levels
+    //    for EVERY direction, never exceeds 0.75·max(scale) (never
+    //    oversamples the coarsest axis), and guarantees ~one sample per voxel
+    //    crossing on every axis — which the max rule does not: on a
+    //    [2ⁿ,2ⁿ,1] pyramid (z never downsampled) a face-on ray stepped by
+    //    the xy factor straight THROUGH the z planes, a 6× undersample that
+    //    dropped thin structures from MIP.
+    //  - OFF: the legacy MAX spatial component (kept for A/B).
+    // Note the deliberate asymmetry with `wantFiner`/`desiredLevelAt`, which
+    // stay max-based: LOD selection is a screen-footprint question, the
+    // pitch is a marching-density one.
     const levelPitch = (level: any) => {
       const s = vec3(t.uLevelScale.element(level));
+      if (anisoStride) {
+        // dirB is unit-length in base-voxel space; |dirB/s| ≥ |dirB|/max(s)
+        // bounds the pitch by the legacy rule from below.
+        return float(0.75).div(max(float(length(dirB.div(s))), 1e-6));
+      }
       return float(0.75).mul(max(s.x, max(s.y, s.z)));
     };
 
     // Reference step for VOLUME opacity correction (see
-    // core/opacityCorrection.ts — keep in lockstep).
-    const refStep = max(max(float(uMinDelta), floorDelta), levelPitch(uDesiredLevel)).toVar();
+    // core/opacityCorrection.ts — keep in lockstep). Under anisoStride the
+    // dead uMinDelta floor is dropped: uMinDelta is 0.5·max(scale) of the
+    // plan target, which would pin the pitch back to the max-axis rule and
+    // nullify the projection exactly where it matters (face-on thin slabs).
+    const refStep = anisoStride
+      ? max(floorDelta, levelPitch(uDesiredLevel)).toVar()
+      : max(max(float(uMinDelta), floorDelta), levelPitch(uDesiredLevel)).toVar();
 
     // Jitter must not depend on rayLen or uStepScale (motion-invariant, P14).
-    const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(uMinDelta)).toVar("rayT");
+    // Under anisoStride the amplitude is the projected pitch of the plan
+    // target — like uMinDelta it changes only on replan, and it matches the
+    // actual stride (the legacy amplitude straddled ~5 face-on strides).
+    const jitterAmp = anisoStride ? levelPitch(uDesiredLevel) : float(uMinDelta);
+    const rayT = boundsX.add(float(rand2(screenCoordinate.xy)).mul(jitterAmp)).toVar("rayT");
 
     // Per-member accumulators. Deliberately UNNAMED `.toVar()`: TSL mints a
     // unique name for each, which is what makes unrolling members into one
@@ -1255,10 +1308,11 @@ export function createVolumeNodeMaterial(
       done: bool(false).toVar(),
     }));
 
-    Loop({ start: int(0), end: int(MAX_RAY_STEPS), type: "int", condition: "<" }, ({ i }: any) => {
+    Loop({ start: int(0), end: int(MAX_RAY_STEPS_CEILING), type: "int", condition: "<" }, ({ i }: any) => {
       // Tier cap: the uniform can't feed the compile-constant loop bound, so
       // it breaks here. floorDelta above guarantees full-ray coverage in
-      // uMaxSteps iterations.
+      // uMaxSteps iterations. The bound is the settle-refinement CEILING
+      // (4× the largest settled budget) — cost stays bounded by uMaxSteps.
       If(float(i).greaterThanEqual(float(uMaxSteps)), () => {
         Break();
       });
@@ -1277,7 +1331,12 @@ export function createVolumeNodeMaterial(
       const lvl = int(desiredLevelAt(pB, originB)).toVar();
 
       // LOD-adaptive step (P14): fine pitch where fine data is sampled.
-      const stepLen = max(max(float(uMinDelta), floorDelta), levelPitch(lvl))
+      // floorDelta stays in the max under both rules — the uMaxSteps
+      // termination guarantee is stride-rule-independent.
+      const stepLen = (anisoStride
+        ? max(floorDelta, levelPitch(lvl))
+        : max(max(float(uMinDelta), floorDelta), levelPitch(lvl))
+      )
         .mul(max(float(uStepScale), 1.0))
         .toVar();
 
@@ -1341,6 +1400,115 @@ export function createVolumeNodeMaterial(
           });
         });
 
+        // HIERARCHICAL-OCCUPANCY COARSE HOP (R4, orkestrator.occHierarchy) —
+        // tried BEFORE the per-brick skip: when the level-(lvl+1) AGGREGATE
+        // (the union of every level-lvl measured range under that cell —
+        // written only when complete, all-zero = unknown = never hop) proves
+        // every member invisible / mip-beaten / iso-missed, the ray hops the
+        // whole COARSE cell instead of brick-by-brick. Same predicate as the
+        // per-brick skip (CPU mirror: residentBrickSkippable), same decode
+        // as Phase A (sentinel per channel).
+        //
+        // SOUNDNESS (why no explicit level guard is emitted): the ray origin
+        // IS the camera (perspective), so `desiredLevelAt` is monotone
+        // NON-FINER along the ray — the finest desired level on any forward
+        // segment is at its start, which is exactly `lvl`, the level the
+        // aggregate bounds (ortho: desired is the constant uDesiredLevel).
+        // Coarser fallback samples inside the cell stay within the level-lvl
+        // hull up to downsampling boundary bleed — beneath the conservative
+        // quantization slack. CPU mirror of the monotonicity argument:
+        // core/raymarchStep.ts `desiredLevelForDistance` (+ tests).
+        if (occHierarchy) {
+          If(
+                resolved.status
+                  .greaterThanEqual(0.5)
+                  .and(resolved.status.lessThan(1.5))
+                  .and(int(lvl).add(1).lessThan(int(t.uNumLevels))),
+                () => {
+                  const aggLevel = int(lvl).add(1).toVar("aggLevel");
+                  const aggScale = vec3(t.uLevelScale.element(aggLevel)).toVar("aggScale");
+                  const aggShape = vec3(t.uLevelShape.element(aggLevel)).toVar("aggShape");
+                  const aggVoxel = clamp(
+                    vec3(pB).div(aggScale),
+                    vec3(0.0),
+                    aggShape.sub(0.5001),
+                  ).toVar("aggVoxel");
+                  const aggCell = ivec3(
+                    floor(aggVoxel.div(vec3(t.uBrickPayload))),
+                  ).toVar("aggCell");
+                  const aggTexel = vec4(
+                    texture3DLoad(
+                      t.aggregate,
+                      ivec3(t.uPageOffset.element(aggLevel)).add(aggCell),
+                    ),
+                  ).toVar("aggTexel");
+                  If(aggTexel.r.add(aggTexel.g).greaterThan(0.001), () => {
+                    const aggRange = max(float(t.uOccDecodeRange), 0.00001);
+                    const aggMin = select(
+                      aggTexel.r.lessThan(0.002),
+                      float(c.minValue),
+                      float(t.uOccDecodeMin).add(aggTexel.r.mul(aggRange)),
+                    ).toVar("aggMin");
+                    const aggMax = select(
+                      aggTexel.g.lessThan(0.002),
+                      float(c.maxValue),
+                      float(t.uOccDecodeMin).add(oneMinus(aggTexel.g).mul(aggRange)),
+                    ).toVar("aggMax");
+                    const aggSkipAll = bool(true).toVar("aggSkipAll");
+                    memberNodes.forEach((mem, m) => {
+                      const upper = float(0.0).toVar();
+                      Loop(
+                        {
+                          start: int(0),
+                          end: int(MAX_CHANNELS),
+                          type: "int",
+                          condition: "<",
+                          name: `ag${m}`,
+                        },
+                        (args: any) => {
+                          const k = args[`ag${m}`];
+                          If(int(k).greaterThanEqual(mem.slotCount), () => {
+                            Break();
+                          });
+                          const slot = int(mem.slotFirst).add(int(k)).toVar();
+                          If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
+                            Continue();
+                          });
+                          upper.assign(
+                            max(
+                              upper,
+                              max(
+                                float(memberFns[m].channelNormalize(slot, aggMin)),
+                                float(memberFns[m].channelNormalize(slot, aggMax)),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                      const invisible = upper.lessThanEqual(0.001);
+                      const mipBeaten = int(mem.projectionMode)
+                        .equal(int(0))
+                        .and(upper.lessThanEqual(acc[m].bestNorm));
+                      const isoMiss = int(mem.projectionMode)
+                        .equal(int(3))
+                        .and(upper.lessThan(mem.isoThreshold));
+                      aggSkipAll.assign(
+                        aggSkipAll.and(acc[m].done.or(invisible).or(mipBeaten).or(isoMiss)),
+                      );
+                    });
+                    If(aggSkipAll, () => {
+                      rayT.addAssign(
+                        max(
+                          stepLen,
+                          float(brickExitRel(pB, invD, aggLevel)).add(0.01),
+                        ),
+                      );
+                      Continue();
+                    });
+                  });
+                },
+              );
+        }
         // OCCUPANCY SKIP — the resident-brick analogue of the EMPTY hop (CPU
         // mirror: core/raymarchStep.ts `residentBrickSkippable`). The page
         // table's RG8 sidecar brackets each resident brick's raw [min, max]
@@ -1365,11 +1533,24 @@ export function createVolumeNodeMaterial(
           const occ = vec4(
             texture3DLoad(t.occupancy, ivec3(resolved.pageTexel)),
           ).toVar("occTexel");
-          const occRange = max(float(c.maxValue).sub(c.minValue), 0.00001);
-          const occMin = float(c.minValue).add(occ.r.mul(occRange)).toVar("occMin");
-          const occMax = float(c.minValue)
-            .add(oneMinus(occ.g).mul(occRange))
-            .toVar("occMax");
+          // Decode against the ENCODE range (uOccDecode*, = the pool range
+          // unless orkestrator.occObservedRange promoted the observed one).
+          // Byte 0 on either channel is the "unbounded on that side"
+          // sentinel and decodes to the POOL endpoint — the all-zero
+          // "unknown, never skip" texel stays airtight even while the
+          // observed range lags a brick whose readback has not landed.
+          // CPU lockstep: brickEncoding.decodeOccupancyBounds.
+          const occRange = max(float(t.uOccDecodeRange), 0.00001);
+          const occMin = select(
+            occ.r.lessThan(0.002), // code 0 = 0.0; code 1 = 1/255 ≈ 0.0039
+            float(c.minValue),
+            float(t.uOccDecodeMin).add(occ.r.mul(occRange)),
+          ).toVar("occMin");
+          const occMax = select(
+            occ.g.lessThan(0.002),
+            float(c.maxValue),
+            float(t.uOccDecodeMin).add(oneMinus(occ.g).mul(occRange)),
+          ).toVar("occMax");
           const occSkipAll = bool(true).toVar("occSkipAll");
           memberNodes.forEach((mem, m) => {
             const upper = float(0.0).toVar();
@@ -1430,6 +1611,9 @@ export function createVolumeNodeMaterial(
       // tricubic engages only on RESIDENT samples whose resolved level is
       // magnified past uSmoothThreshold px per voxel — the same footprint
       // math as desiredLevelAt (keep in lockstep). Perspective only.
+      // DELIBERATELY max-axis even under orkestrator.anisoStride: this is a
+      // screen-footprint question ("how magnified is this level"), not a
+      // marching-density one — the stride projection does not apply here.
       let smoothActive: any = null;
       if (smoothZoom) {
         const stepDist = max(distance(pB, originB), 1.0);

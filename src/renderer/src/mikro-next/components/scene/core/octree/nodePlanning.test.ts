@@ -7,6 +7,7 @@ import { buildLayerLevelGeometry, type LevelSource } from "./levelGeometry";
 import { chunksTouchingBrick } from "./nodeAddress";
 import {
   adjacentSlabBrickZ,
+  anisoEffectiveFactor,
   compareFetchOrder,
   foveatedScore,
   planLayerNodes,
@@ -994,5 +995,137 @@ describe("foveatedScore", () => {
 
   it("a zero-distance node scores zero regardless of direction", () => {
     expect(foveatedScore([0, 0, 0], origin, [0, 0, 1])).toBe(0);
+  });
+});
+
+describe("anisoEffectiveFactor (Phase C dominant-axis discount)", () => {
+  const randomUnit = (): [number, number, number] => {
+    const v: [number, number, number] = [
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1,
+    ];
+    const n = Math.hypot(...v) || 1;
+    return [v[0] / n, v[1] / n, v[2] / n];
+  };
+
+  it("equals the max rule whenever no axis dominates the view (any diagonal)", () => {
+    const d = Math.SQRT1_2 - 1e-6; // every |d_i| ≤ √½ ⇒ every weight = 1
+    const dirs: Array<[number, number, number]> = [
+      [d, d, 0],
+      [0.577, 0.577, 0.577],
+      [0.5, 0.5, Math.sqrt(0.5)],
+    ];
+    for (const dir of dirs) {
+      const scale: [number, number, number] = [
+        1 + Math.random() * 20,
+        1 + Math.random() * 20,
+        1 + Math.random() * 20,
+      ];
+      expect(anisoEffectiveFactor(scale, dir)).toBeCloseTo(Math.max(...scale), 4);
+    }
+  });
+
+  it("is a no-op on isotropic and [2ⁿ,2ⁿ,1] pyramids for EVERY view", () => {
+    for (let i = 0; i < 300; i++) {
+      const dir = randomUnit();
+      const s = 1 + Math.random() * 20;
+      expect(anisoEffectiveFactor([s, s, s], dir)).toBeCloseTo(s, 6);
+      // z never downsampled: the discounted axis never carries the max alone.
+      expect(anisoEffectiveFactor([8, 8, 1], dir)).toBeCloseTo(8, 6);
+    }
+  });
+
+  it("discounts only the view-aligned axis on true-factor pyramids", () => {
+    // Face-on (along the divergent z): refinement keys to the screen axes.
+    expect(anisoEffectiveFactor([2, 2, 9], [0, 0, 1])).toBeCloseTo(4.5, 6);
+    // Across-view: the z-dominant-view protection is fully preserved.
+    expect(anisoEffectiveFactor([2, 2, 9], [1, 0, 0])).toBeCloseTo(9, 6);
+    // A huge divergence still forces refinement at half weight even face-on.
+    expect(anisoEffectiveFactor([2, 2, 32], [0, 0, 1])).toBeCloseTo(16, 6);
+  });
+
+  it("ramps continuously through the 45° boundary", () => {
+    const effAt = (dz: number) => {
+      const dx = Math.sqrt(1 - dz * dz);
+      return anisoEffectiveFactor([2, 2, 9], [dx, 0, dz]);
+    };
+    expect(effAt(Math.SQRT1_2 - 1e-4)).toBeCloseTo(effAt(Math.SQRT1_2 + 1e-4), 2);
+    for (let dz = 0.71; dz < 1; dz += 0.02) {
+      expect(effAt(dz + 0.02 > 1 ? 1 : dz + 0.02)).toBeLessThanOrEqual(effAt(dz) + 1e-6);
+    }
+  });
+});
+
+describe("planLayerNodes anisotropy-aware LOD (Phase C, orkestrator.anisoLod)", () => {
+  // True-factor pyramid: z downsamples 9× while xy downsample 2× (dim order
+  // [z, y, x] ⇒ spatial scale (x, y, z) = (2, 2, 9) at L1, (4, 4, 18) at L2).
+  const LEVELS: LevelSource[] = [
+    { shape: [252, 256, 256], chunks: [64, 64, 64], dtype: "uint8", storeId: "c0" },
+    { shape: [28, 128, 128], chunks: [28, 64, 64], dtype: "uint8", storeId: "c1", scaleFactors: [9, 2, 2] },
+    { shape: [14, 64, 64], chunks: [14, 64, 64], dtype: "uint8", storeId: "c2", scaleFactors: [18, 4, 4] },
+  ];
+  const volLayer = {
+    ...makeLayer({ zAxis: "z" }),
+    lens: {
+      slices: [],
+      axisNames: ["z", "y", "x"],
+      shape: [252, 256, 256],
+      dataset: { axisNames: ["z", "y", "x"], dataArrays: [] },
+    },
+  } as unknown as LayerState;
+  const geo = buildLayerLevelGeometry(["z", "y", "x"], volLayer, LEVELS)!;
+  const spec = resolveBrickSpec(geo, "3D");
+  const VIEW: LayerViewRange = { xRange: [0, 256], yRange: [0, 256], zRange: [0, 252], scale: 0.15 };
+
+  /** A camera at `position` looking at the volume center, tuned so every
+   * visible node's footprint sits at ~0.11–0.15 px/voxel — inside the band
+   * where eff=9 refines (≥1px) and eff=4.5 does not. */
+  const cameraAt = (position: [number, number, number]): NodeCamera => {
+    const cam = new THREE.PerspectiveCamera(60, 1, 1, 100000);
+    cam.position.set(...position);
+    cam.lookAt(128, 128, 126);
+    cam.updateMatrixWorld(true);
+    cam.updateProjectionMatrix();
+    const projScreen = new THREE.Matrix4().multiplyMatrices(
+      cam.projectionMatrix,
+      cam.matrixWorldInverse,
+    );
+    return {
+      voxelFrustum: new THREE.Frustum().setFromProjectionMatrix(projScreen),
+      voxelPosition: position,
+      pxPerVoxelAtUnitDistance: 113,
+    };
+  };
+
+  const plan = (camera: NodeCamera | null, anisoLod: boolean) =>
+    planLayerNodes({
+      layer: volLayer,
+      geometry: geo,
+      spec,
+      mode: "3D",
+      viewRange: VIEW,
+      camera,
+      lodBias: 1,
+      currentZ: undefined,
+      anisoLod,
+    });
+
+  it("face-on (along the divergent z): stops fetching a whole level early", () => {
+    const camera = cameraAt([128, 128, 1000]);
+    expect(plan(camera, false).targetLevel).toBe(1); // max rule: eff 9 ⇒ refine
+    expect(plan(camera, true).targetLevel).toBe(2); // discount: eff 4.5 ⇒ hold
+  });
+
+  it("across-view (along x): the z-dominant protection is preserved", () => {
+    const camera = cameraAt([1000, 128, 126]);
+    expect(plan(camera, false).targetLevel).toBe(1);
+    expect(plan(camera, true).targetLevel).toBe(1); // eff = 9 either way
+  });
+
+  it("no camera (orthographic/2D path): falls back to the max rule", () => {
+    const withFlag = plan(null, true);
+    const withoutFlag = plan(null, false);
+    expect(sameNodePlan(withFlag, withoutFlag)).toBe(true);
   });
 });

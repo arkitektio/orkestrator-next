@@ -3,11 +3,13 @@ import { TIER_HIGH, TIER_LOW, TIER_MEDIUM } from "../core/qualityGovernor";
 import {
   createCompositorStats,
   createVolumeInputsTracker,
+  decideSettleRefine,
   decideVolumeFrame,
   ladderFeedforwardPassCount,
   needsTargetResize,
   resolveVolumeScale,
   resolveVolumeTargetSize,
+  type SettleRefineAction,
   type VolumeFrameKey,
 } from "./volumeCompositor";
 
@@ -198,5 +200,71 @@ describe("ladderFeedforwardPassCount", () => {
   it("reports one pass to the DPR ladder while the volume target owns raymarch cost", () => {
     expect(ladderFeedforwardPassCount(true, 6)).toBe(1);
     expect(ladderFeedforwardPassCount(false, 6)).toBe(6);
+  });
+});
+
+describe("decideSettleRefine (settle refinement ladder)", () => {
+  const base = {
+    cameraMoving: false,
+    streaming: false,
+    enabled: true,
+    cacheEnabled: true,
+    renderedThisFrame: true,
+    scale: 1,
+    stage: 0,
+    maxStages: 2,
+  };
+  const decide = (overrides: Partial<typeof base> = {}): SettleRefineAction =>
+    decideSettleRefine({ ...base, ...overrides });
+
+  it("advances after a settled full-res render below the max stage", () => {
+    expect(decide()).toBe("advance");
+    expect(decide({ stage: 1 })).toBe("advance");
+    expect(decide({ stage: 2 })).toBe("hold"); // parked at max
+  });
+
+  it("motion or streaming resets a held stage, holds at stage 0", () => {
+    expect(decide({ cameraMoving: true, stage: 1 })).toBe("reset");
+    expect(decide({ streaming: true, stage: 2 })).toBe("reset");
+    expect(decide({ cameraMoving: true, stage: 0 })).toBe("hold");
+    expect(decide({ streaming: true, stage: 0 })).toBe("hold");
+  });
+
+  it("flag-off RESETS a held stage (never freezes a boosted budget)", () => {
+    expect(decide({ enabled: false, stage: 2 })).toBe("reset");
+    expect(decide({ enabled: false, stage: 0 })).toBe("hold");
+  });
+
+  it("cache-off keeps the ladder dormant (every frame would re-render at 4×)", () => {
+    expect(decide({ cacheEnabled: false, stage: 0 })).toBe("hold");
+    expect(decide({ cacheEnabled: false, stage: 1 })).toBe("reset");
+  });
+
+  it("only a completed FULL-RES render arms an advance", () => {
+    expect(decide({ renderedThisFrame: false })).toBe("hold");
+    expect(decide({ scale: 0.5 })).toBe("hold");
+  });
+
+  it("terminates structurally: folding over frames reaches max and holds", () => {
+    let stage = 0;
+    const frames = [
+      { cameraMoving: false }, // settle frame → advance to 1
+      { cameraMoving: false }, // stage-1 render → advance to 2
+      { cameraMoving: false }, // stage-2 render → hold
+      { cameraMoving: false }, // stays held
+    ];
+    const trace: SettleRefineAction[] = [];
+    for (const frame of frames) {
+      const action = decide({ ...frame, stage });
+      trace.push(action);
+      if (action === "advance") stage = Math.min(stage + 1, base.maxStages);
+      if (action === "reset") stage = 0;
+    }
+    expect(trace).toEqual(["advance", "advance", "hold", "hold"]);
+    expect(stage).toBe(2);
+    // A mid-ladder motion frame resets to 0 and the ladder restarts.
+    expect(decide({ cameraMoving: true, stage })).toBe("reset");
+    stage = 0;
+    expect(decide({ stage })).toBe("advance");
   });
 });

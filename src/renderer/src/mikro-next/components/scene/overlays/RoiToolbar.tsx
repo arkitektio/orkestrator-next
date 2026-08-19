@@ -14,6 +14,7 @@ import {
   Box,
   Brush,
   Crosshair,
+  Droplet,
   Minus,
   MousePointer2,
   Pentagon,
@@ -45,6 +46,9 @@ const TOOLS: {
   // The skeleton brush (3D-only): paint a stroke over a bright structure,
   // the extracted centerline becomes a PATH annotation.
   { tool: "BRUSH", label: "Brush", icon: Brush },
+  // The smooth blob (3D-only): click a probed point, a smoothed surface
+  // grows around the bright structure until it closes.
+  { tool: "BLOB", label: "Blob", icon: Droplet },
 ];
 
 export const RoiToolbar = () => {
@@ -86,6 +90,8 @@ export const RoiToolbar = () => {
           "Drag to select annotations"
         ) : activeTool === "BRUSH" ? (
           "Drag over the volume to paint a stroke along the structure"
+        ) : activeTool === "BLOB" ? (
+          "Click a bright structure — a surface grows around it"
         ) : displayMode === "3D" ? (
           "Click the volume to place each point — probed onto the data"
         ) : (

@@ -17,6 +17,12 @@
  * This module is the CPU mirror of that GLSL (same lockstep contract as
  * `core/probeMath.ts` ↔ the shader normalization). The `.test.ts` pins the
  * invariance the shader relies on; keep the formula here identical to the shader.
+ *
+ * The PITCH RULE feeding stepLen/refStep is orthogonal to this formula: under
+ * `orkestrator.anisoStride` both switch to the direction-projected pitch
+ * (`core/raymarchStep.ts directionProjectedPitch`) — numerator and reference
+ * use the SAME projection, so the identity-at-the-finest-settled-sample
+ * semantics carry over unchanged.
  */
 
 /**

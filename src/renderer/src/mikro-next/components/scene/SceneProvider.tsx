@@ -304,9 +304,8 @@ export const SceneProvider = (props: {
         if (viewer.probeLayerId && removedLayerIds.includes(viewer.probeLayerId)) {
           viewer.setProbeLayerId(null);
         }
-        // A selection outliving its layer leaves `SelectionInfoPanel` unable
-        // to resolve a collection matrix — no anchor, so it parks in the
-        // corner describing a shape that is no longer in the scene.
+        // A selection outliving its layer would keep describing a shape that
+        // is no longer in the scene.
         scope.roiSelectionStore.getState().dropLayerSelections(removedLayerIds);
       }
       // Stamp what we actually folded. If a newer fragment arrived meanwhile,

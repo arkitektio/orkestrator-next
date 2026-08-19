@@ -1,11 +1,10 @@
 import { instanceHue } from "../render/fabriks/instanceColormaps";
 
 /**
- * How selections are LABELLED, shared by the three surfaces that show them:
- * the annotations sidebar, the meshes sidebar and the in-canvas
- * `SelectionInfoPanel`. A mesh must carry the same hue chip and the same
- * "#42 · 12.4k v" shorthand wherever it appears, or the panel and the tab read
- * as two different objects.
+ * How selections are LABELLED, shared by the surfaces that show them: the
+ * annotations sidebar and the meshes sidebar. A mesh must carry the same hue
+ * chip and the same "#42 · 12.4k v" shorthand wherever it appears, or two
+ * surfaces read as two different objects.
  */
 
 /** Compact magnitudes for catalog counts: "980", "12.4k", "1.2M". */

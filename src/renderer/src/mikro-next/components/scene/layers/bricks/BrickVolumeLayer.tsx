@@ -138,7 +138,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // Pool appears/rebuilds/disposes → re-render. NOT residencyVersion: that
   // bumps per upload batch while streaming and would re-render this component
   // continuously during a pan for nothing (texture updates are imperative).
-  useViewerStore((s) => s.poolsVersion);
+  // The VALUE feeds the decode-uniform effect below: range moves (auto-range,
+  // occupancy promotions) bump poolsVersion and the shader's decode uniforms
+  // must follow the pool's ranges.
+  const poolsVersion = useViewerStore((s) => s.poolsVersion);
   const brickSystem = useViewerStore((s) => s.brickSystem);
 
   // Scalar selectors ONLY: cameraPose/viewportSize are new objects on every
@@ -208,9 +211,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     interactionMode,
     probeFollowsCursor,
     drawingToolActive: isDrawingTool(activeTool),
-    // The skeleton brush paints THROUGH this volume's probe march, so the
-    // volume is the one layer that arms for it.
-    brushToolActive: activeTool === "BRUSH",
+    // The skeleton brush and the smooth blob both work THROUGH this volume's
+    // probe march, so the volume is the one layer that arms for them.
+    brushToolActive: activeTool === "BRUSH" || activeTool === "BLOB",
     // The volume answers ANNOTATE hover: inside a volume there is no draw
     // plane, so the probe IS the placement for every shape tool.
     annotateProbes: true,
@@ -452,6 +455,27 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, planTargetLevel, layer?.projection, invalidate]);
 
+  // Range-decode uniforms, tracked on every poolsVersion bump: the pool's
+  // ranges MOVE at runtime (float auto-contrast; occupancy observed-range
+  // promotions) and the encode↔decode lockstep requires the uniforms to
+  // follow. Deliberately its own effect: the channel-uniform effect above
+  // keys on layer settings and would not re-run on a pure range move.
+  useEffect(() => {
+    if (!bundle || !pool) return;
+    /* eslint-disable react-hooks/immutability --
+     * Uniform nodes are deliberately mutable handles into a compiled shader
+     * graph (see useVolumeRayUniforms' module header). */
+    const n = bundle.nodes;
+    n.minValue.value = pool.minValue;
+    n.maxValue.value = pool.maxValue;
+    n.uEmptyDecodeMin.value = pool.minValue;
+    n.uEmptyDecodeRange.value = pool.maxValue - pool.minValue;
+    n.uOccDecodeMin.value = pool.occEncodeMin;
+    n.uOccDecodeRange.value = pool.occEncodeMax - pool.occEncodeMin;
+    /* eslint-enable react-hooks/immutability */
+    invalidate();
+  }, [bundle, pool, poolsVersion, invalidate]);
+
   useVolumeRayUniforms(bundle?.nodes, {
     pool,
     // The FINEST level any member planned: residency is shared and the walk goes
@@ -460,7 +484,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     planTargetLevel,
   });
 
-  useStepScaleUniform(bundle?.nodes);
+  useStepScaleUniform(bundle?.nodes, /* settleRefine — image material */ true);
   useVolumePassRegistration(!!bundle);
 
   // --- Probing: CPU march over the resident bricks (shader lockstep) -------
@@ -657,6 +681,22 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
           e.stopPropagation();
           // Synchronous: click latency matters, click storms don't.
           updateProbe(probeFromRay(e.ray, "click"), e.shiftKey);
+          return;
+        }
+        if (
+          interactionMode === "ANNOTATE" &&
+          roiDrawingApi.getState().activeTool === "BLOB"
+        ) {
+          // The smooth blob: one probed point IS the whole gesture — the
+          // grow loop takes it from here. Same single-layer decline rule.
+          if (!answersProbe()) return;
+          const probe = probeFromRay(e.ray, "click");
+          if (!probe?.worldPos) return;
+          e.stopPropagation();
+          const brush = brushApi.getState();
+          brush.beginStroke(layerId, "blob");
+          brush.addSample({ world: probe.worldPos, voxel: probe.voxelIndex });
+          brush.endStroke();
           return;
         }
         if (

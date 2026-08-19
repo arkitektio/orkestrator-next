@@ -6,11 +6,9 @@
  * server confirms it — but on a scene's FIRST annotation the server is also
  * minting the `AnnotationLayer` that draws it, so there is no layer to name
  * yet and the entry is written with `layerId: ""`. The canvas highlight copes
- * (it matches by annotation id), but everything that needs the collection's
- * PLACEMENT does not: `SelectionInfoPanel` looks the collection matrix up by
- * `layerId`, finds nothing, computes no anchor, and the projector parks the
- * panel in its corner fallback instead of beside the shape — for the rest of
- * the session, because nothing else revisits that entry.
+ * (it matches by annotation id), but everything that resolves the collection
+ * by `layerId` — measures, go-to, delete — finds nothing for that entry, for
+ * the rest of the session, because nothing else revisits it.
  *
  * The layer that draws an annotation holds the authoritative entry for it, so
  * it is the one that repairs. Kept pure and free of generated imports so its

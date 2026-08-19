@@ -52,6 +52,19 @@ export type PageTableTexture = {
   occupancy: THREE.Data3DTexture;
   occMirrors: Uint8Array[];
   occBacking: Uint8Array;
+  /**
+   * Hierarchical-occupancy AGGREGATE sidecar (R4, `orkestrator.occHierarchy`):
+   * an RG8 texture with the SAME layout where the texel at (level h, cell c)
+   * carries the conservative union of the MEASURED ranges of every level-(h−1)
+   * brick overlapping that cell — written only when ALL those children are
+   * known (`core/octree/occupancyAggregate.ts`), all-zero otherwise ("unknown,
+   * never hop"). This is a statement about the DATA, not residency: entries
+   * survive eviction and are only cleared on a pool flush. Same dirty-box
+   * flush as the other two textures.
+   */
+  aggregate: THREE.Data3DTexture;
+  aggMirrors: Uint8Array[];
+  aggBacking: Uint8Array;
 };
 
 const configureTexture = (texture: THREE.Data3DTexture, format: THREE.PixelFormat) => {
@@ -76,6 +89,9 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
   configureTexture(texture, THREE.RGBAFormat);
   const occupancy = new THREE.Data3DTexture(occBacking, w, h, d);
   configureTexture(occupancy, THREE.RGFormat);
+  const aggBacking = new Uint8Array(w * h * d * 2); // all zero = unknown, never hop
+  const aggregate = new THREE.Data3DTexture(aggBacking, w, h, d);
+  configureTexture(aggregate, THREE.RGFormat);
 
   return {
     texture,
@@ -90,7 +106,50 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
       (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
     ),
     occBacking,
+    aggregate,
+    aggMirrors: layout.levelGrid.map(
+      (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
+    ),
+    aggBacking,
   };
+}
+
+/**
+ * Write one aggregate texel at (level, cell) — `encodeOccupancyTexel` bytes
+ * against the pool's occupancy ENCODE range, or `null` to reset the cell to
+ * the all-zero "unknown, never hop" sentinel. Shares the page table's dirty
+ * boxes, so the next `flushPageTable` uploads it.
+ */
+export function setAggregateEntry(
+  pageTable: PageTableTexture,
+  level: number,
+  cell: Vec3,
+  texel: readonly [number, number] | null,
+): void {
+  const grid = pageTable.layout.levelGrid[level];
+  const entry = pageEntryIndex(grid, cell);
+  const r = texel?.[0] ?? 0;
+  const g = texel?.[1] ?? 0;
+  pageTable.aggMirrors[level][entry * 2] = r;
+  pageTable.aggMirrors[level][entry * 2 + 1] = g;
+  const box = pageTable.dirty[level];
+  if (box === null) {
+    pageTable.dirty[level] = {
+      min: [cell[0], cell[1], cell[2]],
+      max: [cell[0], cell[1], cell[2]],
+    };
+  } else {
+    for (let axis = 0; axis < 3; axis++) {
+      if (cell[axis] < box.min[axis]) box.min[axis] = cell[axis];
+      if (cell[axis] > box.max[axis]) box.max[axis] = cell[axis];
+    }
+  }
+  const offset = pageTable.layout.levelOffset[level];
+  const [w, h] = [pageTable.layout.size[0], pageTable.layout.size[1]];
+  const flat =
+    ((offset[2] + cell[2]) * h + (offset[1] + cell[1])) * w + (offset[0] + cell[0]);
+  pageTable.aggBacking[flat * 2] = r;
+  pageTable.aggBacking[flat * 2 + 1] = g;
 }
 
 export function setPageEntry(
@@ -186,7 +245,20 @@ export function flushPageTable(
         rowsPerImage: grid[1],
       },
     );
-    if (pageOk && occOk) {
+    const aggOk = uploadTexSubImage3D(
+      renderer,
+      pageTable.aggregate,
+      "rg8",
+      dest,
+      [extent[0], extent[1], extent[2]],
+      pageTable.aggMirrors[level],
+      {
+        offsetBytes: ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
+        bytesPerRow: grid[0] * 2,
+        rowsPerImage: grid[1],
+      },
+    );
+    if (pageOk && occOk && aggOk) {
       pageTable.dirty[level] = null;
       uploaded = true;
     }
@@ -198,10 +270,12 @@ export function flushPageTable(
 export function clearPageTable(pageTable: PageTableTexture): void {
   pageTable.backing.fill(0);
   pageTable.occBacking.fill(0);
+  pageTable.aggBacking.fill(0);
   for (let level = 0; level < pageTable.mirrors.length; level++) {
     const grid = pageTable.layout.levelGrid[level];
     pageTable.mirrors[level].fill(0);
     pageTable.occMirrors[level].fill(0);
+    pageTable.aggMirrors[level].fill(0);
     pageTable.dirty[level] = {
       min: [0, 0, 0],
       max: [grid[0] - 1, grid[1] - 1, grid[2] - 1],
@@ -212,4 +286,5 @@ export function clearPageTable(pageTable: PageTableTexture): void {
 export function disposePageTable(pageTable: PageTableTexture): void {
   pageTable.texture.dispose();
   pageTable.occupancy.dispose();
+  pageTable.aggregate.dispose();
 }

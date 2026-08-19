@@ -17,10 +17,8 @@ const roi = (id: string, layerId: string): SelectedRoi => ({
 });
 
 /**
- * A selection must not outlive its layer. `SelectionInfoPanel` resolves the
- * collection matrix by `layerId`, so a selected shape whose layer is gone
- * yields no anchor and the info panel parks in the corner describing something
- * that is no longer in the scene.
+ * A selection must not outlive its layer: a selected shape whose layer is
+ * gone keeps describing something that is no longer in the scene.
  */
 describe("dropLayerSelections", () => {
   it("drops selections belonging to a departed layer", () => {

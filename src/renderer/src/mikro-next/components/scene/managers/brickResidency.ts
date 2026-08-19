@@ -46,6 +46,14 @@ import {
   getDecodedChunkCacheBytes,
   resolvePoolBudget,
 } from "../core/octree/poolBudget";
+import {
+  isOccHierarchyEnabled,
+  isOccObservedRangeEnabled,
+} from "../render/bricks/shaderFlags";
+import {
+  aggregateIfComplete,
+  parentCellsOf,
+} from "../core/octree/occupancyAggregate";
 import type { RepackDispatcher } from "../core/octree/repackDispatcher";
 import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../core/octree/brickSpec";
 import {
@@ -60,6 +68,7 @@ import {
   brickGridForLevel,
   chunksTouchingBrick,
   fetchVoxelBox,
+  nodeKey,
   nodeVoxelBox,
   parseNodeKey,
   totalBrickCount,
@@ -111,6 +120,7 @@ import {
   createPageTableTexture,
   disposePageTable,
   flushPageTable,
+  setAggregateEntry,
   setPageEntry,
   type PageTableTexture,
 } from "../render/bricks/pageTableTexture";
@@ -132,6 +142,14 @@ const PAGE_TEXTURE_MAX_EXTENT = 2048;
 // TIER-scaled — read from the quality governor's profile at use sites (P19).
 
 const DECODED_CHUNK_CACHE_BYTES = getDecodedChunkCacheBytes();
+
+/** The range occupancy texels are quantized against — the pool range unless
+ * the observed-range flag promoted a tighter one (see `occObservedRange`).
+ * MUST be the range the shader's `uOccDecodeMin/Range` uniforms hold. */
+const occEncodeRangeOf = (pool: LayerBrickPool): { minValue: number; maxValue: number } => ({
+  minValue: pool.occEncodeMin,
+  maxValue: pool.occEncodeMax,
+});
 
 /** A decoded chunk plus its shared-cache key (doubles as the GPU-buffer key). */
 type GpuQueuedChunk = RepackChunk & { cacheKey: string };
@@ -261,6 +279,38 @@ export type LayerBrickPool = {
   /** True once a non-degenerate brick has seeded the real auto-range, so the
    * first update replaces the provisional `[0,1]` seed instead of unioning. */
   autoRangeInitialized: boolean;
+  /** Occupancy OBSERVED-range encoding (`orkestrator.occObservedRange`,
+   * captured at pool creation): quantize the occupancy sidecar against the
+   * running union of every landed brick range instead of the pool (dtype)
+   * range — on dim integer data the dtype-range encoding collapses to a few
+   * codes and MIP maximum-culling never fires. `occEncodeMin/Max` is the
+   * range the sidecar texels are CURRENTLY encoded against (the shader's
+   * `uOccDecodeMin/Range` must always equal it — the lockstep invariant);
+   * `occObserved*` is the running union that PROMOTES into it via a
+   * two-drain protocol (`occRangePromotePending` → blank all texels +
+   * promote + bump, then `occReencodePending` → re-encode next drain) so
+   * there is never a frame where texels are encoded against a range the
+   * shader uniforms don't hold — blanked texels are the "never skip"
+   * sentinel under ANY uniforms. Flag off: `occEncode*` mirrors the pool
+   * range (bit-identical to the legacy single-range behavior). */
+  occObservedRange: boolean;
+  occObservedMin: number;
+  occObservedMax: number;
+  occObservedInitialized: boolean;
+  occEncodeMin: number;
+  occEncodeMax: number;
+  occRangePromotePending: boolean;
+  occReencodePending: boolean;
+  /** Hierarchical occupancy (R4, `orkestrator.occHierarchy`, captured at
+   * pool creation). `measuredRanges` holds every brick's raw measured
+   * [min,max] (uniform bricks as [v,v]) and — unlike `brickRanges` —
+   * SURVIVES EVICTION: ranges are statements about the data, invalidated
+   * only by a pool flush. `aggregateRanges` holds the written level-h
+   * aggregates (key = nodeKey(h, cell)) so promotions can blank/re-encode
+   * them without re-checking completeness. See occupancyAggregate.ts. */
+  occHierarchy: boolean;
+  measuredRanges: Map<string, readonly [number, number]>;
+  aggregateRanges: Map<string, readonly [number, number]>;
   /** Keys whose slot was written by the GPU repack kernel: the CPU atlas
    * mirror never sees those writes, so `sampleResident` must read THESE bricks
    * from the decoded chunk cache instead (`sampleChunkCacheSync`). Scoped
@@ -362,6 +412,9 @@ export type BrickSystemStats = {
   /** Streaming wakeups whose render was coalesced by the cadence gate — each
    * one is a whole-scene re-raymarch that no longer happened (gap 1a). */
   streamFramesCoalesced: number;
+  /** Hierarchical-occupancy aggregate texels written (R4) — a write happens
+   * when a parent cell's LAST child range lands (or on re-encode). */
+  aggregateWrites: number;
 };
 
 export class BrickResidencyManager {
@@ -489,6 +542,7 @@ export class BrickResidencyManager {
     staleUploads: 0,
     fetchErrors: 0,
     streamFramesCoalesced: 0,
+    aggregateWrites: 0,
   };
   /** Streaming render-cadence gate (gap 1a — see resolveStreamFrameAction):
    * last actually-issued streaming invalidate, and the off-frame pump timer
@@ -645,6 +699,16 @@ export class BrickResidencyManager {
           pendingFetch: pool.pendingFetch.length,
           protectedKeys: pool.protectedKeys.size,
           dataRange: [pool.minValue, pool.maxValue],
+          occEncodeRange: [pool.occEncodeMin, pool.occEncodeMax],
+          occObservedRange: pool.occObservedInitialized
+            ? [pool.occObservedMin, pool.occObservedMax]
+            : null,
+          occHierarchy: pool.occHierarchy
+            ? {
+                measured: pool.measuredRanges.size,
+                aggregatesComplete: pool.aggregateRanges.size,
+              }
+            : null,
           sliceSignature: pool.sliceSignature,
           // Why bricks did (not) take the GPU repack path — "ready" above only
           // means the pipeline compiled; per-brick `supports()` can still
@@ -1762,6 +1826,22 @@ export class BrickResidencyManager {
       autoRange,
       autoRangeEncodeDirty: false,
       autoRangeInitialized: false,
+      // Occupancy encode range starts at the pool range (legacy behavior)
+      // and, when the flag is on, tightens to the observed union as bricks
+      // land. NEVER for label pools: their occupancy is id-space where
+      // "range" has no windowing meaning, exactly like autoRange.
+      occObservedRange:
+        derivation.valueSemantics === "intensity" && isOccObservedRangeEnabled(),
+      occObservedMin: 0,
+      occObservedMax: 0,
+      occObservedInitialized: false,
+      occEncodeMin: minValue,
+      occEncodeMax: maxValue,
+      occRangePromotePending: false,
+      occReencodePending: false,
+      occHierarchy: isOccHierarchyEnabled(),
+      measuredRanges: new Map(),
+      aggregateRanges: new Map(),
       gpuStaleKeys: new Set(),
       minTargetLevel: 0,
       lastRepackPath: null,
@@ -2135,6 +2215,14 @@ export class BrickResidencyManager {
       const texel = encodeEmptyTexel(pending.uniformValue, pool, pool.emptyBits);
       setPageEntry(pool.pageTable, pending.level, pending.coords, texel, PAGE_FLAG_EMPTY);
       pool.emptyValues.set(pending.key, pending.uniformValue);
+      this.recordMeasuredRange(
+        pool,
+        pending.key,
+        pending.level,
+        pending.coords,
+        pending.uniformValue,
+        pending.uniformValue,
+      );
       this.stats.emptyBricks += 1;
       progress.uploadedAny = true;
       return "done";
@@ -2240,16 +2328,30 @@ export class BrickResidencyManager {
     // Occupancy sidecar: the brick's conservative min/max bracket (skip
     // predicate for the raymarcher). GPU-path bricks have no range yet —
     // the default texel means "unknown, never skip" until the readback
-    // continuation writes the real one (applyGpuOutcome).
-    if (pending.range) pool.brickRanges.set(pending.key, pending.range);
+    // continuation writes the real one (applyGpuOutcome). While a range
+    // promotion is in flight (occReencodePending) new texels stay "unknown"
+    // too: the shader's decode uniforms may not yet hold the new encode
+    // range, and the re-encode pass writes the real texel from brickRanges.
+    if (pending.range) {
+      pool.brickRanges.set(pending.key, pending.range);
+      this.accumulateOccRange(pool, pending.range[0], pending.range[1]);
+      this.recordMeasuredRange(
+        pool,
+        pending.key,
+        pending.level,
+        pending.coords,
+        pending.range[0],
+        pending.range[1],
+      );
+    }
     setPageEntry(
       pool.pageTable,
       pending.level,
       pending.coords,
       acquired.slot.coords,
       PAGE_FLAG_RESIDENT,
-      pending.range
-        ? encodeOccupancyTexel(pending.range[0], pending.range[1], pool)
+      pending.range && !pool.occReencodePending && !pool.occRangePromotePending
+        ? encodeOccupancyTexel(pending.range[0], pending.range[1], occEncodeRangeOf(pool))
         : undefined,
     );
     progress.bytes += frameCostBytes;
@@ -2360,6 +2462,22 @@ export class BrickResidencyManager {
       if (pool.autoRangeEncodeDirty) {
         pool.autoRangeEncodeDirty = false;
         this.reencodeEmptyEntries(pool);
+        this.reencodeOccupancyEntries(pool);
+      }
+      // Occupancy range promotion, two drains (see the occObservedRange field
+      // doc): drain N blanks every texel to the conservative sentinel and
+      // promotes the encode range (the poolsVersion bump pushing the new
+      // decode uniforms was scheduled by accumulateOccRange); drain N+1 —
+      // after the uniforms had a frame to land — writes the real texels.
+      if (pool.occRangePromotePending) {
+        pool.occRangePromotePending = false;
+        pool.occEncodeMin = pool.occObservedMin;
+        pool.occEncodeMax = pool.occObservedMax;
+        this.blankOccupancyEntries(pool);
+        pool.occReencodePending = true;
+        this.wakeDrain();
+      } else if (pool.occReencodePending) {
+        pool.occReencodePending = false;
         this.reencodeOccupancyEntries(pool);
       }
       flushPageTable(this.deps.renderer, pool.pageTable);
@@ -2556,6 +2674,13 @@ export class BrickResidencyManager {
     pool.minValue = nextMin;
     pool.maxValue = nextMax;
     pool.autoRangeInitialized = true;
+    // Flag-off pools keep the occupancy encode range mirroring the pool
+    // range (legacy single-range behavior); the autoRangeEncodeDirty pass
+    // below re-encodes the sidecar against it, exactly as before.
+    if (!pool.occObservedRange) {
+      pool.occEncodeMin = nextMin;
+      pool.occEncodeMax = nextMax;
+    }
 
     // EMPTY page entries encode their value against the pool range, so a
     // range move requires re-encoding them — but COALESCED to one pass per
@@ -2571,6 +2696,13 @@ export class BrickResidencyManager {
     // LAST range move of a burst always publishes (the drain's idle edge is
     // not a safe trailing site — applyGpuOutcome can fold ranges in after
     // the pipeline already went idle).
+    this.schedulePoolsBump();
+  }
+
+  /** Throttled `poolsVersion` bump + invalidate with a trailing timer, so
+   * the LAST event of a burst always publishes. Shared by the auto-range
+   * and occupancy-range paths. */
+  private schedulePoolsBump(): void {
     const now = performance.now();
     if (now - this.lastPoolsBumpAt > AUTO_RANGE_BUMP_MS) {
       this.lastPoolsBumpAt = now;
@@ -2590,6 +2722,43 @@ export class BrickResidencyManager {
     }
   }
 
+  /**
+   * Fold a landed brick range into the pool's occupancy OBSERVED range and
+   * decide whether it should PROMOTE into the encode range (see the
+   * `occObservedRange` field doc for the two-drain protocol). Promotion is
+   * worth a full sidecar rewrite only when it changes discrimination:
+   * the observed range escaped the encode range (encoded texels are
+   * clamping — culling weakens), or it tightened to under 80% of the encode
+   * span (finer codes — culling strengthens). Sub-1% growth is ignored like
+   * the auto-range wobble filter.
+   */
+  private accumulateOccRange(pool: LayerBrickPool, brickMin: number, brickMax: number): void {
+    if (!pool.occObservedRange) return;
+    if (!Number.isFinite(brickMin) || !Number.isFinite(brickMax) || brickMax < brickMin) return;
+
+    pool.occObservedMin = pool.occObservedInitialized
+      ? Math.min(pool.occObservedMin, brickMin)
+      : brickMin;
+    pool.occObservedMax = pool.occObservedInitialized
+      ? Math.max(pool.occObservedMax, brickMax)
+      : brickMax;
+    pool.occObservedInitialized = true;
+
+    if (pool.occRangePromotePending) return; // already scheduled
+    const encodeSpan = Math.max(pool.occEncodeMax - pool.occEncodeMin, 1e-6);
+    const observedSpan = pool.occObservedMax - pool.occObservedMin;
+    if (observedSpan <= 0) return; // degenerate union: nothing to encode against
+    const escaped =
+      pool.occObservedMin < pool.occEncodeMin - encodeSpan * 0.01 ||
+      pool.occObservedMax > pool.occEncodeMax + encodeSpan * 0.01;
+    const tightened = observedSpan < encodeSpan * 0.8;
+    if (!escaped && !tightened) return;
+
+    pool.occRangePromotePending = true;
+    this.wakeDrain();
+    this.schedulePoolsBump();
+  }
+
   /** Re-encode every EMPTY page entry against the current pool range (the
    * page table is flushed by the caller). */
   private reencodeEmptyEntries(pool: LayerBrickPool): void {
@@ -2606,10 +2775,11 @@ export class BrickResidencyManager {
   }
 
   /** Re-encode every RESIDENT brick's occupancy texel against the current
-   * pool range (same quantization dependency as the EMPTY entries; the range
-   * only ever widens, but the old encoding was relative to the old range and
-   * may no longer bracket the brick after a move). */
+   * occupancy ENCODE range (same quantization dependency as the EMPTY
+   * entries; a range move leaves old encodings relative to the old range,
+   * which may no longer bracket the brick). */
   private reencodeOccupancyEntries(pool: LayerBrickPool): void {
+    const encodeRange = occEncodeRangeOf(pool);
     for (const [key, range] of pool.brickRanges) {
       const slot = pool.pool.slotOf(key);
       if (!slot) continue; // evicted since — its page entry is UNMAPPED
@@ -2620,8 +2790,77 @@ export class BrickResidencyManager {
         coords,
         slot.coords,
         PAGE_FLAG_RESIDENT,
-        encodeOccupancyTexel(range[0], range[1], pool),
+        encodeOccupancyTexel(range[0], range[1], encodeRange),
       );
+    }
+    for (const [key, range] of pool.aggregateRanges) {
+      const { level, coords } = parseNodeKey(key);
+      setAggregateEntry(
+        pool.pageTable,
+        level,
+        coords,
+        encodeOccupancyTexel(range[0], range[1], encodeRange),
+      );
+    }
+  }
+
+  /** Blank every RESIDENT brick's occupancy texel (and every aggregate
+   * texel) to the all-zero "unknown, never skip/hop" sentinel — the
+   * conservative intermediate state of a range promotion (valid under ANY
+   * decode uniforms; see `occObservedRange`). */
+  private blankOccupancyEntries(pool: LayerBrickPool): void {
+    for (const key of pool.brickRanges.keys()) {
+      const slot = pool.pool.slotOf(key);
+      if (!slot) continue;
+      const { level, coords } = parseNodeKey(key);
+      setPageEntry(pool.pageTable, level, coords, slot.coords, PAGE_FLAG_RESIDENT);
+    }
+    for (const key of pool.aggregateRanges.keys()) {
+      const { level, coords } = parseNodeKey(key);
+      setAggregateEntry(pool.pageTable, level, coords, null);
+    }
+  }
+
+  /**
+   * Hierarchical occupancy (R4): fold one brick's measured range into
+   * `measuredRanges` and write every parent cell's aggregate that just
+   * became complete (`occupancyAggregate.ts`). Uniform (EMPTY) bricks land
+   * here too, as [v, v] — an aggregate is only as complete as ALL its
+   * children. While a range promotion is in flight the texel is written as
+   * the unknown sentinel (like the per-brick path); the re-encode pass
+   * rewrites it from `aggregateRanges`.
+   */
+  private recordMeasuredRange(
+    pool: LayerBrickPool,
+    key: string,
+    level: number,
+    coords: Vec3,
+    brickMin: number,
+    brickMax: number,
+  ): void {
+    if (!pool.occHierarchy) return;
+    if (!Number.isFinite(brickMin) || !Number.isFinite(brickMax) || brickMax < brickMin) return;
+    pool.measuredRanges.set(key, [brickMin, brickMax]);
+    const parentLevel = level + 1;
+    for (const cell of parentCellsOf(pool.geometry, pool.spec, level, coords)) {
+      const aggregate = aggregateIfComplete(
+        pool.geometry,
+        pool.spec,
+        parentLevel,
+        cell,
+        pool.measuredRanges,
+      );
+      if (!aggregate) continue;
+      pool.aggregateRanges.set(nodeKey(parentLevel, cell), aggregate);
+      setAggregateEntry(
+        pool.pageTable,
+        parentLevel,
+        cell,
+        pool.occReencodePending || pool.occRangePromotePending
+          ? null
+          : encodeOccupancyTexel(aggregate[0], aggregate[1], occEncodeRangeOf(pool)),
+      );
+      this.stats.aggregateWrites += 1;
     }
   }
 
@@ -2648,13 +2887,18 @@ export class BrickResidencyManager {
         const slot = pool.pool.slotOf(result.token.key);
         if (slot) {
           pool.brickRanges.set(result.token.key, [result.min, result.max]);
+          this.accumulateOccRange(pool, result.min, result.max);
+          this.recordMeasuredRange(pool, result.token.key, level, coords, result.min, result.max);
           setPageEntry(
             pool.pageTable,
             level,
             coords,
             slot.coords,
             PAGE_FLAG_RESIDENT,
-            encodeOccupancyTexel(result.min, result.max, pool),
+            // "Unknown" while a promotion is in flight — see drainEntry.
+            pool.occReencodePending || pool.occRangePromotePending
+              ? undefined
+              : encodeOccupancyTexel(result.min, result.max, occEncodeRangeOf(pool)),
           );
           touchedPools.add(pool);
         }
@@ -2670,6 +2914,14 @@ export class BrickResidencyManager {
       pool.coarsestResident.delete(result.token.key);
       pool.brickRanges.delete(result.token.key);
       pool.emptyValues.set(result.token.key, result.uniformValue);
+      this.recordMeasuredRange(
+        pool,
+        result.token.key,
+        level,
+        coords,
+        result.uniformValue,
+        result.uniformValue,
+      );
       this.stats.emptyBricks += 1;
       touchedPools.add(pool);
     }
@@ -2890,6 +3142,17 @@ export class BrickResidencyManager {
     pool.gpuStaleKeys.clear();
     pool.coarsestResident.clear();
     pool.autoRangeEncodeDirty = false;
+    // Occupancy observed range is a statement about the flushed data —
+    // reset to the pool range and re-observe from the refetched bricks.
+    pool.occObservedInitialized = false;
+    pool.occEncodeMin = pool.minValue;
+    pool.occEncodeMax = pool.maxValue;
+    pool.occRangePromotePending = false;
+    pool.occReencodePending = false;
+    // Measured ranges/aggregates describe the flushed slice's data — the ONE
+    // event that invalidates them (they deliberately survive eviction).
+    pool.measuredRanges.clear();
+    pool.aggregateRanges.clear();
     clearPageTable(pool.pageTable);
     pool.sliceSignature = nextSliceSignature;
     // The signature changed because the SELECTION changed (slices or a dim

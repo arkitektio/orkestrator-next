@@ -6,7 +6,13 @@ import { buildAffineMatrix } from "../core/worldTransform";
 import { simplifyPath, type PathPoint } from "../core/trace/pathSimplify";
 import { voxelWorldSize } from "../core/trace/traceBox";
 import { traceChannelSlab, traceLayerShape, traceLevelSteps } from "../core/trace/traceLayer";
-import { buildCostField, voxelCost } from "../core/skeleton/corridorCost";
+import {
+  buildCostField,
+  connectivityFromCost,
+  maskFieldByDistance,
+  voxelCost,
+} from "../core/skeleton/corridorCost";
+import { smoothCostField } from "../core/skeleton/fieldSmooth";
 import { marchTube, tubeClampValue } from "../core/skeleton/tubeMarch";
 import {
   MAX_TUBE_SAVE_TRIANGLES,
@@ -79,6 +85,34 @@ const CPU_MAX_TUBE_VERTICES = 240_000;
  * jank the very pointer stream that is painting. */
 const LIVE_MAX_CORRIDOR_VOXELS = 1_000_000;
 const LIVE_MAX_TUBE_VERTICES = 300_000;
+
+/** The GROW gesture (a click, not a stroke): the search sphere expands by
+ * this factor per step until the surface stops touching its boundary. */
+const GROW_FACTOR = 1.5;
+const MAX_GROW_STEPS = 10;
+
+/**
+ * Whether the surface still reaches the search sphere's boundary — the grow
+ * loop's stop test. The tube closes flat against the corridor wall
+ * (`tubeMarch`), parking those vertices just inside `radius`, so "any vertex
+ * within `margin` of the boundary" is exactly "still clipped by it".
+ */
+function touchesBoundary(
+  positions: Float32Array,
+  seedWorld: Vec3,
+  radius: number,
+  margin: number,
+): boolean {
+  const limit = Math.max(0, radius - margin);
+  const limitSq = limit * limit;
+  for (let i = 0; i < positions.length; i += 3) {
+    const dx = positions[i] - seedWorld[0];
+    const dy = positions[i + 1] - seedWorld[1];
+    const dz = positions[i + 2] - seedWorld[2];
+    if (dx * dx + dy * dy + dz * dz >= limitSq) return true;
+  }
+  return false;
+}
 
 type PickedCorridor = {
   level: number;
@@ -217,7 +251,9 @@ export const useBrushSkeleton = () => {
   const extract = useCallback(async () => {
     const brush = brushApi.getState();
     const { stroke, strokeLayerId } = brush;
-    if (!strokeLayerId || stroke.length < 2) return;
+    // One sample = the GROW gesture (expand a sphere from the probed point);
+    // two or more = the stroke gesture. Zero = nothing to do.
+    if (!strokeLayerId || stroke.length < 1) return;
     brush.setExtracting();
 
     const layer = sceneStoreApi
@@ -313,9 +349,151 @@ export const useBrushSkeleton = () => {
       ),
     ];
 
+    const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
+
+    // --- The smooth-blob GROW gesture: one probed point, no stroke. Expand
+    // the search sphere step by step, re-meshing the threshold surface each
+    // round, until it stops touching the boundary (closed), stops growing
+    // the budget allows, or runs out of steps. Each intermediate surface is
+    // published as the live tube, so the expansion is visible. --------------
+    if (brush.strokeMode === "blob") {
+      const smoothVoxels = Math.max(0, Math.floor(brush.blobSmoothness));
+      const gapVoxels = Math.max(0, Math.floor(brush.blobGap));
+      const seedWorld = stroke[0].world;
+      const gpuTube = skeletonizer?.tubeReady() ?? false;
+      const corridorBudget = gpuTube ? MAX_CORRIDOR_VOXELS : CPU_MAX_CORRIDOR_VOXELS;
+      let radius = radiusWorld;
+      let grown: { tube: TubeSurface; level: number } | null = null;
+      let closed = false;
+
+      for (let step = 0; step < MAX_GROW_STEPS; step += 1) {
+        if (brushApi.getState().status !== "extracting") return; // cancelled
+        const grownPick = pickCorridor({
+          strokeWorld: [seedWorld],
+          radiusWorld: radius,
+          inverse,
+          voxelSize,
+          levelSteps,
+          shape,
+          startLevel,
+          maxVoxels: corridorBudget,
+        });
+        if (!grownPick) break; // outgrew every level's budget: keep the last
+        const seedLevelPt = grownPick.worldToLevelVoxel(seedWorld);
+        const seedBoxRel = boxRelative(stroke[0].voxel, grownPick.box, grownPick.step);
+        // Gap N bridges dark gaps up to ~N voxels: crossing a one-voxel gap
+        // costs about one voxel of world length in the connectivity metric
+        // (two half-priced boundary edges), and the +0.75 tolerates a seed
+        // that probed a hair off the bright core.
+        const gapLimitWorld = (gapVoxels + 0.75) * Math.max(...grownPick.spacing);
+
+        let stepTube: { positions: Float32Array; triangles: number; truncated: boolean } | null =
+          null;
+        if (gpuTube && pool.pageTable.layout.levelOffset[grownPick.level]) {
+          stepTube = await skeletonizer!.extractTube({
+            atlas: pool.atlas,
+            pageTable: pool.pageTable,
+            level: grownPick.level,
+            box: grownPick.box,
+            strokeLevelPts: [seedLevelPt],
+            radiusWorld: radius,
+            weights,
+            channel,
+            minValue: dataWindow.min,
+            maxValue: dataWindow.max,
+            emptyCeiling: pool.emptyBits === 24 ? 0xffffff : 0xff,
+            poolMin: pool.minValue,
+            poolRange: Math.max(pool.maxValue - pool.minValue, 1e-5),
+            payload: pool.spec.payload,
+            border: pool.spec.border,
+            storedZ: pool.spec.stored[2],
+            spacing: grownPick.spacing,
+            tube: {
+              iso: tubeIso,
+              clampValue: tubeClampValue(tubeIso),
+              maxVertices: GPU_MAX_TUBE_VERTICES,
+              smoothVoxels,
+              connectivity: {
+                tau: brush.tubeThreshold,
+                gapLimitWorld,
+                seed: seedBoxRel,
+              },
+            },
+          });
+          if (brushApi.getState().status !== "extracting") return;
+        }
+        if (!stepTube) {
+          if (corridorVoxelCount(grownPick.box) > CPU_MAX_CORRIDOR_VOXELS) break;
+          const built = buildCostField({
+            box: grownPick.box,
+            strokeLevelPts: [seedLevelPt],
+            radiusWorld: radius,
+            spacing: grownPick.spacing,
+            weights,
+            sample: samplerFor(grownPick),
+          });
+          const clampValue = tubeClampValue(tubeIso);
+          let field =
+            smoothVoxels >= 1
+              ? smoothCostField({
+                  cost: built.cost,
+                  box: grownPick.box,
+                  radius: smoothVoxels,
+                  clampValue,
+                })
+              : built.cost;
+          // The Gap, CPU twin of the GPU chain: binary field → geodesic dark
+          // distance from the seed → mask the (smoothed) field.
+          const connectDist = geodesicField({
+            cost: connectivityFromCost(built.cost, tubeIso),
+            box: grownPick.box,
+            spacing: grownPick.spacing,
+            seed: seedBoxRel,
+          });
+          field = maskFieldByDistance(field, connectDist.dist, gapLimitWorld, clampValue);
+          stepTube = marchTube({
+            cost: field,
+            box: grownPick.box,
+            iso: tubeIso,
+            maxVertices: CPU_MAX_TUBE_VERTICES,
+          });
+        }
+
+        const worldTube: TubeSurface = {
+          positions: soupToWorld(stepTube.positions, grownPick.step, affine),
+          triangles: stepTube.triangles,
+          truncated: stepTube.truncated,
+        };
+        grown = { tube: worldTube, level: grownPick.level };
+        const margin = 2 * Math.max(...grownPick.spacing);
+        if (worldTube.triangles > 0 && !touchesBoundary(worldTube.positions, seedWorld, radius, margin)) {
+          closed = true;
+          break;
+        }
+        if (worldTube.truncated) break; // growing further only truncates more
+        brushApi.getState().setLiveTube(worldTube); // the expansion animation
+        radius *= GROW_FACTOR;
+      }
+
+      const grownAfter = brushApi.getState();
+      if (grownAfter.status !== "extracting") return;
+      if (!grown || grown.tube.triangles === 0) {
+        grownAfter.fail(
+          "Nothing brighter than the Wrap threshold near the probe point — lower Wrap and try again",
+        );
+        return;
+      }
+      grownAfter.setCandidate(
+        { points: [], layerId: strokeLayerId, level: grown.level, holes: 0, tube: grown.tube },
+        closed
+          ? null
+          : "Surface still touches the search boundary — the structure may extend further",
+      );
+      return;
+    }
+
     // --- GPU first: the corridor budget is larger because the field lives
     // and relaxes on the device; only dist/pred come back. ------------------
-    const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
     let field: GeodesicField | null = null;
     let holes = 0;
     let picked: PickedCorridor | null = null;
@@ -567,46 +745,59 @@ export const useBrushSkeleton = () => {
     const brush = brushApi.getState();
     const candidate = brush.candidate;
     if (!candidate || brush.status !== "preview") return;
+    // A GROW candidate has no centerline — its whole payload is the tube.
+    const hasPath = candidate.points.length >= 2;
+    const tube = candidate.tube;
+    if (!hasPath && !tube) return;
     brush.setSaving();
+    let persistedAny = false;
 
-    const created = await createSceneAnnotation(
-      AnnotationKind.Path,
-      candidate.points.map((p) => [p[0], p[1], p[2]]),
-    );
     let after = brushApi.getState();
-    if (after.candidate !== candidate) return; // a new stroke took over
-    if (!created) {
-      after.fail("Saving failed — the annotation was not created");
-      return;
+    if (hasPath) {
+      const created = await createSceneAnnotation(
+        AnnotationKind.Path,
+        candidate.points.map((p) => [p[0], p[1], p[2]]),
+      );
+      after = brushApi.getState();
+      if (after.candidate !== candidate) return; // a new stroke took over
+      if (!created) {
+        after.fail("Saving failed — the annotation was not created");
+        return;
+      }
+      persistedAny = true;
     }
 
     // The tube rides along as a MESH annotation (SPHERE_KIND-precedent cast;
-    // see tubePersist.ts). A refusal must not fail the save — the centerline
-    // is persisted, the tube stays a local preview and says why.
+    // see tubePersist.ts). A refusal must not fail the save — whatever DID
+    // persist stays persisted, the tube stays a local preview and says why.
     let savedNote = "Saved";
-    const tube = candidate.tube;
     if (tube) {
+      const prefix = hasPath ? "Centerline saved — tube" : "Tube";
       if (tube.triangles > MAX_TUBE_SAVE_TRIANGLES) {
-        savedNote = `Centerline saved — tube too detailed to save (${tube.triangles} triangles), preview only`;
+        savedNote = `${prefix} too detailed to save (${tube.triangles} triangles), preview only`;
       } else {
         const mesh = await createSceneAnnotation(MESH_KIND, tubeVectors(tube.positions));
         after = brushApi.getState();
         if (after.candidate !== candidate) return;
-        if (!mesh) {
-          savedNote =
-            "Centerline saved — tube not saved (the server may not support MESH annotations yet)";
+        if (mesh) {
+          persistedAny = true;
+        } else {
+          savedNote = `${prefix} not saved (the server may not support MESH annotations yet)`;
         }
       }
     }
     after.setCandidate(candidate, savedNote);
     // The persisted copy arrives with the annotation layer's next poll; keep
-    // the local line meanwhile so the shape never blinks off screen.
-    setTimeout(() => {
-      const state = brushApi.getState();
-      if (state.candidate === candidate && state.status === "preview") {
-        state.clear();
-      }
-    }, SAVED_PREVIEW_CLEAR_MS);
+    // the local preview meanwhile so the shape never blinks off screen. When
+    // NOTHING persisted, the preview is all there is — keep it indefinitely.
+    if (persistedAny) {
+      setTimeout(() => {
+        const state = brushApi.getState();
+        if (state.candidate === candidate && state.status === "preview") {
+          state.clear();
+        }
+      }, SAVED_PREVIEW_CLEAR_MS);
+    }
   }, [brushApi, createSceneAnnotation]);
 
   return { initRadiusForLayer, extract, previewLiveTube, save };

@@ -41,7 +41,9 @@ export const BrushStrokeSession = () => {
 
   const interactionMode = useModeStore((s) => s.interactionMode);
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
-  const armed = interactionMode === "ANNOTATE" && activeTool === "BRUSH";
+  const armed =
+    interactionMode === "ANNOTATE" &&
+    (activeTool === "BRUSH" || activeTool === "BLOB");
   // Gesture-cadence facts, fine to select on: which phase drives extraction
   // and whether a candidate line should be shown. `liveTube` moves at the
   // preview THROTTLE (~7 Hz), not pointer cadence — the re-render it costs

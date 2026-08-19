@@ -12,8 +12,11 @@ import {
 import {
   DEFAULT_SKELETON_WEIGHTS,
   buildCostField,
+  connectivityFromCost,
+  maskFieldByDistance,
   voxelCost,
 } from "../../core/skeleton/corridorCost";
+import { smoothCostField } from "../../core/skeleton/fieldSmooth";
 import { marchTube, tubeClampValue } from "../../core/skeleton/tubeMarch";
 import { planCorridor } from "../../core/skeleton/corridorPlan";
 import { backtrackPath, geodesicField } from "../../core/skeleton/geodesicReference";
@@ -173,7 +176,10 @@ export async function runGpuSkeletonSelfTest(
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
-    const tubeIso = voxelCost(0.5, DEFAULT_SKELETON_WEIGHTS);
+    // 0.47, not 0.5: with the fixture's value set, τ=0.5 admits blurred
+    // corner sums landing EXACTLY on the iso — a knife-edge where CPU f64
+    // and GPU f32 could legitimately disagree. 0.47 provably cannot.
+    const tubeIso = voxelCost(0.47, DEFAULT_SKELETON_WEIGHTS);
     const gpu = await skeletonizer.run({
       atlas,
       pageTable,
@@ -197,6 +203,9 @@ export async function runGpuSkeletonSelfTest(
         iso: tubeIso,
         clampValue: tubeClampValue(tubeIso),
         maxVertices: 120_000,
+        // Exercises the smooth kernel too — the CPU comparison below blurs
+        // with the twin (`smoothCostField`) before marching.
+        smoothVoxels: 1,
       },
     });
     if (!gpu) {
@@ -289,8 +298,17 @@ export async function runGpuSkeletonSelfTest(
     // Tube surface parity: same triangles, ORDER-INSENSITIVE — the GPU's
     // atomic append order is nondeterministic, so compare canonicalized
     // triangle multisets (vertices quantized, sorted within the triangle,
-    // triangles sorted).
-    const cpuTube = marchTube({ cost: cpuField.cost, box, iso: tubeIso });
+    // triangles sorted). Both sides blur first (smooth kernel ↔ CPU twin).
+    const cpuTube = marchTube({
+      cost: smoothCostField({
+        cost: cpuField.cost,
+        box,
+        radius: 1,
+        clampValue: tubeClampValue(tubeIso),
+      }),
+      box,
+      iso: tubeIso,
+    });
     if (!gpu.tube) {
       return { supported: true, pass: false, detail: "gpu answered no tube surface" };
     }
@@ -318,13 +336,78 @@ export async function runGpuSkeletonSelfTest(
       };
     }
 
+    // The Gap chain parity (binary cost mode → connectivity geodesic → tube
+    // mask): one strict-connectivity run compared against the CPU twins.
+    const gapLimit = 0.75;
+    const gpuGap = await skeletonizer.extractTube({
+      atlas,
+      pageTable,
+      level: 0,
+      box,
+      strokeLevelPts: STROKE_WORLD,
+      radiusWorld: RADIUS,
+      weights: DEFAULT_SKELETON_WEIGHTS,
+      channel: 0,
+      minValue: MIN_VALUE,
+      maxValue: MAX_VALUE,
+      emptyCeiling: 0xff,
+      poolMin: MIN_VALUE,
+      poolRange: RANGE,
+      payload: SPEC.payload,
+      border: SPEC.border,
+      storedZ: SPEC.stored[2],
+      spacing: [1, 1, 1],
+      tube: {
+        iso: tubeIso,
+        clampValue: tubeClampValue(tubeIso),
+        maxVertices: 120_000,
+        connectivity: { tau: 0.47, gapLimitWorld: gapLimit, seed },
+      },
+    });
+    if (!gpuGap || gpuGap.triangles === 0) {
+      return {
+        supported: true,
+        pass: false,
+        detail: `gap run answered ${gpuGap ? "an empty surface" : "null"}`,
+      };
+    }
+    const connect = geodesicField({
+      cost: connectivityFromCost(cpuField.cost, tubeIso),
+      box,
+      spacing: [1, 1, 1],
+      seed,
+    });
+    const cpuGapTube = marchTube({
+      cost: maskFieldByDistance(
+        cpuField.cost,
+        connect.dist,
+        gapLimit,
+        tubeClampValue(tubeIso),
+      ),
+      box,
+      iso: tubeIso,
+    });
+    const cpuGapTris = canonical(cpuGapTube.positions);
+    const gpuGapTris = canonical(gpuGap.positions);
+    const gapsMatch =
+      cpuGapTris.length === gpuGapTris.length &&
+      cpuGapTris.every((triangle, i) => triangle === gpuGapTris[i]);
+    if (!gapsMatch) {
+      return {
+        supported: true,
+        pass: false,
+        detail: `gap surfaces differ: cpu ${cpuGapTris.length} vs gpu ${gpuGapTris.length} triangles`,
+      };
+    }
+
     return {
       supported: true,
       pass: true,
       detail:
         `dist fields match (${cpu.dist.length} voxels, holes ${gpu.holes}), ` +
         `path ${gpuPath.length} pts follows the seam shift, ` +
-        `tube ${gpuTris.length} triangles identical`,
+        `tube ${gpuTris.length} triangles identical, ` +
+        `gap surface ${gpuGapTris.length} triangles identical`,
     };
   } catch (error) {
     return { supported: true, pass: false, detail: String(error) };

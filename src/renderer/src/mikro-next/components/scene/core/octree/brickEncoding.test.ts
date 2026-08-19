@@ -136,3 +136,66 @@ describe("occupancy texel encode/decode", () => {
     expect(bounds.maxValue).toBe(65535);
   });
 });
+
+describe("occupancy observed-range encoding (encode range ≠ pool range)", () => {
+  const pool = { minValue: -1000, maxValue: 1000 };
+  const encode = { minValue: 0, maxValue: 100 };
+
+  it("byte-0 sentinel decodes to the POOL endpoint, not the encode endpoint", async () => {
+    const { decodeOccupancyBounds } = await import("./brickEncoding");
+    const bounds = decodeOccupancyBounds([0, 0], encode, pool);
+    expect(bounds.minValue).toBe(pool.minValue);
+    expect(bounds.maxValue).toBe(pool.maxValue);
+    // Non-zero codes decode against the ENCODE range.
+    const mid = decodeOccupancyBounds([128, 128], encode, pool);
+    expect(mid.minValue).toBeCloseTo((128 / 255) * 100, 5);
+    expect(mid.maxValue).toBeCloseTo(((255 - 128) / 255) * 100, 5);
+  });
+
+  it("stale-encode corners stay conservative (bracket from the outside)", async () => {
+    const { encodeOccupancyTexel, decodeOccupancyBounds } = await import("./brickEncoding");
+    const bracketOf = (lo: number, hi: number) =>
+      decodeOccupancyBounds(encodeOccupancyTexel(lo, hi, encode), encode, pool);
+    const cases: Array<[number, number]> = [
+      [-50, -10], // wholly below the encode range
+      [150, 200], // wholly above
+      [-50, 50], // straddling the low edge
+      [50, 150], // straddling the high edge
+    ];
+    for (const [lo, hi] of cases) {
+      const bounds = bracketOf(lo, hi);
+      expect(bounds.minValue).toBeLessThanOrEqual(lo);
+      expect(bounds.maxValue).toBeGreaterThanOrEqual(hi);
+    }
+    // Property sweep: random bricks vs the stale encode range.
+    for (let i = 0; i < 500; i++) {
+      const a = -900 + Math.random() * 1800;
+      const b = -900 + Math.random() * 1800;
+      const [lo, hi] = a <= b ? [a, b] : [b, a];
+      const bounds = bracketOf(lo, hi);
+      expect(bounds.minValue).toBeLessThanOrEqual(lo);
+      expect(bounds.maxValue).toBeGreaterThanOrEqual(hi);
+    }
+  });
+
+  it("the observed range restores code resolution on dim data", async () => {
+    const { encodeOccupancyTexel, decodeOccupancyBounds } = await import("./brickEncoding");
+    const dtype = { minValue: 0, maxValue: 65535 };
+    const observed = { minValue: 0, maxValue: 2000 };
+    // A dim brick quantized against the dtype range: ~257 raw units/code.
+    const coarse = decodeOccupancyBounds(
+      encodeOccupancyTexel(500, 700, dtype),
+      dtype,
+      dtype,
+    );
+    // The same brick against the observed range: ~8 raw units/code.
+    const fine = decodeOccupancyBounds(
+      encodeOccupancyTexel(500, 700, observed),
+      observed,
+      dtype,
+    );
+    const trueWidth = 200;
+    expect(coarse.maxValue - coarse.minValue).toBeGreaterThan(trueWidth + 200);
+    expect(fine.maxValue - fine.minValue).toBeLessThanOrEqual(trueWidth + 2 * (2000 / 255));
+  });
+});

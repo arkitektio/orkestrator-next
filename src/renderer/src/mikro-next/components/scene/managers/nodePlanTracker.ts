@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { StoreApi } from "zustand/vanilla";
 import { perfMonitor } from "./perfMonitor";
 import { getInitialVolumeTextureBudgetBytes } from "../core/lodPlanning";
+import { isAnisoLodEnabled } from "../render/bricks/shaderFlags";
 import { brickSlotBytes, resolveBrickSpec } from "../core/octree/brickSpec";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "../core/octree/atlasFormat";
 import { totalBrickCount } from "../core/octree/nodeAddress";
@@ -349,6 +350,7 @@ export function startNodePlanTracking({
         dimSelections: viewerState.dimSelections,
         maxPlanBytes,
         decodeAllowanceBytes,
+        anisoLod: isAnisoLodEnabled(),
         previousBudgetMinLevel:
           prevRepresentative && prevRepresentative.mode === mode
             ? prevRepresentative.budgetMinLevel

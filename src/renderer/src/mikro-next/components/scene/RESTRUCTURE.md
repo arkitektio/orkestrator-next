@@ -17,11 +17,58 @@ Transient. Delete when Phase 5 lands. `ARCHITECTURE.md` is the permanent map.
       out of sync with the import rules sitting beside it.
       Verified: typecheck 0, 2005 tests, `pnpm build` still emits
       `repack-worker` and `fabriksDecode-worker` as separate chunks.
-- [ ] **Phase 2 — demote the shared vocabulary.** Type-only moves into
-      `platform/model`; the enhancer/skeletonizer inversion.
-- [ ] **Phase 3 — invert and split the stores.**
-- [ ] **Phase 4 — split the oversized files.**
-- [ ] **Phase 5 — turn on `architecture.test.ts`.**
+- [x] **Phase 2 — demote the shared vocabulary.** `OutlinePoint`,
+      `MAX_BRICK_LEVELS` and the scene-scope contract moved down; the
+      `bricks -> annotations` skeletonizer cycle inverted by registration.
+- [x] **Phase 3 — invert the stores.** `SceneProvider` opens the zarr arrays;
+      `createViewerStore` is a pure factory. The god-store SPLIT was
+      deliberately not done — see "Scope decision" below.
+- [ ] **Phase 4 — split the oversized files.** NOT STARTED. This is the whole
+      of the remaining work; see below.
+- [x] **Phase 5 — `architecture.test.ts`.** Brought forward ahead of Phase 4:
+      it locks in the structure that already exists, and the file splits do not
+      change the module graph.
+
+## Where it stands
+
+18 sideways edges, 0 of every other kind, 3 documented exceptions.
+`pnpm typecheck` 0 · 164 test files / 2010 tests · `pnpm build` clean.
+
+## Scope decision: the god store was not split
+
+The plan called for splitting `viewerStore` by ownership. On inspection the
+three remaining `platform -> features` edges are all `import type` — **erased at
+runtime**, so there is no runtime coupling to break — while dissolving them
+means moving ~12 interleaved fields across 33 files in the P17-sensitive render
+path, and adding two more always-mounted-null contexts to a provider already 10
+deep.
+
+`layerViewRanges` and `viewSnapshot` are published in ONE atomic store write
+specifically to fix an intermittent mid-orbit bug (~1 in 4 replans paired a
+fresh camera with stale ranges), and no test covers it. That is not a path to
+churn for three erased type references. Documented as the single narrow
+exception instead; `scene-graph.mjs` and the test both keep it visible.
+
+## Phase 4 — what is left
+
+Structural work is done; these are file-level refactors, each local to a folder
+that now owns it. Ordered by value:
+
+| File | LOC | Why |
+|---|---|---|
+| `features/debug/DebugPanel.tsx` | 1117 | `shell/debugRegistry.ts` — each feature contributes its own section. Clears **9** of the 18 sideways edges. ~800 lines of interleaved JSX; P10 says the debug report must not lie, so it needs a real visual check. |
+| `features/bricks/residency/brickResidency.ts` | 3479 | Extract `ChunkService` (the closed 9-field set that IS the P8/P10 mechanism) plus the pure clusters; leave the streaming core whole. ~40%, not more. |
+| `features/bricks/layers/BrickVolumeLayer.tsx` | 842 | Runs annotation drawing inline — clears **5** sideways edges. |
+| `features/bricks/gpu/brickNodeMaterials.ts` | 1900 | Per shader concern. TSL only, no raw GLSL. |
+| `features/volume/rendergraph/RenderNodeEditor.tsx` | 1231 | Extract `useRenderGraphEditor` — a GraphQL write path, not UI. |
+| `features/meshes/fabriks/fabriksManager.ts` | 1155 | Its README already has the boundary table to split along. |
+
+Also outstanding: `shell/layerPanel/cardRegistry.ts` (replaces
+`LayerControlPanel`'s four hard-coded pre-partitioned card arrays — note this
+changes render order from grouped-by-kind to scene order), and re-anchoring the
+eight line-pinned doc references after each split.
+
+## References deliberately left stale
 
 ## Baseline (2026-08-20, before Phase 1)
 

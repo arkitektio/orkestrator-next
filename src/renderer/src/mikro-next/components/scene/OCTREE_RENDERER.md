@@ -604,7 +604,7 @@ Keep the two in sync when touching either.
 | Shaders | `features/bricks/gpu/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
 | Materials | `features/bricks/layers/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
 | Registry entries | `features/volume/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
-| Debug | `features/debug/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `features/debug/BrickResidencyOverlay.tsx` (per-level wireframes) |
+| Debug | `features/debug/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `features/bricks/BrickResidencyOverlay.tsx` (per-level wireframes) |
 | Center LOD badge | `features/bricks/octree/centerLod.ts` (+ `.test.ts`) — center-pixel ray → base voxel; `features/bricks/CenterLodReadout.tsx` — the level `BrickResidencyManager.residentLevelAt` serves there, vs. the plan's target. Not debug-gated: silent coarse fallback is invisible without it |
 | Store | `platform/stores/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `platform/stores/viewStore.ts` (`cameraPose`, `cameraMoving`) |
 | Cache | `@/lib/zarr/caches/byteBudgetChunkCache.ts` |

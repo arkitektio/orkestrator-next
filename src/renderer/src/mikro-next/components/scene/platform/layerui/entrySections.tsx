@@ -17,12 +17,13 @@ import {
   entryKey,
   entryLabel,
   filterByEntryToInput,
+  isColumnColorBy,
   isJoinedEntry,
   isMeasure,
   JOINED_NOTE,
+  SPARSE_NOTE,
   toColorByInput,
   toFilterByInput,
-  type ColorByClims,
   type ColorByEntry,
   type ColorByInputLike,
   type ColumnOption,
@@ -66,7 +67,7 @@ import {
 /** What both cards' entry-persistence accepts: whole-array replacements plus
  * the active indices, in the input shapes both mutations take. */
 export type EntriesPatch = {
-  colorBys?: (ColorByInputLike & ColorByClims)[];
+  colorBys?: ColorByInputLike[];
   filterBys?: FilterByInputLike[];
   activeColorBy?: number | null;
   activeFilterBys?: number[];
@@ -114,14 +115,18 @@ const ColorByRow = memo(function ColorByRow({
   expanded: boolean;
   onRowClick: (index: number) => void;
   onRemove: (index: number) => void;
-  onUpdate: (index: number, patch: Partial<ColorByInputLike> & ColorByClims) => void;
+  onUpdate: (index: number, patch: Partial<ColorByInputLike>) => void;
 }) {
   return (
     <EntryRow
       active={active}
       expanded={expanded}
-      title={`Color objects by ${entry.column} of table ${entry.table} — click to configure (stored)${
-        isJoinedEntry(entry) ? JOINED_NOTE : ""
+      title={`${
+        isColumnColorBy(entry)
+          ? `Color objects by ${entry.column} of table ${entry.table}`
+          : "Color objects by a slice of a sparse matrix"
+      } — click to configure (stored)${isJoinedEntry(entry) ? JOINED_NOTE : ""}${
+        isColumnColorBy(entry) ? "" : SPARSE_NOTE
       }`}
       onClick={() => onRowClick(index)}
       leading={
@@ -137,7 +142,9 @@ const ColorByRow = memo(function ColorByRow({
       label={
         <>
           {entryLabel(entry)}
-          {isJoinedEntry(entry) && <span className="ml-1 text-amber-300/70">*</span>}
+          {(isJoinedEntry(entry) || !isColumnColorBy(entry)) && (
+            <span className="ml-1 text-amber-300/70">*</span>
+          )}
         </>
       }
       detail={describeColouring(entry)}
@@ -240,7 +247,7 @@ export const ColorBySection = memo(function ColorBySection({
    * untouched: editing changes what an entry MEANS, never where it sits.
    */
   const updateColorBy = useCallback(
-    (index: number, patch: Partial<ColorByInputLike> & ColorByClims) => {
+    (index: number, patch: Partial<ColorByInputLike>) => {
       const next = stateRef.current.colorBys.map(colorByEntryToInput);
       if (!next[index]) return;
       next[index] = { ...next[index], ...patch };

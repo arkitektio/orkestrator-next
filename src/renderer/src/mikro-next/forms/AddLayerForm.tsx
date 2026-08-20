@@ -26,7 +26,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   ProjectionMode,
-  TableColumnRole,
+  ColumnRole,
   useAddLayerLensCapabilitiesQuery,
   useAddLayerReachableQuery,
   useCreateAnnotationLayerMutation,
@@ -431,7 +431,7 @@ const TableLayerForm = (props: {
 
   const defaults = useMemo(
     () => ({
-      colorColumn: columns.find((c) => c.role === TableColumnRole.Color)?.name ?? "",
+      colorColumn: columns.find((c) => c.role === ColumnRole.Color)?.name ?? "",
       sizeColumn: "",
       pointSize: undefined as number | undefined,
       lineWidth: undefined as number | undefined,
@@ -446,7 +446,7 @@ const TableLayerForm = (props: {
     ...columns.map((c) => ({
       value: c.name,
       label:
-        c.role === TableColumnRole.Attribute
+        c.role === ColumnRole.Attribute
           ? c.name
           : `${c.name} (${c.role.toLowerCase()})`,
     })),

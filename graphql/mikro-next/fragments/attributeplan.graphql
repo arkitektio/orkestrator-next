@@ -7,7 +7,7 @@
 # the target table is keyed by its single INDEX coordinate column, and we
 # select enough of it (store + columns) to run the one-hop follow-up lookup
 # without another GraphQL round-trip.
-fragment AttributePlanColumn on TableDatasetColumn {
+fragment AttributePlanColumn on Column {
   id
   name
   longName

@@ -1,6 +1,6 @@
 import {
   ColumnControl,
-  TableColumnRole,
+  ColumnRole,
   type ColorMap,
   type ColorByOptionFragment,
   type FilterByOptionFragment,
@@ -29,7 +29,7 @@ import { paletteOfClassColors } from "./colormap-utils";
  * exactly the FIELD edge a collection's object ids do.
  *
  * The option and the input deliberately do NOT share a shape: an option carries
- * whole `TableDataset` / `TableDatasetColumn` nodes (the picker needs their
+ * whole `TableDataset` / `Column` nodes (the picker needs their
  * names, roles, units and parquet stores), while the input names them by id and
  * by column name. `toColorByInput` / `toFilterByInput` are the single place
  * that translation happens — including the `joinPath`, whose step objects
@@ -43,7 +43,26 @@ import { paletteOfClassColors } from "./colormap-utils";
  * which resolves the same column name against the wrong table.
  */
 
-export type ColumnOption = ColorByOptionFragment | FilterByOptionFragment;
+type OfferedOption = ColorByOptionFragment | FilterByOptionFragment;
+
+/**
+ * A candidate this module can actually execute: one naming a TABLE COLUMN.
+ *
+ * The server offers two kinds of candidate over one type. A column candidate
+ * carries `table` and `column`; a SPARSE one carries `sparseDataset` and the
+ * `axes` a position is named along, and leaves both of the others null —
+ * "present exactly when `table` and `column` are null … an option is one or
+ * the other, never both". Nothing here reads a sparse matrix yet, so the
+ * pickers narrow with `isColumnOption` and the sparse half never reaches a
+ * consumer written against `option.table.id`.
+ */
+export type ColumnOption = OfferedOption & {
+  table: NonNullable<OfferedOption["table"]>;
+  column: NonNullable<OfferedOption["column"]>;
+};
+
+export const isColumnOption = (option: OfferedOption): option is ColumnOption =>
+  option.table != null && option.column != null;
 
 /**
  * A stored colouring, either layer kind. `MeshColorByFragment` and
@@ -52,6 +71,17 @@ export type ColumnOption = ColorByOptionFragment | FilterByOptionFragment;
  * being written twice.
  */
 export type ColorByEntry = MeshColorByFragment | LabelColorByFragment;
+
+/**
+ * A stored colouring the renderers can execute: the COLUMN arm of the same
+ * either/or the options carry. A `SPARSE` entry names a `dataset` and a
+ * position `at` instead and leaves `table`/`column` null; it round-trips
+ * through `colorByEntryToInput` untouched, but no LUT is built from it.
+ */
+export type ColumnColorByEntry = ColorByEntry & { table: string; column: string };
+
+export const isColumnColorBy = (entry: ColorByEntry): entry is ColumnColorByEntry =>
+  entry.table != null && entry.column != null;
 
 /** A stored filter rule, either layer kind. See `ColorByEntry`. */
 export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
@@ -69,15 +99,6 @@ export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
  */
 export type ColorByInputLike = MeshColorByInput & LabelColorByInput;
 export type FilterByInputLike = MeshFilterByInput & LabelFilterByInput;
-
-/**
- * CLIMS a colouring may carry: the bounds the colormap ramp runs between,
- * instead of the column's own min/max. Typed locally because the backend
- * fields are still landing — the editor already authors them, the entry→input
- * mapper already round-trips them, and the moment codegen picks the server
- * fields up this alias becomes redundant rather than wrong.
- */
-export type ColorByClims = { min?: number | null; max?: number | null };
 
 /**
  * The equivalence the two aliases above rest on, asserted at compile time.
@@ -126,15 +147,31 @@ const columnKey = (
 export const optionKey = (option: ColumnOption): string =>
   columnKey(optionJoinPath(option), option.table.id, option.column.name);
 
+/**
+ * A stored entry's identity. A sparse entry names no column, so it keys on
+ * what it does name — its dataset and position — rather than collapsing every
+ * one of them onto the same empty `||` key.
+ */
 export const entryKey = (entry: {
-  table: string;
-  column: string;
+  table?: string | null;
+  column?: string | null;
+  dataset?: string | null;
+  at?: readonly { axis: string; value: number }[] | null;
   joinPath?: readonly JoinStepLike[] | null;
-}): string => columnKey(entryJoinPath(entry), entry.table, entry.column);
+}): string =>
+  entry.table != null && entry.column != null
+    ? columnKey(entryJoinPath(entry), entry.table, entry.column)
+    : `sparse|${entry.dataset ?? "?"}|${(entry.at ?? [])
+        .map((position) => `${position.axis}=${position.value}`)
+        .join(",")}`;
 
 /** Whether a stored entry is this option — same table, column and join. */
 export const entryMatchesOption = (
-  entry: { table: string; column: string; joinPath?: readonly JoinStepLike[] | null },
+  entry: {
+    table?: string | null;
+    column?: string | null;
+    joinPath?: readonly JoinStepLike[] | null;
+  },
   option: ColumnOption,
 ): boolean => entryKey(entry) === optionKey(option);
 
@@ -156,8 +193,10 @@ export const isMeasure = (option: ColumnOption): boolean =>
   option.control === ColumnControl.Measure;
 
 /** A picker entry captions itself; the column is the fallback name. */
-export const entryLabel = (entry: { label?: string | null; column: string }): string =>
-  entry.label?.trim() || entry.column;
+export const entryLabel = (entry: {
+  label?: string | null;
+  column?: string | null;
+}): string => entry.label?.trim() || entry.column || "a sparse slice";
 
 /**
  * A filter rule in words, for its row's detail line and the toggle's tooltip.
@@ -189,11 +228,12 @@ export const describeFilterRule = (rule: {
 export const describeColouring = (entry: {
   colormap?: ColorMap | null;
   classColors?: unknown;
+  min?: number | null;
+  max?: number | null;
 }): string => {
   if (entry.colormap) {
-    const clims = entry as ColorByClims;
-    return clims.min != null || clims.max != null
-      ? `${entry.colormap.toLowerCase()} over ${clims.min ?? "…"} … ${clims.max ?? "…"}`
+    return entry.min != null || entry.max != null
+      ? `${entry.colormap.toLowerCase()} over ${entry.min ?? "…"} … ${entry.max ?? "…"}`
       : `${entry.colormap.toLowerCase()} over the column's range`;
   }
   const palette = paletteOfClassColors(entry.classColors);
@@ -214,6 +254,9 @@ export const isJoinedEntry = (entry: {
 /** What that badge says, appended to a row's tooltip. */
 export const JOINED_NOTE = " — reached through a join, not rendered yet";
 
+/** The same, for the SPARSE arm: stored and round-tripped, never drawn. */
+export const SPARSE_NOTE = " — reads a sparse matrix, not rendered yet";
+
 /**
  * The control a column admits, from its declared role — the same rule the
  * server derives `ColumnControl` by, restated here because a STORED entry
@@ -224,8 +267,8 @@ export const JOINED_NOTE = " — reached through a join, not rendered yet";
  * an explicit colour map and a value set, because a colormap or a range over
  * them would impose an order they do not have.
  */
-export const controlForRole = (role: TableColumnRole): ColumnControl =>
-  role === TableColumnRole.Coordinate || role === TableColumnRole.Attribute
+export const controlForRole = (role: ColumnRole): ColumnControl =>
+  role === ColumnRole.Coordinate || role === ColumnRole.Attribute
     ? ColumnControl.Measure
     : ColumnControl.Categorical;
 
@@ -256,24 +299,28 @@ export const toFilterByInput = (
 
 // ----------------------------------------------------------------- entry → input
 
-export const colorByEntryToInput = (
-  entry: ColorByEntry,
-): ColorByInputLike & ColorByClims => {
-  // The fragments predate the clim fields; read them structurally so a server
-  // that already returns them round-trips, and one that does not sends none.
-  const clims = entry as ColorByClims;
-  return {
-    table: entry.table,
-    column: entry.column,
-    joinPath: entryJoinPath(entry),
-    colormap: entry.colormap ?? null,
-    classColors: entry.classColors ?? null,
-    label: entry.label ?? null,
-    ...(clims.min != null || clims.max != null
-      ? { min: clims.min ?? null, max: clims.max ?? null }
-      : {}),
-  };
-};
+/**
+ * Every field, including the ones no picker here authors: `colorBys` is a
+ * WHOLE-ARRAY replace, so a `SPARSE` entry read back and re-sent without its
+ * `kind`, `dataset` and `at` would come back a COLUMN entry naming nothing —
+ * the `joinPath` hazard again, one arm further out.
+ */
+export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
+  kind: entry.kind,
+  table: entry.table ?? null,
+  column: entry.column ?? null,
+  dataset: entry.dataset ?? null,
+  at: (entry.at ?? []).map((position) => ({
+    axis: position.axis,
+    value: position.value,
+  })),
+  joinPath: entryJoinPath(entry),
+  colormap: entry.colormap ?? null,
+  classColors: entry.classColors ?? null,
+  label: entry.label ?? null,
+  min: entry.min ?? null,
+  max: entry.max ?? null,
+});
 
 export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike => ({
   table: entry.table,

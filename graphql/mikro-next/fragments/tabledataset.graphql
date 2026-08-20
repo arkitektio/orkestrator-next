@@ -1,6 +1,6 @@
 # One declared column of a table dataset. A COORDINATE column is also an axis
 # of the table's own coordinate system.
-fragment TableDatasetColumn on TableDatasetColumn {
+fragment TableDatasetColumn on Column {
   id
   name
   longName

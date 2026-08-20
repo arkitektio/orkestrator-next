@@ -15,7 +15,13 @@ import {
   useMeshColorByOptionsLazyQuery,
   useMeshFilterByOptionsLazyQuery,
 } from "@/mikro-next/api/graphql";
-import { isMeasure, optionKey, optionLabel, type ColumnOption } from "./columnOptions";
+import {
+  isColumnOption,
+  isMeasure,
+  optionKey,
+  optionLabel,
+  type ColumnOption,
+} from "./columnOptions";
 
 /**
  * The "+" that turns a mesh collection's or a label mask's OFFERED columns into
@@ -131,10 +137,22 @@ export const ColumnOptionPicker = ({
 
   // Memoized because the `?? []` would otherwise mint a new array every render
   // and re-run the grouping below for nothing.
-  const options = useMemo(
-    () => (result.data?.options ?? []) as ColumnOption[],
-    [result.data],
-  );
+  //
+  // The same roots now also offer SPARSE candidates — a slice of a matrix
+  // rather than a column of a table. Nothing downstream can read one, so they
+  // are dropped HERE rather than half-rendered as a row with no table, and
+  // said out loud: an offer silently withheld is indistinguishable from one
+  // the server never made.
+  const options = useMemo<ColumnOption[]>(() => {
+    const offered = result.data?.options ?? [];
+    const columns = offered.filter(isColumnOption);
+    if (columns.length < offered.length) {
+      console.warn(
+        `[layer] ${offered.length - columns.length} sparse candidate(s) not offered — reading a sparse matrix is not supported yet`,
+      );
+    }
+    return columns;
+  }, [result.data]);
 
   /** Grouped by the table the value is READ FROM — the option's own `table`. */
   const groups = useMemo(() => {

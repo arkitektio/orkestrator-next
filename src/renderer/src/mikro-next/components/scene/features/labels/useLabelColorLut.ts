@@ -14,6 +14,7 @@ import type { LayerState } from "../../platform/model/layerModel";
 import { setLabelColorLut, type LabelLutNodes } from "./labelNodeMaterials";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { buildLabelColorLut } from "./labelColorLut";
+import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 
 /**
  * Resolve a label layer's ACTIVE colouring and filter rules into the material's
@@ -38,8 +39,22 @@ export const useLabelColorLut = (
   const viewerStoreApi = useViewerStoreApi();
 
   const render = layer?.labelRender;
-  const activeColorBy =
+  const storedColorBy =
     render?.activeColorBy != null ? (render.colorBys?.[render.activeColorBy] ?? null) : null;
+  /**
+   * A SPARSE colouring names a slice of a matrix rather than a column of a
+   * table, and the column LUT has no way to read one — so the mask draws
+   * uncoloured until it does, and says why rather than looking broken.
+   */
+  const activeColorBy = useMemo(() => {
+    if (!storedColorBy) return null;
+    if (isColumnColorBy(storedColorBy)) return storedColorBy;
+    console.warn(
+      "[label] the active colouring reads a sparse matrix, which does not render yet:",
+      storedColorBy,
+    );
+    return null;
+  }, [storedColorBy]);
   const activeRules = useMemo(
     () =>
       (render?.activeFilterBys ?? [])

@@ -32,13 +32,38 @@ export type QueryClient = {
 };
 
 /**
- * The generated fragment is a structural superset of the core's plan type;
- * this typed identity is where the compiler PROVES that (no cast) — the one
- * place the codegen dependency touches the core contract.
+ * A plan whose lookup is a parquet ROW — the only shape the core executes.
+ *
+ * `LookupStep` is a flat discriminator over two shapes: TABLE names a store
+ * and the SQL to read a row with, SPARSE names a matrix layout to slice and
+ * leaves all three of `table`, `lookup.store` and `lookup.sql` null. The
+ * predicate is written on those fields rather than on `kind` because they are
+ * what `AttributePlanLike` requires, so narrowing here is what keeps the
+ * codegen→core hand-off cast-free — the property this module has always had.
+ */
+const isTablePlan = (
+  fragment: AttributePlanFragment,
+): fragment is AttributePlanFragment & AttributePlanLike =>
+  fragment.table != null && fragment.lookup.store != null && fragment.lookup.sql != null;
+
+/**
+ * The generated fragment is a structural superset of the core's plan type for
+ * every TABLE plan; this typed filter is where the compiler PROVES that (no
+ * cast) — the one place the codegen dependency touches the core contract.
+ * Sparse plans are dropped, and said out loud: a field silently withheld is
+ * indistinguishable from one the server never published.
  */
 const toStructuralPlans = (
   fragments: readonly AttributePlanFragment[],
-): readonly AttributePlanLike[] => fragments;
+): readonly AttributePlanLike[] => {
+  const executable = fragments.filter(isTablePlan);
+  if (executable.length < fragments.length) {
+    console.warn(
+      `[attributes] ${fragments.length - executable.length} sparse plan(s) ignored — reading a sparse matrix is not supported yet`,
+    );
+  }
+  return executable;
+};
 
 const DEFAULT_SYSTEM_CAP = 64;
 

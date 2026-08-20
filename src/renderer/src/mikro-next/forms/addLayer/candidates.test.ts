@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ArrayDatasetSpec, TableColumnRole } from "../../api/graphql";
+import type { ArrayDatasetSpec, ColumnRole } from "../../api/graphql";
 import {
   Candidate,
   Capabilities,
@@ -13,8 +13,8 @@ import {
 
 // Spelled as wire values, for the same reason candidates.ts does: importing the
 // generated enum would drag the Apollo client into a node-environment suite.
-const COORDINATE = "COORDINATE" as TableColumnRole;
-const TRACK_ID = "TRACK_ID" as TableColumnRole;
+const COORDINATE = "COORDINATE" as ColumnRole;
+const TRACK_ID = "TRACK_ID" as ColumnRole;
 const VOLUME = "VOLUME" as ArrayDatasetSpec;
 
 type LensOverrides = {
@@ -69,7 +69,7 @@ const level = (id: string, value: number): Candidate => ({
   level: value,
 });
 
-const table = (id: string, roles: TableColumnRole[]): Candidate => ({
+const table = (id: string, roles: ColumnRole[]): Candidate => ({
   __typename: "TableDataset",
   id,
   name: "localisations",

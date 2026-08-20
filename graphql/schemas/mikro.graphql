@@ -3,6 +3,31 @@ directive @auth(required_roles: [String!] = null, required_scopes: [String!] = n
 directive @unionElementOf(discriminator: String!, key: String!, union: String!) repeatable on INPUT_OBJECT
 
 """
+A whole placement path composed into one affine map, labelled with the axes it is written over. `matrix` is M x (N+1) with rows outermost -- the same layout an AffineTransformation's `affine` uses -- its columns in `inputAxes` order and its last column the translation. **`outputAxes` names only the destination axes the path actually constrains**: a (c,y,x) dataset registered on (y,x) into a (t,z,y,x) world gets two rows, not four, because the registration says nothing about t and z and a zero row there would pin the data at their origin rather than leave it unstated. `total` is whether the map covers every destination axis
+"""
+type AffinePlacement {
+  """
+  The axes the matrix's columns are in, which is the layer's own source coordinate system's axis order
+  """
+  inputAxes: [String!]!
+
+  """
+  The composed map, M x (N+1), rows outermost. One row per axis in `outputAxes`, one column per axis in `inputAxes`, plus a final translation column
+  """
+  matrix: [[Float!]!]!
+
+  """
+  The destination axes the matrix's rows are in, in the world's own axis order. An axis the path says nothing about has no row at all
+  """
+  outputAxes: [String!]!
+
+  """
+  Whether `outputAxes` covers every axis of the destination space. False for a partial registration -- an honest map over the axes it names, and silence about the rest
+  """
+  total: Boolean!
+}
+
+"""
 The fields an AFFINE member of TransformInput reads. Published for codegen; the wire type is the flat TransformInput
 """
 input AffineTransformInput {
@@ -457,6 +482,11 @@ type AnnotationLayer implements Layer {
   The annotation collection whose shapes this layer renders. Its own coordinate system is the layer's space
   """
   annotationCollection: AnnotationCollection!
+
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -464,7 +494,7 @@ type AnnotationLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -909,9 +939,14 @@ type AttributePlan {
   sample: SampleStep!
 
   """
+  The matrix the plan lands in, when `lookup.kind` is SPARSE. One or the other, never both
+  """
+  sparseDataset: SparseDataset
+
+  """
   The table the plan lands in: the home of the attributes, its columns and their `references`
   """
-  table: TableDataset!
+  table: TableDataset
 }
 
 """
@@ -973,6 +1008,22 @@ input AxisInput {
   longName: String = null
   name: String!
   type: AxisType!
+}
+
+"""
+One position along one named axis: which slice of a matrix a colouring reads
+"""
+type AxisPosition {
+  axis: String!
+  value: Int!
+}
+
+"""
+One position along one named axis: which slice of a matrix a colouring reads. The same pair a coordinate anchor carries -- it *names* a position rather than enumerating them, which is what lets a matrix with 19 059 features be selected from at all
+"""
+input AxisPositionInput {
+  axis: String!
+  value: Int!
 }
 
 """
@@ -1521,9 +1572,14 @@ One column a layer may be coloured or filtered by, and how it is reached. Both p
 """
 type ColorByOption {
   """
+  (SPARSE) The axes a position is named along -- the ones the matrix identifies itself, never the one the source's ids index. **Name a position along every one of them**: a rank-two matrix has one, a rank-three matrix two, and an `at` that names a different set is refused. **One option per matrix, never per position**: a matrix with 19 059 features has 19 059 of those, and the picker offers the axes while the client picks the positions out of the tables they reference, which it already holds access grants for. Offered when at least one of these axes has a stored layout, which is what makes the read one contiguous slice rather than a scan
+  """
+  axes: [String!]!
+
+  """
   The column holding the value. Its `name` is what `colorBys`/`filterBys` take, and its `role`, `unit` and `dtype` are declared on the table
   """
-  column: TableDatasetColumn!
+  column: Column
 
   """
   Which control this column admits, derived from its role by the same rule the write path enforces: MEASURE takes a colormap and a `min`/`max` range, CATEGORICAL an explicit colour map and a `values` set
@@ -1536,9 +1592,14 @@ type ColorByOption {
   joinPath: [ColumnOptionJoinStep!]!
 
   """
+  (SPARSE) The matrix one slice of which is read, instead of a table column. Present exactly when `table` and `column` are null -- an option is one or the other, never both
+  """
+  sparseDataset: SparseDataset
+
+  """
   The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
   """
-  table: TableDataset!
+  table: TableDataset
 }
 
 """
@@ -1621,6 +1682,46 @@ enum ColorMap {
 }
 
 """
+Which sort of source a colouring reads its value from: the discriminator of `LabelColorByInput` and `MeshColorByInput`. Two members, because there are two ways a set of ids reaches a number -- a column of a table they key into, or one slice of a sparse matrix they index. Flat with a discriminator rather than an input union, which GraphQL has no such thing as; the fields the other member reads are refused rather than ignored
+"""
+enum ColorSourceKind {
+  """
+  A column of a table the source's ids key into, reached by `table`, `column` and any `joinPath`. Every colouring written before sparse datasets existed is one of these, which is why it is the default.
+  """
+  COLUMN
+
+  """
+  One slice of a sparse matrix the source's ids index, reached by `dataset` and the position `at`. Always measured: a slice is a value per object, so it takes a colormap and never a class map.
+  """
+  SPARSE
+}
+
+"""
+One declared column of a table dataset: its name, dtype and role. A COORDINATE column is also an axis of the table's space
+"""
+type Column {
+  axisType: AxisType
+  description: String
+  dtype: String!
+  id: ID!
+  longName: String
+  name: String!
+  order: Int!
+
+  """
+  The table whose rows this column's values identify -- a declared foreign key, e.g. an `instance_id` column referencing a table of tracks. The target is keyed by its single INDEX coordinate column; look a value up there. Null for a column that identifies nothing
+  """
+  references: TableDataset
+  role: ColumnRole!
+
+  """
+  The table this column is declared on. Trivial when the column was read through its table, load-bearing when it was not -- an options list is flat, and a column with no table on it cannot be named in a `colorBy`
+  """
+  table: TableDataset!
+  unit: Unit
+}
+
+"""
 Which kind of control a column admits, derived from its declared role. The one split that decides how a value becomes a colour and how it is filtered -- published here so a picker renders the control the write path will actually accept.
 """
 enum ColumnControl {
@@ -1633,6 +1734,20 @@ enum ColumnControl {
   The values are measured and ordered, so they take a colormap over their range and a `min`/`max` bound. Roles COORDINATE and ATTRIBUTE.
   """
   MEASURE
+}
+
+"""
+One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and becomes an axis of the table's space; a COORDINATE or ATTRIBUTE column may state the unit its values are in
+"""
+input ColumnInput {
+  axisType: AxisType = null
+  description: String = null
+  dtype: String!
+  longName: String = null
+  name: String!
+  references: ID = null
+  role: ColumnRole! = ATTRIBUTE
+  unit: Unit = null
 }
 
 input ColumnOptionFilter {
@@ -1649,7 +1764,7 @@ input ColumnOptionFilter {
   """
   Keep only the options whose column declares one of these roles. Finer than `controls`, which groups the roles into the two the pickers actually branch on
   """
-  roles: [TableColumnRole!] = null
+  roles: [ColumnRole!] = null
 
   """
   Case-insensitive substring, matched against the column's name, its `longName` and the name of the table it lives in. The same `icontains` the list queries' `search` uses
@@ -1667,10 +1782,37 @@ One hop of a join path: the column whose values identify rows of the next table
 """
 type ColumnOptionJoinStep {
   """The column of it whose `references` identifies rows of the next table"""
-  column: TableDatasetColumn!
+  column: Column!
 
   """The table this hop stands in"""
   table: TableDataset!
+}
+
+"""
+What a table dataset's column is for: a coordinate that places the row, or data hanging off it.
+"""
+enum ColumnRole {
+  """
+  A measurement or property column — area, an intensity, a marker level. Data only; it does not place the row.
+  """
+  ATTRIBUTE
+
+  """A per-row color, or a value a layer colors the rows by."""
+  COLOR
+
+  """
+  A spatial or temporal column whose values are coordinates. The coordinate columns become the axes of the table's own coordinate system, which is what makes the table placeable.
+  """
+  COORDINATE
+
+  """A per-row identifier."""
+  ID
+
+  """A per-row text label."""
+  LABEL
+
+  """Groups rows into a trajectory. Required to render a table as tracks."""
+  TRACK_ID
 }
 
 """
@@ -2213,10 +2355,23 @@ input CreateSceneInput {
 }
 
 """
+Create a sparse dataset from one uploaded sparse store, which holds the matrix in one or more layouts. A sparse matrix is a grid of numbers with no row labels and no column labels, so **every axis says what its positions are** through its own `identifiedBy` -- a source whose contents are the ids, or the table whose rows they are. Carried on the axis, identified-exactly-once is a property of this input rather than a rule the server enforces. Nothing about the matrix itself is declared: the spec, shape, each layout's encoding and its chunking were read from the store when its upload was finished, and are checked against these axes rather than taken from them
+"""
+input CreateSparseDatasetInput {
+  axes: [SparseAxisInput!]! = []
+  derivedFrom: [DerivedFromInput!] = null
+  description: String = null
+  folder: ID = null
+  name: String!
+  sourceFiles: [SourceFileInput!] = null
+  store: SporadikLike!
+}
+
+"""
 Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE)
 """
 input CreateTableDatasetInput {
-  columns: [TableColumnInput!]! = []
+  columns: [ColumnInput!]! = []
   data: ParquetLike!
   derivedFrom: [DerivedFromInput!] = null
   description: String = null
@@ -2340,6 +2495,16 @@ input DatasetExportOfInput {
 }
 
 """
+The fields a DATASET identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+"""
+input DatasetIdentifiesInput {
+  dataset: ID!
+  kind: SparseIdentificationKind! = DATASET
+  name: String = null
+  validity: PlacementValidity = null
+}
+
+"""
 The fields a DATASET keying reads. Published for codegen; the wire type is the flat KeyedByInput
 """
 input DatasetKeyedByInput {
@@ -2440,6 +2605,12 @@ input DeleteSceneInput {
 """Input for deleting a lens snapshot by ID"""
 input DeleteSceneSnapshotInput {
   """The ID of the snapshot to delete"""
+  id: ID!
+}
+
+"""Input for deleting a sparse dataset by ID"""
+input DeleteSparseDatasetInput {
+  """The ID of the sparse dataset to delete"""
   id: ID!
 }
 
@@ -2712,7 +2883,7 @@ Whether the server can state where a source sits in a space, and if not, why not
 """
 enum ExtentState {
   """
-  The path walks an edge against its stored direction, and this server composes forward only. The step *is* invertible -- a placement search offers a backwards step only for a map that has an inverse -- so invert the flagged step and compose `path` yourself.
+  The path walks an edge against its stored direction, and the extent walk composes forward only -- it pushes a box, and re-bounding one through an inverted step is a different calculation. The step *is* invertible: a placement search offers a backwards step only for a map that has an inverse, which is why `Layer.asAffine` composes such a path without difficulty. So compose `path` yourself, inverting the flagged step, or read the layer's `asAffine`.
   """
   INVERTED
 
@@ -3199,9 +3370,14 @@ One column a layer may be filtered by, and how it is reached. The same set the c
 """
 type FilterByOption {
   """
+  (SPARSE) The axes a position is named along -- the ones the matrix identifies itself, never the one the source's ids index. **Name a position along every one of them**: a rank-two matrix has one, a rank-three matrix two, and an `at` that names a different set is refused. **One option per matrix, never per position**: a matrix with 19 059 features has 19 059 of those, and the picker offers the axes while the client picks the positions out of the tables they reference, which it already holds access grants for. Offered when at least one of these axes has a stored layout, which is what makes the read one contiguous slice rather than a scan
+  """
+  axes: [String!]!
+
+  """
   The column the rule is written against. Its `name` is what `filterBys` takes, and its `unit` is the unit a `min`/`max` bound is stated in
   """
-  column: TableDatasetColumn!
+  column: Column
 
   """
   Which rule this column admits, derived from its role by the same rule the write path enforces: MEASURE takes a `min`/`max` bound, CATEGORICAL an explicit `values` set. Passing the wrong one is refused at the boundary
@@ -3214,9 +3390,14 @@ type FilterByOption {
   joinPath: [ColumnOptionJoinStep!]!
 
   """
+  (SPARSE) The matrix one slice of which is read, instead of a table column. Present exactly when `table` and `column` are null -- an option is one or the other, never both
+  """
+  sparseDataset: SparseDataset
+
+  """
   The table the value is read from. With an empty `joinPath` this is a table the source's ids key directly
   """
-  table: TableDataset!
+  table: TableDataset
 }
 
 """A filter"""
@@ -3283,6 +3464,11 @@ input FinishMediaUploadInput {
 }
 
 input FinishParquetUploadInput {
+  storeId: String!
+  valid: Boolean! = true
+}
+
+input FinishSparseUploadInput {
   storeId: String!
   valid: Boolean! = true
 }
@@ -3458,6 +3644,17 @@ type GeneralParquetAccessGrant {
   store: String
 }
 
+"""Temporary S3 credentials for reading the organization's sparse stores."""
+type GeneralSparseAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+}
+
 """Temporary S3 credentials for reading a Zarr store."""
 type GeneralZarrAccessGrant {
   accessKey: String!
@@ -3556,6 +3753,10 @@ scalar ImageFileLike
 A layer that renders array (lens) data as an alpha-blended image. Its rendering is described entirely by the composable render graph; its placement, entirely by the coordinate graph.
 """
 type ImageLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3569,7 +3770,7 @@ type ImageLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -3669,7 +3870,7 @@ input KeyedByInput {
 }
 
 """
-Which kind of thing keys a table: the discriminator of `KeyedByInput`. Two members, not the six `DerivationSourceKind` carries, because a keying source has to be something whose own contents identify an object -- a mask's pixels, a collection's geometry. A lens is a selection and owns neither; a table is already in record-land, where the relation is `TableColumn.references` rather than an edge; a bare space holds nothing at all. Advertising those and refusing them at runtime would be a schema that says yes where the server says no
+Which kind of thing keys a table: the discriminator of `KeyedByInput`. Two members, not the six `DerivationSourceKind` carries, because a keying source has to be something whose own contents identify an object -- a mask's pixels, a collection's geometry. A lens is a selection and owns neither; a table is already in record-land, where the relation is `Column.references` rather than an edge; a bare space holds nothing at all. Advertising those and refusing them at runtime would be a schema that says yes where the server says no
 """
 enum KeyedBySourceKind {
   """
@@ -3687,24 +3888,34 @@ enum KeyedBySourceKind {
 One entry of a label layer's colour picker: colour the mask's objects by a column of the table its FIELD edge keys into, instead of by hashing their id. The table is named, never the join: which of its columns holds row identity is already declared there, and the edge that makes the lookup possible is already in the coordinate graph
 """
 type LabelColorBy {
+  at: [AxisPosition!]!
   classColors: JSON
   colormap: ColorMap
-  column: String!
+  column: String
+  dataset: ID
   joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
   label: String
-  table: ID!
+  max: Float
+  min: Float
+  table: ID
 }
 
 """
 One entry of a label layer's colour picker: colour objects by a column of the table this mask's FIELD edge keys into, instead of by hashing their id
 """
 input LabelColorByInput {
+  at: [AxisPositionInput!]! = []
   classColors: JSON = null
   colormap: ColorMap = null
-  column: String!
+  column: String = null
+  dataset: ID = null
   joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
   label: String = null
-  table: ID!
+  max: Float = null
+  min: Float = null
+  table: ID = null
 }
 
 """
@@ -3746,6 +3957,10 @@ input LabelInput {
 A layer that renders array (lens) data whose values are discrete object ids -- a segmentation or an instance map. It shares the image layer's source and the same coordinate-graph placement, and none of its render settings: contrast limits, gamma, colormaps and intensity projections are all meaningless over ids.
 """
 type LabelLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3764,7 +3979,7 @@ type LabelLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -3923,6 +4138,10 @@ input LaserElementInput {
 A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: a spatial fact is a coordinate system or a transformation edge, never a field here, and every spatial question a layer answers -- `pathToWorld`, `placement`, `placementValidity`, `placementInvariance` -- is derived from the graph on read and stored nowhere, so refining one edge updates every layer that looks through it. Which columns hold a point layer's coordinates is likewise the table dataset's declaration, not a per-layer copy. The concrete kind (ImageLayer, AnnotationLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
 """
 interface Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3930,7 +4149,7 @@ interface Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -4349,24 +4568,44 @@ The duckdb half of a plan: look the sampled value up in the parquet. Bind order 
 """
 type LookupStep {
   """
-  What the SQL selects -- every declared non-coordinate column, never `*`. A column whose `references` names another table holds row ids of that table; following them is the client's choice, one more lookup away
+  (TABLE) What the SQL selects -- every declared non-coordinate column, never `*`. A column whose `references` names another table holds row ids of that table; following them is the client's choice, one more lookup away
   """
-  attributes: [TableDatasetColumn!]!
+  attributes: [Column!]!
 
   """
-  The key bindings, in bind order: each names the value the worker holds (by axis name) and the parquet column it binds
+  (SPARSE) The axis the sampled id is bound to -- what `keyColumns` is for a table. **Always the axis that layout's `indptr` indexes**, which is what makes the read one contiguous range; a plan is published over a layout where that holds, or not at all
+  """
+  keyAxis: String
+
+  """
+  (TABLE) The key bindings, in bind order: each names the value the worker holds (by axis name) and the parquet column it binds
   """
   keyColumns: [PlanKeyColumn!]!
 
   """
-  The parameterized DuckDB statement: identifiers from validated declared columns and quoted, values as `?` placeholders, never interpolated. Bind the parquet path first, then the key values in `keyColumns` order. A non-duckdb consumer ignores this and reads `keyColumns` + `attributes` instead
+  Which shape this lookup is: `TABLE` for a row of a parquet, `SPARSE` for a slice of a matrix. The fields of the other shape are null -- a flat discriminator rather than an interface, which over these two would carry nothing in common
   """
-  sql: String!
+  kind: String!
 
   """
-  The parquet store holding the rows. Ask it for an accessGrant to actually read it -- credentials and locations never appear in a plan
+  (SPARSE) The layout to read. Ask its `store` for an accessGrant, open the group at its `path` -- both layouts of a matrix live in one prefix, so the store alone does not say which -- then make two reads: `indptr[i:i+2]` at the id, and the range those two offsets name in `indices` and `data`. There is no SQL and no database in the path
   """
-  store: ParquetStore!
+  sparseArray: SparseArray
+
+  """
+  (TABLE) The parameterized DuckDB statement: identifiers from validated declared columns and quoted, values as `?` placeholders, never interpolated. Bind the parquet path first, then the key values in `keyColumns` order. A non-duckdb consumer ignores this and reads `keyColumns` + `attributes` instead
+  """
+  sql: String
+
+  """
+  (TABLE) The parquet store holding the rows. Ask it for an accessGrant to actually read it -- credentials and locations never appear in a plan
+  """
+  store: ParquetStore
+
+  """
+  (SPARSE) What comes back is indexed by: every position along these axes that carries a value. **Not keys** -- the client supplies nothing for them and receives all of them, which is what makes this one object's whole profile. One axis at rank two, so a returned position is a single coordinate and a row of the table that axis references; two at rank three, where a position is raveled and unravels through `sparseArray.indexOrder` into one coordinate per entry here, in order
+  """
+  valueAxes: [String!]!
 }
 
 """
@@ -4614,6 +4853,16 @@ input MeshCollectionFilter {
 }
 
 """
+The fields a MESH_COLLECTION identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+"""
+input MeshCollectionIdentifiesInput {
+  kind: SparseIdentificationKind! = MESH_COLLECTION
+  meshCollection: ID!
+  name: String = null
+  validity: PlacementValidity = null
+}
+
+"""
 The fields a MESH_COLLECTION keying reads. Published for codegen; the wire type is the flat KeyedByInput
 """
 input MeshCollectionKeyedByInput {
@@ -4627,24 +4876,34 @@ input MeshCollectionKeyedByInput {
 One entry of a mesh layer's picker: color the collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color. The same shape `LabelColorBy` carries, and the same relation -- a collection's ids reach a table exactly as a mask's pixel values do -- plus the caption a picker needs
 """
 type MeshColorBy {
+  at: [AxisPosition!]!
   classColors: JSON
   colormap: ColorMap
-  column: String!
+  column: String
+  dataset: ID
   joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
   label: String
-  table: ID!
+  max: Float
+  min: Float
+  table: ID
 }
 
 """
 Color a mesh collection's objects by a column of the table its FIELD edge keys into, instead of by the layer's flat material color
 """
 input MeshColorByInput {
+  at: [AxisPositionInput!]! = []
   classColors: JSON = null
   colormap: ColorMap = null
-  column: String!
+  column: String = null
+  dataset: ID = null
   joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
   label: String = null
-  table: ID!
+  max: Float = null
+  min: Float = null
+  table: ID = null
 }
 
 """
@@ -4688,6 +4947,11 @@ type MeshLayer implements Layer {
   Which entries of `filterBys` are applied, as indices into it. They combine with AND: an object is drawn when every active rule keeps it. Empty applies none of them, so everything draws
   """
   activeFilterBys: [Int!]!
+
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
 
   """
@@ -4717,7 +4981,7 @@ type MeshLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -4985,6 +5249,11 @@ type Mutation {
   createSceneSnapshot(input: SceneSnapshotInput!): SceneSnapshot!
 
   """
+  Create a sparse dataset from one uploaded sparse store, which holds the matrix in one or more layouts. A sparse matrix is a grid of numbers with no row labels and no column labels, so **every axis says what its positions are** through its own `identifiedBy` -- a source whose own contents are the ids (which authors a FIELD edge, and is what makes the matrix reachable from a layer over that source), or the table whose rows they are (which authors a foreign key and no edge). Carried on the axis, identified-exactly-once is a property of the input rather than a rule this enforces. Nothing about the matrix itself is declared: the spec, the shape, each layout's encoding and its chunking were read from the store when its upload was finished, and are checked against these axes rather than taken from them
+  """
+  createSparseDataset(input: CreateSparseDatasetInput!): SparseDataset!
+
+  """
   Create a table dataset from a Parquet store. Its declared coordinate columns become the axes of a coordinate system it owns, which lets a localization table be placed in a scene; a table with no coordinate columns is a measurement table whose rows enumerate objects and whose lineage edge is UNMAPPABLE
   """
   createTableDataset(input: CreateTableDatasetInput!): TableDataset!
@@ -5057,6 +5326,9 @@ type Mutation {
   """Delete an existing scene snapshot"""
   deleteSceneSnapshot(input: DeleteSceneSnapshotInput!): ID!
 
+  """Delete an existing sparse dataset"""
+  deleteSparseDataset(input: DeleteSparseDatasetInput!): ID!
+
   """Delete an existing table dataset"""
   deleteTableDataset(input: DeleteTableDatasetInput!): ID!
 
@@ -5079,6 +5351,11 @@ type Mutation {
 
   """Finalize a Parquet upload after the client has written the object"""
   finishParquetUpload(input: FinishParquetUploadInput!): ParquetStore!
+
+  """
+  Finalize a sparse upload, which is when the group's own metadata is read. A missing encoding, a missing array, or an `indptr` whose length contradicts the declared shape are all refused here -- that is what an interrupted upload looks like, and catching it now beats a reader discovering it later
+  """
+  finishSparseUpload(input: FinishSparseUploadInput!): SparseStore!
 
   """Finalize a Zarr upload after the client has written the object"""
   finishZarrUpload(input: FinishZarrUploadInput!): ZarrStore!
@@ -5114,6 +5391,11 @@ type Mutation {
 
   """File table datasets in a folder"""
   putTableDatasetsInFolder(input: AssociateInput!): Folder!
+
+  """
+  Reissue upload credentials for a sparse store whose upload is still in flight, for the reason `refreshZarrUpload` exists: three chunked arrays of a large matrix take long enough that a write can outlive its session token. Refuses a store that is already populated -- that is an overwrite, not a resumption
+  """
+  refreshSparseUpload(input: RefreshSparseUploadInput!): SparseUploadGrant!
 
   """
   Reissue upload credentials for a Zarr store whose upload is still in flight. A grant's credentials expire, and clients hold the session token as a static credential, so a write large enough to outlive its session dies partway through. This returns a fresh session against the same prefix so the write can carry on. Refuses a store that is already populated -- that is an overwrite, not a resumption
@@ -5178,6 +5460,11 @@ type Mutation {
   requestGeneralParquetAccess(input: RequestGeneralParquetAccessInput!): GeneralParquetAccessGrant!
 
   """
+  Request temporary S3 read credentials for sparse stores in the organization
+  """
+  requestGeneralSparseAccess(input: RequestGeneralSparseAccessInput!): GeneralSparseAccessGrant!
+
+  """
   Request temporary S3 read credentials for Zarr files in the organization
   """
   requestGeneralZarrAccess(input: RequestGeneralZarrAccessInput!): GeneralZarrAccessGrant!
@@ -5193,6 +5480,16 @@ type Mutation {
 
   """Request an upload grant for a Parquet store"""
   requestParquetUpload(input: RequestParquetUploadInput!): ParquetUploadGrant!
+
+  """
+  Request temporary S3 read credentials for a sparse store. Covers the whole prefix, because a lookup needs `indptr` before it knows which range of `data` to fetch
+  """
+  requestSparseAccess(input: RequestSparseAccessInput!): SparseAccessGrant!
+
+  """
+  Request an upload grant for a sparse store. The grant covers the whole prefix, so one request authorizes the group's metadata and all three of its arrays. It declares nothing about the matrix: the group states its encoding, shape and chunking, and the server reads them when the upload is finished
+  """
+  requestSparseUpload(input: RequestSparseUploadInput!): SparseUploadGrant!
 
   """Request temporary S3 read credentials for a Zarr store"""
   requestZarrAccess(input: RequestZarrAccessInput!): ZarrAccessGrant!
@@ -5249,6 +5546,11 @@ type Mutation {
 
   """Set a scene's viewer preferences: how a client should open it"""
   updateScene(input: UpdateSceneInput!): Scene!
+
+  """
+  Rename a sparse dataset or redescribe it -- the whole of what is editable. Its stores, axes and coordinate system are fixed at creation; a recomputation is a new dataset
+  """
+  updateSparseDataset(input: UpdateSparseDatasetInput!): SparseDataset!
 
   """
   Rename a table dataset or redescribe it -- the whole of what is editable. Its store, columns and coordinate system are fixed at creation; a recomputation is a new table
@@ -6004,11 +6306,11 @@ enum PlacementState {
 }
 
 """
-One step of a placement path: a transformation edge, plus whether it is traversed against its stored direction. The server returns the steps; composing them into a matrix is the client's job (invert the flagged ones first)
+One step of a placement path: a transformation edge, plus whether it is traversed against its stored direction. Each step carries its own map, its own `validity` and its own `invariance`, which is what this shape is for -- a client that only wants the composed answer should ask the layer for `asAffine` instead of composing these itself
 """
 type PlacementStep {
   """
-  True when the edge is traversed output-to-input; the client must invert it before composing
+  True when the edge is traversed output-to-input, so its map must be inverted before composing. Only ever set on a step that has an inverse -- a rank-changing edge and a warp field are never offered backwards
   """
   inverted: Boolean!
 
@@ -6053,13 +6355,17 @@ type PlanKeyColumn {
   """
   The declared coordinate column this value binds, carrying the parquet column name and its dtype
   """
-  column: TableDatasetColumn!
+  column: Column!
 }
 
 """
 A layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset.
 """
 type PointLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   colorColumn: String
   colormap: ColorMap
@@ -6072,7 +6378,7 @@ type PointLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -6426,6 +6732,14 @@ type Query {
   """List scenes (compositions of layers over array datasets)"""
   scenes(filters: SceneFilter, ordering: [SceneOrder!]! = [], pagination: OffsetPaginationInput): [Scene!]!
 
+  """Get a single sparse dataset by ID"""
+  sparseDataset(id: ID!): SparseDataset!
+
+  """
+  List sparse datasets (matrices over two enumerated axes, stored as anndata-spelled zarr groups)
+  """
+  sparseDatasets(filters: SparseDatasetFilter, ordering: [SparseDatasetOrder!]! = [], pagination: OffsetPaginationInput): [SparseDataset!]!
+
   """Get a single table dataset by ID"""
   tableDataset(id: ID!): TableDataset!
 
@@ -6450,6 +6764,10 @@ type Query {
   List transformations (the directed edges of the coordinate graph). Compose them client-side; the server never resolves a path to world, because the same dataset can sit in two scenes under two registrations
   """
   transformations(filters: TransformationFilter, ordering: [TransformationOrder!]! = [], pagination: OffsetPaginationInput): [Transformation!]!
+}
+
+input RefreshSparseUploadInput {
+  storeId: String!
 }
 
 input RefreshZarrUploadInput {
@@ -6530,6 +6848,10 @@ input RequestGeneralParquetAccessInput {
   expiresIn: Int = null
 }
 
+input RequestGeneralSparseAccessInput {
+  expiresIn: Int = null
+}
+
 input RequestGeneralZarrAccessInput {
   expiresIn: Int = null
 }
@@ -6550,6 +6872,15 @@ input RequestParquetAccessInput {
 
 input RequestParquetUploadInput {
   contentType: String = null
+  host: String = null
+  port: Int = null
+}
+
+input RequestSparseAccessInput {
+  storeId: String!
+}
+
+input RequestSparseUploadInput {
   host: String = null
   port: Int = null
 }
@@ -7175,6 +7506,346 @@ type SourcePlacement {
   validity: PlacementValidity!
 }
 
+"""
+Temporary S3 credentials for reading a sparse store. Covers the whole prefix, because a lookup needs `indptr` before it knows which range of `data` to fetch.
+"""
+type SparseAccessGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String
+}
+
+"""
+One stored layout of a sparse matrix: a store, and which axis its `indptr` indexes. The `DataArray` of this world and deliberately thinner -- two layouts are the same space holding the same values in a different order, so unlike a pyramid level there is no coordinate system and no edge, because there is nothing spatial to state
+"""
+type SparseArray {
+  id: ID!
+
+  """
+  Which axis of the dataset this layout's `indptr` indexes, as a position in the declared axis order. Selecting one position along it is a single contiguous read; selecting along the other axis is a scan of everything, which is why a dataset that must answer both questions holds two of these
+  """
+  indexedAxis: Int!
+
+  """
+  The name of the axis this layout indexes, from the dataset's declared order
+  """
+  indexedAxisName: String
+
+  """
+  Where this layout sits inside the store's prefix, e.g. `layouts/csr_matrix`. Open the group at this path, not at the store root
+  """
+  path: String!
+
+  """
+  The store holding this layout. Both layouts of one matrix share it -- one matrix is one upload -- so `path` is what says which of them this is. Ask the store for an access grant and read the three arrays directly
+  """
+  store: SparseStore!
+}
+
+"""
+One axis of a sparse matrix, and what its positions **are**. Every axis carries exactly one `identifiedBy`, so an axis identified twice or not at all is not something this input can express -- which matters, because an axis nothing identifies is not a lax dataset, it is one no source could ever key. There is no `type` field: both axes of a sparse matrix enumerate and neither has a metric, so INDEX is the only thing it could ever be
+"""
+input SparseAxisInput {
+  description: String = null
+  identifiedBy: SparseIdentificationInput!
+  longName: String = null
+  name: String!
+}
+
+"""
+An axis whose positions are rows of a table. The sparse counterpart of `Column.references` -- the same statement said of an axis, because a matrix has no columns to hang it on -- and what lets a FIELD edge land beside it: a mask supplies one id, so the other axis has to be accounted for by its own identification
+"""
+type SparseAxisReference {
+  """The name of the identified axis"""
+  axis: String!
+  id: ID!
+
+  """
+  The table whose rows this axis' positions are. Keyed by its single INDEX coordinate column, which is where a position is looked up
+  """
+  references: TableDataset!
+}
+
+"""
+A sparse matrix over two enumerated axes -- objects on one, features on the other -- stored as anndata-spelled zarr groups. It exists because a colouring names one *column*, so a colourable measurement is a column of a table: right for a few hundred features and impossible for a transcriptome, where a feature stops being a schema fact and becomes a data one. **Each axis is identified exactly once**, by its own `identifiedBy` -- a source whose contents are the ids, or the table whose rows the positions are. Its stores, axes and coordinate system are fixed at creation; a recomputation is a new dataset
+"""
+type SparseDataset {
+  """
+  The stored layouts, one per axis a store's `indptr` indexes. One is legal and offers one capability
+  """
+  arrays: [SparseArray!]!
+
+  """The matrix's axis names, in the order its stores' `shape` is written"""
+  axisNames: [String!]!
+
+  """The axes identified by a table rather than by a keying source"""
+  axisReferences: [SparseAxisReference!]!
+
+  """
+  The coordinate system whose axes are this matrix's two enumerations. Owned by the dataset, and the space a FIELD edge lands in
+  """
+  coordinateSystem: CoordinateSystem!
+
+  """The task this dataset was created through, if any"""
+  createdThrough: Task
+
+  """Who assigned that task"""
+  createdThroughBy: User
+
+  """
+  Every edge from this matrix's space back into the data it was computed from, in declared order
+  """
+  derivedFrom: [Transformation!]!
+  description: String
+
+  """The folder it is filed in. Organisational only"""
+  folder: Folder
+  id: ID!
+
+  """
+  The axes this dataset can select a single position along in one contiguous read -- one per stored layout. An axis absent here is one it holds, but can only answer about by scanning every byte, so a surface needing that answer will not offer this dataset
+  """
+  indexableAxes: [String!]!
+  name: String!
+
+  """
+  The recorded history of this dataset. Only `name` and `description` can change
+  """
+  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """How this matrix was produced: the run, its parameters and its inputs"""
+  provenanceMetadata: Any!
+
+  """
+  The shape of the matrix, read off its stores rather than declared. Every layout of one dataset holds the same shape
+  """
+  shape: [Int!]!
+
+  """The files this dataset was converted from"""
+  sourceFiles(filters: FileLinkFilter): [FileLink!]!
+}
+
+input SparseDatasetFilter {
+  AND: SparseDatasetFilter
+  DISTINCT: Boolean
+  NOT: SparseDatasetFilter
+  OR: SparseDatasetFilter
+
+  """Filter by the sub of the user that assigned the creating task"""
+  assignedBy: ID
+
+  """Filter for items created after this datetime"""
+  createdAfter: DateTime
+
+  """Filter for items created before this datetime"""
+  createdBefore: DateTime
+
+  """
+  Filter by the database ID of the task the item was created through (the `createdThrough { id }` field)
+  """
+  createdThrough: ID
+
+  """
+  Filter by the database ID of the user that assigned the creating task (the `createdThroughBy { id }` field)
+  """
+  createdThroughBy: ID
+
+  """Filter by the rekuest task id the item was created through"""
+  createdThroughTask: String
+  description: StrFilterLookup
+
+  """Filter by the folder this sparse dataset is filed in"""
+  folder: ID
+  id: ID
+
+  """Filter by list of IDs"""
+  ids: [ID!]
+
+  """
+  Filter to datasets holding a layout indexed on this axis -- the ones that can answer about it in one contiguous read rather than by scanning
+  """
+  indexesAxis: String
+  name: StrFilterLookup
+
+  """Filter by the creator's subject ID"""
+  owner: ID
+
+  """Search by name (case-insensitive substring)"""
+  search: String
+}
+
+input SparseDatasetOrder @oneOf {
+  createdAt: Ordering
+  id: Ordering
+  name: Ordering
+}
+
+"""
+What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET` and `MESH_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
+"""
+input SparseIdentificationInput {
+  """
+  (DATASET) The label dataset whose pixel values are the positions along this axis. Its own pixel grid is both the edge's input and its field, which is what a label mask is
+  """
+  dataset: ID = null
+
+  """
+  Which sort of thing identifies this axis. It fixes which id field below is read; any other is rejected
+  """
+  kind: SparseIdentificationKind!
+
+  """
+  (MESH_COLLECTION) The mesh collection whose geometry rows carry the positions. Its vertex space is both the edge's input and its field, exactly as a mask's grid is
+  """
+  meshCollection: ID = null
+
+  """
+  What to call the edge this authors, in a graph a person has to read. Defaults to `<source> -> <dataset>`. Only meaningful for the kinds that author one
+  """
+  name: String = null
+
+  """
+  (TABLE) The table whose rows this axis' positions are. Must be keyed by exactly one INDEX coordinate column, which is where a position is looked up -- the same contract `Column.references` carries. A matrix with 19 059 features costs one picker entry because of this, not 19 059
+  """
+  table: ID = null
+
+  """
+  How far the edge this authors may be trusted. Only meaningful for the kinds that author one
+  """
+  validity: PlacementValidity = null
+}
+
+"""
+How one axis of a sparse dataset is identified: the discriminator of `SparseIdentificationInput`. A sparse matrix is a grid with no row labels and no column labels, so every axis has to say what its positions *are*, and there are exactly these ways to answer. A superset of `KeyedBySourceKind` rather than the same union, because `TABLE` is valid here and nowhere else: a table cannot key a table, but an axis whose positions are rows of one is the ordinary case
+"""
+enum SparseIdentificationKind {
+  """
+  A label mask, through its intrinsic pixel grid: its pixel values are the positions along this axis. Authors a FIELD edge, so it is also what makes the matrix reachable from a layer over that mask.
+  """
+  DATASET
+
+  """
+  A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows. Authors a FIELD edge, exactly as DATASET does.
+  """
+  MESH_COLLECTION
+
+  """
+  A table whose rows this axis' positions are -- the same relation `Column.references` carries, said of an axis because a matrix has no columns to hang it on. Authors no edge and touches no coordinate system: a table is already in record-land. It is what lets a FIELD edge land beside it, because an axis identified this way is one the edge is not expected to supply.
+  """
+  TABLE
+}
+
+"""
+One stored layout of a sparse matrix: an anndata-spelled group under `layouts/<encoding>`, holding `data`, `indices` and `indptr`. Read it with two requests -- `indptr[i:i+2]` at the position, then the range those two offsets name in `indices` and `data`.
+"""
+type SparseLayout {
+  """
+  The chunk length of each of `data`, `indices` and `indptr`. What decides the read cost: a chunk is the granularity at which bytes can be fetched, so a slice costs whole chunks -- measured on a 16 um matrix, one slice costs 0.95 ms at 32 768-element chunks and 23.55 ms at 4 Mi ones. Sized for one object-store request, where the cost is round trips rather than bytes and a chunk is also the unit the next lookup along an adjacent slice reuses
+  """
+  chunks: JSON
+
+  """The dtype of the stored values"""
+  dtype: String!
+
+  """
+  The anndata encoding this layout declares: `csr_matrix` or `csc_matrix`. It names which axis `indptr` indexes, which is the whole of what the two layouts differ in
+  """
+  encoding: String!
+
+  """The version of that encoding, as the layout declares it"""
+  encodingVersion: String
+
+  """
+  The axes this layout did not compress, in the order `indices` was raveled over them. At rank two it has one member and says nothing; above it, unravel a returned position through this -- it is the one fact in the format that cannot be recovered from the bytes, so a wrong reading does not fail, it reads a different cell
+  """
+  indexOrder: [Int!]!
+
+  """
+  Which axis of the store's `shape` this layout makes contiguous. Ask along an axis no layout compresses and there is no range to read at all, only a scan of everything
+  """
+  indexedAxis: Int!
+
+  """
+  How many nonzeros this layout holds. Read from the length of `data`, never declared
+  """
+  nnz: Int!
+
+  """
+  Where this layout sits inside the store's prefix, e.g. `layouts/csr_matrix`. A reader opens the group at this path, not the store root
+  """
+  path: String!
+
+  """
+  Whether a slice can be fetched as an exact byte range instead of as whole chunks -- true when every array is one uncompressed chunk, so `indptr` names byte offsets into the raw buffer. False is the ordinary case and not a defect: the default trades bytes for cache reuse, which is the better trade when the cost is requests
+  """
+  rangeReadable: Boolean!
+}
+
+"""
+A sparse matrix stored as an anndata-spelled zarr group behind the S3 datalayer: `data`, `indices` and `indptr`, with the encoding, shape and chunking read from the group itself rather than declared. Its `encoding` says which axis `indptr` indexes, and so which question it answers in one contiguous read -- ask the other and there is no range to read at all.
+"""
+type SparseStore {
+  """Get temporary S3 read credentials for the sparse store."""
+  accessGrant(host: String = null): SparseAccessGrant!
+  bucket: String!
+  id: ID!
+  key: String!
+
+  """
+  The stored layouts, one per `layouts/<encoding>` child. Which axis a layout's `indptr` indexes decides which question it answers in one contiguous read, so a store holding one layout offers one capability and a store holding both offers both. Empty while the store is unpopulated, which is the only state in which what it holds is unknown
+  """
+  layouts: [SparseLayout!]!
+
+  """
+  The byte budget the upload grant advertised for this store. Advertised, not enforced: a session policy bounds what a credential may write, never how much, so a store may exceed this
+  """
+  maxBytes: Int
+  path: String!
+
+  """
+  The shape of the matrix, as the root block declares it and every layout agrees. Two axes
+  """
+  shape: [Int!]
+
+  """
+  How many bytes this store actually holds, measured when its upload was finished. Null while unfinished, or for stores written before this was recorded
+  """
+  sizeBytes: Int
+
+  """
+  The version of the `sporadik` block this store was accepted under. A spec selects how every byte in the prefix is read, so an unknown one is refused rather than guessed at
+  """
+  spec: String
+}
+
+"""
+Temporary S3 credentials for uploading a sparse store. Scoped to the prefix and permitted to read back and delete inside it, because the three arrays are written incrementally.
+"""
+type SparseUploadGrant {
+  accessKey: String!
+  bucket: String!
+  expiresIn: Int!
+  key: String!
+  maxBytes: Int!
+  originalFileName: String
+  path: String!
+  region: String!
+  secretKey: String!
+  sessionToken: String!
+  status: String!
+  store: String!
+  uploadContentType: String
+  uploadFileName: String!
+  uploadFormField: String!
+}
+
 """Spectral window"""
 type Spectrum {
   max: Length!
@@ -7186,6 +7857,11 @@ input SpectrumInput {
   max: Length!
   min: Length!
 }
+
+"""
+A reference to an uploaded **sporadik store**: one prefix holding one child per axis made contiguous, under `layouts/axis{k}`, each an anndata-spelled sparse group of `data`, `indices` and `indptr`. Named for the wire format the way `FabriksLike` is. Request it with `requestSparseUpload`, write the layouts, land the `sporadik` block last, then `finishSparseUpload` -- which reads that block and refuses a prefix without one, because zarr fills a missing chunk rather than failing and a torn upload is otherwise indistinguishable from a finished one. A dataset registered this way declares no encoding, no shape and no chunking: the server reads them from the artifact, so they cannot be stated wrong
+"""
+scalar SporadikLike
 
 """Where the stage was, per axis, as physical lengths"""
 type StageState {
@@ -7227,47 +7903,6 @@ type Subscription {
 }
 
 """
-One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and becomes an axis of the table's space; a COORDINATE or ATTRIBUTE column may state the unit its values are in
-"""
-input TableColumnInput {
-  axisType: AxisType = null
-  description: String = null
-  dtype: String!
-  longName: String = null
-  name: String!
-  references: ID = null
-  role: TableColumnRole! = ATTRIBUTE
-  unit: Unit = null
-}
-
-"""
-What a table dataset's column is for: a coordinate that places the row, or data hanging off it.
-"""
-enum TableColumnRole {
-  """
-  A measurement or property column — area, an intensity, a marker level. Data only; it does not place the row.
-  """
-  ATTRIBUTE
-
-  """A per-row color, or a value a layer colors the rows by."""
-  COLOR
-
-  """
-  A spatial or temporal column whose values are coordinates. The coordinate columns become the axes of the table's own coordinate system, which is what makes the table placeable.
-  """
-  COORDINATE
-
-  """A per-row identifier."""
-  ID
-
-  """A per-row text label."""
-  LABEL
-
-  """Groups rows into a trajectory. Required to render a table as tracks."""
-  TRACK_ID
-}
-
-"""
 A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Its store, its columns and that coordinate system are fixed at creation -- only `name` and `description` can be updated, and a recomputation is a new table rather than an edit of this one. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL
 """
 type TableDataset {
@@ -7277,7 +7912,7 @@ type TableDataset {
   """
   The declared column schema, in order. The COORDINATE columns are the axes of this table's coordinate system
   """
-  columns: [TableDatasetColumn!]!
+  columns: [Column!]!
 
   """
   The coordinate system this table owns. Its axes are the table's coordinate columns (or a single INDEX axis for a pure measurement table)
@@ -7317,9 +7952,9 @@ type TableDataset {
   provenanceMetadata: Any!
 
   """
-  Every column, in any table, that declares this table as its reference target -- the reverse of `TableDatasetColumn.references`. This table cannot be deleted while any of them exist
+  Every column, in any table, that declares this table as its reference target -- the reverse of `Column.references`. This table cannot be deleted while any of them exist
   """
-  referencedBy: [TableDatasetColumn!]!
+  referencedBy: [Column!]!
 
   """
   The files this table dataset was converted from -- the CZI a converter read to write these arrays, named per series. **Read this alongside `derivedFrom`, not instead of it**: `derivedFrom` says which *data* this was computed from and relates two coordinate systems, while this says which *bytes* it was read out of and relates to no space at all, because a file has none. Both can be non-empty and complete
@@ -7330,31 +7965,6 @@ type TableDataset {
   The Parquet store holding the rows. Request an access grant from it and read the Parquet directly
   """
   store: ParquetStore!
-}
-
-"""
-One declared column of a table dataset: its name, dtype and role. A COORDINATE column is also an axis of the table's space
-"""
-type TableDatasetColumn {
-  axisType: AxisType
-  description: String
-  dtype: String!
-  id: ID!
-  longName: String
-  name: String!
-  order: Int!
-
-  """
-  The table whose rows this column's values identify -- a declared foreign key, e.g. an `instance_id` column referencing a table of tracks. The target is keyed by its single INDEX coordinate column; look a value up there. Null for a column that identifies nothing
-  """
-  references: TableDataset
-  role: TableColumnRole!
-
-  """
-  The table this column is declared on. Trivial when the column was read through its table, load-bearing when it was not -- an options list is flat, and a column with no table on it cannot be named in a `colorBy`
-  """
-  table: TableDataset!
-  unit: Unit
 }
 
 """
@@ -7418,7 +8028,7 @@ input TableDatasetFilter {
   folders: [ID!]
 
   """Filter to tables that declare a column of this role, e.g. TRACK_ID"""
-  hasColumnRole: TableColumnRole
+  hasColumnRole: ColumnRole
   id: ID
 
   """Filter by list of IDs"""
@@ -7441,6 +8051,14 @@ input TableDatasetOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
+}
+
+"""
+The fields a TABLE identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+"""
+input TableIdentifiesInput {
+  kind: SparseIdentificationKind! = TABLE
+  table: ID!
 }
 
 """A validated Rekuest task under which objects were created or changed."""
@@ -7544,6 +8162,10 @@ type TimeBucket {
 A layer that renders trajectories (e.g. particle/cell tracks) from a table dataset, grouped by its TRACK_ID column.
 """
 type TrackLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(strict: Boolean! = false): AffinePlacement
   blending: Blending!
   colorByColumn: String
   colormap: ColorMap
@@ -7554,7 +8176,7 @@ type TrackLayer implements Layer {
   order: Int!
 
   """
-  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. The server returns the edges; composing them (inverting flagged steps) stays the client's job
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
   pathToWorld: [PlacementStep!]
 
@@ -8098,6 +8720,13 @@ input UpdateSceneInput {
   preferredView: PreferredView = null
 }
 
+"""Input for renaming or redescribing a sparse dataset"""
+input UpdateSparseDatasetInput {
+  description: String = null
+  id: ID!
+  name: String = null
+}
+
 """
 Input for renaming or redescribing a table dataset. These two fields are the whole of what is editable: the store, the declared columns and the coordinate system derived from them are fixed at creation, and a recomputation is a new table
 """
@@ -8311,7 +8940,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | ChannelLabel | Client | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | TableDataset | TableDatasetColumn | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
+union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | ChannelLabel | Client | Column | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | SparseArray | SparseAxisReference | SparseDataset | SparseStore | TableDataset | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
 
 type _Service {
   sdl: String!

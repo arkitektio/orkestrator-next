@@ -22,6 +22,7 @@ import { FabriksCollection } from "./fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "./fabriks/fabriksManager";
 import { openFabriksCollection } from "./fabriks/fabriksSource";
 import { buildColorLut } from "./fabriks/fabriksColorLut";
+import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
   resolveCollectionMatrix,
@@ -219,8 +220,22 @@ const FabriksCollectionGroup = ({
    */
   const attributeService = useAttributeServiceOrNull();
   const activeColorByIndex = layer.activeColorBy ?? null;
-  const colorBy =
+  const storedColorBy =
     activeColorByIndex === null ? null : (layer.colorBys?.[activeColorByIndex] ?? null);
+  /**
+   * A SPARSE colouring names a slice of a matrix rather than a column of a
+   * table, and the column LUT has no way to read one — so the collection
+   * draws uncoloured until it does, and says why rather than looking broken.
+   */
+  const colorBy = useMemo(() => {
+    if (!storedColorBy) return null;
+    if (isColumnColorBy(storedColorBy)) return storedColorBy;
+    console.warn(
+      "[mesh] the active colouring reads a sparse matrix, which does not render yet:",
+      storedColorBy,
+    );
+    return null;
+  }, [storedColorBy]);
   const filterBys = layer.filterBys;
   const activeFilterBys = layer.activeFilterBys;
   const activeRules = useMemo(

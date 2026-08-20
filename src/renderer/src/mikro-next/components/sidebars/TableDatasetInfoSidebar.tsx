@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { MikroCoordinateSystem, MikroTableDataset } from "@/linkers";
 import {
   GetTableDatasetQuery,
-  TableColumnRole,
+  ColumnRole,
   useGetTableDatasetDerivedQuery,
 } from "../../api/graphql";
 import { residentLabel } from "../coordinates/residents";
@@ -32,7 +32,7 @@ export const TableDatasetInfoSidebar = ({ dataset }: { dataset: PageTable }) => 
   // `order` is a field, not a position — the API does not promise order.
   const columns = [...dataset.columns].sort((a, b) => a.order - b.order);
   const coordinateColumns = columns.filter(
-    (column) => column.role === TableColumnRole.Coordinate,
+    (column) => column.role === ColumnRole.Coordinate,
   );
 
   // cache-and-network so reopening the tab after a task ran shows what it
@@ -124,7 +124,7 @@ export const TableDatasetInfoSidebar = ({ dataset }: { dataset: PageTable }) => 
                 </span>
                 <Badge
                   variant={
-                    column.role === TableColumnRole.Coordinate
+                    column.role === ColumnRole.Coordinate
                       ? "secondary"
                       : "outline"
                   }

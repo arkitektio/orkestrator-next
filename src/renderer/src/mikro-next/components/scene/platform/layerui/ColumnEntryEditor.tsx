@@ -349,7 +349,11 @@ export const ColumnEntrySettings = ({
   const control = column ? controlForRole(column.role) : null;
 
   useEffect(() => {
-    void loadTable({ variables: { id: entry.table } }).catch((error) => {
+    // A SPARSE colouring names no table — there is nothing to resolve, and the
+    // stats below stay unread rather than being asked of `null`.
+    const tableId = entry.table;
+    if (tableId == null) return;
+    void loadTable({ variables: { id: tableId } }).catch((error) => {
       console.warn("[layer] could not resolve the entry's table:", error);
     });
   }, [entry.table, loadTable]);

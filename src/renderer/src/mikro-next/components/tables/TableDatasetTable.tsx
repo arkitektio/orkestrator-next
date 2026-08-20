@@ -49,7 +49,7 @@ import {
 
 export type Item = Record<string, unknown>;
 
-type TableDatasetColumn = TableDatasetFragment["columns"][number];
+type TableColumn = TableDatasetFragment["columns"][number];
 
 const formatCellValue = (value: unknown) => {
   if (value == null) {
@@ -161,7 +161,7 @@ const createIndexColumn = (rowIndexOffset: number): ColumnDef<Item> => ({
 // A COORDINATE column is an axis of the table's coordinate system — surface that
 // so the reader can tell measurement columns apart from the space they live in.
 const ColumnHeader = (props: {
-  column: TableDatasetColumn;
+  column: TableColumn;
   sortDirection: false | "asc" | "desc";
   onToggleSort: () => void;
 }) => {
@@ -204,7 +204,7 @@ const ColumnHeader = (props: {
 };
 
 const calculateColumns = (
-  columns: TableDatasetColumn[],
+  columns: TableColumn[],
   options: {
     rowIndexOffset: number;
     sorting: SortingState;

@@ -7,12 +7,11 @@ import {
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
-import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 import { aliasToHttpPath, aliasToWsPath } from "../alias/helpers";
+import { createAuthRetryLink, isSubscriptionQuery } from "../runtime/authRetryLink";
 import { Service, ServiceBuilder } from "../types";
 import { buildGraphQlWard } from "../ward";
-
 
 export const createGraphQLServiceBuilder =
   (possibleTypes: any, builderOptions?: { describe?: boolean }): ServiceBuilder<Service<ApolloClient<any>>> =>
@@ -37,6 +36,8 @@ export const createGraphQLServiceBuilder =
       const wsClient = createClient({
         url: aliasToWsPath(alias, "graphql"),
         connectionParams: async () => {
+          // Re-evaluated on every (re)connect, so a socket that comes back for
+          // any reason authenticates with a current token.
           const token = await getToken();
           return {
             token: token.access_token,
@@ -47,19 +48,32 @@ export const createGraphQLServiceBuilder =
       const wslink = new GraphQLWsLink(wsClient);
 
       const splitLink = split(
-        ({ query }) => {
-          const definition = getMainDefinition(query);
-          return (
-            definition.kind === "OperationDefinition" &&
-            definition.operation === "subscription"
-          );
-        },
+        ({ query }) => isSubscriptionQuery(query),
         wslink,
         queryLink as unknown as ApolloLink
       );
 
+      const authRetryLink = createAuthRetryLink({
+        getToken,
+        onReauthenticateSocket: () => {
+          // A socket carries the token it was opened with: the server reads
+          // `connection_params` per operation, so every NEW subscription on a
+          // stale socket fails while the running ones keep streaming.
+          // Refreshing the token alone changes nothing — `connectionParams` is
+          // only re-evaluated on a new socket, so the socket has to go.
+          // `terminate` (not `dispose`) is the one that reconnects: it is
+          // explicitly "not considered fatal and a connection retry will occur
+          // as expected", whereas `dispose` is permanent teardown.
+          try {
+            wsClient.terminate();
+          } catch (e) {
+            console.warn("[arkitekt] failed to terminate ws client for re-auth:", e);
+          }
+        },
+      });
+
       const client = new ApolloClient({
-        link: splitLink,
+        link: authRetryLink.concat(splitLink),
         cache: new InMemoryCache({ possibleTypes }),
         devtools: { enabled: import.meta.env.DEV },
       });

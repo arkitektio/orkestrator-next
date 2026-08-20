@@ -31,7 +31,7 @@ import { residentName } from "@/mikro-next/components/coordinates/residents";
 import type {
   AddLayerCandidateFragment,
   ArrayDatasetSpec,
-  TableColumnRole,
+  ColumnRole,
 } from "../../api/graphql";
 import { lensLabel } from "../../lenses";
 
@@ -41,7 +41,7 @@ import { lensLabel } from "../../lenses";
  * api — that module pulls in the Apollo client and with it `window`, and this
  * one is pure logic that runs in vitest's `node` environment.
  */
-const TRACK_ID = "TRACK_ID" as TableColumnRole;
+const TRACK_ID = "TRACK_ID" as ColumnRole;
 
 export type Candidate = AddLayerCandidateFragment;
 

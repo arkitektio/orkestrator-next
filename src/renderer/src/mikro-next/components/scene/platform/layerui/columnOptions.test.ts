@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ColorSourceKind,
   ColumnControl,
   type LabelColorByFragment,
   type LabelFilterByFragment,
@@ -20,6 +21,7 @@ import {
   entryLabel,
   entryMatchesOption,
   filterByEntryToInput,
+  isColumnColorBy,
   isJoinedEntry,
   optionKey,
   toColorByInput,
@@ -139,11 +141,16 @@ describe("entry → input round trip", () => {
 describe("label entries take the same path as mesh ones", () => {
   const labelColouring: LabelColorByFragment = {
     __typename: "LabelColorBy",
+    kind: ColorSourceKind.Column,
     table: "t2",
     column: "phenotype",
+    dataset: null,
+    at: [],
     joinPath: [{ __typename: "JoinStep", table: "t1", column: "track_id" }],
     colormap: null,
     classColors: null,
+    min: null,
+    max: null,
     label: "tracks · Phenotype",
   };
 
@@ -158,6 +165,15 @@ describe("label entries take the same path as mesh ones", () => {
     values: null,
     exclude: true,
   };
+
+  // The clims are the same hazard as the joinPath: the card authors them, the
+  // server now stores them, and an entry read back without them and re-sent
+  // blanks them on every OTHER entry in the same whole-array replace.
+  it("carries a label colouring's clims back through a read-modify-write", () => {
+    expect(
+      colorByEntryToInput({ ...labelColouring, min: 0.25, max: 4 }),
+    ).toMatchObject({ min: 0.25, max: 4 });
+  });
 
   it("carries a label colouring's joinPath back through a read-modify-write", () => {
     expect(colorByEntryToInput(labelColouring).joinPath).toEqual([
@@ -197,6 +213,79 @@ describe("label entries take the same path as mesh ones", () => {
   it("badges a joined label entry and leaves a direct one bare", () => {
     expect(isJoinedEntry(labelColouring)).toBe(true);
     expect(isJoinedEntry(labelRule)).toBe(false);
+  });
+});
+
+const labelColumnColouring: LabelColorByFragment = {
+  __typename: "LabelColorBy",
+  kind: ColorSourceKind.Column,
+  table: "t1",
+  column: "area",
+  dataset: null,
+  at: [],
+  joinPath: [],
+  colormap: null,
+  classColors: null,
+  min: null,
+  max: null,
+  label: null,
+};
+
+/**
+ * The SPARSE arm. A colouring can now name a slice of a matrix instead of a
+ * column, and nothing in this client renders one — but `colorBys` is a
+ * WHOLE-ARRAY replace, so editing any other entry re-sends this one. These pin
+ * that it survives that trip intact, which is the only way it can: read it
+ * back without `kind`/`dataset`/`at` and the server stores a COLUMN entry
+ * naming nothing.
+ */
+describe("a sparse colouring round-trips untouched", () => {
+  const sparseColouring: LabelColorByFragment = {
+    __typename: "LabelColorBy",
+    kind: ColorSourceKind.Sparse,
+    table: null,
+    column: null,
+    dataset: "sparse-1",
+    at: [{ __typename: "AxisPosition", axis: "feature", value: 17 }],
+    joinPath: [],
+    colormap: "VIRIDIS" as never,
+    classColors: null,
+    min: 0,
+    max: 1,
+    label: "CD3",
+  };
+
+  it("sends every field the sparse arm names back", () => {
+    expect(colorByEntryToInput(sparseColouring)).toMatchObject({
+      kind: ColorSourceKind.Sparse,
+      table: null,
+      column: null,
+      dataset: "sparse-1",
+      at: [{ axis: "feature", value: 17 }],
+      min: 0,
+      max: 1,
+    });
+  });
+
+  it("strips __typename off a position, as it does off a join step", () => {
+    // `AxisPositionInput` has no such field; spreading one read off the wire
+    // sends an unknown key into the mutation's variables.
+    expect(colorByEntryToInput(sparseColouring).at).toEqual([
+      { axis: "feature", value: 17 },
+    ]);
+  });
+
+  it("is not a column colouring, so no LUT is built from it", () => {
+    expect(isColumnColorBy(sparseColouring)).toBe(false);
+    expect(isColumnColorBy(labelColumnColouring)).toBe(true);
+  });
+
+  it("keys on what it names, so two of them are not one entry", () => {
+    const other: LabelColorByFragment = {
+      ...sparseColouring,
+      at: [{ __typename: "AxisPosition", axis: "feature", value: 18 }],
+    };
+    expect(entryKey(sparseColouring)).not.toBe(entryKey(other));
   });
 });
 

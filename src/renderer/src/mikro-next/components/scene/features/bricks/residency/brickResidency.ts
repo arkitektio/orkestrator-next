@@ -106,14 +106,6 @@ import {
   type GpuRepacker,
 } from "../gpu/computeRepack";
 import {
-  createGpuSkeletonizer,
-  type GpuSkeletonizer,
-} from "../../annotations/enhancers/shared/gpu/computeSkeleton";
-import {
-  runGpuSkeletonSelfTest,
-  type GpuSkeletonSelfTestResult,
-} from "../../annotations/enhancers/shared/gpu/computeSkeletonSelfTest";
-import {
   runGpuRepackSelfTest,
   type GpuRepackSelfTestResult,
 } from "../gpu/computeRepackSelfTest";
@@ -222,6 +214,9 @@ const MAX_ACQUIRE_RETRIES = 30;
 /** Identifies a dispatched brick across the async min/max readback; every
  * field is re-validated against the CURRENT mapping when the readback lands. */
 type GpuBrickToken = { poolKey: string; key: string; slotIndex: number };
+
+/** All the manager needs to know about a resource built on its renderer. */
+type RendererBoundResource = { dispose(): void };
 
 /** `acquire()` sentinel treating every occupant as protected: the acquisition
  * succeeds only into a FREE slot, never by eviction — how out-of-plan bricks
@@ -603,8 +598,16 @@ export class BrickResidencyManager {
    * disabled via the localStorage kill switch) — the CPU worker path then
    * handles every brick. */
   private gpuRepacker: GpuRepacker<GpuBrickToken> | null | undefined;
-  /** Lazy like `gpuRepacker`: undefined = not yet attempted, null = no device. */
-  private gpuSkeletonizer: GpuSkeletonizer | null | undefined;
+  /**
+   * Resources other modules build on THIS manager's renderer, so the manager
+   * stays the one sanctioned holder of it without having to know what they
+   * are. Each slot is lazy like `gpuRepacker` (undefined = not yet attempted,
+   * null = unavailable) and is disposed on detach, so nothing can outlive the
+   * device it was built against. See `registerRendererResource`.
+   */
+  private readonly rendererResources = new Set<{
+    instance: RendererBoundResource | null | undefined;
+  }>();
   /** Wall-clock start of the current streaming burst (null = idle). Set when
    * a reconcile enqueues work while idle; NOT reset by mid-burst replans, so
    * timeToSharpMs measures interaction → fully-sharp. */
@@ -672,8 +675,12 @@ export class BrickResidencyManager {
     // undefined, not null: null MEMOIZES "unavailable", and the next attach
     // must be free to try again.
     this.gpuRepacker = undefined;
-    this.gpuSkeletonizer?.dispose();
-    this.gpuSkeletonizer = undefined;
+    // undefined, not null, for the same reason as `gpuRepacker` above: the
+    // next attach must be free to rebuild against the new device.
+    for (const slot of this.rendererResources) {
+      slot.instance?.dispose();
+      slot.instance = undefined;
+    }
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
     this.layerToPoolKey.clear();
@@ -694,17 +701,35 @@ export class BrickResidencyManager {
   }
 
   /**
-   * The skeleton-brush compute engine (`computeSkeleton.ts`), created lazily
-   * on the manager's renderer like the repacker above — the manager is the
-   * one sanctioned holder of the renderer, so GPU consumers of the atlas +
-   * page table hang off it rather than threading the renderer through React.
+   * Let another module build a GPU resource on this manager's renderer without
+   * the manager importing it.
+   *
+   * The manager stays the one sanctioned holder of the renderer — GPU
+   * consumers of the atlas + page table hang off it rather than threading the
+   * renderer through React — but it only ever sees `{ dispose() }`. The
+   * returned accessor is a GETTER, called per use: it hands back null while
+   * detached and rebuilds after the next attach, so a caller cannot cache a
+   * resource built against a dead device.
    */
-  getGpuSkeletonizer(): GpuSkeletonizer | null {
-    if (this.renderer === null) return null;
-    if (this.gpuSkeletonizer === undefined) {
-      this.gpuSkeletonizer = createGpuSkeletonizer(this.renderer);
-    }
-    return this.gpuSkeletonizer;
+  registerRendererResource<T extends RendererBoundResource>(
+    create: (renderer: SceneRenderer) => T | null,
+  ): () => T | null {
+    const slot: { instance: T | null | undefined } = { instance: undefined };
+    this.rendererResources.add(slot as { instance: RendererBoundResource | null | undefined });
+    return () => {
+      if (this.renderer === null) return null;
+      if (slot.instance === undefined) slot.instance = create(this.renderer);
+      return slot.instance;
+    };
+  }
+
+  /**
+   * The live renderer, or null while detached. For one-shot work that builds
+   * nothing to dispose (the dev-only parity self-tests); anything with a
+   * lifetime must go through `registerRendererResource` instead.
+   */
+  getRenderer(): SceneRenderer | null {
+    return this.renderer;
   }
 
   /** Dev-only (DebugPanel): GPU↔CPU repack parity check on the live renderer. */
@@ -713,14 +738,6 @@ export class BrickResidencyManager {
       return Promise.reject(new Error("No renderer attached"));
     }
     return runGpuRepackSelfTest(this.renderer);
-  }
-
-  /** Dev-only (DebugPanel): GPU↔CPU skeleton-extraction parity check. */
-  runGpuSkeletonSelfTest(): Promise<GpuSkeletonSelfTestResult> {
-    if (this.renderer === null) {
-      return Promise.reject(new Error("No renderer attached"));
-    }
-    return runGpuSkeletonSelfTest(this.renderer);
   }
 
   /** Debug-report probe: every channel slab's raw value at two fixed voxels
@@ -3459,8 +3476,10 @@ export class BrickResidencyManager {
     this.mirrorQueue.length = 0;
     this.gpuRepacker?.dispose();
     this.gpuRepacker = null;
-    this.gpuSkeletonizer?.dispose();
-    this.gpuSkeletonizer = null;
+    for (const slot of this.rendererResources) {
+      slot.instance?.dispose();
+      slot.instance = null;
+    }
     for (const pool of this.pools.values()) this.disposePool(pool);
     this.pools.clear();
     this.renderer = null;

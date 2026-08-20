@@ -24,6 +24,7 @@ import type {
 } from "../../shared/engine";
 import { createCpuSkeletonEngine } from "../../shared/cpuEngine";
 import { createGpuSkeletonEngine } from "../../shared/gpuEngine";
+import { gpuSkeletonizerFor } from "../../shared/gpu/skeletonizerAccess";
 import {
   boxRelative,
   centerlineToWorld,
@@ -135,7 +136,7 @@ export const useBrushSkeleton = () => {
           brickSystem.sampleResident(layerId, baseVoxel, level, channel),
       };
       const engines: SkeletonEngine[] = [];
-      const skeletonizer = brickSystem.getGpuSkeletonizer?.() ?? null;
+      const skeletonizer = gpuSkeletonizerFor(brickSystem);
       if (skeletonizer) engines.push(createGpuSkeletonEngine(engineContext, skeletonizer));
       engines.push(createCpuSkeletonEngine(engineContext));
 

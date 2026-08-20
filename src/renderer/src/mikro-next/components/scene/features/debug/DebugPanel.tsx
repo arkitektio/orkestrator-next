@@ -66,6 +66,7 @@ import { usePerfRecording } from "../../platform/perf/PerfFrameProbe";
 import { useModeStore } from "../../platform/stores/modeStore";
 import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
+import { runGpuSkeletonSelfTest } from "../annotations/enhancers/shared/gpu/computeSkeletonSelfTest";
 
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
@@ -235,7 +236,9 @@ export const DebugPanel = () => {
     const manager = viewerStoreApi.getState().brickSystem;
     if (!manager) return;
     setGpuSelfTest("skeleton: running…");
-    void manager.runGpuSkeletonSelfTest().then((result) => {
+    const renderer = manager.getRenderer();
+    if (!renderer) return;
+    void runGpuSkeletonSelfTest(renderer).then((result) => {
       setGpuSelfTest(
         `skeleton: ${result.supported ? (result.pass ? "PASS" : "FAIL") : "n/a"} — ${result.detail}`,
       );

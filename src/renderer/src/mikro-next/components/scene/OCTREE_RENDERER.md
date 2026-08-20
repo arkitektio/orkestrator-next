@@ -613,9 +613,13 @@ The legacy paths (`ChunkPlane`, `PlaneLayer`, `VolumeLayer`,
 `VolumeTextureMesh`, `core/chunkPlanning.ts`, `managers/chunkPlanTracker.ts`,
 `core/volumeTexture.ts`) and the `useOctreeRenderer` migration flag were
 deleted at cutover; `buildSliceSignature` survives in
-`core/sliceSignature.ts`. Kept: `core/slab.ts`, `core/viewportPlanning.ts`,
+`core/sliceSignature.ts`. Kept: `core/viewportPlanning.ts`,
 `core/probeMath.ts`, `core/lodPlanning.ts` (budget source +
-`planDefaultVolumeLods` for `fixedLOD` defaults).
+`planDefaultVolumeLods` for `fixedLOD` defaults). `core/slab.ts` was listed
+as kept here but its only consumer was `ChunkPlane`, so it had been dead
+since the cutover; deleted 2026-08-20 along with `core/layerListLayout.ts`
+(de-adopted by `LayerControlPanel` when auto-expand stopped being
+space-derived).
 
 ---
 

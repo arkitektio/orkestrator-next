@@ -1,4 +1,4 @@
-import { createStore } from "zustand/vanilla";
+import { createStore, type StoreApi } from "zustand/vanilla";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore"
 import { RefObject } from "react";
 import * as THREE from 'three';
@@ -360,7 +360,10 @@ export interface ViewerState {
 }
 
 
-function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>) {
+function createViewerStoreInternal(
+  arraysByStoreId: Map<string, OpenedZarrArray>,
+  extraSlices: readonly AnyViewerSlice[],
+) {
   return createStore<ViewerState>((set, get) => ({
     trackables: new Set(),
     visibleLayers: [],
@@ -519,6 +522,14 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
     setShowSceneAxis: (show) => set({ showSceneAxis: show }),
     setShowLodReadout: (show) => set({ showLodReadout: show }),
     setWorldUnitsPerPixel: (v) => set({ worldUnitsPerPixel: v }),
+    // Feature-owned slices, supplied by SceneProvider. `platform/` cannot
+    // import them, so composition happens at the shell.
+    ...Object.assign(
+      {},
+      ...extraSlices.map((slice) =>
+        slice(set as never, get as never),
+      ),
+    ),
   }));
 }
 
@@ -531,9 +542,49 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
  * opens arrays in its reconcile effect, so it is the natural owner of the
  * opening on first build too.
  */
-export function createViewerStore(arraysByStoreId: Map<string, OpenedZarrArray>) {
-  return createViewerStoreInternal(arraysByStoreId);
+export function createViewerStore(
+  arraysByStoreId: Map<string, OpenedZarrArray>,
+  extraSlices: readonly AnyViewerSlice[] = [],
+) {
+  return createViewerStoreInternal(arraysByStoreId, extraSlices);
 }
+
+/**
+ * A slice of the viewer store.
+ *
+ * Sees the WHOLE composed state through `set`/`get` — slices share one store,
+ * so a write from any of them is as atomic as it ever was — and returns only
+ * its own members. Hand-rolled rather than zustand's `StateCreator` because
+ * there is no middleware here, so the mutator tuples would all be empty and
+ * buy nothing but noise.
+ */
+export type ViewerSliceOf<S> = (
+  set: (partial: Partial<ViewerState & S>) => void,
+  get: () => ViewerState & S,
+) => S;
+
+/** Slices erase to this at the composition point so one array can hold a
+ * heterogeneous set of them. */
+export type AnyViewerSlice = ViewerSliceOf<Record<string, unknown>>;
+
+/**
+ * Typed access to a feature's slice of the viewer store.
+ *
+ * Reuses the ONE `ViewerStoreContext` — there is a single store and this only
+ * re-types it, so nothing about subscription or write atomicity changes.
+ *
+ * The cast is unavoidable and lives here, once. The context is declared
+ * `StoreApi<ViewerState>` because `platform/` may not name a feature's slice,
+ * while the composed store genuinely carries more; registering the slice in
+ * `SceneProvider` is what makes the wider type true, and `viewerStore.test.ts`
+ * asserts the resulting key set so an unregistered slice cannot pass silently.
+ */
+export const makeViewerSliceHooks = <S,>() => ({
+  useSlice: <T,>(selector: (state: ViewerState & S) => T): T =>
+    useViewerStore(selector as (state: ViewerState) => T),
+  useSliceApi: (): StoreApi<ViewerState & S> =>
+    useViewerStoreApi() as unknown as StoreApi<ViewerState & S>,
+});
 
 const {
   StoreContext: ViewerStoreContext,

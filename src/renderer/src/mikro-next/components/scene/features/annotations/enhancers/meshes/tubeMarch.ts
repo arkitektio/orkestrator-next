@@ -4,7 +4,7 @@ import { TET_CORNERS, TET_TRIANGLE_TABLE } from "./marchingTets";
 
 /**
  * CPU tube-surface extraction: the isosurface of the corridor cost field via
- * marching tetrahedra (`tetTable.ts`) — the parity truth for the GPU tube
+ * marching tetrahedra (`marchingTets.ts`) — the parity truth for the GPU tube
  * kernel and the runtime fallback when compute is unavailable.
  *
  * "Inside" is `cost <= iso`: cost is monotone-decreasing in brightness

@@ -13,7 +13,7 @@ import { SmoothBlobPanel } from "./meshes/smoothBlob/SmoothBlobPanel";
  * The annotation enhancers: tools-adjacent features that turn a gesture into
  * something richer than its raw geometry. One registry so the toolbar never
  * hard-codes a panel again — adding an enhancer = one entry here + its panel
- * component (the `shell/registry.ts` idiom).
+ * component (the `shell/layerRegistry.ts` idiom).
  *
  * `appliesTo` decides when the enhancer's panel is offered, from the same
  * (tool, displayMode) pair `modeCompat` gates tools with. The enhancer's own

@@ -1,7 +1,7 @@
 /**
  * Placeholder renderers for the layer types the backend has that we do not draw
  * yet (Point/Track). They render nothing, but registering them in
- * `shell/registry.ts` means implementing a type later is a one-component change
+ * `shell/layerRegistry.ts` means implementing a type later is a one-component change
  * that never touches the image path.
  *
  * Each will grow into its own module (features/points, …) with its own data path:

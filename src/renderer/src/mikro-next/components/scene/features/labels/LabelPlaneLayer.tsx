@@ -3,7 +3,7 @@ import { BrickLabelVolumeLayer } from "./BrickLabelVolumeLayer";
 
 /**
  * Registry entry for rendering a LabelLayer in 2D: the brick-pool label plane.
- * Mirrors `image/ImagePlaneLayer.tsx` — the registry entry stays a one-liner and
+ * Mirrors `features/volume/ImagePlaneLayer.tsx` — the registry entry stays a one-liner and
  * the work lives next to the brick machinery it uses.
  */
 export const LabelPlaneLayer = ({ layerId }: { layerId: string }) => (

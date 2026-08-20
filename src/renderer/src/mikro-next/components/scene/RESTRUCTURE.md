@@ -65,6 +65,27 @@ Placement decisions that dissolved edges, and why:
 Re-run `node scripts/scene-graph.mjs` after any change — post-move it reports
 the real graph, and it agreed with the simulation exactly.
 
+## Two hazards found while reviewing Phases 0–1
+
+**Phase 3 — `layerViewRanges` and `viewSnapshot` are one atomic write.**
+`viewerStore`'s own docblock records why: `visibilityTracker` publishes both in
+the SAME store write, and the node planner builds its `NodeCamera` from that
+snapshot rather than a live `viewStore.getState()`. Before that, camera/box
+coherence rested on zustand listener-insertion order plus rAF FIFO, and roughly
+**1 in 4 mid-orbit replans** paired a fresh camera with one-emission-stale
+ranges. The split table must place `viewSnapshot`, `layerViewRanges` and
+`nodePlans` deliberately — if the first two land on opposite sides of a store
+boundary the structural pairing is gone, and it fails intermittently, in
+motion, with no test that catches it.
+
+**Phase 2 — the skeletonizer inversion must hand out an accessor, not a value.**
+`brickResidency` has `attachRenderer`/`detachRenderer`; the renderer dies with
+the canvas. Expose `getRenderer(): SceneRenderer | null`, called per use, so the
+annotations side cannot hold a reference across a remount. Check that
+`computeSkeleton`'s broken-latch ("permanently reverts to the CPU reference")
+cannot latch on a null renderer seen mid-remount. P23's tri-state rule is about
+`gpuRepacker`, not the skeletonizer — do not over-apply it here.
+
 ## References deliberately left stale
 
 `scripts/scene-prose.mjs` reports 9 it cannot resolve. All are correct as-is:

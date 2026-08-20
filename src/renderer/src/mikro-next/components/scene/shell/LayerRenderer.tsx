@@ -3,7 +3,7 @@ import { useSceneStore } from "../platform/stores/sceneStore";
 import { useViewerStore } from "../platform/stores/viewerStore";
 import { getInitialVolumeTextureBudgetBytes } from "../platform/quality/lodPlanning";
 import { selectLayersWithinBudget } from "../platform/quality/renderCost";
-import { LAYER_RENDERERS } from "./registry";
+import { LAYER_RENDERERS } from "./layerRegistry";
 
 // Draw-call backstop only — the primary display limit is the byte budget.
 const MAX_DISPLAYABLE_LAYERS = 64;

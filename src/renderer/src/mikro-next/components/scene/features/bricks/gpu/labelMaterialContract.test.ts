@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 
-import { LAYER_RENDERERS } from "../../../shell/registry";
+import { LAYER_RENDERERS } from "../../../shell/layerRegistry";
 
 /**
  * The label render path's SHAPE, asserted where a unit test can reach it.

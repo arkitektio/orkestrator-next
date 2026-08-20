@@ -429,7 +429,7 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   fast navigation; `stats.cancelledDecodes`), while a STARTED task ignores it
   and finishes into the chunk cache. Never cancel shared in-progress decodes —
   that direction was the 13× refetch amplification.
-- **Byte-bounded decoded-chunk cache** (`zarr/caches/byteBudgetChunkCache.ts`,
+- **Byte-bounded decoded-chunk cache** (`@/lib/zarr/caches/byteBudgetChunkCache.ts`,
   512 MB LRU). The runner's default cache is *count*-bounded; 500 entries of
   plane chunks pinned multiple GB (pitfall P6).
 - **In-flight ceiling** per pool from the quality profile, abort-on-drop per
@@ -596,18 +596,18 @@ Keep the two in sync when touching either.
 
 | Area | Files |
 | --- | --- |
-| Pure core | `features/bricks/octree/{levelGeometry, brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling, voxelFrame}.ts` (each with a `.test.ts`) |
+| Pure core | `features/bricks/octree/{brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling}.ts` (each with a `.test.ts`). `levelGeometry.ts` sits in `platform/coords/` — level scale/shape is a coordinate fact the probe and the transform graph need too |
 | Coordinate graph | `@/mikro-next/lib/coords/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
 | Mesh layers | `features/meshes/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
 | Drivers | `features/bricks/residency/nodePlanTracker.ts`, `features/bricks/residency/brickResidency.ts`, `features/bricks/residency/BrickSystemProvider.tsx`, started from `shell/VisibilityManager.tsx` |
-| GPU | `features/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
-| Shaders | `features/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
-| Materials | `features/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
+| GPU | `features/bricks/gpu/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
+| Shaders | `features/bricks/gpu/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
+| Materials | `features/bricks/layers/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
 | Registry entries | `features/volume/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
 | Debug | `features/debug/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `features/debug/BrickResidencyOverlay.tsx` (per-level wireframes) |
 | Center LOD badge | `features/bricks/octree/centerLod.ts` (+ `.test.ts`) — center-pixel ray → base voxel; `features/bricks/CenterLodReadout.tsx` — the level `BrickResidencyManager.residentLevelAt` serves there, vs. the plan's target. Not debug-gated: silent coarse fallback is invisible without it |
 | Store | `platform/stores/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `platform/stores/viewStore.ts` (`cameraPose`, `cameraMoving`) |
-| Cache | `zarr/caches/byteBudgetChunkCache.ts` |
+| Cache | `@/lib/zarr/caches/byteBudgetChunkCache.ts` |
 
 The legacy paths (`ChunkPlane`, `PlaneLayer`, `VolumeLayer`,
 `VolumeTextureMesh`, `core/chunkPlanning.ts`, `managers/chunkPlanTracker.ts`,

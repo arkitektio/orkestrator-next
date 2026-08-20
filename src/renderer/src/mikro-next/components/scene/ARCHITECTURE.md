@@ -64,9 +64,9 @@ per-kind pieces. `shell/` owns the dispatch tables, and **each feature
 contributes one entry to each**:
 
 ```
-shell/layerRegistry.ts            __typename -> { Layer2D, Layer3D }
-shell/layerPanel/cardRegistry.ts  __typename -> LayerCard
-shell/debugRegistry.ts            feature    -> DebugSection
+shell/layerRegistry.ts            __typename -> { Layer2D, Layer3D }   exists
+shell/layerPanel/cardRegistry.ts  __typename -> LayerCard              PLANNED
+shell/debugRegistry.ts            feature    -> DebugSection           PLANNED
 ```
 
 Adding a layer type is: one folder under `features/`, two registry lines.
@@ -86,8 +86,9 @@ invert it, or to demote the shared symbol to `platform/` — not to widen rule 2
 Adding an entry needs a justification line here. The absence of any such check
 is precisely what turned the old `core/` into a 153-file grab-bag.
 
-`node scripts/scene-graph.mjs` reports the current graph and any violation;
-`architecture.test.ts` asserts the same rules in `pnpm test`.
+`node scripts/scene-graph.mjs` reports the current graph and any violation
+today. `architecture.test.ts`, which will assert the same rules inside
+`pnpm test`, is PLANNED — see `RESTRUCTURE.md`.
 
 ## Invariants a restructure must not break
 

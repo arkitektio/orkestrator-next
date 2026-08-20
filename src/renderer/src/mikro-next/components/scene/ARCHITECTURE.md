@@ -69,6 +69,11 @@ shell/layerPanel/cardRegistry.ts  __typename -> LayerCard              PLANNED
 shell/debugRegistry.ts            feature    -> DebugSection           PLANNED
 ```
 
+The two planned ones are what clear the last sideways edges: the card registry
+replaces `LayerControlPanel`'s four hard-coded, pre-partitioned card arrays, and
+the debug registry lets each feature contribute its own `DebugPanel` section
+instead of the panel reaching into brick and mesh internals.
+
 Adding a layer type is: one folder under `features/`, two registry lines.
 `features/annotations/enhancers/registry.tsx` already follows the same shape.
 
@@ -86,9 +91,13 @@ invert it, or to demote the shared symbol to `platform/` — not to widen rule 2
 Adding an entry needs a justification line here. The absence of any such check
 is precisely what turned the old `core/` into a 153-file grab-bag.
 
-`node scripts/scene-graph.mjs` reports the current graph and any violation
-today. `architecture.test.ts`, which will assert the same rules inside
-`pnpm test`, is PLANNED — see `RESTRUCTURE.md`.
+`architecture.test.ts` asserts these rules in `pnpm test`. Three are hard
+zeroes; "features do not reach sideways" is a RATCHET against a known list, in
+the same spirit as `typecheck-baseline.json` — the count may fall, never rise,
+and clearing an entry means deleting it so it cannot come back.
+
+`node scripts/scene-graph.mjs` prints the same graph for a human, with
+`--edges` to list every offending import.
 
 ## Invariants a restructure must not break
 

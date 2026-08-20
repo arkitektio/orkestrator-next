@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { nodeBaseBox } from "../bricks/octree/nodeAddress";
+import { nodeBaseBox } from "./octree/nodeAddress";
 import { buildAffineMatrix } from "../../platform/coords/worldTransform";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";

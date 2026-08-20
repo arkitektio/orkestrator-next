@@ -32,7 +32,7 @@ import { BrickSystemProvider } from "../features/bricks/residency/BrickSystemPro
 import { VisibilityManager } from "./VisibilityManager";
 import { coldOpenTimeline } from "../platform/perf/coldOpenTimeline";
 import { BrickSystemHost } from "../features/bricks/residency/BrickSystemHost";
-import { BrickResidencyOverlay } from "../features/debug/BrickResidencyOverlay";
+import { BrickResidencyOverlay } from "../features/bricks/BrickResidencyOverlay";
 import { SceneModeControls } from "./chrome/SceneModeControls";
 import { SceneShortcuts } from "./keyboard/SceneShortcuts";
 import { CenterLodReadout } from "../features/bricks/CenterLodReadout";

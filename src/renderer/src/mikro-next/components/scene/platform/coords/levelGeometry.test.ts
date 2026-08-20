@@ -96,7 +96,7 @@ describe("buildLayerLevelGeometry", () => {
 
 describe("MAX_BRICK_LEVELS cap (deep pyramids)", () => {
   it("caps the level list at 10 — deeper levels are unreachable by the shader", async () => {
-    const { MAX_BRICK_LEVELS } = await import("../../features/bricks/octree/brickEncoding");
+    const { MAX_BRICK_LEVELS } = await import("./levelGeometry");
     // 12-level dyadic pyramid; the shader's traversal uniform arrays and
     // residency walk are sized to MAX_BRICK_LEVELS, so an uncapped geometry
     // made the planner root its backdrop at a level the shader cannot read

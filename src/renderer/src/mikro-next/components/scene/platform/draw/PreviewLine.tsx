@@ -5,7 +5,7 @@ import { Line2 } from "three/examples/jsm/lines/webgpu/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { Line2NodeMaterial } from "three/webgpu";
 import { writeLineDistances, writePolylinePairs } from "../gpu/lineBuffer";
-import type { OutlinePoint } from "../../features/annotations/roiOutline";
+import type { OutlinePoint } from "../model/geometry";
 
 /**
  * A rubber-band border the drawers rewrite at pointer cadence, without React.

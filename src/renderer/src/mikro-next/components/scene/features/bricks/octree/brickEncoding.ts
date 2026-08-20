@@ -9,7 +9,8 @@ import * as THREE from "three";
  * the GPU renders.
  */
 
-export const MAX_BRICK_LEVELS = 10;
+// Defined by levelGeometry, which is the module that applies the cap.
+export { MAX_BRICK_LEVELS } from "../../../platform/coords/levelGeometry";
 
 /**
  * How many bits of a page-table entry an EMPTY (uniform) brick's value gets.

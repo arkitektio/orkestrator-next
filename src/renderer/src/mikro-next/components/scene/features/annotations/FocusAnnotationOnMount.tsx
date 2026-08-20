@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import type { DetailAnnotationFragment } from "@/mikro-next/api/graphql";
 
 import type { AnnotationLayerVariant } from "./annotationBounds";
-import { SceneGuard } from "../../shell/SceneProvider";
+import { SceneGuard } from "../../platform/stores/sceneScope";
 import { useRoiSelectionStoreApi } from "./roiSelectionStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStoreApi, type ViewerState } from "../../platform/stores/viewerStore";

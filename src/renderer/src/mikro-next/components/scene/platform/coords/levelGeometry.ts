@@ -1,6 +1,5 @@
 import { resolveAxisIndices, type AxisIndices, type LayerAxisDims } from "../model/dims";
 import type { TransformLike } from "@/mikro-next/lib/coords/transformGraph";
-import { MAX_BRICK_LEVELS } from "../../features/bricks/octree/brickEncoding";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in
@@ -10,6 +9,13 @@ import { MAX_BRICK_LEVELS } from "../../features/bricks/octree/brickEncoding";
  */
 
 export type Vec3 = readonly [number, number, number];
+
+/**
+ * Hard cap on pyramid levels. Lives here rather than with the brick encodings
+ * because this is the module that APPLIES it, and platform/ cannot import from
+ * a feature; the shader's traversal uniform arrays are sized to match.
+ */
+export const MAX_BRICK_LEVELS = 10;
 
 /** Per-level source data, structurally identical to `chunkPlanning.PlanLevel`. */
 export type LevelSource = {

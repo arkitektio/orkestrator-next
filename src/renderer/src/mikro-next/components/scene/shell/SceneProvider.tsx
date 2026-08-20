@@ -2,9 +2,6 @@ import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { SceneFragment } from "@/mikro-next/api/graphql";
 import { AttributeServiceProvider } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
-  Fragment,
-  createContext,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -46,6 +43,19 @@ import { ViewStoreContext, createViewStore } from "../platform/stores/viewStore"
 import { ViewerStoreContext, createViewerStore } from "../platform/stores/viewerStore";
 import { SceneBrandTheme } from "./theme/SceneBrandTheme";
 import { coldOpenTimeline } from "../platform/perf/coldOpenTimeline";
+import {
+  SceneScopeStatusContext,
+  type SceneScopeStatus,
+} from "../platform/stores/sceneScope";
+
+// The scope-readiness contract lives in platform/ so features can gate on it
+// without importing the shell; re-exported here because this is the module
+// that publishes the value.
+export {
+  SceneGuard,
+  useSceneScopeStatus,
+  type SceneScopeStatus,
+} from "../platform/stores/sceneScope";
 
 /**
  * The scene's store scope: one vanilla zustand store per concern, all created
@@ -63,49 +73,6 @@ export type SceneScope = {
   roiDrawSessionStore: ReturnType<typeof createRoiDrawSessionStore>;
   roiSelectionStore: ReturnType<typeof createRoiSelectionStore>;
   brushSkeletonStore: ReturnType<typeof createBrushSkeletonStore>;
-};
-
-/**
- * Where the scope build stands, carrying the scene fragment so consumers (the
- * viewport's fallback, the sidebar tab) need no separate scene prop.
- */
-export type SceneScopeStatus =
-  | { phase: "no-scene"; scene: null; error: null }
-  | { phase: "initializing"; scene: SceneFragment; error: null }
-  | { phase: "error"; scene: SceneFragment; error: Error }
-  | { phase: "ready"; scene: SceneFragment; error: null };
-
-const SceneScopeStatusContext = createContext<SceneScopeStatus | null>(null);
-SceneScopeStatusContext.displayName = "SceneScopeStatusContext";
-
-
-export const useSceneScopeStatus = (): SceneScopeStatus => {
-  const status = useContext(SceneScopeStatusContext);
-  if (!status) {
-    throw new Error("Missing SceneProvider");
-  }
-  return status;
-};
-
-/**
- * Renders children only when the scene scope is ready — the ONLY sanctioned way
- * to gate store consumers. The scoped store hooks keep throwing on a missing
- * provider (softening them would hide real composition bugs), so anything that
- * reads a scene store and can render while the scope is absent must sit under a
- * guard: the viewport does this for the canvas tree, and sidebar tabs do it for
- * themselves.
- *
- * Children are keyed on the scene id so a scene switch can never feed new
- * stores into components primed for the old scene — they remount instead
- * (the "remount, don't repopulate" invariant).
- */
-export const SceneGuard = (props: {
-  fallback?: ReactNode;
-  children: ReactNode;
-}) => {
-  const status = useSceneScopeStatus();
-  if (status.phase !== "ready") return <>{props.fallback ?? null}</>;
-  return <Fragment key={status.scene.id}>{props.children}</Fragment>;
 };
 
 /**

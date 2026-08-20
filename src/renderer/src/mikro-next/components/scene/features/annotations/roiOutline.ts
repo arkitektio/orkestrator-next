@@ -17,7 +17,11 @@ import type { DrawingTool } from "./roiDrawingStore";
  * the user is dragging out right now.
  */
 
-export type OutlinePoint = [number, number, number];
+// Re-exported so the drawers keep importing it from the module that produces
+// it; the type itself lives in platform/ because platform/draw/PreviewLine
+// consumes it and cannot import from a feature.
+import type { OutlinePoint } from "../../platform/model/geometry";
+export type { OutlinePoint };
 
 export interface OutlinePlanar {
   x: number;

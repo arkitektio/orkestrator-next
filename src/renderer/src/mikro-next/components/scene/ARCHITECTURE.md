@@ -128,7 +128,22 @@ break:
 - **The scene is not multi-instance-safe.** `platform/perf/perfMonitor.ts` and
   `coldOpenTimeline.ts` are module-level singletons imported by 20+ files,
   despite the per-scene scoped stores. Known and deferred.
-- **`platform/stores/viewerStore.ts` is a service locator.** It holds handles to
-  the brick system and the fabriks manager so components can find them. This is
-  deliberate, and it is the reason a few `platform -> features` type edges
-  survive.
+- **`platform/stores/viewerStore.ts` is the scene's service registry**, and that
+  is the one documented exception to rule 1. It carries handles to the brick
+  residency manager and the per-layer fabriks managers so components can find
+  them, which makes it name three feature types.
+
+  The store no longer *constructs* anything — `SceneProvider` opens the zarr
+  arrays and hands them in — so there is no service-locator construction left.
+  What remains is handle-holding, and the three imports are `import type`,
+  erased at runtime: there is no runtime coupling to break. Dissolving them
+  would mean splitting ~12 interleaved fields (`nodePlans`, `poolsVersion`,
+  `residencyVersion`, `volumeInputs`, `renderBudget`, `unplannableLayers`,
+  `meshSystems`, …) across 33 files in the P17-sensitive render path — and
+  `layerViewRanges` and `viewSnapshot` are published in ONE atomic store write
+  precisely to stop an intermittent mid-orbit bug, so that path is not somewhere
+  to churn for erased type references.
+
+  The exception is deliberately narrow — `platform/stores` only, `import type`
+  only — and `scripts/scene-graph.mjs` prints these three separately rather than
+  hiding them, so it cannot quietly become the norm.

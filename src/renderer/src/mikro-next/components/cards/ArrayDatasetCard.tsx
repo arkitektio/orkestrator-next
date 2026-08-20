@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardTitle } from '@/components/ui/card'
 import { MikroArrayDataset, MikroScene } from '@/linkers'
+import { cn } from '@/lib/utils'
 import { Clapperboard, Grid3x3 } from 'lucide-react'
 import { ListArrayDatasetFragment } from '../../api/graphql'
 import { modifierSpecsOf, spatialSpecOf, splitAxesBySpec, type ArrayDatasetAxis } from '../../specs'
@@ -9,6 +10,12 @@ import { SnapshotBackdrop } from './SnapshotBackdrop'
 interface Props {
   /** Named `item` because createList passes items in under that name. */
   item: ListArrayDatasetFragment
+  /**
+   * Fill the space given instead of claiming a square. Set by a justified list,
+   * which sizes the tile itself from the dataset's x/y — the card must not then
+   * insist on an aspect of its own.
+   */
+  fill?: boolean
 }
 
 /**
@@ -44,16 +51,21 @@ const AxisChip = ({ axis, muted }: { axis: ArrayDatasetAxis; muted?: boolean }) 
  * most datasets have none and the spec/extent readout has to carry the card on
  * its own regardless.
  */
-const TheCard = ({ item: arrayDataset }: Props) => {
+const TheCard = ({ item: arrayDataset, fill }: Props) => {
   const spatial = spatialSpecOf(arrayDataset.spec)
   const modifiers = modifierSpecsOf(arrayDataset.spec)
   const axes = splitAxesBySpec(arrayDataset.axisNames, arrayDataset.shape, arrayDataset.spec)
 
   const Icon = spatial?.icon ?? Grid3x3
 
+  // `h-full` down BOTH levels when filling: SmartModel puts its own div between
+  // this card and whatever sized the tile, and a percentage height against an
+  // auto-height parent resolves to auto — so without it the card collapses to
+  // the height of its text and a 512x512 dataset comes out a letterbox instead
+  // of the square its shape asked for.
   return (
-    <MikroArrayDataset.Smart object={arrayDataset}>
-      <Card className="aspect-square overflow-hidden p-0">
+    <MikroArrayDataset.Smart object={arrayDataset} className={fill ? 'h-full' : undefined}>
+      <Card className={cn('overflow-hidden p-0', fill ? 'h-full w-full' : 'aspect-square')}>
         <SnapshotBackdrop snapshot={arrayDataset.latestSnapshot} className="h-full w-full">
           <div className="flex h-full flex-col justify-between gap-2 px-3 py-2">
             <div className="flex min-w-0 flex-row items-start gap-2">

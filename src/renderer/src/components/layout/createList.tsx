@@ -50,6 +50,11 @@ export interface GeneratedListProps<TFilters, TOrder, TOrdering> {
   // Typed as `any` at this boundary because `TItem` is not reliably inferred by
   // the factory; the group-by definitions are strongly typed at their def site.
   groupBy?: GroupByDef<any>;
+  // When set, the grid gives way to justified rows sized by this ratio — see
+  // `GroupableListRenderer`. A per-page prop rather than a factory option: the
+  // same list reads as a picture shelf on a page of planes and as a grid of
+  // readouts everywhere else. Same `any` caveat as `groupBy`.
+  aspectOf?: (item: any) => number;
 }
 
 
@@ -263,6 +268,7 @@ export const createList = <
             ItemComponent={ItemComponent}
             cardProps={cardProps}
             minItemWidth={minItemWidth}
+            aspectOf={props.aspectOf}
           />
         )}
 

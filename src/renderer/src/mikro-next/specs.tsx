@@ -274,3 +274,32 @@ export const formatBytes = (bytes: number): string => {
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(k)))
   return `${parseFloat((bytes / k ** i).toFixed(2))} ${units[i]}`
 }
+
+/**
+ * How wide a plane is relative to how tall — `x / y`, for laying a tile out at
+ * the shape of the thing it shows rather than in a square that crops it.
+ *
+ * Keyed on the axis NAMES, never on position. RFC-5 pins the order, but a
+ * transposed tile reads as plausible rather than as broken, so a dataset that
+ * does not name both axes gets the square fallback instead of a guess.
+ *
+ * Clamped, because the column width is fixed and the height follows from this:
+ * a `64x 4096y` sliver would otherwise be a tile twenty screens tall, and its
+ * transpose a few pixels of nothing. Wide enough to leave an ordinary
+ * micrograph — anything up to 3:1 — at exactly its own shape.
+ */
+export const xyAspectOf = (
+  axisNames: readonly string[],
+  shape: readonly number[]
+): number => {
+  const extentOf = (name: string) => {
+    const index = axisNames.findIndex((axis) => axis.toLowerCase() === name)
+    return index >= 0 ? shape[index] : undefined
+  }
+
+  const x = extentOf('x')
+  const y = extentOf('y')
+  if (!x || !y) return 1
+
+  return Math.min(Math.max(x / y, 1 / 3), 3)
+}

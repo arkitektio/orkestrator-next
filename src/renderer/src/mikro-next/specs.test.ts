@@ -14,7 +14,8 @@ import {
   formatShape,
   modifierSpecsOf,
   spatialSpecOf,
-  splitAxesBySpec
+  splitAxesBySpec,
+  xyAspectOf
 } from './specs'
 
 describe('the spec catalogue', () => {
@@ -239,5 +240,27 @@ describe('formatBytes', () => {
 
   it('stays in the top unit rather than inventing one past PB', () => {
     expect(formatBytes(1024 ** 6)).toBe('1024 PB')
+  })
+})
+
+describe('xyAspectOf', () => {
+  it('reads the aspect off the named axes, not their position', () => {
+    expect(xyAspectOf(['t', 'c', 'y', 'x'], [10, 3, 512, 1024])).toBe(2)
+    // The same plane with the spatial axes transposed must not flip the tile.
+    expect(xyAspectOf(['x', 'y'], [1024, 512])).toBe(2)
+  })
+
+  it('falls back to square when either axis is unnamed', () => {
+    expect(xyAspectOf(['a', 'b'], [1024, 512])).toBe(1)
+    expect(xyAspectOf(['y'], [512])).toBe(1)
+  })
+
+  it('is square when the shape does not reach the named axis', () => {
+    expect(xyAspectOf(['t', 'c', 'y', 'x'], [10, 3, 512])).toBe(1)
+  })
+
+  it('clamps a shape no tile could hold', () => {
+    expect(xyAspectOf(['y', 'x'], [64, 4096])).toBe(3)
+    expect(xyAspectOf(['y', 'x'], [4096, 64])).toBe(1 / 3)
   })
 })

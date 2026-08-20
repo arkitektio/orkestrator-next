@@ -7,7 +7,7 @@ import {
   useGetSceneQuery
 } from "../api/graphql";
 import { Scene } from "../components/scene/Scene";
-import { coldOpenTimeline } from "../components/scene/managers/coldOpenTimeline";
+import { coldOpenTimeline } from "../components/scene/platform/perf/coldOpenTimeline";
 import { useSceneOpen } from "../lib/zarr/useDatalayerWarmup";
 
 export type IRepresentationScreenProps = {};

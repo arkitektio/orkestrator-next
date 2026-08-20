@@ -7,7 +7,7 @@ import {
   spatialPixelSizes,
   type PixelSizeEdge,
 } from "../coordinates/pixelSize";
-import { isPhysicalUnit } from "../scene/core/sceneUnits";
+import { isPhysicalUnit } from "../scene/platform/coords/sceneUnits";
 
 type PageDataset = GetArrayDatasetQuery["arrayDataset"];
 

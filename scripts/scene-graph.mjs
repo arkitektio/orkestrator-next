@@ -29,7 +29,8 @@ export const bucketOf = (rel) => {
   // platform/gpu, features/bricks, shell/keyboard — two levels, since the rules
   // distinguish sibling features but not files within one.
   if (parts[0] === "features" || parts[0] === "platform" || parts[0] === "shell") {
-    return parts.length > 1 ? `${parts[0]}/${parts[1]}` : parts[0];
+    // tier/sub for a nested file; the bare tier for one sitting directly in it.
+    return parts.length > 2 ? `${parts[0]}/${parts[1]}` : parts[0];
   }
   return parts[0];
 };

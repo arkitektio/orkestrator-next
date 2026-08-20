@@ -4,20 +4,20 @@ import {
   SceneColumn,
   SceneColumnPanels,
   SceneColumnTrigger,
-} from "./SceneColumn";
-import { SceneDock } from "./SceneDock";
-import { SceneProvider } from "./SceneProvider";
-import { DefaultScenePanels, SceneViewport } from "./SceneViewport";
-import { sceneHasMeshLayer } from "./layers/mesh/collectionPlacement";
-import { AnimationPanel } from "./panels/AnimationPanel";
-import { DimSliderPanel } from "./panels/DimSliderPanel";
+} from "./shell/SceneColumn";
+import { SceneDock } from "./shell/SceneDock";
+import { SceneProvider } from "./shell/SceneProvider";
+import { DefaultScenePanels, SceneViewport } from "./shell/SceneViewport";
+import { sceneHasMeshLayer } from "./platform/model/collectionPlacement";
+import { AnimationPanel } from "./features/animation/AnimationPanel";
+import { DimSliderPanel } from "./shell/chrome/DimSliderPanel";
 import {
   SceneAnimationsSidebar,
   SceneAnnotationsSidebar,
   SceneLayersSidebar,
   SceneMeshesSidebar,
-} from "./panels/sceneSidebarTabs";
-import { ZSliderPanel } from "./panels/ZSliderPanel";
+} from "./shell/chrome/sceneSidebarTabs";
+import { ZSliderPanel } from "./shell/chrome/ZSliderPanel";
 
 /**
  * All-in-one scene renderer: provider + viewport in one element, for hosts

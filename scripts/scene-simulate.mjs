@@ -29,7 +29,7 @@ const bucketOf = (rel) => {
   const p = rel.split("/");
   if (p.length === 1) return "(root)";
   return p[0] === "features" || p[0] === "platform" || p[0] === "shell"
-    ? `${p[0]}/${p[1] ?? ""}`.replace(/\/$/, "") : p[0];
+    ? (p.length > 2 ? `${p[0]}/${p[1]}` : p[0]) : p[0];
 };
 const resolveTarget = (fromFile, spec) => {
   let abs;

@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from "react";
 import { createDefaultWorker } from "@/lib/zarr/runner";
 import { workerPool } from "@/mikro-next/workers/pool";
-import { assertWebGPUSupported } from "@/mikro-next/components/scene/render/gpu/webgpuSupport";
+import { assertWebGPUSupported } from "@/mikro-next/components/scene/platform/gpu/webgpuSupport";
 import type { MikroClient } from "@/lib/zarr/store/types";
 import { getGeneralAccess } from "./access";
 import { useMikro } from "@/app/Arkitekt";
-import { coldOpenTimeline } from "@/mikro-next/components/scene/managers/coldOpenTimeline";
+import { coldOpenTimeline } from "@/mikro-next/components/scene/platform/perf/coldOpenTimeline";
 
 /**
  * Start the scene's setup work that does NOT depend on the scene.

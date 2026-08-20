@@ -12,7 +12,7 @@ import {
 import { AnnotationGlyph } from "../components/annotations/AnnotationGlyph";
 import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
 import { Scene } from "../components/scene/Scene";
-import { FocusAnnotationOnMount } from "../components/scene/interactions/FocusAnnotationOnMount";
+import { FocusAnnotationOnMount } from "../components/scene/features/annotations/FocusAnnotationOnMount";
 import { AnnotationInfoSidebar } from "../components/sidebars/AnnotationInfoSidebar";
 
 type PageAnnotation = GetAnnotationQuery["annotation"];

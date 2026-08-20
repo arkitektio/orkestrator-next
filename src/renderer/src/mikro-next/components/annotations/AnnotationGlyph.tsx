@@ -3,12 +3,12 @@ import { useMemo } from "react";
 import { AnnotationKind, type SceneAnnotationFragment } from "@/mikro-next/api/graphql";
 import { cn } from "@/lib/utils";
 
-import { getAnnotationSelectionPoints } from "../scene/core/annotationBounds";
+import { getAnnotationSelectionPoints } from "../scene/features/annotations/annotationBounds";
 import {
   DEFAULT_STROKE,
   IMPLIED_FILL_OPACITY,
   rgbaToStyle,
-} from "../scene/core/annotationStyle";
+} from "../scene/features/annotations/annotationStyle";
 
 /**
  * The shape itself, drawn from its own vectors — what identifies an annotation

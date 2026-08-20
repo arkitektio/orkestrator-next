@@ -8,7 +8,7 @@ import {
 import {
   absoluteLevelScale,
   relativeLevelScaleFactors,
-} from "@/mikro-next/components/scene/core/octree/levelGeometry";
+} from "@/mikro-next/components/scene/platform/coords/levelGeometry";
 
 /**
  * Fixtures use the reference scene document's own numbers (confocal pyramid

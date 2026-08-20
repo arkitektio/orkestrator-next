@@ -1,12 +1,9 @@
 import { createStore } from "zustand/vanilla";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore"
-import { MikroClient } from "@/lib/zarr/store/types";
 import { RefObject } from "react";
 import * as THREE from 'three';
-import { SceneFragment } from "@/mikro-next/api/graphql";
 import type { BrandTarget } from "@/providers/settings/brandTheme";
-import { createConfiguredSceneStores } from "../sources/zarrSources";
-import { openSceneArrays, type OpenedZarrArray } from "../sources/arrayRegistry";
+import type { OpenedZarrArray } from "../sources/arrayRegistry";
 import { fitCameraToObject } from "../camera/cameraFit";
 import {
   createVolumeInputsTracker,
@@ -61,7 +58,6 @@ import type { BrickResidencyManager } from "../../features/bricks/residency/bric
 import type { FabriksCollectionManager } from "../../features/meshes/fabriks/fabriksManager";
 
 import { probeAfterPinChange } from "../probe/probeTargeting";
-import { coldOpenTimeline } from "../perf/coldOpenTimeline";
 import { applyExactValues, type ProbeFetchKey, type ProbeMode, type ProbeResult } from "../probe/probeTypes";
 import {
   applyAttributeRows,
@@ -526,14 +522,16 @@ function createViewerStoreInternal(arraysByStoreId: Map<string, OpenedZarrArray>
   }));
 }
 
-export async function createViewerStore(
-  scene: SceneFragment,
-  client: MikroClient,
-  datalayer: string,
-) {
-  const storesById = await createConfiguredSceneStores(scene, client, datalayer);
-  const arraysByStoreId = await openSceneArrays(storesById);
-  coldOpenTimeline.stamp("arraysOpen");
+/**
+ * Build the viewer store over arrays that are ALREADY open.
+ *
+ * Opening them is the provider's job, not the store's: a store that fetches is
+ * a service locator, and it forced platform/stores to import platform/sources
+ * and the cold-open timeline just to construct itself. `SceneProvider` already
+ * opens arrays in its reconcile effect, so it is the natural owner of the
+ * opening on first build too.
+ */
+export function createViewerStore(arraysByStoreId: Map<string, OpenedZarrArray>) {
   return createViewerStoreInternal(arraysByStoreId);
 }
 

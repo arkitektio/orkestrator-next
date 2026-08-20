@@ -11,7 +11,11 @@ import {
 import { resolveSceneCameraFrame } from "../platform/camera/cameraState";
 import { resolvePreferredDisplayMode } from "../platform/camera/preferredView";
 import { sceneLayerSignature, sceneScopeSignature } from "../platform/model/sceneStructure";
-import { openMissingSceneArrays } from "../platform/sources/zarrSources";
+import {
+  createConfiguredSceneStores,
+  openMissingSceneArrays,
+} from "../platform/sources/zarrSources";
+import { openSceneArrays } from "../platform/sources/arrayRegistry";
 import { assertWebGPUSupported } from "../platform/gpu/webgpuSupport";
 import {
   AnimationStoreContext,
@@ -183,6 +187,13 @@ export const SceneProvider = (props: {
           throw new Error("No datalayer endpoint configured");
         }
 
+        // Opening the scene's zarr arrays belongs to the provider: the store
+        // is a state container, not a fetcher. Stamped here so the cold-open
+        // timeline still sees the same moment it used to.
+        const storesById = await createConfiguredSceneStores(scene, client, datalayer);
+        const arraysByStoreId = await openSceneArrays(storesById);
+        coldOpenTimeline.stamp("arraysOpen");
+
         const sceneStore = createSceneStore({ scene });
         // Both the opening view and the pose frame are facts about the scene AS
         // LOADED, so they are resolved from the normalized layers the scene
@@ -194,7 +205,7 @@ export const SceneProvider = (props: {
             displayMode: resolvePreferredDisplayMode(scene.preferredView, layers),
           }),
           viewStore: createViewStore(),
-          viewerStore: await createViewerStore(scene, client, datalayer),
+          viewerStore: createViewerStore(arraysByStoreId),
           selectionStore: createSelectionStore(),
           sceneStore,
           animationStore: createAnimationStore({

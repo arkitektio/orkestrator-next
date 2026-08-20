@@ -66,7 +66,7 @@ export const captureFrameBlob = async (
     gl.setRenderTarget(target);
     gl.render(scene, camera);
     // Returns the pixel buffer (no out-param); bottom-up, RGBA8, and with rows
-    // padded to WebGPU's 256-byte alignment — see core/pixelBuffer.
+    // padded to WebGPU's 256-byte alignment — see platform/gpu/pixelBuffer.
     buf = await gl.readRenderTargetPixelsAsync(target, 0, 0, width, height);
   } finally {
     restoreVisibility();

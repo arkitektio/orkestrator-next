@@ -4,7 +4,7 @@ import { BrickLayerFragment, ImageLayerFragment } from "../model/layerGuards";
 
 /**
  * GPU volume-texture memory budgeting and default per-layer LOD assignment.
- * Extracted from `store/sceneStore.ts` so the store no longer owns this
+ * Extracted from `platform/stores/sceneStore.ts` so the store no longer owns this
  * concern — it just calls `planDefaultVolumeLods(brickLayers)` at construction.
  */
 

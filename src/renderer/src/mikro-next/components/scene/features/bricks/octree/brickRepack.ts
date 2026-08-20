@@ -21,7 +21,7 @@ import type { VoxelBox } from "./nodeAddress";
  *  - **reduce** (a phasor node in the layer's render graph): the phasor axis is
  *    fetched WHOLE and consumed here — every bin of every voxel is walked once.
  *    A phasor node's three slabs get the DFT of the voxel's profile at its
- *    harmonic (g, s — see `core/phasor.ts`) plus the mean photon count; a plain
+ *    harmonic (g, s — see `platform/model/phasor.ts`) plus the mean photon count; a plain
  *    channel slab gets the mean over the same axis, i.e. the ordinary intensity
  *    image. (It has to be *some* projection — the axis still exists in the data
  *    and no slider pins it — and the intensity image is the one that composites
@@ -304,7 +304,7 @@ function reduceChunks(
       const iBase = phasor.iSlab * voxelsPerSlab;
       const step = (2 * Math.PI * phasor.harmonic) / phasorBins;
       for (let bin = binStart; bin < binEnd; bin++) {
-        // Mirrors `reduceProfile` in core/phasor.ts, one bin at a time —
+        // Mirrors `reduceProfile` in platform/model/phasor.ts, one bin at a time —
         // the profile is spread across chunks, so the DFT is accumulated.
         const cos = Math.cos(step * bin);
         const sin = Math.sin(step * bin);

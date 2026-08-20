@@ -20,7 +20,7 @@ import type {
 import type { PickedCorridor } from "./planning";
 
 /**
- * The CPU skeleton engine: the `enhancers/shared` reference pipeline, verbatim
+ * The CPU skeleton engine: the `features/annotations/enhancers/shared` reference pipeline, verbatim
  * — cost field from `sampleResident`, Dijkstra geodesic, box-blur smoothing,
  * connectivity mask, tet march. It is BOTH the fallback (no device, dead
  * pipelines, corridor within its smaller budget) and the parity truth the

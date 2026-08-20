@@ -92,8 +92,8 @@ import {
  * directory alongside two ShaderMaterials, since deleted. TSL compiles to WGSL,
  * the scene's only backend.
  *
- * Semantics are a 1:1 port — the CPU mirrors (`core/octree/brickSampling.ts`,
- * `core/opacityCorrection.ts`, `core/probeMath.ts` normalization) remain in
+ * Semantics are a 1:1 port — the CPU mirrors (`features/bricks/octree/brickSampling.ts`,
+ * `features/bricks/shaderspec/opacityCorrection.ts`, `features/bricks/probeMath.ts` normalization) remain in
  * lockstep. The GLSL `uPickingPass` branch was NOT ported: it was dead code
  * (probing is a CPU march via `sampleResident`).
  *
@@ -550,7 +550,7 @@ function emitChannelTap(
  * blocks trilinear leaves. Classic two-tap decomposition (Sigg & Hadwiger):
  * per axis the four cubic weights collapse into TWO hardware-trilinear taps,
  * so the full filter is 8 taps instead of 64. CPU lockstep mirror + algebra
- * tests: `core/tricubic.ts`.
+ * tests: `features/bricks/shaderspec/tricubic.ts`.
  *
  * The atlas border is 1 voxel but cubic support reaches ±1.5, so every tap is
  * CLAMPED to the slot interior (x/y) and the channel slab (z) — edge voxels
@@ -746,7 +746,7 @@ function makeChannelNormalize(c: any) {
 const TAU = Math.PI * 2;
 
 /**
- * TSL port of `core/phasor.ts` — keep the two in lockstep.
+ * TSL port of `platform/model/phasor.ts` — keep the two in lockstep.
  *
  * Takes the three slabs the repack produced for a phasor node (g, s and the
  * mean photon count is tapped by the caller) and returns the scalar its
@@ -1260,7 +1260,7 @@ export function createVolumeNodeMaterial(
     const floorDelta = rayLen.div(max(float(uMaxSteps), 1.0));
 
     // Marching pitch per level. Two rules behind orkestrator.anisoStride
-    // (CPU mirror: core/raymarchStep.ts `directionProjectedPitch` — keep in
+    // (CPU mirror: features/bricks/shaderspec/raymarchStep.ts `directionProjectedPitch` — keep in
     // lockstep):
     //  - ON (default): the ELLIPSOIDAL voxel-crossing distance along the ray,
     //    0.75 / |dirB / scale|. Identical to the max rule on isotropic levels
@@ -1289,7 +1289,7 @@ export function createVolumeNodeMaterial(
     };
 
     // Reference step for VOLUME opacity correction (see
-    // core/opacityCorrection.ts — keep in lockstep). Under anisoStride the
+    // features/bricks/shaderspec/opacityCorrection.ts — keep in lockstep). Under anisoStride the
     // dead uMinDelta floor is dropped: uMinDelta is 0.5·max(scale) of the
     // plan target, which would pin the pitch back to the max-axis rule and
     // nullify the projection exactly where it matters (face-on thin slabs).
@@ -1374,7 +1374,7 @@ export function createVolumeNodeMaterial(
 
       if (fastPath) {
         // FAST PATH — decide skippability BEFORE any per-slot sampling is
-        // emitted (CPU mirror: core/raymarchStep.ts). The legacy path below
+        // emitted (CPU mirror: features/bricks/shaderspec/raymarchStep.ts). The legacy path below
         // built the full transfer-function + colormap + phasor sample set
         // first and only then tested the skip predicate, so every skipped
         // step still paid the whole per-slot path.
@@ -1434,7 +1434,7 @@ export function createVolumeNodeMaterial(
         // Coarser fallback samples inside the cell stay within the level-lvl
         // hull up to downsampling boundary bleed — beneath the conservative
         // quantization slack. CPU mirror of the monotonicity argument:
-        // core/raymarchStep.ts `desiredLevelForDistance` (+ tests).
+        // features/bricks/shaderspec/raymarchStep.ts `desiredLevelForDistance` (+ tests).
         if (occHierarchy) {
           If(
                 resolved.status
@@ -1527,7 +1527,7 @@ export function createVolumeNodeMaterial(
               );
         }
         // OCCUPANCY SKIP — the resident-brick analogue of the EMPTY hop (CPU
-        // mirror: core/raymarchStep.ts `residentBrickSkippable`). The page
+        // mirror: features/bricks/shaderspec/raymarchStep.ts `residentBrickSkippable`). The page
         // table's RG8 sidecar brackets each resident brick's raw [min, max]
         // conservatively (encodeOccupancyTexel: floor'd min, inverted-ceil'd
         // max, so an unwritten texel decodes to the full range and can never
@@ -1769,7 +1769,7 @@ export function createVolumeNodeMaterial(
             }
           })
             .ElseIf(int(mem.projectionMode).equal(2), () => {
-              // Step-size (opacity) correction — mirrors core/opacityCorrection.ts.
+              // Step-size (opacity) correction — mirrors features/bricks/shaderspec/opacityCorrection.ts.
               const av = oneMinus(
                 pow(max(oneMinus(sampleNorm), 0.0), stepLen.div(max(refStep, 1e-5))),
               );

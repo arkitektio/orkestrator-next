@@ -37,7 +37,7 @@ const scratchDelta = new THREE.Vector3();
 
 /**
  * Arrow keys drive the scene: bare arrows pan, Shift+←/→ walks the Z stack,
- * Shift+↑/↓ zooms. The map itself lives in `core/sceneNavigation.ts`; this
+ * Shift+↑/↓ zooms. The map itself lives in `platform/camera/sceneNavigation.ts`; this
  * applies it to the live rig.
  *
  * Mounted INSIDE the Canvas (after `<CameraController/>`, which installs the

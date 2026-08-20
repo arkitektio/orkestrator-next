@@ -9,7 +9,7 @@ import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "./enhancers/paths/vect
  * The drawing tool types the drawer implements. Each maps to a AnnotationKind for
  * the mutation. SPHERE and CUBE are the volumetric (3D-only) tools: a probe
  * click anchors their center, a second click sets the radius
- * (`core/primitiveDraw.ts`).
+ * (`features/annotations/primitiveDraw.ts`).
  */
 export type DrawingTool =
   | "RECTANGLE"
@@ -39,7 +39,7 @@ export const isProbeDerivedTool = (
 /**
  * The tools the vector enhancer applies to: their vertices are clicked one by
  * one, so each edge is a candidate for being traced through the data
- * (`enhancers/paths/vectorTrace/`) instead of drawn straight.
+ * (`features/annotations/enhancers/paths/vectorTrace/`) instead of drawn straight.
  */
 export const isEnhanceableTool = (
   tool: AnnotateTool | null | undefined,
@@ -59,8 +59,8 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, AnnotationKind> = {
 
 /**
  * What the pointer does in ANNOTATE mode. "SELECT" is the marquee pointer
- * (`interactions/RectangleDrawer.tsx`); "BRUSH" is the intensity-skeleton
- * brush (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx` — a painted stroke, not a
+ * (`features/annotations/RectangleDrawer.tsx`); "BRUSH" is the intensity-skeleton
+ * brush (`features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession.tsx` — a painted stroke, not a
  * clicked shape); every other value is a shape the `RoiDrawer` draws.
  *
  * Deliberately a separate union from `DrawingTool`: `DRAWING_TOOL_TO_ROI_KIND`
@@ -78,7 +78,7 @@ export const isDrawingTool = (
 ): tool is DrawingTool => tool != null && tool in DRAWING_TOOL_TO_ROI_KIND;
 
 /**
- * The annotation enhancers. Declared here, not in `enhancers/registry`,
+ * The annotation enhancers. Declared here, not in `features/annotations/enhancers/registry`,
  * because the registry's panels consume this store — the id union living with
  * the state keeps the import graph acyclic.
  */

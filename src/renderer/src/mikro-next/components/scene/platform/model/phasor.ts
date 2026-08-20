@@ -5,9 +5,9 @@ import { toBase } from "@/lib/quantities";
  * Phasor math — the single source of truth, mirrored in three places that must
  * stay in lockstep:
  *
- *  - the CPU repack (`core/octree/brickRepack.ts`) reduces the phasor axis of a
+ *  - the CPU repack (`features/bricks/octree/brickRepack.ts`) reduces the phasor axis of a
  *    brick into three slabs (g, s, intensity) with `reduceProfile`;
- *  - the shader (`layers/bricks/brickNodeMaterials.ts`) taps those three slabs
+ *  - the shader (`features/bricks/gpu/brickNodeMaterials.ts`) taps those three slabs
  *    and re-derives the pixel's color with the TSL port of `calibratePhasor` /
  *    `phasorValue` / `cursorHit`;
  *  - the panels display the same numbers next to the phasor plot.

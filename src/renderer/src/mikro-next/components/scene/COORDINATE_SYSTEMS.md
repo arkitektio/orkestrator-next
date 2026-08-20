@@ -5,7 +5,7 @@ systems as nodes, transformations as edges), what the client derives from it,
 and every invariant that keeps a voxel on screen where it belongs.
 
 Companion documents: `OCTREE_RENDERER.md` (the brick-pool image renderer this
-feeds), `render/fabriks/README.md` (the mesh-collection renderer built on the
+feeds), `features/meshes/fabriks/README.md` (the mesh-collection renderer built on the
 same graph).
 
 ---
@@ -51,7 +51,7 @@ primitives offset by half their size so group-local spans `[0..shape]`, and
 the shader/CPU local→voxel maps carry no flip (`brickNodeMaterials.ts`
 `toBaseVoxel`, the plane material's `baseVoxel`, and their lockstep mirrors in
 the probe/trace/visibility code — of which
-**`core/octree/brickSampling.ts`'s `marchResidentBricks` is the one to check
+**`features/bricks/octree/brickSampling.ts`'s `marchResidentBricks` is the one to check
 first**: it kept a y flip for months after the shaders lost theirs, because
 its tests only ever marched along x, and the CPU probe silently measured the
 mirrored row. It now has Y-axis coverage; keep it).
@@ -62,7 +62,7 @@ mirrored row. It now has Y-axis coverage; keep it).
 
 The backend (OME-NGFF RFC-5 aligned) obeys three rules; the renderer's
 adapter code is shaped by the same three. When editing anything in
-`@/mikro-next/lib/coords/transformGraph.ts` / `core/layerModel.ts` / `core/octree/levelGeometry.ts`,
+`@/mikro-next/lib/coords/transformGraph.ts` / `platform/model/layerModel.ts` / `platform/coords/levelGeometry.ts`,
 re-derive from here.
 
 **R1 — Edges are facts; matrices are client work.** The server ships
@@ -170,7 +170,7 @@ Gone from the wire (and from `ImageLayerFragment`): `Layer.affineMatrix`,
   requested lazily (zarr: existing store flow; parquet: mutation on mesh-layer
   mount).
 - `CoordinateAnchor.valueHistogram` IS still selected (clim defaults + the
-  brick pool's global min/max normalization need it, `core/dataRange.ts`).
+  brick pool's global min/max normalization need it, `platform/model/dataRange.ts`).
   It is always PRECOMPUTED server-side — there is no on-demand evaluation
   path; the field is either present or null. So selecting it costs only wire
   size (a few hundred floats per anchor), and a null histogram simply means
@@ -181,19 +181,19 @@ Gone from the wire (and from `ImageLayerFragment`): `Layer.affineMatrix`,
 
 ## 3. What the client derives, and where
 
-One rule of altitude: **everything below `core/transformGraph.ts` and
-`core/layerModel.ts` still sees the pre-migration flat facts.** The octree
+One rule of altitude: **everything below `@/mikro-next/lib/coords/transformGraph.ts` and
+`platform/model/layerModel.ts` still sees the pre-migration flat facts.** The octree
 planner, culling, slab math, probes and panels were not rewritten — they
 consume derived fields with the exact semantics the server fields used to
 have. The migration is an adapter, not a rewrite.
 
 | Derived fact | From | Where | Consumed by |
 | --- | --- | --- | --- |
-| `LayerState.affineMatrix` (voxel→world 4×4, x/y/z rows) | local prefix (`lens.toParent`, level-0 `toParent`) ∘ `pathToWorld` steps | `composeLayerAffine` (`core/transformGraph.ts`), once per scene load in `normalizeLayer` | `worldTransform.buildAffineMatrix` (the rendered frame — corner-anchored, §0), `nodePlanning` 2D slab inverse, `visibility`, `RoiDrawer` |
-| `LayerState.xAxis/yAxis/zAxis/tAxis/intensityAxis` | `lens.renderAxes` | `normalizeLayer` (`core/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
-| Relative level factors (old `scaleFactors` semantics) | `toParent` pixel scales, `rel = abs_L / abs_0` (a no-op now that level 0 = 1) | `relativeLevelScaleFactors` / `buildLevelSources` (`core/octree/levelGeometry.ts`) | level geometry, plan tracker, residency, pool viability, probe geometry |
+| `LayerState.affineMatrix` (voxel→world 4×4, x/y/z rows) | local prefix (`lens.toParent`, level-0 `toParent`) ∘ `pathToWorld` steps | `composeLayerAffine` (`@/mikro-next/lib/coords/transformGraph.ts`), once per scene load in `normalizeLayer` | `worldTransform.buildAffineMatrix` (the rendered frame — corner-anchored, §0), `nodePlanning` 2D slab inverse, `visibility`, `RoiDrawer` |
+| `LayerState.xAxis/yAxis/zAxis/tAxis/intensityAxis` | `lens.renderAxes` | `normalizeLayer` (`platform/model/layerModel.ts`) | `resolveAxisIndices` and ~15 call sites (slice signature, probes, panels) |
+| Relative level factors (old `scaleFactors` semantics) | `toParent` pixel scales, `rel = abs_L / abs_0` (a no-op now that level 0 = 1) | `relativeLevelScaleFactors` / `buildLevelSources` (`platform/coords/levelGeometry.ts`) | level geometry, plan tracker, residency, pool viability, probe geometry |
 | `spatialUnit` | first SPACE axis of the world CS | `sceneStore` | `ScaleBar` |
-| Mesh transforms | `MeshLayer.pathToWorld` via `composePlacementPath` | `core/transformGraph.ts` | `layers/mesh/FabriksCollectionLayer` |
+| Mesh transforms | `MeshLayer.pathToWorld` via `composePlacementPath` | `@/mikro-next/lib/coords/transformGraph.ts` | `features/meshes/FabriksCollectionLayer` |
 
 Raw-fragment code paths that run BEFORE normalization (`lodPlanning`,
 `renderCost`, `renderGraph.defaultLayerGraph`, `colormap-utils`) read
@@ -306,7 +306,7 @@ one `AnnotationLayer` per scene. Styling (`strokeColor`/`fillColor`/
 `strokeWidth`/`filled`) is per-shape — the layer renders a whole collection, so
 a color on the layer could not tell its shapes apart.
 
-Creation (`interactions/RoiDrawer.tsx`): the mutation takes `scene`, and the
+Creation (`features/annotations/RoiDrawer.tsx`): the mutation takes `scene`, and the
 server finds the scene's collection or mints it on first use together with its
 CS, its registration into the world, and its layer. That registration is an
 identity into the world, so the drawn **world** points are submitted as-is —
@@ -315,7 +315,7 @@ Arming plays no part: a shape lands in the scene's own coordinate system, so
 there is no layer for the user to be pointing at. EDIT mode + an active tool is
 the whole precondition for drawing.
 
-Reading (`layers/annotation/AnnotationLayer.tsx`): the layer composes its own
+Reading (`features/annotations/AnnotationLayer.tsx`): the layer composes its own
 server-resolved `pathToWorld` via `composePlacementPath`, the same way the mesh
 layer does. `createdWithTransforms` is provenance only — never used for
 resolution.
@@ -348,7 +348,7 @@ is no draw plane, so the probe IS the placement — every 3D annotation vertex
 comes from it, and the `RoiDrawer`'s own interaction plane deliberately stands
 down for non-primitive tools there. In 2D that plane drives the rubber band
 itself, and a second hover probe would only compete with it for the pointer
-event. `core/probe/probeGating.ts` makes this explicit with its
+event. `platform/probe/probeGating.ts` makes this explicit with its
 `annotateProbes` flag rather than leaving each layer to re-derive it.
 
 **Which space answers which question** (the world-metric LOD contract —
@@ -443,7 +443,7 @@ degradation hides data bugs — enforce these server-side:
    Live data shipped `intensityAxis: "t"` on a time-lapse — 16 timepoints
    would render as 16 stacked channel slabs (the P16 failure shape) and the
    t-slider would vanish (t counts as "rendered"). The client now guards
-   (`resolveIntensityDim`, `core/dims.ts`: graph mapping wins only when it
+   (`resolveIntensityDim`, `platform/model/dims.ts`: graph mapping wins only when it
    doesn't name a spatial/time render axis), but the write path should
    reject it.
 4. **Histogram bins are linear — ship the rule, not the samples.** STILL
@@ -465,10 +465,10 @@ the dim-slider follow-ups in OCTREE_RENDERER.md §2.2.
 
 | Concern | Tests |
 | --- | --- |
-| Edge evaluation, `invert4`, placement-path composition (incl. inverted steps), layer prefix detection, unregistered degradation | `core/transformGraph.test.ts` |
-| Pixel-factor and legacy physical-scale level edges, identity/translation edges, fallback | `core/transformGraph.test.ts` ("level scale factors") |
-| Planner/geometry under true factors | `core/octree/nodePlanning.test.ts`, `levelGeometry` coverage via existing octree tests |
-| Mesh cell math, planning, decoding, cache | `render/fabriks/fabriksCore.test.ts` |
+| Edge evaluation, `invert4`, placement-path composition (incl. inverted steps), layer prefix detection, unregistered degradation | `@/mikro-next/lib/coords/transformGraph.test.ts` |
+| Pixel-factor and legacy physical-scale level edges, identity/translation edges, fallback | `@/mikro-next/lib/coords/transformGraph.test.ts` ("level scale factors") |
+| Planner/geometry under true factors | `features/bricks/octree/nodePlanning.test.ts`, `levelGeometry` coverage via existing octree tests |
+| Mesh cell math, planning, decoding, cache | `features/meshes/fabriks/fabriksCore.test.ts` |
 
 The reference scene document (confocal + FLIM + mesh collection) doubles as
 the fixture source — its hand-computed numbers (the 0.325/0.5 µm calibration

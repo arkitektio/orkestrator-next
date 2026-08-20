@@ -424,7 +424,7 @@ const FabriksCollectionGroup = ({
   // EVERY mode — NAVIGATE included, where none of these handlers can act. The
   // click-class props matter just as much: R3F does not filter those by
   // handler kind, so an unarmed onClick bought that same raycast at the start
-  // of every orbit drag. See core/probe/probeGating.ts (P20).
+  // of every orbit drag. See platform/probe/probeGating.ts (P20).
   const activeTool = useRoiDrawingStore((s) => s.activeTool);
   const gate: ProbeGateInput = {
     interactionMode,

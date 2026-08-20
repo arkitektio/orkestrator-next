@@ -20,7 +20,7 @@ import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 /**
  * The write path for tours and scene preferences.
  *
- * Same shape as `useRenderGraphEditor` (`panels/layer/rendergraph/RenderNodeEditor.tsx`):
+ * Same shape as `useRenderGraphEditor` (`features/volume/rendergraph/RenderNodeEditor.tsx`):
  * mutate, then fold the server's answer back into the scene's store — the
  * stores are built once at mount and never rehydrate, so anything saved
  * mid-session has to land locally to be visible without a reload.

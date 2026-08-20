@@ -14,7 +14,7 @@ type TargetControls = { target: THREE.Vector3; update: () => void };
  * Drives the camera along the playing tour.
  *
  * The only thing in the scene that turns a sampled pose into motion — all the
- * timing and interpolation is pure, in `core/animation.ts`. Store reads go
+ * timing and interpolation is pure, in `platform/camera/animation.ts`. Store reads go
  * through the non-reactive `…StoreApi` escape hatch because this runs in a
  * `useFrame`: subscribing to `elapsedMs` would re-render the React tree at
  * frame rate (P17).
@@ -63,7 +63,7 @@ export const AnimationPlayer = () => {
     );
 
     const viewer = viewerApi.getState();
-    // In 2D the pose's z is the slice, not the target (see core/cameraState.ts).
+    // In 2D the pose's z is the slice, not the target (see platform/camera/cameraState.ts).
     const sliceZ = readSceneZ(pose, state.frame.axes);
     if (displayMode === "2D" && sliceZ !== null) viewer.setCurrentZ(sliceZ);
     for (const [dim, index] of Object.entries(readDimSelections(pose, state.frame.axes))) {

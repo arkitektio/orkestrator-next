@@ -5,7 +5,7 @@ import type { Vec3 } from "../../../platform/coords/levelGeometry";
 /**
  * "Which LOD is the middle of the screen showing?" — the geometry half.
  *
- * The readout (`overlays/CenterLodReadout.tsx`) answers that question in two
+ * The readout (`features/bricks/CenterLodReadout.tsx`) answers that question in two
  * steps: find the BASE VOXEL under the viewport's center pixel (here), then ask
  * the residency manager which level it can actually serve there
  * (`sampleResidentEx`, whose level walk IS the shader's per-sample coarse
@@ -31,7 +31,7 @@ export type CenterRay = {
  * Two NDC depths on the center axis define the ray for orthographic and
  * perspective cameras alike (the camera POSITION is not on the ray under
  * ortho, so it cannot be the origin). The near depth is convention-dependent —
- * 0 under WebGPU, -1 under WebGL — exactly like `core/frustumClip.ts`, and the
+ * 0 under WebGPU, -1 under WebGL — exactly like `platform/visibility/frustumClip.ts`, and the
  * origin must sit at the near plane so a 3D box entry point in front of the
  * camera is never mistaken for one behind it.
  */
@@ -74,7 +74,7 @@ export type CenterVoxelQuery = {
  * 2D takes the plane at group-local z = 0 (`BrickPlaneLayer`'s quad); 3D takes
  * the ENTRY point of the ray into the layer's box. Entry rather than "first
  * visible sample": the shader's `desiredLevelAt` is monotone non-finer along a
- * forward ray (see `core/raymarchStep.ts`), so the entry point is where the
+ * forward ray (see `features/bricks/shaderspec/raymarchStep.ts`), so the entry point is where the
  * finest level on that ray is desired — the honest answer to "how good is what
  * I'm looking at", and the one a CPU march could only refine, never beat.
  */
@@ -118,7 +118,7 @@ export function centerBaseVoxel(query: CenterVoxelQuery): Vec3 | null {
  * returning the ENTRY ray parameter (0 when the camera is inside the box) or
  * null when the ray misses it entirely / the box is wholly behind the camera.
  *
- * Not `core/probeMath.ts intersectLocalVolumeBox`: that one works in the
+ * Not `features/bricks/probeMath.ts intersectLocalVolumeBox`: that one works in the
  * volume mesh's own unit box ([-0.5, 0.5]³, which needs the mesh's world
  * matrix), and this readout is deliberately mesh-free — it runs outside the
  * canvas, off the affine alone.

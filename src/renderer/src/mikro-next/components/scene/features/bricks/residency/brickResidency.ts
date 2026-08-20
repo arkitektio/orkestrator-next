@@ -492,7 +492,7 @@ export class BrickResidencyManager {
    * is still QUEUED, while a started task ignores it and finishes into the
    * cache. Entries live exactly as long as their inFlightChunks entry. */
   private readonly inFlightChunkAborts = new Map<string, AbortController>();
-  /** Which live bricks need which in-flight chunk (`core/octree/chunkRefRegistry`). */
+  /** Which live bricks need which in-flight chunk (`features/bricks/octree/chunkRefRegistry`). */
   private readonly chunkRefs = new ChunkRefRegistry();
   /** Monotonic per-fetch owner suffix: a brick dropped and immediately
    * re-planned runs TWO overlapping fetchBrick invocations with the SAME
@@ -943,7 +943,7 @@ export class BrickResidencyManager {
     // STEP (~256 steps a frame while hover probing), and used to allocate two
     // Vec3s and a fresh key string every time round. The values are consumed
     // synchronously below and never retained, and consecutive steps almost
-    // always share a brick — see core/octree/nodeKeyMemo.ts.
+    // always share a brick — see features/bricks/octree/nodeKeyMemo.ts.
     const levelVoxel = this.levelVoxelScratch;
     for (let level = Math.max(0, desiredLevel); level < geometry.levels.length; level++) {
       const { scale, spatialShape } = geometry.levels[level];
@@ -1071,7 +1071,7 @@ export class BrickResidencyManager {
    * chunk evicted from the decode cache) it routinely is — reporting "nothing
    * resident" for a brick that is on screen. The level is settled by the
    * page-table walk alone, so a level-only question must not be gated on a
-   * value read. Consumer: `overlays/CenterLodReadout.tsx`.
+   * value read. Consumer: `features/bricks/CenterLodReadout.tsx`.
    */
   residentLevelAt(layerId: string, baseVoxel: Vec3, desiredLevel: number): number | null {
     const pool = this.poolFor(layerId);

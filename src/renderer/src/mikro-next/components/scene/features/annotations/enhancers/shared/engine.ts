@@ -8,7 +8,7 @@ import type { PickedCorridor } from "./planning";
 /**
  * The extraction ENGINE seam: one interface, two implementations —
  * `gpuEngine.ts` (the WGSL kernels via `computeSkeleton`) and `cpuEngine.ts`
- * (the `enhancers/shared` reference). The hook (`useBrushSkeleton`) plans a
+ * (the `features/annotations/enhancers/shared` reference). The hook (`useBrushSkeleton`) plans a
  * corridor per engine budget and walks the engine list until one answers;
  * an engine returns null to say "not me, ask the next one" (pipeline dead,
  * capability missing, corridor too big) — it never throws for that.

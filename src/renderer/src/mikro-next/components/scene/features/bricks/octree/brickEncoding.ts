@@ -3,7 +3,7 @@ import * as THREE from "three";
 /**
  * Value semantics shared by the brick pyramid's shader and its CPU mirror.
  *
- * The traversal itself lives in the TSL port (`layers/bricks/brickNodeMaterials.ts`),
+ * The traversal itself lives in the TSL port (`features/bricks/gpu/brickNodeMaterials.ts`),
  * which compiles to WGSL; what stays here is the small set of constants and
  * encodings the CPU side must reproduce exactly to stay in lockstep with what
  * the GPU renders.

@@ -19,7 +19,7 @@
  * closure must not act — but these predicates are the primary gate.
  *
  * Pure and store-free (the `core/` rule): callers pass
- * `isDrawingTool(activeTool)` from `store/roiDrawingStore` rather than the tool
+ * `isDrawingTool(activeTool)` from `features/annotations/roiDrawingStore` rather than the tool
  * itself, so the "which tools count as drawing" rule keeps its single home.
  */
 

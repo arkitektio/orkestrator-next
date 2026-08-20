@@ -27,7 +27,7 @@ import { formatAnnotationKind, indexLabel } from "../../platform/model/selection
  * explicit go-to button, so building a selection never yanks the view around.
  *
  * Replaces the old floating `SelectedRoiPanel`; the Backspace-delete that
- * lived there is now `interactions/RoiDeleteKeybinding` (always mounted —
+ * lived there is now `features/annotations/RoiDeleteKeybinding` (always mounted —
  * sidebar tabs unmount when inactive).
  */
 

@@ -23,7 +23,7 @@ import { useViewerStore } from "../../platform/stores/viewerStore";
  * distribution, the light path it came down, the microscope state at the moment
  * of acquisition — to specific coordinates. Which of them describe the pixels on
  * screen depends on the channel toggles and the dim sliders, so the panel splits
- * them live (`core/anchorVisibility.ts` owns that rule) and shows only the ones
+ * them live (`features/annotations/anchorVisibility.ts` owns that rule) and shows only the ones
  * in view. The rest stay one click away rather than vanishing, because "there IS
  * a light path, just not for this timepoint" is a different answer from "no light
  * path was ever recorded".

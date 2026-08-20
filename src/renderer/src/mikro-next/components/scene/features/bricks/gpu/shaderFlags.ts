@@ -106,7 +106,7 @@ export function setWorldLodEnabled(enabled: boolean): void {
 
 /**
  * Hierarchical occupancy (R4): aggregate per-brick measured ranges up one
- * level (`core/octree/occupancyAggregate.ts`) and let the raymarcher hop a
+ * level (`features/bricks/octree/occupancyAggregate.ts`) and let the raymarcher hop a
  * whole COARSE cell when the aggregate proves every member invisible /
  * mip-beaten / iso-missed there (with a level guard so no finer-desired
  * sample is skipped). Default **OFF** until live-validated — unlike the

@@ -9,9 +9,14 @@ Transient. Delete when Phase 5 lands. `ARCHITECTURE.md` is the permanent map.
       import-graph walker (`scripts/scene-graph.mjs`) and the post-move
       simulator (`scripts/scene-simulate.mjs`) are in place; `ARCHITECTURE.md`
       written.
-- [ ] **Phase 1 — the move.** `git mv` + import-specifier rewrite only. No line
-      that is not a module specifier may change. Per-module `README.md` with the
-      "Owns / Knows nothing about" table. Prose cross-reference sweep.
+- [x] **Phase 1 — the move.** 432 files relocated, content-frozen; 837 specifier
+      rewrites; git pairs 431 as renames. 263 prose references swept
+      automatically (`scripts/scene-prose.mjs`) plus 11 files fixed by hand.
+      The "Owns / Knows nothing about" tables live in `ARCHITECTURE.md` rather
+      than 20 scattered READMEs — one page beats a hunt, and it cannot drift
+      out of sync with the import rules sitting beside it.
+      Verified: typecheck 0, 2005 tests, `pnpm build` still emits
+      `repack-worker` and `fabriksDecode-worker` as separate chunks.
 - [ ] **Phase 2 — demote the shared vocabulary.** Type-only moves into
       `platform/model`; the enhancer/skeletonizer inversion.
 - [ ] **Phase 3 — invert and split the stores.**
@@ -57,4 +62,18 @@ Placement decisions that dissolved edges, and why:
 | `platform/coords -> bricks` | 1 | **Phase 2** — `levelGeometry` needs only the `MAX_BRICK_LEVELS` constant; demote it |
 | `meshes -> annotations` | 1 | **Phase 4** — `FabriksCollectionLayer` reads the ROI drawing store |
 
-Re-run `node scripts/scene-simulate.mjs` after any manifest change.
+Re-run `node scripts/scene-graph.mjs` after any change — post-move it reports
+the real graph, and it agreed with the simulation exactly.
+
+## References deliberately left stale
+
+`scripts/scene-prose.mjs` reports 9 it cannot resolve. All are correct as-is:
+the "(Moved from `layers/three_d/volume-math.ts`)" provenance notes, the
+"deleted at cutover" list in `OCTREE_RENDERER.md` (which now also records
+`core/slab.ts` and `core/layerListLayout.ts`), and two regex false positives.
+They point at files that no longer exist *on purpose*.
+
+Eight doc references are pinned to a file *and a line*. Phase 1 was
+content-frozen, so those line numbers are still correct — but Phase 4 splits two
+of the files they point into, and a grep will silently leave the wrong number.
+Re-anchor them after each split.

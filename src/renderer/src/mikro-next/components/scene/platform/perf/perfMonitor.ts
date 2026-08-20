@@ -88,7 +88,7 @@ export type PerfSessionReport = {
   replans: number;
   visibilityRecomputes: number;
   /** Probe evaluations (CPU march / plane read / mesh pick) over the session.
-   * The gating in `core/probe/probeGating.ts` is only verifiable against this:
+   * The gating in `platform/probe/probeGating.ts` is only verifiable against this:
    * it must read zero for a NAVIGATE-mode sweep. */
   probes: number;
   bricksUploaded: number;

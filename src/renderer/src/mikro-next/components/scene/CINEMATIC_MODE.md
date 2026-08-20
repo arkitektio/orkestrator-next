@@ -6,7 +6,7 @@ sketches — see §8, none of this TSL has been compiled.
 A "cinematic mode" that shades the volume: gradient-derived normals,
 Blinn-Phong key/fill, and a surface gate. Today the volume renderer has **no
 lighting of any kind** — no gradients, no normals, `material.lights = false`
-(`layers/bricks/brickNodeMaterials.ts`, `commonMaterialSettings`, line 688). The
+(`features/bricks/gpu/brickNodeMaterials.ts`, `commonMaterialSettings`, line 688). The
 ISOSURFACE projection is a first-hit test that paints a flat colormap colour, so
 it renders a silhouette rather than an object.
 
@@ -34,12 +34,12 @@ The chain is structural, not incidental — *3D ⟺ border ⟺ linear*:
 
 | fact | where |
 |---|---|
-| `border = mode === "3D" ? 1 : 0` | `core/octree/brickSpec.ts:59` |
-| `filter: spec.border > 0 ? "linear" : "nearest"` | `managers/brickResidency.ts:657` |
+| `border = mode === "3D" ? 1 : 0` | `features/bricks/octree/brickSpec.ts:59` |
+| `filter: spec.border > 0 ? "linear" : "nearest"` | `features/bricks/residency/brickResidency.ts:657` |
 | "3D: payload 64³, border 1 (stored 66³), LinearFilter" | `OCTREE_RENDERER.md` §2.3 |
 
 Note the border is edge-replicated at the *volume's* outer boundary and holds
-real neighbour data everywhere else (`core/octree/brickRepack.ts`). At the volume
+real neighbour data everywhere else (`features/bricks/octree/brickRepack.ts`). At the volume
 edge the outward gradient is therefore zero — correct, there is no data out there.
 
 Because 2D is the branch with `border = 0` and nearest filtering, and cinematic is
@@ -73,8 +73,8 @@ to rediscover.
 
 **C1 — Lighting modulates colour only.** Never `sampleNorm`, never `weight`,
 never `volAlpha`, never the iso hit test. This is what keeps the CPU transfer-math
-mirrors (`core/probeMath.ts`, `core/opacityCorrection.ts`,
-`core/octree/brickSampling.ts`, `core/phasor.ts`) valid with **zero** changes —
+mirrors (`features/bricks/probeMath.ts`, `features/bricks/shaderspec/opacityCorrection.ts`,
+`features/bricks/octree/brickSampling.ts`, `platform/model/phasor.ts`) valid with **zero** changes —
 they pin *transfer* math because the probe readout must agree with the picture,
 and shading is not transfer. Break C1 and every one of those mirrors, and their
 tests, comes into scope.
@@ -84,7 +84,7 @@ range of a slot is `[slot + 0.5, slot + slotSize - 0.5]`; the payload occupies
 `[slot + 1, slot + 1 + payload)`, leaving exactly 0.5 texel of margin each side.
 `h > 0.5` reaches past the border into the neighbouring slot in x/y — and in z
 into the neighbouring **channel slab**, because `slotSize.z = stored.z *
-channelCount` (`core/octree/levelGeometry.ts:66`). That would silently mix another
+channelCount` (`platform/coords/levelGeometry.ts:66`). That would silently mix another
 channel's data into the normal. If a wider baseline is ever genuinely needed, the
 correct move is a full `emitResolveBrickResidency` per tap (~7×), not a bigger `h`.
 Guard it with a test (§8).
@@ -123,7 +123,7 @@ is in §6.
 **C8 — This is not a `ProjectionMode` and not a `DisplayMode`.**
 `ProjectionMode` is a backend enum (`api/graphql.ts:6402`) — a fifth member needs
 a schema change. `DisplayMode` (`"2D" | "3D"`) drives brick planning
-(`core/octree/nodePlanning.ts`, `resolveBrickSpec`) and is re-declared as
+(`features/bricks/octree/nodePlanning.ts`, `resolveBrickSpec`) and is re-declared as
 hand-written literal unions in several files, so a third member would silently
 fail to propagate. Cinematic is a session flag that changes *how the existing*
 VOLUME/ISOSURFACE branches shade.
@@ -201,7 +201,7 @@ Proposed defaults: `ambient 0.25, specular 0.35, shininess 32, surfaceGain 6`.
 
 ### 4.3 Where the state lives
 
-`store/modeStore.ts` — `cinematic: boolean` + `setCinematic`, session-only, per
+`platform/stores/modeStore.ts` — `cinematic: boolean` + `setCinematic`, session-only, per
 scene, resets on scene change. `BrickVolumeLayer` already imports `useModeStore`
 and `SceneSettings` already reads both stores, so it costs nothing.
 
@@ -219,7 +219,7 @@ permanently pinned at 0.5, and a shaded iso is worthless without a working
 threshold. It *must* be session-only: `ProjectionNode` (`api/graphql.ts:6414`) is
 `{children, kind, label, mode}` — there is no threshold field to persist to. Mirror
 `viewerStore.probeThreshold` + the threshold block of
-`panels/SelectedPointPanel.tsx` (the probe HUD) verbatim. Worth
+`features/probe/SelectedPointPanel.tsx` (the probe HUD) verbatim. Worth
 landing on its own merit, independent of cinematic.
 
 **Phase 1 — lit ISOSURFACE (~1 day). The honest first cut.** One gradient per
@@ -244,14 +244,14 @@ shadowing hazard bites hardest. Loop iterator names are not auto-renamed the way
 
 | file | change |
 |---|---|
-| `core/shading.ts` | **new, pure**: `GRADIENT_H`, `physicalGradient`, `surfaceness`, `blinnPhong`, `CINEMATIC_DEFAULTS`. House style of `core/phasor.ts`. |
-| `layers/bricks/brickNodeMaterials.ts` | `length` into the TSL destructure; scalar uniforms `uCinematic`, `uBaseScale`, `uAmbient`, `uSpecular`, `uShininess`, `uSurfaceGain` (C6); `emitFieldGradient` + `emitShade`; argmax `domSlot` in the channel loop (~991); hoist `vPhys`; shade in the ISO (~1039) and VOLUME (~1028) branches. |
-| `layers/bricks/BrickVolumeLayer.tsx` | read `useModeStore(s => s.cinematic)`; push `uCinematic` in the existing uniform effect (~179-200); set `uBaseScale` in the `bundle` useMemo beside `uBaseShape`. |
-| `store/modeStore.ts` | `cinematic` + setter. |
-| `store/viewerStore.ts` | Phase 0: `isoThreshold` + setter. |
-| `panels/IsoThresholdPanel.tsx` | Phase 0: new, from `SelectedPointPanel.tsx`'s threshold block. |
-| `overlays/SceneSettings.tsx` | one `SettingRow` in the Settings2 popover. |
-| `core/qualityGovernor.ts` | Phase 2: `litVolumeWhileActive` + pure `resolveCinematic`. |
+| `features/volume/shading.ts` | **new, pure**: `GRADIENT_H`, `physicalGradient`, `surfaceness`, `blinnPhong`, `CINEMATIC_DEFAULTS`. House style of `platform/model/phasor.ts`. |
+| `features/bricks/gpu/brickNodeMaterials.ts` | `length` into the TSL destructure; scalar uniforms `uCinematic`, `uBaseScale`, `uAmbient`, `uSpecular`, `uShininess`, `uSurfaceGain` (C6); `emitFieldGradient` + `emitShade`; argmax `domSlot` in the channel loop (~991); hoist `vPhys`; shade in the ISO (~1039) and VOLUME (~1028) branches. |
+| `features/bricks/layers/BrickVolumeLayer.tsx` | read `useModeStore(s => s.cinematic)`; push `uCinematic` in the existing uniform effect (~179-200); set `uBaseScale` in the `bundle` useMemo beside `uBaseShape`. |
+| `platform/stores/modeStore.ts` | `cinematic` + setter. |
+| `platform/stores/viewerStore.ts` | Phase 0: `isoThreshold` + setter. |
+| `features/volume/IsoThresholdPanel.tsx` | Phase 0: new, from `SelectedPointPanel.tsx`'s threshold block. |
+| `shell/chrome/SceneSettings.tsx` | one `SettingRow` in the Settings2 popover. |
+| `platform/quality/qualityGovernor.ts` | Phase 2: `litVolumeWhileActive` + pure `resolveCinematic`. |
 | `OCTREE_RENDERER.md` | C2 as a numbered invariant beside the existing pitfalls. |
 
 `uCinematic` is dynamically uniform across the draw, so the branch is coherent on
@@ -274,7 +274,7 @@ contract.
 
 **R2 — Camera tours render unlit, exactly where cinematic matters most.**
 `CameraMatrixSync`'s `useFrame` calls `updateCameraData(..., true)` during motion,
-which sets `viewStore.cameraMoving` (`store/viewStore.ts:62`). `AnimationPlayer`
+which sets `viewStore.cameraMoving` (`platform/stores/viewStore.ts:62`). `AnimationPlayer`
 drives the camera continuously, so a playing tour is permanently "active" → on
 MEDIUM/LOW, Phase 2's governor gate renders it flat. A tour is a deliberate
 artifact, not an interaction: quality should win over framerate. Compute
@@ -302,7 +302,7 @@ and does not touch a headlight. Rare. Documented, not fixed.
 ## 8. What can and cannot be verified
 
 **Automatable (vitest + tsc):**
-- `core/shading.ts` pure math: dot-product invariance under the y-flip reflection
+- `features/volume/shading.ts` pure math: dot-product invariance under the y-flip reflection
   (C4); headlight never dark; `surfaceness` clamps; `physicalGradient` exact under
   anisotropic scale.
 - **The highest-value test here:** assert `GRADIENT_H <= resolveBrickSpec(geo,
@@ -320,7 +320,7 @@ and does not touch a headlight. Rare. Documented, not fixed.
   wrong on first run — budget a debug round-trip.
 - Normal orientation, specular blowout, whether `surfaceGain = 6` and the fill
   direction flatter real data, actual frame cost.
-- `core/shading.ts` would prove the TS is right, **not** that the TSL matches it —
+- `features/volume/shading.ts` would prove the TS is right, **not** that the TSL matches it —
   the same caveat the existing `phasor.ts` / `opacityCorrection.ts` mirrors carry.
   Do not oversell it.
 

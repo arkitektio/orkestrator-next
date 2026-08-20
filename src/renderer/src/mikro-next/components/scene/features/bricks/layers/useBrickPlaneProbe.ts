@@ -102,7 +102,7 @@ export const useBrickPlaneProbe = ({
     // Deliberately false: in 2D the RoiDrawer's own interaction plane drives
     // the rubber band, and a second hover probe would only fight it for the
     // event. The 3D volume is the one that must answer (no draw plane inside a
-    // volume) — see core/probe/probeGating.ts.
+    // volume) — see platform/probe/probeGating.ts.
     annotateProbes: false,
   };
   const hoverEnabled = hoverProbeEnabled(gate);
@@ -248,7 +248,7 @@ export const useBrickPlaneProbe = ({
         strategy: "plane",
         origin,
         // Always a measurement: the 2D plane does not answer ANNOTATE hover
-        // (the RoiDrawer's own plane does) — see core/probe/probeGating.ts.
+        // (the RoiDrawer's own plane does) — see platform/probe/probeGating.ts.
         purpose: "readout",
         values: resident
           ? resident.values.map((value, channel) => ({ channel, value }))

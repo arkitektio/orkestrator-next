@@ -51,7 +51,7 @@ const VOLUMETRIC_TOOLS = new Set<AnnotateTool>(["SPHERE", "CUBE"]);
  * The skeleton brush and the smooth blob: probe-driven gestures on the
  * volume — 3D only. Kept out of `VOLUMETRIC_TOOLS`, whose membership drives
  * the anchor-then-size gesture (`isPrimitiveTool`); these have their own
- * session (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`).
+ * session (`features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`).
  */
 const BRUSH_TOOLS = new Set<AnnotateTool>(["BRUSH", "BLOB"]);
 
@@ -77,7 +77,7 @@ export const fallbackToolFor = (
  * stream in.
  *
  * Equivalent by design to `effectiveProbeLayerId(…) !== null`
- * (`core/probe/probeTargeting.ts`): some layer can answer the probe exactly
+ * (`platform/probe/probeTargeting.ts`): some layer can answer the probe exactly
  * when some layer is visible.
  *
  * KNOWN GAP: the 3D label raymarcher does not answer the probe (only the label

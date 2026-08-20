@@ -12,7 +12,7 @@ import type { DrawingTool } from "./roiDrawingStore";
  * The corner-pair shapes (rectangle, ellipse, and the volumetric primitives'
  * footprint) stay planar even then: two probed corners describe a BOX, and its
  * preview is the footprint at the anchor's depth.
- * `layers/annotation/AnnotationLayer.tsx` keeps the 3D-aware variants that
+ * `features/annotations/AnnotationLayer.tsx` keeps the 3D-aware variants that
  * extrude the committed annotation — a different job from previewing a shape
  * the user is dragging out right now.
  */
@@ -108,7 +108,7 @@ export function roiOutline(
     case "ELLIPSE":
       return ellipseOutline(points[0], points[1], z, options.segments);
     // The volumetric tools' points are the two BOUNDING CORNERS
-    // (`core/primitiveDraw.ts` — center ± r on every axis); the outline is
+    // (`features/annotations/primitiveDraw.ts` — center ± r on every axis); the outline is
     // their equatorial footprint. The volumetric body itself is the
     // AnnotationLayer's job once the annotation lands.
     case "SPHERE":

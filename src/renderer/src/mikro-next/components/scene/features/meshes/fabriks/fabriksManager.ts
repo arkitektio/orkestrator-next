@@ -537,7 +537,7 @@ export class FabriksCollectionManager {
 
   /**
    * EVERY object in the collection, ordinal-ordered — for a list that browses
-   * the collection rather than picking out of it (`panels/MeshesPanel`).
+   * the collection rather than picking out of it (`features/meshes/MeshesPanel`).
    *
    * Shares the lazy ordinal index with picking, so the list is free once
    * anything has resolved an ordinal, and vice versa. REJECTS when the

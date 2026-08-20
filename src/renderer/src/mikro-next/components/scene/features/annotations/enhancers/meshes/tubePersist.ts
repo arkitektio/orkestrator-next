@@ -4,7 +4,7 @@ import type { AnnotationKind } from "@/mikro-next/api/graphql";
  * Persistence shape for the tube surface.
  *
  * MESH is not in the generated `AnnotationKind` yet — the cast follows the
- * `SPHERE_KIND` precedent (`core/primitiveDraw.ts:19`): the client gets
+ * `SPHERE_KIND` precedent (`features/annotations/primitiveDraw.ts:19`): the client gets
  * ahead of codegen, the mutation starts succeeding the moment the server
  * learns the kind, and until then a failed save keeps the local preview.
  * Vector semantics: a triangle soup, 3 consecutive vectors per triangle

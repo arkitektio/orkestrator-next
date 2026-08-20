@@ -73,7 +73,7 @@ export interface SceneState {
    * deleted), and `syncSceneLayers` folds those changes in while the scene
    * keeps rendering. Untouched layers keep their object identity across a
    * fold, so a subscription that reads one layer out of this list still
-   * settles — see `core/layerReconcile.ts`.
+   * settles — see `platform/model/layerReconcile.ts`.
    */
   sceneLayers: SceneLayer[];
   /** Normalized BRICK-backed layers — images and label masks alike. */
@@ -84,7 +84,7 @@ export interface SceneState {
    * rebuilding the whole store scope (which unmounts the canvas and re-opens
    * every zarr array). Layers that did not structurally change keep their
    * exact objects, so session-only state and the layer-keyed caches downstream
-   * survive. See `core/layerReconcile.ts` for the contract.
+   * survive. See `platform/model/layerReconcile.ts` for the contract.
    *
    * The world frame is deliberately NOT a parameter: it is scope-scoped (a
    * world change rebuilds the scope), so the fold composes affines against

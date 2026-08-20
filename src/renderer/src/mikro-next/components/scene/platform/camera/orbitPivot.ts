@@ -4,16 +4,16 @@ import type { ProbeOrigin } from "../probe/probeTypes";
 /**
  * Orbit-pivot math for the "rotate around the probed point" setting.
  *
- * Kept out of `cameras/CameraController.tsx` so the geometry and the
+ * Kept out of `platform/camera/CameraController.tsx` so the geometry and the
  * when-do-we-move rule are testable without a Canvas — the React side is then a
  * thin wrapper that reads stores and calls these two functions.
  */
 
 /**
  * The camera surface a re-pivot needs. Structurally a subset of
- * `core/cameraState.ts`'s `CameraFrame`, so a real frame can be passed straight
+ * `platform/camera/cameraState.ts`'s `CameraFrame`, so a real frame can be passed straight
  * in. `controls` is nullable because `ArcballControls`-style controllers have no
- * `.target` (`cameras/CanvasSync.tsx` narrows them to null the same way).
+ * `.target` (`platform/camera/CanvasSync.tsx` narrows them to null the same way).
  */
 export type PivotFrame = {
   camera: { position: THREE.Vector3 };
@@ -54,7 +54,7 @@ export function repivotPreservingView(
  * re-pivot on every voxel the cursor crosses. Flipping the setting on, however,
  * pivots to whatever probe is current (hover-origin included), so the switch
  * has an immediate effect. Animation playback owns the camera outright while a
- * tour runs (`cameras/AnimationPlayer.tsx` writes position + target every
+ * tour runs (`features/animation/AnimationPlayer.tsx` writes position + target every
  * frame), so we stay out of its way.
  */
 export function shouldRepivot(args: {

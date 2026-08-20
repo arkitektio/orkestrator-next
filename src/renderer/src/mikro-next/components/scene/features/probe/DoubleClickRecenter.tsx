@@ -26,7 +26,7 @@ type RecenterControls = {
  * The point is resolved GEOMETRICALLY — cursor ray ∩ the nearest layer box,
  * chord midpoint (`nearestChordMidpointAlongRay`: the box the user pointed
  * at beats any union math). Not via the probe: the P20 gate unarms probing
- * entirely in NAVIGATE (`core/probe/probeGating.ts`), so `probedCoordinate`
+ * entirely in NAVIGATE (`platform/probe/probeGating.ts`), so `probedCoordinate`
  * is stale there.
  *
  * A DOM "dblclick" on the canvas element, headless component mounted with

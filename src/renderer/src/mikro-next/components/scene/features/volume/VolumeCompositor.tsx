@@ -55,7 +55,7 @@ import { useViewerStoreApi } from "../../platform/stores/viewerStore";
  * canvas render, so tone mapping stays single and final. On unmount (2D
  * switch, flag off) the subscription drops and R3F's own render resumes.
  *
- * All decisions live in the pure core (`render/volumeCompositor.ts`); this
+ * All decisions live in the pure core (`platform/gpu/volumeCompositor.ts`); this
  * shell only executes renders and restores state in `finally` (the
  * SceneScreenshot contract).
  */

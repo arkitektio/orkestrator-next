@@ -89,7 +89,7 @@ export const RectangleDrawer = () => {
   }, [endSession]);
 
   // The marquee is the Select *tool* of ANNOTATE mode, and it is 2D-only — the
-  // toolbar hides it in 3D (`core/modeCompat.ts`), so this is belt and braces.
+  // toolbar hides it in 3D (`features/annotations/modeCompat.ts`), so this is belt and braces.
   if (
     displayMode !== "2D" ||
     interactionMode !== "ANNOTATE" ||

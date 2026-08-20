@@ -62,7 +62,7 @@ export const MAX_RAY_STEPS = 512;
  *    test is `pxPerVoxel * lodBias >= 1`, so a larger multiplier lets a finer
  *    level pass it). The DebugPanel exposes it as "LOD Aggressiveness",
  *    default 1. This comment previously said "coarser", contradicting both
- *    its own code below and `core/viewportPlanning.ts`'s `chooseLodForScale`.
+ *    its own code below and `features/bricks/octree/viewportPlanning.ts`'s `chooseLodForScale`.
  *  - `uPxPerVoxelAtUnitDist` — screen px per base voxel at unit distance; ≤0
  *    disables the per-sample LOD pick entirely.
  *  - `uVoxelWorldSize` — per-axis world length of one base voxel (the planner's

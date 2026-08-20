@@ -2,7 +2,7 @@ import type { SceneZExtent } from "../coords/worldTransform";
 
 /**
  * Keyboard navigation, as arithmetic. The R3F component
- * (`interactions/KeyboardSceneNavigation.tsx`) owns the camera and the stores;
+ * (`shell/keyboard/KeyboardSceneNavigation.tsx`) owns the camera and the stores;
  * everything here is a pure function of numbers, which is what makes the
  * binding map and the slice stepping testable without a WebGPU context.
  */
@@ -37,7 +37,7 @@ export type NavigationAction =
  * view's slice plane, meaningless in 3D — so one binding would have been dead
  * in one mode either way. Splitting it leaves neither key inert.
  *
- * Keyed on `KeyboardEvent.code`, matching `interactions/layerVisibilityKeys.ts`:
+ * Keyed on `KeyboardEvent.code`, matching `shell/keyboard/layerVisibilityKeys.ts`:
  * `code` is the physical key, so the map cannot come apart on a keyboard layout
  * that prints something else on the arrow cluster.
  *
@@ -84,7 +84,7 @@ export type NavigationCamera = {
  * World units spanned by one screen pixel — the conversion that makes a pan
  * step feel identical however far in you are.
  *
- * Same formula as `computeWorldUnitsPerPixel` (`core/probeWorld.ts`), but
+ * Same formula as `computeWorldUnitsPerPixel` (`platform/probe/probeWorld.ts`), but
  * measured from the distance to the CONTROLS TARGET rather than to the world
  * origin. The origin is only the right pivot for a scene sitting on it, and
  * `PanScaleSync` re-seats the target along the view ray precisely because the

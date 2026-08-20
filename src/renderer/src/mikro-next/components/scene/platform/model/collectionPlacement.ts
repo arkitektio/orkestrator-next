@@ -13,7 +13,7 @@ import { affineToMatrix4 } from "../coords/worldTransform";
  * No anchoring to another layer's frame, no shape-derived recentering, no
  * client-injected flips — any origin or raster convention is the server's to
  * express as transform edges (or the writer's, in the vertices themselves).
- * This is the same rule `core/annotationBounds.ts` applies to annotations;
+ * This is the same rule `features/annotations/annotationBounds.ts` applies to annotations;
  * images differ only in owning an additional index→local map.
  *
  * Pure and React-free so placement is unit-testable without R3F or Apollo.

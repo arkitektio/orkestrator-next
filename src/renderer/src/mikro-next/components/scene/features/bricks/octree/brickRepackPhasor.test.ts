@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// (`core/phasor` imports the generated enums, whose module touches `window` on
+// (`platform/model/phasor` imports the generated enums, whose module touches `window` on
 // load — the repack itself does not import it: the DFT is inlined there so the
 // worker bundle stays free of the Apollo barrel.)
 import { describe, expect, it } from "vitest";

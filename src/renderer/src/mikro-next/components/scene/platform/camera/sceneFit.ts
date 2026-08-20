@@ -7,8 +7,8 @@ import { buildAffineMatrix } from "../coords/worldTransform";
  * Metadata-only scene fitting: compute the union world-space bounding box of a
  * set of layers and the camera pose that frames it. Deliberately free of any
  * mounted three.js objects so the INITIAL camera pose can be derived before the
- * first render (`cameras/InitialCameraFit.tsx`) — `fitCameraToObject`
- * (`core/cameraFit.ts`) shares the same pose math for post-mount fits.
+ * first render (`platform/camera/InitialCameraFit.tsx`) — `fitCameraToObject`
+ * (`platform/camera/cameraFit.ts`) shares the same pose math for post-mount fits.
  */
 
 /** Padding factors matching the historical `fitCameraToObject` behavior. */

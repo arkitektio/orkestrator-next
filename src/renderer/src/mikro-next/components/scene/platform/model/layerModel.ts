@@ -17,7 +17,7 @@ import { composeLayerAffine, type SceneTransformContext } from "@/mikro-next/lib
 export type { SceneTransformContext };
 
 /**
- * The scene renderer's per-layer view-model. Extracted from `store/sceneStore.ts`
+ * The scene renderer's per-layer view-model. Extracted from `platform/stores/sceneStore.ts`
  * so the store holds state, and this module owns the pure derivation from the
  * server fragment into render-ready state.
  *

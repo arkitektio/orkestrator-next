@@ -10,7 +10,7 @@ import type {
 /**
  * Playing a camera tour: easing, pose interpolation, and sampling a tour at a
  * point in time. Pure — no camera, no store, no clock — so the whole of
- * playback is testable without a Canvas. `cameras/AnimationPlayer.tsx` is the
+ * playback is testable without a Canvas. `features/animation/AnimationPlayer.tsx` is the
  * only thing that turns a sample into camera motion.
  */
 
@@ -64,7 +64,7 @@ export const tourDurationMs = (waypoints: readonly AnimationWaypointFragment[]):
 
 /**
  * A stop → the mutation's input shape. The counterpart of
- * `core/renderGraph.ts`'s `serializeRenderGraph` for tours.
+ * `platform/model/renderGraph.ts`'s `serializeRenderGraph` for tours.
  *
  * No `order`: the server writes it by enumerating the list, so tour order IS
  * array order on the way out — which is why both mutations take the whole list

@@ -59,7 +59,7 @@ export const SceneModeControls = () => {
 
   const nextDisplayMode = displayMode === "2D" ? "3D" : "2D";
 
-  // An option that would be inert is not offered — see `core/modeCompat.ts`.
+  // An option that would be inert is not offered — see `features/annotations/modeCompat.ts`.
   const modeContext = {
     displayMode,
     hasProbeableLayer: hasProbeableLayer(layers),

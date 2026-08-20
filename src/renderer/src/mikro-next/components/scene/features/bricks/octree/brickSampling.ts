@@ -62,7 +62,7 @@ export type MarchResidentBricksInput = {
  * Scales normalized visibility into per-step opacity for the "volume-accum"
  * strategy. A documented visual approximation of the shader's
  * opacity-corrected front-to-back accumulation (colormap alpha is not
- * consulted — see core/opacityCorrection.ts for the real transfer math).
+ * consulted — see features/bricks/shaderspec/opacityCorrection.ts for the real transfer math).
  */
 export const VOLUME_ACCUM_GAIN = 4;
 
@@ -134,7 +134,7 @@ export function marchResidentBricks({
 
     // Unit-box local ([-0.5,0.5]) → base voxel. Corner-anchored, NO FLIP on any
     // axis — this must stay byte-for-byte the shader's `toBaseVoxel`
-    // (`render/bricks/brickNodeMaterials.ts`) and the unflipped `voxelIndex`
+    // (`features/bricks/gpu/brickNodeMaterials.ts`) and the unflipped `voxelIndex`
     // that `BrickVolumeLayer.probeFromRay` reports, or the probe measures a
     // different voxel from the one it renders and names. y carried a flip until
     // the 2026-08-15 pass removed it from both shaders (COORDINATE_SYSTEMS.md

@@ -26,7 +26,7 @@ export type InteractionModeOption = {
 
 /**
  * Canonical order and copy. Which of these are actually *offered* is decided by
- * `core/modeCompat.ts` — an option that would be inert is not shown.
+ * `features/annotations/modeCompat.ts` — an option that would be inert is not shown.
  */
 export const interactionModeOptions: InteractionModeOption[] = [
   {
@@ -62,7 +62,7 @@ export interface ModeState {
   zoomToCursor: boolean;
   /**
    * Re-center the orbit pivot on the last *click*-probed point (3D). Was the
-   * PROBE_ORBIT camera mode. See `core/orbitPivot.ts`.
+   * PROBE_ORBIT camera mode. See `platform/camera/orbitPivot.ts`.
    */
   pivotOnProbe: boolean;
   /**
@@ -91,7 +91,7 @@ export interface ModeState {
 
 /**
  * `displayMode` seeds from the scene's `preferredView` (resolved by
- * `core/preferredView.ts`, which is where the AUTO policy lives) and is the
+ * `platform/camera/preferredView.ts`, which is where the AUTO policy lives) and is the
  * user's from then on — nothing rehydrates it, so switching view never fights
  * the scene's stated preference.
  */

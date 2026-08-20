@@ -72,7 +72,7 @@ import { useViewerStore } from "../platform/stores/viewerStore";
  * saves is the picking layers' own raycasts, above all the fabriks
  * `BatchedMesh`, which three walks per mounted instance. Click-class events
  * are NOT filtered that way, which is why the layers gate their `onClick` /
- * `onPointerDown` props too (`core/probe/probeGating.ts`).
+ * `onPointerDown` props too (`platform/probe/probeGating.ts`).
  *
  * The gate reads `viewStore.cameraMoving`, so it lasts exactly as long as the
  * camera actually moves: drag-drawing tools (RoiDrawer/RectangleDrawer hold a

@@ -4,7 +4,7 @@ import { brickGridForLevel, childrenOf, nodeBaseBox, nodeKey } from "./nodeAddre
 
 /**
  * Hierarchical-occupancy aggregation (R4, `orkestrator.occHierarchy`) —
- * the pure CPU half; the impure hooks live in `managers/brickResidency.ts`
+ * the pure CPU half; the impure hooks live in `features/bricks/residency/brickResidency.ts`
  * and the GPU write in `pageTableTexture.setAggregateEntry`.
  *
  * GROUNDING RULE (the R4 caveat, made precise): the aggregate texel at

@@ -572,7 +572,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       strategy,
       origin,
       // In ANNOTATE the probe is the drawer's cursor, not a measurement — the
-      // HUD and the attribute plans skip it (core/probe/probeTypes.ts).
+      // HUD and the attribute plans skip it (platform/probe/probeTypes.ts).
       purpose: interactionMode === "ANNOTATE" ? "placement" : "readout",
       values: resident
         ? resident.values.map((value, channel) => ({ channel, value }))
@@ -643,7 +643,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       matrixAutoUpdate={false}
       // `undefined` when hover probing is off, NOT a handler that early-returns:
       // that is what takes this group out of R3F's pointermove raycast set
-      // entirely (core/probe/probeGating.ts, P20). ANNOTATE arms for EVERY
+      // entirely (platform/probe/probeGating.ts, P20). ANNOTATE arms for EVERY
       // shape tool — in 3D the probe IS the placement, for a path's next vertex
       // exactly as much as for a sphere's center, and the drawer's rubber band
       // follows the published probe.

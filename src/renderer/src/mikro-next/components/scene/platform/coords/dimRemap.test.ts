@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { buildDimRemapMatrix, computeAxisMemoryOrder } from "./dimRemap";
 
 /**
- * The CPU probe raymarch (core/probeMath.ts) must map a unit-box UVW
+ * The CPU probe raymarch (features/bricks/probeMath.ts) must map a unit-box UVW
  * coordinate onto texture (width, height, depth) exactly like the GLSL
  * `dimRemap` matrix does, otherwise probing and rendering disagree.
  * This pins the two mappings together for every axis permutation.

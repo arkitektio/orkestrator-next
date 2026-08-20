@@ -15,7 +15,7 @@ export { requestGeneralAccess } from "@/mikro-next/lib/zarr/access";
 /**
  * Zarr store construction for a scene: gather the unique data-array stores the
  * scene's brick-backed layers reference, request S3 credentials, and build a
- * ready `ConfiguredS3Store` per store. Extracted out of `store/viewerStore.ts`
+ * ready `ConfiguredS3Store` per store. Extracted out of `platform/stores/viewerStore.ts`
  * so the store no longer owns data-loading — it just consumes these.
  *
  * `isBrickLayer`, not `isImageLayer`: a LABEL mask is a Lens over an array too,

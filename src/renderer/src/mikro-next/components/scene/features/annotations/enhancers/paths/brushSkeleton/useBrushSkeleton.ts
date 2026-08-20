@@ -46,7 +46,7 @@ import { useCreateSceneAnnotation } from "../../../useCreateSceneAnnotation";
  * stroke/click in the store → engine extraction → candidate → annotations.
  *
  * The division of labour after the engine refactor:
- * - `enhancers/shared/`      — pure arithmetic (fields, geodesics, marching).
+ * - `features/annotations/enhancers/shared/`      — pure arithmetic (fields, geodesics, marching).
  * - `skeleton/planning`   — level/corridor choice and coordinate plumbing.
  * - `skeleton/cpuEngine`  — the reference pipeline on the main thread.
  * - `skeleton/gpuEngine`  — the same pipeline on the WGSL kernels.

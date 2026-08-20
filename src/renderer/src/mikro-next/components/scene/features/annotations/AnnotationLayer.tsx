@@ -243,7 +243,7 @@ const AnnotationCollectionGroup = ({
 
   // This layer draws these annotations, so it holds the authoritative entry
   // for each — including the `layerId` a selection made before the layer
-  // existed could not know. See `core/selectionRepair.ts`: without this the
+  // existed could not know. See `features/annotations/selectionRepair.ts`: without this the
   // info panel never finds a collection matrix for the shape and parks in the
   // corner. Converges after one pass (the repaired entries then agree).
   const mergeSelectedRois = useRoiSelectionStore((s) => s.mergeSelectedRois);

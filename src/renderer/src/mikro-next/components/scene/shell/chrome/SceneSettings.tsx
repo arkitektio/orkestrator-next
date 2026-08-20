@@ -62,7 +62,7 @@ const ProbeSettingsSection = () => {
   const layers = useSceneStore((s) => s.layers);
 
   // Both brick layers bail on `visible === false`, so a hidden layer cannot
-  // answer a probe (`core/modeCompat.ts`). An alive explicit pin drives the
+  // answer a probe (`features/annotations/modeCompat.ts`). An alive explicit pin drives the
   // picker's value; a dead pin (hidden/gone layer) shows as Auto WITHOUT being
   // erased — it heals by derivation and resurrects if its layer comes back.
   const probeableLayers = layers.filter((candidate) => candidate.visible !== false);

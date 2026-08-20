@@ -25,7 +25,7 @@ import { useViewerStore, useViewerStoreApi } from "../../../platform/stores/view
  * The CPU side of `volumeRayNodes`' uniforms — what actually drives the ray
  * scaffolding every frame.
  *
- * The SHADER half of these was extracted into `render/bricks/volumeRayNodes.ts`
+ * The SHADER half of these was extracted into `features/bricks/gpu/volumeRayNodes.ts`
  * because `desiredLevelAt` must stay in lockstep with the planner's `wantFiner`.
  * The driver half belongs with it for exactly the same reason:
  * `pxPerVoxelAtUnitDistance` is the other half of that footprint calculation, and

@@ -14,7 +14,7 @@ import type { OutlinePoint } from "./roiOutline";
  * Scaling happens imperatively in `useFrame` off the camera, not through a
  * `worldUnitsPerPixel` store subscription: that field is throttled, and
  * subscribing would re-render this component on every camera move (P17). Same
- * shape as `layers/three_d/SceneProbedPoint.tsx`, including the `scale={0}`
+ * shape as `shell/SceneProbedPoint.tsx`, including the `scale={0}`
  * mount so nothing draws at the wrong size for one frame.
  */
 

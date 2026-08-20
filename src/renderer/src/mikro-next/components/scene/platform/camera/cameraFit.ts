@@ -38,7 +38,7 @@ export function padDegenerateAxes(box: THREE.Box3, minHalfExtent: number): THREE
 /**
  * Apply a `computeFitPose` result to a live camera + controls. Shared by the
  * post-mount object fit below and the pre-first-render initial fit
- * (`cameras/InitialCameraFit.tsx`).
+ * (`platform/camera/InitialCameraFit.tsx`).
  */
 export function applyFitToCamera(box: THREE.Box3, canvas: FitCanvasContext): void {
   const { camera, controls, size, invalidate } = canvas;

@@ -11,7 +11,7 @@
  * These write into the buffers that already exist, so the caller only has to set
  * `needsUpdate` and the backend issues a single `writeBuffer`. Valid only while
  * the point COUNT is unchanged; the caller falls back to `setPositions` when it
- * is not (`interactions/PreviewLine.tsx`).
+ * is not (`platform/draw/PreviewLine.tsx`).
  */
 
 /** Floats per pair-buffer segment: (start.xyz, end.xyz). */

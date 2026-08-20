@@ -16,7 +16,7 @@ import {
 
 /**
  * The invariant that matters most here: an ellipse's point count does not depend
- * on its size. That is what lets `interactions/PreviewLine.tsx` rewrite the
+ * on its size. That is what lets `platform/draw/PreviewLine.tsx` rewrite the
  * border in place while you drag instead of reallocating the vertex buffer.
  */
 

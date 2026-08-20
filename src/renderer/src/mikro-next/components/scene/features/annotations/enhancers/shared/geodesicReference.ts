@@ -13,7 +13,7 @@ import { INF_COST } from "./corridorCost";
  * plain voxel-wise compare instead of a fuzzy one.
  *
  * Steps are world lengths (`spacing`), edge weight = length × mean endpoint
- * cost — the exact metric `enhancers/paths/vectorTrace/traceSearch` uses, restated over a
+ * cost — the exact metric `features/annotations/enhancers/paths/vectorTrace/traceSearch` uses, restated over a
  * corridor instead of an A* box because Phases 2–3 need the WHOLE field, not
  * one path.
  */

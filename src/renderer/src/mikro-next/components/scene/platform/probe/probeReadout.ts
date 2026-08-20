@@ -2,7 +2,7 @@ import type { ProbeResult } from "./probeTypes";
 
 /**
  * The HUD's view of the probe settles instead of tracking it
- * (`managers/ProbeReadoutSettler.tsx`): `probedCoordinate` changes once per
+ * (`features/probe/ProbeReadoutSettler.tsx`): `probedCoordinate` changes once per
  * voxel crossing, which while sweeping is once per frame, and the readout
  * panel is a React subtree (OCTREE_RENDERER.md P17).
  */

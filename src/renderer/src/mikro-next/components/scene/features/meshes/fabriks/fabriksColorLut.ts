@@ -23,7 +23,7 @@ export { LUT_WIDTH } from "../../../platform/attributes/columnLut";
  *
  * The semantics — how a measure becomes a ramp, how a categorical becomes a
  * palette, what a rule keeps, what an unreadable column means — live in
- * `render/attributes/columnLut.ts`, shared with the LABEL path: a mask's pixel
+ * `platform/attributes/columnLut.ts`, shared with the LABEL path: a mask's pixel
  * values dereference into a table by exactly the FIELD edge a collection's object
  * ids do, so two copies of those rules would mean one of them was wrong.
  *

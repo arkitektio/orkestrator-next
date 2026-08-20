@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// (majorityHue reaches `brandTarget` → `render/colormaps`, which transitively
+// (majorityHue reaches `brandTarget` → `platform/gpu/colormaps`, which transitively
 // touches `window`)
 import { describe, expect, it } from "vitest";
 import { srgbToOklch } from "@/lib/color/oklch";

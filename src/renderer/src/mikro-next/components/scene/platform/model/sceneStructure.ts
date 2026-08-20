@@ -8,7 +8,7 @@
  *   `resolveSceneCameraFrame` hang off, so swapping it changes what a live
  *   camera pose MEANS; rebuilding is the honest answer.
  * - `sceneLayerSignature` — which layers, in which order, placed how. A change
- *   here is folded into the LIVE stores by `core/layerReconcile.ts` while the
+ *   here is folded into the LIVE stores by `platform/model/layerReconcile.ts` while the
  *   canvas keeps rendering. Layers arriving dynamically (the AnnotationLayer
  *   the server mints on a scene's first annotation, and one day a subscription
  *   delivering layers) must never blank the viewport.

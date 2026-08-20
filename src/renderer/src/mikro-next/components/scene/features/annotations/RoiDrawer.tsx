@@ -147,7 +147,7 @@ export const RoiDrawer = () => {
   const isPrimitive = isPrimitiveTool(tool);
   /**
    * Vector enhancer active for this tool: each clicked edge is traced through
-   * the data (`enhancers/paths/vectorTrace/`) instead of drawn straight. The toggle moves at
+   * the data (`features/annotations/enhancers/paths/vectorTrace/`) instead of drawn straight. The toggle moves at
    * click cadence at worst, so a plain subscription costs nothing (P17).
    */
   const enhanceOn = vectorEnhance && isEnhanceableTool(tool);
@@ -179,7 +179,7 @@ export const RoiDrawer = () => {
 
     // Volumetric tools rubber-band a RADIUS around the probe-seeded center,
     // but outline/measure speak the corner-pair convention — translate here so
-    // both stay single-sourced (`core/primitiveDraw.ts`).
+    // both stay single-sourced (`features/annotations/primitiveDraw.ts`).
     if (isPrimitiveTool(tool) && session.vertices.length === 1) {
       const anchor = session.vertices[0];
       const radius = session.cursor

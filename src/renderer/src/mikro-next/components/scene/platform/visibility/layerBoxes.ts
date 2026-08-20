@@ -3,7 +3,7 @@ import * as THREE from "three";
 /**
  * The structural slice of `viewerStore.TrackableObject` the box gather needs —
  * structural on purpose, so pure-core stays import-free of the store types
- * (the `core/orbitPivot.ts` pattern).
+ * (the `platform/camera/orbitPivot.ts` pattern).
  */
 export type LayerTrackable = {
   kind: string;
@@ -18,7 +18,7 @@ const scratchBox = new THREE.Box3();
  * truncated to the live count; entries are overwritten in place). Shared by
  * `PanScaleSync` (settle/gesture retarget) and the double-click recenter —
  * both need "where is the content" against the same box walk that
- * `core/visibility.ts` already does per rAF, so this runs strictly less
+ * `platform/visibility/visibility.ts` already does per rAF, so this runs strictly less
  * often than that.
  */
 export function gatherLayerWorldBoxes(

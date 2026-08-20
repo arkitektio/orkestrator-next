@@ -17,7 +17,7 @@ export { LUT_WIDTH } from "../../platform/attributes/columnLut";
 /**
  * The id → RGBA lookup a LABEL layer's stored `colorBys` / `filterBys` resolve
  * to — the mesh feature's twin, over the same relation and with the same
- * semantics (they live in `render/attributes/columnLut.ts`, shared).
+ * semantics (they live in `platform/attributes/columnLut.ts`, shared).
  *
  * THE ONE REAL DIFFERENCE: fabriks indexes the LUT by a DENSE ordinal its
  * vertices carry, and a mask's pixels carry SPARSE raw ids with no ordinal

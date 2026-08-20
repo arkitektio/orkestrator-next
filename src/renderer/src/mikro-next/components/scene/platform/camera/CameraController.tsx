@@ -64,7 +64,7 @@ const TOOL_BUTTONS_2D = {
 
 /**
  * Keeps the OrbitControls pivot on the probed point while "Orbit around probe"
- * is on. The geometry and the when-do-we-move rule live in `core/orbitPivot.ts`;
+ * is on. The geometry and the when-do-we-move rule live in `platform/camera/orbitPivot.ts`;
  * this is the store glue. Mounted inside the Canvas (needs `useThree`) and only
  * in 3D.
  */
@@ -135,7 +135,7 @@ const ProbeOrbitPivot = () => {
  * distance, which both dolly and zoomToCursor collapse toward zero as you
  * zoom into a volume — pan and zoom freeze while the screen is still full of
  * voxels at real distances. Two mechanisms, both fed by the layer boxes along
- * the view ray (`core/panScale.ts`):
+ * the view ray (`platform/camera/panScale.ts`):
  *
  * - **Continuous** (every throttled camera emission, ≤16 Hz): keep
  *   `controls.panSpeed = contentDistance / targetDistance`, so a drag stays
@@ -152,7 +152,7 @@ const ProbeOrbitPivot = () => {
  *
  * Skipped while "orbit around probe" or an animation owns the target/camera.
  * All outside React — no store writes, no re-renders. The box walk mirrors
- * `core/visibility.ts` (`Box3.setFromObject` per layer trackable), which
+ * `platform/visibility/visibility.ts` (`Box3.setFromObject` per layer trackable), which
  * already runs per rAF; this runs strictly less often.
  */
 const PanScaleSync = () => {

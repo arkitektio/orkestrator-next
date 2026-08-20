@@ -57,7 +57,7 @@ export type PageTableTexture = {
    * an RG8 texture with the SAME layout where the texel at (level h, cell c)
    * carries the conservative union of the MEASURED ranges of every level-(h−1)
    * brick overlapping that cell — written only when ALL those children are
-   * known (`core/octree/occupancyAggregate.ts`), all-zero otherwise ("unknown,
+   * known (`features/bricks/octree/occupancyAggregate.ts`), all-zero otherwise ("unknown,
    * never hop"). This is a statement about the DATA, not residency: entries
    * survive eviction and are only cleared on a pool flush. Same dirty-box
    * flush as the other two textures.

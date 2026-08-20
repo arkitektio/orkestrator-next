@@ -10,8 +10,8 @@ export type ProbeMode = "auto" | "first-hit" | "max" | "gradient";
 
 /**
  * Where a probe came from. Hover probes update the readout but must never move
- * the camera — see `core/orbitPivot.ts` (`shouldRepivot`) and the
- * `ProbeOrbitPivot` effect in `cameras/CameraController.tsx`.
+ * the camera — see `platform/camera/orbitPivot.ts` (`shouldRepivot`) and the
+ * `ProbeOrbitPivot` effect in `platform/camera/CameraController.tsx`.
  */
 export type ProbeOrigin = "click" | "hover";
 

@@ -85,5 +85,5 @@ function mirroredManifest(node: FabriksStoreFragment): Record<string, unknown> |
 }
 
 // The store's axis-order declaration is read by the placement module
-// (`layers/mesh/collectionPlacement.ts` `fabriksAxisOrder`), which stays free
+// (`platform/model/collectionPlacement.ts` `fabriksAxisOrder`), which stays free
 // of this file's transitive Arkitekt/zarr imports so placement is testable.

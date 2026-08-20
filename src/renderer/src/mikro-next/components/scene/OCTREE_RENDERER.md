@@ -12,7 +12,7 @@ testing, so nobody re-learns it).
 
 Sibling documents: `COORDINATE_SYSTEMS.md` — how the RFC-5 coordinate-system
 graph (server edges → client-composed `LayerState.affineMatrix`, per-level
-scales from `toParent`) feeds this renderer; `render/fabriks/README.md` — the
+scales from `toParent`) feeds this renderer; `features/meshes/fabriks/README.md` — the
 mesh-collection renderer (fabriks prefix, Parquet row-group streaming) built on
 the same graph and the same planning discipline; `CINEMATIC_MODE.md` — an **unimplemented
 proposal** for lit (shaded) volume rendering, which leans on §2.3's 1-voxel
@@ -67,7 +67,7 @@ slabs, and the plane material composites with the same `sampleBrick` tap.
 
 ## 2. Concepts
 
-### 2.1 Level geometry (`core/octree/levelGeometry.ts`)
+### 2.1 Level geometry (`platform/coords/levelGeometry.ts`)
 
 `buildLayerLevelGeometry(dims, layer, allLevels)` normalizes a layer's zarr
 pyramid into canonical `[x, y, z]` spatial order with per-level scale factors.
@@ -94,7 +94,7 @@ level-0 `dataArrays` (one with `scaleFactors: null`, one with `[1,1,1,1]`)
 pointing at different stores. Without dedupe the planner planned — and the
 residency manager fetched — the same voxels twice (see pitfall P6).
 
-### 2.2 Node addressing (`core/octree/nodeAddress.ts`)
+### 2.2 Node addressing (`features/bricks/octree/nodeAddress.ts`)
 
 A node is one brick on one pyramid level, keyed `"level:bx:by:bz"` on that
 level's own brick grid. Channels are **not** part of the key — all channels of
@@ -122,7 +122,7 @@ the worker pipeline and caches untouched); `chunksTouchingBrick` maps a brick's
 fetch box to the 1–N chunks that intersect it, and repack cuts the brick out of
 the decoded chunks.
 
-### 2.3 Brick spec (`core/octree/brickSpec.ts`)
+### 2.3 Brick spec (`features/bricks/octree/brickSpec.ts`)
 
 Per (layer, mode):
 
@@ -137,7 +137,7 @@ texture limit (2048 under ANGLE). In 2D the z payload only doubles when the z
 page grid itself exceeds the limit — otherwise 3000-slice stacks force
 pointless fat slabs (pitfall P1).
 
-### 2.4 Page table (`core/octree/pageTableLayout.ts`, `render/bricks/pageTableTexture.ts`)
+### 2.4 Page table (`features/bricks/octree/pageTableLayout.ts`, `features/bricks/gpu/pageTableTexture.ts`)
 
 One packed `RGBA8UI` `Data3DTexture` per (layer, mode). **All pyramid levels
 live in this single texture**, stacked along one axis with per-level
@@ -154,7 +154,7 @@ flags; dirty levels are re-uploaded whole (they are tiny).
 **Occupancy sidecar.** A second RG8 texture with the same layout carries each
 RESIDENT brick's raw `[min, max]`, 8-bit-quantized against the pool's
 **occupancy encode range** with conservative rounding and an INVERTED max byte
-(`encodeOccupancyTexel` in `core/octree/brickEncoding.ts`) — a byte of 0 on
+(`encodeOccupancyTexel` in `features/bricks/octree/brickEncoding.ts`) — a byte of 0 on
 either channel is the "unbounded on that side" sentinel decoding to the POOL
 endpoint, so the all-zero texel (fresh texture, or a GPU-repacked brick whose
 async min/max readback has not landed yet) means "unknown, never skip". The
@@ -203,13 +203,13 @@ without a tracker delta the stale-uniform composite was cached
 indefinitely. `flushPool` bumps the tracker too (a t/z slice change
 otherwise kept serving the previous timepoint from cache).
 
-### 2.5 Brick atlas + slot LRU (`render/bricks/brickAtlas.ts`, `core/octree/brickPoolState.ts`)
+### 2.5 Brick atlas + slot LRU (`features/bricks/gpu/brickAtlas.ts`, `features/bricks/octree/brickPoolState.ts`)
 
 One `Data3DTexture` per (layer, mode), format `R8`, `R16F` or `R32F`. The zarr
 worker emits only `Uint8Array` or `Float32Array` (uint16 is promoted to
 float32 in the CHUNKS) — but uint16 INTENSITY pools store their bricks as
 `R16F` half floats (roadmap R3): the repack writes raw values, then encodes
-`raw / 65535` (`encodeHalfArray`, `core/octree/halfFloat.ts` — precision
+`raw / 65535` (`encodeHalfArray`, `features/bricks/octree/halfFloat.ts` — precision
 analysis there) and the shader rescales through `uAtlasScale` (= 65535),
 exactly like the R8 path's 255. Half the bytes, double the slot budget; label
 pools never take R16F (`geometry.exactValues` — an 11-bit significand
@@ -257,7 +257,7 @@ storm).
 mirror for A/B, except for R16F atlases, whose backing would hold half-float
 BITS a raw probe read would misinterpret.
 
-### 2.6 The unified planner (`core/octree/nodePlanning.ts`)
+### 2.6 The unified planner (`features/bricks/octree/nodePlanning.ts`)
 
 `planLayerNodes()` produces `LayerNodePlan { mode, sliceSignature, targetLevel,
 slabZ, nodes, planBytes }` with exactly two roles:
@@ -323,13 +323,13 @@ optimistic plans (pitfall P5). `budgetMinLevel` is the finest level whose
 chunk-aligned visible cost fits `maxPlanBytes`; `fixedLOD` overrides it.
 
 Refinement/fetch ORDER is **foveated** (`foveatedScore` in
-`core/octree/nodePlanning.ts`): roots and children sort by camera distance
+`features/bricks/octree/nodePlanning.ts`): roots and children sort by camera distance
 penalized by the angle off the view axis (derived per class by unprojecting
 the NDC center — `cameraPose` carries no orientation), so the screen CENTER
 sharpens before equidistant screen-edge bricks. Strictly ordering-only — it
 never admits or rejects a node; orthographic/2D fall back to plain distance.
 
-### 2.7 The plan driver (`managers/nodePlanTracker.ts`)
+### 2.7 The plan driver (`features/bricks/residency/nodePlanTracker.ts`)
 
 Subscribes to `layerViewRanges`, `lodBias`, `currentZ`, the flag, scene layers,
 `viewProjectionMatrix`, and `displayMode`.
@@ -381,7 +381,7 @@ Two structural costs were removed from the replan itself:
 - **Equivalence-class planning.** Pools are shared by content address but
   planning inputs are per layer, so the tracker groups plannable layers by
   `poolKey` + `buildPlanInputSignature` (affine, fixedLOD, view range by
-  VALUE — `core/octree/planInputSignature.ts`) and runs `planLayerNodes` once
+  VALUE — `features/bricks/octree/planInputSignature.ts`) and runs `planLayerNodes` once
   per class, assigning every member THE SAME plan object. Four channel layers
   over one image: one DFS instead of four, and `reconcilePool`'s member union
   degenerates to identical plans. The per-class camera (voxel frustum,
@@ -393,14 +393,14 @@ Two structural costs were removed from the replan itself:
   read (layer, dataArrays, mode); only successes are cached so late-opening
   stores retry, and entries are pruned when a layer leaves the scene.
 
-### 2.8 Residency manager (`managers/brickResidency.ts`)
+### 2.8 Residency manager (`features/bricks/residency/brickResidency.ts`)
 
 A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
 
 - **It starts OUTSIDE the canvas, and the renderer is LATE-BOUND**
-  (`orkestrator.earlyBricks`, default ON). `managers/BrickSystemHost.tsx`
+  (`orkestrator.earlyBricks`, default ON). `features/bricks/residency/BrickSystemHost.tsx`
   builds the system (via the single construction site
-  `managers/brickSystem.ts`) as a sibling of `<SceneWrapper>`;
+  `features/bricks/residency/brickSystem.ts`) as a sibling of `<SceneWrapper>`;
   `BrickSystemProvider` stays inside the canvas and is now only the FRAME
   DRIVER — it calls `attachRenderer(gl, invalidate)` and runs the per-frame
   drain. Why: the canvas `gl` factory awaits `renderer.init()` and R3F mounts
@@ -423,7 +423,7 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   plane chunk each triggered their own 14 MB decode — a measured **73×
   fetch amplification** (pitfall P8, the single worst bug of the bring-up).
   **Dead-queue cancellation** rides on top: bricks reference-count their
-  chunks (`core/octree/chunkRefRegistry.ts`), and when the LAST referring
+  chunks (`features/bricks/octree/chunkRefRegistry.ts`), and when the LAST referring
   brick aborts, the chunk's per-fetch AbortController fires — the worker pool
   cancels the task if it is still QUEUED (reclaiming the wasted decode during
   fast navigation; `stats.cancelledDecodes`), while a STARTED task ignores it
@@ -468,11 +468,11 @@ A plain class (registered in `viewerStore`, like `canvas`). Key mechanics:
   per cache hit (pitfall P10). `buildDebugReport()` backs the DebugPanel's
   "Copy debug report" button — paste that JSON when reporting perf issues.
 
-### 2.9 Repack (`core/octree/brickRepack.ts` + `repackDispatcher.ts`)
+### 2.9 Repack (`features/bricks/octree/brickRepack.ts` + `repackDispatcher.ts`)
 
 Pure, golden-buffer-tested, and — since the P17 hardening — run **off the UI
 thread**: `BrickResidencyManager` submits jobs through a `RepackDispatcher`
-(`core/octree/repackDispatcher.ts`), a 2-worker pool around the unchanged pure
+(`features/bricks/octree/repackDispatcher.ts`), a 2-worker pool around the unchanged pure
 function (`repack-worker.ts`; sync fallback when `Worker` is unavailable —
 vitest/jsdom). Strided copy from decoded chunks into the canonical output
 layout `((c·storedZ + z)·storedY + y)·storedX + x` (x-fastest — this is why
@@ -505,14 +505,14 @@ context-loss restore both read `atlas.backing`, and the copy is bounded by the
 was removed via a per-array metadata memo
 (`lib/zarr/runner/get-worker.ts` `readArrayMetadataCached`).
 
-### 2.10 Shader traversal (`layers/bricks/brickNodeMaterials.ts`)
+### 2.10 Shader traversal (`features/bricks/gpu/brickNodeMaterials.ts`)
 
 `sampleBrickEx(p01, desiredLevel, channel)` → `0 unmapped / 1 resident / 2
 empty`. Resident path: page `texelFetch` → atlas tap at
 `slotOrigin + border + inBrickOffset (+ channel-slab z)`. Unmapped path: loop
 to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
 
-- **3D** (`layers/bricks/BrickVolumeLayer.tsx`): unit-box raymarcher marching
+- **3D** (`features/bricks/layers/BrickVolumeLayer.tsx`): unit-box raymarcher marching
   in **base voxel space** (`toBaseVoxel(p) = (p.x+0.5, 0.5−p.y, p.z+0.5) ·
   uBaseShape`), ≤ 256 steps, per-sample perspective LOD
   (`desiredLevelAt(dist)`, clamped to the plan's floor `uDesiredLevel`),
@@ -523,8 +523,8 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   the camera-settle emission restores full quality automatically.
 
   The **shader fast path** (`orkestrator.shaderFastPath`, default ON — flag in
-  `render/bricks/shaderFlags.ts`, read at material build time) restructures the
-  ray loop; CPU mirrors of every decision live in `core/raymarchStep.ts`:
+  `features/bricks/gpu/shaderFlags.ts`, read at material build time) restructures the
+  ray loop; CPU mirrors of every decision live in `features/bricks/shaderspec/raymarchStep.ts`:
   - **Skip-before-sample.** The empty-space decision is emitted BEFORE the
     per-slot sampling block: an unmapped chain hops immediately, and a uniform
     EMPTY brick's max norm is derived with pure ALU from `resolved.emptyValue`
@@ -551,7 +551,7 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
     window (≤ 0.001, the EMPTY threshold), a MIP the brick cannot beat
     (`upper ≤ bestNorm` — classic maximum culling), an ISO it never reaches,
     or already done. CPU lockstep: `residentBrickSkippable` /
-    `occupancyUpperNorm` in `core/raymarchStep.ts`. Conservative by
+    `occupancyUpperNorm` in `features/bricks/shaderspec/raymarchStep.ts`. Conservative by
     construction — a skipped brick cannot change any accumulator.
   - **Compile-time phasor specialization**: a member whose slots hold no phasor
     sources (`hasPhasorSources`, from `buildMergedChannelUniformData`) gets the
@@ -564,7 +564,7 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   `uSmoothThreshold` px/voxel (default 3), the INTENSITY tap switches from
   trilinear to a tricubic B-spline reconstruction — 8 trilinear taps via the
   two-tap decomposition (`emitTricubicTap`; algebra pinned by
-  `core/tricubic.ts` tests) — so magnified fluorescence renders as smooth
+  `features/bricks/shaderspec/tricubic.ts` tests) — so magnified fluorescence renders as smooth
   blobs instead of hard voxel blocks. The original "cost is bounded: only
   engages where rays are short" claim is TRUE for zoom-down-axis and FALSE
   for zoom+tilt (the diagonal ray runs hundreds of fine-pitch samples, all
@@ -579,12 +579,12 @@ to coarser levels (bounded by `MAX_BRICK_LEVELS = 10`).
   seams show); phasor g/s taps stay single-tap; CPU probes read RAW voxel
   values — smoothing is a display-space reconstruction filter, measurements
   are unchanged.
-- **2D** (`layers/bricks/BrickPlaneLayer.tsx`): ONE full-layer quad (the
+- **2D** (`features/bricks/layers/BrickPlaneLayer.tsx`): ONE full-layer quad (the
   per-chunk React mesh churn of `ChunkPlane` is gone); the legacy multi-channel
   compositor with its texture tap replaced by `sampleBrick(vec3(uv, slabZ),
   uDesiredLevel, ch)`.
 
-### 2.11 Probes (`core/octree/brickSampling.ts`)
+### 2.11 Probes (`features/bricks/octree/brickSampling.ts`)
 
 `marchResidentBricks` is a CPU march in **lockstep with the GLSL
 normalization**, sampling through `sampleResident` (the CPU brick mirrors).
@@ -596,25 +596,25 @@ Keep the two in sync when touching either.
 
 | Area | Files |
 | --- | --- |
-| Pure core | `core/octree/{levelGeometry, brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling, voxelFrame}.ts` (each with a `.test.ts`) |
-| Coordinate graph | `core/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
-| Mesh layers | `render/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
-| Drivers | `managers/nodePlanTracker.ts`, `managers/brickResidency.ts`, `managers/BrickSystemProvider.tsx`, started from `managers/VisibilityManager.tsx` |
-| GPU | `render/bricks/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
-| Shaders | `layers/bricks/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
-| Materials | `layers/bricks/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
-| Registry entries | `render/image/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
-| Debug | `panels/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `overlays/BrickResidencyOverlay.tsx` (per-level wireframes) |
-| Center LOD badge | `core/octree/centerLod.ts` (+ `.test.ts`) — center-pixel ray → base voxel; `overlays/CenterLodReadout.tsx` — the level `BrickResidencyManager.residentLevelAt` serves there, vs. the plan's target. Not debug-gated: silent coarse fallback is invisible without it |
-| Store | `store/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `store/viewStore.ts` (`cameraPose`, `cameraMoving`) |
+| Pure core | `features/bricks/octree/{levelGeometry, brickSpec, nodeAddress, pageTableLayout, brickPoolState, nodePlanning, brickRepack, brickSampling, voxelFrame}.ts` (each with a `.test.ts`) |
+| Coordinate graph | `@/mikro-next/lib/coords/transformGraph.ts` (+ `.test.ts`) — client-side edge composition into `LayerState.affineMatrix` / mesh & ROI transforms; see COORDINATE_SYSTEMS.md |
+| Mesh layers | `features/meshes/fabriks/` (fabriks prefix, row-group streaming, own README + `fabriksCore.test.ts`) |
+| Drivers | `features/bricks/residency/nodePlanTracker.ts`, `features/bricks/residency/brickResidency.ts`, `features/bricks/residency/BrickSystemProvider.tsx`, started from `shell/VisibilityManager.tsx` |
+| GPU | `features/{texSubImage3d, brickAtlas, pageTableTexture}.ts` |
+| Shaders | `features/{brickNodeMaterials, channelUniforms}.ts` (TSL → WGSL) |
+| Materials | `features/{BrickPlaneLayer, BrickVolumeLayer}.tsx` |
+| Registry entries | `features/volume/{ImagePlaneLayer, ImageVolumeLayer}.tsx` (thin wrappers over the brick components) |
+| Debug | `features/debug/DebugPanel.tsx` (plan/pool/lifetime stats, **Copy debug report**), `features/debug/BrickResidencyOverlay.tsx` (per-level wireframes) |
+| Center LOD badge | `features/bricks/octree/centerLod.ts` (+ `.test.ts`) — center-pixel ray → base voxel; `features/bricks/CenterLodReadout.tsx` — the level `BrickResidencyManager.residentLevelAt` serves there, vs. the plan's target. Not debug-gated: silent coarse fallback is invisible without it |
+| Store | `platform/stores/viewerStore.ts` (`nodePlans`, `residencyVersion`, `brickSystem`), `platform/stores/viewStore.ts` (`cameraPose`, `cameraMoving`) |
 | Cache | `zarr/caches/byteBudgetChunkCache.ts` |
 
 The legacy paths (`ChunkPlane`, `PlaneLayer`, `VolumeLayer`,
 `VolumeTextureMesh`, `core/chunkPlanning.ts`, `managers/chunkPlanTracker.ts`,
 `core/volumeTexture.ts`) and the `useOctreeRenderer` migration flag were
 deleted at cutover; `buildSliceSignature` survives in
-`core/sliceSignature.ts`. Kept: `core/viewportPlanning.ts`,
-`core/probeMath.ts`, `core/lodPlanning.ts` (budget source +
+`platform/model/sliceSignature.ts`. Kept: `features/bricks/octree/viewportPlanning.ts`,
+`features/bricks/probeMath.ts`, `platform/quality/lodPlanning.ts` (budget source +
 `planDefaultVolumeLods` for `fixedLOD` defaults). `core/slab.ts` was listed
 as kept here but its only consumer was `ChunkPlane`, so it had been dead
 since the cutover; deleted 2026-08-20 along with `core/layerListLayout.ts`
@@ -705,10 +705,10 @@ window band). This is inherent to the 8-bit page encoding. The CPU probe path
 (`sampleResident`) applies the SAME round-trip (`decodeEmptyValue(encodeEmptyValue
 (v))`) so `marchResidentBricks` stays in lockstep with the rendered image rather
 than reporting the exact-but-not-rendered raw value. Encode/decode live in
-`core/octree/brickEncoding.ts`; tested in `core/octree/brickEncoding.test.ts`.
+`features/bricks/octree/brickEncoding.ts`; tested in `features/bricks/octree/brickEncoding.test.ts`.
 
 **Atlas format must mirror the worker's promotion, not the dtype string.**
-`atlasKindForDtype` (`core/octree/atlasFormat.ts`) picks R8 only for unsigned
+`atlasKindForDtype` (`features/bricks/octree/atlasFormat.ts`) picks R8 only for unsigned
 8-bit, R16F for unsigned 16-bit intensities (roadmap R3 — the promoted
 Float32 CHUNKS are unchanged; the repack re-encodes brick-side, so the worker
 lockstep is preserved), and R32F for everything else — matching the codec
@@ -722,7 +722,7 @@ constraint: the scene never sets `textureFidelity`, so it assumes `'default'`
 break both this format choice and the global `pool.minValue/maxValue`
 normalization. Tested in `atlasFormat.test.ts` / `brickAtlas.test.ts`.
 
-**Contrast limits are raw dtype units.** `climToUnit` (`core/dataRange.ts`) maps an
+**Contrast limits are raw dtype units.** `climToUnit` (`platform/model/dataRange.ts`) maps an
 absolute clim into the shader's `[0,1]` via `pool.minValue/maxValue`. This is
 correct ONLY if `channel.transfer.climMin/Max` and `layer.climMin/Max` arrive in
 raw dtype units (e.g. 0..4000 for a uint16 layer, not a normalized 0..1). A
@@ -755,7 +755,7 @@ The per-level pitch itself went through two generations: `.x` → the MAX
 spatial scale component → (2026-08-19, `orkestrator.anisoStride`, default ON)
 the **direction-projected ellipsoidal crossing distance**
 `0.75 / |dirB / uLevelScale[lvl]|` (CPU mirror
-`core/raymarchStep.ts directionProjectedPitch`). The max rule never
+`features/bricks/shaderspec/raymarchStep.ts directionProjectedPitch`). The max rule never
 oversampled the coarsest axis but under-sampled every finer one: on
 [2ⁿ,2ⁿ,1] pyramids (z never downsampled) a face-on ray stepped by the xy
 factor straight through the z planes — a 6× undersample that dropped thin
@@ -776,7 +776,7 @@ steps accumulate less opacity). The volume accumulator uses
 `a = 1 − (1 − sampleNorm)^(stepLen / refStep)` where `refStep` is the
 finest-shown level's settled pitch (`uDesiredLevel`, no `uStepScale`) — identity
 at the finest settled sample, brighter as the step grows. Mirrored/tested by
-`core/opacityCorrection.ts` (+ `.test.ts`). MIP/AttenuatedMIP are `max()` and
+`features/bricks/shaderspec/opacityCorrection.ts` (+ `.test.ts`). MIP/AttenuatedMIP are `max()` and
 need no correction; **MIP coarse-dimming is a separate, inherent effect** — a
 mean-downsampled zarr pyramid stores lower peaks and normalization is
 LOD-independent (`brickResidency.ts` `pool.minValue/maxValue` from level 0), so
@@ -828,7 +828,7 @@ heavy subtree):
   changes during pan/orbit too, not just zoom) → ScaleBar re-rendered per frame
   and both probe-marker components rebuilt their geometry memo per frame. Fix:
   probe markers compute the radius from the camera in their own `useFrame`
-  (`core/probeWorld.ts` splits camera-independent geometry from
+  (`platform/probe/probeWorld.ts` splits camera-independent geometry from
   `probeMarkerRadius`); `CanvasSync` publishes the store value throttled
   (150 ms leading + trailing) for the HTML ScaleBar only.
 - `residencyVersion` (per-upload-batch) was the layers' only way to catch the
@@ -853,11 +853,11 @@ heavy subtree):
   every publish, so it rewrote three Line2 buffers for a point that had often
   not moved. `SelectedPointPanel` re-rendered its whole HUD subtree.
   Fix: `probedCoordinate` is declared a HOT field (vanilla subscribers only);
-  the canvas-side consumers bind imperatively (`core/probe/useProbeMarkerBinding.ts`,
+  the canvas-side consumers bind imperatively (`features/probe/useProbeMarkerBinding.ts`,
   and the guides' value-deduped subscription); React reads `probeReadout`, a
-  settled snapshot published by `managers/ProbeReadoutSettler.tsx` once the
+  settled snapshot published by `features/probe/ProbeReadoutSettler.tsx` once the
   cursor rests, with retractions, clicks and target changes bypassing the wait
-  (`core/probe/probeReadout.ts`). `AttributeProbeTracker` rides that same
+  (`platform/probe/probeReadout.ts`). `AttributeProbeTracker` rides that same
   settle instead of keeping a second, independent debounce.
 - Corollary for write-side dedup gates (`sameViewRanges`): never gate a hot
   store write on a continuously-varying cosmetic field (the `viewportFraction`
@@ -878,7 +878,7 @@ children, never roots) → a full-dataset fetch storm re-triggered per
 interaction. The same volume floors the 2D atlas at ~16 GB — the 2D slot
 floor spans EVERY z slab (that is what makes z-scrubbing instant).
 
-The guard: `assessPoolViability` (`core/octree/poolViability.ts`) computes
+The guard: `assessPoolViability` (`features/bricks/octree/poolViability.ts`) computes
 the coarsest-grid floor with the same helpers `ensurePool` uses and refuses
 the layer when it exceeds `getInitialVolumeTextureBudgetBytes()` — the
 device-scaled GLOBAL budget, NOT `MIN_LAYER_POOL_BYTES` (128 MB), which
@@ -904,11 +904,11 @@ main thread for >200 ms per streaming frame (perf-recorder signature:
 `cpuMs.max ≈ 250 ms`, jank landing in the post-gesture streaming burst,
 `movingFrames 0`). The stall also delayed the repack workers' response
 messages, inflating repack WALL time ~6× past exec time. Fixes, in
-`managers/uploadBudget.ts` + `drainUploads`:
+`platform/quality/uploadBudget.ts` + `drainUploads`:
 - the drain loop is additionally capped by **wall clock** (`maxMs = 4`,
   `shouldContinueDrain`) with a guaranteed first-brick-per-frame — fast GPUs
   still fit their whole batch, slow ones self-limit to ~1 brick/frame;
-- `cameras/AdaptiveResolution.tsx` halves the DPR during camera motion ONLY
+- `platform/quality/QualityAdapter.tsx` halves the DPR during camera motion ONLY
   when the rolling frame time shows the machine can't hold ~45 fps (an M2 at
   Retina DPR 2 was GPU-bound at ~19 ms/frame just compositing 2D layers);
   restores on settle, machines that hold rate never regress;
@@ -928,7 +928,7 @@ zoom could not unlock finer levels on large volumes — and TILTING inflated the
 AABB up to ~√3× further, pushing `visibleBytesAtLevel` across `maxPlanBytes`
 and flipping `budgetMinLevel` a level coarser mid-gesture, which replaces the
 ENTIRE finest target set (abort/fetch/evict churn during the exact gesture
-that is already fragment-bound). Fix: `core/frustumClip.ts`
+that is already fragment-bound). Fix: `platform/visibility/frustumClip.ts`
 `frustumBoxIntersectionAabb` — the EXACT AABB of the frustum∩box intersection
 polytope (candidate-vertex construction), computed directly in voxel space via
 `projScreen × affine`, so both legacy inflations are gone; `scale` is now
@@ -962,7 +962,7 @@ own frames — a single extra realloc, not the old self-amplifying cascade);
 and the 250 ms crisp-DPR entry delay is skipped when the predicted rung is
 already < 1 (a predicted-heavy burst's first quarter-second IS the jank).
 
-**The quality GOVERNOR generalizes this** (`core/qualityGovernor.ts`): the
+**The quality GOVERNOR generalizes this** (`platform/quality/qualityGovernor.ts`): the
 one-shot motion-DPR regress still janked because the real jank window is
 STREAMING, not motion — after any gesture, bricks stream for seconds and every
 residency bump renders a "settled" full-quality frame (DPR 2 + full-pitch
@@ -975,7 +975,7 @@ raymarch) at 25–50 ms. The governor:
   so later sessions start right; DebugPanel has an Auto/High/Medium/Low
   override for testing;
 - drives every knob from one profile table: settled/active DPR
-  (`cameras/QualityAdapter.tsx`), 3D `uStepScale` settled/active
+  (`platform/quality/QualityAdapter.tsx`), 3D `uStepScale` settled/active
   (`BrickVolumeLayer`), upload time budget, per-layer in-flight fetches, and
   the residency-bump cadence (`brickResidency.ts`), where **active = camera
   moving OR bricks streaming** (the drain loop feeds the streaming edge).
@@ -1024,7 +1024,7 @@ fabriks layer attached `onPointerMove` to a `manager.group` holding a
 `BatchedMesh` of up to 2048 cells (no BVH in the tree), which meant every
 pointer move in EVERY mode, NAVIGATE included, walked every instance. The fix
 is to pass `undefined` rather than a no-op handler
-(`core/probe/probeGating.ts`), which removes the object from the set outright.
+(`platform/probe/probeGating.ts`), which removes the object from the set outright.
 
 Two asymmetries make this easy to reason about wrongly, and both are load-
 bearing:
@@ -1065,7 +1065,7 @@ initially rode on three's automatic WebGL2 fallback backend; that path is now
 deleted, because a silent downgrade rendered a subtly degraded scene while
 reporting success only to the console. Two mechanisms replace it:
 
-- `render/gpu/webgpuSupport.ts` — `assertWebGPUSupported()` probes
+- `platform/gpu/webgpuSupport.ts` — `assertWebGPUSupported()` probes
   `navigator.gpu.requestAdapter()` and is awaited in `SceneRoot`'s existing
   init gate, *before* `<Canvas>` mounts, so an unsupported machine gets a
   legible "This scene cannot be rendered: …" message. This is the user-facing
@@ -1082,17 +1082,17 @@ reporting success only to the console. Two mechanisms replace it:
 Consequences and contracts:
 
 - **TSL only — no raw GLSL `ShaderMaterial`s.** `WebGPURenderer` does not run
-  them. The brick shaders live in `layers/bricks/brickNodeMaterials.ts` (TSL →
+  them. The brick shaders live in `features/bricks/gpu/brickNodeMaterials.ts` (TSL →
   WGSL); the old GLSL reference strings are deleted, and the value semantics
-  the CPU must mirror moved to `core/octree/brickEncoding.ts`. NodeMaterials go
+  the CPU must mirror moved to `features/bricks/octree/brickEncoding.ts`. NodeMaterials go
   through the renderer's output transform, so the brick materials pin
   `toneMapped = false` for parity with the raw FragColor path. Uniform updates
   go through the returned NODE records (`bundle.nodes.uDesiredLevel.value = …`),
   not a `.uniforms` map.
-- **Backend internals are isolated in `render/gpu/sceneRenderer.ts`** (device,
+- **Backend internals are isolated in `platform/gpu/sceneRenderer.ts`** (device,
   texture handles, `maxTextureDimension3D`, GPU identity for the quality
   governor). Nothing else may touch `renderer.backend`.
-- **Uploads** (`render/bricks/texSubImage3d.ts`):
+- **Uploads** (`features/bricks/gpu/texSubImage3d.ts`):
   `device.queue.writeTexture` partial 3D writes — no alignment constraints, no
   unpack state (P3 is obsolete). Uninitialized texture → full `needsUpdate`
   re-spec from the CPU backing mirror.
@@ -1137,7 +1137,7 @@ No longer deferred:
   alongside the per-array zarr-metadata memo and the `useSharedArrayBuffer`
   forwarding fix in `getChunkWorker`;
 - **motion-time reduced-resolution rendering shipped** as the interaction DPR
-  ladder (`core/qualityGovernor.ts`, applied by `QualityAdapter`): a quantized
+  ladder (`platform/quality/qualityGovernor.ts`, applied by `QualityAdapter`): a quantized
   rung `[1, 0.75, 0.5] ×` the tier's active DPR, decided ONCE per activity
   burst by `predictBurstLadderScale` — the frame-time EMA normalized by the
   previous burst's rung² (fragment-bound: cheap-because-low-res frames must
@@ -1149,7 +1149,7 @@ No longer deferred:
   the settle restore brings the crisp image back. Kill switch:
   `orkestrator.adaptiveDpr` (read per frame; DebugPanel toggle + live dpr
   chip);
-- **standard-fidelity default** (`FidelityMode` in `core/qualityGovernor.ts`,
+- **standard-fidelity default** (`FidelityMode` in `platform/quality/qualityGovernor.ts`,
   key `orkestrator.fidelity`): the governor's SETTLED profiles are moderately
   capped by default — DPR ≤ 1.5, settled step scale ≥ 1.25, ray steps ≤ 384
   (`standardizeProfile`; TIER_LOW effectively unchanged) — trading a little
@@ -1163,7 +1163,7 @@ No longer deferred:
 - **scene-load feedforward quality** (`volumeLoadFactor` step-budget scaling,
   burst-rung flooring, one mid-burst rung correction — P22), the tricubic
   activity/tier gate (`resolveSmoothThreshold`), the exact frustum∩box
-  visible region (P21, `core/frustumClip.ts`), and the GLOBAL in-flight
+  visible region (P21, `platform/visibility/frustumClip.ts`), and the GLOBAL in-flight
   fetch cap (§2.8);
 - **adaptive depth** (`resolveMaxRaySteps`): the ray-step CEILING halves while
   the camera is moving or bricks stream (further divided by the load factor,
@@ -1206,7 +1206,7 @@ No longer deferred:
   atlas mirror is gone by default (probes read the decoded-chunk cache, the
   path GPU-repacked bricks always used; `orkestrator.atlasMirror` restores
   it) and uint16 intensity pools store half floats
-  (`orkestrator.r16Atlas`, `core/octree/halfFloat.ts`) — together ≈4× less
+  (`orkestrator.r16Atlas`, `features/bricks/octree/halfFloat.ts`) — together ≈4× less
   memory for uint16 data, and the null-data texture creation also absorbs
   the old `texStorage3D` deferred item (no more one-time zeroed full upload).
 
@@ -1238,7 +1238,7 @@ kill switch on the warmup: `getGeneralAccess` collapses in-flight callers and
 clears `inFlight` in a `finally`, so a failed warm cannot poison the scope
 build, which still awaits, still re-mints, and still surfaces the error.
 
-**Measuring it.** `managers/coldOpenTimeline.ts` — always on, ~13 stamps per
+**Measuring it.** `platform/perf/coldOpenTimeline.ts` — always on, ~13 stamps per
 scene open, `performance.mark`/`measure` so the phases also show in a Chrome
 trace, surfaced as `coldOpen` in the debug report. `perfMonitor` structurally
 cannot see this window: it only arms once the scene is already up.
@@ -1320,13 +1320,13 @@ BigVolumeViewer, ranked by expected impact. Each item is its own future plan;
 do them in this order unless a measurement says otherwise.
 
 **R1 + R2 — Volume compositor — DONE (2026-08-19).** One mechanism for both:
-`managers/VolumeCompositor.tsx` (mounted by `ThreeDScene`, 3D-only) takes
+`features/volume/VolumeCompositor.tsx` (mounted by `ThreeDScene`, 3D-only) takes
 over rendering with a priority-1 `useFrame` (R3F's render takeover) and per
 frame (a) re-renders the `VOLUME_PASS_OBJECT`-tagged raymarch meshes into a
 persistent reduced-resolution `RenderTarget` when — and only when — a volume
 input changed, then (b) renders the canvas frame with volumes hidden and a
 fullscreen composite quad shown. All decisions live in the pure, tested core
-`render/volumeCompositor.ts`.
+`platform/gpu/volumeCompositor.ts`.
 
 - *R2 (resolution decoupling):* target = `resolveVolumeScale` (FULL res
   settled — under the demand loop + cache a settled frame raymarches once,
@@ -1392,7 +1392,7 @@ fullscreen composite quad shown. All decisions live in the pure, tested core
 
 **R3 — R16 atlases + lazy backing mirror — DONE (2026-08-18).** uint16
 intensity pools store `raw/65535` half floats in `r16float` atlases
-(`core/octree/halfFloat.ts`; labels excluded via `geometry.exactValues`;
+(`features/bricks/octree/halfFloat.ts`; labels excluded via `geometry.exactValues`;
 GPU repack rejects them → CPU worker path), and the CPU backing mirror is
 gone by default — probes read the decoded-chunk cache via the `gpuStaleKeys`
 path all GPU-repacked bricks already used. ≈4× memory for uint16 data.
@@ -1406,7 +1406,7 @@ CPU: every landed brick range (uniform bricks as [v,v]) goes into a per-pool
 only by a pool flush); each landing writes any parent cell whose child set
 just completed into a third RG8 page-table sidecar (`aggregate` in
 `pageTableTexture.ts`) as the conservative union — pure helpers in
-`core/octree/occupancyAggregate.ts`, straddle-aware for non-dyadic pyramids
+`features/bricks/octree/occupancyAggregate.ts`, straddle-aware for non-dyadic pyramids
 (`parentCellsOf` is DEFINED by `childrenOf` membership, so completeness and
 aggregation can never disagree). All-zero = unknown = never hop; texels
 encode against Phase A's occupancy range and ride the same blank/re-encode

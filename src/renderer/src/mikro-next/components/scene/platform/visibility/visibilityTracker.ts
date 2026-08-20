@@ -10,7 +10,7 @@ import type { ViewerState } from "../stores/viewerStore";
 import type { ViewState } from "../stores/viewStore";
 
 /**
- * Store-level driver for the visibility computation (`core/visibility.ts`).
+ * Store-level driver for the visibility computation (`platform/visibility/visibility.ts`).
  * Subscribes to the camera matrix (viewStore), the registered trackables
  * (viewerStore) and the layer list (sceneStore), coalesces any burst of
  * changes into ONE recompute per animation frame, and writes results back to

@@ -30,7 +30,7 @@ export function measureDraw(
   }
 
   if (tool === "SPHERE" || tool === "CUBE") {
-    // Corner-pair convention (`core/primitiveDraw.ts`): the extent is 2r on
+    // Corner-pair convention (`features/annotations/primitiveDraw.ts`): the extent is 2r on
     // every axis, so half the x span IS the radius — the number the sizing
     // gesture is choosing.
     return { kind: "length", length: Math.abs(points[1].x - points[0].x) / 2 };
@@ -139,7 +139,7 @@ export type AnnotationMeasure =
  *  - ELLIPSE: its bounding box, plus π/4·w·h — the ellipse's area, not the
  *    box's.
  *  - SPHERE: the radius (half the x extent, the corner-pair convention of
- *    `core/primitiveDraw.ts`) and 4/3·π·r³.
+ *    `features/annotations/primitiveDraw.ts`) and 4/3·π·r³.
  *  - CUBE: the side (the full extent) and side³.
  *  - POLYGON: shoelace area of the xy footprint.
  *  - LINE / PATH: length, via `measureDraw` — length is already the feature.

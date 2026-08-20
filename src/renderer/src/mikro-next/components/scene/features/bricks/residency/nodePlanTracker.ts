@@ -55,7 +55,7 @@ const sameUnplannable = (
 };
 
 /**
- * Store-level driver for the octree node planner (`core/octree/nodePlanning`):
+ * Store-level driver for the octree node planner (`features/bricks/octree/nodePlanning`):
  * subscribe to the planning inputs, coalesce bursts into one recompute per
  * animation frame (debounced), and write plans back only when they changed
  * (per-layer identity preserved via `sameNodePlan`).

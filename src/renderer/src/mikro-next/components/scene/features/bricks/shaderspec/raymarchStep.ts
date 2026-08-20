@@ -1,7 +1,7 @@
 /**
  * CPU mirrors of the per-step decisions the raymarch fast path emits in
- * `render/bricks/brickNodeMaterials.ts` — keep the two in lockstep (same
- * pattern as `core/opacityCorrection.ts`). The shader cannot be unit-tested
+ * `features/bricks/gpu/brickNodeMaterials.ts` — keep the two in lockstep (same
+ * pattern as `features/bricks/shaderspec/opacityCorrection.ts`). The shader cannot be unit-tested
  * against a GPU; these pin the semantics the TSL emission encodes.
  */
 

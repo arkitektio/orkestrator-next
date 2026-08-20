@@ -1,6 +1,6 @@
 /**
  * Kill switches for the volume compositor (localStorage, default ON — same
- * pattern as `render/bricks/shaderFlags.ts`). The compositor is render-path
+ * pattern as `features/bricks/gpu/shaderFlags.ts`). The compositor is render-path
  * restructuring that cannot be GPU-verified in CI, so every piece ships
  * behind an instantly revertible flag:
  *

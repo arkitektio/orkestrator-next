@@ -3,7 +3,7 @@ import { corridorIndex, type CorridorBox } from "./corridorPlan";
 
 /**
  * What one corridor voxel costs to travel through — the SINGLE SOURCE of the
- * cost semantics. `render/bricks/skeletonKernel.ts` mirrors these formulas in
+ * cost semantics. `features/annotations/enhancers/shared/gpu/skeletonKernel.ts` mirrors these formulas in
  * WGSL and the parity self-test pins the two together, so a change here
  * without the twin change there is a test failure, not a silent drift.
  *

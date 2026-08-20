@@ -8,7 +8,7 @@ export type Rgb = readonly [number, number, number];
 
 /** Where on a colormap ramp a channel's representative color is taken — bright
  * but not the blown-out top of magma/inferno. The same point the layer swatch
- * dots use (`panels/layer/renderGraphSwatch.ts`), so the app tint and the
+ * dots use (`platform/layerui/renderGraphSwatch.ts`), so the app tint and the
  * sidebar dot agree. */
 const REPRESENTATIVE_T = 0.85;
 

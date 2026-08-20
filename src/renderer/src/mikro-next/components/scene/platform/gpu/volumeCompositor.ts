@@ -3,7 +3,7 @@ import type { QualityTier } from "../quality/qualityGovernor";
 /**
  * Pure core of the volume compositor (R2 reduced-resolution volume target +
  * R1 cached volume compositing) — every decision the impure shell
- * (`managers/VolumeCompositor.tsx`) makes per frame lives here so it can be
+ * (`features/volume/VolumeCompositor.tsx`) makes per frame lives here so it can be
  * vitest-covered; the shell only executes renders. See OCTREE_RENDERER.md §7.
  */
 

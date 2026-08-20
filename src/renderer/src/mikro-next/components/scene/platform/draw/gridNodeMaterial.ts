@@ -5,7 +5,7 @@ import * as TSLTyped from "three/tsl";
 // three's TSL TypeScript surface lags the runtime API this module needs
 // (swizzle method chaining, node-valued math). The node GRAPH is typed
 // dynamically; the PUBLIC surface (the uniform handles the React layer writes
-// to) is hand-typed below. Same convention as `layers/bricks/brickNodeMaterials.ts`.
+// to) is hand-typed below. Same convention as `features/bricks/gpu/brickNodeMaterials.ts`.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TSL = TSLTyped as any;
 const {

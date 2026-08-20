@@ -74,7 +74,7 @@ export const pickReferenceLayer = (
 /**
  * The world axis names for three's x/y/z. Taken from the reference layer's
  * render axes and validated against the world system's SPACE axes: composition
- * (`core/transformGraph.ts` `evalTransform`) already assumes a spatial axis
+ * (`@/mikro-next/lib/coords/transformGraph.ts` `evalTransform`) already assumes a spatial axis
  * keeps its name from the lens through to the world, and this is where that
  * assumption is checked rather than trusted. Null when it does not hold — the
  * pose then carries no spatial axes instead of guessing.
@@ -118,7 +118,7 @@ export const perspectiveScaleToDistance = (
  * World units per screen pixel for a perspective camera at `distance` FROM THE
  * TARGET.
  *
- * Deliberately distance-to-target, where `core/probeWorld.ts`
+ * Deliberately distance-to-target, where `platform/probe/probeWorld.ts`
  * `computeWorldUnitsPerPixel` uses distance-to-ORIGIN. The two agree only for
  * an origin-centred scene, and they answer different questions: the probe/
  * ScaleBar one describes what is under the cursor right now, while a stored

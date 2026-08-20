@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// (brandTarget reaches `render/colormaps`, which transitively touches `window`)
+// (brandTarget reaches `platform/gpu/colormaps`, which transitively touches `window`)
 import { describe, expect, it } from "vitest";
 import { ColorMap } from "@/mikro-next/api/graphql";
 import type { ChannelRenderNode } from "../../platform/model/renderGraph";

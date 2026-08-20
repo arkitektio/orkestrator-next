@@ -36,7 +36,7 @@ import {
  * LIVE renderer (`computeRepackSelfTest.ts` structure): builds a synthetic
  * one-level pool — a bright tube that SHIFTS at a brick seam, one EMPTY
  * uniform brick, one UNMAPPED brick — runs the GPU extraction
- * (`computeSkeleton`) and the CPU reference (`enhancers/shared`) over the same
+ * (`computeSkeleton`) and the CPU reference (`features/annotations/enhancers/shared`) over the same
  * corridor, and compares hole counts, distance fields (small float
  * tolerance: the two accumulate in f64 vs f32) and the backtracked
  * centerline's endpoints. The vitest suite pins the packing math; this pins

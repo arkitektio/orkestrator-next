@@ -58,7 +58,7 @@ export function buildAffineMatrix(layer: LayerState): THREE.Matrix4 {
  * direction-dependently — a 0.5/0.5/5 µm SPIM affine made the refinement
  * boundary a world ellipsoid 10:1 elongated along z regardless of view.
  * Identity affine → [1,1,1] → every consumer reduces to the legacy voxel
- * metric exactly. (A twin of `enhancers/shared/planning.ts voxelWorldSize`,
+ * metric exactly. (A twin of `features/annotations/enhancers/shared/planning.ts voxelWorldSize`,
  * housed here so core/ needs no enhancers import.)
  */
 export function voxelWorldSizeOf(affine: THREE.Matrix4): [number, number, number] {

@@ -1,7 +1,7 @@
 /**
  * Uniform cubic B-spline reconstruction math — the CPU mirror of the zoom
  * smoothing filter the raymarcher emits (`emitTricubicTap` in
- * `render/bricks/brickNodeMaterials.ts`); keep the two in lockstep.
+ * `features/bricks/gpu/brickNodeMaterials.ts`); keep the two in lockstep.
  *
  * The shader uses the classic two-tap decomposition (Sigg & Hadwiger): per
  * axis, the four B-spline weights collapse into TWO hardware-trilinear taps

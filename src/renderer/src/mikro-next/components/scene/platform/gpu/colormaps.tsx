@@ -406,7 +406,7 @@ const clampRgb = (color: number[]) =>
 
 /**
  * One stop of a custom positioned gradient — RGBA 0-255, the model's color
- * convention (`core/renderGraph.ts` `TransferStop` is structurally this).
+ * convention (`platform/model/renderGraph.ts` `TransferStop` is structurally this).
  */
 export type GradientStop = { position: number; color: readonly number[] };
 
@@ -444,7 +444,7 @@ export const sampleStopsRgb = (
 /**
  * One control point of the intensity transfer CURVE (the server's
  * `LookupStop`): raw intensity → normalized 0..1. Structural twin of
- * `core/renderGraph.ts` `TransferCurveStop`.
+ * `platform/model/renderGraph.ts` `TransferCurveStop`.
  */
 export type CurveStop = { position: number; value: number };
 

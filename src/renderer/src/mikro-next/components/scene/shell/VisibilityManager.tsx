@@ -12,8 +12,8 @@ import { startNodePlanTracking } from '../features/bricks/residency/nodePlanTrac
  * (ranges + camera + mode → per-layer brick plans).
  * Holds no reactive state — the store APIs are stable — so this component
  * renders once and never again; all reactivity lives in the trackers'
- * subscriptions and the pure math in `core/visibility.ts` /
- * `core/octree/nodePlanning.ts`.
+ * subscriptions and the pure math in `platform/visibility/visibility.ts` /
+ * `features/bricks/octree/nodePlanning.ts`.
  */
 export function VisibilityManager() {
   const viewStore = useViewStoreApi()

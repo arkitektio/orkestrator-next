@@ -12,7 +12,7 @@ export const openZarrArray = (store: ZarrStore): Promise<OpenedZarrArray> =>
 
 /**
  * Open every configured scene store into a zarr Array, keyed by store id.
- * Extracted from `store/viewerStore.ts` so the store just receives the opened
+ * Extracted from `platform/stores/viewerStore.ts` so the store just receives the opened
  * arrays.
  */
 export async function openSceneArrays(

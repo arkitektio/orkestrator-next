@@ -146,10 +146,10 @@ export interface ViewerState {
   debug: boolean;
   showScaleBar: boolean;
   showScaleGrid: boolean;
-  /** The red-X/green-Y origin crosshair (`layers/SceneAxis.tsx`). */
+  /** The red-X/green-Y origin crosshair (`shell/chrome/SceneAxis.tsx`). */
   showSceneAxis: boolean;
   /** The pyramid level under the viewport's center
-   * (`overlays/CenterLodReadout.tsx`). */
+   * (`features/bricks/CenterLodReadout.tsx`). */
   showLodReadout: boolean;
   worldUnitsPerPixel: number;
   getArrayForStoreId: (storeId: string) => OpenedZarrArray;
@@ -204,9 +204,9 @@ export interface ViewerState {
   probedCoordinate: ProbedCoordinate | null;
   /**
    * UI-cadence mirror of `probedCoordinate` — the only probe field React may
-   * subscribe to. Published by `managers/ProbeReadoutSettler.tsx` once the
+   * subscribe to. Published by `features/probe/ProbeReadoutSettler.tsx` once the
    * cursor rests, with retractions, clicks and target changes bypassing the
-   * wait (`core/probe/probeReadout.ts`).
+   * wait (`platform/probe/probeReadout.ts`).
    */
   probeReadout: ProbedCoordinate | null;
   probeThreshold: number;

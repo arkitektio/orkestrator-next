@@ -36,8 +36,8 @@ export const isLabelLayer = (
  *
  * Named for the invariant every downstream site actually depends on. The three
  * that gate on it are the ones where a label layer being absent means it never
- * loads at all: `sources/zarrSources.ts` (opening the arrays),
- * `store/sceneStore.ts` (normalizing into `layers`) and the `isImage` predicate
+ * loads at all: `platform/sources/zarrSources.ts` (opening the arrays),
+ * `platform/stores/sceneStore.ts` (normalizing into `layers`) and the `isImage` predicate
  * `reconcileSceneLayers` folds by.
  *
  * `isImageLayer` stays, and is still the right question wherever the answer

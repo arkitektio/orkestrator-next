@@ -4,7 +4,7 @@
  * The gesture feeds samples at pointermove cadence, so the model's whole job
  * is hygiene — keep the stroke small and evenly spread without losing its
  * shape. Everything here is pure; the capture session
- * (`enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`) owns the impure side.
+ * (`features/annotations/enhancers/paths/brushSkeleton/BrushStrokeSession.tsx`) owns the impure side.
  */
 
 export type Vec3 = readonly [number, number, number];

@@ -30,7 +30,7 @@ import { useViewerStoreApi } from "../../../../../platform/stores/viewerStore";
  * One edge of the vector enhancer: two probed waypoints in, the path the data
  * suggests between them out, in world coordinates.
  *
- * This is the impure shell around `enhancers/paths/vectorTrace/` — it decides WHICH layer, WHICH
+ * This is the impure shell around `features/annotations/enhancers/paths/vectorTrace/` — it decides WHICH layer, WHICH
  * channel and WHICH pyramid level to ask about, reads the voxels out of the
  * residency manager, and converts the answer back to world space. All of the
  * arithmetic lives in the pure modules.

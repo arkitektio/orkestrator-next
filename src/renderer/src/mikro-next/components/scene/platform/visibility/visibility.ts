@@ -11,7 +11,7 @@ import type { LayerState } from "../model/layerModel";
  * Pure per-layer visibility computation: frustum-test every trackable and,
  * for image layers, derive the visible voxel ranges + screen-pixels-per-voxel
  * scale. Extracted from the old `VisibilityManager` component so the math is
- * unit-testable and the driver (`managers/visibilityTracker.ts`) is a plain
+ * unit-testable and the driver (`platform/visibility/visibilityTracker.ts`) is a plain
  * store subscription instead of a React effect.
  */
 

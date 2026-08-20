@@ -11,7 +11,7 @@ import {
 /**
  * The invariant: our in-place writers must produce EXACTLY what three's own
  * `setPositions` / `computeLineDistances` produce. If three ever changes the
- * interleaved pair layout, the fast path in `interactions/PreviewLine.tsx`
+ * interleaved pair layout, the fast path in `platform/draw/PreviewLine.tsx`
  * would write garbage into a live buffer — so the first test below compares
  * against a real `LineGeometry` rather than against hand-written expectations.
  *

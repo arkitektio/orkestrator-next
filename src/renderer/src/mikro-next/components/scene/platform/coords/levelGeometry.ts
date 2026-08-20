@@ -4,7 +4,7 @@ import { MAX_BRICK_LEVELS } from "../../features/bricks/octree/brickEncoding";
 
 /**
  * Canonical per-layer pyramid geometry for the octree renderer. Everything in
- * `core/octree/` works in **spatial [x, y, z] order**, independent of the
+ * `features/bricks/octree/` works in **spatial [x, y, z] order**, independent of the
  * zarr array's dim order — the axis positions recorded here are the only
  * bridge back to zarr-space (selections, chunk coords).
  */

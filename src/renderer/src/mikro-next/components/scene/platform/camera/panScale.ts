@@ -19,8 +19,8 @@ import * as THREE from "three";
  * term cancels exactly and a drag is screen-space correct at the CONTENT
  * depth, whatever the orbit radius has collapsed to.
  *
- * Pure math here; `cameras/CameraController.tsx` (`PanScaleSync`) is the store
- * glue, same split as `core/orbitPivot.ts`.
+ * Pure math here; `platform/camera/CameraController.tsx` (`PanScaleSync`) is the store
+ * glue, same split as `platform/camera/orbitPivot.ts`.
  */
 
 /** Ray/AABB slab test returning [tEntry, tExit], or null when the ray misses. */

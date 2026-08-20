@@ -11,7 +11,7 @@ import { AttributePlanBlock } from "../../platform/layerui/AttributeRowsSection"
 /**
  * "What is under this ROI?" — attribute-plan rows for a selected annotation,
  * looked up at a sparse kind-aware set of representative points (see
- * `core/roiAttributeLookup.ts`) in the collection's own coordinate system.
+ * `features/annotations/roiAttributeLookup.ts`) in the collection's own coordinate system.
  * One `useAttributesAt` per point keeps the lookups bounded (≤5) and
  * abortable; the service caches per point, so re-selecting is free.
  */

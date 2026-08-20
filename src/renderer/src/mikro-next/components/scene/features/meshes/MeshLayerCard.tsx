@@ -45,6 +45,7 @@ import {
 } from "../../platform/layerui/entrySections";
 import { type ColumnOptionSource } from "../../platform/layerui/ColumnOptionPicker";
 import { colorByEntryToInput, filterByEntryToInput } from "../../platform/layerui/columnOptions";
+import { useMeshStore } from "./store/meshSlice";
 
 /**
  * A compact card for a `MeshLayer` in the Layers panel.
@@ -175,7 +176,7 @@ const MeshInstanceSection = memo(function MeshInstanceSection({
     s.meshSelection?.layerId === layerId ? s.meshSelection : null,
   );
   const setMeshSelection = useViewerStore((s) => s.setMeshSelection);
-  const manager = useViewerStore((s) => s.meshSystems[layerId]);
+  const manager = useMeshStore((s) => s.meshSystems[layerId]);
   const [idQuery, setIdQuery] = useState("");
 
   const selectById = () => {

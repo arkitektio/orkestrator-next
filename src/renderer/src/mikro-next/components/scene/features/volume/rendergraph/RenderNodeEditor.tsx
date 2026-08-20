@@ -51,7 +51,7 @@ import {
 import { LevelsEditor } from "../LevelsEditor";
 import { getLayerDtypeRange } from "../../../platform/layerui/contrast-utils";
 import { LayerState, useSceneStore } from "../../../platform/stores/sceneStore";
-import { useViewerStore } from "../../../platform/stores/viewerStore";
+
 import {
   BLEND_KIND,
   BlendRenderNode,
@@ -75,6 +75,7 @@ import {
 import { resolvePhasorAxis } from "../../../platform/model/dims";
 import { resolvePhasorScale } from "../../../platform/model/phasor";
 import { PhasorPlot } from "../PhasorPlot";
+import { useBrickStore } from "../../bricks/store/brickSlice";
 
 const colorToObj = (color: number[] | null) => ({
   r: Math.round(color?.[0] ?? 255),
@@ -342,8 +343,8 @@ const TransferHistogram = ({
   // `[0,1]`, so the sliders would operate on the wrong scale. Prefer the live
   // auto-contrast range the brick pool accumulates from decoded voxels; the
   // `poolsVersion` subscription re-renders this editor when it settles.
-  const brickSystem = useViewerStore((s) => s.brickSystem);
-  useViewerStore((s) => s.poolsVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
+  useBrickStore((s) => s.poolsVersion);
   const pool = brickSystem?.getLayerPool(layer.id) ?? null;
   const [dtypeMin, dtypeMax] =
     pool?.autoRange && pool.autoRangeInitialized

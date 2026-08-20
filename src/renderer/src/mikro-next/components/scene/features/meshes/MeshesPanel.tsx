@@ -16,6 +16,7 @@ import type { FabriksObjectEntry } from "./fabriks/fabriksCatalogs";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore, type MeshSelectionState } from "../../platform/stores/viewerStore";
 import { formatCount, hueStyle, objectLabel } from "../../platform/model/selectionFormat";
+import { useMeshStore } from "./store/meshSlice";
 
 /**
  * The meshes panel: every object of every mesh layer in the scene, grouped per
@@ -122,7 +123,7 @@ const SelectedMeshCard = ({
   onIsolate: () => void;
   onClear: () => void;
 }) => {
-  const manager = useViewerStore((s) => s.meshSystems[selection.layerId]);
+  const manager = useMeshStore((s) => s.meshSystems[selection.layerId]);
   const transformContext = useSceneStore((s) => s.transformContext);
   const navigateToBox = useNavigateToMeshBox();
 
@@ -207,7 +208,7 @@ const MeshLayerSection = ({
   layer: MeshLayerVariant;
   collection: MeshCollectionRef;
 }) => {
-  const manager = useViewerStore((s) => s.meshSystems[layer.id]);
+  const manager = useMeshStore((s) => s.meshSystems[layer.id]);
   const setMeshSelection = useViewerStore((s) => s.setMeshSelection);
   const meshSelection = useViewerStore((s) => s.meshSelection);
   const transformContext = useSceneStore((s) => s.transformContext);

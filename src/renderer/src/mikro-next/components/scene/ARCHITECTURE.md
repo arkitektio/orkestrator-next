@@ -79,7 +79,7 @@ Adding a layer type is: one folder under `features/`, two registry lines.
 
 ## Import rules
 
-1. `platform/**` imports nothing from `features/**` or `shell/**`.
+1. `platform/**` imports nothing from `features/**` or `shell/**`. No exceptions.
 2. `features/<a>/**` imports nothing from `features/<b>/**`, except:
    `volume -> bricks`, `labels -> bricks`, `probe -> bricks`,
    `annotations -> bricks`.
@@ -137,22 +137,13 @@ break:
 - **The scene is not multi-instance-safe.** `platform/perf/perfMonitor.ts` and
   `coldOpenTimeline.ts` are module-level singletons imported by 20+ files,
   despite the per-scene scoped stores. Known and deferred.
-- **`platform/stores/viewerStore.ts` is the scene's service registry**, and that
-  is the one documented exception to rule 1. It carries handles to the brick
-  residency manager and the per-layer fabriks managers so components can find
-  them, which makes it name three feature types.
+- **`platform/stores/viewerStore.ts` is composed from slices.** Six platform
+  slices live in `platform/stores/viewer/`; the bricks and meshes features own
+  theirs and `SceneProvider` registers them. It is one store and one `set` —
+  slices compose, they do not split, so every write stays as atomic as it was.
+  Read a feature's members through its own hook (`useBrickStore`,
+  `useMeshStore`), not `useViewerStore`: the hook name is what tells the next
+  reader which module owns the field.
 
-  The store no longer *constructs* anything — `SceneProvider` opens the zarr
-  arrays and hands them in — so there is no service-locator construction left.
-  What remains is handle-holding, and the three imports are `import type`,
-  erased at runtime: there is no runtime coupling to break. Dissolving them
-  would mean splitting ~12 interleaved fields (`nodePlans`, `poolsVersion`,
-  `residencyVersion`, `volumeInputs`, `renderBudget`, `unplannableLayers`,
-  `meshSystems`, …) across 33 files in the P17-sensitive render path — and
-  `layerViewRanges` and `viewSnapshot` are published in ONE atomic store write
-  precisely to stop an intermittent mid-orbit bug, so that path is not somewhere
-  to churn for erased type references.
-
-  The exception is deliberately narrow — `platform/stores` only, `import type`
-  only — and `scripts/scene-graph.mjs` prints these three separately rather than
-  hiding them, so it cannot quietly become the norm.
+  `shell/viewerStoreComposition.test.ts` pins the composed key set, because an
+  unregistered slice is the one failure a type-checker cannot see.

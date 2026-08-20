@@ -33,7 +33,7 @@ import {
 } from "../../annotations/roiDrawingStore";
 import { useBrushSkeletonStoreApi } from "../../annotations/enhancers/brushSkeletonStore";
 import { useSceneStore, useSceneStoreApi } from "../../../platform/stores/sceneStore";
-import { useViewerStore, useViewerStoreApi } from "../../../platform/stores/viewerStore";
+import { useViewerStore } from "../../../platform/stores/viewerStore";
 import {
   createVolumeNodeMaterial,
   updateChannelNodes,
@@ -52,6 +52,7 @@ import {
   isVolumeMergeEnabled,
   planVolumeMergeGroups,
 } from "../gpu/volumeMergeGroups";
+import { useBrickStore, useBrickStoreApi } from "../store/brickSlice";
 
 /**
  * Brick-pool replacement for the monolithic `VolumeLayer`/`VolumeTextureMesh`
@@ -80,7 +81,6 @@ const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
       return 0; // MIP
   }
 };
-
 
 /**
  * Scratch for `probeFromRay`, shared across layer instances.
@@ -120,7 +120,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   const groupRef = useRef<THREE.Group>(null!);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const invalidate = useThree((state) => state.invalidate);
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
   const brushApi = useBrushSkeletonStoreApi();
   const { createPointAnnotation } = useCreateSceneAnnotation();
@@ -134,16 +134,16 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // means re-rendering only when those actually change (zoom-level crossings).
   // Anything needing the full plan (the probe closure) reads it via
   // viewerStoreApi.getState() at call time.
-  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
-  const planMode = useViewerStore((s) => s.nodePlans[layerId]?.mode);
+  const planTargetLevel = useBrickStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planMode = useBrickStore((s) => s.nodePlans[layerId]?.mode);
   // Pool appears/rebuilds/disposes → re-render. NOT residencyVersion: that
   // bumps per upload batch while streaming and would re-render this component
   // continuously during a pan for nothing (texture updates are imperative).
   // The VALUE feeds the decode-uniform effect below: range moves (auto-range,
   // occupancy promotions) bump poolsVersion and the shader's decode uniforms
   // must follow the pool's ranges.
-  const poolsVersion = useViewerStore((s) => s.poolsVersion);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
+  const poolsVersion = useBrickStore((s) => s.poolsVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
 
   // Scalar selectors ONLY: cameraPose/viewportSize are new objects on every
   // camera write (~16/s during an orbit) and would re-render all volume
@@ -258,7 +258,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // above, before the layers-key subscription that depends on them.)
   // Scalar selector: a joined string only changes identity when a member's
   // target level actually moves, so this does not re-render per replan.
-  const memberLevelsKey = useViewerStore((s) =>
+  const memberLevelsKey = useBrickStore((s) =>
     memberIds.map((id) => s.nodePlans[id]?.targetLevel ?? -1).join(","),
   );
 

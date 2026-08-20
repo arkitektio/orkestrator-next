@@ -59,7 +59,6 @@ export const useBrickMaterialBundle = <
   return bundle;
 };
 
-
 /**
  * The two traversal uniforms a 2D brick PLANE pushes, for either material.
  *

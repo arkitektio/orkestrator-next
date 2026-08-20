@@ -64,23 +64,27 @@ import {
 } from "../../platform/gpu/volumeTargetFlags";
 import { usePerfRecording } from "../../platform/perf/PerfFrameProbe";
 import { useModeStore } from "../../platform/stores/modeStore";
-import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
+import { useViewerStore } from "../../platform/stores/viewerStore";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
 import { runGpuSkeletonSelfTest } from "../annotations/enhancers/shared/gpu/computeSkeletonSelfTest";
+import { useBrickStore, useBrickStoreApi } from "../bricks/store/brickSlice";
+import { useMeshStore } from "../meshes/store/meshSlice";
+import { useMeshStoreApi } from "../meshes/store/meshSlice";
 
 export const DebugPanel = () => {
   const isDebug = useViewerStore((s) => s.debug);
   const renderBudget = useViewerStore((s) => s.renderBudget);
-  const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
-  const lodBias = useViewerStore((s) => s.lodBias);
-  const setLodBias = useViewerStore((s) => s.setLodBias);
-  const nodePlans = useViewerStore((s) => s.nodePlans);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
-  useViewerStore((s) => s.residencyVersion); // refresh residency stats
-  const meshSystems = useViewerStore((s) => s.meshSystems);
-  useViewerStore((s) => s.meshVersion); // refresh fabriks streaming stats
+  const unplannableLayers = useBrickStore((s) => s.unplannableLayers);
+  const lodBias = useBrickStore((s) => s.lodBias);
+  const setLodBias = useBrickStore((s) => s.setLodBias);
+  const nodePlans = useBrickStore((s) => s.nodePlans);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
+  useBrickStore((s) => s.residencyVersion); // refresh residency stats
+  const meshSystems = useMeshStore((s) => s.meshSystems);
+  useMeshStore((s) => s.meshVersion); // refresh fabriks streaming stats
   const displayMode = useModeStore((s) => s.displayMode);
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
+  const meshApi = useMeshStoreApi();
   const viewStoreApi = useViewStoreApi();
   const [isControlsOpen, setIsControlsOpen] = useState(true);
   const [reportCopied, setReportCopied] = useState(false);
@@ -335,7 +339,7 @@ export const DebugPanel = () => {
       ),
       brickSystem: viewerState.brickSystem?.buildDebugReport() ?? null,
       fabriks: Object.fromEntries(
-        Object.entries(viewerState.meshSystems).map(([layerId, manager]) => [
+        Object.entries(meshApi.getState().meshSystems).map(([layerId, manager]) => [
           layerId,
           manager.buildDebugReport(),
         ]),

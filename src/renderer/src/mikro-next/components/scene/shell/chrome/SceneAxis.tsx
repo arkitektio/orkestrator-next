@@ -15,10 +15,8 @@ export const SceneAxis = () => {
 
   if (!showSceneAxis) return null;
 
-
   const stageRangeX = 400;
   const stageRangeY = 400;
-
 
   return (
     <group userData={{ [EXCLUDE_FROM_CAPTURE]: true }}>

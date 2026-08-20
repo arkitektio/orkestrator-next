@@ -195,7 +195,6 @@ describe("reconcileSceneLayers", () => {
   });
 });
 
-
 /**
  * Label masks share the brick path, so they normalize into `layers` alongside
  * images and must keep their session state across a fold exactly as an image

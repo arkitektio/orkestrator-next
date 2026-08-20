@@ -31,23 +31,27 @@ Transient. Delete when Phase 5 lands. `ARCHITECTURE.md` is the permanent map.
 
 ## Where it stands
 
-18 sideways edges, 0 of every other kind, 3 documented exceptions.
+22 sideways edges, 0 of every other kind, 0 exceptions.
 `pnpm typecheck` 0 · 164 test files / 2010 tests · `pnpm build` clean.
 
-## Scope decision: the god store was not split
+## The god store was sliced
 
-The plan called for splitting `viewerStore` by ownership. On inspection the
-three remaining `platform -> features` edges are all `import type` — **erased at
-runtime**, so there is no runtime coupling to break — while dissolving them
-means moving ~12 interleaved fields across 33 files in the P17-sensitive render
-path, and adding two more always-mounted-null contexts to a provider already 10
-deep.
+An earlier pass argued against splitting `viewerStore` on the grounds that
+`layerViewRanges` and `viewSnapshot` are published in one atomic `set`. That
+reasoning was about splitting into *separate stores*; **slices are not that**.
+A sliced store is one store, one `set`, one context — atomicity and provider
+nesting are untouched — so the objection did not apply.
 
-`layerViewRanges` and `viewSnapshot` are published in ONE atomic store write
-specifically to fix an intermittent mid-orbit bug (~1 in 4 replans paired a
-fresh camera with stale ranges), and no test covers it. That is not a path to
-churn for three erased type references. Documented as the single narrow
-exception instead; `scene-graph.mjs` and the test both keep it visible.
+`ViewerState` was 79 members in one interface. It is now an intersection of
+eight slice interfaces: six in `platform/stores/viewer/`, plus `BrickSlice` and
+`MeshSlice` owned by the features that name their types. `SceneProvider`
+composes them, which is what let the three `platform -> features` imports go and
+rule 1 become unconditional.
+
+Placement followed readership, not names: `volumeInputs` stays platform (bricks,
+labels and volume all read it), `renderBudget` stays platform (only shell), and
+`meshSelection` sits in the probe slice because the picked mesh instance is one
+scene-wide selection of the same kind as the probed point.
 
 ## Phase 4 — what is left
 

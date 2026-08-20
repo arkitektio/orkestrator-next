@@ -8,6 +8,7 @@ import type { ModeState } from "../../../platform/stores/modeStore";
 import type { SceneState } from "../../../platform/stores/sceneStore";
 import type { ViewerState, LayerViewRange } from "../../../platform/stores/viewerStore";
 import type { ViewState } from "../../../platform/stores/viewStore";
+import type { BrickSlice } from "../store/brickSlice";
 
 const LAYER_ID = "layer-1";
 
@@ -69,7 +70,7 @@ const makeStores = (layers: LayerState[] = [layer]) => {
     }) as ViewerSubset["getArrayForStoreId"],
     setNodePlans: (plans: Record<string, LayerNodePlan>) => set({ nodePlans: plans }),
     setUnplannableLayers: (unplannable) => set({ unplannableLayers: unplannable }),
-  })) as unknown as StoreApi<ViewerState>;
+  })) as unknown as StoreApi<ViewerState & BrickSlice>;
 
   const sceneStore = createStore<Pick<SceneState, "layers">>(() => ({
     layers,

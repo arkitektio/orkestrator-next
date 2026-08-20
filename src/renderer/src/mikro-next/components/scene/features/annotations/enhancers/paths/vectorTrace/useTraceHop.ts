@@ -24,7 +24,8 @@ import {
 } from "../../shared/traceLayer";
 import { useRoiDrawingStoreApi } from "../../../roiDrawingStore";
 import { useSceneStoreApi } from "../../../../../platform/stores/sceneStore";
-import { useViewerStoreApi } from "../../../../../platform/stores/viewerStore";
+
+import { useBrickStoreApi } from "../../../../bricks/store/brickSlice";
 
 /**
  * One edge of the vector enhancer: two probed waypoints in, the path the data
@@ -60,7 +61,7 @@ const SIMPLIFY_TOLERANCE_STEPS = 0.5;
 
 export const useTraceHop = () => {
   const sceneStoreApi = useSceneStoreApi();
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
   const roiDrawingApi = useRoiDrawingStoreApi();
 
   return useCallback(
@@ -158,7 +159,7 @@ export const useTraceHop = () => {
  */
 export const useTraceWaypoints = () => {
   const sceneStoreApi = useSceneStoreApi();
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
 
   const fromProbe = useCallback((): TraceWaypoint | null => {
     const probe = viewerStoreApi.getState().probedCoordinate;

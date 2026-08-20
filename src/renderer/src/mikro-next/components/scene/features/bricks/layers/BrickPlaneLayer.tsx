@@ -13,6 +13,7 @@ import {
   useBrickMaterialBundle,
   usePlaneTraversalUniforms,
 } from "./useBrickMaterialBundle";
+import { useBrickStore } from "../store/brickSlice";
 
 /**
  * Brick-pool replacement for `PlaneLayer` + per-chunk `ChunkPlane` meshes:
@@ -33,15 +34,15 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   // SCALAR plan subscriptions only (P9c/P17, see BrickVolumeLayer): the plan
   // object churns identity per replan; this component consumes only these.
-  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
-  const planSlabZ = useViewerStore((s) => s.nodePlans[layerId]?.slabZ);
-  const planHasNodes = useViewerStore(
+  const planTargetLevel = useBrickStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planSlabZ = useBrickStore((s) => s.nodePlans[layerId]?.slabZ);
+  const planHasNodes = useBrickStore(
     (s) => (s.nodePlans[layerId]?.nodes.length ?? 0) > 0,
   );
   // Re-render when the pool handle appears/rebuilds/disposes — pool lifecycle
   // only (see BrickVolumeLayer), never the streaming residency counter.
-  useViewerStore((s) => s.poolsVersion);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
+  useBrickStore((s) => s.poolsVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
   const isDebug = useViewerStore((s) => s.debug);
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
@@ -106,7 +107,6 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       b.nodes.cursorParams.value?.dispose();
     },
   );
-
 
   // Push dynamic values straight to the uniform nodes (no material rebuild).
   useEffect(() => {

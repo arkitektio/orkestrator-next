@@ -732,8 +732,6 @@ const getContinuousColorMapTexture = (
   return texture;
 };
 
-
-
 /**
  * Build a colormap atlas: a 256 x N RGBA LUT where row `c` is the LUT for
  * channel `c` (its colormap tinted by its base color). A multi-channel shader

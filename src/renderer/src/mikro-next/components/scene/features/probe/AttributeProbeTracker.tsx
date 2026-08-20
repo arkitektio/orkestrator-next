@@ -16,17 +16,15 @@ import {
   resolveSampleIndex,
   type HeldValue,
 } from "@/mikro-next/lib/attributes/planExec";
-import {
-  sceneAttributeKey,
-  useViewerStoreApi,
-  type SceneAttributeKey,
-} from "../../platform/stores/viewerStore";
+import { sceneAttributeKey, type SceneAttributeKey } from "../../platform/stores/viewerStore";
 import { useSceneStoreApi } from "../../platform/stores/sceneStore";
 import type { ProbeResult } from "../../platform/probe/probeTypes";
 import type { LayerState } from "../../platform/model/layerModel";
 import { buildSliceMap, resolveFixedDimIndex } from "../../platform/coords/selection";
 import { collectionSpatialAxes } from "../../platform/model/collectionPlacement";
 import { createResidentSampler } from "../bricks/residency/residentSampling";
+import { useBrickStoreApi } from "../bricks/store/brickSlice";
+import { useMeshStoreApi } from "../meshes/store/meshSlice";
 
 /**
  * Headless "what is under this pixel?" executor: whenever the active probe
@@ -46,7 +44,8 @@ import { createResidentSampler } from "../bricks/residency/residentSampling";
  * stays on the hosts mounting <Scene>.
  */
 export function AttributeProbeTracker() {
-  const viewerStore = useViewerStoreApi();
+  const viewerStore = useBrickStoreApi();
+  const meshApi = useMeshStoreApi();
   const sceneStore = useSceneStoreApi();
   const client = useMikro();
   const datalayer = useDatalayerEndpoint();
@@ -171,7 +170,7 @@ export function AttributeProbeTracker() {
       if (meshPlans.length === 0) return;
       const meshStoreIds = new Set(meshPlans.map((candidate) => candidate.sample.store.id));
 
-      const systems = viewerStore.getState().meshSystems;
+      const systems = meshApi.getState().meshSystems;
       for (const [layerId, manager] of Object.entries(systems)) {
         const mesh = meshLayerById(layerId);
         if (!mesh?.collection || !meshStoreIds.has(mesh.collection.store.id)) continue;

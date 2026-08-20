@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { createViewerStore } from "./viewerStore";
+import { createBrickSlice } from "../features/bricks/store/brickSlice";
+import { createMeshSlice } from "../features/meshes/store/meshSlice";
+import { createViewerStore } from "../platform/stores/viewerStore";
+
+/** Exactly what SceneProvider composes — that is what makes this a real check. */
+const build = () =>
+  createViewerStore(new Map(), [createBrickSlice, createMeshSlice]);
 
 /**
- * The viewer store's shape, pinned.
+ * The composed viewer store's shape, pinned.
+ *
+ * Lives in `shell/` because the shell is what composes the store: platform
+ * contributes six slices, and the bricks and meshes features contribute their
+ * own. Asserting the shape anywhere else would assert an incomplete store.
  *
  * This exists for the slice carve: a single 79-member object literal is being
  * replaced by a composition of eight slice functions, several of which live in
@@ -39,12 +49,12 @@ const EXPECTED_KEYS = [
 
 describe("viewerStore shape", () => {
   it("exposes exactly the expected members", () => {
-    const keys = Object.keys(createViewerStore(new Map()).getState()).sort();
+    const keys = Object.keys(build().getState()).sort();
     expect(keys).toEqual([...EXPECTED_KEYS].sort());
   });
 
   it("keeps every action callable and every value field defined", () => {
-    const state = createViewerStore(new Map()).getState() as Record<string, unknown>;
+    const state = build().getState() as Record<string, unknown>;
     // Split by convention rather than listing both sets twice: an action is a
     // function, and nothing here is legitimately `undefined` at rest — a slice
     // that failed to register would show up as exactly that.

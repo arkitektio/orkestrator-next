@@ -45,6 +45,8 @@ import {
 } from "../platform/stores/selectionStore";
 import { ViewStoreContext, createViewStore } from "../platform/stores/viewStore";
 import { ViewerStoreContext, createViewerStore } from "../platform/stores/viewerStore";
+import { createBrickSlice } from "../features/bricks/store/brickSlice";
+import { createMeshSlice } from "../features/meshes/store/meshSlice";
 import { SceneBrandTheme } from "./theme/SceneBrandTheme";
 import { coldOpenTimeline } from "../platform/perf/coldOpenTimeline";
 import {
@@ -205,7 +207,13 @@ export const SceneProvider = (props: {
             displayMode: resolvePreferredDisplayMode(scene.preferredView, layers),
           }),
           viewStore: createViewStore(),
-          viewerStore: createViewerStore(arraysByStoreId),
+          // Feature-owned slices are composed HERE: they name brick and mesh
+          // types, and platform/ may not import a feature. Same store, same
+          // set — this is composition, not a split.
+          viewerStore: createViewerStore(arraysByStoreId, [
+            createBrickSlice,
+            createMeshSlice,
+          ]),
           selectionStore: createSelectionStore(),
           sceneStore,
           animationStore: createAnimationStore({

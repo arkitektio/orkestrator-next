@@ -22,6 +22,7 @@ import { useSceneStore, useSceneStoreApi, type LayerState } from "../../../platf
 import { useViewerStore, useViewerStoreApi } from "../../../platform/stores/viewerStore";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import type { LayerBrickPool } from "../residency/brickResidency";
+import { useBrickStore } from "../store/brickSlice";
 
 /**
  * Everything a brick-pool PLANE needs to answer the probe, extracted so the
@@ -83,8 +84,8 @@ export const useBrickPlaneProbe = ({
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
   const currentZ = useViewerStore((s) => s.currentZ);
-  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
+  const planTargetLevel = useBrickStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
   const viewerStoreApi = useViewerStoreApi();
   const sceneStoreApi = useSceneStoreApi();
 

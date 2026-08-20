@@ -11,13 +11,14 @@ import {
   labelDataSignature,
 } from "./labelUniforms";
 import { buildAffineMatrix } from "../../platform/coords/worldTransform";
-import { useViewerStore } from "../../platform/stores/viewerStore";
+
 import { perfMonitor } from "../../platform/perf/perfMonitor";
 import { slabBaseZOf, useBrickLayer, useBrickPlaneProbe } from "../bricks/layers/useBrickPlaneProbe";
 import {
   useBrickMaterialBundle,
   usePlaneTraversalUniforms,
 } from "../bricks/layers/useBrickMaterialBundle";
+import { useBrickStore } from "../bricks/store/brickSlice";
 
 /**
  * A label mask drawn as ONE full-layer quad, the same shape as `BrickPlaneLayer`
@@ -42,14 +43,14 @@ export const BrickLabelPlaneLayer = ({ layerId }: { layerId: string }) => {
 
   // SCALAR plan subscriptions only (P9c/P17): the plan object churns identity
   // per replan; this component consumes only these.
-  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
-  const planSlabZ = useViewerStore((s) => s.nodePlans[layerId]?.slabZ);
-  const planHasNodes = useViewerStore(
+  const planTargetLevel = useBrickStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planSlabZ = useBrickStore((s) => s.nodePlans[layerId]?.slabZ);
+  const planHasNodes = useBrickStore(
     (s) => (s.nodePlans[layerId]?.nodes.length ?? 0) > 0,
   );
   // Re-render on pool lifecycle only, never the streaming residency counter.
-  useViewerStore((s) => s.poolsVersion);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
+  useBrickStore((s) => s.poolsVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
 
   const layer = useBrickLayer(layerId);
 
@@ -75,7 +76,6 @@ export const BrickLabelPlaneLayer = ({ layerId }: { layerId: string }) => {
     pool,
     (p) => createLabelPlaneNodeMaterial(p, p, labelData),
   );
-
 
   useEffect(() => {
     if (!bundle || planTargetLevel === undefined) return;

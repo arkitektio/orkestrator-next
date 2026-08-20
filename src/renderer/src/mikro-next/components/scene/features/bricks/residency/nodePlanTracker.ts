@@ -32,7 +32,8 @@ import {
 import { buildAffineMatrix, voxelWorldSizeOf } from "../../../platform/coords/worldTransform";
 import type { ModeState } from "../../../platform/stores/modeStore";
 import type { SceneState } from "../../../platform/stores/sceneStore";
-import type { UnplannableLayerInfo, ViewerState } from "../../../platform/stores/viewerStore";
+import type { ViewerState } from "../../../platform/stores/viewerStore";
+import type { BrickSlice, UnplannableLayerInfo } from "../store/brickSlice";
 import type { ViewState } from "../../../platform/stores/viewStore";
 
 /** Value equality for the unplannable-layers map (skip no-op store writes). */
@@ -66,7 +67,7 @@ const sameUnplannable = (
  */
 
 type NodePlanStores = {
-  viewerStore: StoreApi<ViewerState>;
+  viewerStore: StoreApi<ViewerState & BrickSlice>;
   sceneStore: StoreApi<SceneState>;
   viewStore: StoreApi<ViewState>;
   modeStore: StoreApi<ModeState>;

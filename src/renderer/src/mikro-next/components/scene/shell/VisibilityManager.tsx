@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { useModeStoreApi } from '../platform/stores/modeStore'
 import { useSceneStoreApi } from '../platform/stores/sceneStore'
-import { useViewerStoreApi } from '../platform/stores/viewerStore'
 import { useViewStoreApi } from '../platform/stores/viewStore'
 import { startVisibilityTracking } from '../platform/visibility/visibilityTracker'
 import { startNodePlanTracking } from '../features/bricks/residency/nodePlanTracker'
+import { useBrickStoreApi } from "../features/bricks/store/brickSlice";
 
 /**
  * Mount point for the store-level scene managers: the visibility tracker
@@ -17,7 +17,7 @@ import { startNodePlanTracking } from '../features/bricks/residency/nodePlanTrac
  */
 export function VisibilityManager() {
   const viewStore = useViewStoreApi()
-  const viewerStore = useViewerStoreApi()
+  const viewerStore = useBrickStoreApi()
   const sceneStore = useSceneStoreApi()
   const modeStore = useModeStoreApi()
 

@@ -6,7 +6,8 @@ import { buildAffineMatrix } from "../../platform/coords/worldTransform";
 import { layerDisplayLabel } from "../../platform/layerui/layerIdentity";
 import { useSceneStoreApi } from "../../platform/stores/sceneStore";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
-import { useViewerStore, useViewerStoreApi } from "../../platform/stores/viewerStore";
+import { useViewerStore } from "../../platform/stores/viewerStore";
+import { useBrickStoreApi } from "./store/brickSlice";
 
 /**
  * Which pyramid level the middle of the screen is actually showing.
@@ -62,7 +63,7 @@ const sameLod = (a: CenterLod | null, b: CenterLod | null): boolean =>
 
 export const CenterLodReadout = () => {
   const show = useViewerStore((s) => s.showLodReadout);
-  const viewerApi = useViewerStoreApi();
+  const viewerApi = useBrickStoreApi();
   const sceneApi = useSceneStoreApi();
   const viewApi = useViewStoreApi();
   const [lod, setLod] = useState<CenterLod | null>(null);

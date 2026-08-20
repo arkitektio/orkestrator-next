@@ -23,7 +23,6 @@ export interface CanvasContext {
   invalidate: () => void;
 }
 
-
 export interface TrackableObject {
   kind: "layer" | "gizmo" | "other";
   id: string;
@@ -51,9 +50,6 @@ export type ViewSnapshot = {
   viewportSize: { width: number; height: number };
   cameraPose: CameraPose | null;
 };
-import type { LayerNodePlan } from "../../features/bricks/octree/nodePlanning";
-import type { BrickResidencyManager } from "../../features/bricks/residency/brickResidency";
-import type { FabriksCollectionManager } from "../../features/meshes/fabriks/fabriksManager";
 
 import type { ProbeFetchKey, ProbeResult } from "../probe/probeTypes";
 import type { AttributeFetchKey } from "@/mikro-next/lib/attributes/attributeTypes";
@@ -113,16 +109,6 @@ export interface RenderBudgetInfo {
   culledLayerIds: string[];
 }
 
-/** Why a layer cannot be planned/rendered in the current display mode: its
- * coarsest pyramid level's pinned atlas floor exceeds the GPU budget (a layer
- * without a multiscale pyramid — see OCTREE_RENDERER.md P18). */
-export interface UnplannableLayerInfo {
-  mode: "2D" | "3D";
-  floorBytes: number;
-  capBytes: number;
-}
-
-
 /** Per-scene viewer state: camera-derived facts, trackables, probes and the
  * declarative chunk plans the scene managers write. */
 export interface ViewerState
@@ -132,44 +118,10 @@ export interface ViewerState
     ArraySlice,
     ProbeSlice,
     BudgetSlice {
-  /* Brick- and mesh-owned members, still declared here until they move into
-   * the features that own them (that is what removes the last
-   * `platform -> features` type imports). */
-  /** Declarative per-layer octree node plans, written by the node-plan tracker. */
-  nodePlans: Record<string, LayerNodePlan>;
-  setNodePlans: (plans: Record<string, LayerNodePlan>) => void;
-  /** Bumped by the brick residency manager whenever bricks become resident.
-   * STREAMING-progress cadence — only debug consumers (DebugPanel,
-   * BrickResidencyOverlay) may subscribe; layer components must use
-   * `poolsVersion` instead (P17). Deliberately NOT a node-plan replan trigger. */
-  residencyVersion: number;
-  bumpResidencyVersion: () => void;
-  /** Bumped only when a layer's brick POOL is created, rebuilt or disposed —
-   * the rare lifecycle event layer components actually need to re-render on
-   * (their memos key on pool identity). */
-  poolsVersion: number;
-  bumpPoolsVersion: () => void;
-  /** Handle to the brick residency manager (owned by BrickSystemProvider). */
-  brickSystem: BrickResidencyManager | null;
-  registerBrickSystem: (manager: BrickResidencyManager | null) => void;
-  /** Layers refused by the pool-viability guard for the CURRENT display mode
-   * (empty when all layers are plannable). Written by nodePlanTracker /
-   * brickResidency; read by the layer panel badge and DebugPanel. */
-  unplannableLayers: Record<string, UnplannableLayerInfo>;
-  setUnplannableLayers: (layers: Record<string, UnplannableLayerInfo>) => void;
-
-  lodBias: number;
-  setLodBias: (bias: number) => void;
-  /** Per-MeshLayer fabriks managers (owned by FabriksCollectionLayer), for
-   * debug consumers — the mesh twin of `brickSystem`. */
-  meshSystems: Record<string, FabriksCollectionManager>;
-  registerMeshSystem: (layerId: string, manager: FabriksCollectionManager | null) => void;
-  /** Bumped (throttled by the layer) as mesh cells plan/stream. STREAMING
-   * cadence — only debug consumers may subscribe (P17), like `residencyVersion`. */
-  meshVersion: number;
-  bumpMeshVersion: () => void;
+  /* Every member now belongs to a slice. Feature-owned slices (bricks,
+   * meshes) are registered by SceneProvider and reached through their own
+   * hooks — see `makeViewerSliceHooks`. */
 }
-
 
 function createViewerStoreInternal(
   arraysByStoreId: Map<string, OpenedZarrArray>,
@@ -182,28 +134,6 @@ function createViewerStoreInternal(
     ...createArraySlice(arraysByStoreId),
     ...createProbeSlice(set),
     ...createBudgetSlice(set),
-    nodePlans: {},
-    setNodePlans: (plans) => set({ nodePlans: plans }),
-    residencyVersion: 0,
-    bumpResidencyVersion: () => set((state) => ({ residencyVersion: state.residencyVersion + 1 })),
-    poolsVersion: 0,
-    bumpPoolsVersion: () => set((state) => ({ poolsVersion: state.poolsVersion + 1 })),
-    brickSystem: null,
-    registerBrickSystem: (manager) => set({ brickSystem: manager }),
-    unplannableLayers: {},
-    setUnplannableLayers: (layers) => set({ unplannableLayers: layers }),
-    lodBias: 1,
-    setLodBias: (bias) => set({ lodBias: bias }),
-    meshSystems: {},
-    registerMeshSystem: (layerId, manager) =>
-      set((state) => {
-        const meshSystems = { ...state.meshSystems };
-        if (manager) meshSystems[layerId] = manager;
-        else delete meshSystems[layerId];
-        return { meshSystems };
-      }),
-    meshVersion: 0,
-    bumpMeshVersion: () => set((state) => ({ meshVersion: state.meshVersion + 1 })),
     // Feature-owned slices, supplied by SceneProvider. `platform/` cannot
     // import them, so composition happens at the shell.
     ...Object.assign({}, ...extraSlices.map((slice) => slice(set as never, get as never))),
@@ -236,13 +166,24 @@ export function createViewerStore(
  * buy nothing but noise.
  */
 export type ViewerSliceOf<S> = (
-  set: (partial: Partial<ViewerState & S>) => void,
+  set: (
+    partial:
+      | Partial<ViewerState & S>
+      | ((state: ViewerState & S) => Partial<ViewerState & S>),
+  ) => void,
   get: () => ViewerState & S,
 ) => S;
 
-/** Slices erase to this at the composition point so one array can hold a
- * heterogeneous set of them. */
-export type AnyViewerSlice = ViewerSliceOf<Record<string, unknown>>;
+/**
+ * Slices erase to this at the composition point so one array can hold a
+ * heterogeneous set of them.
+ *
+ * `never[]` params rather than `ViewerSliceOf<Record<string, unknown>>`:
+ * function parameters are contravariant, so a concretely-typed slice is not
+ * assignable to a loosely-typed one. This is the type that actually means
+ * "erased", and it matches how the composer invokes them.
+ */
+export type AnyViewerSlice = (...args: never[]) => object;
 
 /**
  * Typed access to a feature's slice of the viewer store.
@@ -253,7 +194,7 @@ export type AnyViewerSlice = ViewerSliceOf<Record<string, unknown>>;
  * The cast is unavoidable and lives here, once. The context is declared
  * `StoreApi<ViewerState>` because `platform/` may not name a feature's slice,
  * while the composed store genuinely carries more; registering the slice in
- * `SceneProvider` is what makes the wider type true, and `viewerStore.test.ts`
+ * `SceneProvider` is what makes the wider type true, and `shell/viewerStoreComposition.test.ts`
  * asserts the resulting key set so an unregistered slice cannot pass silently.
  */
 export const makeViewerSliceHooks = <S,>() => ({

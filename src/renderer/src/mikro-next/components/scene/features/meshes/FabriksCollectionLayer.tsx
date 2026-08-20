@@ -16,7 +16,7 @@ import {
   type ProbeGateInput,
 } from "../../platform/probe/probeGating";
 import { useSceneStore, type MeshLayerSessionState } from "../../platform/stores/sceneStore";
-import { useViewerStoreApi } from "../../platform/stores/viewerStore";
+
 import { useViewStoreApi } from "../../platform/stores/viewStore";
 import { FabriksCollection } from "./fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "./fabriks/fabriksManager";
@@ -28,6 +28,7 @@ import {
   type MeshCollectionRef,
   type MeshLayerVariant,
 } from "../../platform/model/collectionPlacement";
+import { useMeshStoreApi } from "./store/meshSlice";
 
 /**
  * MeshLayer renderer: a fabriks collection — a self-describing prefix of
@@ -78,7 +79,7 @@ const FabriksCollectionGroup = ({
   const invalidate = useThree((state) => state.invalidate);
   const transformContext = useSceneStore((s) => s.transformContext);
   const viewApi = useViewStoreApi();
-  const viewerApi = useViewerStoreApi();
+  const viewerApi = useMeshStoreApi();
   const datalayer = useDatalayerEndpoint();
   const client = useMikro();
 

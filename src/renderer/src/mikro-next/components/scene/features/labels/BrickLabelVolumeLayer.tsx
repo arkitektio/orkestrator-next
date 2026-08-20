@@ -18,6 +18,7 @@ import {
   useVolumePassRegistration,
   useVolumeRayUniforms,
 } from "../bricks/layers/useVolumeRayUniforms";
+import { useBrickStore } from "../bricks/store/brickSlice";
 
 /**
  * A label mask in 3D: a unit-box proxy whose fragment shader marches the brick
@@ -48,11 +49,10 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
   const register = useViewerStore((s) => s.register);
   const unregister = useViewerStore((s) => s.unregister);
   // SCALAR plan subscriptions only (P9c/P17) — see BrickVolumeLayer.
-  const planTargetLevel = useViewerStore((s) => s.nodePlans[layerId]?.targetLevel);
-  const planMode = useViewerStore((s) => s.nodePlans[layerId]?.mode);
-  useViewerStore((s) => s.poolsVersion);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
-
+  const planTargetLevel = useBrickStore((s) => s.nodePlans[layerId]?.targetLevel);
+  const planMode = useBrickStore((s) => s.nodePlans[layerId]?.mode);
+  useBrickStore((s) => s.poolsVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
 
   const layer = useBrickLayer(layerId);
 
@@ -94,7 +94,6 @@ export const BrickLabelVolumeLayer = ({ layerId }: { layerId: string }) => {
     pool,
     (p) => createLabelVolumeNodeMaterial(p, p, labelData),
   );
-
 
   // Every label-specific uniform in one push; the ray uniforms and the
   // camera-motion step scale are driven by the shared hooks below, which the

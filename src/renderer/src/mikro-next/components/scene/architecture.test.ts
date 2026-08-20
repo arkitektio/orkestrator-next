@@ -36,8 +36,8 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   // The debug panel reaches into brick and mesh internals to report on them.
   // Removed by shell/debugRegistry.ts, where each feature contributes its own
   // section instead.
-  "features/debug->features/bricks": 7,
-  "features/debug->features/meshes": 1,
+  "features/debug->features/bricks": 8,
+  "features/debug->features/meshes": 3,
   "features/debug->features/annotations": 1,
   // BrickVolumeLayer and useBrickPlaneProbe run annotation drawing inline.
   // Removed when BrickVolumeLayer is split.
@@ -46,6 +46,13 @@ const KNOWN_SIDEWAYS: Record<string, number> = {
   "features/meshes->features/annotations": 1,
   // SelectedPointPanel's "create annotation from probe" action.
   "features/probe->features/annotations": 3,
+  // AttributeProbeTracker calls identifyObjectId on the fabriks managers to
+  // resolve a probed instance. NOT a new coupling — it used to reach them via
+  // `meshSystems` on the platform store, which laundered a real feature
+  // dependency through a shared file. The slice carve surfaced it, which is
+  // the point; removing it means giving the probe a narrower way to ask
+  // "which object is this?".
+  "features/probe->features/meshes": 1,
 };
 
 type Edge = { from: string; to: string; fromBucket: string; toBucket: string; typeOnly: boolean };
@@ -119,11 +126,7 @@ describe("scene architecture", () => {
     const bad = edges.filter(
       (e) =>
         tier(e.fromBucket) === "platform" &&
-        ["features", "shell"].includes(tier(e.toBucket)) &&
-        // The one documented exception: viewerStore is the scene's service
-        // registry and names three feature handle types. Type-only, so it is
-        // erased at runtime. See ARCHITECTURE.md "Open items".
-        !(e.fromBucket === "platform/stores" && e.typeOnly),
+        ["features", "shell"].includes(tier(e.toBucket)),
     );
     expect(
       bad.length,

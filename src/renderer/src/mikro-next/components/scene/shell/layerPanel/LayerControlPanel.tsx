@@ -13,16 +13,17 @@ import { useModeStore } from "../../platform/stores/modeStore";
 import { useSelectionStore } from "../../platform/stores/selectionStore";
 import { isLabelLayerState } from "../../platform/model/layerModel";
 import { LayerState, useSceneStore } from "../../platform/stores/sceneStore";
-import {
-  useViewerStore,
-  type UnplannableLayerInfo,
-} from "../../platform/stores/viewerStore";
+import { useViewerStore } from "../../platform/stores/viewerStore";
 import { LayerGraphFlyout } from "./LayerGraphFlyout";
 import { LayerRow } from "./LayerRow";
 import { AnnotationLayerCard } from "../../features/annotations/AnnotationLayerCard";
 import { LabelLayerCard } from "../../features/labels/LabelLayerCard";
 import { MeshLayerCard } from "../../features/meshes/MeshLayerCard";
 import { useRenderGraphEditor } from "../../features/volume/rendergraph/RenderNodeEditor";
+import {
+  useBrickStore,
+  type UnplannableLayerInfo,
+} from "../../features/bricks/store/brickSlice";
 
 const formatBytes = (bytes: number): string =>
   bytes >= 1024 ** 3
@@ -188,7 +189,7 @@ export const LayerControlPanel = ({
   const setSelectedLayerId = useSelectionStore((s) => s.setSelectedLayerId);
   const fitToLayer = useViewerStore((s) => s.fitToLayer);
   // Rarely changes (only when the viability verdict flips) — P17-clean.
-  const unplannableLayers = useViewerStore((s) => s.unplannableLayers);
+  const unplannableLayers = useBrickStore((s) => s.unplannableLayers);
   // Per-layer explicit open/closed, keyed by id. Absent = follow the
   // selection; present = the user has said otherwise for that card.
   const [expandOverrides, setExpandOverrides] = useState<Record<string, boolean>>({});

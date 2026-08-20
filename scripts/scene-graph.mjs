@@ -90,29 +90,11 @@ const FEATURE_ALLOW = new Set([
   "features/annotations->features/bricks",
 ]);
 
-/**
- * The one documented exception (ARCHITECTURE.md "Open items").
- *
- * viewerStore is the scene's service registry: it carries handles to the brick
- * residency manager and the fabriks managers so components can find them. That
- * makes it NAME three feature types. The imports are `import type` — erased at
- * runtime, so there is no runtime coupling — and dissolving them means
- * splitting ~12 interleaved fields across 33 files in the P17-sensitive render
- * path, which costs far more than three erased type references are worth.
- *
- * Narrow on purpose: platform/stores only, type-only only. Counted and printed
- * separately so it stays visible instead of quietly becoming the norm.
- */
-const isDocumentedException = (e) =>
-  e.fromBucket === "platform/stores" && e.typeOnly && e.toBucket.startsWith("features/");
-
 const violations = [];
-const exceptions = [];
 for (const e of edges) {
   if (e.test) continue; // test-only edges are not production layering facts
   const { fromBucket: f, toBucket: t } = e;
   if (f === t) continue;
-  if (isDocumentedException(e)) { exceptions.push(e); continue; }
   const tier = (b) => b.split("/")[0];
   if (tier(f) === "platform" && (tier(t) === "features" || tier(t) === "shell"))
     violations.push({ ...e, rule: "platform must not import features/shell" });
@@ -139,9 +121,7 @@ if (process.argv.includes("--json")) {
   for (const a of buckets)
     console.log(a.padEnd(w) + buckets.map((b) => String(count.get(`${a}->${b}`) ?? ".").padStart(7)).join(""));
 
-  console.log(`\n${violations.length} layering violation(s), ${exceptions.length} documented exception(s)`);
-  if (exceptions.length)
-    for (const e of exceptions) console.log(`  [ok, documented] ${e.fromBucket} -> ${e.to}  (type-only)`);
+  console.log(`\n${violations.length} layering violation(s)`);
   const byRule = new Map();
   for (const v of violations) byRule.set(v.rule, [...(byRule.get(v.rule) ?? []), v]);
   for (const [rule, vs] of byRule) {

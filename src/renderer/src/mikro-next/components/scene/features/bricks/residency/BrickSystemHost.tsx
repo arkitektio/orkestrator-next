@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useSceneStoreApi } from "../../../platform/stores/sceneStore";
-import { useViewerStoreApi } from "../../../platform/stores/viewerStore";
+
 import { useViewStoreApi } from "../../../platform/stores/viewStore";
 import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
+import { useBrickStoreApi } from "../store/brickSlice";
 
 /**
  * Starts the brick system OUTSIDE the R3F canvas, so chunk fetching begins
@@ -27,7 +28,7 @@ import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
  * as before.
  */
 export function BrickSystemHost() {
-  const viewerStore = useViewerStoreApi();
+  const viewerStore = useBrickStoreApi();
   const sceneStore = useSceneStoreApi();
   const viewStore = useViewStoreApi();
 

@@ -19,7 +19,8 @@ import { voxelWorldSizeOf } from "../../../platform/coords/worldTransform";
 import type * as THREE from "three";
 import type { LayerBrickPool } from "../residency/brickResidency";
 import { useViewStore, useViewStoreApi } from "../../../platform/stores/viewStore";
-import { useViewerStore, useViewerStoreApi } from "../../../platform/stores/viewerStore";
+import { useViewerStoreApi } from "../../../platform/stores/viewerStore";
+import { useBrickStore } from "../store/brickSlice";
 
 /**
  * The CPU side of `volumeRayNodes`' uniforms — what actually drives the ray
@@ -103,7 +104,7 @@ export const useVolumeRayUniforms = (
     worldMatrix?: THREE.Matrix4 | null;
   },
 ): void => {
-  const lodBias = useViewerStore((s) => s.lodBias);
+  const lodBias = useBrickStore((s) => s.lodBias);
   const pxPerVoxelAtUnitDistance = usePxPerVoxelAtUnitDistance();
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();

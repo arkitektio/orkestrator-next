@@ -119,6 +119,7 @@ import {
   setPageEntry,
   type PageTableTexture,
 } from "../gpu/pageTableTexture";
+import type { BrickSlice } from "../store/brickSlice";
 
 /**
  * CPU-side octree residency: subscribes to `viewerStore.nodePlans`, fetches
@@ -368,7 +369,7 @@ export type LayerBrickPool = {
 };
 
 type Deps = {
-  viewerStore: StoreApi<ViewerState>;
+  viewerStore: StoreApi<ViewerState & BrickSlice>;
   sceneStore: StoreApi<SceneState>;
   /** Runs `repackBrick` off the UI thread (worker pool; sync in tests). */
   repack: RepackDispatcher;

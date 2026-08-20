@@ -149,7 +149,6 @@ describe("buildStructureSignature", () => {
   });
 });
 
-
 /**
  * A label mask and an intensity image can be the SAME array read two ways, so
  * the key has to keep their pools apart: `valueSemantics` decides the EMPTY code

@@ -39,8 +39,9 @@ import {
   type TubeSurface,
 } from "../../brushSkeletonStore";
 import { useSceneStoreApi } from "../../../../../platform/stores/sceneStore";
-import { useViewerStoreApi } from "../../../../../platform/stores/viewerStore";
+
 import { useCreateSceneAnnotation } from "../../../useCreateSceneAnnotation";
+import { useBrickStoreApi } from "../../../../bricks/store/brickSlice";
 
 /**
  * The GESTURE orchestration of the skeleton brush and the smooth blob:
@@ -104,7 +105,7 @@ type ExtractionContext = {
 
 export const useBrushSkeleton = () => {
   const sceneStoreApi = useSceneStoreApi();
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
   const brushApi = useBrushSkeletonStoreApi();
   const { createSceneAnnotation } = useCreateSceneAnnotation();
 

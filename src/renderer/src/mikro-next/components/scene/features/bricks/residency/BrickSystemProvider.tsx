@@ -2,10 +2,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import type { SceneRenderer } from "../../../platform/gpu/sceneRenderer";
 import { useSceneStoreApi } from "../../../platform/stores/sceneStore";
-import { useViewerStoreApi } from "../../../platform/stores/viewerStore";
+
 import { useViewStoreApi } from "../../../platform/stores/viewStore";
 import type { BrickResidencyManager } from "./brickResidency";
 import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
+import { useBrickStoreApi } from "../store/brickSlice";
 
 /**
  * The brick system's FRAME DRIVER, inside the R3F canvas.
@@ -22,7 +23,7 @@ import { createBrickSystem, isEarlyBricksEnabled } from "./brickSystem";
 export function BrickSystemProvider() {
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
-  const viewerStore = useViewerStoreApi();
+  const viewerStore = useBrickStoreApi();
   const sceneStore = useSceneStoreApi();
   const viewStore = useViewStoreApi();
   const managerRef = useRef<BrickResidencyManager | null>(null);

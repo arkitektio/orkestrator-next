@@ -83,12 +83,6 @@ export interface ModeState {
   setProbeFollowsCursor: (on: boolean) => void;
 }
 
-
-
-
-
-
-
 /**
  * `displayMode` seeds from the scene's `preferredView` (resolved by
  * `platform/camera/preferredView.ts`, which is where the AUTO policy lives) and is the

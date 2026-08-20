@@ -6,6 +6,7 @@ import type { SceneState } from "../../../platform/stores/sceneStore";
 import type { ViewerState } from "../../../platform/stores/viewerStore";
 import type { ViewState } from "../../../platform/stores/viewStore";
 import { BrickResidencyManager } from "./brickResidency";
+import type { BrickSlice } from "../store/brickSlice";
 
 /**
  * Kill switch for starting the brick system OUTSIDE the R3F canvas
@@ -54,7 +55,7 @@ export type BrickSystem = {
  * being created.
  */
 export function createBrickSystem(stores: {
-  viewerStore: StoreApi<ViewerState>;
+  viewerStore: StoreApi<ViewerState & BrickSlice>;
   sceneStore: StoreApi<SceneState>;
   viewStore: StoreApi<ViewState>;
 }): BrickSystem {

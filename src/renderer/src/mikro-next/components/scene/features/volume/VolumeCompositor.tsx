@@ -38,7 +38,8 @@ import {
   isVolumeDepthPrepassEnabled,
 } from "../../platform/gpu/volumeTargetFlags";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
-import { useViewerStoreApi } from "../../platform/stores/viewerStore";
+
+import { useBrickStoreApi } from "../bricks/store/brickSlice";
 
 /**
  * The volume compositor (OCTREE_RENDERER.md §7 R1+R2): renders the tagged
@@ -121,7 +122,7 @@ const buildStructureKey = (sets: PassSets): string => {
 
 export const VolumeCompositor = () => {
   const viewStoreApi = useViewStoreApi();
-  const viewerStoreApi = useViewerStoreApi();
+  const viewerStoreApi = useBrickStoreApi();
   const stats = useMemo(() => createCompositorStats(), []);
 
   const target = useMemo(

@@ -4,6 +4,7 @@ import { nodeBaseBox } from "./octree/nodeAddress";
 import { buildAffineMatrix } from "../../platform/coords/worldTransform";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
+import { useBrickStore } from "./store/brickSlice";
 
 /**
  * Debug wireframes of the resident bricks, colored by pyramid level (finest
@@ -22,8 +23,8 @@ const BOX_EDGES: [number, number][] = [
 
 export function BrickResidencyOverlay() {
   const debug = useViewerStore((s) => s.debug);
-  const residencyVersion = useViewerStore((s) => s.residencyVersion);
-  const brickSystem = useViewerStore((s) => s.brickSystem);
+  const residencyVersion = useBrickStore((s) => s.residencyVersion);
+  const brickSystem = useBrickStore((s) => s.brickSystem);
   const layers = useSceneStore((s) => s.layers);
 
   const groups = useMemo(() => {

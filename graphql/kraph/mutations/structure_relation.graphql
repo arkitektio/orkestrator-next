@@ -3,8 +3,8 @@ mutation AssertStructureRelationExists($input: AssertStructureRelationExistsInpu
     assertion {
       ...Assertion
     }
-    structureRelation {
-      ...StructureRelation
+    link {
+      ...Link
     }
   }
 }
@@ -14,8 +14,8 @@ mutation RetractStructureRelation($id: String!) {
     assertion {
       ...Assertion
     }
-    structureRelation {
-      ...StructureRelation
+    link {
+      ...Link
     }
   }
 }

@@ -1,10 +1,10 @@
-mutation CreateMeasurementCategory($input: CreateMeasurementDefinitionInput!) {
+mutation CreateMeasurementCategory($input: CreateMeasurementCategoryInput!) {
   createMeasurementCategory(input: $input) {
     ...MeasurementCategory
   }
 }
 
-mutation UpdateMeasurementCategory($input: UpdateMeasurementDefinitionInput!) {
+mutation UpdateMeasurementCategory($input: UpdateMeasurementCategoryInput!) {
   updateMeasurementCategory(input: $input) {
     ...MeasurementCategory
   }

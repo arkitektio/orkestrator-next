@@ -1,7 +1,6 @@
 fragment ProtocolEvent on ProtocolEvent {
   ...BaseNode
   id
-  measuredFrom
 
   category {
     id
@@ -12,8 +11,6 @@ fragment ProtocolEvent on ProtocolEvent {
 fragment ListProtocolEvent on ProtocolEvent {
   id
   label
-  measuredFrom
-  measuredTo
   category {
     label
     id

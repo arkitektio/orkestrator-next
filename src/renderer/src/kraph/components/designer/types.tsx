@@ -2,9 +2,9 @@ import { Connection, Edge, Node } from "@xyflow/react";
 import React from "react";
 
 import {
-  CreateEntityDefinitionInput,
-  CreateMeasurementDefinitionInput,
-  CreateRelationDefinitionInput,
+  CreateEntityCategoryInput,
+  CreateMeasurementCategoryInput,
+  CreateRelationCategoryInput,
   EventRoleFragment,
   ListEntityCategoryFragment,
   ListNaturalEventCategoryFragment,
@@ -26,12 +26,12 @@ export type NaturalEventNode = Node<
 >;
 
 export type StagingGenericNode = Node<
-  CreateEntityDefinitionInput,
+  CreateEntityCategoryInput,
   "staginggeneric"
 >;
 
 export type StagingMeasurementEdge = Edge<
-  CreateMeasurementDefinitionInput,
+  CreateMeasurementCategoryInput,
   "stagingmeasurement"
 >;
 export type RelationEdge = Edge<ListRelationCategoryFragment, "relation">;
@@ -39,7 +39,7 @@ export type EntityRoleEdge = Edge<EventRoleFragment, "reagentrole">;
 export type ReagentRoleEdge = Edge<EventRoleFragment, "entityrole">;
 
 export type StagingRelationEdge = Edge<
-  CreateRelationDefinitionInput,
+  CreateRelationCategoryInput,
   "stagingrelation"
 >;
 

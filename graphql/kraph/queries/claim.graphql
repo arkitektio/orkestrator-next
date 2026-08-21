@@ -1,0 +1,39 @@
+# Claim-grain reads. These take a bare uuid and no graph, because a claim belongs
+# to the organization rather than to any one view.
+#
+# Anything holding only an id — the command palette, a drop from another module, a
+# rekuest return port — can answer with these. The view-grain reads
+# (`entity(id:, graph:)`, `node(id:, graph:)`) cannot: they refuse a node the
+# named view does not admit, and there is no graph to name.
+
+query GetInstance($id: ID!) {
+  instance(id: $id) {
+    ...Instance
+  }
+}
+
+query GetDetailInstance($id: ID!) {
+  instance(id: $id) {
+    ...DetailInstance
+  }
+}
+
+query GetLink($id: ID!) {
+  link(id: $id) {
+    ...Link
+  }
+}
+
+query GetDetailLink($id: ID!) {
+  link(id: $id) {
+    ...DetailLink
+  }
+}
+
+# Every position anyone has taken on a claim, in order. The current answer is the
+# fold; this is the history it folds over.
+query GetStandings($id: ID!) {
+  standings(id: $id) {
+    ...Standing
+  }
+}

@@ -283,7 +283,7 @@ export const CreateEntityWithPropertiesDialog = (props: {
       },
     });
 
-    const entityId = created.data?.assertEntityExists.entity.id;
+    const entityId = created.data?.assertEntityExists.instance.id;
     if (!entityId) return;
 
     const assertions = (props.category.propertyDefinitions ?? [])

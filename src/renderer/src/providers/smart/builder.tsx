@@ -281,6 +281,52 @@ export const buildSmart = <T extends Object>(
   };
 };
 
+/**
+ * A model whose detail page lives *inside* something else — for kraph, inside the
+ * graph that draws it.
+ *
+ * Two grains, one identity. A claim (`Instance`, `Link`) is organization-grain
+ * and addressed by a bare uuid; a *drawing* of it exists only inside one graph
+ * and carries everything a rich detail page shows. Identity stays claim-grain —
+ * `Smart`, `Drop`, `ObjectButton` and every local-action `condition` keep taking
+ * `{ identifier, id }` with that bare uuid, which is the only thing a
+ * drag-and-drop payload can honestly carry. Only the *destination* varies.
+ *
+ * So `scope` is optional, and the fallback is the point: a call site that knows
+ * its graph gets the view page; one that does not — the command palette, a drop
+ * from another module, a rekuest return port — gets `claimTo`, the claim page,
+ * which lists `drawnIn` and links onward. No caller is ever forced to invent a
+ * graph, and nothing re-encodes `graph:id` back into one string, which is
+ * precisely the `GraphID` scalar the backend deleted.
+ */
+export const buildScopedSmart = <T extends Object>(
+  model: Identifier,
+  scopedTo: (scope: string) => string,
+  claimTo: string,
+  options?: {
+    name?: string;
+    description?: string;
+    searchFunction?: SearchFunction;
+  },
+) => {
+  const pathFor = (scope?: string) => (scope ? scopedTo(scope) : claimTo);
+
+  // Registers under `claimTo`: the registry answers "where does a bare id of
+  // this kind go", and that is the claim page. Generic navigate/popout actions
+  // resolve through it.
+  const base = buildSmart<T>(model, claimTo, options);
+
+  return {
+    ...base,
+    DetailLink: ({ scope, ...props }: ModelLinkProps<T> & { scope?: string }) =>
+      buildModelLink<T>(pathFor(scope))(props),
+    PaneLink: ({ scope, ...props }: SmartPaneLinkProps<T> & { scope?: string }) =>
+      buildPaneLink<T>(pathFor(scope))(props),
+    linkBuilder: (objectId: string | undefined, scope?: string) =>
+      linkBuilder(pathFor(scope))(objectId),
+  };
+};
+
 export type Smart = ReturnType<typeof buildSmart>;
 
 export const buildModuleLink = (module: string) => {

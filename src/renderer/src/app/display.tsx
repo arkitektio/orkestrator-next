@@ -6,6 +6,8 @@ import { SimulationDisplay } from "@/elektro/displays/SimulationDisplay";
 import { PodDisplay } from "@/kabinet/displays/PodDisplay";
 import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
 import { EntityDisplay } from "@/kraph/displays/EntityDisplay";
+import { InstanceDisplay } from "@/kraph/displays/InstanceDisplay";
+import { LinkDisplay } from "@/kraph/displays/LinkDisplay";
 import { GraphDisplay } from "@/kraph/displays/GraphDisplay";
 import { MeasurementDisplay } from "@/kraph/displays/MeasurementDisplay";
 import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
@@ -48,6 +50,9 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@elektro/block": BlockDisplay,
     "@elektro/neuronmodel": NeuronModelDisplay,
     "@elektro/modelworkspace": ModelWorkspaceDisplay,
+    // kraph — claims (organization grain, a bare uuid)
+    "@kraph/instance": InstanceDisplay,
+    "@kraph/link": LinkDisplay,
     // kraph — instances
     "@kraph/graph": GraphDisplay,
     "@kraph/entity": EntityDisplay,

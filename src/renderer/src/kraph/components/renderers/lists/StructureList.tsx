@@ -48,7 +48,7 @@ import {
   useListStructuresQuery,
 } from "@/kraph/api/graphql";
 import { KraphStructure } from "@/linkers";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { ViewOptions } from "../types";
 
 const calculateColumns = (
   kind?: StructureKindFragment,
@@ -96,8 +96,9 @@ const calculateColumns = (
     },
     {
       id: "label",
-      accessorFn: (x) => x.label,
-      header: () => <div className="text-center">Label</div>,
+      // A structure has no label — `(identifier, object)` is how it is named.
+      accessorFn: (x) => x.object,
+      header: () => <div className="text-center">Object</div>,
       cell: ({ row }) => {
         const label = row.getValue("label") as string;
         return <div className="text-center">{label || ""}</div>;
@@ -234,7 +235,6 @@ export const StructureList = (props: {
 
     const headers = [
       "id",
-      "label",
       "object",
       "identifier",
       "kindLabel",
@@ -246,7 +246,6 @@ export const StructureList = (props: {
     const csvRows = rows.map((row) => {
       const values = [
         row.id,
-        row.label || "",
         row.object || "",
         String(row.identifier || ""),
         row.kind?.label || props.kind?.label || "",

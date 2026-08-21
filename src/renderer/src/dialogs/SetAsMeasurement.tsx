@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
-  ListMaterializedMeasurementEdgeFragment,
+  ListMeasurementCategoryWithGraphFragment,
   useAssertMeasurementExistsMutation,
   useEnsureStructureMutation,
+  useEntityCategoriesMatchingDescriptorQuery,
   useListEntitiesQuery,
 } from "@/kraph/api/graphql";
 import { Structure } from "@/types";
@@ -31,7 +32,7 @@ import { toast } from "sonner";
  */
 export const SetAsMeasurement = (props: {
   left: Structure[];
-  edge: ListMaterializedMeasurementEdgeFragment;
+  category: ListMeasurementCategoryWithGraphFragment;
 }) => {
   const { closeDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,11 +65,11 @@ export const SetAsMeasurement = (props: {
           input: {
             sourceId,
             targetId: entityId,
-            term: props.edge.edge.term?.key ?? props.edge.edge.key,
+            term: props.category.term?.key ?? props.category.key,
           },
         },
       });
-      toast.success(`Measured as ${props.edge.edge.label}`);
+      toast.success(`Measured as ${props.category.label}`);
       closeDialog();
     } catch (e) {
       toast.error(
@@ -81,14 +82,29 @@ export const SetAsMeasurement = (props: {
     }
   };
 
+  // Which entity categories this measurement may target. `MaterializedEdge`
+  // had one precomputed as `target`; the category declares a *descriptor*, and
+  // the server resolves it — the same predicate the writer applies.
+  const { data: targetCategories } = useEntityCategoriesMatchingDescriptorQuery({
+    variables: {
+      descriptor: {
+        keys: props.category.targetDescriptor.keys,
+        ontologyTerms: props.category.targetDescriptor.ontologyTerms,
+        defaultCategoryKey: props.category.targetDescriptor.defaultCategoryKey,
+      },
+    },
+  });
+
+  const targetCategory = targetCategories?.entityCategories.at(0);
+
   const { data, loading } = useListEntitiesQuery({
     variables: {
-
-      entityCategoryId: props.edge.target.id,
+      entityCategoryId: targetCategory?.id ?? "",
       filters: {
         search: debouncedSearch || undefined,
       },
     },
+    skip: !targetCategory,
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +120,7 @@ export const SetAsMeasurement = (props: {
               Set As Measurement
             </h2>
             <p className="text-sm text-muted-foreground">
-              Pick the {props.edge.target.label} this structure measures. The
+              Pick the {targetCategory?.label ?? "entity"} this structure measures. The
               claim names the word, so every graph that declares it holds the
               measurement.
             </p>
@@ -112,11 +128,11 @@ export const SetAsMeasurement = (props: {
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary" className="gap-1.5 px-2.5 py-1">
               <Activity className="h-3.5 w-3.5" />
-              {props.edge.edge.label}
+              {props.category.label}
             </Badge>
             <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
               <CircleDot className="h-3.5 w-3.5" />
-              {props.edge.graph.name}
+              {props.category.graph.name}
             </Badge>
           </div>
         </div>
@@ -135,7 +151,7 @@ export const SetAsMeasurement = (props: {
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={`Search ${props.edge.target.label.toLowerCase()} entities...`}
+            placeholder={`Search ${targetCategory?.label ?? "entity".toLowerCase()} entities...`}
             value={searchQuery}
             onChange={handleSearchChange}
             className="h-10 rounded-lg pl-10"
@@ -173,7 +189,7 @@ export const SetAsMeasurement = (props: {
                       )}
                     </div>
                     <Badge variant="outline" className="shrink-0">
-                      {props.edge.target.label}
+                      {targetCategory?.label ?? "entity"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -190,7 +206,7 @@ export const SetAsMeasurement = (props: {
                   >
                     {attaching === entity.id
                       ? "Measuring…"
-                      : props.edge.edge.label}
+                      : props.category.label}
                   </Button>
                 </CardContent>
               </Card>

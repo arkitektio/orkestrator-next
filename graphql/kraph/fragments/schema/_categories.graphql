@@ -24,9 +24,6 @@ fragment BaseNodeCategory on NodeCategory {
   width
   label
   height
-  relevantNodeQueries {
-    ...ListNodeQuery
-  }
 }
 
 fragment BaseEdgeCategory on EdgeCategory {

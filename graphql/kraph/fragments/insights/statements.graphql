@@ -2,6 +2,9 @@ fragment MatchPath on MatchPath {
   nodes
   relations
   relationDirections
+  # Which category each position in `nodes` is constrained to. New with the plan
+  # contract: the compiled Cypher used to bake the label into the string.
+  nodeCategories
   title
   color
   optional
@@ -10,6 +13,9 @@ fragment ReturnStatement on ReturnStatement {
   path
   property
   node
+  # The returned column's name. Render filters and orders address returned
+  # aliases, which is why splicing a filter into raw Cypher could not work.
+  alias
 }
 
 fragment WhereClause on WhereClause {
@@ -33,14 +39,20 @@ fragment Column on Column {
 }
 
 
-fragment BuilderArgs on BuilderArgs {
-  matchPaths {
+# The saved query itself. A table query used to be a Cypher string the client
+# wrote and the server stored verbatim; the plan is the contract now, and each
+# projection kind compiles it. `BuilderArgs` was the builder's private echo of
+# the same three lists, written by one mutation and readable by no field — the
+# plan replaces both.
+fragment TableQueryPlan on TableQueryPlan {
+  version
+  matches {
     ...MatchPath
   }
-  whereClauses {
+  wheres {
     ...WhereClause
   }
-  returnStatements {
+  returns {
     ...ReturnStatement
   }
 }

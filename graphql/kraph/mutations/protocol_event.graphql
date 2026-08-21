@@ -3,8 +3,8 @@ mutation AssertProtocolEventExists($input: AssertProtocolEventExistsInput!) {
     assertion {
       ...Assertion
     }
-    protocolEvent {
-      ...ProtocolEvent
+    instance {
+      ...Instance
     }
     drawings {
       ...NodeDrawing
@@ -17,8 +17,8 @@ mutation RetractProtocolEvent($id: String!) {
     assertion {
       ...Assertion
     }
-    protocolEvent {
-      ...ProtocolEvent
+    instance {
+      ...Instance
     }
   }
 }
@@ -28,8 +28,8 @@ mutation AttestProtocolEvent($id: String!) {
     assertion {
       ...Assertion
     }
-    protocolEvent {
-      ...ProtocolEvent
+    instance {
+      ...Instance
     }
     drawings {
       ...NodeDrawing

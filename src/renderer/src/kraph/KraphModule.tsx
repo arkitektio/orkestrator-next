@@ -10,6 +10,8 @@ import GraphPage from "./pages/GraphPage";
 import GraphQueryPage from "./pages/GraphTableQueryPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
+import InstancePage from "./pages/InstancePage";
+import LinkPage from "./pages/LinkPage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
 import MetricKindsPage from "./pages/MetricKindsPage";
@@ -39,32 +41,51 @@ import StructureRelationPage from "./pages/StructureRelationPage";
 import BuilderPage from "./pages/graph/BuilderPage";
 import GraphGraphQueriesPage from "./pages/graph/GraphGraphQueriesPage";
 import StandardPane from "./panes/StandardPane";
+import { GraphScopeLayout } from "./providers/GraphScopeProvider";
 
 import { EntityCategorySchemaBuilderPage } from "./pages/EntityCategorySchemaBuilderPage";
 interface Props { }
 
 export const KraphModule: React.FC<Props> = () => {
   return (
-    <Guard.Mikro unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
+    <Guard.Kraph unavailable={<>Loading</>} unconfigured={<>Loading</>} configuring={<>Loading</>} challenging={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="home" element={<HomePage />} />
           <Route path="expressions/:id" element={<ExpressionPage />} />
-          <Route path="nodes/:id" element={<NodePage />} />
+          {/*
+            Claim grain: a bare uuid, no graph. Where a dropped id lands when
+            nothing supplies a view — the page then offers `drawnIn`.
+          */}
+          <Route path="instances/:id" element={<InstancePage />} />
+          <Route path="links/:id" element={<LinkPage />} />
           <Route path="relations/:id" element={<RelationPage />} />
           <Route
             path="structurerelations/:id"
             element={<StructureRelationPage />}
           />
-          <Route path="entities/:id" element={<EntityPage />} />
           <Route path="metrics/:id" element={<MetricPage />} />
           <Route path="scatterplots/:id" element={<ScatterPlotPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
-          <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
-          <Route path="graphs/:id/queries" element={<GraphGraphQueriesPage />} />
-          <Route path="graphs/:id" element={<GraphPage />} />
+          {/*
+            Nested under the graph, because these are *view-grain* reads:
+            `entity(id:, graph:)` answers for one graph's drawing of a claim and
+            refuses a node that view does not admit. `GraphScopeLayout` turns the
+            `:graph` segment into context so the pages below never thread it.
+
+            The claim itself lives at a flat bare-uuid route — `instances/:id`,
+            `structures/:id`, `links/:id` — which is where a dropped id with no
+            graph in hand lands.
+          */}
+          <Route path="graphs/:graph" element={<GraphScopeLayout />}>
+            <Route index element={<GraphPage />} />
+            <Route path="queries" element={<GraphGraphQueriesPage />} />
+            <Route path="nodes/:id" element={<NodePage />} />
+            <Route path="entities/:id" element={<EntityPage />} />
+            <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
+          </Route>
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
           <Route path="graphqueries/:id/builder" element={<BuilderPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
@@ -127,11 +148,10 @@ export const KraphModule: React.FC<Props> = () => {
             path="measurementcategories/:id"
             element={<MeasurementCategoryPage />}
           />
-          <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
-    </Guard.Mikro>
+    </Guard.Kraph>
   );
 };
 

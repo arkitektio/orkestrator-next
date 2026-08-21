@@ -16,7 +16,7 @@ query SearchStructureKinds($search: String, $values: [ID!]) {
 
 query ListStructureKinds(
   $filters: StructureKindFilter
-  $pagination: StructurePaginationInput
+  $pagination: VocabularyPaginationInput
 ) {
   structureKinds(filters: $filters, pagination: $pagination) {
     ...ListStructureKind

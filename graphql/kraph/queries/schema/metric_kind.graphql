@@ -16,7 +16,7 @@ query SearchMetricKinds($search: String, $values: [ID!]) {
 
 query ListMetricKinds(
   $filters: MetricKindFilter
-  $pagination: StructurePaginationInput
+  $pagination: VocabularyPaginationInput
 ) {
   metricKinds(filters: $filters, pagination: $pagination) {
     ...ListMetricKind

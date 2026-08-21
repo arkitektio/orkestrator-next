@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  CreateMeasurementDefinitionInput,
+  CreateMeasurementCategoryInput,
   useCreateMeasurementCategoryMutation,
   useListEntityCategoryQuery,
   useListStructureKindsQuery,
@@ -19,8 +19,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const normalizeInput = (
-  data: CreateMeasurementDefinitionInput,
-): CreateMeasurementDefinitionInput => ({
+  data: CreateMeasurementCategoryInput,
+): CreateMeasurementCategoryInput => ({
   ...data,
   label: data.label || undefined,
   description: data.description || undefined,
@@ -58,7 +58,7 @@ export const CreateNewMeasurement = (props: {
   const debouncedStructureSearch = useDebounce(structureSearch);
   const debouncedEntitySearch = useDebounce(entitySearch);
 
-  const form = useForm<CreateMeasurementDefinitionInput>({
+  const form = useForm<CreateMeasurementCategoryInput>({
     defaultValues: {
       graph: props.graph,
       label: "",
@@ -124,7 +124,7 @@ export const CreateNewMeasurement = (props: {
     }
   };
 
-  const handleSubmit = async (data: CreateMeasurementDefinitionInput) => {
+  const handleSubmit = async (data: CreateMeasurementCategoryInput) => {
     try {
       await createMeasurementCategory({
         variables: { input: normalizeInput({ ...data, graph: props.graph }) },

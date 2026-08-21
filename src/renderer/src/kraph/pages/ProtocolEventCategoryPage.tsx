@@ -16,7 +16,6 @@ import {
   useUpdateProtocolEventCategoryMutation,
 } from "../api/graphql";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
-import { buildUpdateProtocolEventDefinitionInput } from "../protocolEventInput";
 
 const Page =  asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
@@ -31,10 +30,7 @@ const Page =  asDetailQueryRoute(
       if (response) {
         await update({
           variables: {
-            input: buildUpdateProtocolEventDefinitionInput(
-              data.protocolEventCategory,
-              { image: response },
-            ),
+            input: { id: data.protocolEventCategory.id, image: response },
           },
         });
         await refetch();

@@ -44,7 +44,8 @@ const ScatterPlot = (props: {
   const chartRef = React.useRef<any>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const filters: RenderGraphTableFilter = { value: "" };
+  // No filter: the plot renders the saved query whole.
+  const filters: RenderGraphTableFilter | undefined = undefined;
 
   const { data: tableData } = useRenderGraphTableQuery({
     variables: {
@@ -250,7 +251,7 @@ const ScatterPlot = (props: {
               content={
                 <ScatterPlotTooltip
                   scatterPlot={props.scatterPlot}
-                  graphAgeName={table?.query.graph.ageName}
+                  graphId={table?.query.graph.id}
                 />
               }
               cursor={{ strokeDasharray: "3 3" }}
@@ -337,7 +338,7 @@ const ScatterPlot = (props: {
                         <>
                           <MiniWidget
                             id={idVal}
-                            graph={table?.query.graph.ageName}
+                            graph={table?.query.graph.id}
                           />
                         </>
                       ) : (

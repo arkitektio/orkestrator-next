@@ -246,14 +246,21 @@ const InlineWhereEditor: React.FC<InlineWhereEditorProps> = ({
 };
 
 // Helper to convert GraphQL types to internal Path format
+//
+// The three `deserialize*` helpers below read `plan` where they used to read
+// `builderArgs`. That is one translation layer fewer, not merely a rename:
+// `builderArgs` was the builder's private echo of the same three lists, written
+// by one mutation and readable by no field, while the query itself was stored as
+// a Cypher string. The plan *is* the contract now — the server compiles it — so
+// what the builder round-trips is what the query is.
 const convertGraphQLToPath = (
   graphQuery: GraphTableQueryFragment
 ): Path[] => {
-  if (!graphQuery.builderArgs?.matchPaths || graphQuery.builderArgs.matchPaths?.length === 0) {
+  if (!graphQuery.plan?.matches || graphQuery.plan.matches.length === 0) {
     return [];
   }
 
-  return graphQuery.builderArgs?.matchPaths?.map((match) => {
+  return graphQuery.plan.matches.map((match) => {
     return {
       nodes: match.nodes,
       relations: match.relations,
@@ -295,14 +302,14 @@ const mapWhereOperatorToString = (operator: string): string => {
 const deserializeWhereClauses = (
   graphQuery: GraphTableQueryFragment
 ): NodeWhereClause[] => {
-  if (!graphQuery.builderArgs || graphQuery.builderArgs.whereClauses?.length === 0) {
+  if (!graphQuery.plan || graphQuery.plan.wheres.length === 0) {
     return [];
   }
 
   // Group WHERE clauses by nodeId
   const clausesByNode = new Map<string, WhereCondition[]>();
 
-  graphQuery.builderArgs.whereClauses?.forEach((where) => {
+  graphQuery.plan.wheres.forEach((where) => {
     const nodeId = where.node || where.path; // Use node if available, fallback to path
     if (!nodeId) return;
 
@@ -329,14 +336,17 @@ const deserializeWhereClauses = (
 const deserializeReturnColumns = (
   graphQuery: GraphTableQueryFragment
 ): ReturnColumn[] => {
-  if (!graphQuery.builderArgs || graphQuery.builderArgs.returnStatements?.length === 0) {
+  if (!graphQuery.plan || graphQuery.plan.returns.length === 0) {
     return [];
   }
 
-  return (graphQuery.builderArgs.returnStatements || []).map((ret) => ({
+  return graphQuery.plan.returns.map((ret) => ({
     nodeId: ret.node || ret.path, // Use node if available, fallback to path
     property: ret.property || "id",
-    alias: undefined, // Alias is not stored in GraphQL, will be generated
+    // `alias` round-trips now. Render filters and orders address a returned
+    // alias, which is exactly what splicing a filter into raw Cypher could not
+    // do correctly.
+    alias: ret.alias || undefined,
   }));
 };
 

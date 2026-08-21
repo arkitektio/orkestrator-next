@@ -3,8 +3,8 @@ mutation AssertMeasurementExists($input: AssertMeasurementExistsInput!) {
     assertion {
       ...Assertion
     }
-    measurement {
-      ...Measurement
+    link {
+      ...Link
     }
   }
 }
@@ -14,8 +14,8 @@ mutation RetractMeasurement($id: String!) {
     assertion {
       ...Assertion
     }
-    measurement {
-      ...Measurement
+    link {
+      ...Link
     }
   }
 }

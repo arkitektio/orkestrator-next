@@ -5,6 +5,10 @@ import {
   DeleteEntityCategoryDocument,
   RetractEntityDocument,
   AttestEntityDocument,
+  AttestLinkDocument,
+  AttestMetricDocument,
+  AttestStructureDocument,
+  RetractLinksDocument,
   AttestNaturalEventDocument,
   AttestProtocolEventDocument,
   DeleteGraphDocument,
@@ -98,6 +102,13 @@ const ATTEST_DOCUMENTS = {
   "@kraph/entity": AttestEntityDocument,
   "@kraph/naturalevent": AttestNaturalEventDocument,
   "@kraph/protocolevent": AttestProtocolEventDocument,
+  // The three claim kinds that had no attestation path until the evidence layer
+  // grew one. A structure and a metric are rows of their own tables — neither is
+  // an instance and neither is ever drawn — but a position can be taken on them
+  // exactly as on any other claim.
+  "@kraph/link": AttestLinkDocument,
+  "@kraph/metric": AttestMetricDocument,
+  "@kraph/structure": AttestStructureDocument,
 } as const;
 
 export const AttestNodeAction: Action = {
@@ -129,10 +140,49 @@ export const AttestNodeAction: Action = {
   collections: ["io"],
 };
 
+/**
+ * Retracting is a claim too: it writes a `Standing` saying this no longer holds,
+ * and leaves the evidence in place. `retractLinks` takes a list of `Link` ids —
+ * it was `retractClaims`, which named neither the table it reads nor the one a
+ * retraction writes.
+ */
+export const RetractLinksAction: Action = {
+  title: "Retract",
+  description: "Record that these links no longer hold, without deleting them",
+  icon: Undo2,
+  conditions: [{ type: "identifier", identifier: "@kraph/link" }],
+  execute: async ({ state, services, confirm }) => {
+    const client = (services.kraph as unknown as { client: ApolloClient<NormalizedCache> })
+      .client;
+    if (!client) {
+      throw new Error("Kraph service is not available");
+    }
+
+    const ids = state.left
+      .filter((node) => node.identifier === "@kraph/link")
+      .map((node) => String(node.object.id));
+    if (ids.length === 0) return;
+
+    await confirm({
+      title: `Retract ${ids.length} link${ids.length === 1 ? "" : "s"}?`,
+      description:
+        "The evidence stays and nothing is deleted — this records that they no longer hold.",
+      confirmLabel: "Retract",
+    });
+
+    await client.mutate({
+      mutation: RetractLinksDocument,
+      variables: { ids },
+    });
+  },
+  collections: ["io"],
+};
+
 export const KRAPH_ACTIONS = {
   "create-new-entity": NewEntityAction,
   "link-structure-to-entity": LinkStructureToEntityAction,
   "attest-node": AttestNodeAction,
+  "retract-links": RetractLinksAction,
   "delete-kraph-graph": buildDeleteAction({
     title: "Delete Graph",
     identifier: "@kraph/graph",

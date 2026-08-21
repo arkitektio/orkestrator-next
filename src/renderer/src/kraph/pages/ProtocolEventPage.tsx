@@ -1,4 +1,4 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { asGraphDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Sidebars } from "@/components/layout/Sidebars";
 import {
@@ -14,7 +14,7 @@ import { useGetProtocolEventQuery } from "../api/graphql";
 // (both concepts have been fully removed from the schema), so the rich-text
 // role-value editor that used to render here has been dropped.
 
-const Page = asDetailQueryRoute(
+const Page = asGraphDetailQueryRoute(
   useGetProtocolEventQuery,
   ({ data }) => {
     return (

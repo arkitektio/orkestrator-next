@@ -32,9 +32,10 @@ import {
   RenderGraphTableFilter,
   RenderGraphTableOrder,
   RenderGraphTablePagination,
+  WhereOperator,
   useRenderGraphTableQuery
 } from "@/kraph/api/graphql";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { ViewOptions } from "../types";
 import { calculateColumns, calculateRows } from "../utils";
 
 
@@ -56,11 +57,17 @@ export const RenderGraphQueryTable = (props: {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  // Prepare GraphQL variables
-  const filters: RenderGraphTableFilter = {
-    search: search || undefined,
-    value: "",
-  };
+  // Which column the search box searches. `RenderGraphTableFilter` lost its
+  // free-text `search` and gained `{ key, operator, value }` over a *returned
+  // alias* — which is the only form that can work, since the old one was spliced
+  // into raw Cypher ahead of its last RETURN and got `WITH` and `UNION` wrong.
+  // Columns declare `searchable`, so the first one that does is the target.
+  const [searchKey, setSearchKey] = React.useState<string | undefined>();
+
+  const filters: RenderGraphTableFilter | undefined =
+    search && searchKey
+      ? { key: searchKey, operator: WhereOperator.Contains, value: search }
+      : undefined;
 
   const paginationInput: RenderGraphTablePagination = {
     limit: pagination.pageSize,
@@ -86,6 +93,13 @@ export const RenderGraphQueryTable = (props: {
 
   // Extract the Table from the response
   const table = data?.renderGraphTable;
+
+  // The columns arrive with the first (unfiltered) render, which is enough: the
+  // search box starts empty, so no filter is needed before they are known.
+  React.useEffect(() => {
+    const searchable = table?.query.columns.find((column) => column.searchable);
+    if (searchable) setSearchKey(searchable.key);
+  }, [table]);
 
   const columns = calculateColumns(table);
   const rows = calculateRows(table);

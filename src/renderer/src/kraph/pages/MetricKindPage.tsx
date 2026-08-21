@@ -7,7 +7,7 @@ import { useKraphMediaUpload } from "@/datalayer/hooks/useKraphMediaUpload";
 import { KraphMetricKind } from "@/linkers";
 import {
   useGetMetricKindQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateMetricKindMutation
 } from "../api/graphql";
 import UpdateMetricKindForm from "../forms/UpdateMetricKindForm";
 
@@ -15,7 +15,7 @@ const Page = asDetailQueryRoute(
   useGetMetricKindQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateMetricKindMutation();
 
 
     const createFile = async (file: File) => {

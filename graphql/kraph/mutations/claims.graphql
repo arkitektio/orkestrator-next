@@ -18,8 +18,8 @@ mutation AssertParticipation(
     assertion {
       ...Assertion
     }
-    participation {
-      ...Edge
+    link {
+      ...Link
     }
     drawings {
       ...EdgeDrawing
@@ -32,8 +32,8 @@ mutation AssertParticipations($event: String!, $participants: [ParticipantInput!
     assertion {
       ...Assertion
     }
-    edges {
-      ...Edge
+    links {
+      ...Link
     }
     drawings {
       ...EdgeDrawing
@@ -46,8 +46,8 @@ mutation RetractParticipation($id: String!) {
     assertion {
       ...Assertion
     }
-    participation {
-      ...Edge
+    link {
+      ...Link
     }
   }
 }
@@ -57,8 +57,8 @@ mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
     assertion {
       ...Assertion
     }
-    nodes {
-      ...Node
+    instances {
+      ...Instance
     }
     drawings {
       ...NodeDrawing
@@ -66,13 +66,52 @@ mutation ClassifyNodes($classifications: [ClassificationInput!]!) {
   }
 }
 
-mutation RetractClaims($ids: [String!]!) {
-  retractClaims(input: { ids: $ids }) {
+mutation RetractLinks($ids: [String!]!) {
+  retractLinks(input: { ids: $ids }) {
     assertion {
       ...Assertion
     }
-    edges {
-      ...Edge
+    links {
+      ...Link
+    }
+  }
+}
+
+# Attesting is a claim in its own right, not an undo: it writes a new `Standing`
+# saying the claim still holds, and the current answer is the fold over all of
+# them. These three cover the claim kinds that had no attestation path — a link,
+# a metric and a structure — alongside the instance-shaped ones on their own
+# mutations.
+mutation AttestLink($id: String!) {
+  attestLink(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    # `AssertedLinks`, plural: a write reports every link it recorded.
+    links {
+      ...Link
+    }
+  }
+}
+
+mutation AttestMetric($id: String!) {
+  attestMetric(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    metric {
+      ...ListMetric
+    }
+  }
+}
+
+mutation AttestStructure($id: String!) {
+  attestStructure(input: { id: $id }) {
+    assertion {
+      ...Assertion
+    }
+    structure {
+      ...ListStructure
     }
   }
 }

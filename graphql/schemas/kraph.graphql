@@ -29,59 +29,6 @@ input ActionRuleInput {
   filter: ActionFilterInput!
 }
 
-"""An activity representing provenance information"""
-type Activity implements Node {
-  """Action arguments as JSON"""
-  actionArgs: AnyScalar
-
-  """Action identifier"""
-  actionId: String
-
-  """Human-readable action name"""
-  actionName: String
-
-  """Application that performed the activity"""
-  appId: String
-
-  """When this activity was created"""
-  createdAt: DateTime
-
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """
-  The graph this node belongs to, or null for organization-scoped evidence
-  """
-  graph: Graph
-
-  """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
-  """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
-
-  """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
-  """
-  label: String!
-
-  """Local ID if set"""
-  localId: String
-
-  """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
-  """
-  pinned: Boolean!
-
-  """User/subject who performed the activity"""
-  subject: String
-}
-
 enum AggregationFunction {
   COUNT
   EUCLIDEAN_RANGE
@@ -96,63 +43,15 @@ enum AggregationFunction {
 """The `AnyScalar` scalar type represents an arbitrary JSON-like value"""
 scalar AnyScalar
 
-"""Input for archiving an edge pairs query"""
-input ArchiveEdgePairsQueryInput {
-  """The ID of the edge pairs query to archive"""
-  id: ID!
-}
-
-"""Input for archiving an edge path query"""
-input ArchiveEdgePathQueryInput {
-  """The ID of the edge path query to archive"""
-  id: ID!
-}
-
-"""Input for archiving an edge table query"""
-input ArchiveEdgeTableQueryInput {
-  """The ID of the edge table query to archive"""
-  id: ID!
-}
-
 """Input for archiving a graph"""
 input ArchiveGraphInput {
   """The ID of the graph to archive"""
   id: String!
 }
 
-"""Input for archiving a graph pairs query"""
-input ArchiveGraphPairsQueryInput {
-  """The ID of the graph pairs query to archive"""
-  id: ID!
-}
-
-"""Input for archiving a graph path query"""
-input ArchiveGraphPathQueryInput {
-  """The ID of the graph path query to archive"""
-  id: ID!
-}
-
 """Input for archiving a graph table query"""
 input ArchiveGraphTableQueryInput {
   """The ID of the graph query to archive"""
-  id: ID!
-}
-
-"""Input for archiving a node pairs query"""
-input ArchiveNodePairsQueryInput {
-  """The ID of the node pairs query to archive"""
-  id: ID!
-}
-
-"""Input for archiving a node path query"""
-input ArchiveNodePathQueryInput {
-  """The ID of the node path query to archive"""
-  id: ID!
-}
-
-"""Input for archiving a node table query"""
-input ArchiveNodeTableQueryInput {
-  """The ID of the node table query to archive"""
   id: ID!
 }
 
@@ -196,7 +95,7 @@ input AssertMetricValueForStructureInput {
   key: String!
 
   """The unique ID of the structure this metric is associated with"""
-  structure: GraphID!
+  structure: ID!
 
   """Unix epoch time in milliseconds"""
   timestamp: Int = null
@@ -260,7 +159,9 @@ input AssertParticipationInput {
   """True if the entity went into the event, False if it came out of it"""
   isInput: Boolean! = true
 
-  """Which role the entity played, as the event's category names it"""
+  """
+  Which role the entity played — the caller's own word; the write names no graph and no category
+  """
   role: String!
 }
 
@@ -312,11 +213,11 @@ input AssertRelationExistsInput {
 }
 
 """Input for claiming that several recorded instances are one thing"""
-input AssertSameEntityInput {
+input AssertSameInstanceInput {
   """
-  Two or more entity ids that name the same thing. Every pair among them is claimed, under one assertion.
+  Two or more instance ids that name the same thing — entities or events alike. Every pair among them is claimed, under one assertion.
   """
-  entities: [String!]!
+  instances: [String!]!
 }
 
 """Input for claiming that an external datum exists"""
@@ -329,11 +230,6 @@ input AssertStructureExistsInput {
 
   """The unique ID of the object this structure references"""
   object: String!
-
-  """
-  The ID of the user for whom to set this pin. If not provided, will default to the user making the request.
-  """
-  user: String = null
 }
 
 """Input for creating a new structure relation"""
@@ -353,6 +249,7 @@ input AssertStructureRelationExistsInput {
   term: String!
 }
 
+"""An assertion about a comment — a remark recorded about a structure"""
 type AssertedComment {
   """
   The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
@@ -363,6 +260,212 @@ type AssertedComment {
   The remark this act was about — recorded it, withdrew it, or reopened it; the assertion says which
   """
   comment: Comment!
+}
+
+"""
+An assertion that a structure is evidence for a node. Drawings are always empty: an INFORMS claim has no AGE edge
+"""
+type AssertedDescription {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  link: Link!
+}
+
+"""
+An assertion about an entity: the act, the claim it recorded, and everywhere that claim is now drawn
+"""
+type AssertedEntity {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [NodeDrawing!]!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  instance: Instance!
+}
+
+"""
+An assertion about several instances made as one act, and everywhere they are now drawn
+"""
+type AssertedInstances {
+  """
+  The single claim covering the whole batch. One act by one actor is one assertion, which is why this is not a list
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [NodeDrawing!]!
+
+  """The instances this act was about, as the log has them"""
+  instances: [Instance!]!
+}
+
+"""
+An assertion about several link claims made as one act, and everywhere they are now drawn
+"""
+type AssertedLinks {
+  """The single claim covering the whole batch"""
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [EdgeDrawing!]!
+
+  """The claims this act was about, as the log has them"""
+  links: [Link!]!
+}
+
+"""An assertion about a measurement — a structure measuring a node"""
+type AssertedMeasurement {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  link: Link!
+}
+
+"""An assertion about a metric — a measured value about a structure"""
+type AssertedMetric {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """The metric this act was about"""
+  metric: Metric!
+}
+
+"""An assertion about a natural event, and everywhere it is now drawn"""
+type AssertedNaturalEvent {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [NodeDrawing!]!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  instance: Instance!
+}
+
+"""An assertion about one participation, and everywhere it is now drawn"""
+type AssertedParticipation {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [EdgeDrawing!]!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  link: Link!
+}
+
+"""An assertion about a protocol event, and everywhere it is now drawn"""
+type AssertedProtocolEvent {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [NodeDrawing!]!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  instance: Instance!
+}
+
+"""
+An assertion about a relation, and everywhere that relation is now drawn
+"""
+type AssertedRelation {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
+  """
+  drawings: [EdgeDrawing!]!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  link: Link!
+}
+
+"""An assertion that instances are one thing, and the claims it recorded"""
+type AssertedSameness {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  The sameness claims this act recorded. Asserting that three instances are one records every pair among them, under one assertion
+  """
+  links: [Link!]!
+}
+
+"""An assertion about a structure — a pointer to an external datum"""
+type AssertedStructure {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """The structure this act was about"""
+  structure: Structure!
+}
+
+"""
+An assertion about a structure relation — a claim between two external data
+"""
+type AssertedStructureRelation {
+  """
+  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
+  """
+  assertion: Assertion!
+
+  """
+  What was claimed, as the log has it. Not a drawing of it: derived properties, a label and a category are one view's account and live on each entry in `drawings`. This is addressable whether or not any view draws it, which is the case a write has to answer for.
+  """
+  link: Link!
 }
 
 """
@@ -398,6 +501,7 @@ type Assertion {
   subject: String!
 }
 
+"""Input for claiming a remark stands again — reopening, as new evidence"""
 input AttestCommentInput {
   """The ID of the comment to attest"""
   id: String!
@@ -406,15 +510,27 @@ input AttestCommentInput {
 """Input for claiming that an entity exists"""
 input AttestEntityInput {
   """
-  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  The uuid of the node being attested. The same id `retract*` returns, so the two round-trip.
   """
+  id: String!
+}
+
+"""Input for claiming that a link claim still stands"""
+input AttestLinkInput {
+  """The ID of the claim to attest — its `Link` primary key"""
+  id: String!
+}
+
+"""Input for claiming that a measurement still stands"""
+input AttestMetricInput {
+  """The ID of the metric to attest — a bare uuid, its evidence primary key"""
   id: String!
 }
 
 """Input for claiming that a natural event exists"""
 input AttestNaturalEventInput {
   """
-  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  The uuid of the node being attested. The same id `retract*` returns, so the two round-trip.
   """
   id: String!
 }
@@ -422,7 +538,15 @@ input AttestNaturalEventInput {
 """Input for claiming that a protocol event exists"""
 input AttestProtocolEventInput {
   """
-  The uuid of the node being attested. The same id `archive*` returns, so the two round-trip.
+  The uuid of the node being attested. The same id `retract*` returns, so the two round-trip.
+  """
+  id: String!
+}
+
+"""Input for claiming that a structure still stands"""
+input AttestStructureInput {
+  """
+  The ID of the structure to attest — a bare uuid, its evidence primary key
   """
   id: String!
 }
@@ -475,18 +599,6 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
-"""Input type for creating a new graph query"""
-type BuilderArgs {
-  """Optional patterns to match in the graph for this query"""
-  matchPaths: [MatchPath!]
-
-  """The values to return for each matched pattern in the graph query"""
-  returnStatements: [ReturnStatement!]
-
-  """Optional filtering conditions for the graph query"""
-  whereClauses: [WhereClause!]
-}
-
 """Builder arguments for generating a graph table query"""
 input BuilderArgsInput {
   """Optional patterns to match in the graph for this query"""
@@ -505,7 +617,7 @@ enum Cardinality {
   ONE_TO_ONE
 }
 
-"""Base interface for structure categories/schemas"""
+"""Base interface for structure categories"""
 interface Category {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -533,7 +645,7 @@ interface Category {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """Persistent URL for this category"""
@@ -566,21 +678,18 @@ input CategoryNodePositionInput {
   width: Float = null
 }
 
+"""
+Either end of a claim: another claim, an external datum, or one of the organization's words
+"""
+union ClaimEndpoint = Instance | Link | Structure | Term
+
 """A CLASSIFIES claim: somebody's word for what a node is"""
 type Classification implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
@@ -588,17 +697,17 @@ type Classification implements Edge {
   """The node this word was claimed about"""
   source: Node!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 
   """The organization's word that was claimed"""
   term: Term
 }
 
-"""One claim that a node is of a category, inside a batch"""
+"""One claim that a node is of a word, inside a batch"""
 input ClassificationInput {
   """The node being classified"""
   node: String!
@@ -609,7 +718,7 @@ input ClassificationInput {
   term: String!
 }
 
-"""Input for claiming that several nodes are of a category, as one act"""
+"""Input for claiming that several nodes are of a word, as one act"""
 input ClassifyNodesInput {
   """The claims to record"""
   classifications: [ClassificationInput!]!
@@ -713,6 +822,7 @@ enum ColumnKind {
   VALUE
 }
 
+"""A remark somebody made about a structure — a claim, as the log has it"""
 type Comment {
   """The act of commenting: who said it, with which app, and when"""
   assertion: Assertion!
@@ -762,6 +872,7 @@ type Comment {
   text: String!
 }
 
+"""Input for remarking on an external datum, minting its structure if new"""
 input CommentOnStructureInput {
   """The rich body of the remark — a tree of LEAF/MENTION/PARAGRAPH nodes"""
   descendants: [DescendantInput!]!
@@ -783,71 +894,8 @@ enum ConflictPolicy {
   SUBJECT_PRIORITY
 }
 
-"""Input for creating a new edge pairs query"""
-input CreateEdgePairsQueryInput {
-  """Description of this edge query"""
-  description: String = null
-
-  """The graph id this edge pairs query will belong to"""
-  graph: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this edge query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String!
-}
-
-"""Input for creating a new edge path query"""
-input CreateEdgePathQueryInput {
-  """Description of this edge query"""
-  description: String = null
-
-  """The graph id this edge path query will belong to"""
-  graph: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this edge query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String!
-}
-
-"""Input for creating a new edge table query"""
-input CreateEdgeTableQueryInput {
-  """Definitions for the columns returned by this edge table query"""
-  columnInput: [ColumnInput!]! = []
-
-  """Description of this edge query"""
-  description: String = null
-
-  """The graph id this edge table query will belong to"""
-  graph: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this edge query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String!
-}
-
 """Input for creating a new entity definition in the graph schema"""
-input CreateEntityDefinitionInput {
+input CreateEntityCategoryInput {
   """
   Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
   """
@@ -886,9 +934,6 @@ input CreateEntityDefinitionInput {
 
   """Property definitions"""
   propertyDefinitions: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for creating a new graph from a schema definition"""
@@ -908,99 +953,52 @@ input CreateGraphInput {
   name: String!
 }
 
-"""Input for creating a graph pairs query"""
-input CreateGraphPairsQueryInput {
-  """Description of this graph query"""
-  description: String = null
-
-  """The graph id this graph pairs query will belong to"""
-  graph: String!
-
-  """Unique key for this graph query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this graph query"""
-  query: String!
-}
-
-"""Input for creating a graph path query"""
-input CreateGraphPathQueryInput {
-  """Description of this graph query"""
-  description: String = null
-
-  """The graph id this graph path query will belong to"""
-  graph: String!
-
-  """Unique key for this graph query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this graph query"""
-  query: String!
-}
-
 """Input for creating a new graph table query"""
 input CreateGraphTableQueryInput {
-  """Definitions for the columns returned by this graph query"""
+  """How the returned aliases are presented"""
   columnInput: [ColumnInput!]! = []
 
-  """Description of this graph query"""
+  """Description of this query"""
   description: String = null
 
   """The graph id this table query will belong to"""
   graph: String!
 
-  """Unique key for this graph query, used for referencing in the UI"""
+  """
+  Unique key for this query within its graph, used for referencing in the UI
+  """
   key: String!
 
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
+  """Human-readable name (defaults to `key`)"""
   name: String = null
 
-  """The Cypher query string that defines this graph query"""
-  query: String!
+  """What the query means; compiled by each projection kind"""
+  plan: TableQueryPlanInput!
 }
 
 """Input for creating a graph table query through builder arguments"""
 input CreateGraphTableQueryThroughBuilderInput {
-  """
-  Optional additional arguments for the graph query builder to support advanced features like dynamic filtering or pattern matching
-  """
+  """The builder arguments; stored as the query's plan"""
   builderArgs: BuilderArgsInput!
 
-  """Definitions for the columns returned by this graph query"""
+  """How the returned aliases are presented"""
   columnInput: [ColumnInput!]! = []
 
-  """Description of this graph query"""
+  """Description of this query"""
   description: String = null
 
   """The graph id this table query will belong to"""
   graph: String!
 
-  """Unique key for this graph query, used for referencing in the UI"""
+  """Unique key for this query within its graph"""
   key: String!
 
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
+  """Human-readable name (defaults to `key`)"""
   name: String = null
-
-  """Ignored; the query is generated from the builder arguments"""
-  query: String = null
 }
 
 """Input for creating a new measurement definition in the graph schema"""
-input CreateMeasurementDefinitionInput {
+input CreateMeasurementCategoryInput {
   """Relation cardinality"""
   cardinality: Cardinality! = ONE_TO_ONE
 
@@ -1033,9 +1031,6 @@ input CreateMeasurementDefinitionInput {
   """Derived property definitions"""
   properties: [PropertyDefinitionInput!]! = []
 
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
   """Source entity type(s)"""
   source: StructureDescriptorInput!
 
@@ -1044,7 +1039,7 @@ input CreateMeasurementDefinitionInput {
 }
 
 """Input for creating a new natural event definition in the graph schema"""
-input CreateNaturalEventDefinitionInput {
+input CreateNaturalEventCategoryInput {
   """
   Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
   """
@@ -1068,7 +1063,9 @@ input CreateNaturalEventDefinitionInput {
   """The label of the node participating in the event"""
   key: String!
 
-  """The kind of event"""
+  """
+  Whether the event arises in the system itself (INTRINSIC, e.g. mitosis) or is applied from outside (EXTRINSIC, e.g. a protocol step)
+  """
   kind: EventKind!
 
   """
@@ -1087,76 +1084,10 @@ input CreateNaturalEventDefinitionInput {
 
   """Property definitions"""
   properties: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-}
-
-"""Input for creating a new node pairs query"""
-input CreateNodePairsQueryInput {
-  """Description of this node query"""
-  description: String = null
-
-  """The graph id this node pairs query will belong to"""
-  graph: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this node query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String!
-}
-
-"""Input for creating a new node path query"""
-input CreateNodePathQueryInput {
-  """Description of this node query"""
-  description: String = null
-
-  """The graph id this node path query will belong to"""
-  graph: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this node query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String!
-}
-
-"""Input for creating a new node table query"""
-input CreateNodeTableQueryInput {
-  """Definitions for the columns returned by this node table query"""
-  columnInput: [ColumnInput!]! = []
-
-  """Description of this node query"""
-  description: String = null
-
-  """The graph id this node table query will belong to"""
-  graph: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String!
-
-  """
-  Human-readable name for this node query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String!
 }
 
 """Input for creating a new protocol event definition in the graph schema"""
-input CreateProtocolEventDefinitionInput {
+input CreateProtocolEventCategoryInput {
   """
   Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
   """
@@ -1180,7 +1111,9 @@ input CreateProtocolEventDefinitionInput {
   """The label of the node participating in the event"""
   key: String!
 
-  """The kind of event"""
+  """
+  Whether the event arises in the system itself (INTRINSIC, e.g. mitosis) or is applied from outside (EXTRINSIC, e.g. a protocol step)
+  """
   kind: EventKind!
 
   """
@@ -1202,13 +1135,10 @@ input CreateProtocolEventDefinitionInput {
 
   """The protocol this event definition belongs to"""
   protocol: String!
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for creating a new relation definition in the graph schema"""
-input CreateRelationDefinitionInput {
+input CreateRelationCategoryInput {
   """
   Draw the evidence this word already admits. Claims made under it before this category existed are in the organization's evidence base; with this on they are projected into the graph now, instead of waiting for the next reproject. Off by default because the work is proportional to the graph's evidence and happens before this mutation returns.
   """
@@ -1247,9 +1177,6 @@ input CreateRelationDefinitionInput {
 
   """Property definitions"""
   propertyDefinitions: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for creating a scatter plot"""
@@ -1260,20 +1187,14 @@ input CreateScatterPlotInput {
   """Optional description of the scatter plot"""
   description: String = null
 
-  """Optional graph table query ID used by this scatter plot"""
-  graphQueryId: Int = null
+  """The graph table query this scatter plot is drawn from"""
+  graphQueryId: Int!
 
   """Column key used for point identifiers"""
   idColumn: String!
 
   """The display name of the scatter plot"""
   name: String!
-
-  """Optional node table query ID used by this scatter plot"""
-  nodeQueryId: Int = null
-
-  """Optional node path query ID used by this scatter plot"""
-  pathQueryId: Int = null
 
   """Optional column key used for point shape"""
   shapeColumn: String = null
@@ -1297,7 +1218,7 @@ input CreateScatterPlotInput {
 """
 Input for creating a new structure relation definition in the graph schema
 """
-input CreateStructureRelationDefinitionInput {
+input CreateStructureRelationCategoryInput {
   """Relation cardinality"""
   cardinality: Cardinality! = ONE_TO_ONE
 
@@ -1329,9 +1250,6 @@ input CreateStructureRelationDefinitionInput {
 
   """Derived property definitions"""
   properties: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 
   """Source entity type(s)"""
   source: StructureDescriptorInput!
@@ -1372,26 +1290,8 @@ scalar CypherLiteral
 """Date with time (isoformat)"""
 scalar DateTime
 
-"""Input for deleting an edge pairs query"""
-input DeleteEdgePairsQueryInput {
-  """The ID of the edge pairs query to delete"""
-  id: ID!
-}
-
-"""Input for deleting an edge path query"""
-input DeleteEdgePathQueryInput {
-  """The ID of the edge path query to delete"""
-  id: ID!
-}
-
-"""Input for deleting an edge table query"""
-input DeleteEdgeTableQueryInput {
-  """The ID of the edge table query to delete"""
-  id: ID!
-}
-
 """Input for deleting an existing entity definition in the graph schema"""
-input DeleteEntityDefinitionInput {
+input DeleteEntityCategoryInput {
   """The ID of the structure category to delete"""
   id: ID!
 }
@@ -1400,18 +1300,6 @@ input DeleteEntityDefinitionInput {
 input DeleteGraphInput {
   """The ID of the graph to delete"""
   id: String!
-}
-
-"""Input for deleting a graph pairs query"""
-input DeleteGraphPairsQueryInput {
-  """The ID of the graph pairs query to delete"""
-  id: ID!
-}
-
-"""Input for deleting a graph path query"""
-input DeleteGraphPathQueryInput {
-  """The ID of the graph path query to delete"""
-  id: ID!
 }
 
 """Input for deleting a graph table query"""
@@ -1423,53 +1311,35 @@ input DeleteGraphTableQueryInput {
 """
 Input for deleting an existing measurement definition in the graph schema
 """
-input DeleteMeasurementDefinitionInput {
+input DeleteMeasurementCategoryInput {
   """The ID of the measurement category to delete"""
   id: String!
 }
 
 """Input for deleting an existing metric definition in the graph schema"""
-input DeleteMetricDefinitionInput {
-  """The ID of the entity category to delete"""
+input DeleteMetricKindInput {
+  """The ID of the metric kind to retire"""
   id: String!
 }
 
 """
 Input for deleting an existing natural event definition in the graph schema
 """
-input DeleteNaturalEventDefinitionInput {
+input DeleteNaturalEventCategoryInput {
   """The ID of the event category to delete"""
   id: String!
-}
-
-"""Input for deleting a node pairs query"""
-input DeleteNodePairsQueryInput {
-  """The ID of the node pairs query to delete"""
-  id: ID!
-}
-
-"""Input for deleting a node path query"""
-input DeleteNodePathQueryInput {
-  """The ID of the node path query to delete"""
-  id: ID!
-}
-
-"""Input for deleting a node table query"""
-input DeleteNodeTableQueryInput {
-  """The ID of the node table query to delete"""
-  id: ID!
 }
 
 """
 Input for deleting an existing protocol event definition in the graph schema
 """
-input DeleteProtocolEventDefinitionInput {
+input DeleteProtocolEventCategoryInput {
   """The ID of the event category to delete"""
   id: String!
 }
 
 """Input for deleting an existing relation definition in the graph schema"""
-input DeleteRelationDefinitionInput {
+input DeleteRelationCategoryInput {
   """The ID of the relation category to delete"""
   id: String!
 }
@@ -1483,15 +1353,15 @@ input DeleteScatterPlotInput {
 """
 Input for deleting an existing structure definition in the graph schema
 """
-input DeleteStructureDefinitionInput {
-  """The ID of the entity category to delete"""
+input DeleteStructureKindInput {
+  """The ID of the structure kind to retire"""
   id: String!
 }
 
 """
 Input for deleting an existing structure relation definition in the graph schema
 """
-input DeleteStructureRelationDefinitionInput {
+input DeleteStructureRelationCategoryInput {
   """The ID of the structure relation category to delete"""
   id: String!
 }
@@ -1569,6 +1439,9 @@ enum DerivationType {
   ROLLUP
 }
 
+"""
+One node of a comment's rich body. The tree lok's komment app renders: paragraphs holding leaves and mentions
+"""
 interface Descendant {
   """The children of this node. Always empty for leafs"""
   children: [Descendant!]
@@ -1582,6 +1455,9 @@ interface Descendant {
   unsafeChildren: AnyScalar
 }
 
+"""
+One node of a comment's rich body — shape-compatible with lok's komment descendants
+"""
 input DescendantInput {
   bold: Boolean = null
 
@@ -1606,6 +1482,9 @@ input DescendantInput {
   user: String = null
 }
 
+"""
+The kind of a comment descendant — how one node of the rich-text tree renders
+"""
 enum DescendantKind {
   LEAF
   MENTION
@@ -1614,19 +1493,11 @@ enum DescendantKind {
 
 """An INFORMS claim: a structure that is evidence for a node"""
 type Description implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
@@ -1634,40 +1505,34 @@ type Description implements Edge {
   """The structure that is evidence here"""
   source: Structure!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """The entity this structure is evidence for"""
-  target: Entity!
+  """What this structure is evidence for — a node, or another claim"""
+  target: InformsTarget!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
-"""Base interface for all graph edges"""
+"""
+A claim relating two things — one `evidence.Link` row, typed by its kind. Not a drawing: several kinds are never projected to an AGE edge at all
+"""
 interface Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
 """Base interface for graph schemas"""
@@ -1687,14 +1552,8 @@ interface EdgeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
-  materializableAs: [MaterializedEdge!]!
-
   """Persistent URL for this category"""
   purl: String
-
-  """List of relevant queries that use this category as input"""
-  relevantEdgeQueries: [EdgeQuery!]!
 }
 
 """One view that draws a claimed edge, and how it draws it"""
@@ -1711,221 +1570,6 @@ type EdgeDrawing {
   graph: Graph!
 }
 
-"""Base interface for graph schemas"""
-type EdgePairsQuery implements EdgeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """Optional edge category/schema to filter pairs by"""
-  edgeCategory: EdgeCategory
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-
-  """The source node category/schema to query"""
-  sourceCategory: NodeCategory!
-
-  """The target node category/schema to query"""
-  targetCategory: NodeCategory!
-}
-
-input EdgePairsQueryFilter {
-  AND: EdgePairsQueryFilter
-  DISTINCT: Boolean
-  NOT: EdgePairsQueryFilter
-  OR: EdgePairsQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input EdgePairsQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for graph schemas"""
-type EdgePathQuery implements EdgeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-}
-
-input EdgePathQueryFilter {
-  AND: EdgePathQueryFilter
-  DISTINCT: Boolean
-  NOT: EdgePathQueryFilter
-  OR: EdgePathQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input EdgePathQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for entity categories/schemas"""
-interface EdgeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of this saved query"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-}
-
-"""Base interface for graph schemas"""
-type EdgeTableQuery implements EdgeQuery & Plottable {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """
-  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
-  """
-  builderArgs: BuilderArgs
-
-  """List of columns to return in the table query result"""
-  columns: [Column!]!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher query to execute for this table query"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-
-  """The graph this category belongs to"""
-  scatterPlots: [ScatterPlot!]!
-}
-
-input EdgeTableQueryFilter {
-  AND: EdgeTableQueryFilter
-  DISTINCT: Boolean
-  NOT: EdgeTableQueryFilter
-  OR: EdgeTableQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input EdgeTableQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""
-An assertion about several edges made as one act, and everywhere they are now drawn
-"""
-type EdgesAssertion {
-  """The single claim covering the whole batch"""
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [EdgeDrawing!]!
-
-  """The claims this act was about, each as its own kind"""
-  edges: [Edge!]!
-}
-
 """
 Input for getting the structure for an external datum, creating it if new
 """
@@ -1938,15 +1582,10 @@ input EnsureStructureInput {
 
   """The unique ID of the object this structure references"""
   object: String!
-
-  """
-  The ID of the user for whom to set this pin. If not provided, will default to the user making the request.
-  """
-  user: String = null
 }
 
 """An entity in the knowledge graph with derived properties"""
-type Entity implements Node & VersionedNode {
+type Entity implements Node {
   """How the view this was read through draws it, if any view does"""
   category: EntityCategory
 
@@ -1968,30 +1607,16 @@ type Entity implements Node & VersionedNode {
   """
   drawnIn: [NodeDrawing!]!
 
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
   """
-  The graph this node belongs to, or null for organization-scoped evidence
+  This node's durable identity — a bare uuid, world-unique and stable across reprojects
   """
-  graph: Graph
-
-  """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
-  """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
+  id: ID!
 
   """The entity type/kind (e.g. 'AIS', 'Cell')"""
   kind: String!
 
   """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  The label this view draws the node under — its category's `ageName` — or the claim's word when the view has not drawn it yet
   """
   label: String!
 
@@ -2000,30 +1625,17 @@ type Entity implements Node & VersionedNode {
   """
   labels: [Label!]!
 
-  """Timestamp when properties were last derived (unix ms)"""
-  lastDerived: UnixMilliseconds
-
-  """Local ID if set"""
-  localId: String
-
-  """The source entity of this relation"""
-  measuredBy: [Measurement!]!
-
-  """The source entity of this relation"""
-  participatedIn: [InputParticipation!]!
-
   """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
+  Always null. A per-node wall-clock stamp the projector no longer writes; ask `Graph.projection { derivedAt }` for when the view was last derived
   """
-  pinned: Boolean!
+  lastDerived: UnixMilliseconds @deprecated(reason: "`__last_derived` is no longer stamped on vertices — it was the one projected value a rebuild could not reproduce. Read `Graph.projection { derivedAt projectedThroughSeq }` instead. Removed in the next major.")
 
   """The current derived properties for this entity"""
   properties: AnyScalar!
 
-  """The source entity of this relation"""
-  resultedOut: [OutputParticipation!]!
-
-  """List of properties derived for this entity"""
+  """
+  List of properties derived for this entity. Empty when this reading has no category — a property definition is one view's rule, and a claim no view draws has none
+  """
   richProperties: [RichProperty!]!
 
   """
@@ -2031,35 +1643,19 @@ type Entity implements Node & VersionedNode {
   """
   sameAs: [Sameness!]!
 
-  """Schema version used to derive properties"""
-  schemaVersion: String!
+  """
+  Schema version the properties were derived under. Null when this reading came from the log rather than from a projection — a claim no view draws has no derived properties, so there is no version to name
+  """
+  schemaVersion: String
 
-  """When this entity became valid"""
+  """When this entity became valid. When did it start existing?"""
   validFrom: DateTime
 
-  """When this entity stopped being valid"""
+  """When this entity stopped being valid. . When did it stop existing?"""
   validTo: DateTime
 }
 
-"""An assertion about an entity, and everywhere that entity is now drawn"""
-type EntityAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [NodeDrawing!]!
-
-  """
-  The entity as the log has it: its identity and the word it was claimed under. Derived properties are per-view and live on each drawing
-  """
-  entity: Entity!
-}
-
-"""An entity category/schema definition"""
+"""An entity category definition"""
 type EntityCategory implements Category & NodeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -2070,7 +1666,7 @@ type EntityCategory implements Category & NodeCategory {
   """Description of the category"""
   description: String
 
-  """The graph this category belongs to"""
+  """The entities this category draws, read from the evidence log"""
   entities(filters: EntityFilter = null, ordering: [EntityOrder!] = null, pagination: EntityPaginationInput = null): [Entity!]!
 
   """The graph this category belongs to"""
@@ -2101,7 +1697,7 @@ type EntityCategory implements Category & NodeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """X coordinate"""
@@ -2118,9 +1714,6 @@ type EntityCategory implements Category & NodeCategory {
 
   """Persistent URL for this category"""
   purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
 
   """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
@@ -2219,9 +1812,6 @@ input EntityDefinitionInput {
 
   """Property definitions"""
   propertyDefinitions: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input type for creating a new graph query"""
@@ -2250,32 +1840,22 @@ input EntityDescriptorInput {
 
 """Filter options for querying entities"""
 input EntityFilter {
-  """Filter entities that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific entity IDs"""
-  ids: [GraphID!] = null
+  ids: [ID!] = null
 
-  """Filter entities that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over entity properties"""
+  """
+  Substring match on the claim's term key or label. A column of the log, not a derived property
+  """
   search: String = null
 }
 
 """Ordering options for entity queries"""
 input EntityOrder {
-  """Order by entity kind/type"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by entity ID"""
   id: Ordering = null
-
-  """Order by a specific property value (requires 'has_property' filter)"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying entities"""
@@ -2287,13 +1867,15 @@ input EntityPaginationInput {
   offset: Int = 0
 }
 
-"""Interface for edges that track schema version and derivation time"""
+"""
+A domain event drawn in a graph — something that happened to the sample, never an entry of the assertion log
+"""
 interface Event {
-  """The event type/kind"""
+  """The event's word, e.g. 'Mitosis' — what the claim says happened"""
   kind: String!
 }
 
-"""Base interface for event categories/schemas"""
+"""Base interface for event categories"""
 interface EventCategory implements Category & NodeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -2319,7 +1901,7 @@ interface EventCategory implements Category & NodeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
-  """The graph this category belongs to"""
+  """The roles an entity can play going into an event of this category"""
   inputs: [EventRole!]!
 
   """
@@ -2330,10 +1912,10 @@ interface EventCategory implements Category & NodeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
+  """The roles an entity can play coming out of an event of this category"""
   outputs: [EventRole!]!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """X coordinate"""
@@ -2350,9 +1932,6 @@ interface EventCategory implements Category & NodeCategory {
 
   """Persistent URL for this category"""
   purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
 
   """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
@@ -2383,7 +1962,9 @@ input EventDefinitionInput {
   """The label of the node participating in the event"""
   key: String!
 
-  """The kind of event"""
+  """
+  Whether the event arises in the system itself (INTRINSIC, e.g. mitosis) or is applied from outside (EXTRINSIC, e.g. a protocol step)
+  """
   kind: EventKind!
 
   """
@@ -2402,9 +1983,6 @@ input EventDefinitionInput {
 
   """Property definitions"""
   properties: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 enum EventKind {
@@ -2461,29 +2039,26 @@ input FinishZarrUploadInput {
   valid: Boolean! = true
 }
 
-scalar GlobalID
-
 """One view over the organization's evidence log"""
 type Graph {
-  """The name of the graph as used in AGE (e.g. 'CellGraph')"""
+  """
+  Internal handle of the graph's Apache AGE namespace. Random, read-only, and not an identifier: address a graph by `id`.
+  """
   ageName: String!
 
   """Color as RGBA list (0-255)"""
   color: [Int!]
 
-  """Description of the category"""
+  """Description of the graph"""
   description: String
 
-  """List of edge categories/schemas defined in this graph"""
+  """List of edge categories defined in this graph"""
   edgeCategories: [EdgeCategory!]!
 
-  """List of entity categories/schemas defined in this graph"""
+  """List of entity categories defined in this graph"""
   entityCategories(filters: EntityCategoryFilter, ordering: [EntityCategoryOrder!]! = [], pagination: OffsetPaginationInput): [EntityCategory!]!
 
-  """ID of the graph this category belongs to"""
-  graphId: ID!
-
-  """Database ID of the category"""
+  """Database ID of the graph"""
   id: ID!
 
   """An image representing this graph, for visualization purposes"""
@@ -2494,46 +2069,42 @@ type Graph {
   """
   isArchived: Boolean!
 
-  """Label/name of the category"""
+  """Label/name of the graph"""
   label: String!
 
-  """List of materialized edges in the graph"""
-  materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
-
-  """List of materialized relation edges in the graph"""
-  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
-
-  """List of materialized structure relation edges in the graph"""
-  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
-
-  """List of measurement categories/schemas defined in this graph"""
+  """List of measurement categories defined in this graph"""
   measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
 
   """Name of the graph"""
   name: String!
 
-  """List of natural event categories/schemas defined in this graph"""
+  """List of natural event categories defined in this graph"""
   naturalEventCategories(filters: NaturalEventCategoryFilter, ordering: [NaturalEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [NaturalEventCategory!]!
 
-  """List of node categories/schemas defined in this graph"""
+  """List of node categories defined in this graph"""
   nodeCategories: [NodeCategory!]!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
-  """List of protocol event categories/schemas defined in this graph"""
+  """
+  Where this view's drawing stands relative to the organization's log: the assertion seq it is caught up to, how far behind it is, and whether its derived properties are current under the active schema. Compare a write's `assertion.seq` with `projectedThroughSeq` to know whether this view has drawn it. See `graph_engine/watermark.py` for why the cursor is safe.
+  """
+  projection: GraphProjection!
+
+  """List of protocol event categories defined in this graph"""
   protocolEventCategories(filters: ProtocolEventCategoryFilter, ordering: [ProtocolEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [ProtocolEventCategory!]!
 
-  """Persistent URL for this category"""
+  """Persistent URL for this graph"""
   purl: String
 
   """List of graph queries defined in this graph"""
   queries: [GraphQuery!]!
 
-  """List of relation categories/schemas defined in this graph"""
+  """List of relation categories defined in this graph"""
   relationCategories(filters: RelationCategoryFilter, ordering: [RelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [RelationCategory!]!
 
-  """List of structure relation categories/schemas defined in this graph"""
+  """List of structure relation categories defined in this graph"""
   structureRelationCategories(filters: StructureRelationCategoryFilter, ordering: [StructureRelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureRelationCategory!]!
 }
 
@@ -2572,9 +2143,6 @@ input GraphExtensionsInput {
   """Scatter plot definitions"""
   scatterPlots: [ScatterPlotInput!]! = []
 
-  """Graph sequences for ordering entities"""
-  sequences: [SequenceInput!]! = []
-
   """Structure relation definitions"""
   structureRelations: [StructureRelationDefinitionInput!]! = []
 }
@@ -2606,182 +2174,53 @@ input GraphFilter {
   search: String
 }
 
-scalar GraphID
-
-"""Base interface for graph schemas"""
-type GraphNodesQuery implements GraphQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The node category/schema to query"""
-  nodeCategory: NodeCategory!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-}
-
-input GraphNodesQueryFilter {
-  AND: GraphNodesQueryFilter
-  DISTINCT: Boolean
-  NOT: GraphNodesQueryFilter
-  OR: GraphNodesQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input GraphNodesQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
 input GraphOrder @oneOf {
   id: Ordering
   name: Ordering
 }
 
-"""Base interface for graph schemas"""
-type GraphPairsQuery implements GraphQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """Optional edge category/schema to filter pairs by"""
-  edgeCategory: EdgeCategory
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
+"""
+How far along the organization's log one view's drawing is. The projection is a cache of the evidence; this says how current a cache it is. `projectedThroughSeq` is a safe cursor: every assertion at or below it has been drawn here. `lag` is the distance to the log head; `pending` is how many assertions organization-wide nobody has finished drawing. `schemaStale` is the other axis — a category's rules moved and the vertices have not been redrawn under them.
+"""
+type GraphProjection {
+  """When derived properties were last written here"""
+  derivedAt: DateTime
 
   """
-  The key this query is referenced and pinned by, unique within its graph
+  Log head the last bulk operation (rebuild, backfill, replay) read at. Informational — the cursor is `projectedThroughSeq`
   """
-  key: String!
+  derivedThroughSeq: Int!
 
-  """Human-readable name for this query"""
-  label: String!
+  """Which kind of projection. Only Apache AGE exists today"""
+  kind: String!
 
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-
-  """The source node category/schema to query"""
-  sourceCategory: NodeCategory!
-
-  """The target node category/schema to query"""
-  targetCategory: NodeCategory!
-}
-
-input GraphPairsQueryFilter {
-  AND: GraphPairsQueryFilter
-  DISTINCT: Boolean
-  NOT: GraphPairsQueryFilter
-  OR: GraphPairsQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input GraphPairsQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for graph schemas"""
-type GraphPathQuery implements GraphQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
+  """Assertions between the cursor and the organization's log head"""
+  lag: Int!
 
   """
-  The key this query is referenced and pinned by, unique within its graph
+  Assertions across the organization whose synchronous projection did not finish
   """
-  key: String!
+  pending: Int!
 
-  """Human-readable name for this query"""
-  label: String!
+  """
+  Every assertion with seq at or below this has been drawn in this view. 0 while undrawn or mid-rebuild
+  """
+  projectedThroughSeq: Int!
 
-  """The Cypher this query runs"""
-  query: CypherLiteral!
+  """When this view was last dropped and replayed in full"""
+  rebuiltAt: DateTime
 
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
+  """GraphSchema hash the drawing was last fully derived under"""
+  schemaHash: String
 
-  """The node category this path starts from"""
-  sourceCategory: NodeCategory
-
-  """The node category this path ends at"""
-  targetCategory: NodeCategory
+  """
+  The drawing was last fully derived under a schema that is no longer the active one
+  """
+  schemaStale: Boolean!
+  status: ProjectionStatus!
 }
 
-input GraphPathQueryFilter {
-  AND: GraphPathQueryFilter
-  DISTINCT: Boolean
-  NOT: GraphPathQueryFilter
-  OR: GraphPathQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input GraphPathQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for entity categories/schemas"""
+"""Base interface for entity categories"""
 interface GraphQuery {
   """Whether this saved query has been archived"""
   archived: Boolean!
@@ -2803,8 +2242,20 @@ interface GraphQuery {
   """Human-readable name for this query"""
   label: String!
 
-  """The Cypher this query runs"""
-  query: CypherLiteral!
+  """
+  True for a row saved as raw Cypher before the plan became the contract. It still renders, but takes no filter, order or page; rebuild it through the builder
+  """
+  legacy: Boolean!
+
+  """
+  What this query means: its plan. Null only on a legacy row saved as raw Cypher before plans existed — see `legacy`
+  """
+  plan: TableQueryPlan
+
+  """
+  The query as compiled for the Apache AGE projection — read-only, from `plan`. The stored string for a legacy row
+  """
+  query: CypherLiteral @deprecated(reason: "The contract is `plan`; this is its compiled form and names a projection kind. Removed in the next major.")
 
   """List of node categories for which this query is relevant"""
   relevantFor: [NodeCategory!]!
@@ -2835,12 +2286,7 @@ type GraphTableQuery implements GraphQuery & Plottable {
   """Whether this saved query has been archived"""
   archived: Boolean!
 
-  """
-  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
-  """
-  builderArgs: BuilderArgs
-
-  """List of columns to return in the table query result"""
+  """How the returned aliases are presented"""
   columns: [Column!]!
 
   """Description of this query"""
@@ -2849,7 +2295,7 @@ type GraphTableQuery implements GraphQuery & Plottable {
   """The graph this query belongs to"""
   graph: Graph!
 
-  """Database ID of the category"""
+  """Database ID of this saved query"""
   id: ID!
 
   """
@@ -2860,8 +2306,20 @@ type GraphTableQuery implements GraphQuery & Plottable {
   """Human-readable name for this query"""
   label: String!
 
-  """The Cypher query to execute for this table query"""
-  query: CypherLiteral!
+  """
+  True for a row saved as raw Cypher before the plan became the contract. It still renders, but takes no filter, order or page; rebuild it through the builder
+  """
+  legacy: Boolean!
+
+  """
+  What this query means: its plan. Null only on a legacy row saved as raw Cypher before plans existed — see `legacy`
+  """
+  plan: TableQueryPlan
+
+  """
+  The query as compiled for the Apache AGE projection — read-only, from `plan`. The stored string for a legacy row
+  """
+  query: CypherLiteral @deprecated(reason: "The contract is `plan`; this is its compiled form and names a projection kind. Removed in the next major.")
 
   """List of node categories for which this query is relevant"""
   relevantFor: [NodeCategory!]!
@@ -2886,21 +2344,22 @@ input GraphTableQueryFilter {
   search: String
 }
 
-"""A saved table query over a graph"""
+"""A saved table query declared inside a graph definition, as a plan"""
 input GraphTableQueryInput {
-  """Description of this graph query"""
+  """How the returned aliases are presented"""
+  columnInput: [ColumnInput!]! = []
+
+  """Description of this query"""
   description: String = null
 
-  """Unique key for this graph query, used for referencing in the UI"""
+  """Unique key for this query within its graph"""
   key: String!
 
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
+  """Human-readable name (defaults to `key`)"""
   name: String = null
 
-  """The Cypher query string that defines this graph query"""
-  query: String!
+  """What the query means; compiled by each projection kind"""
+  plan: TableQueryPlanInput!
 }
 
 input GraphTableQueryOrder @oneOf {
@@ -2913,7 +2372,9 @@ type GraphTableRender {
   """The graph rendered by this query"""
   graph: Graph!
 
-  """The graph name used for this render"""
+  """
+  Internal AGE handle of the rendered view (read-only); address the view through `graph { id }`
+  """
   graphName: String!
 
   """The query used to generate this table"""
@@ -2923,39 +2384,96 @@ type GraphTableRender {
   rows: [AnyScalar!]!
 }
 
+"""What a structure is evidence for: a node, or another claim"""
+union InformsTarget = Entity | Link | NaturalEvent | ProtocolEvent
+
 """A claim that an entity went into an event"""
 type InputParticipation implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """The role the entity played going in"""
-  role: String!
+  """The role the node played going in, if the claim recorded one"""
+  role: String
 
-  """The entity that took part"""
-  source: Entity!
+  """The node that took part"""
+  source: Node!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """The event the entity went into"""
+  """The event the node went into"""
   target: Event!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
+}
+
+"""A claimed individual — an entity or an event, as the log has it"""
+type Instance {
+  """
+  The act that first claimed this exists. Not the latest — for that, read `standings`
+  """
+  assertion: Assertion!
+
+  """
+  Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it
+  """
+  component: [ID!]!
+
+  """
+  Every standing claim connecting this thing to something else — relations, participations, classifications and the structures that inform it
+  """
+  connections: [Link!]!
+
+  """When the claim was recorded"""
+  createdAt: DateTime!
+
+  """
+  Every view that actually draws this claim, and the category it draws it under. Empty means no view does, which is an ordinary answer
+  """
+  drawnIn: [NodeDrawing!]!
+
+  """
+  The claim's durable identity — a bare uuid, world-unique and stable across reprojects
+  """
+  id: ID!
+
+  """
+  What sort of individual this is. Entities and events are told apart here, not by a vertex label — a label is one view's rename of a word
+  """
+  kind: InstanceKind!
+
+  """
+  What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed
+  """
+  labels: [Label!]!
+
+  """
+  The standing claims that this instance and another are one thing, with who said so
+  """
+  sameAs: [Link!]!
+
+  """
+  Every position anyone has taken on whether this exists, **newest first** by the order the fold uses. An empty list means nobody has disputed it, which is not the same as nobody having attested it: silence is not dissent. Two rows disagreeing is an ordinary state rather than a conflict to resolve. There is no folded `stands` beside this, deliberately — see the class docstring.
+  """
+  standings: [Standing!]!
+
+  """
+  The organization's word this was first claimed under. Which view draws it, and as what, is decided from the claims
+  """
+  term: Term!
+}
+
+enum InstanceKind {
+  ENTITY
+  NATURAL_EVENT
+  PROTOCOL_EVENT
 }
 
 """
@@ -2984,6 +2502,7 @@ type Label {
   term: Term
 }
 
+"""A leaf of styled text. Ends a branch of the tree"""
 type LeafDescendant implements Descendant {
   """Render this text bold"""
   bold: Boolean
@@ -3012,9 +2531,79 @@ type LeafDescendant implements Descendant {
   unsafeChildren: AnyScalar
 }
 
+"""
+A claim relating two things — as the log has it, whether or not any view draws it
+"""
+type Link {
+  """The act that made this claim"""
+  assertion: Assertion!
+
+  """When the claim was recorded"""
+  createdAt: DateTime!
+
+  """
+  Every view that draws this claim as an edge. Empty for the three kinds that are never drawn, and for a claim whose endpoints no view holds
+  """
+  drawnIn: [EdgeDrawing!]!
+
+  """The claim's durable identity — the `Link` primary key"""
+  id: ID!
+
+  """
+  What this claim says — and therefore what each of its two refs points at
+  """
+  kind: LinkKind!
+
+  """
+  Which role the source plays, for participation claims — the asserter's own word; the claim names no graph, so no schema names this
+  """
+  role: String
+
+  """
+  What this claim is about, resolved. Null when the ref names a row a redaction has since removed — history rather than an error
+  """
+  source: ClaimEndpoint
+
+  """
+  The source ref, as the log holds it: an opaque uuid. `source` resolves it
+  """
+  sourceRef: ID!
+
+  """
+  Every position anyone has taken on whether this claim holds, newest first. Empty means nobody has disputed it — see `Instance.standings`, which is the same field asked of a different claim
+  """
+  standings: [Standing!]!
+
+  """
+  What this claim relates it to, resolved. A classification's target is a `Term`, a measurement's is an `Instance`, and an INFORMS link may name another claim
+  """
+  target: ClaimEndpoint
+
+  """
+  The target ref, as the log holds it: an opaque uuid. `target` resolves it
+  """
+  targetRef: ID!
+
+  """
+  The organization's word this claim is stated in. Null for a plain INFORMS link, which names no word
+  """
+  term: Term
+}
+
+enum LinkKind {
+  CLASSIFIES
+  INFORMS
+  MEASUREMENT
+  PARTICIPATES_AS_INPUT
+  PARTICIPATES_AS_OUTPUT
+  RELATION
+  SAME_AS
+  STRUCTURE_RELATION
+}
+
 """Input for linking a structure to an entity"""
 input LinkStructureInput {
-  """Composite ID of the entity this structure informs"""
+  """The ID of the entity this structure informs — a bare uuid"""
   entityId: String!
 
   """Structure identifier, e.g. '@mikro/roi'"""
@@ -3028,6 +2617,11 @@ input LinkStructureInput {
 type MatchPath {
   """Color for the matched path as RGB values"""
   color: [Float!]
+
+  """
+  Optional category key per node (parallel to `nodes`), constraining that node of the pattern to a category; null leaves it unconstrained
+  """
+  nodeCategories: [String]
 
   """List of node IDs to match"""
   nodes: [String!]!
@@ -3052,6 +2646,11 @@ input MatchPathInput {
   """Color for the matched path as RGB values"""
   color: [Float!] = null
 
+  """
+  Optional category key per node (parallel to `nodes`), constraining that node of the pattern to a category; null leaves it unconstrained
+  """
+  nodeCategories: [String] = null
+
   """List of node IDs to match"""
   nodes: [String!]!
 
@@ -3070,229 +2669,34 @@ input MatchPathInput {
   title: String = null
 }
 
-"""A materialized edge representing a relationship in the graph"""
-type MaterializedEdge {
-  """The edge category this edge was derived from"""
-  edge: EdgeCategory!
-  graph: Graph!
-
-  """Database ID of the edge"""
-  id: ID!
-
-  """The source category, for edges that start at one"""
-  source: NodeCategory
-
-  """The target category, for edges that end at one"""
-  target: NodeCategory
-}
-
-input MaterializedEdgeFilter {
-  AND: MaterializedEdgeFilter
-  DISTINCT: Boolean
-  NOT: MaterializedEdgeFilter
-  OR: MaterializedEdgeFilter
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over connected category labels"""
-  search: String
-
-  """Filter by list of IDs"""
-  sourceIdentifier: String
-
-  """Filter by list of IDs"""
-  targetIdentifier: String
-}
-
-input MaterializedEdgeOrder @oneOf {
-  id: Ordering
-}
-
-"""A materialized edge representing a relationship in the graph"""
-type MaterializedMeasurementEdge {
-  """The measurement category this edge was derived from"""
-  edge: MeasurementCategory!
-  graph: Graph!
-
-  """Database ID of the edge"""
-  id: ID!
-
-  """The source structure kind"""
-  source: StructureKind!
-
-  """The target entity category"""
-  target: EntityCategory!
-}
-
-input MaterializedMeasurementEdgeFilter {
-  AND: MaterializedMeasurementEdgeFilter
-  DISTINCT: Boolean
-  NOT: MaterializedMeasurementEdgeFilter
-  OR: MaterializedMeasurementEdgeFilter
-
-  """Filter by list of IDs"""
-  graphId: String
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over connected category labels"""
-  search: String
-
-  """Filter by list of IDs"""
-  sourceIdentifier: String
-
-  """Filter by list of IDs"""
-  targetIdentifier: String
-}
-
-input MaterializedMeasurementEdgeOrder @oneOf {
-  id: Ordering
-}
-
-"""A materialized edge representing a relationship in the graph"""
-type MaterializedRelationEdge {
-  """The relation category this edge was derived from"""
-  edge: RelationCategory!
-  graph: Graph!
-
-  """Database ID of the edge"""
-  id: ID!
-
-  """The source entity category"""
-  source: EntityCategory!
-
-  """The target entity category"""
-  target: EntityCategory!
-}
-
-input MaterializedRelationEdgeFilter {
-  AND: MaterializedRelationEdgeFilter
-  DISTINCT: Boolean
-  NOT: MaterializedRelationEdgeFilter
-  OR: MaterializedRelationEdgeFilter
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over connected category labels"""
-  search: String
-
-  """Filter by list of IDs"""
-  sourceIdentifier: String
-
-  """Filter by list of IDs"""
-  targetIdentifier: String
-}
-
-input MaterializedRelationEdgeOrder @oneOf {
-  id: Ordering
-}
-
-"""A materialized edge representing a relationship in the graph"""
-type MaterializedStructureRelationEdge {
-  """The structure relation category this edge was derived from"""
-  edge: StructureRelationCategory!
-  graph: Graph!
-
-  """Database ID of the edge"""
-  id: ID!
-
-  """The source structure kind"""
-  source: StructureKind!
-
-  """The target structure kind"""
-  target: StructureKind!
-}
-
-input MaterializedStructureRelationEdgeFilter {
-  AND: MaterializedStructureRelationEdgeFilter
-  DISTINCT: Boolean
-  NOT: MaterializedStructureRelationEdgeFilter
-  OR: MaterializedStructureRelationEdgeFilter
-  id: ID
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over connected category labels"""
-  search: String
-
-  """Filter by list of IDs"""
-  sourceIdentifier: String
-
-  """Filter by list of IDs"""
-  targetIdentifier: String
-}
-
-input MaterializedStructureRelationEdgeOrder @oneOf {
-  id: Ordering
-}
-
 """A MEASUREMENT claim: a structure measuring an entity"""
 type Measurement implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
   """How the view this was read through draws it, if any view does"""
   category: MeasurementCategory
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """When this relation became valid according to the evidence"""
-  measuredFrom: DateTime
-
-  """When this relation stopped being valid according to the evidence"""
-  measuredTo: DateTime
-
   """The structure that does the measuring"""
   source: Structure!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """The entity being measured"""
-  target: Entity!
+  """The node being measured"""
+  target: Node!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
-"""
-An assertion about a measurement. Drawings are always empty: a measurement has no AGE edge at all
-"""
-type MeasurementAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Always empty, and structurally so: nothing projects a measurement to an AGE edge
-  """
-  drawings: [EdgeDrawing!]!
-
-  """The measurement as the log has it"""
-  measurement: Measurement!
-}
-
-"""A measurement category/schema definition"""
+"""A measurement category definition"""
 type MeasurementCategory implements Category & EdgeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -3323,10 +2727,7 @@ type MeasurementCategory implements Category & EdgeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
-  materializableAs: [MaterializedEdge!]!
-
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """List of property definitions for this entity category"""
@@ -3336,15 +2737,12 @@ type MeasurementCategory implements Category & EdgeCategory {
   purl: String
 
   """List of relevant queries that use this category as input"""
-  relevantEdgeQueries: [EdgeQuery!]!
-
-  """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its source"""
   sourceDescriptor: StructureDescriptor!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its target"""
   targetDescriptor: EntityDescriptor!
 
   """
@@ -3436,9 +2834,6 @@ input MeasurementDefinitionInput {
   """Derived property definitions"""
   properties: [PropertyDefinitionInput!]! = []
 
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
   """Source entity type(s)"""
   source: StructureDescriptorInput!
 
@@ -3448,32 +2843,17 @@ input MeasurementDefinitionInput {
 
 """Filter options for querying measurements"""
 input MeasurementFilter {
-  """Filter measurements that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific measurement IDs"""
-  ids: [GraphID!] = null
-
-  """Filter measurements that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over measurement properties"""
-  search: String = null
+  ids: [ID!] = null
 }
 
 """Ordering options for measurement queries"""
 input MeasurementOrder {
-  """Order by measurement category"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by measurement ID"""
   id: Ordering = null
-
-  """Order by a specific property value"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying measurements"""
@@ -3532,6 +2912,9 @@ type MediaUploadGrant {
   uploadFormField: String!
 }
 
+"""
+A mention of a subject — the same id `Assertion.subject` carries, never a user row: a comment is evidence, and the evidence layer knows actors by subject
+"""
 type MentionDescendant implements Descendant {
   """The children of this node. Always empty for leafs"""
   children: [Descendant!]
@@ -3548,8 +2931,8 @@ type MentionDescendant implements Descendant {
   unsafeChildren: AnyScalar
 }
 
-"""A metric node representing computed values"""
-type Metric implements Node {
+"""A measured value about a structure — a claim, not a graph node"""
+type Metric {
   """When this measurement was claimed"""
   assertedAt: DateTime
 
@@ -3562,24 +2945,8 @@ type Metric implements Node {
   """What kind of confidence this is"""
   confidenceType: String
 
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """
-  The graph this node belongs to, or null for organization-scoped evidence
-  """
-  graph: Graph
-
-  """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
-  """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
+  """This claim's durable identity — the `Metric` primary key, a bare uuid"""
+  id: ID!
 
   """The measurement key"""
   key: String
@@ -3590,38 +2957,14 @@ type Metric implements Node {
   """ID of the metric kind this instantiates"""
   kindId: String
 
-  """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
-  """
-  label: String!
-
-  """Local ID if set"""
-  localId: String
-
   """When the world was observed"""
   measuredAt: DateTime
-
-  """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
-  """
-  pinned: Boolean!
 
   """Unit of measurement, where the source gave one"""
   unit: String
 
   """The metric value"""
   value: AnyScalar!
-}
-
-"""An assertion about a metric — a measured value about a structure"""
-type MetricAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """The metric this act was about"""
-  metric: Metric!
 }
 
 """One measured value about a structure"""
@@ -3695,13 +3038,6 @@ input MetricKindFilter {
   valueKind: ValueKind
 }
 
-input MetricKindOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  key: Ordering
-  label: Ordering
-}
-
 type MetricKindStats {
   """Average value"""
   avg(field: MetricKindField!): Float
@@ -3724,95 +3060,71 @@ type MetricKindStats {
 
 """Graph Engine Mutations"""
 type Mutation {
-  """Archive an edge pairs query"""
-  archiveEdgePairsQuery(input: ArchiveEdgePairsQueryInput!): ID!
-
-  """Archive an edge path query"""
-  archiveEdgePathQuery(input: ArchiveEdgePathQueryInput!): ID!
-
-  """Archive an edge table query"""
-  archiveEdgeTableQuery(input: ArchiveEdgeTableQueryInput!): ID!
-
   """Archive a graph in the graph engine (soft delete)"""
   archiveGraph(input: ArchiveGraphInput!): Graph!
 
-  """Archive a graph pairs query"""
-  archiveGraphPairsQuery(input: ArchiveGraphPairsQueryInput!): ID!
-
-  """Archive a graph path query"""
-  archiveGraphPathQuery(input: ArchiveGraphPathQueryInput!): ID!
-
   """Archive a graph table query"""
-  archiveGraphTableQuery(input: ArchiveGraphTableQueryInput!): ID!
-
-  """Archive a node pairs query"""
-  archiveNodePairsQuery(input: ArchiveNodePairsQueryInput!): ID!
-
-  """Archive a node path query"""
-  archiveNodePathQuery(input: ArchiveNodePathQueryInput!): ID!
-
-  """Archive a node table query"""
-  archiveNodeTableQuery(input: ArchiveNodeTableQueryInput!): ID!
+  archiveGraphTableQuery(input: ArchiveGraphTableQueryInput!): GraphTableQuery!
 
   """
   Claim that an entity exists, under one of the organization's words. Returns the assertion and every view that draws it — empty when no view declares the word, which is an ordinary outcome
   """
-  assertEntityExists(input: AssertEntityExistsInput!): EntityAssertion!
+  assertEntityExists(input: AssertEntityExistsInput!): AssertedEntity!
 
   """
   Assert that a structure measures an entity, under one of the organization's words. Drawings are always empty: a measurement has no AGE edge
   """
-  assertMeasurementExists(input: AssertMeasurementExistsInput!): MeasurementAssertion!
+  assertMeasurementExists(input: AssertMeasurementExistsInput!): AssertedMeasurement!
 
   """
   Record a measurement, creating the structure it describes if this is its first sight. One assertion covers both
   """
-  assertMetricValue(input: AssertMetricValueInput!): MetricAssertion!
+  assertMetricValue(input: AssertMetricValueInput!): AssertedMetric!
 
   """
   Record a measurement against a structure that already exists, named by its evidence id
   """
-  assertMetricValueForStructure(input: AssertMetricValueForStructureInput!): MetricAssertion!
+  assertMetricValueForStructure(input: AssertMetricValueForStructureInput!): AssertedMetric!
 
   """
   Claim that a natural event happened, under one of the organization's words
   """
-  assertNaturalEventExists(input: AssertNaturalEventExistsInput!): NaturalEventAssertion!
+  assertNaturalEventExists(input: AssertNaturalEventExistsInput!): AssertedNaturalEvent!
 
   """
   Claim that an entity took part in an event, without displacing anyone else's claim
   """
-  assertParticipation(input: AssertParticipationInput!): ParticipationAssertion!
+  assertParticipation(input: AssertParticipationInput!): AssertedParticipation!
 
   """
   Claim that several entities took part in one event, as one act and one assertion
   """
-  assertParticipations(input: AssertParticipationsInput!): EdgesAssertion!
+  assertParticipations(input: AssertParticipationsInput!): AssertedLinks!
 
   """
   Claim that a protocol step happened, under one of the organization's words
   """
-  assertProtocolEventExists(input: AssertProtocolEventExistsInput!): ProtocolEventAssertion!
+  assertProtocolEventExists(input: AssertProtocolEventExistsInput!): AssertedProtocolEvent!
 
   """
   Assert a relation between two entities, under one of the organization's words
   """
-  assertRelationExists(input: AssertRelationExistsInput!): RelationAssertion!
+  assertRelationExists(input: AssertRelationExistsInput!): AssertedRelation!
 
   """
   Claim that several already-recorded instances are one thing. An equivalence with no primary — the order of the ids carries no meaning
   """
-  assertSameEntity(input: AssertSameEntityInput!): SamenessAssertion!
+  assertSameInstance(input: AssertSameInstanceInput!): AssertedSameness!
 
   """
   Claim that an external datum exists and is worth pointing at. Idempotent by (identifier, object)
   """
-  assertStructureExists(input: AssertStructureExistsInput!): StructureAssertion!
+  assertStructureExists(input: AssertStructureExistsInput!): AssertedStructure!
 
   """
   Assert a relation between two structures. Drawings are always empty: neither endpoint has a vertex
   """
-  assertStructureRelationExists(input: AssertStructureRelationExistsInput!): StructureRelationAssertion!
+  assertStructureRelationExists(input: AssertStructureRelationExistsInput!): AssertedStructureRelation!
 
   """
   Claim a remark stands again — reopening, as new evidence rather than an undo
@@ -3822,44 +3134,44 @@ type Mutation {
   """
   Claim that an entity exists, returning it to every projection whose rules admit it
   """
-  attestEntity(input: AttestEntityInput!): EntityAssertion!
+  attestEntity(input: AttestEntityInput!): AssertedEntity!
+
+  """
+  Claim that a link claim still stands — a relation, a classification, a participation, a measurement. One act for every kind, as `retractLinks` is
+  """
+  attestLink(input: AttestLinkInput!): AssertedLinks!
+
+  """
+  Claim that a measurement still stands. The derived values that dropped it are refolded
+  """
+  attestMetric(input: AttestMetricInput!): AssertedMetric!
 
   """Claim that a natural event exists"""
-  attestNaturalEvent(input: AttestNaturalEventInput!): NaturalEventAssertion!
+  attestNaturalEvent(input: AttestNaturalEventInput!): AssertedNaturalEvent!
 
   """Claim that a protocol event exists"""
-  attestProtocolEvent(input: AttestProtocolEventInput!): ProtocolEventAssertion!
+  attestProtocolEvent(input: AttestProtocolEventInput!): AssertedProtocolEvent!
+
+  """
+  Claim that a structure still stands, after somebody retracted it. New evidence, not an undo — both positions stay on the record
+  """
+  attestStructure(input: AttestStructureInput!): AssertedStructure!
 
   """
   Claim that several nodes are of a word, without displacing anyone else's claim. One act, one assertion
   """
-  classifyNodes(input: ClassifyNodesInput!): NodesAssertion!
+  classifyNodes(input: ClassifyNodesInput!): AssertedInstances!
 
   """
   Record a remark about an external datum, minting its structure if this is the first sight of it. A reply names its parent and stays on the parent's thread
   """
   commentOnStructure(input: CommentOnStructureInput!): AssertedComment!
 
-  """Create an edge pairs query"""
-  createEdgePairsQuery(input: CreateEdgePairsQueryInput!): EdgePairsQuery!
-
-  """Create an edge path query"""
-  createEdgePathQuery(input: CreateEdgePathQueryInput!): EdgePathQuery!
-
-  """Create an edge table query"""
-  createEdgeTableQuery(input: CreateEdgeTableQueryInput!): EdgeTableQuery!
-
-  """Create a new entity category/schema in the graph"""
-  createEntityCategory(input: CreateEntityDefinitionInput!): EntityCategory!
+  """Create a new entity category in the graph"""
+  createEntityCategory(input: CreateEntityCategoryInput!): EntityCategory!
 
   """Create a new graph in the graph engine"""
   createGraph(input: CreateGraphInput!): Graph!
-
-  """Create a graph pairs query"""
-  createGraphPairsQuery(input: CreateGraphPairsQueryInput!): GraphPairsQuery!
-
-  """Create a graph path query"""
-  createGraphPathQuery(input: CreateGraphPathQueryInput!): GraphPathQuery!
 
   """Create a graph table query"""
   createGraphTableQuery(input: CreateGraphTableQueryInput!): GraphTableQuery!
@@ -3867,94 +3179,61 @@ type Mutation {
   """Create or update a graph table query using builder arguments"""
   createGraphTableQueryThroughBuilder(input: CreateGraphTableQueryThroughBuilderInput!): GraphTableQuery!
 
-  """Create a new measurement category/schema in the graph"""
-  createMeasurementCategory(input: CreateMeasurementDefinitionInput!): MeasurementCategory!
+  """Create a new measurement category in the graph"""
+  createMeasurementCategory(input: CreateMeasurementCategoryInput!): MeasurementCategory!
 
-  """Create a new natural event category/schema in the graph"""
-  createNaturalEventCategory(input: CreateNaturalEventDefinitionInput!): NaturalEventCategory!
+  """Create a new natural event category in the graph"""
+  createNaturalEventCategory(input: CreateNaturalEventCategoryInput!): NaturalEventCategory!
 
-  """Create a node pairs query"""
-  createNodePairsQuery(input: CreateNodePairsQueryInput!): NodePairsQuery!
+  """Create a new protocol event category in the graph"""
+  createProtocolEventCategory(input: CreateProtocolEventCategoryInput!): ProtocolEventCategory!
 
-  """Create a node path query"""
-  createNodePathQuery(input: CreateNodePathQueryInput!): NodePathQuery!
-
-  """Create a node table query"""
-  createNodeTableQuery(input: CreateNodeTableQueryInput!): NodeTableQuery!
-
-  """Create a new protocol event category/schema in the graph"""
-  createProtocolEventCategory(input: CreateProtocolEventDefinitionInput!): ProtocolEventCategory!
-
-  """Create a new relation category/schema in the graph"""
-  createRelationCategory(input: CreateRelationDefinitionInput!): RelationCategory!
+  """Create a new relation category in the graph"""
+  createRelationCategory(input: CreateRelationCategoryInput!): RelationCategory!
 
   """Create a scatter plot"""
   createScatterPlot(input: CreateScatterPlotInput!): ScatterPlot!
 
-  """Create a new structure relation category/schema in the graph"""
-  createStructureRelationCategory(input: CreateStructureRelationDefinitionInput!): StructureRelationCategory!
+  """Create a new structure relation category in the graph"""
+  createStructureRelationCategory(input: CreateStructureRelationCategoryInput!): StructureRelationCategory!
 
   """
   Declare one of the organization's words, or describe one an ingest minted bare
   """
   createTerm(input: CreateTermInput!): Term!
 
-  """Delete an edge pairs query"""
-  deleteEdgePairsQuery(input: DeleteEdgePairsQueryInput!): ID!
-
-  """Delete an edge path query"""
-  deleteEdgePathQuery(input: DeleteEdgePathQueryInput!): ID!
-
-  """Delete an edge table query"""
-  deleteEdgeTableQuery(input: DeleteEdgeTableQueryInput!): ID!
-
-  """Delete an entity category/schema from the graph"""
-  deleteEntityCategory(input: DeleteEntityDefinitionInput!): ID!
+  """Delete an entity category from the graph"""
+  deleteEntityCategory(input: DeleteEntityCategoryInput!): ID!
 
   """Delete a graph from the graph engine"""
   deleteGraph(input: DeleteGraphInput!): ID!
 
-  """Delete a graph pairs query"""
-  deleteGraphPairsQuery(input: DeleteGraphPairsQueryInput!): ID!
-
-  """Delete a graph path query"""
-  deleteGraphPathQuery(input: DeleteGraphPathQueryInput!): ID!
-
   """Delete a graph table query"""
   deleteGraphTableQuery(input: DeleteGraphTableQueryInput!): ID!
 
-  """Delete a measurement category/schema from the graph"""
-  deleteMeasurementCategory(input: DeleteMeasurementDefinitionInput!): ID!
+  """Delete a measurement category from the graph"""
+  deleteMeasurementCategory(input: DeleteMeasurementCategoryInput!): ID!
 
   """Retire a metric kind and the measurements recorded under it"""
-  deleteMetricKind(input: DeleteMetricDefinitionInput!): ID!
+  deleteMetricKind(input: DeleteMetricKindInput!): ID!
 
-  """Delete a natural event category/schema from the graph"""
-  deleteNaturalEventCategory(input: DeleteNaturalEventDefinitionInput!): ID!
+  """Delete a natural event category from the graph"""
+  deleteNaturalEventCategory(input: DeleteNaturalEventCategoryInput!): ID!
 
-  """Delete a node pairs query"""
-  deleteNodePairsQuery(input: DeleteNodePairsQueryInput!): ID!
+  """Delete a protocol event category from the graph"""
+  deleteProtocolEventCategory(input: DeleteProtocolEventCategoryInput!): ID!
 
-  """Delete a node path query"""
-  deleteNodePathQuery(input: DeleteNodePathQueryInput!): ID!
-
-  """Delete a node table query"""
-  deleteNodeTableQuery(input: DeleteNodeTableQueryInput!): ID!
-
-  """Delete a protocol event category/schema from the graph"""
-  deleteProtocolEventCategory(input: DeleteProtocolEventDefinitionInput!): ID!
-
-  """Delete a relation category/schema from the graph"""
-  deleteRelationCategory(input: DeleteRelationDefinitionInput!): ID!
+  """Delete a relation category from the graph"""
+  deleteRelationCategory(input: DeleteRelationCategoryInput!): ID!
 
   """Delete a scatter plot"""
   deleteScatterPlot(input: DeleteScatterPlotInput!): ID!
 
   """Retire a structure kind and the evidence recorded under it"""
-  deleteStructureKind(input: DeleteStructureDefinitionInput!): ID!
+  deleteStructureKind(input: DeleteStructureKindInput!): ID!
 
-  """Delete a structure relation category/schema from the graph"""
-  deleteStructureRelationCategory(input: DeleteStructureRelationDefinitionInput!): ID!
+  """Delete a structure relation category from the graph"""
+  deleteStructureRelationCategory(input: DeleteStructureRelationCategoryInput!): ID!
 
   """Retire a word nothing has been claimed under"""
   deleteTerm(input: DeleteTermInput!): ID!
@@ -3962,7 +3241,7 @@ type Mutation {
   """
   Get the structure for an external datum, creating it if this is the first sight of it
   """
-  ensureStructure(input: EnsureStructureInput!): StructureAssertion!
+  ensureStructure(input: EnsureStructureInput!): AssertedStructure!
 
   """Finalize a big file upload after the client has written the object"""
   finishBigFileUpload(input: FinishBigFileUploadInput!): BigFileStore!
@@ -3974,7 +3253,7 @@ type Mutation {
   finishZarrUpload(input: FinishZarrUploadInput!): ZarrStore!
 
   """Assert that a structure is evidence for an entity"""
-  linkStructureToEntity(input: LinkStructureInput!): StructureAssertion!
+  linkStructureToEntity(input: LinkStructureInput!): AssertedDescription!
 
   """Request an upload grant for a big file store"""
   requestBigFileUpload(input: RequestBigFileUploadInput!): BigFileUploadGrant!
@@ -3985,9 +3264,6 @@ type Mutation {
   """Request an upload grant for a Zarr store"""
   requestZarrUpload(input: RequestZarrUploadInput!): ZarrUploadGrant!
 
-  """Retract several claims as one act"""
-  retractClaims(input: RetractClaimsInput!): EdgesAssertion!
-
   """
   Claim a remark no longer stands — resolved by a reviewer or withdrawn by its author; the assertion records whose position it is. The row survives
   """
@@ -3996,70 +3272,60 @@ type Mutation {
   """
   Claim that an entity no longer stands. It leaves every projection that counts the claim; the evidence stays.
   """
-  retractEntity(input: RetractEntityInput!): EntityAssertion!
+  retractEntity(input: RetractEntityInput!): AssertedEntity!
+
+  """
+  Retract several link claims as one act, by their `Link` ids — a relation, a classification, a participation, a measurement
+  """
+  retractLinks(input: RetractLinksInput!): AssertedLinks!
 
   """Retract a measurement assertion without destroying it"""
-  retractMeasurement(input: RetractMeasurementInput!): MeasurementAssertion!
+  retractMeasurement(input: RetractMeasurementInput!): AssertedMeasurement!
 
   """
   Retract a measurement without destroying it. It stays readable, because a derived value that dropped it still has to be explainable
   """
-  retractMetric(input: RetractMetricInput!): MetricAssertion!
+  retractMetric(input: RetractMetricInput!): AssertedMetric!
 
   """Claim that a natural event no longer stands"""
-  retractNaturalEvent(input: RetractNaturalEventInput!): NaturalEventAssertion!
+  retractNaturalEvent(input: RetractNaturalEventInput!): AssertedNaturalEvent!
 
   """
   Retract one claim that an entity took part in an event. The edge survives while another claim still states it
   """
-  retractParticipation(input: RetractParticipationInput!): ParticipationAssertion!
+  retractParticipation(input: RetractParticipationInput!): AssertedParticipation!
 
   """Claim that a protocol event no longer stands"""
-  retractProtocolEvent(input: RetractProtocolEventInput!): ProtocolEventAssertion!
+  retractProtocolEvent(input: RetractProtocolEventInput!): AssertedProtocolEvent!
 
   """
   Retract a relation assertion without destroying it. The edge survives wherever another live assertion still states the same proposition
   """
-  retractRelation(input: RetractRelationInput!): RelationAssertion!
+  retractRelation(input: RetractRelationInput!): AssertedRelation!
 
   """
   Withdraw one sameness claim. The component it held together is rebuilt from the claims that survive, which may split it
   """
-  retractSameEntity(input: RetractSameEntityInput!): SamenessAssertion!
+  retractSameInstance(input: RetractSameInstanceInput!): AssertedSameness!
 
   """
   Claim that a structure should no longer be pointed at. The row and its metrics survive
   """
-  retractStructure(input: RetractStructureInput!): StructureAssertion!
+  retractStructure(input: RetractStructureInput!): AssertedStructure!
 
   """Retract a structure relation assertion without destroying it"""
-  retractStructureRelation(input: RetractStructureRelationInput!): StructureRelationAssertion!
+  retractStructureRelation(input: RetractStructureRelationInput!): AssertedStructureRelation!
 
   """
   Correct a measurement by retracting it and asserting a new one. The returned metric has a new id: it is a new row, not an edited one
   """
-  supersedeMetricValue(input: SupersedeMetricValueInput!): MetricAssertion!
+  supersedeMetricValue(input: SupersedeMetricValueInput!): AssertedMetric!
 
-  """Update an edge pairs query"""
-  updateEdgePairsQuery(input: UpdateEdgePairsQueryInput!): EdgePairsQuery!
-
-  """Update an edge path query"""
-  updateEdgePathQuery(input: UpdateEdgePathQueryInput!): EdgePathQuery!
-
-  """Update an edge table query"""
-  updateEdgeTableQuery(input: UpdateEdgeTableQueryInput!): EdgeTableQuery!
-
-  """Update an existing entity category/schema in the graph"""
-  updateEntityCategory(input: UpdateEntityDefinitionInput!): EntityCategory!
+  """Update an existing entity category in the graph"""
+  updateEntityCategory(input: UpdateEntityCategoryInput!): EntityCategory!
 
   """Update an existing graph in the graph engine"""
   updateGraph(input: UpdateGraphInput!): Graph!
-
-  """Update a graph pairs query"""
-  updateGraphPairsQuery(input: UpdateGraphPairsQueryInput!): GraphPairsQuery!
-
-  """Update a graph path query"""
-  updateGraphPathQuery(input: UpdateGraphPathQueryInput!): GraphPathQuery!
 
   """Update a graph table query"""
   updateGraphTableQuery(input: UpdateGraphTableQueryInput!): GraphTableQuery!
@@ -4067,34 +3333,25 @@ type Mutation {
   """Update the visual configuration of a graph in the graph engine"""
   updateGraphVisual(input: UpdateGraphVisualInput!): Graph!
 
-  """Update an existing measurement category/schema in the graph"""
-  updateMeasurementCategory(input: UpdateMeasurementDefinitionInput!): MeasurementCategory!
+  """Update an existing measurement category in the graph"""
+  updateMeasurementCategory(input: UpdateMeasurementCategoryInput!): MeasurementCategory!
 
   """Update a metric kind's label, description or colour"""
-  updateMetricKind(input: UpdateMetricDefinitionInput!): MetricKind!
+  updateMetricKind(input: UpdateMetricKindInput!): MetricKind!
 
-  """Update an existing natural event category/schema in the graph"""
-  updateNaturalEventCategory(input: UpdateNaturalEventDefinitionInput!): NaturalEventCategory!
+  """Update an existing natural event category in the graph"""
+  updateNaturalEventCategory(input: UpdateNaturalEventCategoryInput!): NaturalEventCategory!
 
-  """Update a node pairs query"""
-  updateNodePairsQuery(input: UpdateNodePairsQueryInput!): NodePairsQuery!
-
-  """Update a node path query"""
-  updateNodePathQuery(input: UpdateNodePathQueryInput!): NodePathQuery!
-
-  """Update a node table query"""
-  updateNodeTableQuery(input: UpdateNodeTableQueryInput!): NodeTableQuery!
-
-  """Update an existing protocol event category/schema in the graph"""
-  updateProtocolEventCategory(input: UpdateProtocolEventDefinitionInput!): ProtocolEventCategory!
+  """Update an existing protocol event category in the graph"""
+  updateProtocolEventCategory(input: UpdateProtocolEventCategoryInput!): ProtocolEventCategory!
 
   """
   Replace a relation with a new assertion, retracting the old one. Two assertions are recorded; the result reports the one that made the relation now standing
   """
-  updateRelation(input: UpdateRelationInput!): RelationAssertion!
+  updateRelation(input: UpdateRelationInput!): AssertedRelation!
 
-  """Update an existing relation category/schema in the graph"""
-  updateRelationCategory(input: UpdateRelationDefinitionInput!): RelationCategory!
+  """Update an existing relation category in the graph"""
+  updateRelationCategory(input: UpdateRelationCategoryInput!): RelationCategory!
 
   """Update a scatter plot"""
   updateScatterPlot(input: UpdateScatterPlotInput!): ScatterPlot!
@@ -4102,16 +3359,16 @@ type Mutation {
   """
   Append metrics to an existing structure. Its (identifier, object) is immutable
   """
-  updateStructure(input: UpdateStructureInput!): StructureAssertion!
+  updateStructure(input: UpdateStructureInput!): AssertedStructure!
 
   """Update a structure kind's label, description or colour"""
-  updateStructureKind(input: UpdateStructureDefinitionInput!): StructureKind!
+  updateStructureKind(input: UpdateStructureKindInput!): StructureKind!
 
   """Replace a structure relation, keeping the old assertion on the record"""
-  updateStructureRelation(input: UpdateStructureRelationInput!): StructureRelationAssertion!
+  updateStructureRelation(input: UpdateStructureRelationInput!): AssertedStructureRelation!
 
-  """Update an existing structure relation category/schema in the graph"""
-  updateStructureRelationCategory(input: UpdateStructureRelationDefinitionInput!): StructureRelationCategory!
+  """Update an existing structure relation category in the graph"""
+  updateStructureRelationCategory(input: UpdateStructureRelationCategoryInput!): StructureRelationCategory!
 
   """
   Update a term's label, description, PURL or colour. Its kind and key are its identity and cannot change.
@@ -4120,56 +3377,50 @@ type Mutation {
 }
 
 """A natural event in the knowledge graph"""
-type NaturalEvent implements Event & Node & VersionedNode {
+type NaturalEvent implements Event & Node {
   """How the view this was read through draws it, if any view does"""
   category: NaturalEventCategory
 
   """Category ID linking to NaturalEventCategory model"""
   categoryId: String
 
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
   """
-  The graph this node belongs to, or null for organization-scoped evidence
+  Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it
   """
-  graph: Graph
+  component: [ID!]!
 
   """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection
   """
-  graphId: Int
+  connections: [Edge!]!
 
-  """Composite ID for node lookup"""
-  id: String!
+  """
+  Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed
+  """
+  drawnIn: [NodeDrawing!]!
+
+  """
+  This node's durable identity — a bare uuid, world-unique and stable across reprojects
+  """
+  id: ID!
 
   """The event type/kind"""
   kind: String!
 
   """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  The label this view draws the node under — its category's `ageName` — or the claim's word when the view has not drawn it yet
   """
   label: String!
 
-  """Timestamp when properties were last derived (unix ms)"""
-  lastDerived: UnixMilliseconds
-
-  """Local ID if set"""
-  localId: String
-
-  """List of the current derived properties for this event"""
-  measuredFrom: DateTime!
-
-  """The source entity of this relation"""
-  measuredTo: DateTime!
+  """
+  What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed
+  """
+  labels: [Label!]!
 
   """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
+  Always null. A per-node wall-clock stamp the projector no longer writes; ask `Graph.projection { derivedAt }` for when the view was last derived
   """
-  pinned: Boolean!
+  lastDerived: UnixMilliseconds @deprecated(reason: "`__last_derived` is no longer stamped on vertices — it was the one projected value a rebuild could not reproduce. Read `Graph.projection { derivedAt projectedThroughSeq }` instead. Removed in the next major.")
 
   """List of the current derived properties for this entity"""
   properties: AnyScalar!
@@ -4177,27 +3428,18 @@ type NaturalEvent implements Event & Node & VersionedNode {
   """List of properties derived for this entity"""
   richProperties: [RichProperty!]!
 
-  """Schema version used to derive properties"""
-  schemaVersion: String!
+  """
+  The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent
+  """
+  sameAs: [Sameness!]!
+
+  """
+  Schema version the properties were derived under. Null when this reading came from the log rather than from a projection — a claim no view draws has no derived properties, so there is no version to name
+  """
+  schemaVersion: String
 }
 
-"""An assertion about a natural event, and everywhere it is now drawn"""
-type NaturalEventAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [NodeDrawing!]!
-
-  """The event as the log has it"""
-  naturalEvent: NaturalEvent!
-}
-
-"""A relation category/schema definition"""
+"""A relation category definition"""
 type NaturalEventCategory implements Category & EventCategory & NodeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -4223,7 +3465,7 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
-  """The graph this category belongs to"""
+  """The roles an entity can play going into an event of this category"""
   inputs: [EventRole!]!
 
   """
@@ -4234,10 +3476,10 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
+  """The roles an entity can play coming out of an event of this category"""
   outputs: [EventRole!]!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """X coordinate"""
@@ -4254,9 +3496,6 @@ type NaturalEventCategory implements Category & EventCategory & NodeCategory {
 
   """Persistent URL for this category"""
   purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
 
   """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
@@ -4322,32 +3561,22 @@ type NaturalEventCategoryStats {
 
 """Filter options for querying natural events"""
 input NaturalEventFilter {
-  """Filter natural events that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific natural event IDs"""
-  ids: [GraphID!] = null
+  ids: [ID!] = null
 
-  """Filter natural events that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over natural event properties"""
+  """
+  Substring match on the claim's term key or label. A column of the log, not a derived property
+  """
   search: String = null
 }
 
 """Ordering options for natural event queries"""
 input NaturalEventOrder {
-  """Order by natural event category"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by natural event ID"""
   id: Ordering = null
-
-  """Order by a specific property value"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying natural events"""
@@ -4361,37 +3590,50 @@ input NaturalEventPaginationInput {
 
 """Base interface for all graph nodes"""
 interface Node {
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
   """
-  The graph this node belongs to, or null for organization-scoped evidence
+  Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it
   """
-  graph: Graph
+  component: [ID!]!
 
   """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection
   """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
+  connections: [Edge!]!
 
   """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed
+  """
+  drawnIn: [NodeDrawing!]!
+
+  """
+  This node's durable identity — a bare uuid, world-unique and stable across reprojects
+  """
+  id: ID!
+
+  """
+  The label this view draws the node under — its category's `ageName` — or the claim's word when the view has not drawn it yet
   """
   label: String!
 
-  """Local ID if set"""
-  localId: String
+  """
+  What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed
+  """
+  labels: [Label!]!
 
   """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
+  Always null. A per-node wall-clock stamp the projector no longer writes; ask `Graph.projection { derivedAt }` for when the view was last derived
   """
-  pinned: Boolean!
+  lastDerived: UnixMilliseconds @deprecated(reason: "`__last_derived` is no longer stamped on vertices — it was the one projected value a rebuild could not reproduce. Read `Graph.projection { derivedAt projectedThroughSeq }` instead. Removed in the next major.")
+
+  """
+  The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent
+  """
+  sameAs: [Sameness!]!
+
+  """
+  Schema version the properties were derived under. Null when this reading came from the log rather than from a projection — a claim no view draws has no derived properties, so there is no version to name
+  """
+  schemaVersion: String
 }
 
 """Base interface for graph schemas"""
@@ -4426,9 +3668,6 @@ interface NodeCategory {
   """Persistent URL for this category"""
   purl: String
 
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
-
   """Width for visualization (optional)"""
   width: Float
 }
@@ -4451,32 +3690,22 @@ type NodeDrawing {
 
 """Filter options for querying nodes"""
 input NodeFilters {
-  """Filter nodes that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific node IDs"""
-  ids: [GraphID!] = null
+  ids: [ID!] = null
 
-  """Filter nodes that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over node properties"""
+  """
+  Substring match on the claim's term key or label. A column of the log, not a derived property
+  """
   search: String = null
 }
 
 """Ordering options for node queries"""
 input NodeOrder {
-  """Order by entity kind/type"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
-  """Order by entity ID"""
+  """Order by node ID"""
   id: Ordering = null
-
-  """Order by a specific property value (requires 'has_property' filter)"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying nodes"""
@@ -4486,223 +3715,6 @@ input NodePaginationInput {
 
   """Number of items to skip"""
   offset: Int = 0
-}
-
-"""Base interface for graph schemas"""
-type NodePairsQuery implements NodeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """Optional edge category/schema to filter pairs by"""
-  edgeCategory: EdgeCategory
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-
-  """The source node category/schema to query"""
-  sourceCategory: NodeCategory!
-
-  """The target node category/schema to query"""
-  targetCategory: NodeCategory!
-}
-
-input NodePairsQueryFilter {
-  AND: NodePairsQueryFilter
-  DISTINCT: Boolean
-  NOT: NodePairsQueryFilter
-  OR: NodePairsQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input NodePairsQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for graph schemas"""
-type NodePathQuery implements NodeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-}
-
-input NodePathQueryFilter {
-  AND: NodePathQueryFilter
-  DISTINCT: Boolean
-  NOT: NodePathQueryFilter
-  OR: NodePathQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input NodePathQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""Base interface for entity categories/schemas"""
-interface NodeQuery {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of this saved query"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher this query runs"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-}
-
-"""Base interface for graph schemas"""
-type NodeTableQuery implements NodeQuery & Plottable {
-  """Whether this saved query has been archived"""
-  archived: Boolean!
-
-  """
-  If this graph was built using a builder function, the arguments used for building it, which can be used for debugging or rebuilding the graph with different parameters
-  """
-  builderArgs: BuilderArgs
-
-  """List of columns to return in the table query result"""
-  columns: [Column!]!
-
-  """Description of this query"""
-  description: String
-
-  """The graph this query belongs to"""
-  graph: Graph!
-
-  """Database ID of the category"""
-  id: ID!
-
-  """
-  The key this query is referenced and pinned by, unique within its graph
-  """
-  key: String!
-
-  """Human-readable name for this query"""
-  label: String!
-
-  """The Cypher query to execute for this table query"""
-  query: CypherLiteral!
-
-  """List of node categories for which this query is relevant"""
-  relevantFor: [NodeCategory!]!
-
-  """The graph this category belongs to"""
-  scatterPlots: [ScatterPlot!]!
-}
-
-input NodeTableQueryFilter {
-  AND: NodeTableQueryFilter
-  DISTINCT: Boolean
-  NOT: NodeTableQueryFilter
-  OR: NodeTableQueryFilter
-
-  """Only archived queries, or only live ones. Omitted shows both"""
-  archived: Boolean
-
-  """Filter by list of IDs"""
-  ids: [ID!]
-
-  """Full-text search over label and description"""
-  search: String
-}
-
-input NodeTableQueryOrder @oneOf {
-  id: Ordering
-  label: Ordering
-}
-
-"""
-An assertion about several nodes made as one act, and everywhere they are now drawn
-"""
-type NodesAssertion {
-  """
-  The single claim covering the whole batch. One act by one actor is one assertion, which is why this is not a list
-  """
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [NodeDrawing!]!
-
-  """The nodes this act was about, each as its own kind"""
-  nodes: [Node!]!
 }
 
 input OffsetPaginationInput {
@@ -4739,39 +3751,32 @@ enum Ordering {
 
 """A claim that an entity came out of an event"""
 type OutputParticipation implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """The role the entity played coming out"""
-  role: String!
+  """The role the node played coming out, if the claim recorded one"""
+  role: String
 
-  """The event the entity came out of"""
-  source: Event!
+  """The node that came out"""
+  source: Node!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """The entity that came out"""
-  target: Entity!
+  """The event the node came out of"""
+  target: Event!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
+"""A paragraph of the comment body"""
 type ParagraphDescendant implements Descendant {
   """The children of this node. Always empty for leafs"""
   children: [Descendant!]
@@ -4796,26 +3801,34 @@ input ParticipantInput {
   """True if the entity went into the event, False if it came out of it"""
   isInput: Boolean! = true
 
-  """Which role the entity played, as the event's category names it"""
+  """
+  Which role the entity played — the caller's own word; the write names no graph and no category
+  """
   role: String!
 }
 
-"""An assertion about one participation, and everywhere it is now drawn"""
-type ParticipationAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
+"""Filter options for querying participation claims"""
+input ParticipationFilter {
+  """Filter by specific relation IDs"""
+  ids: [ID!] = null
+}
 
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [EdgeDrawing!]!
+"""Ordering options for participation queries"""
+input ParticipationOrder {
+  """Order by creation timestamp"""
+  createdAt: Ordering = null
 
-  """
-  The participation claim, as an input or an output depending on which side it names
-  """
-  participation: Edge!
+  """Order by relation ID"""
+  id: Ordering = null
+}
+
+"""Pagination options for querying participation claims"""
+input ParticipationPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
+
+  """Number of items to skip"""
+  offset: Int = 0
 }
 
 """Base interface for plottable queries"""
@@ -4835,6 +3848,15 @@ input PrefixInput {
   The URI that the prefix maps to (e.g. 'http://purl.obolibrary.org/obo/OBI_')
   """
   uri: String!
+}
+
+"""
+Whether a view's drawing reflects the log, has never been drawn, or is mid-replay
+"""
+enum ProjectionStatus {
+  CONSISTENT
+  NEEDS_BACKFILL
+  REBUILDING
 }
 
 """A property definition from the graph schema"""
@@ -4901,7 +3923,7 @@ input PropertyDefinitionInput {
   valueKind: ValueKind!
 }
 
-"""A property match condition for filtering entities"""
+"""A property match condition for filtering structures"""
 input PropertyMatch {
   """The property matching"""
   key: String!
@@ -4911,15 +3933,6 @@ input PropertyMatch {
 
   """The value to filter against"""
   value: String!
-}
-
-"""Ordering options for graph table queries"""
-input PropertyOrder {
-  """The direction to order (ASC or DESC)"""
-  direction: Ordering!
-
-  """The property key to order by"""
-  key: String!
 }
 
 enum PropertyType {
@@ -4932,56 +3945,50 @@ enum PropertyType {
 }
 
 """A protocol event in the graph"""
-type ProtocolEvent implements Event & Node & VersionedNode {
+type ProtocolEvent implements Event & Node {
   """How the view this was read through draws it, if any view does"""
   category: ProtocolEventCategory
 
   """Category ID linking to ProtocolEventCategory model"""
   categoryId: String
 
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
   """
-  The graph this node belongs to, or null for organization-scoped evidence
+  Every instance claimed to be this same thing, this one included. A component of one means nobody has merged it
   """
-  graph: Graph
+  component: [ID!]!
 
   """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
+  Every standing claim connecting this thing to something else — relations, participations and the structures that inform it. Needs no graph query: they are all evidence rows, and the drawing of them is a projection
   """
-  graphId: Int
+  connections: [Edge!]!
 
-  """Composite ID for node lookup"""
-  id: String!
+  """
+  Every view that actually draws this thing, and the category it draws it under. Read back from each projection, so a graph that declares the word but whose definition refuses the node is not listed
+  """
+  drawnIn: [NodeDrawing!]!
+
+  """
+  This node's durable identity — a bare uuid, world-unique and stable across reprojects
+  """
+  id: ID!
 
   """The event type/kind"""
   kind: String!
 
   """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
+  The label this view draws the node under — its category's `ageName` — or the claim's word when the view has not drawn it yet
   """
   label: String!
 
-  """Timestamp when properties were last derived (unix ms)"""
-  lastDerived: UnixMilliseconds
-
-  """Local ID if set"""
-  localId: String
-
-  """List of the current derived properties for this event"""
-  measuredFrom: DateTime!
-
-  """The source entity of this relation"""
-  measuredTo: DateTime!
+  """
+  What anyone has called this thing, with how many assertions say so. Two words means two people disagreed; one word with a count of two means they agreed
+  """
+  labels: [Label!]!
 
   """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
+  Always null. A per-node wall-clock stamp the projector no longer writes; ask `Graph.projection { derivedAt }` for when the view was last derived
   """
-  pinned: Boolean!
+  lastDerived: UnixMilliseconds @deprecated(reason: "`__last_derived` is no longer stamped on vertices — it was the one projected value a rebuild could not reproduce. Read `Graph.projection { derivedAt projectedThroughSeq }` instead. Removed in the next major.")
 
   """List of the current derived properties for this entity"""
   properties: AnyScalar!
@@ -4989,27 +3996,18 @@ type ProtocolEvent implements Event & Node & VersionedNode {
   """List of properties derived for this entity"""
   richProperties: [RichProperty!]!
 
-  """Schema version used to derive properties"""
-  schemaVersion: String!
+  """
+  The standing claims that this instance and another are one thing, with who said so. Exposed so a merge is visible and contestable rather than silent
+  """
+  sameAs: [Sameness!]!
+
+  """
+  Schema version the properties were derived under. Null when this reading came from the log rather than from a projection — a claim no view draws has no derived properties, so there is no version to name
+  """
+  schemaVersion: String
 }
 
-"""An assertion about a protocol event, and everywhere it is now drawn"""
-type ProtocolEventAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [NodeDrawing!]!
-
-  """The event as the log has it"""
-  protocolEvent: ProtocolEvent!
-}
-
-"""A relation category/schema definition"""
+"""A relation category definition"""
 type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -5035,7 +4033,7 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
   """An image representing this category, for visualization purposes"""
   image: MediaStore
 
-  """The graph this category belongs to"""
+  """The roles an entity can play going into an event of this category"""
   inputs: [EventRole!]!
 
   """
@@ -5046,10 +4044,10 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
+  """The roles an entity can play coming out of an event of this category"""
   outputs: [EventRole!]!
 
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """X coordinate"""
@@ -5066,9 +4064,6 @@ type ProtocolEventCategory implements Category & EventCategory & NodeCategory {
 
   """Persistent URL for this category"""
   purl: String
-
-  """List of relevant node queries that use this category as input"""
-  relevantNodeQueries: [NodeQuery!]!
 
   """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
@@ -5134,32 +4129,22 @@ type ProtocolEventCategoryStats {
 
 """Filter options for querying protocol events"""
 input ProtocolEventFilter {
-  """Filter protocol events that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific protocol event IDs"""
-  ids: [GraphID!] = null
+  ids: [ID!] = null
 
-  """Filter protocol events that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over protocol event properties"""
+  """
+  Substring match on the claim's term key or label. A column of the log, not a derived property
+  """
   search: String = null
 }
 
 """Ordering options for protocol event queries"""
 input ProtocolEventOrder {
-  """Order by protocol event category"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by protocol event ID"""
   id: Ordering = null
-
-  """Order by a specific property value"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying protocol events"""
@@ -5175,14 +4160,6 @@ type Query {
   _entities(representations: [_Any!]!): [_Entity]!
   _service: _Service!
 
-  """
-  List activities in a graph with optional filters, ordering, and pagination
-  """
-  activities(filters: NodeFilters = null, graph: ID!, ordering: [NodeOrder!] = null, pagination: NodePaginationInput = null): [Activity!]!
-
-  """Get an activity node by composite graph ID"""
-  activity(id: GraphID!): Activity!
-
   """Get one remark by ID, as the log has it"""
   comment(id: ID!): Comment!
 
@@ -5191,46 +4168,19 @@ type Query {
   """
   commentsFor(identifier: String!, object: ID!): [Comment!]!
 
-  """Get a description edge by composite graph ID"""
-  description(id: GraphID!): Description!
-
-  """List description edges in a graph"""
-  descriptions(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [Description!]!
-
-  """Show all saved edge pairs queries"""
-  edgePairsQueries(filters: EdgePairsQueryFilter, ordering: [EdgePairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgePairsQuery!]!
-
-  """Show a single saved edge pairs query by ID"""
-  edgePairsQuery(id: ID!): EdgePairsQuery!
-
-  """Show all saved edge path queries"""
-  edgePathQueries(filters: EdgePathQueryFilter, ordering: [EdgePathQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgePathQuery!]!
-
-  """Show a single saved edge path query by ID"""
-  edgePathQuery(id: ID!): EdgePathQuery!
-
-  """Show all saved edge queries"""
-  edgeQueries: [EdgeQuery!]!
-
-  """Show a single saved edge query by ID"""
-  edgeQuery(id: ID!): EdgeQuery!
-
-  """Show all saved edge table queries"""
-  edgeTableQueries(filters: EdgeTableQueryFilter, ordering: [EdgeTableQueryOrder!]! = [], pagination: OffsetPaginationInput): [EdgeTableQuery!]!
-
-  """Show a single saved edge table query by ID"""
-  edgeTableQuery(id: ID!): EdgeTableQuery!
+  """Get an INFORMS claim by ID — a bare uuid, its `Link` primary key"""
+  description(id: ID!): Description!
 
   """List entities with optional filters, ordering, and pagination"""
   entities(entityCategoryId: ID!, filters: EntityFilter = null, ordering: [EntityOrder!] = null, pagination: EntityPaginationInput = null): [Entity!]!
 
-  """Get an entity by ID"""
-  entity(id: GraphID!): Entity!
+  """Get an entity by ID, as the named view holds it — see `node`"""
+  entity(graph: ID!, id: ID!): Entity!
 
-  """List all entity categories/schemas"""
+  """List all entity categories"""
   entityCategories(filters: EntityCategoryFilter, ordering: [EntityCategoryOrder!]! = [], pagination: OffsetPaginationInput): [EntityCategory!]!
 
-  """Get a single entity category/schema by ID"""
+  """Get a single entity category by ID"""
   entityCategory(id: ID!): EntityCategory!
 
   """Get aggregated entity-category stats with optional filters"""
@@ -5238,24 +4188,6 @@ type Query {
 
   """Get a graph by ID"""
   graph(id: ID!): Graph!
-
-  """Show a single saved graph node query by ID"""
-  graphNodeQuery(id: ID!): GraphNodesQuery!
-
-  """Show all saved graph nodes queries"""
-  graphNodesQueries(filters: GraphNodesQueryFilter, ordering: [GraphNodesQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphNodesQuery!]!
-
-  """Show all saved graph pairs queries"""
-  graphPairsQueries(filters: GraphPairsQueryFilter, ordering: [GraphPairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphPairsQuery!]!
-
-  """Show a single saved graph pairs query by ID"""
-  graphPairsQuery(id: ID!): GraphPairsQuery!
-
-  """Show all saved graph path queries"""
-  graphPathQueries(filters: GraphPathQueryFilter, ordering: [GraphPathQueryOrder!]! = [], pagination: OffsetPaginationInput): [GraphPathQuery!]!
-
-  """Show a single saved graph path query by ID"""
-  graphPathQuery(id: ID!): GraphPathQuery!
 
   """Show all saved graph queries"""
   graphQueries: [GraphQuery!]!
@@ -5278,43 +4210,27 @@ type Query {
   """List the structures that are evidence for an entity"""
   informingStructures(entityId: String!): [Structure!]!
 
-  """Get an input participation edge by composite graph ID"""
-  inputParticipation(id: GraphID!): InputParticipation!
+  """
+  Get an input participation claim by ID — a bare uuid, its `Link` primary key
+  """
+  inputParticipation(id: ID!): InputParticipation!
 
   """List input participation edges in a graph"""
-  inputParticipations(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [InputParticipation!]!
+  inputParticipations(filters: ParticipationFilter = null, graph: ID!, ordering: [ParticipationOrder!] = null, pagination: ParticipationPaginationInput = null): [InputParticipation!]!
 
-  """Get a single materialized edge by ID"""
-  materializedEdge(id: ID!): MaterializedEdge!
+  """Get one claimed individual by ID, as the log has it"""
+  instance(id: ID!): Instance!
 
-  """List all materialized edges in the graph"""
-  materializedEdges(filters: MaterializedEdgeFilter, ordering: [MaterializedEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedEdge!]!
+  """Get one claim relating two things by ID, as the log has it"""
+  link(id: ID!): Link!
 
-  """Get a single materialized measurement edge by ID"""
-  materializedMeasurementEdge(id: ID!): MaterializedMeasurementEdge!
+  """Get a measurement claim by ID — a bare uuid, its `Link` primary key"""
+  measurement(id: ID!): Measurement!
 
-  """List all materialized measurement edges in the graph"""
-  materializedMeasurementEdges(filters: MaterializedMeasurementEdgeFilter, ordering: [MaterializedMeasurementEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedMeasurementEdge!]!
-
-  """Get a single materialized relation edge by ID"""
-  materializedRelationEdge(id: ID!): MaterializedRelationEdge!
-
-  """List all materialized relation edges in the graph"""
-  materializedRelationEdges(filters: MaterializedRelationEdgeFilter, ordering: [MaterializedRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedRelationEdge!]!
-
-  """Get a single materialized structure relation edge by ID"""
-  materializedStructureRelationEdge(id: ID!): MaterializedStructureRelationEdge!
-
-  """List all materialized structure relation edges in the graph"""
-  materializedStructureRelationEdges(filters: MaterializedStructureRelationEdgeFilter, ordering: [MaterializedStructureRelationEdgeOrder!]! = [], pagination: OffsetPaginationInput): [MaterializedStructureRelationEdge!]!
-
-  """Get a measurement by composite graph ID"""
-  measurement(id: GraphID!): Measurement!
-
-  """List all measurement categories/schemas"""
+  """List all measurement categories"""
   measurementCategories(filters: MeasurementCategoryFilter, ordering: [MeasurementCategoryOrder!]! = [], pagination: OffsetPaginationInput): [MeasurementCategory!]!
 
-  """Get a single measurement category/schema by ID"""
+  """Get a single measurement category by ID"""
   measurementCategory(id: ID!): MeasurementCategory!
 
   """Get aggregated measurement-category stats with optional filters"""
@@ -5324,7 +4240,7 @@ type Query {
   measurements(filters: MeasurementFilter = null, measurementCategoryId: ID!, ordering: [MeasurementOrder!] = null, pagination: MeasurementPaginationInput = null): [Measurement!]!
 
   """Get a metric by ID"""
-  metric(metricId: GraphID!): Metric!
+  metric(id: ID!): Metric!
 
   """Get one metric kind by ID"""
   metricKind(id: ID!): MetricKind!
@@ -5333,27 +4249,27 @@ type Query {
   metricKindStats(filters: MetricKindFilter = null): MetricKindStats!
 
   """List the organization's metric kinds"""
-  metricKinds(filters: MetricKindFilter = null, ordering: [MetricKindOrder!] = null, pagination: StructurePaginationInput = null): [MetricKind!]!
+  metricKinds(filters: MetricKindFilter = null, pagination: VocabularyPaginationInput = null): [MetricKind!]!
 
   """List every un-retracted metric recorded under one metric kind"""
   metrics(metricKindId: ID!): [Metric!]!
 
   """List every metric recorded under one assertion"""
-  metricsForAssertion(assertionId: GraphID!): [Metric!]!
+  metricsForAssertion(assertionId: ID!): [Metric!]!
 
   """List every un-retracted metric describing a structure"""
-  metricsForStructure(structureId: GraphID!): [Metric!]!
+  metricsForStructure(structureId: ID!): [Metric!]!
 
   """Every remark that mentions the caller, newest first"""
   myMentions: [Comment!]!
 
-  """Get a natural event by composite graph ID"""
-  naturalEvent(id: GraphID!): NaturalEvent!
+  """Get a natural event by ID, as the named view holds it — see `node`"""
+  naturalEvent(graph: ID!, id: ID!): NaturalEvent!
 
-  """List all natural event categories/schemas"""
+  """List all natural event categories"""
   naturalEventCategories(filters: NaturalEventCategoryFilter, ordering: [NaturalEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [NaturalEventCategory!]!
 
-  """Get a single natural event category/schema by ID"""
+  """Get a single natural event category by ID"""
   naturalEventCategory(id: ID!): NaturalEventCategory!
 
   """Get aggregated natural-event-category stats with optional filters"""
@@ -5362,49 +4278,29 @@ type Query {
   """List natural events for a natural event category"""
   naturalEvents(filters: NaturalEventFilter = null, naturalEventCategoryId: ID!, ordering: [NaturalEventOrder!] = null, pagination: NaturalEventPaginationInput = null): [NaturalEvent!]!
 
-  """Get a node by ID"""
-  node(id: GraphID!): Node!
-
-  """Show all saved node pairs queries"""
-  nodePairsQueries(filters: NodePairsQueryFilter, ordering: [NodePairsQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodePairsQuery!]!
-
-  """Show a single saved node pairs query by ID"""
-  nodePairsQuery(id: ID!): NodePairsQuery!
-
-  """Show all saved node path queries"""
-  nodePathQueries(filters: NodePathQueryFilter, ordering: [NodePathQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodePathQuery!]!
-
-  """Show a single saved node path query by ID"""
-  nodePathQuery(id: ID!): NodePathQuery!
-
-  """Show all saved node queries"""
-  nodeQueries: [NodeQuery!]!
-
-  """Show a single saved node query by ID"""
-  nodeQuery(id: ID!): NodeQuery!
-
-  """Show all saved node table queries"""
-  nodeTableQueries(filters: NodeTableQueryFilter, ordering: [NodeTableQueryOrder!]! = [], pagination: OffsetPaginationInput): [NodeTableQuery!]!
-
-  """Show a single saved node table query by ID"""
-  nodeTableQuery(id: ID!): NodeTableQuery!
+  """
+  Get a node by ID, as the named view holds it. Refused when that view does not admit the node; the claim itself is `instance(id:)`
+  """
+  node(graph: ID!, id: ID!): Node!
 
   """List nodes with optional filters, ordering, and pagination"""
   nodes(filters: NodeFilters = null, graph: ID!, ordering: [NodeOrder!] = null, pagination: NodePaginationInput = null): [Node!]!
 
-  """Get an output participation edge by composite graph ID"""
-  outputParticipation(id: GraphID!): OutputParticipation!
+  """
+  Get an output participation claim by ID — a bare uuid, its `Link` primary key
+  """
+  outputParticipation(id: ID!): OutputParticipation!
 
   """List output participation edges in a graph"""
-  outputParticipations(filters: RelationFilter = null, graph: ID!, ordering: [RelationOrder!] = null, pagination: RelationPaginationInput = null): [OutputParticipation!]!
+  outputParticipations(filters: ParticipationFilter = null, graph: ID!, ordering: [ParticipationOrder!] = null, pagination: ParticipationPaginationInput = null): [OutputParticipation!]!
 
-  """Get a protocol event by composite graph ID"""
-  protocolEvent(id: GraphID!): ProtocolEvent!
+  """Get a protocol event by ID, as the named view holds it — see `node`"""
+  protocolEvent(graph: ID!, id: ID!): ProtocolEvent!
 
-  """List all protocol event categories/schemas"""
+  """List all protocol event categories"""
   protocolEventCategories(filters: ProtocolEventCategoryFilter, ordering: [ProtocolEventCategoryOrder!]! = [], pagination: OffsetPaginationInput): [ProtocolEventCategory!]!
 
-  """Get a single protocol event category/schema by ID"""
+  """Get a single protocol event category by ID"""
   protocolEventCategory(id: ID!): ProtocolEventCategory!
 
   """Get aggregated protocol-event-category stats with optional filters"""
@@ -5413,13 +4309,13 @@ type Query {
   """List protocol events for a protocol event category"""
   protocolEvents(filters: ProtocolEventFilter = null, ordering: [ProtocolEventOrder!] = null, pagination: ProtocolEventPaginationInput = null, protocolEventCategoryId: ID!): [ProtocolEvent!]!
 
-  """Get a relation by composite graph ID"""
-  relation(id: GraphID!): Relation!
+  """Get a relation claim by ID — a bare uuid, its `Link` primary key"""
+  relation(id: ID!): Relation!
 
-  """List all relation categories/schemas"""
+  """List all relation categories"""
   relationCategories(filters: RelationCategoryFilter, ordering: [RelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [RelationCategory!]!
 
-  """Get a single relation category/schema by ID"""
+  """Get a single relation category by ID"""
   relationCategory(id: ID!): RelationCategory!
 
   """Get aggregated relation-category stats with optional filters"""
@@ -5437,11 +4333,16 @@ type Query {
   """Show all saved scatter plots"""
   scatterPlots(filters: ScatterPlotFilter, ordering: [ScatterPlotOrder!]! = [], pagination: OffsetPaginationInput): [ScatterPlot!]!
 
-  """Get a structure by composite graph ID"""
-  structure(id: GraphID!): Structure!
+  """Every position anyone has taken on one claim, newest first"""
+  standings(id: ID!): [Standing!]!
 
-  """Get a structure by graph, identifier and object"""
-  structureByIdentifier(graph: ID!, identifier: StructureIdentifier!, object: StructureObject!): Structure!
+  """Get a structure by ID — a bare uuid, its evidence primary key"""
+  structure(id: ID!): Structure!
+
+  """
+  Get a structure by identifier and object. No graph: a structure belongs to the organization and has no vertex in any projection
+  """
+  structureByIdentifier(identifier: StructureIdentifier!, object: StructureObject!): Structure!
 
   """Get one structure kind by ID"""
   structureKind(id: ID!): StructureKind!
@@ -5450,15 +4351,17 @@ type Query {
   structureKindStats(filters: StructureKindFilter = null): StructureKindStats!
 
   """List the organization's structure kinds"""
-  structureKinds(filters: StructureKindFilter = null, ordering: [StructureKindOrder!] = null, pagination: StructurePaginationInput = null): [StructureKind!]!
+  structureKinds(filters: StructureKindFilter = null, pagination: VocabularyPaginationInput = null): [StructureKind!]!
 
-  """Get a structure relation by composite graph ID"""
-  structureRelation(id: GraphID!): StructureRelation!
+  """
+  Get a structure relation claim by ID — a bare uuid, its `Link` primary key
+  """
+  structureRelation(id: ID!): StructureRelation!
 
-  """List all structure relation categories/schemas"""
+  """List all structure relation categories"""
   structureRelationCategories(filters: StructureRelationCategoryFilter, ordering: [StructureRelationCategoryOrder!]! = [], pagination: OffsetPaginationInput): [StructureRelationCategory!]!
 
-  """Get a single structure relation category/schema by ID"""
+  """Get a single structure relation category by ID"""
   structureRelationCategory(id: ID!): StructureRelationCategory!
 
   """Get aggregated structure-relation-category stats with optional filters"""
@@ -5476,15 +4379,13 @@ type Query {
   """
   List the organization's words — its vocabulary, independent of any graph
   """
-  terms(filters: TermFilter = null, ordering: [TermOrder!] = null, pagination: StructurePaginationInput = null): [Term!]!
+  terms(filters: TermFilter = null, pagination: VocabularyPaginationInput = null): [Term!]!
 }
 
 """A relation edge between two entities"""
 type Relation implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
   """How the view this was read through draws it, if any view does"""
   category: RelationCategory
@@ -5492,62 +4393,26 @@ type Relation implements Edge {
   """When this relation was created"""
   createdAt: DateTime
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """When this relation became valid according to the evidence"""
-  measuredFrom: DateTime
+  """The node this relation runs from"""
+  source: Node!
 
-  """When this relation stopped being valid according to the evidence"""
-  measuredTo: DateTime
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
-  """List of the current derived properties for this entity"""
-  properties: AnyScalar!
+  """The node this relation runs to"""
+  target: Node!
 
-  """List of properties derived for this entity"""
-  richProperties: [RichProperty!]!
-
-  """The entity this relation runs from"""
-  source: Entity!
-
-  """Global ID of the source/left node"""
-  sourceId: String!
-
-  """The entity this relation runs to"""
-  target: Entity!
-
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
-"""
-An assertion about a relation, and everywhere that relation is now drawn
-"""
-type RelationAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Every view that draws this claim, after this assertion. Empty means no view does — which is an ordinary answer, not an error: a claim names a word the organization owns, and a view that declares no category for that word simply will not draw it. For a retraction this is usually empty and deliberately not hardcoded so: existence is folded under each view's own selector, so a view that does not count the retracting subject still draws the node.
-  """
-  drawings: [EdgeDrawing!]!
-
-  """The relation as the log has it"""
-  relation: Relation!
-}
-
-"""A relation category/schema definition"""
+"""A relation category definition"""
 type RelationCategory implements Category & EdgeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -5578,10 +4443,7 @@ type RelationCategory implements Category & EdgeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
-  materializableAs: [MaterializedEdge!]!
-
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """List of property definitions for this entity category"""
@@ -5591,15 +4453,12 @@ type RelationCategory implements Category & EdgeCategory {
   purl: String
 
   """List of relevant queries that use this category as input"""
-  relevantEdgeQueries: [EdgeQuery!]!
-
-  """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its source"""
   sourceDescriptor: EntityDescriptor!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its target"""
   targetDescriptor: EntityDescriptor!
 
   """
@@ -5689,9 +4548,6 @@ input RelationDefinitionInput {
   """Derived property definitions"""
   properties: [PropertyDefinitionInput!]! = []
 
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
   """Source entity type(s)"""
   source: EntityDescriptorInput!
 
@@ -5701,32 +4557,17 @@ input RelationDefinitionInput {
 
 """Filter options for querying relations"""
 input RelationFilter {
-  """Filter relations that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific relation IDs"""
-  ids: [GraphID!] = null
-
-  """Filter relations that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over relation properties"""
-  search: String = null
+  ids: [ID!] = null
 }
 
 """Ordering options for relation queries"""
 input RelationOrder {
-  """Order by relation category"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by relation ID"""
   id: Ordering = null
-
-  """Order by a specific property value"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying relations"""
@@ -5738,12 +4579,16 @@ input RelationPaginationInput {
   offset: Int = 0
 }
 
-"""Filters for querying node lists"""
+"""A render-time filter on one returned alias of a saved table query"""
 input RenderGraphTableFilter {
-  key: String = null
-  operator: String = null
-  search: String = null
-  value: String!
+  """A returned alias of the plan — what `columns[].key` names"""
+  key: String!
+
+  """How to compare"""
+  operator: WhereOperator! = EQUALS
+
+  """The value to compare against; bound as a parameter, never interpolated"""
+  value: JSON!
 }
 
 """Ordering options for querying node lists"""
@@ -5784,12 +4629,9 @@ input RequestZarrUploadInput {
   version: String = null
 }
 
-"""Input for retracting several claims as one act"""
-input RetractClaimsInput {
-  """The evidence IDs of the claims to retract"""
-  ids: [String!]!
-}
-
+"""
+Input for claiming a remark no longer stands — withdrawn or resolved; the assertion records whose position it is
+"""
 input RetractCommentInput {
   """The ID of the comment to retract"""
   id: String!
@@ -5797,25 +4639,39 @@ input RetractCommentInput {
 
 """Input for retracting an entity claim"""
 input RetractEntityInput {
-  """The ID of the entity to archive"""
-  id: GraphID!
+  """The ID of the entity to retract"""
+  id: ID!
 }
 
-"""Input for archiving an existing measurement edge"""
+"""Input for retracting several link claims as one act"""
+input RetractLinksInput {
+  """The `Link` primary keys of the claims to retract"""
+  ids: [String!]!
+}
+
+"""
+Input for retracting a measurement claim — a Standing(stands=false), not a deletion
+"""
 input RetractMeasurementInput {
-  """The ID of the measurement to archive"""
+  """The ID of the measurement claim to retract — its `Link` primary key"""
   id: String!
 }
 
-"""Input for archiving an existing metric"""
+"""
+Input for retracting a metric claim — a Standing(stands=false), not a deletion
+"""
 input RetractMetricInput {
-  """The ID of the metric to archive"""
+  """
+  The ID of the metric to retract — a bare uuid, its evidence primary key
+  """
   id: String!
 }
 
-"""Input for archiving (soft deleting) an existing natural event instance"""
+"""
+Input for retracting a natural event claim — a Standing(stands=false), not a deletion
+"""
 input RetractNaturalEventInput {
-  """The ID of the natural event to archive"""
+  """The ID of the natural event to retract"""
   id: String!
 }
 
@@ -5826,39 +4682,54 @@ input RetractParticipationInput {
 }
 
 """
-Input for archiving (soft deleting) an existing protocol event instance
+Input for retracting a protocol event claim — a Standing(stands=false), not a deletion
 """
 input RetractProtocolEventInput {
-  """The ID of the protocol event to archive"""
+  """The ID of the protocol event to retract"""
   id: String!
 }
 
-"""Input for archiving an existing relation"""
+"""
+Input for retracting a relation claim — a Standing(stands=false), not a deletion
+"""
 input RetractRelationInput {
-  """The ID of the relation to archive"""
-  id: GraphID!
+  """The ID of the relation claim to retract — its `Link` primary key"""
+  id: ID!
 }
 
 """Input for withdrawing one sameness claim"""
-input RetractSameEntityInput {
+input RetractSameInstanceInput {
   """The id of the sameness claim to retract"""
   id: String!
 }
 
-"""Input for deleting an existing structure"""
+"""
+Input for retracting a structure claim — a Standing(stands=false), not a deletion
+"""
 input RetractStructureInput {
-  """The ID of the structure to archive"""
-  id: GraphID!
+  """
+  The ID of the structure to retract — a bare uuid, its evidence primary key
+  """
+  id: ID!
 }
 
-"""Input for archiving an existing structure relation"""
+"""
+Input for retracting a structure relation claim — a Standing(stands=false), not a deletion
+"""
 input RetractStructureRelationInput {
-  """The ID of the structure relation to archive"""
+  """
+  The ID of the structure relation claim to retract — its `Link` primary key
+  """
   id: String!
 }
 
 """Input type for creating a new graph"""
 type ReturnStatement {
+  """
+  The column alias this value is returned under — what `columns[].key`, a render filter and a render order name. Generated from path/node/property when omitted
+  """
+  alias: String
+
   """The node ID to return"""
   node: String
 
@@ -5871,6 +4742,11 @@ type ReturnStatement {
 
 """Input for a return statement in a graph table query builder"""
 input ReturnStatementInput {
+  """
+  The column alias this value is returned under — what `columns[].key`, a render filter and a render order name. Generated from path/node/property when omitted
+  """
+  alias: String = null
+
   """The node ID to return"""
   node: String = null
 
@@ -5888,9 +4764,6 @@ type RichProperty {
 
   """The schema definition this property was derived under"""
   definition: PropertyDefinition
-
-  """Local AGE graph ID"""
-  graphId: GraphID!
 
   """The property key/name"""
   key: String
@@ -5927,50 +4800,29 @@ input RoleMappingInput {
 
 """A claim that two instances are one thing"""
 type Sameness implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
   """One of the two instances claimed to be the same"""
-  source: Entity!
+  source: Node!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
   """The other instance claimed to be the same"""
-  target: Entity!
+  target: Node!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
-"""An assertion that instances are one thing, and the claims it recorded"""
-type SamenessAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  The sameness claims this act recorded. Asserting that three instances are one records every pair among them, under one assertion
-  """
-  samenesses: [Sameness!]!
-}
-
-"""Result of linking a structure to an entity"""
+"""A saved scatter-plot configuration over a graph query"""
 type ScatterPlot {
   """The name of the column to use for color values (optional)"""
   colorColumn: String
@@ -5989,8 +4841,8 @@ type ScatterPlot {
   """Label/name of the scatter plot definition"""
   label: String!
 
-  """The graph this category belongs to"""
-  query: Plottable!
+  """The saved table query this plot is drawn from"""
+  query: GraphTableQuery!
 
   """The name of the column to use for shape values (optional)"""
   shapeColumn: String
@@ -6057,21 +4909,7 @@ input ScatterPlotOrder @oneOf {
   name: Ordering
 }
 
-"""A sequence a graph can draw category indices from"""
-input SequenceInput {
-  """The prefix string (e.g. 'IAZ')"""
-  prefix: String!
-}
-
-"""How a category draws its index from a sequence"""
-input SequenceMappingInput {
-  """The property key that will be set with the sequence value"""
-  property: String!
-
-  """The sequence identifier (e.g., 'IAZ001')"""
-  sequence: String!
-}
-
+"""Somebody's position on whether a claim still holds"""
 type Standing {
   """Who took this position, with what tool, and when they recorded it"""
   assertion: Assertion!
@@ -6090,31 +4928,17 @@ type Standing {
   stands: Boolean!
 }
 
-"""A structure that provides evidence for entities"""
-type Structure implements Node {
+"""A pointer to an external datum — a claim, not a graph node"""
+type Structure {
   """
   The discussion this datum carries: every remark recorded about it, newest first, resolved ones included — resolution is shown, not hidden. Threading is on each comment (`parent`/`replies`)
   """
   comments: [Comment!]!
 
-  """External ID if set"""
-  externalId: String
-
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
   """
-  The graph this node belongs to, or null for organization-scoped evidence
+  This claim's durable identity — the `Structure` primary key, a bare uuid
   """
-  graph: Graph
-
-  """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
-  """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
+  id: ID!
 
   """Schema identifier (e.g. '@mikro/roi')"""
   identifier: StructureIdentifier!
@@ -6122,7 +4946,7 @@ type Structure implements Node {
   """
   The nodes this structure is evidence for. Where its labels, merges and connections live — a structure is a pointer to an external datum and is never itself claimed to be an AIS
   """
-  informs: [Entity!]!
+  informs: [Node!]!
 
   """The organization's term for this kind of structure"""
   kind: StructureKind
@@ -6130,35 +4954,11 @@ type Structure implements Node {
   """ID of the structure kind this instantiates"""
   kindId: String!
 
-  """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
-  """
-  label: String!
-
-  """Local ID if set"""
-  localId: String
-
   """Every un-retracted measurement of this structure, in observation order"""
   metrics: [Metric!]!
 
   """External object ID this structure references"""
   object: String!
-
-  """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
-  """
-  pinned: Boolean!
-}
-
-"""An assertion about a structure — a pointer to an external datum"""
-type StructureAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """The structure this act was about"""
-  structure: Structure!
 }
 
 """Input type for creating a new graph query"""
@@ -6206,16 +5006,16 @@ input StructureDescriptorInput {
 
 """Filter options for querying structures"""
 input StructureFilter {
-  """Filter structures that have a specific property"""
+  """Filter structures that have a metric under this key"""
   hasProperty: String = null
 
   """Filter by specific structure IDs"""
-  ids: [GraphID!] = null
+  ids: [ID!] = null
 
-  """Filter structures that match specific property conditions"""
+  """Filter structures whose metrics match these conditions"""
   matches: [PropertyMatch!] = null
 
-  """Full-text search over structure properties"""
+  """Substring match on the structure's `object`, not its properties"""
   search: String = null
 }
 
@@ -6275,13 +5075,6 @@ input StructureKindFilter {
   search: String = null
 }
 
-input StructureKindOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  identifier: Ordering
-  label: Ordering
-}
-
 type StructureKindStats {
   """Average value"""
   avg(field: StructureKindField!): Float
@@ -6309,17 +5102,11 @@ scalar StructureObject
 
 """Ordering options for structure queries"""
 input StructureOrder {
-  """Order by structure kind/type"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by structure ID"""
   id: Ordering = null
-
-  """Order by a specific property value (requires 'has_property' filter)"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying structures"""
@@ -6343,10 +5130,8 @@ input StructureReferenceInput {
 
 """A relation edge between two structures"""
 type StructureRelation implements Edge {
-  """
-  Who claimed this, and when. Null for an edge read out of a projection, which carries no provenance
-  """
-  assertion: Assertion
+  """Who claimed this, and when"""
+  assertion: Assertion!
 
   """How the view this was read through draws it, if any view does"""
   category: StructureRelationCategory
@@ -6357,56 +5142,26 @@ type StructureRelation implements Edge {
   """When this relation was created"""
   createdAt: DateTime
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """Local AGE graph ID, or null for edges that have no projection"""
-  graphId: Int
-
-  """Composite ID for edge lookup"""
-  id: String!
+  """This claim's durable identity — the `Link` primary key, a bare uuid"""
+  id: ID!
 
   """The edge label/type"""
   label: String!
 
-  """When this relation became valid according to the evidence"""
-  measuredFrom: DateTime
-
-  """When this relation stopped being valid according to the evidence"""
-  measuredTo: DateTime
-
   """The structure this relation runs from"""
   source: Structure!
 
-  """Global ID of the source/left node"""
-  sourceId: String!
+  """The source endpoint, as evidence names it — a bare uuid"""
+  sourceId: ID!
 
   """The structure this relation runs to"""
   target: Structure!
 
-  """Global ID of the target/right node"""
-  targetId: String!
+  """The target endpoint, as evidence names it — a bare uuid"""
+  targetId: ID!
 }
 
-"""
-An assertion about a structure relation. Drawings are always empty: neither endpoint has a vertex
-"""
-type StructureRelationAssertion {
-  """
-  The claim this call recorded. Not the subject's original assertion — for an attestation or a retraction those are different acts, possibly years apart.
-  """
-  assertion: Assertion!
-
-  """
-  Always empty, and structurally so: both endpoints are structures, which have no vertex for an edge to run between
-  """
-  drawings: [EdgeDrawing!]!
-
-  """The structure relation as the log has it"""
-  structureRelation: StructureRelation!
-}
-
-"""A relation category/schema definition"""
+"""A relation category definition"""
 type StructureRelationCategory implements Category & EdgeCategory {
   """The name of the category as used in AGE (e.g. 'Cell', 'ROI')"""
   ageName: String!
@@ -6437,10 +5192,7 @@ type StructureRelationCategory implements Category & EdgeCategory {
   """Label/name of the category"""
   label: String!
 
-  """The graph this category belongs to"""
-  materializableAs: [MaterializedEdge!]!
-
-  """The graph this category belongs to"""
+  """Whether the requesting user has pinned this graph for quick access"""
   pinned: Boolean!
 
   """List of property definitions for this entity category"""
@@ -6450,15 +5202,12 @@ type StructureRelationCategory implements Category & EdgeCategory {
   purl: String
 
   """List of relevant queries that use this category as input"""
-  relevantEdgeQueries: [EdgeQuery!]!
-
-  """List of relevant queries that use this category as input"""
   relevantQueries: [GraphQuery!]!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its source"""
   sourceDescriptor: StructureDescriptor!
 
-  """The graph this category belongs to"""
+  """Which nodes this edge category admits as its target"""
   targetDescriptor: StructureDescriptor!
 
   """
@@ -6548,9 +5297,6 @@ input StructureRelationDefinitionInput {
   """Derived property definitions"""
   properties: [PropertyDefinitionInput!]! = []
 
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
   """Source entity type(s)"""
   source: StructureDescriptorInput!
 
@@ -6560,32 +5306,17 @@ input StructureRelationDefinitionInput {
 
 """Filter options for querying structure relations"""
 input StructureRelationFilter {
-  """Filter structure relations that have a specific property"""
-  hasProperty: String = null
-
   """Filter by specific structure relation IDs"""
-  ids: [GraphID!] = null
-
-  """Filter structure relations that match specific property conditions"""
-  matches: [PropertyMatch!] = null
-
-  """Full-text search over structure relation properties"""
-  search: String = null
+  ids: [ID!] = null
 }
 
 """Ordering options for structure relation queries"""
 input StructureRelationOrder {
-  """Order by structure relation category"""
-  category: Ordering = null
-
   """Order by creation timestamp"""
   createdAt: Ordering = null
 
   """Order by structure relation ID"""
   id: Ordering = null
-
-  """Order by a specific property value"""
-  property: PropertyOrder = null
 }
 
 """Pagination options for querying structure relations"""
@@ -6597,13 +5328,7 @@ input StructureRelationPaginationInput {
   offset: Int = 0
 }
 
-"""Graph Engine Subscriptions"""
-type Subscription {
-  """Subscribe to updates for a specific graph"""
-  graphUpdated(graphId: GraphID!): Graph!
-}
-
-"""Input for updating an existing metric"""
+"""Input for superseding a metric value"""
 input SupersedeMetricValueInput {
   confidence: Float = null
   confidenceType: String = null
@@ -6621,6 +5346,44 @@ input SupersedeMetricValueInput {
   What type of value this is. Required: it decides which column the value is stored in and which measurement term it is recorded under, and nothing infers it. Two callers may declare the same key differently — a float `confidence` and a category-label `confidence` are two terms, and both are recorded.
   """
   valueKind: PropertyType!
+}
+
+"""
+What a saved table query means — matches, wheres, returns, columns — independent of the projection kind that compiles it. The contract a client reads back and rewrites; `query` is its compiled form
+"""
+type TableQueryPlan {
+  """How the returned aliases are presented"""
+  columns: [Column!]!
+
+  """
+  The paths to match; the first node of the first path is the default subject
+  """
+  matches: [MatchPath!]!
+
+  """What to return, each under an alias a column can name"""
+  returns: [ReturnStatement!]!
+
+  """Shape version of this plan"""
+  version: Int!
+
+  """Predicates over matched nodes' properties"""
+  wheres: [WhereClause!]!
+}
+
+"""
+What a saved table query means: matches, wheres, returns. Compiled per projection kind
+"""
+input TableQueryPlanInput {
+  """
+  The paths to match; the first node of the first path is the default subject
+  """
+  matches: [MatchPathInput!]!
+
+  """What to return, each under an alias a column can name"""
+  returns: [ReturnStatementInput!]! = []
+
+  """Predicates over matched nodes' properties"""
+  wheres: [WhereClauseInput!]! = []
 }
 
 """A word this organization uses for a kind of thing"""
@@ -6692,75 +5455,10 @@ enum TermKind {
   STRUCTURE_RELATION
 }
 
-input TermOrder @oneOf {
-  createdAt: Ordering
-  id: Ordering
-  key: Ordering
-  kind: Ordering
-  label: Ordering
-}
-
 scalar UnixMilliseconds
 
-"""Input for updating an edge pairs query"""
-input UpdateEdgePairsQueryInput {
-  """Description of this edge query"""
-  description: String = null
-
-  """The ID of the edge query to update"""
-  id: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this edge query"""
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String = null
-}
-
-"""Input for updating an edge path query"""
-input UpdateEdgePathQueryInput {
-  """Description of this edge query"""
-  description: String = null
-
-  """The ID of the edge query to update"""
-  id: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this edge query"""
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String = null
-}
-
-"""Input for updating an edge table query"""
-input UpdateEdgeTableQueryInput {
-  """Definitions for the columns returned by this edge table query"""
-  columnInput: [ColumnInput!] = null
-
-  """Description of this edge query"""
-  description: String = null
-
-  """The ID of the edge query to update"""
-  id: String!
-
-  """Unique key for this edge query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this edge query"""
-  name: String = null
-
-  """The Cypher query string that defines this edge query"""
-  query: String = null
-}
-
 """Input for updating an existing entity definition in the graph schema"""
-input UpdateEntityDefinitionInput {
+input UpdateEntityCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -6794,9 +5492,6 @@ input UpdateEntityDefinitionInput {
 
   """Property definitions"""
   propertyDefinitions: [PropertyDefinitionInput!] = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!] = null
 }
 
 """Input for updating an existing graph"""
@@ -6817,67 +5512,25 @@ input UpdateGraphInput {
   pin: Boolean = null
 }
 
-"""Input for updating a graph pairs query"""
-input UpdateGraphPairsQueryInput {
-  """Description of this graph query"""
-  description: String = null
-
-  """The ID of the graph query to update"""
-  id: String!
-
-  """Unique key for this graph query, used for referencing in the UI"""
-  key: String = null
-
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this graph query"""
-  query: String = null
-}
-
-"""Input for updating a graph path query"""
-input UpdateGraphPathQueryInput {
-  """Description of this graph query"""
-  description: String = null
-
-  """The ID of the graph query to update"""
-  id: String!
-
-  """Unique key for this graph query, used for referencing in the UI"""
-  key: String = null
-
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
-  name: String = null
-
-  """The Cypher query string that defines this graph query"""
-  query: String = null
-}
-
 """Input for updating a graph table query through builder arguments"""
 input UpdateGraphTableQueryInput {
   """Definitions for the columns returned by this graph query"""
   columnInput: [ColumnInput!] = null
 
-  """Description of this graph query"""
+  """Description of this query"""
   description: String = null
 
-  """The ID of the graph query to update"""
+  """The ID of the graph table query to update"""
   id: String!
 
-  """Unique key for this graph query, used for referencing in the UI"""
+  """Unique key for this query within its graph"""
   key: String = null
 
-  """
-  Human-readable name for this graph query (defaults to 'key' if not provided)
-  """
+  """Human-readable name"""
   name: String = null
 
-  """The Cypher query string that defines this graph query"""
-  query: String = null
+  """A new plan; omitted means unchanged"""
+  plan: TableQueryPlanInput = null
 }
 
 """Input for updating the visual properties of a graph element"""
@@ -6892,10 +5545,7 @@ input UpdateGraphVisualInput {
 """
 Input for updating an existing measurement definition in the graph schema
 """
-input UpdateMeasurementDefinitionInput {
-  """Relation cardinality"""
-  cardinality: Cardinality! = ONE_TO_ONE
-
+input UpdateMeasurementCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -6908,8 +5558,8 @@ input UpdateMeasurementDefinitionInput {
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """Relation type name/key"""
-  key: String!
+  """The label of the node participating in the event"""
+  key: String = null
 
   """
   Optional human-readable label for this node role (defaults to 'key' if not provided)
@@ -6917,26 +5567,14 @@ input UpdateMeasurementDefinitionInput {
   label: String = null
 
   """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
+  ontologyReferences: [OntologyReferenceInput!] = null
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Derived property definitions"""
-  properties: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-
-  """Source entity type(s)"""
-  source: StructureDescriptorInput!
-
-  """Target entity type(s)"""
-  target: EntityDescriptorInput!
 }
 
 """Input for updating an existing metric definition in the graph schema"""
-input UpdateMetricDefinitionInput {
+input UpdateMetricKindInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -6946,7 +5584,9 @@ input UpdateMetricDefinitionInput {
   """The ID of the definition to update"""
   id: String!
 
-  """Optional schema identifier for this metric (e.g. '@mikro/roi')"""
+  """
+  Read by nothing: a metric kind is identified by `(organization, structure_kind, key, value_kind)`. `update_metric_kind` writes label, description and colour only
+  """
   identifier: String = null
 
   """Optional media store ID for an image representing this node role"""
@@ -6965,35 +5605,26 @@ input UpdateMetricDefinitionInput {
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!] = null
 }
 
 """
 Input for updating an existing natural event definition in the graph schema
 """
-input UpdateNaturalEventDefinitionInput {
+input UpdateNaturalEventCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
   """Description of this node role"""
   description: String = null
 
-  """The ID of the event category to update"""
+  """The ID of the natural event category to update"""
   id: String!
 
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """Input node roles"""
-  inputs: [EventRoleInput!]! = []
-
   """The label of the node participating in the event"""
-  key: String!
-
-  """The kind of event"""
-  kind: EventKind!
+  key: String = null
 
   """
   Optional human-readable label for this node role (defaults to 'key' if not provided)
@@ -7001,102 +5632,30 @@ input UpdateNaturalEventDefinitionInput {
   label: String = null
 
   """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
-
-  """Output node roles"""
-  outputs: [EventRoleInput!]! = []
+  ontologyReferences: [OntologyReferenceInput!] = null
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Property definitions"""
-  properties: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
-}
-
-"""Input for updating a node pairs query"""
-input UpdateNodePairsQueryInput {
-  """Description of this node query"""
-  description: String = null
-
-  """The ID of the node query to update"""
-  id: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this node query"""
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String = null
-}
-
-"""Input for updating a node path query"""
-input UpdateNodePathQueryInput {
-  """Description of this node query"""
-  description: String = null
-
-  """The ID of the node query to update"""
-  id: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this node query"""
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String = null
-}
-
-"""Input for updating a node table query"""
-input UpdateNodeTableQueryInput {
-  """Definitions for the columns returned by this node table query"""
-  columnInput: [ColumnInput!] = null
-
-  """Description of this node query"""
-  description: String = null
-
-  """The ID of the node query to update"""
-  id: String!
-
-  """Unique key for this node query, used for referencing in the UI"""
-  key: String = null
-
-  """Human-readable name for this node query"""
-  name: String = null
-
-  """The Cypher query string that defines this node query"""
-  query: String = null
 }
 
 """
 Input for updating an existing protocol event definition in the graph schema
 """
-input UpdateProtocolEventDefinitionInput {
+input UpdateProtocolEventCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
   """Description of this node role"""
   description: String = null
 
-  """The ID of the event category to update"""
+  """The ID of the protocol event category to update"""
   id: String!
 
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """Input node roles"""
-  inputs: [EventRoleInput!]! = []
-
   """The label of the node participating in the event"""
-  key: String!
-
-  """The kind of event"""
-  kind: EventKind!
+  key: String = null
 
   """
   Optional human-readable label for this node role (defaults to 'key' if not provided)
@@ -7104,45 +5663,28 @@ input UpdateProtocolEventDefinitionInput {
   label: String = null
 
   """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
-
-  """Output node roles"""
-  outputs: [EventRoleInput!]! = []
+  ontologyReferences: [OntologyReferenceInput!] = null
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Property definitions"""
-  properties: [PropertyDefinitionInput!]! = []
-
-  """The protocol this event definition belongs to"""
-  protocol: String!
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for updating an existing relation definition in the graph schema"""
-input UpdateRelationDefinitionInput {
+input UpdateRelationCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
   """Description of this node role"""
   description: String = null
 
-  """The ID of the entity category to update"""
+  """The ID of the relation category to update"""
   id: String!
 
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """
-  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
-  """
-  instanceKind: String = null
-
   """The label of the node participating in the event"""
-  key: String!
+  key: String = null
 
   """
   Optional human-readable label for this node role (defaults to 'key' if not provided)
@@ -7150,16 +5692,10 @@ input UpdateRelationDefinitionInput {
   label: String = null
 
   """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
+  ontologyReferences: [OntologyReferenceInput!] = null
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Property definitions"""
-  propertyDefinitions: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for updating an existing relation"""
@@ -7185,8 +5721,8 @@ input UpdateScatterPlotInput {
   """Optional description of the scatter plot"""
   description: String = null
 
-  """Optional graph table query ID used by this scatter plot"""
-  graphQueryId: Int = null
+  """The graph table query this scatter plot is drawn from"""
+  graphQueryId: Int!
 
   """The database ID of the scatter plot to update"""
   id: Int!
@@ -7196,12 +5732,6 @@ input UpdateScatterPlotInput {
 
   """The display name of the scatter plot"""
   name: String!
-
-  """Optional node table query ID used by this scatter plot"""
-  nodeQueryId: Int = null
-
-  """Optional node path query ID used by this scatter plot"""
-  pathQueryId: Int = null
 
   """Optional column key used for point shape"""
   shapeColumn: String = null
@@ -7222,10 +5752,22 @@ input UpdateScatterPlotInput {
   yIdColumn: String = null
 }
 
+"""Input for updating an existing structure"""
+input UpdateStructureInput {
+  """The ID of the structure to update"""
+  id: String!
+
+  """List of measurements associated with this structure"""
+  metrics: [MetricInput!]! = []
+
+  """The unique ID of the object this structure references"""
+  object: String!
+}
+
 """
 Input for updating an existing structure definition in the graph schema
 """
-input UpdateStructureDefinitionInput {
+input UpdateStructureKindInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -7235,7 +5777,9 @@ input UpdateStructureDefinitionInput {
   """The ID of the definition to update"""
   id: String!
 
-  """Optional schema identifier for this structure (e.g. '@mikro/roi')"""
+  """
+  Read by nothing: `(organization, identifier)` is a structure kind's identity and cannot be reassigned. `update_structure_kind` writes label, description and colour only
+  """
   identifier: String = null
 
   """Optional media store ID for an image representing this node role"""
@@ -7254,32 +5798,12 @@ input UpdateStructureDefinitionInput {
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!] = null
-}
-
-"""Input for updating an existing structure"""
-input UpdateStructureInput {
-  """The ID of the structure to update"""
-  id: String!
-
-  """List of measurements associated with this structure"""
-  metrics: [MetricInput!]! = []
-
-  """The unique ID of the object this structure references"""
-  object: String!
-
-  """
-  The ID of the user for whom to set this pin. If not provided, will default to the user making the request.
-  """
-  user: String = null
 }
 
 """
 Input for updating an existing structure relation definition in the graph schema
 """
-input UpdateStructureRelationDefinitionInput {
+input UpdateStructureRelationCategoryInput {
   """Optional RGBA color for this node role (e.g. [255, 0, 0, 128])"""
   color: [Int!] = null
 
@@ -7292,13 +5816,8 @@ input UpdateStructureRelationDefinitionInput {
   """Optional media store ID for an image representing this node role"""
   image: String = null
 
-  """
-  Optional instance kind for this entity category (e.g. 'neuron', 'synapse', 'behavior'). This is used for further categorization and filtering of entities within the graph.
-  """
-  instanceKind: String = null
-
   """The label of the node participating in the event"""
-  key: String!
+  key: String = null
 
   """
   Optional human-readable label for this node role (defaults to 'key' if not provided)
@@ -7306,16 +5825,10 @@ input UpdateStructureRelationDefinitionInput {
   label: String = null
 
   """Ontology references for this event"""
-  ontologyReferences: [OntologyReferenceInput!]! = []
+  ontologyReferences: [OntologyReferenceInput!] = null
 
   """Whether to pin this node role in the UI"""
   pin: Boolean = null
-
-  """Property definitions"""
-  propertyDefinitions: [PropertyDefinitionInput!]! = []
-
-  """Sequence mappings for this node"""
-  sequences: [SequenceMappingInput!]! = []
 }
 
 """Input for updating an existing structure relation"""
@@ -7368,45 +5881,13 @@ enum ValueKind {
   TWO_D_VECTOR
 }
 
-"""Interface for versioned nodes with schema tracking"""
-interface VersionedNode implements Node {
-  """External ID if set"""
-  externalId: String
+"""Pagination options for querying the organization's vocabulary"""
+input VocabularyPaginationInput {
+  """Maximum number of items to return"""
+  limit: Int = 100
 
-  """Global identifier in format 'graph_name:graph_id'"""
-  globalId: GlobalID!
-
-  """
-  The graph this node belongs to, or null for organization-scoped evidence
-  """
-  graph: Graph
-
-  """
-  Local AGE graph ID, or null for evidence rows that are not projected into a graph
-  """
-  graphId: Int
-
-  """Composite ID for node lookup"""
-  id: String!
-
-  """
-  The AGE graph label as recently materialized (e.g. 'Cell IAC100', 'ROI 1')
-  """
-  label: String!
-
-  """Timestamp when properties were last derived (unix ms)"""
-  lastDerived: UnixMilliseconds
-
-  """Local ID if set"""
-  localId: String
-
-  """
-  Whether this node is pinned in the UI. Always false — `pinNode` was removed, so nothing can set it
-  """
-  pinned: Boolean!
-
-  """Schema version used to derive properties"""
-  schemaVersion: String!
+  """Number of items to skip"""
+  offset: Int = 0
 }
 
 """Input type for defining a graph schema"""
@@ -7420,8 +5901,10 @@ type WhereClause {
   """The property name to filter on"""
   property: String!
 
-  """The value to compare against"""
-  value: String!
+  """
+  The value to compare against. A typed value bound as a parameter, never a Cypher literal
+  """
+  value: JSON!
 }
 
 """Input for a where clause in a graph table query builder"""
@@ -7435,8 +5918,10 @@ input WhereClauseInput {
   """The property name to filter on"""
   property: String!
 
-  """The value to compare against"""
-  value: String!
+  """
+  The value to compare against. A typed value bound as a parameter, never a Cypher literal
+  """
+  value: JSON!
 }
 
 enum WhereOperator {
@@ -7507,7 +5992,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = Assertion | BigFileStore | EdgePairsQuery | EdgePathQuery | EdgeTableQuery | EntityCategory | Graph | GraphNodesQuery | GraphPairsQuery | GraphPathQuery | GraphTableQuery | MaterializedEdge | MaterializedMeasurementEdge | MaterializedRelationEdge | MaterializedStructureRelationEdge | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | NodePairsQuery | NodePathQuery | NodeTableQuery | ProtocolEventCategory | RelationCategory | ScatterPlot | StructureKind | StructureRelationCategory | Term | ZarrStore
+union _Entity = Assertion | BigFileStore | Comment | EntityCategory | Graph | GraphTableQuery | Instance | Link | MeasurementCategory | MediaStore | MetricKind | NaturalEventCategory | ProtocolEventCategory | RelationCategory | ScatterPlot | Standing | StructureKind | StructureRelationCategory | Term | ZarrStore
 
 type _Service {
   sdl: String!

@@ -3,8 +3,8 @@ mutation AssertNaturalEventExists($input: AssertNaturalEventExistsInput!) {
     assertion {
       ...Assertion
     }
-    naturalEvent {
-      ...NaturalEvent
+    instance {
+      ...Instance
     }
     drawings {
       ...NodeDrawing
@@ -17,8 +17,8 @@ mutation RetractNaturalEvent($id: String!) {
     assertion {
       ...Assertion
     }
-    naturalEvent {
-      ...NaturalEvent
+    instance {
+      ...Instance
     }
   }
 }
@@ -28,8 +28,8 @@ mutation AttestNaturalEvent($id: String!) {
     assertion {
       ...Assertion
     }
-    naturalEvent {
-      ...NaturalEvent
+    instance {
+      ...Instance
     }
     drawings {
       ...NodeDrawing

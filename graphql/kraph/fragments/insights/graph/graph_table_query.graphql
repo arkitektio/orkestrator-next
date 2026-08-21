@@ -1,12 +1,17 @@
 
 fragment GraphTableQuery on GraphTableQuery {
   ...BaseGraphQuery
+  # The compiled form, read-only and deprecated. Kept for display only — the
+  # plan is what a client writes.
   query
+  # True when the row was saved as raw Cypher before plans existed. Such a row
+  # still renders but takes no filter, order or page.
+  legacy
   columns {
     ...Column
   }
-  builderArgs {
-    ...BuilderArgs
+  plan {
+    ...TableQueryPlan
   }
   scatterPlots {
     ...ListScatterPlot

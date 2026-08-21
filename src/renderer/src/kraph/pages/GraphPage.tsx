@@ -10,6 +10,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import OntologyGraph from "../components/designer/OntologyGraph";
+import { ProjectionBadge } from "../components/ProjectionBadge";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
@@ -38,6 +39,7 @@ export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => 
       title={data.graph.name}
       pageActions={
         <>
+          <ProjectionBadge projection={data.graph.projection} />
 
           <FormSheet
             trigger={

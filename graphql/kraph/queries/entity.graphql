@@ -1,18 +1,18 @@
-query GetEntity($id: GraphID!) {
-  entity(id: $id) {
+query GetEntity($id: ID!, $graph: ID!) {
+  entity(id: $id, graph: $graph) {
     ...Entity
   }
 }
 
 # The category an entity was claimed under — enough to decide which relation
 # categories apply between two entities, without pulling the whole entity.
-query GetListEntity($id: GraphID!) {
-  entity(id: $id) {
+query GetListEntity($id: ID!, $graph: ID!) {
+  entity(id: $id, graph: $graph) {
     ...ListEntity
   }
 }
 
-query SearchEntities($category: ID!, $search: String, $values: [GraphID!], ) {
+query SearchEntities($category: ID!, $search: String, $values: [ID!], ) {
   options: entities(
     entityCategoryId: $category,
     filters: { search: $search, ids: $values }
@@ -56,6 +56,5 @@ query SearchLinkableEntities($category: ID!, $search: String) {
     pagination: { limit: 20 }
   ) {
     ...ListEntity
-    externalId
   }
 }

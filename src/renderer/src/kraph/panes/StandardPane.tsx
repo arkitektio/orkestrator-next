@@ -108,13 +108,7 @@ export const NavigationPane = () => {
             <PiNumberCircleEight className="h-4 w-4" />
             Metrics
           </PaneLink>
-          <PaneLink
-            to="/kraph/notes"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <PiNumberCircleEight className="h-4 w-4" />
-            Notes
-          </PaneLink>
+          
           <PaneLink
             to="/kraph/measurementcategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"

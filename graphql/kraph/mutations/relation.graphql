@@ -3,8 +3,8 @@ mutation AssertRelationExists($input: AssertRelationExistsInput!) {
     assertion {
       ...Assertion
     }
-    relation {
-      ...Relation
+    link {
+      ...Link
     }
     drawings {
       ...EdgeDrawing
@@ -17,8 +17,8 @@ mutation UpdateRelation($input: UpdateRelationInput!) {
     assertion {
       ...Assertion
     }
-    relation {
-      ...Relation
+    link {
+      ...Link
     }
     drawings {
       ...EdgeDrawing
@@ -26,13 +26,13 @@ mutation UpdateRelation($input: UpdateRelationInput!) {
   }
 }
 
-mutation RetractRelation($id: GraphID!) {
+mutation RetractRelation($id: ID!) {
   retractRelation(input: { id: $id }) {
     assertion {
       ...Assertion
     }
-    relation {
-      ...Relation
+    link {
+      ...Link
     }
   }
 }

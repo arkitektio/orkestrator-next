@@ -11,6 +11,7 @@ import {
 } from "@apollo/client";
 import React from "react";
 import { useParams } from "react-router-dom";
+import { useGraphScope } from "@/kraph/providers/GraphScopeProvider";
 import { DebugPage } from "../components/fallbacks/DebugPage";
 import { ErrorPage } from "../components/fallbacks/ErrorPage";
 import { LoadingPage } from "../components/fallbacks/LoadingPage";
@@ -114,6 +115,79 @@ export const asDetailQueryRoute = <T extends any>(
       return (
         <RefetchProvider refetch={passyProps.refetch}>
           <Component {...passyProps} id={id ?? ""} />
+        </RefetchProvider>
+      );
+    }
+
+    return null;
+  };
+};
+
+export type GraphDetailVariables = {
+  id: string;
+  graph: string;
+} & OperationVariables;
+
+/**
+ * `asDetailQueryRoute` for a read that is scoped to one graph.
+ *
+ * Kraph's view-grain reads take `(id, graph)`: a claim is organization-grain and
+ * a *drawing* of it exists only inside a graph, so `entity(id:, graph:)` refuses
+ * a node the named view does not admit. The id comes from the path as usual; the
+ * graph comes from `GraphScopeProvider`, which the `graphs/:graph` layout route
+ * installs.
+ *
+ * A sibling rather than a widening of `asDetailQueryRoute` on purpose — around
+ * forty non-kraph pages depend on that one's single-variable shape.
+ */
+export const asGraphDetailQueryRoute = <T extends any>(
+  hook: HookFunction<T, GraphDetailVariables>,
+  Component: React.FC<{
+    id: string;
+    graph: string;
+    data: T;
+    refetch: (
+      variables?: Partial<GraphDetailVariables> | undefined,
+    ) => Promise<ApolloQueryResult<T>>;
+  }>,
+  options: {
+    fallback?: React.ReactNode;
+    queryOptions?: QueryHookOptions<T, GraphDetailVariables>;
+  } = { fallback: <></> },
+) => {
+  return ({ direct }: { direct?: any | undefined }) => {
+    const { debug } = useDebug();
+    const { id } = useParams<{ id: string }>();
+    const scope = useGraphScope();
+
+    if ((!id || !scope) && direct == undefined) {
+      return options.fallback ?? <> This route is illconfigured</>;
+    }
+
+    const passyProps =
+      direct ||
+      hook({
+        variables: { id: id ?? "", graph: scope?.graphId ?? "" },
+        ...options.queryOptions,
+      });
+
+    if (passyProps.error) {
+      if (debug) return <DebugPage data={passyProps.error} />;
+      return <ErrorPage error={passyProps.error} />;
+    }
+
+    if (passyProps.loading && !passyProps.data) return <LoadingPage />;
+
+    if (passyProps && passyProps.data) {
+      if (debug) return <DebugPage data={passyProps.data} />;
+
+      return (
+        <RefetchProvider refetch={passyProps.refetch}>
+          <Component
+            {...passyProps}
+            id={id ?? ""}
+            graph={scope?.graphId ?? ""}
+          />
         </RefetchProvider>
       );
     }

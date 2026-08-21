@@ -1,4 +1,4 @@
-import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
+import { buildModuleLink, buildScopedSmart, buildSmart } from "@/providers/smart/builder";
 
 // Linkers for the smart models
 // Linkers represent ways to reference a smart model consistently in the ui, and
@@ -316,9 +316,10 @@ export const ElektroDataset = buildSmart(
   { name: "Dataset (Elektro)" },
 );
 
-export const KraphNode = buildSmart(
+export const KraphNode = buildScopedSmart(
   "@kraph/node",
-  "kraph/nodes",
+  (graph) => `kraph/graphs/${graph}/nodes`,
+  "kraph/instances",
   { name: "Node" },
 );
 
@@ -421,19 +422,22 @@ export const KraphReagent = buildSmart(
   "kraph/reagents",
   { name: "Reagent" },
 );
-export const KraphProtocolEvent = buildSmart(
+export const KraphProtocolEvent = buildScopedSmart(
   "@kraph/protocolevent",
-  "kraph/protocolevents",
+  (graph) => `kraph/graphs/${graph}/protocolevents`,
+  "kraph/instances",
   { name: "Protocol Event" },
 );
-export const KraphNaturalEvent = buildSmart(
+export const KraphNaturalEvent = buildScopedSmart(
   "@kraph/naturalevent",
-  "kraph/naturalevents",
+  (graph) => `kraph/graphs/${graph}/naturalevents`,
+  "kraph/instances",
   { name: "Natural Event" },
 );
-export const KraphEntity = buildSmart(
+export const KraphEntity = buildScopedSmart(
   "@kraph/entity",
-  "kraph/entities",
+  (graph) => `kraph/graphs/${graph}/entities`,
+  "kraph/instances",
   { name: "Entity" },
 );
 export const KraphEditEvent = buildSmart(
@@ -456,6 +460,21 @@ export const KraphMetric = buildSmart(
   "kraph/metrics",
   { name: "Metric" },
 );
+// The claim itself, at organization grain. A write returns one of these, and a
+// dropped uuid with no graph in hand resolves here — the page lists `drawnIn`,
+// the views that draw it, and links into each.
+export const KraphInstance = buildSmart(
+  "@kraph/instance",
+  "kraph/instances",
+  { name: "Instance" },
+);
+
+export const KraphLink = buildSmart(
+  "@kraph/link",
+  "kraph/links",
+  { name: "Link" },
+);
+
 export const KraphGraph = buildSmart(
   "@kraph/graph",
   "kraph/graphs",
@@ -487,12 +506,6 @@ export const KraphScatterPlot = buildSmart(
   "kraph/scatterplots",
   { name: "Scatter Plot" },
 );
-export const KraphNodeQuery = buildSmart(
-  "@kraph/nodequery",
-  "kraph/nodequeries",
-  { name: "Node Query" },
-);
-
 export const KraphProtocol = buildSmart(
   "@kraph/protocol",
   "kraph/protocols",

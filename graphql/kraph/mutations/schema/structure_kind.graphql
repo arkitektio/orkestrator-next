@@ -1,4 +1,4 @@
-mutation UpdateStructureKind($input: UpdateStructureDefinitionInput!) {
+mutation UpdateStructureKind($input: UpdateStructureKindInput!) {
   updateStructureKind(input: $input) {
     ...StructureKind
   }

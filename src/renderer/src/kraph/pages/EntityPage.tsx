@@ -1,27 +1,39 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { asGraphDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  KraphEntity,
-  KraphEntityCategory,
-  KraphProtocolEvent
-} from "@/linkers";
-import { SmartLink } from "@/providers/smart/builder";
-import {
-  ActivityLogIcon
-} from "@radix-ui/react-icons";
-import {
-  Calendar,
-  Database,
-  Microscope
-} from "lucide-react";
-import Timestamp from "react-timestamp";
+import { KraphEntity, KraphEntityCategory } from "@/linkers";
+import { ActivityLogIcon } from "@radix-ui/react-icons";
+import { Database } from "lucide-react";
 import { useGetEntityQuery } from "../api/graphql";
 import { InformingStructures } from "../components/InformingStructures";
+import { EntityStandings } from "../components/EntityStandings";
 import { PropertyEditor } from "../components/PropertyEditor";
 import { PropertyRenderer } from "../components/PropertyRenderer";
+
+/**
+ * How a connection's kind reads. `Edge` is one graph's drawing of a `Link`, and
+ * only some link kinds are ever drawn — RELATION and the two PARTICIPATES_AS_*.
+ * The rest are read from the log, so this list is shorter than `LinkKind`.
+ */
+const connectionKindLabel = (typename?: string) => {
+  switch (typename) {
+    case "Measurement":
+      return "measured by";
+    case "Relation":
+      return "relation";
+    case "StructureRelation":
+      return "structure relation";
+    case "InputParticipation":
+      return "input to";
+    case "OutputParticipation":
+      return "output of";
+    case "Sameness":
+      return "same as";
+    default:
+      return typename ?? "link";
+  }
+};
 
 export const calculateDuration = (start?: string, end?: string) => {
   if (!start) return null;
@@ -43,7 +55,7 @@ export const calculateDuration = (start?: string, end?: string) => {
   return durationStr.trim();
 };
 
-const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
+const Page = asGraphDetailQueryRoute(useGetEntityQuery, ({ data }) => {
   return (
     <KraphEntity.ModelPage
       variant="black"
@@ -59,7 +71,13 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
             <KraphEntity.Knowledge object={{ id: data.entity.id }} />
           </Sidebars.Tab>
           <Sidebars.Tab label="Evidence">
+            {/*
+              Two halves. Structures are what the claim is evidence *from*;
+              standings are the positions taken on the claim itself — retraction
+              and attestation both write one, and the current answer is the fold.
+            */}
             <InformingStructures entityId={data.entity.id} />
+            <EntityStandings id={data.entity.id} />
           </Sidebars.Tab>
         </Sidebars>
       }
@@ -169,128 +187,47 @@ const Page = asDetailQueryRoute(useGetEntityQuery, ({ data }) => {
             )
           )}
 
-          {/* Measurements */}
-          {data.entity.measuredBy.length > 0 && (
+          {/* Connections */}
+          {data.entity.connections.length > 0 && (
             <>
               <Separator />
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Microscope className="h-4 w-4" /> Measurements
+                  <ActivityLogIcon className="h-4 w-4" /> Connections
                 </h3>
-                <div className="grid gap-4 pl-2">
-                  {data.entity.measuredBy.map((measurement) => (
-                    <SmartLink
-                      identifier={measurement.source.identifier}
-                      object={measurement.source.object || ""}
-                      key={`${measurement.id}`}
+                {/*
+                  One section, not three. `measuredBy`, `participatedIn` and
+                  `resultedOut` were separate traversals for three of the eight
+                  link kinds; `connections` is every link touching this node, and
+                  the kind is what distinguishes them.
+                */}
+                <div className="grid gap-2 pl-2">
+                  {data.entity.connections.map((connection) => (
+                    <div
+                      key={connection.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
                     >
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {measurement.category?.label ?? measurement.label}
-                          </span>
-                          {measurement.source.__typename == "Structure" && (
-                            <span className="text-xs text-muted-foreground">
-                              Source: {measurement.source.identifier}
-                            </span>
-                          )}
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          View
-                        </Button>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Badge variant="outline">
+                          {connectionKindLabel(connection.__typename)}
+                        </Badge>
+                        <span className="font-medium truncate">
+                          {"category" in connection
+                            ? (connection.category?.label ?? connection.label)
+                            : connection.label}
+                        </span>
                       </div>
-                    </SmartLink>
+                      <span className="text-xs text-muted-foreground shrink-0 font-mono">
+                        {connection.sourceId === data.entity.id
+                          ? "outgoing"
+                          : "incoming"}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
             </>
           )}
-
-          {/* Protocols (Subjected To & Targeted By) */}
-          {(data.entity.participatedIn.length > 0 ||
-            data.entity.participatedIn.length > 0) && (
-              <>
-                <Separator />
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <ActivityLogIcon className="h-4 w-4" /> Protocols & Events
-                  </h3>
-                  <div className="grid gap-4 pl-2">
-                    {data.entity.participatedIn.map((subjected) => (
-                      <div
-                        key={subjected.id}
-                        className="flex items-start gap-4 p-3 border rounded-lg"
-                      >
-                        <Badge variant="outline">{subjected.role}</Badge>
-                        {subjected.target.__typename == "ProtocolEvent" && (
-                          <div className="flex-1">
-                            <KraphProtocolEvent.DetailLink
-                              object={{ id: subjected.target.id }}
-                              className="font-medium hover:underline block"
-                            >
-                              {subjected.target.category?.label ?? subjected.target.label}
-                            </KraphProtocolEvent.DetailLink>
-                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                              <Calendar className="h-3 w-3" />
-                              {subjected.target.measuredFrom && (
-                                <Timestamp
-                                  date={subjected.target.measuredFrom}
-                                  relative
-                                />
-                              )}
-                              {subjected.target.measuredFrom && (
-                                <span>
-                                  (~
-                                  {calculateDuration(
-                                    subjected.target.measuredFrom,
-                                    subjected.target.measuredTo,
-                                  )}
-                                  )
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {data.entity.resultedOut.map((targeted) => (
-                      <div
-                        key={targeted.id}
-                        className="flex items-start gap-4 p-3 border rounded-lg"
-                      >
-                        <Badge variant="secondary">{targeted.role}</Badge>
-                        <div className="flex-1">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            Targeted by
-                          </div>
-                          <KraphProtocolEvent.DetailLink
-                            object={{ id: targeted.source.id }}
-                            className="font-medium hover:underline block"
-                          >
-                            {targeted.source.category?.label ?? targeted.source.label}
-                          </KraphProtocolEvent.DetailLink>
-                          <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3" />
-                            {targeted.source.measuredFrom && (
-                              <Timestamp
-                                date={targeted.source.measuredFrom}
-                                relative
-                              />
-                            )}
-                            {targeted.source.measuredTo && (
-                              <Timestamp
-                                date={targeted.source.measuredTo}
-                                relative
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
         </div>
 
         {/* Right Column: Node View */}

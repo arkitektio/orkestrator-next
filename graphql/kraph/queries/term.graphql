@@ -4,7 +4,7 @@ query GetTerm($id: ID!) {
   }
 }
 
-query ListTerms($filters: TermFilter, $pagination: StructurePaginationInput) {
+query ListTerms($filters: TermFilter, $pagination: VocabularyPaginationInput) {
   terms(filters: $filters, pagination: $pagination) {
     ...ListTerm
   }

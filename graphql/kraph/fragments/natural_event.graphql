@@ -3,15 +3,11 @@ fragment NaturalEvent on NaturalEvent {
   id
   label
 
-  measuredFrom
-  measuredTo
 }
 
 fragment ListNaturalEvent on NaturalEvent {
   id
   label
-  measuredFrom
-  measuredTo
   category {
     label
     id

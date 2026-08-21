@@ -10,15 +10,16 @@ import { MiniWidget } from "../MiniWidget";
 // Top-level exported tooltip component for the scatter plot. Recharts will
 // render this component and pass in `active` and `payload` as props; we also
 // accept the `scatterPlot` so the tooltip can show the selected column names.
-// `graphAgeName` is passed down from `ScatterPlot` (fetched via
-// `renderGraphTable`), since `ScatterPlotFragment` itself doesn't carry the
-// graph's `ageName` needed by `MiniWidget`.
+// `graphId` is passed down from `ScatterPlot` (fetched via `renderGraphTable`),
+// since `ScatterPlotFragment` itself doesn't carry the graph `MiniWidget` needs.
+// It was `graphAgeName`: the AGE namespace is random and internal now, read only
+// by the engine — `graph:` takes the primary key and never the handle.
 export const ScatterPlotTooltip: React.FC<
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> & {
     scatterPlot: ScatterPlotFragment;
-    graphAgeName?: string;
+    graphId?: string;
   }
-> = ({ active, payload, scatterPlot, graphAgeName }) => {
+> = ({ active, payload, scatterPlot, graphId }) => {
   if (!active || !payload || !payload.length) return null;
 
   const xVal = payload.find(
@@ -44,7 +45,7 @@ export const ScatterPlotTooltip: React.FC<
       <div className="border-t pt-2">
         {idVal ? (
           <>
-            <MiniWidget id={idVal} graph={graphAgeName} />
+            <MiniWidget id={idVal} graph={graphId} />
           </>
         ) : (
           "No id"

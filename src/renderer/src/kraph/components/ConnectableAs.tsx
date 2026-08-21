@@ -8,21 +8,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  ListMaterializedMeasurementsQuery,
-  useListMaterializedMeasurementsQuery,
+  ListApplicableMeasurementCategoriesQuery,
+  useListApplicableMeasurementCategoriesQuery,
 } from "@/kraph/api/graphql";
 import { Link } from "lucide-react";
 import { useState } from "react";
 
-type MaterializedMeasurementEdge =
-  ListMaterializedMeasurementsQuery["materializedMeasurementEdges"][number];
+type MeasurementCategory =
+  ListApplicableMeasurementCategoriesQuery["measurementCategories"][number];
 
 const ConnectableCategoryList = ({
-  edges,
+  categories,
   loading,
   error,
 }: {
-  edges: MaterializedMeasurementEdge[];
+  categories: MeasurementCategory[];
   loading: boolean;
   error?: string;
 }) => {
@@ -34,7 +34,7 @@ const ConnectableCategoryList = ({
     return <div className="text-sm text-destructive">{error}</div>;
   }
 
-  if (edges.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
         No connectable targets available for this structure.
@@ -44,13 +44,20 @@ const ConnectableCategoryList = ({
 
   return (
     <div className="flex flex-col gap-2">
-      {edges.map((edge) => (
-        <div key={edge.id} className="rounded-md border bg-background/80 p-3">
+      {categories.map((category) => (
+        <div key={category.id} className="rounded-md border bg-background/80 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{edge.edge.label || edge.edge.key}</div>
+              <div className="truncate text-sm font-medium">{category.label || category.key}</div>
               <div className="truncate text-xs text-muted-foreground">
-                Target: {edge.target.label || edge.target.key}
+                {/*
+                  A category declares which entities it may target as a
+                  *descriptor*, not as one resolved category — `MaterializedEdge`
+                  used to have that resolved and stored, and went stale doing it.
+                */}
+                Target: {category.targetDescriptor.keys?.join(", ") ||
+                  category.targetDescriptor.defaultCategoryKey ||
+                  "any entity"}
               </div>
             </div>
             <div className="shrink-0 text-xs text-muted-foreground">
@@ -70,32 +77,30 @@ export type ConnectableAsProps = {
 };
 
 // NOTE: these rows are a read-only survey of what this structure *could* be
-// measured against. Actually recording one needs a concrete target Entity,
-// while `materializedMeasurementEdges` only yields the target EntityCategory
-// (`edge.target`) — that picking step lives in the `setasmeasurement` dialog,
-// which ensures the source structure and calls `assertMeasurementExists`.
+// measured against. Actually recording one needs a concrete target Entity, while
+// a measurement category only says which entity categories it accepts — that
+// picking step lives in the `setasmeasurement` dialog, which resolves the
+// descriptor, ensures the source structure and calls `assertMeasurementExists`.
 export const ConnectableAs = ({
   identifier,
   graphId,
   variant = "dialog",
 }: ConnectableAsProps) => {
-  const { data, loading, error } = useListMaterializedMeasurementsQuery({
+  const { data, loading, error } = useListApplicableMeasurementCategoriesQuery({
     variables: {
-      filters: {
-        sourceIdentifier: identifier,
-        graphId: graphId,
-      },
+      sourceIdentifier: identifier,
+      graph: graphId,
     },
     fetchPolicy: "network-only",
   });
 
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  const edges = data?.materializedMeasurementEdges ?? [];
+  const categories = data?.measurementCategories ?? [];
 
   const categoryList = (
     <ConnectableCategoryList
-      edges={edges}
+      categories={categories}
       loading={loading}
       error={error?.message}
     />

@@ -1,4 +1,4 @@
-mutation UpdateMetricKind($input: UpdateMetricDefinitionInput!) {
+mutation UpdateMetricKind($input: UpdateMetricKindInput!) {
   updateMetricKind(input: $input) {
     ...MetricKind
   }

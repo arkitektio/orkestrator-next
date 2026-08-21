@@ -196,8 +196,10 @@ export const LinkExpressionPanel = (props: {
     }) => {
       const queryResult = await graphSearch({
         variables: {
+          // No `search`. `RelationFilter` is `{ ids }` now — the edge lists read
+          // the evidence log, and a claim carries none of the projected-edge
+          // properties the old free-text filter went over.
           category: props.category,
-          search: x.search,
           values: x.values?.map((v) => v.toString()),
         },
       });

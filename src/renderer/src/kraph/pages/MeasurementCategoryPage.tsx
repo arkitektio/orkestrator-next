@@ -12,7 +12,7 @@ import {
 } from "@/linkers";
 import {
   useGetMeasurmentCategoryQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateMeasurementCategoryMutation
 } from "../api/graphql";
 import UpdateMeasurementCategoryForm from "../forms/UpdateMeasurementCategoryForm";
 
@@ -20,7 +20,7 @@ const Page = asDetailQueryRoute(
   useGetMeasurmentCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateMeasurementCategoryMutation();
 
     const resolve = useResolve();
 

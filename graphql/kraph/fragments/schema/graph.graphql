@@ -27,10 +27,18 @@ fragment Graph on Graph {
     ...ListGraphQuery
   }
   pinned
+  # How far this view's drawing has got along the log. Previously unanswerable:
+  # a client could not tell whether the graph it was looking at had drawn its own
+  # write yet, and `Node.lastDerived` — the one projected value a rebuild could
+  # not reproduce — is deprecated and always null now.
+  projection {
+    ...GraphProjection
+  }
   image {
     ...MediaStore
   }
 }
+
 
 fragment ListGraph on Graph {
   id
@@ -40,4 +48,17 @@ fragment ListGraph on Graph {
   image {
     ...MediaStore
   }
+}
+
+fragment GraphProjection on GraphProjection {
+  kind
+  status
+  # `min(min_pending_seq - 1, max_seq)`, derived and never stored: every
+  # committed assertion at or below it is drawn.
+  projectedThroughSeq
+  lag
+  pending
+  schemaStale
+  derivedAt
+  rebuiltAt
 }

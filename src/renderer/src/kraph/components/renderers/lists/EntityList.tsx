@@ -36,17 +36,9 @@ import {
 } from "@/components/ui/table";
 
 import { useDialog } from "@/app/dialog";
-import { DisplayWidget } from "@/command/Menu";
 import { Card } from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { FancyInput } from "@/components/ui/fancy-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -57,22 +49,17 @@ import {
   EntityCategoryFragment,
   EntityFilter,
   EntityNodesQuery,
-  Ordering,
   PropertyDefinitionFragment,
-  PropertyMatch,
-  PropertyOrder,
   ValueKind,
-  WhereOperator,
   useEntityNodesQuery,
   useGetEntityQuery,
   useAssertMetricValueMutation
 } from "@/kraph/api/graphql";
 import { buildItoldyousoMetric, isManuallyAssertable } from "@/kraph/lib/itoldyouso";
-import { calculateDuration } from "@/kraph/pages/EntityPage";
-import { KraphMeasurement, KraphNaturalEvent, KraphNode, KraphProtocolEvent } from "@/linkers";
-import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Plus, RefreshCw, X } from "lucide-react";
+import { KraphNode } from "@/linkers";
+import { Plus, RefreshCw } from "lucide-react";
 import Timestamp from "react-timestamp";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { ViewOptions } from "../types";
 
 
 export type FormValues = {
@@ -419,134 +406,60 @@ const calculateRows = (entities: EntityNodesQuery["entities"] | undefined) => {
 
 export const RowEntity = ({
   row,
+  graphId,
 }: {
   row: Row<EntityNodesQuery["entities"][0]>;
+  // An entity is a *drawing*, so reading one needs the graph that drew it. It
+  // comes from the category being listed rather than from the route: this list
+  // renders on `entitycategories/:id`, which is claim-shaped in the URL but
+  // view-grain in what it shows, and a category belongs to exactly one graph.
+  graphId: string;
 }) => {
-
   const { data } = useGetEntityQuery({
-    variables: {
-      id: row.getValue("id")
-    }
-  })
+    variables: { id: row.getValue("id"), graph: graphId },
+  });
 
-  return <div className="p-1 w-full h-full overflow-hidden bg-slate-900/70 flex flex-row gap-3">
-    {(data?.entity?.measuredBy?.length || 0) > 0 && (
-      <>
-        {data?.entity.measuredBy.map((measurement) => (
-          <KraphMeasurement.DetailLink
-            object={{ id: measurement.id }}
-            key={`${measurement.id}`}
+  // `measuredBy`, `participatedIn` and `resultedOut` were three traversals for
+  // three of the eight link kinds. `connections` is every link touching this
+  // node, and the kind is what tells them apart.
+  const connections = data?.entity.connections ?? [];
 
-          >
-            <Card className="p-2 flex flex-col flex-1 h-32 w-32 truncate">
-
-              <pre>{measurement.category?.label ?? measurement.label}</pre>
-              <DisplayWidget
-                identifier={measurement.source.identifier}
-                object={measurement.source.object}
-                link={true}
-              />
-            </Card>
-          </KraphMeasurement.DetailLink>
-        ))}
-      </>
-    )}
-    {(data?.entity.participatedIn.length || 0) > 0 && <>
-      <div className="p-2">Participated in</div>
-
-      <div className="flex flex-row gap-2 p-6">
-        {(data?.entity.participatedIn || []).map((participation) => (
-          <Card
-            key={`${participation.id}`}
-            className="p-2 flex-row gap-2 flex w-96"
-          >
-            <div className="my-auto border border-1 rounded  px-2 py-1">
-              {participation.role}
-            </div>
-            {participation.target.__typename == "ProtocolEvent" && (
-              <div className="flex flex-col">
-                <KraphProtocolEvent.DetailLink
-                  object={{ id: participation.target.id }}
-                  className={"text-xl font-bold"}
-                >
-                  {participation.target.category?.label ?? participation.target.label}
-                </KraphProtocolEvent.DetailLink>
-                <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                  {participation.target.measuredFrom && (
-                    <Timestamp date={participation.target.measuredFrom} relative />
-                  )}
-                  {participation.target.measuredTo && participation.target.measuredFrom && (
-                    <div>
-                      (~
-                      {calculateDuration(
-                        participation.target.measuredFrom,
-                        participation.target.measuredTo,
-                      )}
-                      )
-                    </div>
-                  )}
-                  {!participation.target.measuredTo && !participation.target.measuredFrom && (
-                    <div>No validity</div>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
-        ))}
+  if (connections.length === 0) {
+    return (
+      <div className="p-3 w-full text-sm text-muted-foreground bg-slate-900/70">
+        No connections recorded
       </div>
-    </>}
+    );
+  }
 
-    {(data?.entity.resultedOut.length || 0) > 0 && (
-      <>
-        <div className="p-6">Resulted out of</div>
-
-
-        <div className="flex flex-row gap-2 p-6">
-          {data?.entity.resultedOut.map((resulted) => (
-            <Card key={`${resulted.id}`} className="p-2 flex-row gap-2 flex w-96">
-              <div className="my-auto border border-1 rounded  px-2 py-1">
-                {resulted.role}
-              </div>
-              <div className="flex flex-col">
-                <KraphNaturalEvent.DetailLink
-                  object={{ id: resulted.source.id }}
-                  className={"text-xl font-bold"}
-                >
-                  {resulted.source.category?.label ?? resulted.source.label}
-                </KraphNaturalEvent.DetailLink>
-                <div className="text-sm text-muted-foreground flex flex-row gap-2">
-                  {resulted.source.measuredFrom && (
-                    <Timestamp date={resulted.source.measuredFrom} relative />
-                  )}
-                  {resulted.source.measuredTo && resulted.source.measuredFrom && (
-                    <div>
-                      (~
-                      {calculateDuration(
-                        resulted.source.measuredFrom,
-                        resulted.source.measuredTo,
-                      )}
-                      )
-                    </div>
-                  )}
-                  {!resulted.source.measuredTo && !resulted.source.measuredFrom && (
-                    <div>No validity</div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </>
-    )}
-  </div>
+  return (
+    <div className="p-1 w-full h-full overflow-hidden bg-slate-900/70 flex flex-row gap-3">
+      {connections.map((connection) => (
+        <Card
+          key={connection.id}
+          className="p-2 flex flex-col flex-1 h-32 w-32 truncate"
+        >
+          <div className="text-xs text-muted-foreground">
+            {connection.__typename}
+          </div>
+          <pre className="truncate">
+            {"category" in connection
+              ? (connection.category?.label ?? connection.label)
+              : connection.label}
+          </pre>
+        </Card>
+      ))}
+    </div>
+  );
 };
-
 
 
 export const EntityRow = ({
   row,
+  graphId,
 }: {
   row: Row<EntityNodesQuery["entities"][0]>;
+  graphId: string;
 }) => {
 
   const [moreData, setMoreData] = React.useState(false);
@@ -586,7 +499,7 @@ export const EntityRow = ({
     {moreData && (
       <tr className="h-[200px] w-full flex flex-grow" >
 
-        <RowEntity row={row} />
+        <RowEntity row={row} graphId={graphId} />
       </tr>
     )}
   </>
@@ -599,17 +512,6 @@ export const EntityList = (props: {
   const { openDialog } = useDialog();
   const [search, setSearch] = React.useState<string>("");
   const [searchInput, setSearchInput] = React.useState<string>("");
-  const [propertyMatches, setPropertyMatches] = React.useState<PropertyMatch[]>([]);
-  const [newFilterKey, setNewFilterKey] = React.useState<string>("");
-  const [newFilterOperator, setNewFilterOperator] = React.useState<WhereOperator>(WhereOperator.Equals);
-  const [newFilterValue, setNewFilterValue] = React.useState<string>("");
-  const [isAddFilterOpen, setIsAddFilterOpen] = React.useState(false);
-
-  const [propertyOrders, setPropertyOrders] = React.useState<PropertyOrder[]>([]);
-  const [newOrderKey, setNewOrderKey] = React.useState<string>("");
-  const [newOrderDirection, setNewOrderDirection] = React.useState<Ordering>(Ordering.Asc);
-  const [isAddOrderOpen, setIsAddOrderOpen] = React.useState(false);
-
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -632,16 +534,12 @@ export const EntityList = (props: {
 
   const filters: EntityFilter = {
     search: search || undefined,
-    matches: propertyMatches.length > 0 ? propertyMatches : undefined,
   };
 
   const { data, loading, refetch, error } = useEntityNodesQuery({
     variables: {
       category: props.category.id,
       filters,
-      ordering: propertyOrders.length > 0
-        ? propertyOrders.map((propertyOrder) => ({ property: propertyOrder }))
-        : undefined,
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
@@ -728,111 +626,6 @@ export const EntityList = (props: {
     URL.revokeObjectURL(url);
   };
 
-  const addFilter = () => {
-    if (newFilterKey && newFilterValue) {
-      setPropertyMatches([...propertyMatches, {
-        key: newFilterKey,
-        operator: newFilterOperator,
-        value: newFilterValue,
-      }]);
-      setNewFilterKey("");
-      setNewFilterValue("");
-      setNewFilterOperator(WhereOperator.Equals);
-      setIsAddFilterOpen(false);
-    }
-  };
-
-  const removeFilter = (index: number) => {
-    setPropertyMatches(propertyMatches.filter((_, i) => i !== index));
-  };
-
-  const addOrder = () => {
-    if (newOrderKey) {
-      setPropertyOrders([...propertyOrders, {
-        key: newOrderKey,
-        direction: newOrderDirection,
-      }]);
-      setNewOrderKey("");
-      setNewOrderDirection(Ordering.Asc);
-      setIsAddOrderOpen(false);
-    }
-  };
-
-  const removeOrder = (index: number) => {
-    setPropertyOrders(propertyOrders.filter((_, i) => i !== index));
-  };
-
-  const getOperatorsForValueKind = (valueKind: ValueKind) => {
-    const allOperators = [
-      { value: WhereOperator.Equals, label: "Equals" },
-      { value: WhereOperator.NotEquals, label: "Not Equals" },
-      { value: WhereOperator.Contains, label: "Contains" },
-      { value: WhereOperator.StartsWith, label: "Starts With" },
-      { value: WhereOperator.EndsWith, label: "Ends With" },
-      { value: WhereOperator.GreaterThan, label: "Greater Than" },
-      { value: WhereOperator.GreaterOrEqual, label: "Greater Than or Equal" },
-      { value: WhereOperator.LessThan, label: "Less Than" },
-      { value: WhereOperator.LessOrEqual, label: "Less Than or Equal" },
-    ];
-
-    switch (valueKind) {
-      case ValueKind.String:
-      case ValueKind.Category:
-        // String operations
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.Contains,
-          WhereOperator.StartsWith, WhereOperator.EndsWith].includes(op.value)
-        );
-
-      case ValueKind.Int:
-      case ValueKind.Float:
-        // Numeric operations
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
-          WhereOperator.GreaterOrEqual, WhereOperator.LessThan,
-          WhereOperator.LessOrEqual].includes(op.value)
-        );
-
-      case ValueKind.Boolean:
-        // Boolean operations
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals].includes(op.value)
-        );
-
-      case ValueKind.Datetime:
-        // DateTime operations
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals, WhereOperator.GreaterThan,
-          WhereOperator.GreaterOrEqual, WhereOperator.LessThan,
-          WhereOperator.LessOrEqual].includes(op.value)
-        );
-
-      case ValueKind.OneDVector:
-      case ValueKind.TwoDVector:
-      case ValueKind.ThreeDVector:
-      case ValueKind.FourDVector:
-      case ValueKind.NVector:
-        // Vector operations - only equality
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals].includes(op.value)
-        );
-
-      default:
-        // Default to equality operations
-        return allOperators.filter(op =>
-          [WhereOperator.Equals, WhereOperator.NotEquals].includes(op.value)
-        );
-    }
-  };
-
-  const selectedProperty = props.category.propertyDefinitions?.find(
-    prop => prop.key === newFilterKey
-  );
-
-  const operatorOptions = selectedProperty
-    ? getOperatorsForValueKind(selectedProperty.valueKind)
-    : [];
-
   const table = useReactTable({
     data: rows || [],
     columns: columns || [],
@@ -880,201 +673,21 @@ export const EntityList = (props: {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Active Filters */}
-              {propertyMatches.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {propertyMatches.map((match, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1 pr-1">
-                      <span className="font-mono text-xs">{match.key}</span>
-                      <span className="text-xs opacity-70">
-                        {match.operator.toLowerCase().replace(/_/g, " ")}
-                      </span>
-                      <span className="font-semibold text-xs">
-                        {String(match.value)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4 ml-1 hover:bg-destructive/20"
-                        onClick={() => removeFilter(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              {/*
+                The property filter and property sort controls lived here.
+                Neither is expressible any more: `EntityFilter` is `{ ids, search }`
+                and `EntityOrder` is `{ createdAt, id }` — the `matches` /
+                `hasProperty` filters and `property` ordering asked about a *drawn
+                vertex's* derived properties, which exist only where the view has
+                drawn the node and change when the projection is rebuilt. A list
+                that narrows by what happens to be cached is a wrong answer that
+                looks right, so the server refuses the question rather than
+                answering it approximately.
 
-              {/* Active Orders */}
-              {propertyOrders.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {propertyOrders.map((order, index) => (
-                    <Badge key={index} variant="outline" className="gap-1 pr-1">
-                      <span className="font-mono text-xs">{order.key}</span>
-                      {order.direction === Ordering.Asc ? (
-                        <ArrowUp className="h-3 w-3" />
-                      ) : (
-                        <ArrowDown className="h-3 w-3" />
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4 ml-1 hover:bg-destructive/20"
-                        onClick={() => removeOrder(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Add Order Dropdown */}
-              <DropdownMenu open={isAddOrderOpen} onOpenChange={setIsAddOrderOpen}>
-                <DropdownMenuTrigger>
-                  <Button variant="outline" size="sm">
-                    <ArrowUpDown className="mr-2 h-4 w-4" />
-                    Add Order
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[350px] p-4">
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium">Add Property Order</div>
-
-                    <div className="space-y-2">
-                      <Select
-                        value={newOrderKey}
-                        onValueChange={setNewOrderKey}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select property" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {props.category.propertyDefinitions?.map((prop) => (
-                            <SelectItem key={prop.key} value={prop.key}>
-                              {prop.label || prop.key}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={newOrderDirection}
-                        onValueChange={(value) => setNewOrderDirection(value as Ordering)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select direction" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={Ordering.Asc}>
-                            <div className="flex items-center gap-2">
-                              <ArrowUp className="h-4 w-4" />
-                              Ascending
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={Ordering.Desc}>
-                            <div className="flex items-center gap-2">
-                              <ArrowDown className="h-4 w-4" />
-                              Descending
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        className="w-full"
-                        onClick={addOrder}
-                        disabled={!newOrderKey}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Order
-                      </Button>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Add Filter Dropdown */}
-              <DropdownMenu open={isAddFilterOpen} onOpenChange={setIsAddFilterOpen}>
-                <DropdownMenuTrigger>
-                  <Button variant="outline" size="sm">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Add Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[400px] p-4">
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium">Add Property Filter</div>
-
-                    <div className="space-y-2">
-                      <Select
-                        value={newFilterKey}
-                        onValueChange={(value) => {
-                          setNewFilterKey(value);
-                          // Reset operator to first available when property changes
-                          const prop = props.category.propertyDefinitions?.find(p => p.key === value);
-                          if (prop) {
-                            const availableOps = getOperatorsForValueKind(prop.valueKind);
-                            if (availableOps.length > 0) {
-                              setNewFilterOperator(availableOps[0].value);
-                            }
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select property" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {props.category.propertyDefinitions?.map((prop) => (
-                            <SelectItem key={prop.key} value={prop.key}>
-                              {prop.label || prop.key}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={newFilterOperator}
-                        onValueChange={(value) =>
-                          setNewFilterOperator(value as WhereOperator)
-                        }
-                        disabled={!newFilterKey}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select operator" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorOptions.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>
-                              {op.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Input
-                        placeholder="Enter value"
-                        value={newFilterValue}
-                        onChange={(e) => setNewFilterValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            addFilter();
-                          }
-                        }}
-                      />
-
-                      <Button
-                        className="w-full"
-                        onClick={addFilter}
-                        disabled={!newFilterKey || !newFilterValue}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Filter
-                      </Button>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                `search` survives, and means something narrower and true: a
+                substring of the claim's own word (`Term.key` / `Term.label`),
+                which is a column of the log.
+              */}
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
@@ -1169,7 +782,7 @@ export const EntityList = (props: {
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
 
-                <EntityRow key={row.id} row={row} />
+                <EntityRow key={row.id} row={row} graphId={props.category.graph.id} />
               ))
             ) : (
               <TableRow>

@@ -39,8 +39,9 @@ const Page = asDetailQueryRoute(useGetStructureQuery, ({ data }) => {
               {data.structure.kind?.identifier || data.structure.identifier}
             </KraphStructureKind.DetailLink>{" "}{data.structure.object}
           </h1>
+          {/* A structure has no label: `(identifier, object)` is how it is named. */}
           <p className="mt-3 text-xl text-muted-foreground">
-            {data.structure.label}
+            {data.structure.kind?.label ?? data.structure.kind?.identifier}
           </p>
         </div>
         <Card className="flex flex-row gap-2 p-4">

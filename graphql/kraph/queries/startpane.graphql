@@ -7,7 +7,7 @@ query StartPane {
     id
     label
   }
-  structureKinds(ordering: [{ createdAt: DESC }], pagination: { limit: 5 }) {
+  structureKinds(pagination: { limit: 5 }) {
     id
     identifier
     label

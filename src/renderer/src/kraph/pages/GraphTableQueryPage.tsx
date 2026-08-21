@@ -25,7 +25,6 @@ const Page = asDetailQueryRoute(
           <div className="flex flex-row gap-2">
             <KraphGraph.DetailLink
               object={{ id: data.graphTableQuery.graph.id }}
-              subroute="entities"
             >
               <Button variant="outline" size="sm">
                 Graph
@@ -51,14 +50,6 @@ const Page = asDetailQueryRoute(
               <CreateScatterPlotForm graphQuery={data.graphTableQuery} />
             </FormDialog>
 
-            <KraphGraphQuery.DetailLink
-              object={{ id: data.graphTableQuery.id }}
-              subroute="designer"
-            >
-              <Button variant="outline" size="sm">
-                Designer
-              </Button>
-            </KraphGraphQuery.DetailLink>
             <KraphGraphQuery.ObjectButton object={{ id: data.graphTableQuery.id }} />
           </div>
         }

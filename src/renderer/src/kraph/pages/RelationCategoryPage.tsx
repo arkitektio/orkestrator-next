@@ -11,7 +11,7 @@ import {
 } from "@/linkers";
 import {
   useGetRelationCategoryQuery,
-  useUpdateEntityCategoryMutation
+  useUpdateRelationCategoryMutation
 } from "../api/graphql";
 import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
 
@@ -19,7 +19,7 @@ const Page = asDetailQueryRoute(
   useGetRelationCategoryQuery,
   ({ data, refetch }) => {
     const uploadFile = useKraphMediaUpload();
-    const [update] = useUpdateEntityCategoryMutation();
+    const [update] = useUpdateRelationCategoryMutation();
 
     const resolve = useResolve();
 

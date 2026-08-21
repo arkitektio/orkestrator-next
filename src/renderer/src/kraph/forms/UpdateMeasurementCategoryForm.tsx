@@ -27,8 +27,9 @@ const TForm = (props: {
       key: props.measurementCategory.key,
       label: props.measurementCategory.label,
       description: props.measurementCategory.description,
-      source: props.measurementCategory.sourceDescriptor,
-      target: props.measurementCategory.targetDescriptor,
+      // No `source` / `target`. The update input carries decoration only now —
+      // a category's descriptors are declared when it is created, and changing
+      // what a measurement may connect would change which claims the view draws.
     },
   });
 

@@ -14,6 +14,12 @@
       "RelationCategory",
       "StructureRelationCategory"
     ],
+    "ClaimEndpoint": [
+      "Instance",
+      "Link",
+      "Structure",
+      "Term"
+    ],
     "Descendant": [
       "LeafDescendant",
       "MentionDescendant",
@@ -34,11 +40,6 @@
       "RelationCategory",
       "StructureRelationCategory"
     ],
-    "EdgeQuery": [
-      "EdgePairsQuery",
-      "EdgePathQuery",
-      "EdgeTableQuery"
-    ],
     "Event": [
       "NaturalEvent",
       "ProtocolEvent"
@@ -48,65 +49,44 @@
       "ProtocolEventCategory"
     ],
     "GraphQuery": [
-      "GraphNodesQuery",
-      "GraphPairsQuery",
-      "GraphPathQuery",
       "GraphTableQuery"
     ],
-    "Node": [
-      "Activity",
+    "InformsTarget": [
       "Entity",
-      "Metric",
+      "Link",
       "NaturalEvent",
-      "ProtocolEvent",
-      "Structure"
+      "ProtocolEvent"
+    ],
+    "Node": [
+      "Entity",
+      "NaturalEvent",
+      "ProtocolEvent"
     ],
     "NodeCategory": [
       "EntityCategory",
       "NaturalEventCategory",
       "ProtocolEventCategory"
     ],
-    "NodeQuery": [
-      "NodePairsQuery",
-      "NodePathQuery",
-      "NodeTableQuery"
-    ],
     "Plottable": [
-      "EdgeTableQuery",
-      "GraphTableQuery",
-      "NodeTableQuery"
-    ],
-    "VersionedNode": [
-      "Entity",
-      "NaturalEvent",
-      "ProtocolEvent"
+      "GraphTableQuery"
     ],
     "_Entity": [
       "Assertion",
       "BigFileStore",
-      "EdgePairsQuery",
-      "EdgePathQuery",
-      "EdgeTableQuery",
+      "Comment",
       "EntityCategory",
       "Graph",
-      "GraphNodesQuery",
-      "GraphPairsQuery",
-      "GraphPathQuery",
       "GraphTableQuery",
-      "MaterializedEdge",
-      "MaterializedMeasurementEdge",
-      "MaterializedRelationEdge",
-      "MaterializedStructureRelationEdge",
+      "Instance",
+      "Link",
       "MeasurementCategory",
       "MediaStore",
       "MetricKind",
       "NaturalEventCategory",
-      "NodePairsQuery",
-      "NodePathQuery",
-      "NodeTableQuery",
       "ProtocolEventCategory",
       "RelationCategory",
       "ScatterPlot",
+      "Standing",
       "StructureKind",
       "StructureRelationCategory",
       "Term",

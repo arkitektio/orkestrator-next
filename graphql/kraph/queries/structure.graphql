@@ -1,30 +1,25 @@
-query GetStructure($id: GraphID!) {
+query GetStructure($id: ID!) {
   structure(id: $id) {
     ...Structure
   }
 }
 
-query SearchStructures($id: ID, $search: String, $values: [GraphID!]) {
+query SearchStructures($id: ID, $search: String, $values: [ID!]) {
   options: structures(
     structureKindId: $id
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
     value: id
-    label: label
+    label: object
   }
 }
 
 query GetInformedStructure(
-  $graph: ID!
   $identifier: StructureIdentifier!
   $object: StructureObject!
 ) {
-  structureByIdentifier(
-    graph: $graph
-    identifier: $identifier
-    object: $object
-  ) {
+  structureByIdentifier(identifier: $identifier, object: $object) {
     ...InformedStructure
   }
 }
@@ -46,13 +41,13 @@ query InformingStructures($entityId: String!) {
   }
 }
 
-query MetricsForStructure($structureId: GraphID!) {
+query MetricsForStructure($structureId: ID!) {
   metricsForStructure(structureId: $structureId) {
     ...ListMetric
   }
 }
 
-query MetricsForAssertion($assertionId: GraphID!) {
+query MetricsForAssertion($assertionId: ID!) {
   metricsForAssertion(assertionId: $assertionId) {
     ...ListMetric
   }

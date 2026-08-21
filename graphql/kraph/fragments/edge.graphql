@@ -1,12 +1,16 @@
+# `Edge` is one graph's drawing of a `Link`. The `Path*` family that used to live
+# here went with the path renderer: `GraphPathRender` was removed from the schema,
+# so nothing fetched them and no operation spread them.
+
 fragment BaseEdge on Edge {
   id
+  label
   sourceId
   targetId
 }
 
 fragment Measurement on Measurement {
-  id
-  label
+  ...BaseEdge
   category {
     id
     label
@@ -14,8 +18,7 @@ fragment Measurement on Measurement {
 }
 
 fragment Relation on Relation {
-  id
-  label
+  ...BaseEdge
   category {
     id
     label
@@ -23,17 +26,18 @@ fragment Relation on Relation {
 }
 
 fragment StructureRelation on StructureRelation {
-  id
-  label
-  sourceId
-  targetId
+  ...BaseEdge
+  # Both ends are structures, which carry no label — `(identifier, object)` is
+  # how a structure is named.
   source {
     id
-    label
+    identifier
+    object
   }
   target {
     id
-    label
+    identifier
+    object
   }
   category {
     id
@@ -41,61 +45,9 @@ fragment StructureRelation on StructureRelation {
   }
 }
 
-
 fragment Edge on Edge {
-  sourceId
-  targetId
   ...BaseEdge
   ...Measurement
   ...Relation
   ...StructureRelation
-}
-
-
-fragment PathMeasurement on Measurement {
-  id
-  label
-  category {
-    id
-    label
-  }
-}
-fragment PathStructureRelation on StructureRelation {
-  id
-  label
-  category {
-    id
-    label
-  }
-}
-fragment PathRelation on Relation {
-  id
-  label
-  category {
-    id
-    label
-  }
-}
-fragment PathDescription on Description {
-  id
-  label
-}
-fragment PathInputParticipation on InputParticipation {
-  id
-  label
-}
-fragment PathOutputParticipation on OutputParticipation {
-  id
-  label
-}
-fragment PathEdge on Edge {
-  sourceId
-  targetId
-  ...BaseEdge
-  ...PathMeasurement
-  ...PathRelation
-  ...PathStructureRelation
-  ...PathDescription
-  ...PathInputParticipation
-  ...PathOutputParticipation
 }

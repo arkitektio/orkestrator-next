@@ -1,18 +1,22 @@
 import { useDialog } from "@/app/dialog";
 import { CommandItem } from "@/components/ui/command";
 import {
-  ListMaterializedMeasurementEdgeFragment,
-  ListMaterializedRelationEdgeFragment,
-  ListMaterializedStructureRelationEdgeFragment,
+  ListMeasurementCategoryWithGraphFragment,
+  ListRelationCategoryFragment,
+  ListStructureRelationCategoryWithGraphFragment,
   useAssertRelationExistsMutation,
   useAssertStructureRelationExistsMutation,
   useEnsureStructureMutation,
-  useGetListEntityQuery,
+  useGetDetailInstanceQuery,
+  useListApplicableMeasurementCategoriesQuery,
+  useListCandidateRelationCategoriesQuery,
+  useListCandidateStructureRelationCategoriesQuery,
   useListGraphsQuery,
-  useListMaterializedMeasurementsQuery,
-  useListMaterializedRelationEdgesQuery,
-  useListMaterializedStructureRelationEdgesQuery,
 } from "@/kraph/api/graphql";
+import {
+  useApplicableRelationCategories,
+  useApplicableStructureRelationCategories,
+} from "@/kraph/lib/applicableCategories";
 import { Structure } from "@/types";
 import { CommandGroup } from "cmdk";
 import { GitBranchPlus, Network, Ruler } from "lucide-react";
@@ -21,8 +25,34 @@ import { toast } from "sonner";
 import { CommandActionRow } from "../CommandActionRow";
 import type { PassDownProps } from "../types";
 
+/**
+ * The kraph slice of the smart context menu: what you can record about the thing
+ * you picked, or about the pair you dragged together.
+ *
+ * This used to read `materializedRelationEdges` and its two siblings —
+ * precomputed (source × edge × target) rows. They were removed as a cache with
+ * no invalidation, and the removal fixed a live bug: nothing refreshed the table
+ * when a category was added, and `createRelationCategory` never populated it at
+ * all, so relation categories made through the API had zero rows permanently and
+ * the Relate menu was silently empty for them.
+ *
+ * The candidates now come from the graph's *schema* (its edge categories, which
+ * are the size of the schema rather than of the evidence) and admission is
+ * decided by the server through `matchesDescriptor` — the same predicate the
+ * writer applies, so the menu cannot offer a pairing the write would refuse.
+ */
+
+const relateHeading = (
+  <span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+    <span>Relate</span>
+  </span>
+);
+
+const termOf = (category: { key: string; term?: { key: string } | null }) =>
+  category.term?.key ?? category.key;
+
 export const StructureRelateButton = (props: {
-  materializedEdge: ListMaterializedStructureRelationEdgeFragment;
+  category: ListStructureRelationCategoryWithGraphFragment;
   left: PassDownProps;
   right: Structure;
   children: React.ReactNode;
@@ -51,7 +81,10 @@ export const StructureRelateButton = (props: {
           },
         });
 
-        if (!left.data?.ensureStructure.structure.id || !right.data?.ensureStructure.structure.id) {
+        if (
+          !left.data?.ensureStructure.structure.id ||
+          !right.data?.ensureStructure.structure.id
+        ) {
           throw new Error("Failed to ensure structures for relation creation");
         }
 
@@ -60,9 +93,7 @@ export const StructureRelateButton = (props: {
             input: {
               sourceId: left.data.ensureStructure.structure.id,
               targetId: right.data.ensureStructure.structure.id,
-              term:
-                props.materializedEdge.edge.term?.key ??
-                props.materializedEdge.edge.key,
+              term: termOf(props.category),
             },
           },
         });
@@ -78,17 +109,17 @@ export const StructureRelateButton = (props: {
 
   return (
     <CommandActionRow
-      value={props.materializedEdge.id}
+      value={props.category.id}
       onSelect={handleRelationCreation}
-      title={props.materializedEdge.edge.label}
-      description={props.materializedEdge.graph.name}
+      title={props.category.label}
+      description={props.category.graph.name}
       icon={Network}
     />
   );
 };
 
 export const CreateMeasurementButton = (props: {
-  edge: ListMaterializedMeasurementEdgeFragment;
+  category: ListMeasurementCategoryWithGraphFragment;
   left: PassDownProps;
   children: React.ReactNode;
 }) => {
@@ -96,15 +127,16 @@ export const CreateMeasurementButton = (props: {
 
   return (
     <CommandActionRow
-      value={props.edge.id}
+      value={props.category.id}
       onSelect={() => {
-        dialog.openDialog("setasmeasurement", {
-          left: props.left.objects,
-          edge: props.edge,
-        }, { size: "large" });
+        dialog.openDialog(
+          "setasmeasurement",
+          { left: props.left.objects, category: props.category },
+          { size: "large" },
+        );
       }}
-      title={<div className="font-light">{props.edge.edge.label} a {props.edge.target.label}</div>}
-      description={props.edge.graph.name}
+      title={<div className="font-light">{props.category.label}</div>}
+      description={props.category.graph.name}
       icon={Ruler}
     />
   );
@@ -113,11 +145,10 @@ export const CreateMeasurementButton = (props: {
 /**
  * Relating two entities is a claim like any other: it names the word, not a
  * category row, so both endpoints are entity ids and the term comes off the
- * materialized edge. No structure has to be ensured first — entities already
- * are nodes.
+ * category. No structure has to be ensured first — entities already are nodes.
  */
 export const EntityRelateButton = (props: {
-  materializedEdge: ListMaterializedRelationEdgeFragment;
+  category: ListRelationCategoryFragment & { graph: { name: string } };
   source: Structure;
   target: Structure;
 }) => {
@@ -130,9 +161,7 @@ export const EntityRelateButton = (props: {
           input: {
             sourceId: props.source.object.id,
             targetId: props.target.object.id,
-            term:
-              props.materializedEdge.edge.term?.key ??
-              props.materializedEdge.edge.key,
+            term: termOf(props.category),
           },
         },
       });
@@ -146,67 +175,88 @@ export const EntityRelateButton = (props: {
 
   return (
     <CommandActionRow
-      value={props.materializedEdge.id}
+      value={props.category.id}
       onSelect={handleRelationCreation}
-      title={props.materializedEdge.edge.label}
-      description={props.materializedEdge.graph.name}
+      title={props.category.label}
+      description={props.category.graph.name}
       icon={Network}
     />
   );
 };
 
 /**
- * Which relation categories apply is decided by the two entities' categories,
- * so both are looked up first. The materialized edges are then narrowed to the
- * ones whose endpoints match — offering every relation in the organization
- * would be a list of mostly-inapplicable words.
+ * Both ends arrive as bare uuids, and which relation categories apply depends on
+ * the two entities' *categories* — which are view-grain and so exist only inside
+ * a graph. `instance(id:) { drawnIn }` bridges that: it says which views draw
+ * each claim and under which category. A relation is offered only for a graph
+ * that draws both ends, which is also the only graph that could record it.
  */
 export const EntityRelationActions = (props: PassDownProps) => {
   const partner = props.partners?.at(0);
   const object = props.objects.at(0);
 
-  const { data: sourceEntity } = useGetListEntityQuery({
+  const { data: sourceInstance } = useGetDetailInstanceQuery({
     variables: { id: object?.object.id ?? "" },
     skip: !object,
   });
-  const { data: targetEntity } = useGetListEntityQuery({
+  const { data: targetInstance } = useGetDetailInstanceQuery({
     variables: { id: partner?.object.id ?? "" },
     skip: !partner,
   });
 
-  const { data, error } = useListMaterializedRelationEdgesQuery({
+  // The first graph that draws both. Two claims with no view in common cannot be
+  // related there, and saying so by offering nothing is the honest answer.
+  const shared = React.useMemo(() => {
+    const targets = new Map(
+      (targetInstance?.instance.drawnIn ?? []).map((drawing) => [
+        drawing.graph.id,
+        drawing,
+      ]),
+    );
+    for (const drawing of sourceInstance?.instance.drawnIn ?? []) {
+      const counterpart = targets.get(drawing.graph.id);
+      if (counterpart) {
+        return {
+          graphId: drawing.graph.id,
+          sourceCategoryId: drawing.category.id,
+          targetCategoryId: counterpart.category.id,
+        };
+      }
+    }
+    return undefined;
+  }, [sourceInstance, targetInstance]);
+
+  const { data, error } = useListCandidateRelationCategoriesQuery({
     variables: {
-      filters: {
-        search: props.filter && props.filter !== "" ? props.filter : undefined,
-      },
+      search: props.filter && props.filter !== "" ? props.filter : undefined,
     },
     fetchPolicy: "network-only",
   });
 
-  const sourceCategoryId = sourceEntity?.entity.category?.id;
-  const targetCategoryId = targetEntity?.entity.category?.id;
+  const candidates = React.useMemo(
+    () =>
+      (data?.relationCategories ?? []).filter(
+        (category) => category.graph.id === shared?.graphId,
+      ),
+    [data, shared],
+  );
 
-  const applicable =
-    sourceCategoryId && targetCategoryId
-      ? (data?.materializedRelationEdges ?? []).filter(
-          (edge) =>
-            edge.source.id === sourceCategoryId &&
-            edge.target.id === targetCategoryId,
-        )
-      : [];
+  const { applicable } = useApplicableRelationCategories(
+    candidates,
+    shared?.sourceCategoryId,
+    shared?.targetCategoryId,
+  );
 
   if (!object || !partner) {
     return null;
   }
 
   return (
-    <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Relate</span></span>}
-    >
-      {applicable.map((edge) => (
+    <CommandGroup heading={relateHeading}>
+      {applicable.map((category) => (
         <EntityRelateButton
-          key={edge.id}
-          materializedEdge={edge}
+          key={category.id}
+          category={category}
           source={object}
           target={partner}
         />
@@ -225,30 +275,33 @@ export const StructureRelationActions = (props: PassDownProps) => {
   const firstObject = props.objects.at(0);
   const dialog = useDialog();
 
-  const { data, error } = useListMaterializedStructureRelationEdgesQuery({
+  const { data, error } = useListCandidateStructureRelationCategoriesQuery({
     variables: {
-      filters: {
-        sourceIdentifier: firstObject?.identifier || "",
-        targetIdentifier: firstPartner?.identifier || "",
-        search: props.filter && props.filter !== "" ? props.filter : undefined,
-      },
+      search: props.filter && props.filter !== "" ? props.filter : undefined,
     },
     fetchPolicy: "network-only",
   });
 
+  // `StructureRelationCategoryFilter` has no `sourceIdentifier` / `targetIdentifier`
+  // (only `MeasurementCategoryFilter` kept one), so admission is probed against
+  // the two structure kinds instead.
+  const { applicable } = useApplicableStructureRelationCategories(
+    data?.structureRelationCategories,
+    firstObject?.identifier,
+    firstPartner?.identifier,
+  );
+
   return (
-    <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Relate</span></span>}
-    >
+    <CommandGroup heading={relateHeading}>
       {firstPartner &&
-        data?.materializedStructureRelationEdges.map((edge) => (
+        applicable.map((category) => (
           <StructureRelateButton
-            materializedEdge={edge}
+            category={category}
             right={firstPartner}
             left={props}
-            key={edge.id}
+            key={category.id}
           >
-            {edge.edge.label} - {edge.target.label}
+            {category.label}
           </StructureRelateButton>
         ))}
       {error && (
@@ -294,7 +347,12 @@ export const MeasurementActions = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><Ruler className="h-3.5 w-3.5" /><span>Create Measurement Category</span></span>}
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+          <Ruler className="h-3.5 w-3.5" />
+          <span>Create Measurement Category</span>
+        </span>
+      }
     >
       {pinnedGraphs.graphs.map((graph) => (
         <CommandActionRow
@@ -316,16 +374,19 @@ export const MeasurementActions = (props: PassDownProps) => {
   );
 };
 
+/**
+ * Measurements need no probe: `MeasurementCategoryFilter.sourceIdentifier`
+ * survived the materialized-edge removal and answers "which measurements accept
+ * this structure kind" directly, in one query.
+ */
 export const ApplicableMeasurements = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects.at(0);
 
-  const { data, error } = useListMaterializedMeasurementsQuery({
+  const { data, error } = useListApplicableMeasurementCategoriesQuery({
     variables: {
-      filters: {
-        search: props.filter && props.filter !== "" ? props.filter : undefined,
-        sourceIdentifier: firstObject?.identifier || "",
-      },
+      search: props.filter && props.filter !== "" ? props.filter : undefined,
+      sourceIdentifier: firstObject?.identifier || "",
     },
     fetchPolicy: "network-only",
   });
@@ -336,11 +397,19 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
 
   return (
     <CommandGroup
-      heading={<span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2"><span>Measures</span></span>}
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full inline-flex gap-2">
+          <span>Measures</span>
+        </span>
+      }
     >
-      {data?.materializedMeasurementEdges.map((edge) => (
-        <CreateMeasurementButton edge={edge} left={props} key={edge.id}>
-          {edge.graph.name}
+      {data?.measurementCategories.map((category) => (
+        <CreateMeasurementButton
+          category={category}
+          left={props}
+          key={category.id}
+        >
+          {category.graph.name}
         </CreateMeasurementButton>
       ))}
       {error && (

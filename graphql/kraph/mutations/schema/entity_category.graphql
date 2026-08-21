@@ -1,10 +1,10 @@
-mutation CreateEntityCategory($input: CreateEntityDefinitionInput!) {
+mutation CreateEntityCategory($input: CreateEntityCategoryInput!) {
   createEntityCategory(input: $input) {
     ...EntityCategory
   }
 }
 
-mutation UpdateEntityCategory($input: UpdateEntityDefinitionInput!) {
+mutation UpdateEntityCategory($input: UpdateEntityCategoryInput!) {
   updateEntityCategory(input: $input) {
     ...EntityCategory
   }

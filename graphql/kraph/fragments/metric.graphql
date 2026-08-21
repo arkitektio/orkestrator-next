@@ -1,35 +1,28 @@
-fragment Metric on Metric {
+# A measured value about a structure. Claim-grain: it has no `label` and no
+# vertex — its name is its kind's key.
+
+fragment ListMetric on Metric {
   id
+  key
+  value
+  unit
+  kind {
+    id
+    key
+    label
+  }
+}
+
+fragment Metric on Metric {
+  ...ListMetric
+  confidence
+  confidenceType
+  measuredAt
+  assertedAt
   kind {
     id
     key
     label
     description
   }
-  key
-  value
-  unit
-}
-
-fragment ListMetric on Metric {
-  id
-  value
-  label
-  key
-  unit
-  kind {
-    id
-    key
-    label
-  }
-}
-
-fragment PathMetric on Metric {
-  ...ListMetric
-  kind {
-    id
-    key
-    label
-  }
-  value
 }

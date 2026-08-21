@@ -163,11 +163,11 @@ export const EntityAssigner = ({
                     className="flex flex-col items-start gap-0.5"
                   >
                     <span className="font-medium">{entity.label}</span>
-                    {entity.externalId ? (
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {entity.externalId}
-                      </span>
-                    ) : null}
+                    {/*
+                      `externalId` went with `globalId` / `graphId` / `localId`:
+                      every id in the API is the evidence row's bare uuid now,
+                      and there is no second, composite form to show beside it.
+                    */}
                   </CommandItem>
                 ))}
               </CommandGroup>

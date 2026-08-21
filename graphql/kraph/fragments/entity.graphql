@@ -1,9 +1,23 @@
+# An entity as one view draws it: the category it was drawn under, and the
+# properties that view derives. All of that is view-grain and exists only inside
+# a graph — the claim underneath is `Instance`.
+#
+# `measuredBy`, `participatedIn` and `resultedOut` were three separate traversals
+# for three link kinds. There is one now: `connections`, every `Link` touching
+# this node, discriminated by `kind`. That is more honest than three fields,
+# because a link's kind is what distinguishes it and there are eight of them.
+
+fragment ListEntity on Entity {
+  id
+  label
+  category {
+    id
+    label
+  }
+}
+
 fragment Entity on Entity {
   ...BaseNode
-  id
-  graph {
-    id
-  }
   category {
     id
     label
@@ -12,80 +26,24 @@ fragment Entity on Entity {
       ...PropertyDefinition
     }
   }
-  label
   richProperties {
     key
     value
   }
   properties
-  measuredBy {
-    id
-    label
+  connections {
+    ...Edge
+  }
+  # Which views draw this claim. Replaces the old single `graph`, which could
+  # only ever name one of them.
+  drawnIn {
+    graph {
+      id
+      name
+    }
     category {
+      id
       label
     }
-    source {
-      ... on Structure {
-        identifier
-        object
-      }
-    }
-  }
-  participatedIn {
-    id
-    role
-    target {
-      ...PathEventNode
-    }
-  }
-  resultedOut {
-    id
-    role
-    source {
-      ...PathEventNode
-    }
-  }
-}
-
-# `Event` is a bare interface — only `kind` lives on it — so anything an event
-# actually carries has to be read off the concrete types.
-fragment PathEventNode on Event {
-  ... on NaturalEvent {
-    id
-    label
-    measuredFrom
-    measuredTo
-    category {
-      label
-    }
-  }
-  ... on ProtocolEvent {
-    id
-    label
-    measuredFrom
-    measuredTo
-    category {
-      label
-    }
-  }
-}
-
-fragment PathEntity on Entity {
-  ...ListEntity
-  category {
-    label
-    image {
-      presignedUrl
-    }
-  }
-  externalId
-}
-
-fragment ListEntity on Entity {
-  id
-  label
-  category {
-    id
-    label
   }
 }

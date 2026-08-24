@@ -222,11 +222,11 @@ export const ruleKeeps = (rule: ColumnLutEntryFilterBy, raw: unknown): boolean =
   return rule.exclude ? !matches : matches;
 };
 
-export type ResolvedColumnValues = {
-  /** `objectId → value` for the active colouring, or null when it could not be read. */
-  colorValues: Map<number, unknown> | null;
+export type ResolvedColumnValues<V = Map<number, unknown>> = {
+  /** The active colouring's values, or null when it could not be read. */
+  colorValues: V | null;
   /** Per active rule, in order; a null entry could not be read. */
-  ruleValues: (Map<number, unknown> | null)[];
+  ruleValues: (V | null)[];
   /** Entries that named an unreachable table, or that need an unbuilt join. */
   skipped: string[];
 };
@@ -252,13 +252,17 @@ export type ResolvedColumnValues = {
  * do not render yet, and the cards badge them so. `readAcross` already takes a
  * store ARRAY, so lifting this is an addition rather than a rewrite.
  */
-export const resolveColumnValues = async ({
+export const resolveColumnValues = async <V = Map<number, unknown>>({
   colorBy,
   filterBys,
   plans,
   engine,
   want,
-  readColumn = readColumnByObjectId,
+  readColumn = readColumnByObjectId as unknown as (
+    engine: AttributeLookupEngine,
+    access: TableAccess,
+    column: string,
+  ) => Promise<V | null>,
 }: {
   colorBy: ColumnLutEntryColorBy | null;
   filterBys: readonly ColumnLutEntryFilterBy[];
@@ -267,19 +271,26 @@ export const resolveColumnValues = async ({
   want: PlanWant;
   /** The column reader — injectable so callers on a rebuild-heavy path can
    * pass the cached one (`columnValueCache.ts`) while this module stays pure
-   * and its tests stay stub-only. Defaults to the direct scan. */
+   * and its tests stay stub-only. Defaults to the direct scan.
+   *
+   * Generic in what it RETURNS, because the two consumers want different
+   * shapes of the same answer: the mesh and point paths read tens of thousands
+   * of rows and a `Map` is the convenient shape, while the label path reads
+   * millions and wants them columnar (`lib/attributes/columnarReads.ts`). The
+   * resolution logic — which entries are direct, which table each reaches — is
+   * identical either way, and is the reason this stays one function. */
   readColumn?: (
     engine: AttributeLookupEngine,
     access: TableAccess,
     column: string,
-  ) => Promise<Map<number, unknown>>;
-}): Promise<ResolvedColumnValues> => {
+  ) => Promise<V | null>;
+}): Promise<ResolvedColumnValues<V>> => {
   const skipped: string[] = [];
 
   const resolve = async (
     entry: { table: string; column: string; joinPath?: readonly { table: string; column: string }[] | null },
     what: string,
-  ): Promise<Map<number, unknown> | null> => {
+  ): Promise<V | null> => {
     if (!isDirectEntry(entry)) {
       skipped.push(`${what} ${entry.column}: reached through a join, not rendered yet`);
       return null;

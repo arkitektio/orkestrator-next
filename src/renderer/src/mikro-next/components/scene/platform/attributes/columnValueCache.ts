@@ -1,5 +1,9 @@
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { LruMap } from "@/mikro-next/lib/attributes/lruMap";
+import {
+  readColumnValues,
+  type ColumnValues,
+} from "@/mikro-next/lib/attributes/columnarReads";
 import { readColumnByObjectId, type TableAccess } from "./columnLut";
 
 /**
@@ -60,6 +64,53 @@ export const readColumnByObjectIdCached = (
     if (current && current.get(key) === promise) current.take(key);
     throw error;
   });
+  cache.set(key, promise);
+  return promise;
+};
+
+/**
+ * The same cache, for the COLUMNAR read.
+ *
+ * A separate `LruMap` rather than a shared one keyed by shape: the two hold
+ * different things for the same key, and one cache with a union value type
+ * would hand a caller the shape it did not ask for. They are cheap to keep
+ * apart — a scene reads a handful of columns — and the label path is the only
+ * caller of this one, so in practice only one of the two is ever populated for
+ * a given column.
+ *
+ * Null is cached too, and deliberately: a column the columnar path cannot
+ * answer (a non-numeric key, a result with no columnar view) will not become
+ * answerable on a retry, and re-running a full-table scan on every rebuild to
+ * rediscover that is the cost this cache exists to remove. The caller falls
+ * back to `readColumnByObjectIdCached`, which has its own entry.
+ */
+const columnarCaches = new WeakMap<
+  AttributeLookupEngine,
+  LruMap<Promise<ColumnValues | null>>
+>();
+
+export const readColumnValuesCached = (
+  engine: AttributeLookupEngine,
+  access: TableAccess,
+  column: string,
+): Promise<ColumnValues | null> => {
+  let cache = columnarCaches.get(engine);
+  if (!cache) {
+    cache = new LruMap(CACHE_CAPACITY);
+    columnarCaches.set(engine, cache);
+  }
+  const key = `${access.store.id}:${access.keyColumn}:${column}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const promise: Promise<ColumnValues | null> = readColumnValues(engine, access, column).catch(
+    (error: unknown) => {
+      // Self-evict on failure — but only if this promise is still the cached
+      // one, so a retry that already replaced it is left alone.
+      const current = columnarCaches.get(engine);
+      if (current && current.get(key) === promise) current.take(key);
+      throw error;
+    },
+  );
   cache.set(key, promise);
   return promise;
 };

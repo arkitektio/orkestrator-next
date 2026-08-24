@@ -8,7 +8,7 @@ import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTyp
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { accessForTable } from "../../platform/attributes/columnLut";
 import { buildLabelColorLut, LABEL_LUT_MAX_TEXELS } from "./labelColorLut";
-import { CODE_HIDDEN, CODE_NO_VALUE } from "../../platform/attributes/valueLut";
+import { CODE_HIDDEN, CODE_NO_VALUE, VALUE_CODE_MAX } from "../../platform/attributes/valueLut";
 
 /**
  * The label LUT differs from the mesh one in exactly one thing — the slot mapping
@@ -67,20 +67,50 @@ const meshPlan = (tableId: string, keyColumn: string): AttributePlanLike =>
     },
   }) as unknown as AttributePlanLike;
 
-/** An engine stand-in: one canned (object_id, value) result per column. */
-const fakeEngine = (byColumn: Record<string, Record<number, unknown>>) => {
+/**
+ * An engine stand-in: one canned (object_id, value) result per column.
+ *
+ * Answers BOTH reads, because the builder asks for the columnar one and falls
+ * back to rows. `columnar: false` makes it decline the columnar read the way a
+ * result with no `getChild` does, which is the fallback's only test.
+ */
+const fakeEngine = (
+  byColumn: Record<string, Record<number, unknown>>,
+  { columnar = true }: { columnar?: boolean } = {},
+) => {
+  const columnOf = (sql: string) => Object.keys(byColumn).find((name) => sql.includes(`"${name}"`));
+  /** Rows sorted by id — the `ORDER BY object_id` the columnar read issues. */
+  const sorted = (column: string) =>
+    Object.entries(byColumn[column])
+      .map(([id, value]) => [Number(id), value] as const)
+      .sort((a, b) => a[0] - b[0]);
+
   const engine = {
     readAcross: async (
       _stores: readonly unknown[],
       buildSql: (urlOf: (id: string) => string) => string,
     ) => {
-      const sql = buildSql(() => "s3://b/k");
-      const column = Object.keys(byColumn).find((name) => sql.includes(`"${name}"`));
+      const column = columnOf(buildSql(() => "s3://b/k"));
       if (!column) return [];
       return Object.entries(byColumn[column]).map(([id, value]) => ({
         object_id: Number(id),
         value,
       }));
+    },
+    readColumnsTyped: async (
+      _stores: readonly unknown[],
+      buildSql: (urlOf: (id: string) => string) => string,
+    ) => {
+      if (!columnar) return null;
+      const column = columnOf(buildSql(() => "s3://b/k"));
+      if (!column) return { object_id: new Float64Array(0), value: new Float64Array(0) };
+      const rows = sorted(column);
+      const ids = Float64Array.from(rows.map(([id]) => id));
+      const raw = rows.map(([, value]) => value);
+      // A typed array for a measure, a plain string array for a category —
+      // the two shapes Arrow actually hands back.
+      const numeric = raw.every((value) => typeof value === "number");
+      return { object_id: ids, value: numeric ? Float64Array.from(raw as number[]) : raw.map(String) };
     },
   } as unknown as AttributeLookupEngine;
   return engine;
@@ -269,5 +299,207 @@ describe("buildLabelColorLut — filters over sparse ids", () => {
     const data = dataOf(result.texture);
     expect(visibleAt(data, 0)).toBe(255);
     expect(visibleAt(data, 1)).toBe(255);
+  });
+});
+
+describe("buildLabelColorLut — a sparse matrix colouring", () => {
+  /** A `SparseReadRequest` stand-in: one canned slice over a fixed object axis. */
+  const fakeSparse = (values: Map<number, number>, slotCount: number) =>
+    ({
+      source: { name: "expression" },
+      read: async () => ({ values, slotCount }),
+    }) as unknown as NonNullable<Parameters<typeof buildLabelColorLut>[0]["sparse"]>;
+
+  const SPARSE_COLOR_BY = {
+    dataset: "ds",
+    at: [{ axis: "gene", value: 4711 }],
+    colormap: ColorMap.Viridis,
+    joinPath: [],
+  };
+
+  const buildSparse = (values: Map<number, number>, slotCount: number) =>
+    buildLabelColorLut({
+      colorBy: SPARSE_COLOR_BY,
+      sparse: fakeSparse(values, slotCount),
+      filterBys: [],
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+    });
+
+  it("gives an unread slot the code for ZERO, not the no-value sentinel", async () => {
+    // A slice is the complete truth for its feature, so a bin it does not
+    // mention has expression exactly zero. The baseline is now the allocation's
+    // fill rather than a second pass over every slot — this pins that the
+    // ANSWER did not change with the pass that used to produce it.
+    const result = await buildSparse(new Map([[3, 7]]), 10);
+    const data = dataOf(result.texture);
+
+    expect(result.valueMin).toBe(0);
+    expect(result.valueMax).toBe(7);
+    expect(result.idOffset).toBe(0);
+
+    // The window runs 0..7, so the code for zero is 0 and the code for 7 is the max.
+    expect(codeAt(data, 3)).toBe(VALUE_CODE_MAX);
+    for (const slot of [0, 1, 2, 4, 9]) {
+      expect(codeAt(data, slot)).toBe(0);
+      expect(codeAt(data, slot)).not.toBe(CODE_NO_VALUE);
+    }
+  });
+
+  it("includes zero in the window, so an all-positive gene does not start at its own minimum", async () => {
+    const result = await buildSparse(
+      new Map([
+        [1, 5],
+        [2, 9],
+      ]),
+      4,
+    );
+    expect(result.valueMin).toBe(0);
+    expect(result.valueMax).toBe(9);
+    // Slot 0 was never mentioned: it decodes to the bottom of the window, zero.
+    expect(codeAt(dataOf(result.texture), 0)).toBe(0);
+  });
+
+  it("keeps a negative value in the window and still zeroes the unmentioned slots", async () => {
+    const result = await buildSparse(new Map([[1, -4]]), 3);
+    expect(result.valueMin).toBe(-4);
+    expect(result.valueMax).toBe(0);
+    const data = dataOf(result.texture);
+    // Window -4..0, so zero is the TOP of the range, not the bottom.
+    expect(codeAt(data, 1)).toBe(0);
+    expect(codeAt(data, 0)).toBe(VALUE_CODE_MAX);
+    expect(codeAt(data, 2)).toBe(VALUE_CODE_MAX);
+  });
+
+  it("does not divide by a zero span when every value is zero", async () => {
+    const result = await buildSparse(new Map([[0, 0]]), 2);
+    expect(result.valueMin).toBe(0);
+    expect(result.valueMax).toBe(1);
+    expect(codeAt(dataOf(result.texture), 1)).toBe(0);
+  });
+});
+
+describe("buildLabelColorLut — reusing the table", () => {
+  const fakeSparse = (values: Map<number, number>, slotCount: number) =>
+    ({
+      source: { name: "expression" },
+      read: async () => ({ values, slotCount }),
+    }) as unknown as NonNullable<Parameters<typeof buildLabelColorLut>[0]["sparse"]>;
+
+  const gene = (
+    values: Map<number, number>,
+    slotCount: number,
+    extra: Partial<Parameters<typeof buildLabelColorLut>[0]> = {},
+  ) =>
+    buildLabelColorLut({
+      colorBy: { dataset: "ds", at: [{ axis: "gene", value: 1 }], colormap: ColorMap.Viridis, joinPath: [] },
+      sparse: fakeSparse(values, slotCount),
+      filterBys: [],
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+      ...extra,
+    });
+
+  it("refills the SAME buffer and texture on a gene switch", async () => {
+    // The whole point: the slot table spans the object axis, so a gene switch
+    // changes what is in it and never how big it is. Allocating again would be
+    // eleven megabytes of garbage and a GPU texture destroyed and recreated.
+    const first = await gene(new Map([[1, 4]]), 8);
+    const second = await gene(new Map([[2, 9]]), 8, { reuse: first.arena });
+
+    expect(second.arena).toBe(first.arena);
+    expect(second.texture).toBe(first.texture);
+    expect(second.arena!.lut.data).toBe(first.arena!.lut.data);
+  });
+
+  it("leaves NO trace of the previous gene in the refilled table", async () => {
+    // The hazard reuse invites: slot 1 carried a value last gene and carries
+    // none this gene, so the fill has to have reached it.
+    const first = await gene(new Map([[1, 4]]), 8);
+    const second = await gene(new Map([[2, 9]]), 8, { reuse: first.arena });
+
+    const data = dataOf(second.texture);
+    expect(second.valueMax).toBe(9);
+    expect(codeAt(data, 2)).toBe(VALUE_CODE_MAX); // this gene's value
+    expect(codeAt(data, 1)).toBe(0); // last gene's slot, back to zero
+  });
+
+  it("allocates afresh when the slot count moves", async () => {
+    const first = await gene(new Map([[1, 4]]), 8);
+    const second = await gene(new Map([[1, 4]]), 16, { reuse: first.arena });
+
+    expect(second.arena).not.toBe(first.arena);
+    expect(second.texture).not.toBe(first.texture);
+  });
+
+  it("marks the texture for re-upload after a refill", async () => {
+    // `needsUpdate` is write-only on a three texture — it bumps `version`,
+    // which is what the renderer actually reads to decide to re-upload.
+    const first = await gene(new Map([[1, 4]]), 8);
+    const before = first.texture!.version;
+    const second = await gene(new Map([[2, 9]]), 8, { reuse: first.arena });
+    expect(second.texture!.version).toBeGreaterThan(before);
+  });
+
+  it("writes NOTHING when the build is superseded", async () => {
+    // Two builds racing on one shared buffer is what reuse makes possible, so
+    // a superseded build must bow out before its first write — not after.
+    const first = await gene(new Map([[1, 4]]), 8);
+    const before = Array.from(first.arena!.lut.data);
+
+    const second = await gene(new Map([[2, 9]]), 8, {
+      reuse: first.arena,
+      stillWanted: () => false,
+    });
+
+    expect(second.superseded).toBe(true);
+    expect(second.texture).toBeNull();
+    expect(second.arena).toBeNull();
+    expect(Array.from(first.arena!.lut.data)).toEqual(before);
+  });
+});
+
+describe("buildLabelColorLut — columnar and row reads agree", () => {
+  const CASES: Record<string, Record<number, unknown>> = {
+    area: { 3: 30, 1: 10, 2: 20 },
+    kind: { 1: "a", 2: "b", 3: "a" },
+  };
+
+  const build = (column: string, columnar: boolean, colormap: ColorMap) =>
+    buildLabelColorLut({
+      colorBy: { table: "t1", column, colormap, joinPath: [] },
+      filterBys: [{ table: "t1", column: "area", min: 15, exclude: false, joinPath: [] }],
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine(CASES, { columnar }),
+    });
+
+  it("paints a MEASURE colouring identically either way", async () => {
+    const columnar = await build("area", true, ColorMap.Viridis);
+    const rows = await build("area", false, ColorMap.Viridis);
+
+    expect(columnar.valueMin).toBe(rows.valueMin);
+    expect(columnar.valueMax).toBe(rows.valueMax);
+    expect(columnar.idOffset).toBe(rows.idOffset);
+    expect(Array.from(dataOf(columnar.texture))).toEqual(Array.from(dataOf(rows.texture)));
+  });
+
+  it("paints a CATEGORICAL colouring identically either way", async () => {
+    // The ranking walks the values twice — once for the distinct set, once to
+    // paint — so it is the shape most likely to differ between the two readers.
+    const columnar = await build("kind", true, ColorMap.Hues);
+    const rows = await build("kind", false, ColorMap.Hues);
+
+    expect(Array.from(dataOf(columnar.texture))).toEqual(Array.from(dataOf(rows.texture)));
+  });
+
+  it("still applies the filter when the columnar read declines", async () => {
+    const rows = await build("area", false, ColorMap.Viridis);
+    const data = dataOf(rows.texture);
+    expect(visibleAt(data, 0)).toBe(0); // id 1: area 10, under the bound
+    expect(visibleAt(data, 1)).toBe(255); // id 2: area 20
+    expect(visibleAt(data, 2)).toBe(255); // id 3: area 30
   });
 });

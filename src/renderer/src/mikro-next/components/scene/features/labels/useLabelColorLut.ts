@@ -7,7 +7,7 @@
  * which is exactly what the uniform-push contract exists to avoid. */
 import { useThree } from "@react-three/fiber";
 import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { level0StoreIdOf, systemIdOf } from "../../platform/model/layerLevel0";
@@ -15,7 +15,11 @@ import type { LayerState } from "../../platform/model/layerModel";
 import { setLabelColorLut, setLabelColorStyle, type LabelLutNodes } from "./labelNodeMaterials";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { buildLabelColorLut } from "./labelColorLut";
-import { DEFAULT_MEASURE_COLORMAP, paletteRowFor } from "../../platform/attributes/valueLut";
+import {
+  DEFAULT_MEASURE_COLORMAP,
+  paletteRowFor,
+  type ValueLutArena,
+} from "../../platform/attributes/valueLut";
 import { qualitativePalette } from "../../platform/layerui/colormap-utils";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
@@ -107,6 +111,19 @@ export const useLabelColorLut = (
   const systemId = layer ? systemIdOf(layer) : null;
   const storeId = layer ? level0StoreIdOf(layer) : null;
 
+  /**
+   * The table the last build painted into, offered to the next one.
+   *
+   * A gene switch, a filter edit and a colormap-independent colorBy change all
+   * produce a table of the SAME slot count, so this is the difference between
+   * refilling a buffer and allocating a fresh multi-megabyte one — plus a GPU
+   * texture destroyed and recreated — on every one of them.
+   *
+   * A ref rather than state: nothing renders off it, and making it state would
+   * re-run the effect that sets it.
+   */
+  const arenaRef = useRef<ValueLutArena | null>(null);
+
   useEffect(() => {
     if (!nodes) return;
     const off = () => {
@@ -115,6 +132,10 @@ export const useLabelColorLut = (
         { texture: null, width: 0, height: 0, idOffset: 0, valueMin: 0, valueMax: 1 },
         { colorize: false, filter: false },
       );
+      // `setLabelColorLut` disposes what it unbinds, so the arena's texture is
+      // gone with it. Holding the reference would offer a destroyed
+      // `GPUTexture` to the next build.
+      arenaRef.current = null;
       viewerStoreApi.getState().volumeInputs.bump("label-lut");
     };
 
@@ -142,17 +163,27 @@ export const useLabelColorLut = (
         plans,
         storeId,
         engine: attributeService.engine,
+        reuse: arenaRef.current,
+        // Checked inside, after the reads and before the first write. Without
+        // it a superseded build would still paint — into the LIVE buffer, now
+        // that the table is reused — and a slow read finishing last would
+        // overwrite the answer the user is actually looking at.
+        stillWanted: () => !cancelled,
       });
       // A superseded build must not reach the GPU, and its texture is ours to
       // free — `setLabelColorLut` only ever disposes what it REPLACES, so a
-      // texture that never got bound would leak.
-      if (cancelled) {
-        lut.texture?.dispose();
+      // texture that never got bound would leak. The one it must NOT free is
+      // the reused arena's: that texture is still bound.
+      if (cancelled || lut.superseded) {
+        if (lut.texture && lut.texture !== arenaRef.current?.texture) lut.texture.dispose();
         return;
       }
       if (lut.skipped.length > 0) {
         console.warn("[label] picker entries that do not render yet:", lut.skipped);
       }
+      // Adopted before the bind: `setLabelColorLut` disposes what it replaces,
+      // and what it replaces is the arena we are letting go of.
+      arenaRef.current = lut.arena ?? null;
       setLabelColorLut(nodes, lut, {
         colorize: activeColorBy !== null,
         filter: activeRules.length > 0,

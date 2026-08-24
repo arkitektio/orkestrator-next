@@ -7,16 +7,23 @@ import {
   type ColumnLutEntryFilterBy,
 } from "../../platform/attributes/columnLut";
 import {
-  CODE_NO_VALUE,
   VALUE_LUT_BYTES_PER_TEXEL,
-  allocateValueLut,
+  acquireValueLut,
   encodeValue,
+  idRangeOf,
   paintValueLut,
+  valueCount,
   valueLutTexels,
-  valueLutTexture,
+  type ValueLutArena,
+  type ValueSource,
 } from "../../platform/attributes/valueLut";
 import type { SparseReadRequest } from "@/mikro-next/lib/sparse/sparseSource";
-import { readColumnByObjectIdCached } from "../../platform/attributes/columnValueCache";
+import {
+  readColumnByObjectIdCached,
+  readColumnValuesCached,
+} from "../../platform/attributes/columnValueCache";
+import type { AttributeLookupEngine as Engine } from "@/mikro-next/lib/attributes/lookupEngine";
+import type { TableAccess } from "../../platform/attributes/columnLut";
 
 export { LUT_WIDTH } from "../../platform/attributes/columnLut";
 
@@ -93,13 +100,33 @@ export type LabelColorLutRequest = {
   /** The zarr store of the mask's level 0 — which ARRAY plan answers for it. */
   storeId: string;
   engine: AttributeLookupEngine;
+  /**
+   * The previous build's table, to refill instead of allocating.
+   *
+   * Only adopted when the slot count matches, which for a gene switch over one
+   * dataset it always does — the table spans the object axis and the gene only
+   * decides what goes in it.
+   */
+  reuse?: ValueLutArena | null;
+  /**
+   * Checked once, after the reads and BEFORE anything is written.
+   *
+   * The reads are the slow part and the paint is synchronous, so this is the
+   * only point at which a superseded build can bow out — and with `reuse` it is
+   * the point at which it MUST: two builds racing on one shared buffer would
+   * otherwise interleave, and the last one to finish reading would not be the
+   * last one to write. Returning false here means nothing was allocated and
+   * nothing was touched, so the caller has nothing to free.
+   */
+  stillWanted?: () => boolean;
 };
 
 export type LabelColorLutResult = {
   /**
-   * Null when nothing could be built — no readable entry, or ids too sparse to
-   * index. The caller switches the LUT off and the mask falls back to its hue
-   * hash; `skipped` says why, so a refusal is never silent.
+   * Null when nothing could be built — no readable entry, ids too sparse to
+   * index, or the build was superseded. The caller switches the LUT off and the
+   * mask falls back to its hue hash; `skipped` says why, so a refusal is never
+   * silent.
    */
   texture: THREE.DataTexture | null;
   width: number;
@@ -111,7 +138,32 @@ export type LabelColorLutResult = {
   /** The range the codes were quantised over — `uLutValueMin`/`Max`. */
   valueMin: number;
   valueMax: number;
+  /**
+   * The table this build painted into — the next build's `reuse`.
+   *
+   * Null when nothing was built. When it is the SAME object the caller passed as
+   * `reuse`, the texture was refilled in place and must not be disposed.
+   */
+  arena?: ValueLutArena | null;
+  /**
+   * `stillWanted()` said no. Nothing was allocated and nothing was written;
+   * the caller should drop this result without binding or disposing anything.
+   */
+  superseded?: boolean;
 };
+
+/** The result a superseded or empty build returns. Nothing to bind, nothing to free. */
+const nothing = (skipped: string[], superseded = false): LabelColorLutResult => ({
+  texture: null,
+  width: 0,
+  height: 0,
+  idOffset: 0,
+  skipped,
+  valueMin: 0,
+  valueMax: 1,
+  arena: null,
+  superseded,
+});
 
 /**
  * The extent of the ids that have a row in any entry we managed to read.
@@ -123,29 +175,48 @@ export type LabelColorLutResult = {
  * walked once. The painter iterates the value maps directly instead.
  */
 const idExtent = (
-  colorValues: Map<number, unknown> | null,
-  ruleValues: readonly (Map<number, unknown> | null)[],
+  colorValues: ValueSource | null,
+  ruleValues: readonly (ValueSource | null)[],
 ): { min: number; max: number } | null => {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
   let seen = false;
-  const consider = (values: Map<number, unknown> | null) => {
+  const consider = (values: ValueSource | null) => {
     if (!values) return;
-    for (const id of values.keys()) {
-      seen = true;
-      if (id < min) min = id;
-      if (id > max) max = id;
-    }
+    const range = idRangeOf(values);
+    if (!range) return;
+    seen = true;
+    if (range.min < min) min = range.min;
+    if (range.max > max) max = range.max;
   };
   consider(colorValues);
   for (const values of ruleValues) consider(values);
   return seen ? { min, max } : null;
 };
 
+/**
+ * The column reader the label path uses: columnar, falling back to rows.
+ *
+ * The columnar read is the whole point — over 5.5 M rows the row path spends
+ * about 1.1 s building a `Map<number, unknown>` that then holds ~320 MB, and
+ * this reads the same column as two typed arrays with no per-row object. But it
+ * can decline (a result with no columnar view, a non-numeric key column), and a
+ * colouring that declines must still paint, so the map reader stays as the
+ * fallback rather than as a second code path anyone has to choose between.
+ */
+const readLabelColumn = async (
+  engine: Engine,
+  access: TableAccess,
+  column: string,
+): Promise<ValueSource | null> =>
+  (await readColumnValuesCached(engine, access, column)) ??
+  (await readColumnByObjectIdCached(engine, access, column));
+
 export const buildLabelColorLut = async (
   request: LabelColorLutRequest,
 ): Promise<LabelColorLutResult> => {
-  const { colorBy, filterBys, plans, storeId, engine, sparse } = request;
+  const { colorBy, filterBys, plans, storeId, engine, sparse, reuse, stillWanted } = request;
+  const wanted = () => (stillWanted ? stillWanted() : true);
 
   // A sparse colouring reads a slice of a matrix, not a column of a table, so
   // it bypasses the DuckDB path entirely — there is no SQL and no database in
@@ -166,10 +237,9 @@ export const buildLabelColorLut = async (
       skipped.push(
         `'${sparse.source.name}' runs to ${slotCount} objects, so the lookup table is ${Math.round((slotCount * VALUE_LUT_BYTES_PER_TEXEL) / 1e6)} MB against a budget of ${Math.round(LABEL_LUT_MAX_BYTES / 1e6)} MB — no colouring is applied`,
       );
-      return { texture: null, width: 0, height: 0, idOffset: 0, skipped, valueMin: 0, valueMax: 1 };
+      return nothing(skipped);
     }
 
-    const lut = allocateValueLut(slotCount);
     // A bin absent from the slice has expression exactly ZERO — a slice is the
     // complete truth for its feature — so the window must include 0 or an
     // all-positive gene would start its ramp at its own minimum.
@@ -180,19 +250,24 @@ export const buildLabelColorLut = async (
       if (value > max) max = value;
     }
     if (max === min) max = min + 1;
+
+    // The read is done; from here nothing awaits. Bow out before the first
+    // write, because `reuse`'s buffer is the LIVE one.
+    if (!wanted()) return nothing(skipped, true);
+
+    // The baseline IS the code for zero, written as the fill.
+    // This used to allocate at `CODE_NO_VALUE` and then walk every slot testing
+    // for it — two full passes over up to eight million slots, the second one
+    // branchy, to express what one memset says.
+    const arena = acquireValueLut(reuse, slotCount, encodeValue(0, min, max));
+    const { lut } = arena;
     for (const [objectId, value] of values) {
       if (objectId < 0 || objectId >= slotCount) continue;
       lut.view[objectId] = encodeValue(value, min, max);
     }
-    // Every other slot keeps the baseline, which for a sparse colouring MEANS
-    // zero rather than "unknown" — so fill the whole table at the code for 0.
-    const zero = encodeValue(0, min, max);
-    for (let slot = 0; slot < slotCount; slot += 1) {
-      if (lut.view[slot] === CODE_NO_VALUE) lut.view[slot] = zero;
-    }
 
     return {
-      texture: valueLutTexture(lut.data, lut.width, lut.height),
+      texture: arena.texture,
       width: lut.width,
       height: lut.height,
       // `indptr[id]` IS the object-axis position, so the ids are the slots.
@@ -200,10 +275,11 @@ export const buildLabelColorLut = async (
       skipped,
       valueMin: min,
       valueMax: max,
+      arena,
     };
   }
 
-  const { colorValues, ruleValues, skipped } = await resolveColumnValues({
+  const { colorValues, ruleValues, skipped } = await resolveColumnValues<ValueSource>({
     colorBy,
     filterBys,
     plans,
@@ -211,7 +287,7 @@ export const buildLabelColorLut = async (
     want: { kind: "array", storeId },
     // Cached for the same reason as the mesh builder: knob nudges rebuild the
     // LUT, the column values change with none of them.
-    readColumn: readColumnByObjectIdCached,
+    readColumn: readLabelColumn,
   });
 
   const present = idExtent(colorValues, ruleValues);
@@ -219,7 +295,7 @@ export const buildLabelColorLut = async (
     // Nothing readable resolved. No texture rather than an all-identity one: the
     // caller switches the LUT off entirely, which is cheaper than binding a
     // texture that says "change nothing".
-    return { texture: null, width: 0, height: 0, idOffset: 0, skipped, valueMin: 0, valueMax: 1 };
+    return nothing(skipped);
   }
 
   // `slot = id - idOffset`, so the offset is the smallest id present and the
@@ -234,17 +310,22 @@ export const buildLabelColorLut = async (
     // right for a handful of ids scattered over a huge range, and wrong for a
     // bin lattice, whose ids are contiguous and maximally dense — there the
     // table is simply bigger than the budget.
-    const rows = colorValues ? colorValues.size : 0;
+    const rows = colorValues ? valueCount(colorValues) : 0;
     const dense = rows > 0 && rows * 4 > slotCount;
     skipped.push(
       dense
         ? `ids run ${present.min}…${present.max}, so the lookup table is ${slotCount} slots (${Math.round((slotCount * VALUE_LUT_BYTES_PER_TEXEL) / 1e6)} MB) against a budget of ${Math.round(LABEL_LUT_MAX_BYTES / 1e6)} MB — no colouring or filter is applied`
         : `ids run ${present.min}…${present.max} but only ${rows} of them have a row, so indexing them directly would spend ${slotCount} slots on ${rows} values — too sparse to index this way, and no colouring or filter is applied`,
     );
-    return { texture: null, width: 0, height: 0, idOffset: 0, skipped, valueMin: 0, valueMax: 1 };
+    return nothing(skipped);
   }
 
-  const lut = allocateValueLut(slotCount);
+  // The reads are done; from here nothing awaits. Bow out before the first
+  // write, because `reuse`'s buffer is the LIVE one.
+  if (!wanted()) return nothing(skipped, true);
+
+  const arena = acquireValueLut(reuse, slotCount);
+  const { lut } = arena;
 
   const { valueMin, valueMax } = paintValueLut({
     lut,
@@ -262,11 +343,12 @@ export const buildLabelColorLut = async (
   });
 
   return {
-    texture: valueLutTexture(lut.data, lut.width, lut.height),
+    texture: arena.texture,
     width: lut.width,
     height: lut.height,
     idOffset,
     skipped,
+    arena,
     valueMin,
     valueMax,
   };

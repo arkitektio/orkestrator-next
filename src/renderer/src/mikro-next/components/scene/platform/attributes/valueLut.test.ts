@@ -168,3 +168,70 @@ describe("paintValueLut", () => {
     expect(valueLutTexels(slots) * 4).toBeGreaterThan(16 * 1024 * 1024);
   });
 });
+
+describe("paintValueLut — the mentioned-id union", () => {
+  const identityOf = (objectId: number) => objectId;
+
+  it("evaluates an id only ONE rule mentions against both", () => {
+    // Two rules take the union path; one takes the rule's own keys. The union
+    // is load-bearing: id 3 has a row for the second rule only, and the first
+    // rule's answer for an id it never saw is `ruleKeeps(rule, undefined)`.
+    const lut = allocateValueLut(5);
+    paintValueLut({
+      lut,
+      slotOf: identityOf,
+      colorBy: null,
+      filterBys: [
+        { table: "t", column: "area", min: 10 },
+        { table: "t", column: "kind", values: ["good"] },
+      ],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([[1, 50]]),
+        new Map<number, unknown>([
+          [1, "good"],
+          [3, "good"],
+        ]),
+      ],
+    });
+    expect(lut.view[1]).toBe(CODE_NO_VALUE); // both rules pass
+    // id 3 passes the `kind` rule but has no `area` row, and a bounded rule
+    // does not keep an id it never measured.
+    expect(lut.view[3]).toBe(CODE_HIDDEN);
+  });
+
+  it("agrees with itself whether one rule or two are active", () => {
+    // The one-rule path skips the `Set`; it must land on the same bytes the
+    // union path would have written for the same single rule.
+    const rule = { table: "t", column: "area", min: 10 };
+    const values = () =>
+      new Map<number, unknown>([
+        [1, 50],
+        [2, 5],
+      ]);
+
+    const one = allocateValueLut(4);
+    paintValueLut({
+      lut: one,
+      slotOf: identityOf,
+      colorBy: null,
+      filterBys: [rule],
+      colorValues: null,
+      ruleValues: [values()],
+    });
+
+    // The same rule stated twice: the union is the same key set, and AND with
+    // itself is itself.
+    const two = allocateValueLut(4);
+    paintValueLut({
+      lut: two,
+      slotOf: identityOf,
+      colorBy: null,
+      filterBys: [rule, rule],
+      colorValues: null,
+      ruleValues: [values(), values()],
+    });
+
+    expect(Array.from(two.data)).toEqual(Array.from(one.data));
+  });
+});

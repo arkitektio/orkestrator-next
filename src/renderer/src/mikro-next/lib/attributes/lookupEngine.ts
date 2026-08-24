@@ -62,10 +62,15 @@ import { bindSqlLiteral, escapeSqlIdentifier, escapeSqlLiteral } from "./sqlBind
  *
  * Optional, because the type is also satisfied by test doubles and by anything
  * that only ever wanted rows.
+ *
+ * A child's `toArray()` is a typed array for a numeric column and a plain array
+ * of strings for a Utf8 one, which is why the element type is not pinned to
+ * `number`: a categorical column is read columnwise too, and claiming otherwise
+ * would only move the lie into a cast.
  */
 export type QueryResultLike = {
   toArray: () => unknown[];
-  getChild?: (name: string) => { toArray: () => ArrayLike<number> } | null;
+  getChild?: (name: string) => { toArray: () => ArrayLike<number> | ArrayLike<string> } | null;
   numRows?: number;
 };
 
@@ -361,18 +366,20 @@ export class AttributeLookupEngine {
    * one caller that reads a whole column — coordinates for a point layer —
    * where the row shape is the cost. See `QueryResultLike`.
    *
-   * Every named column comes back as a typed array of the same length, in the
+   * Every named column comes back as an array of the same length, in the
    * order DuckDB produced them, so `x[i]` and `y[i]` belong to the same row
    * without anything having to pair them up.
    *
    * `castBigIntToDouble` is already set on the connection, so an int64 id
-   * column arrives as a `Float64Array` and needs no conversion here.
+   * column arrives as a `Float64Array` and needs no conversion here. A Utf8
+   * column arrives as a plain array of strings — still one allocation for the
+   * column rather than one object per row, which is the point.
    */
   async readColumnsTyped(
     stores: readonly ParquetStoreLike[],
     buildSql: (urlOf: (storeId: string) => string) => string,
     columns: readonly string[],
-  ): Promise<Record<string, ArrayLike<number>> | null> {
+  ): Promise<Record<string, ArrayLike<number> | ArrayLike<string>> | null> {
     if (this.disposed) return null;
     const distinct = new Map(stores.map((store) => [store.id, store]));
     const grantsReady = new Map(
@@ -406,7 +413,7 @@ export class AttributeLookupEngine {
         // falling back to the row path, whose cost is the reason this exists.
         return null;
       }
-      const out: Record<string, ArrayLike<number>> = {};
+      const out: Record<string, ArrayLike<number> | ArrayLike<string>> = {};
       for (const name of columns) {
         const child = result.getChild(name);
         if (!child) return null;

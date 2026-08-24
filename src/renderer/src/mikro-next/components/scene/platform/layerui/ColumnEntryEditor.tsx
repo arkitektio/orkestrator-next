@@ -8,7 +8,10 @@ import {
   ColumnControl,
   useGetTableDatasetLazyQuery,
 } from "@/mikro-next/api/graphql";
+import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
+import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
+import { sliceDomain, sliceHistogram } from "@/mikro-next/lib/sparse/sliceStats";
 import {
   DISTINCT_LIMIT,
   readColumnDistinct,
@@ -80,18 +83,33 @@ const sliderStep = (domain: { min: number; max: number }): number => {
 };
 
 /**
- * A typed bound, kept inside the column's own range. An empty field is not a
- * cleared bound — the write path refuses a rule with no bound at all — so it
- * falls back to the column's edge, which is the widest thing the bound can
- * legally say.
+ * A bound as a reader wants to see it. An ion intensity is a float with fifteen
+ * digits behind it and none of them are the point; an integral count keeps
+ * every digit it has.
+ */
+const readable = (value: number): string =>
+  Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(4)));
+
+/**
+ * A typed bound. An empty field is not a cleared bound — the write path refuses
+ * a rule with no bound at all — so it falls back to the edge passed as
+ * `fallback`, which is the widest thing the bound can legally say.
+ *
+ * `domain` CLAMPS it, and is null where clamping would be a lie. A column's
+ * domain is the complete truth about that column, so a bound outside it selects
+ * nothing and the control is right to refuse it. A SPARSE slice's domain is the
+ * truth about ONE slice, and a window deliberately held wider than the slice on
+ * screen — so two of them can be compared against the same ramp — is exactly
+ * what that clamp would eat.
  */
 const clampToDomain = (
   raw: string,
-  domain: { min: number; max: number },
+  domain: { min: number; max: number } | null,
   fallback: number,
 ): number => {
   const value = raw.trim() === "" ? fallback : Number(raw);
   if (!Number.isFinite(value)) return fallback;
+  if (!domain) return value;
   return Math.min(Math.max(value, domain.min), domain.max);
 };
 
@@ -233,6 +251,9 @@ const BoundsControl = ({
   domain,
   histogram,
   colormap,
+  subject = "column",
+  clampTyped = true,
+  onAuto,
   onCommit,
 }: {
   label: string;
@@ -242,6 +263,23 @@ const BoundsControl = ({
   histogram: number[] | null;
   /** Paints the histogram's bars with the ramp being climmed; see above. */
   colormap?: ColorMap | null;
+  /** What the footer's range line is about — a column, or one slice of a matrix. */
+  subject?: string;
+  /**
+   * Whether a TYPED bound is held inside `domain`. True for a column, whose
+   * domain is the whole truth; false for a slice, where the domain is one
+   * slice's and a wider window is the point (see `clampToDomain`). The slider
+   * still spans the domain either way — a typed bound outside it grows the
+   * domain on the next render, which is how it becomes reachable.
+   */
+  clampTyped?: boolean;
+  /**
+   * Offered only where "no bounds at all" is a legal, meaningful state: a
+   * SPARSE colouring, whose null clims mean "rescale to whatever slice is
+   * showing". "full range" writes the numbers the current data happens to
+   * span and so FREEZES the window; this clears them again.
+   */
+  onAuto?: () => void;
   onCommit: (min: number, max: number) => void;
 }) => {
   /**
@@ -273,13 +311,25 @@ const BoundsControl = ({
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[9px] uppercase tracking-[0.08em] text-white/35">{label}</span>
-        <button
-          type="button"
-          className="text-[9px] text-white/40 underline-offset-2 hover:text-white/80 hover:underline"
-          onClick={() => commit(domain.min, domain.max)}
-        >
-          full range
-        </button>
+        <div className="flex items-baseline gap-2">
+          {onAuto && (
+            <button
+              type="button"
+              title="Drop the bounds — every slice rescales to its own range again"
+              className="text-[9px] text-white/40 underline-offset-2 hover:text-white/80 hover:underline"
+              onClick={onAuto}
+            >
+              auto
+            </button>
+          )}
+          <button
+            type="button"
+            className="text-[9px] text-white/40 underline-offset-2 hover:text-white/80 hover:underline"
+            onClick={() => commit(domain.min, domain.max)}
+          >
+            full range
+          </button>
+        </div>
       </div>
       {histogram && (
         <HistogramBars
@@ -309,7 +359,7 @@ const BoundsControl = ({
           className="h-6 text-[10px]"
           defaultValue={bounds.min}
           onBlur={(event) =>
-            commit(clampToDomain(event.target.value, domain, domain.min), bounds.max)
+            commit(clampToDomain(event.target.value, clampTyped ? domain : null, domain.min), bounds.max)
           }
         />
         <span className="text-[9px] text-white/40">…</span>
@@ -319,14 +369,142 @@ const BoundsControl = ({
           className="h-6 text-[10px]"
           defaultValue={bounds.max}
           onBlur={(event) =>
-            commit(bounds.min, clampToDomain(event.target.value, domain, domain.max))
+            commit(bounds.min, clampToDomain(event.target.value, clampTyped ? domain : null, domain.max))
           }
         />
       </div>
       <div className="text-[9px] text-white/35">
-        column runs {domain.min} … {domain.max}
+        {subject} runs {readable(domain.min)} … {readable(domain.max)}
       </div>
     </div>
+  );
+};
+
+/**
+ * The clim half of a SPARSE colouring: the slice's own distribution, and the
+ * two bounds the ramp runs between.
+ *
+ * WHY IT CAN EXIST NOW. This block used to be a comment refusing to draw a
+ * slider, on the grounds that a slice's range is not known until it is read and
+ * that a domain invented for it would be worse than none. The premise was
+ * right; the conclusion followed only while nothing here read the slice. It
+ * does now — the same one-slice read the layer itself performs, on mount, which
+ * for this component IS on unfold (see the module docblock). So the domain is
+ * the slice's real one, and the plot below is the reason to trust it.
+ *
+ * AUTO STAYS THE DEFAULT. Null clims mean "rescale to whatever slice is
+ * showing", which is what makes a gene maxing at 3 legible beside one maxing at
+ * 400 (`picker.py`'s argument, unchanged). Nothing here writes bounds until the
+ * user moves something, and `auto` clears them again.
+ *
+ * BOUNDS SURVIVE A SLICE CHANGE, deliberately: a window held fixed across genes
+ * is how two of them are compared quantitatively, which is the whole reason to
+ * set one by hand. The domain then grows to contain the stored bounds — the
+ * same thing the Levels editor does — so a window wider than the slice stays
+ * reachable rather than snapping to the data's edge, and the histogram is
+ * re-binned over that grown domain so the bars and the thumbs keep agreeing on
+ * the axis. It is also why a bound TYPED here is not clamped to the slice: 400
+ * against a slice topping out at 12 is a window, not a mistake, and clamping it
+ * back to 12 would make the fixed window unauthorable from the slice a user
+ * happens to be looking at.
+ */
+const SparseSliceSettings = ({
+  dataset,
+  at,
+  colormap,
+  stored,
+  onCommit,
+}: {
+  dataset: string;
+  at: readonly { axis: string; value: number }[];
+  colormap: ColorMap;
+  stored: { min?: number | null; max?: number | null };
+  onCommit: (patch: Draft) => void;
+}) => {
+  const client = useMikro();
+  const datalayer = useDatalayerEndpoint();
+  /** The slice's values, flat — the map's keys are the renderer's business. */
+  const [slice, setSlice] = useState<{ values: number[]; slotCount: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // A slice is identified by WHICH position it is read at, and `at` is a fresh
+  // array on every render of the row above.
+  const atKey = JSON.stringify(at.map((position) => [position.axis, position.value]));
+
+  useEffect(() => {
+    if (!datalayer) return;
+    let cancelled = false;
+    setSlice(null);
+    setError(null);
+    void (async () => {
+      const source = await loadSparseSource(client, datalayer, dataset);
+      const read = await source.read(source.source, at);
+      if (cancelled) return;
+      setSlice({ values: [...read.values.values()], slotCount: read.slotCount });
+    })().catch((cause: unknown) => {
+      if (cancelled) return;
+      setError(cause instanceof Error ? cause.message : String(cause));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // `at` is read inside; `atKey` is what decides whether this re-reads, for
+    // the reason above. `client` is infrastructure and may not be stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataset, atKey, datalayer]);
+
+  /** The slice's own range, grown to contain any stored bound (see above). */
+  const domain = useMemo(() => {
+    if (!slice) return null;
+    const base = sliceDomain(slice.values);
+    return {
+      min: Math.min(base.min, stored.min ?? base.min),
+      max: Math.max(base.max, stored.max ?? base.max),
+    };
+  }, [slice, stored.min, stored.max]);
+
+  const histogram = useMemo(
+    () => (slice && domain ? sliceHistogram(slice.values, slice.slotCount, domain) : null),
+    [slice, domain],
+  );
+
+  if (!datalayer) {
+    return (
+      <div className="text-[9px] text-white/35">
+        no datalayer is configured, so the slice cannot be read — it still
+        rescales to its own range
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="text-[10px] text-amber-300/80">
+        Could not read the slice: {error}
+      </div>
+    );
+  }
+  if (!domain) return <div className="text-[10px] text-white/40">Reading the slice…</div>;
+
+  const bounded = stored.min != null || stored.max != null;
+  return (
+    <>
+      <BoundsControl
+        label="clims"
+        stored={stored}
+        domain={domain}
+        histogram={histogram}
+        colormap={colormap}
+        subject="this slice"
+        clampTyped={false}
+        onAuto={bounded ? () => onCommit({ min: null, max: null }) : undefined}
+        onCommit={(min, max) => onCommit({ min, max })}
+      />
+      <div className="text-[9px] text-white/35">
+        {bounded
+          ? "every slice is drawn against these; auto rescales each to its own range"
+          : "scaled to this slice’s own range — move a thumb to hold a window across slices"}
+      </div>
+    </>
   );
 };
 
@@ -473,16 +651,15 @@ export const ColumnEntrySettings = ({
             onChange={(value) => onCommit({ colormap: value as ColorMap })}
           />
         </div>
-        {/* No clim slider here, deliberately. A slider needs a domain, and a
-            slice's range is not known until it is read — the table is
-            quantised over the slice's OWN range at build time and the window
-            is a uniform over that, so every gene auto-scales to itself. That is
-            the right default (`picker.py`: a gene maxing at 3 sharing an
-            inherited range with one maxing at 400 renders black), and inventing
-            a domain to slide over would be worse than not offering one. */}
-        <div className="text-[9px] text-white/35">
-          scaled to this slice&rsquo;s own range
-        </div>
+        {/* The clims, over the slice's REAL domain — read here rather than
+            invented. See `SparseSliceSettings`. */}
+        <SparseSliceSettings
+          dataset={colouring.dataset}
+          at={colouring.at ?? []}
+          colormap={colouring.colormap ?? ColorMap.Magma}
+          stored={clims}
+          onCommit={onCommit}
+        />
       </div>
     );
   }

@@ -105,6 +105,17 @@ export const isColumnColorBy = (entry: ColorByEntry): entry is ColumnColorByEntr
 export type FilterByEntry = MeshFilterByFragment | LabelFilterByFragment;
 
 /**
+ * A stored rule's COLUMN arm — the same either/or a colouring has. A `SPARSE`
+ * rule bounds one slice of a matrix instead: it names a `dataset` and a
+ * position `at`, leaves `table`/`column` null, and is read from the store
+ * rather than from a parquet.
+ */
+export type ColumnFilterByEntry = FilterByEntry & { table: string; column: string };
+
+export const isColumnFilterBy = (entry: FilterByEntry): entry is ColumnFilterByEntry =>
+  entry.table != null && entry.column != null;
+
+/**
  * What the mappers below RETURN, structurally.
  *
  * `MeshColorByInput` and `LabelColorByInput` are generated separately but have
@@ -227,6 +238,13 @@ export const entryLabel = (entry: {
 }): string => entry.label?.trim() || entry.column || "a sparse slice";
 
 /**
+ * A bound as a row wants to read it. An ion intensity carries fifteen digits
+ * and none of them are the point; an integral count keeps every digit it has.
+ */
+const readableBound = (value: number): string =>
+  Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(4)));
+
+/**
  * A filter rule in words, for its row's detail line and the toggle's tooltip.
  * Which half applies follows from the column's role: bounds for a measure, an
  * explicit set for a categorical — the same either/or the input models.
@@ -241,9 +259,10 @@ export const describeFilterRule = (rule: {
       rule.values.length > 4 ? `, +${rule.values.length - 4} more` : ""
     }`;
   }
-  if (rule.min != null && rule.max != null) return `is between ${rule.min} and ${rule.max}`;
-  if (rule.min != null) return `is at least ${rule.min}`;
-  if (rule.max != null) return `is at most ${rule.max}`;
+  if (rule.min != null && rule.max != null)
+    return `is between ${readableBound(rule.min)} and ${readableBound(rule.max)}`;
+  if (rule.min != null) return `is at least ${readableBound(rule.min)}`;
+  if (rule.max != null) return `is at most ${readableBound(rule.max)}`;
   return "matches";
 };
 
@@ -262,7 +281,9 @@ export const describeColouring = (entry: {
   if (palette) return `"${palette}" palette, a colour per distinct value`;
   if (entry.colormap) {
     return entry.min != null || entry.max != null
-      ? `${entry.colormap.toLowerCase()} over ${entry.min ?? "…"} … ${entry.max ?? "…"}`
+      ? `${entry.colormap.toLowerCase()} over ${
+          entry.min != null ? readableBound(entry.min) : "…"
+        } … ${entry.max != null ? readableBound(entry.max) : "…"}`
       : `${entry.colormap.toLowerCase()} over the column's range`;
   }
   return "a colour per distinct value";
@@ -332,18 +353,31 @@ export const toColorByInput = (
  * the ids run along, is refused server-side — so it is refused here too, before
  * a mutation is in flight.
  */
+/**
+ * The position contract both sparse arms rest on, checked before a mutation is
+ * in flight rather than after the server refuses it: `at` names every axis the
+ * matrix identifies itself by — never fewer, and never the axis the ids run
+ * along.
+ */
+const assertNamesEveryAxis = (
+  option: SparseOption,
+  at: readonly { axis: string; value: number }[],
+): void => {
+  const named = [...at.map((position) => position.axis)].sort();
+  const wanted = [...option.axes].sort();
+  if (named.length !== wanted.length || named.some((axis, index) => axis !== wanted[index])) {
+    throw new Error(
+      `an entry over '${option.sparseDataset.name}' names a position along ${wanted.join(", ")}, but got ${named.join(", ") || "none"}`,
+    );
+  }
+};
+
 export const toSparseColorByInput = (
   option: SparseOption,
   at: readonly { axis: string; value: number }[],
   patch?: Partial<Omit<ColorByInputLike, "kind" | "dataset" | "at">>,
 ): ColorByInputLike => {
-  const named = [...at.map((position) => position.axis)].sort();
-  const wanted = [...option.axes].sort();
-  if (named.length !== wanted.length || named.some((axis, index) => axis !== wanted[index])) {
-    throw new Error(
-      `a colouring by '${option.sparseDataset.name}' names a position along ${wanted.join(", ")}, but got ${named.join(", ") || "none"}`,
-    );
-  }
+  assertNamesEveryAxis(option, at);
   return {
     kind: ColorSourceKind.Sparse,
     dataset: option.sparseDataset.id,
@@ -366,6 +400,31 @@ export const toFilterByInput = (
   exclude: false,
   ...patch,
 });
+
+/**
+ * The SPARSE arm of a RULE — `toSparseColorByInput`'s sibling, and the same
+ * position contract: `at` must name every axis the matrix identifies itself by.
+ *
+ * A slice is always MEASURED, so a rule over one is always a `min`/`max` bound
+ * and never a `values` set. Those bounds are the caller's: the write path
+ * refuses a rule that states neither, and the widest legal one is the slice's
+ * own range, which only a read of the slice knows.
+ */
+export const toSparseFilterByInput = (
+  option: SparseOption,
+  at: readonly { axis: string; value: number }[],
+  patch?: Partial<Omit<FilterByInputLike, "kind" | "dataset" | "at">>,
+): FilterByInputLike => {
+  assertNamesEveryAxis(option, at);
+  return {
+    kind: ColorSourceKind.Sparse,
+    dataset: option.sparseDataset.id,
+    at: at.map((position) => ({ axis: position.axis, value: position.value })),
+    label: option.sparseDataset.name,
+    exclude: false,
+    ...patch,
+  };
+};
 
 // ----------------------------------------------------------------- entry → input
 
@@ -391,9 +450,21 @@ export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
   max: entry.max ?? null,
 });
 
+/**
+ * The same, for a rule — `kind`, `dataset` and `at` included for the same
+ * reason they are on the colouring mapper: `filterBys` is a whole-array
+ * replace, so a SPARSE rule read back and re-sent without them comes back a
+ * COLUMN rule naming nothing, and the server refuses it (or worse, stores it).
+ */
 export const filterByEntryToInput = (entry: FilterByEntry): FilterByInputLike => ({
-  table: entry.table,
-  column: entry.column,
+  kind: entry.kind,
+  table: entry.table ?? null,
+  column: entry.column ?? null,
+  dataset: entry.dataset ?? null,
+  at: (entry.at ?? []).map((position) => ({
+    axis: position.axis,
+    value: position.value,
+  })),
   joinPath: entryJoinPath(entry),
   min: entry.min ?? null,
   max: entry.max ?? null,

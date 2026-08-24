@@ -70,13 +70,16 @@ fragment ColorByOption on ColorByOption {
 # Same selection as ColorByOption — see the note above.
 fragment FilterByOption on FilterByOption {
   control
-  # Selected for symmetry and for the round trip, NOT because a sparse filter can
-  # be authored: `LabelFilterByInput.table` and `column` are non-null, so there is
-  # no sparse arm of a filter to send. The picker refuses these in filter mode.
+  # The SPARSE arm, offered here as it is in colour mode: `LabelFilterByInput`
+  # and `MeshFilterByInput` take `kind: SPARSE` with a `dataset` and an `at`,
+  # their `table`/`column` nullable, so a rule can bound one slice of a matrix.
+  # (It could not when this fragment was written, which is why the picker used
+  # to drop these.) The full source fragment rather than id + name: the same
+  # position picker authors a rule as authors a colouring, and it reads the
+  # matrix's axes off this.
   axes
   sparseDataset {
-    id
-    name
+    ...SparseColouringSource
   }
   table {
     ...ListTableDataset

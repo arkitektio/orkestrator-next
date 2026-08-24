@@ -25,7 +25,7 @@ import {
   WatchMessagesSubscriptionVariables,
 } from "../api/graphql";
 import { Chat } from "@/components/chat/chat";
-import { storeRoomTalkingAbout } from "../roomTalkingAbout";
+import { storeRoomTalkingAbout, toStructureInput } from "../roomTalkingAbout";
 
 export type StructureRoomsSidebarProps = {
   identifier: Identifier;
@@ -165,13 +165,15 @@ export const StructureRoomsSidebar = ({
   object,
 }: StructureRoomsSidebarProps) => {
   const storageKey = `${STRUCTURE_ROOMS_SIDEBAR_KEY}:${buildSidebarStorageKey(identifier, object)}`;
+  // Alpaka addresses foreign objects by a numeric id. A structure whose id
+  // isn't one cannot be talked about, and asking anyway would have the server
+  // reject the whole query.
+  const talkingAbout = toStructureInput({ identifier, object });
   const { data, loading, error, refetch } = useListRoomsQuery({
+    skip: !talkingAbout,
     variables: {
       filter: {
-        talkingAbout: {
-          identifier,
-          object: object.id,
-        },
+        talkingAbout: talkingAbout ?? undefined,
       },
       pagination: {
         limit: 20,
@@ -217,17 +219,16 @@ export const StructureRoomsSidebar = ({
   })();
 
   const handleCreateRoom = useCallback(async () => {
+    if (!talkingAbout) {
+      return;
+    }
+
     const result = await createRoom({
       variables: {
         input: {
           title: `Chat about ${identifier}`,
           description: `Talking about ${object.id}`,
-          talkingAbout: [
-            {
-              identifier,
-              object: object.id,
-            },
-          ],
+          talkingAbout: [talkingAbout],
         },
       },
     });
@@ -236,15 +237,21 @@ export const StructureRoomsSidebar = ({
     await refetch();
 
     if (nextRoomId) {
-      storeRoomTalkingAbout(nextRoomId, [
-        {
-          identifier,
-          object: object.id,
-        },
-      ]);
+      storeRoomTalkingAbout(nextRoomId, [talkingAbout]);
       selectRoom(nextRoomId);
     }
-  }, [createRoom, identifier, object.id, refetch, selectRoom]);
+  }, [createRoom, identifier, object.id, refetch, selectRoom, talkingAbout]);
+
+  if (!talkingAbout) {
+    return (
+      <Empty>
+        <EmptyTitle>Not chattable</EmptyTitle>
+        <EmptyDescription>
+          Alpaka cannot hold a conversation about this object.
+        </EmptyDescription>
+      </Empty>
+    );
+  }
 
   if (error) {
     return (

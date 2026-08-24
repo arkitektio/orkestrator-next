@@ -69,6 +69,17 @@ fragment LabelFilterBy on LabelFilterBy {
   max
   values
   exclude
+  # The SPARSE arm, exactly as on `LabelColorBy`: a rule may bound one slice of
+  # a matrix rather than a column of a table, and then names `dataset` and a
+  # position `at` with `table`/`column` null. Selected for the same two reasons
+  # — it renders, and `filterBys` is a whole-array replace, so an entry read
+  # back without these and re-sent comes back a column rule naming nothing.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
 }
 
 # One entry of a mesh layer's colour picker. Same shape and same relation as
@@ -122,6 +133,14 @@ fragment MeshFilterBy on MeshFilterBy {
   max
   values
   exclude
+  # The SPARSE arm — see `LabelFilterBy`, which is this fragment over the other
+  # layer kind.
+  kind
+  dataset
+  at {
+    axis
+    value
+  }
 }
 
 # Not a TransferFunction: a label map has one source, no compositing tree, and

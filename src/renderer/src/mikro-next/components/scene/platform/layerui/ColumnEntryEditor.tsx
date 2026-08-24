@@ -397,6 +397,13 @@ const BoundsControl = ({
  * 400 (`picker.py`'s argument, unchanged). Nothing here writes bounds until the
  * user moves something, and `auto` clears them again.
  *
+ * SERVES A RULE TOO. A filter over a slice is the same two numbers against the
+ * same distribution — "keep the cells where this ion is above x" — so `mode`
+ * only changes what the bounds MEAN (a window the ramp runs between, or the
+ * band that is kept), whether a colormap paints the bars, and whether `auto` is
+ * offered: a rule stating neither a bound nor a value set is refused by the
+ * write path, so null bounds are not a state a rule may be in.
+ *
  * BOUNDS SURVIVE A SLICE CHANGE, deliberately: a window held fixed across genes
  * is how two of them are compared quantitatively, which is the whole reason to
  * set one by hand. The domain then grows to contain the stored bounds — the
@@ -411,13 +418,16 @@ const BoundsControl = ({
 const SparseSliceSettings = ({
   dataset,
   at,
+  mode,
   colormap,
   stored,
   onCommit,
 }: {
   dataset: string;
   at: readonly { axis: string; value: number }[];
-  colormap: ColorMap;
+  mode: "color" | "filter";
+  /** The ramp the bars preview. A rule has none — same plot, neutral bars. */
+  colormap?: ColorMap | null;
   stored: { min?: number | null; max?: number | null };
   onCommit: (patch: Draft) => void;
 }) => {
@@ -471,8 +481,9 @@ const SparseSliceSettings = ({
   if (!datalayer) {
     return (
       <div className="text-[9px] text-white/35">
-        no datalayer is configured, so the slice cannot be read — it still
-        rescales to its own range
+        {mode === "filter"
+          ? "no datalayer is configured, so the slice cannot be read — the rule keeps its stored bounds"
+          : "no datalayer is configured, so the slice cannot be read — it still rescales to its own range"}
       </div>
     );
   }
@@ -485,24 +496,27 @@ const SparseSliceSettings = ({
   }
   if (!domain) return <div className="text-[10px] text-white/40">Reading the slice…</div>;
 
+  const isFilter = mode === "filter";
   const bounded = stored.min != null || stored.max != null;
   return (
     <>
       <BoundsControl
-        label="clims"
+        label={isFilter ? "keep between" : "clims"}
         stored={stored}
         domain={domain}
         histogram={histogram}
         colormap={colormap}
         subject="this slice"
         clampTyped={false}
-        onAuto={bounded ? () => onCommit({ min: null, max: null }) : undefined}
+        onAuto={!isFilter && bounded ? () => onCommit({ min: null, max: null }) : undefined}
         onCommit={(min, max) => onCommit({ min, max })}
       />
       <div className="text-[9px] text-white/35">
-        {bounded
-          ? "every slice is drawn against these; auto rescales each to its own range"
-          : "scaled to this slice’s own range — move a thumb to hold a window across slices"}
+        {isFilter
+          ? "an object the slice never mentions has value 0, and is kept or dropped by these bounds like any other"
+          : bounded
+            ? "every slice is drawn against these; auto rescales each to its own range"
+            : "scaled to this slice’s own range — move a thumb to hold a window across slices"}
       </div>
     </>
   );
@@ -631,35 +645,58 @@ export const ColumnEntrySettings = ({
     onCommit({ colormap: colormapOfPalette(value as FabriksInstanceColormap) });
   };
 
-  // A SPARSE colouring names a matrix and a position rather than a table and a
+  // A SPARSE entry names a matrix and a position rather than a table and a
   // column, so it gets its own settings entirely: which slice to read, and the
-  // colormap window. There is no role to resolve and no column stats to scan —
-  // a slice is always measured.
-  if (!isFilter && colouring.dataset) {
+  // bounds over it. There is no role to resolve and no column stats to scan — a
+  // slice is always MEASURED, which is why a sparse rule is a bound and never a
+  // value set.
+  //
+  // BOTH modes, since the filter inputs grew their sparse arm: a rule over a
+  // slice is the same position picker and the same bounds control, minus the
+  // colormap and plus the invert switch.
+  const sparseDataset = (entry as { dataset?: string | null }).dataset;
+  if (sparseDataset) {
     return (
       <div className="space-y-2 text-xs">
         <SparsePositionPicker
-          dataset={colouring.dataset}
-          at={colouring.at ?? []}
-          onCommit={(at) => onCommit({ at: at.map((position) => ({ ...position })) })}
+          dataset={sparseDataset}
+          at={entry.at ?? []}
+          // Field by field, never a spread: a position read back off the wire
+          // carries `__typename`, `AxisPositionInput` has no such field, and
+          // this patch OVERWRITES the `at` the entry→input mapper just cleaned.
+          onCommit={(at) =>
+            onCommit({ at: at.map(({ axis, value }) => ({ axis, value })) })
+          }
         />
-        <div className="space-y-1.5">
-          <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">colormap</div>
-          <ColormapSelect
-            value={colouring.colormap ?? ColorMap.Magma}
-            choices={measureChoices}
-            onChange={(value) => onCommit({ colormap: value as ColorMap })}
-          />
-        </div>
-        {/* The clims, over the slice's REAL domain — read here rather than
+        {!isFilter && (
+          <div className="space-y-1.5">
+            <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">colormap</div>
+            <ColormapSelect
+              value={colouring.colormap ?? ColorMap.Magma}
+              choices={measureChoices}
+              onChange={(value) => onCommit({ colormap: value as ColorMap })}
+            />
+          </div>
+        )}
+        {/* The bounds, over the slice's REAL domain — read here rather than
             invented. See `SparseSliceSettings`. */}
         <SparseSliceSettings
-          dataset={colouring.dataset}
-          at={colouring.at ?? []}
-          colormap={colouring.colormap ?? ColorMap.Magma}
+          dataset={sparseDataset}
+          at={entry.at ?? []}
+          mode={mode}
+          colormap={isFilter ? null : (colouring.colormap ?? ColorMap.Magma)}
           stored={clims}
           onCommit={onCommit}
         />
+        {isFilter && (
+          <label className="flex items-center justify-between gap-2 border-t border-white/5 pt-2 text-[10px]">
+            <span className="text-white/40">invert — drop what matches instead</span>
+            <Switch
+              checked={rule.exclude}
+              onCheckedChange={(checked) => onCommit({ exclude: checked })}
+            />
+          </label>
+        )}
       </div>
     );
   }

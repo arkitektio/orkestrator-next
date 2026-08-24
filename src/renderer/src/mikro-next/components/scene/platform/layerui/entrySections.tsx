@@ -1,8 +1,11 @@
 import { Filter, X } from "lucide-react";
 import { memo, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { ColorMap, ColumnControl } from "@/mikro-next/api/graphql";
+import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { readDefaultFilterRule } from "@/mikro-next/lib/attributes/columnStats";
+import { sliceDomain } from "@/mikro-next/lib/sparse/sliceStats";
+import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
 import { perfMonitor } from "../perf/perfMonitor";
 import { CardSection, EntryRow, RowAction } from "./cardControls";
 import { colormapGradientCSS } from "./colormap-utils";
@@ -18,8 +21,10 @@ import {
   entryLabel,
   filterByEntryToInput,
   isColumnColorBy,
+  isColumnFilterBy,
   isColumnOption,
   toSparseColorByInput,
+  toSparseFilterByInput,
   type SparseOption,
   isJoinedEntry,
   isMeasure,
@@ -364,10 +369,12 @@ const FilterByRow = memo(function FilterByRow({
       active={applied}
       expanded={expanded}
       title={`${entry.exclude ? "Drop" : "Keep"} objects where ${
-        entry.column
+        // A SPARSE rule names no column — it bounds one slice of a matrix — so
+        // the caption is what the entry calls itself.
+        isColumnFilterBy(entry) ? entry.column : entryLabel(entry)
       } ${describeFilterRule(entry)} — click to apply & configure, the funnel switches it off (stored)${
         isJoinedEntry(entry) ? JOINED_NOTE : ""
-      }`}
+      }${isColumnFilterBy(entry) ? "" : SPARSE_NOTE}`}
       onClick={() => onRowClick(index)}
       leadingAction={
         <button
@@ -437,9 +444,14 @@ export const FilterBySection = memo(function FilterBySection({
   // The bounds a new rule is seeded with come out of the column's parquet,
   // which is the attribute engine's connection and grants.
   const attributeService = useAttributeServiceOrNull();
+  // A SPARSE rule's seed comes from the STORE, not from a parquet: the same
+  // one-slice read the layer performs, so the bounds it is seeded with are the
+  // slice's real ones.
+  const client = useMikro();
+  const datalayer = useDatalayerEndpoint();
 
-  const stateRef = useRef({ filterBys, activeFilterBys, attributeService });
-  stateRef.current = { filterBys, activeFilterBys, attributeService };
+  const stateRef = useRef({ filterBys, activeFilterBys, attributeService, client, datalayer });
+  stateRef.current = { filterBys, activeFilterBys, attributeService, client, datalayer };
 
   const keyOf = (entry: FilterByEntry, index: number) =>
     `filter.${entryKey(entry)}.${index}`;
@@ -460,14 +472,44 @@ export const FilterBySection = memo(function FilterBySection({
    */
   const addFilterBy = useCallback(
     (option: ColumnOption | SparseOption) => {
-      // A sparse rule is not expressible: `LabelFilterByInput.table` and
-      // `column` are non-null, so there is no arm of the mutation to send one
-      // through. The picker does not offer these in filter mode — this is the
-      // structural guard behind that, so the two cannot drift apart silently.
+      // A SPARSE rule bounds one slice of a matrix. Same opening move as a
+      // sparse colouring — position 0 along every identified axis, the gene
+      // chosen afterwards in the entry editor — and the same reason the bounds
+      // cannot be left null: the write path refuses a rule stating neither a
+      // bound nor a value set, so the seed is the slice's OWN range, which
+      // means reading the slice.
       if (!isColumnOption(option)) {
-        setRuleError(
-          `'${option.sparseDataset.name}' is a matrix, and a filter names a column of a table — colour by it instead`,
-        );
+        const { client, datalayer } = stateRef.current;
+        if (!datalayer) {
+          setRuleError("no datalayer connection — cannot read the matrix's range");
+          return;
+        }
+        setRuleError(null);
+        const at = option.axes.map((axis) => ({ axis, value: 0 }));
+        void loadSparseSource(client, datalayer, option.sparseDataset.id)
+          .then(async (source) => {
+            const read = await source.read(source.source, at);
+            // The widest legal rule, exactly as a column's seed is: the slice's
+            // own range, which contains 0 and so keeps the objects the slice
+            // never mentions. Adding a rule must not hide anything yet.
+            const domain = sliceDomain(read.values.values());
+            const { filterBys: entries, activeFilterBys: active } = stateRef.current;
+            const next = [
+              ...entries.map(filterByEntryToInput),
+              toSparseFilterByInput(option, at, { min: domain.min, max: domain.max }),
+            ];
+            return persistEntries({
+              filterBys: next,
+              activeFilterBys: [...active, next.length - 1].sort((a, b) => a - b),
+            });
+          })
+          .catch((error: unknown) => {
+            setRuleError(
+              `could not read '${option.sparseDataset.name}': ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            );
+          });
         return;
       }
       const engine = stateRef.current.attributeService?.engine;

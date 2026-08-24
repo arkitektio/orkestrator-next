@@ -90,10 +90,33 @@ export const labelLutMaxTexels = (bytesPerTexel: number): number =>
  */
 export const LABEL_LUT_MAX_TEXELS = labelLutMaxTexels(VALUE_LUT_BYTES_PER_TEXEL);
 
+/** One slice of a matrix, as both a colouring and a rule consume it. */
+export type SparseSliceRead = {
+  values: Map<number, number>;
+  /** How many objects the matrix addresses — the slot space, zeros included. */
+  slotCount: number;
+};
+
 export type LabelColorLutRequest = {
   colorBy: ColumnLutEntryColorBy | null;
   /** Present only when the active colouring reads a sparse matrix. */
   sparse?: SparseReadRequest | null;
+  /**
+   * Reads one slice of ANY matrix, for the RULES.
+   *
+   * Separate from `sparse` because a rule need not name the matrix the
+   * colouring does — "colour by ion A, keep the cells where ion B is above x"
+   * is two matrices, or one matrix and one column — so a rule's source is
+   * resolved by id at read time rather than fetched once by the caller.
+   * Absent (no datalayer) means a sparse rule cannot be read; it is then
+   * `skipped` rather than silently applied to nothing.
+   */
+  readSparse?:
+    | ((
+        datasetId: string,
+        at: readonly { axis: string; value: number }[],
+      ) => Promise<SparseSliceRead>)
+    | null;
   filterBys: readonly ColumnLutEntryFilterBy[];
   /** The mask's attribute plans, for each table's store and key column. */
   plans: readonly AttributePlanLike[];
@@ -215,8 +238,46 @@ const readLabelColumn = async (
 export const buildLabelColorLut = async (
   request: LabelColorLutRequest,
 ): Promise<LabelColorLutResult> => {
-  const { colorBy, filterBys, plans, storeId, engine, sparse, reuse, stillWanted } = request;
+  const { colorBy, filterBys, plans, storeId, engine, sparse, readSparse, reuse, stillWanted } =
+    request;
   const wanted = () => (stillWanted ? stillWanted() : true);
+
+  /**
+   * Every RULE that reads a matrix, read.
+   *
+   * Kept here rather than inside `resolveColumnValues`, which is the DuckDB
+   * path and is deliberately free of Apollo and of the store: it narrows a
+   * sparse entry away and answers null for it. These reads then take those
+   * nulls' places below.
+   *
+   * A rule that cannot be read is `skipped`, never silently dropped: a filter
+   * that quietly applies to nothing reads on screen as a filter that is
+   * working.
+   */
+  const readSparseRules = async (
+    skipped: string[],
+  ): Promise<(SparseSliceRead | null)[]> =>
+    Promise.all(
+      filterBys.map(async (rule) => {
+        if (rule.dataset == null) return null;
+        if (!readSparse) {
+          skipped.push(
+            `rule over matrix ${rule.dataset}: no datalayer connection, so the slice could not be read`,
+          );
+          return null;
+        }
+        try {
+          return await readSparse(rule.dataset, rule.at ?? []);
+        } catch (error) {
+          skipped.push(
+            `rule over matrix ${rule.dataset}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+          return null;
+        }
+      }),
+    );
 
   // A sparse colouring reads a slice of a matrix, not a column of a table, so
   // it bypasses the DuckDB path entirely — there is no SQL and no database in
@@ -233,6 +294,18 @@ export const buildLabelColorLut = async (
     // across gene switches.
     const slotCount = Math.max(1, extent);
     const skipped: string[] = [];
+    // KNOWN LIMITATION, stated loudly rather than silently: this path writes
+    // the whole table from one slice and never reaches the visibility pass, so
+    // rules are not applied while the COLOURING is sparse. (They apply to a
+    // sparse colouring's siblings — a column colouring with a sparse rule goes
+    // through the generic path below and works.) Lifting it means folding this
+    // path into that one, which is a change to how the table is allocated and
+    // quantised, not an addition.
+    if (filterBys.length > 0) {
+      skipped.push(
+        `${filterBys.length} rule(s): a colouring that reads a matrix paints every slot from that slice, so no filter is applied while it is the active colouring`,
+      );
+    }
     if (valueLutTexels(slotCount) > LABEL_LUT_MAX_TEXELS) {
       skipped.push(
         `'${sparse.source.name}' runs to ${slotCount} objects, so the lookup table is ${Math.round((slotCount * VALUE_LUT_BYTES_PER_TEXEL) / 1e6)} MB against a budget of ${Math.round(LABEL_LUT_MAX_BYTES / 1e6)} MB — no colouring is applied`,
@@ -290,8 +363,20 @@ export const buildLabelColorLut = async (
     readColumn: readLabelColumn,
   });
 
+  // The sparse rules take the nulls `resolveColumnValues` left for them. From
+  // here nothing downstream knows the difference: a slice arrives as
+  // `objectId -> value`, which is one of the two shapes a `ValueSource` is.
+  const sparseRules = await readSparseRules(skipped);
+  let sparseSlots = 0;
+  for (let index = 0; index < sparseRules.length; index += 1) {
+    const read = sparseRules[index];
+    if (!read) continue;
+    ruleValues[index] = read.values as ValueSource;
+    if (read.slotCount > sparseSlots) sparseSlots = read.slotCount;
+  }
+
   const present = idExtent(colorValues, ruleValues);
-  if (!present) {
+  if (!present && sparseSlots === 0) {
     // Nothing readable resolved. No texture rather than an all-identity one: the
     // caller switches the LUT off entirely, which is cheaper than binding a
     // texture that says "change nothing".
@@ -302,8 +387,17 @@ export const buildLabelColorLut = async (
   // lowest id always lands at slot 0. Clamped at 0 because a negative offset
   // would push slots PAST the allocation, and a negative id is not something a
   // segmentation produces anyway.
-  const idOffset = Math.max(0, present.min);
-  const slotCount = present.max - idOffset + 1;
+  //
+  // A SPARSE RULE widens both. Its ids are positions along the matrix's object
+  // axis — `indptr[id]`, so id 0 is a real object — and the objects it does NOT
+  // mention are the zeros the rule still judges. They need slots to be hidden
+  // in, so the table spans the matrix's whole object axis whether or not the
+  // slice touched every one of it.
+  const idOffset = sparseSlots > 0 ? 0 : Math.max(0, present?.min ?? 0);
+  const slotCount = Math.max(
+    sparseSlots,
+    present ? present.max - idOffset + 1 : 0,
+  );
 
   if (slotCount <= 0 || valueLutTexels(slotCount) > LABEL_LUT_MAX_TEXELS) {
     // Two different failures wore one message. "Too sparse to index directly" is
@@ -312,10 +406,11 @@ export const buildLabelColorLut = async (
     // table is simply bigger than the budget.
     const rows = colorValues ? valueCount(colorValues) : 0;
     const dense = rows > 0 && rows * 4 > slotCount;
+    const present_ = present ?? { min: 0, max: slotCount - 1 };
     skipped.push(
       dense
-        ? `ids run ${present.min}…${present.max}, so the lookup table is ${slotCount} slots (${Math.round((slotCount * VALUE_LUT_BYTES_PER_TEXEL) / 1e6)} MB) against a budget of ${Math.round(LABEL_LUT_MAX_BYTES / 1e6)} MB — no colouring or filter is applied`
-        : `ids run ${present.min}…${present.max} but only ${rows} of them have a row, so indexing them directly would spend ${slotCount} slots on ${rows} values — too sparse to index this way, and no colouring or filter is applied`,
+        ? `ids run ${present_.min}…${present_.max}, so the lookup table is ${slotCount} slots (${Math.round((slotCount * VALUE_LUT_BYTES_PER_TEXEL) / 1e6)} MB) against a budget of ${Math.round(LABEL_LUT_MAX_BYTES / 1e6)} MB — no colouring or filter is applied`
+        : `ids run ${present_.min}…${present_.max} but only ${rows} of them have a row, so indexing them directly would spend ${slotCount} slots on ${rows} values — too sparse to index this way, and no colouring or filter is applied`,
     );
     return nothing(skipped);
   }

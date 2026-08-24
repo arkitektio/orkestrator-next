@@ -273,10 +273,20 @@ const FabriksCollectionGroup = ({
           ? await loadSparseSource(client, datalayer, sparseDatasetId)
           : null;
       if (cancelled) return;
+      // A RULE may name a different matrix than the colouring does, so the
+      // builder gets a reader per rule rather than one source fetched up front.
+      // The dataset query behind it is cached per id for the app's life.
+      const readSparse = datalayer
+        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
+            const source = await loadSparseSource(client, datalayer, datasetId);
+            return source.read(source.source, at);
+          }
+        : null;
       const lut = await buildColorLut({
         objects,
         colorBy,
         sparse,
+        readSparse,
         filterBys: activeRules,
         plans,
         engine: attributeService.engine,

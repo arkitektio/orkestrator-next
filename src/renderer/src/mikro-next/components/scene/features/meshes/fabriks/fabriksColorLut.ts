@@ -73,6 +73,18 @@ export type ColorLutRequest = {
    * builder — the same reason `readColumn` is injected.
    */
   sparse?: SparseReadRequest | null;
+  /**
+   * Reads one slice of ANY matrix, for the RULES — the same injection, for the
+   * same reason, as `sparse` is for the colouring. A rule need not name the
+   * matrix the colouring does, so its source is resolved by id at read time.
+   * Absent means a sparse rule cannot be read and is `skipped`.
+   */
+  readSparse?:
+    | ((
+        datasetId: string,
+        at: readonly { axis: string; value: number }[],
+      ) => Promise<{ values: Map<number, number>; slotCount: number }>)
+    | null;
 };
 
 /**
@@ -111,11 +123,13 @@ export const accessForTable = (
  * Build the texture, indexed by the objects' dense ordinals.
  */
 export const buildColorLut = async (request: ColorLutRequest): Promise<ColorLutResult> => {
-  const { objects, colorBy, filterBys, plans, engine, sparse } = request;
+  const { objects, colorBy, filterBys, plans, engine, sparse, readSparse } = request;
 
-  // Rules always come from tables: a sparse FILTER is not expressible, because
-  // `MeshFilterByInput.table` and `column` are non-null. So the filter half goes
-  // through the column path either way, and only the colouring branches.
+  // BOTH halves can now read a matrix: `MeshFilterByInput` grew the same
+  // `kind`/`dataset`/`at` arm its colouring sibling has, so "keep the objects
+  // where this ion is above x" is expressible. `resolveColumnValues` is the
+  // DuckDB path and narrows those entries away, answering null for each; the
+  // reads below take those nulls' places.
   const { colorValues: columnValues, ruleValues, skipped } = await resolveColumnValues({
     colorBy: sparse ? null : colorBy,
     filterBys,
@@ -140,6 +154,30 @@ export const buildColorLut = async (request: ColorLutRequest): Promise<ColorLutR
         )
       ).values as Map<number, unknown>)
     : columnValues;
+
+  // A rule that cannot be read is `skipped`, never silently dropped — a filter
+  // quietly applying to nothing looks exactly like a filter that works.
+  await Promise.all(
+    filterBys.map(async (rule, index) => {
+      if (rule.dataset == null) return;
+      if (!readSparse) {
+        skipped.push(
+          `rule over matrix ${rule.dataset}: no datalayer connection, so the slice could not be read`,
+        );
+        return;
+      }
+      try {
+        const read = await readSparse(rule.dataset, rule.at ?? []);
+        ruleValues[index] = read.values as Map<number, unknown>;
+      } catch (error) {
+        skipped.push(
+          `rule over matrix ${rule.dataset}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }),
+  );
 
   const ordinalCeiling = objects.reduce((max, object) => Math.max(max, object.ordinal), -1);
   const slotCount = ordinalCeiling + 1;

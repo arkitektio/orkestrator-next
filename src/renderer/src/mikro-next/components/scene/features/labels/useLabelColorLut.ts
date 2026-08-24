@@ -156,9 +156,21 @@ export const useLabelColorLut = (
           ? await loadSparseSource(client, datalayer, sparseDatasetId)
           : null;
       if (cancelled) return;
+      // A RULE may name a different matrix than the colouring does — or one
+      // while the colouring names a column — so the builder gets a reader it
+      // can call per rule rather than a source fetched up front. The dataset
+      // query behind it is cached per id for the app's life, so two rules over
+      // one matrix cost one fetch.
+      const readSparse = datalayer
+        ? async (datasetId: string, at: readonly { axis: string; value: number }[]) => {
+            const source = await loadSparseSource(client, datalayer, datasetId);
+            return source.read(source.source, at);
+          }
+        : null;
       const lut = await buildLabelColorLut({
         colorBy: activeColorBy,
         sparse,
+        readSparse,
         filterBys: activeRules,
         plans,
         storeId,

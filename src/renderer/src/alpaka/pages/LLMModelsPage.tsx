@@ -8,7 +8,7 @@ import LLMModelList from "../components/lists/LLMModelList";
 
 export type IRepresentationScreenProps = {};
 
-const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
+const LLMModelsPage: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
       title="LLM Models"
@@ -34,4 +34,4 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   );
 };
 
-export default ImagesPage;
+export default LLMModelsPage;

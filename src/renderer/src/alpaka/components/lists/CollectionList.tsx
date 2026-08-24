@@ -1,7 +1,7 @@
 import { ListRender } from "@/components/layout/ListRender";
 
 import {
-  ProviderFilter,
+  ChromaCollectionFilter,
   useListChromaCollectionsQuery
 } from "@/alpaka/api/graphql";
 import {
@@ -10,7 +10,7 @@ import {
 import CollectionCard from "../cards/CollectionCard";
 
 export type Props = {
-  filters?: ProviderFilter;
+  filters?: ChromaCollectionFilter;
   pagination?: OffsetPaginationInput;
 };
 

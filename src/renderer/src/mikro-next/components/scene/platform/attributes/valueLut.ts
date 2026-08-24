@@ -36,6 +36,7 @@ import { buildColormapAtlas } from "../gpu/colormaps";
 import { qualitativePalette } from "../layerui/colormap-utils";
 import { classColorFor } from "./columnLut";
 import {
+  absentValueOf,
   LUT_WIDTH,
   ruleKeeps,
   type ColumnLutEntryColorBy,
@@ -233,8 +234,10 @@ export const paintValueLut = ({
   // into a hidden slot keeps the two from fighting over the same bits.
   //
   // The answer for an id no rule mentions is a constant, and
-  // `ruleKeeps(rule, undefined)` is that constant — derived rather than
-  // reasoned about, so it cannot drift from the rule semantics.
+  // `ruleKeeps(rule, absentValueOf(rule))` is that constant — derived rather
+  // than reasoned about, so it cannot drift from the rule semantics. What an
+  // unmentioned id is WORTH depends on the rule's source: nothing for a table
+  // column, zero for a slice of a sparse matrix (see `absentValueOf`).
   const active = filterBys
     .map((rule, index) => ({ rule, values: ruleValues[index] }))
     // A rule whose column could not be read applies to nothing rather than to
@@ -245,7 +248,7 @@ export const paintValueLut = ({
     );
 
   if (active.length > 0) {
-    if (!active.every(({ rule }) => ruleKeeps(rule, undefined))) {
+    if (!active.every(({ rule }) => ruleKeeps(rule, absentValueOf(rule)))) {
       // `fill` rather than a loop: a bin lattice's table is millions of slots
       // and this is a memset, not a walk.
       view.fill(CODE_HIDDEN, 0, slotCount);
@@ -276,7 +279,11 @@ export const paintValueLut = ({
         if (slot < 0 || slot >= slotCount) continue;
         let keeps = true;
         for (const { rule, values } of lookups) {
-          if (!ruleKeeps(rule, values.get(objectId))) {
+          // An id this rule does not mention is not thereby exempt from it —
+          // the union is over every rule — and what it is worth here is its
+          // own source's business.
+          const raw = values.has(objectId) ? values.get(objectId) : absentValueOf(rule);
+          if (!ruleKeeps(rule, raw)) {
             keeps = false;
             break;
           }

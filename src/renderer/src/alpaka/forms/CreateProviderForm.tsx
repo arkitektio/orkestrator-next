@@ -19,6 +19,7 @@ export default () => {
 
   const form = useForm<CreateProviderMutationVariables["input"]>({
     defaultValues: {
+      name: "",
       apiKey: "",
       kind: ProviderKind.Openai,
     },
@@ -40,20 +41,25 @@ export default () => {
         >
           <div className="grid grid-cols-1 gap-2">
             <StringField
-              label="Api Key"
-              name="apiKey"
-              description="How do you can to call this Query?"
+              label="Name"
+              name="name"
+              description="How should this provider be called?"
             />
             <ChoicesField
               label="Kind"
               name="kind"
               options={enumToOptions(ProviderKind)}
-              description="What kind of the provider is it??"
+              description="Which vendor does this provider talk to?"
+            />
+            <StringField
+              label="Api Key"
+              name="apiKey"
+              description="The credential used to authenticate against the provider. It is stored on the server and never read back."
             />
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="submit">Change</Button>
+            <Button type="submit">Create</Button>
           </DialogFooter>
         </form>
       </Form>

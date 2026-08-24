@@ -169,6 +169,78 @@ describe("paintValueLut", () => {
   });
 });
 
+describe("paintValueLut — a SPARSE rule's absent objects", () => {
+  // A sparse read answers with the NONZEROS. An object missing from it has
+  // value 0, not "no value" — and the widest legal rule a picker can seed is
+  // the slice's own range, which contains 0. Read the absent objects as "no
+  // value" and switching that rule on hides every cell the ion was not
+  // detected in, which is most of them.
+  const sparseRule = (min: number, max: number) => ({
+    dataset: "matrix-1",
+    at: [{ axis: "ion", value: 3 }],
+    min,
+    max,
+    exclude: false,
+  });
+
+  it("keeps an object the slice never mentions when the bound contains 0", () => {
+    const lut = allocateValueLut(5);
+    paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: null,
+      filterBys: [sparseRule(0, 40)],
+      colorValues: null,
+      ruleValues: [new Map<number, unknown>([[1, 12]])],
+    });
+    expect(lut.view[1]).toBe(CODE_NO_VALUE); // in the band
+    expect(lut.view[4]).toBe(CODE_NO_VALUE); // absent, so zero, so kept
+  });
+
+  it("drops the absent objects when the bound excludes 0", () => {
+    const lut = allocateValueLut(5);
+    paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: null,
+      filterBys: [sparseRule(5, 40)],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([
+          [1, 12],
+          [2, 1],
+        ]),
+      ],
+    });
+    expect(lut.view[1]).toBe(CODE_NO_VALUE); // detected and inside the band
+    expect(lut.view[2]).toBe(CODE_HIDDEN); // detected but below it
+    expect(lut.view[4]).toBe(CODE_HIDDEN); // absent -> zero -> below it
+  });
+
+  it("puts an id one rule omits to that rule as a zero, not as a miss", () => {
+    // Two rules AND together, so the union path runs. Slot 2 is mentioned by
+    // the column rule alone; the sparse rule still has to answer for it, and
+    // its answer is about the value 0.
+    const lut = allocateValueLut(4);
+    paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: null,
+      filterBys: [sparseRule(0, 40), { table: "t", column: "area", min: 10 }],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([[1, 12]]),
+        new Map<number, unknown>([
+          [1, 50],
+          [2, 50],
+        ]),
+      ],
+    });
+    expect(lut.view[1]).toBe(CODE_NO_VALUE); // both rules keep it
+    expect(lut.view[2]).toBe(CODE_NO_VALUE); // absent from the slice = 0, inside 0…40
+  });
+});
+
 describe("paintValueLut — the mentioned-id union", () => {
   const identityOf = (objectId: number) => objectId;
 

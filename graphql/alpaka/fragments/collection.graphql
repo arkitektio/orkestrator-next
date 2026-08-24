@@ -3,10 +3,17 @@ fragment ChromaCollection on ChromaCollection {
   name
   description
   createdAt
+  count
+  embedder {
+    id
+    label
+    llmString
+  }
 }
 
 fragment ListChromaCollection on ChromaCollection {
   id
   name
   description
+  count
 }

@@ -16,7 +16,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "AddDocumentsToCollectionInput",
-        "description": null,
+        "description": "Documents to add to an existing collection",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -68,7 +68,211 @@
       {
         "kind": "OBJECT",
         "name": "Agent",
+        "description": "A participant in a room",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "client",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Client",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "room",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Room",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "user",
+            "description": "The user this agent acts on behalf of",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "User",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "AgentFilter",
         "description": "Agent(id, room, name, client, user)",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AgentFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AgentFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AgentFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "AgentOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "App",
+        "description": "An App model to represent an application in the system",
         "isOneOf": null,
         "fields": [
           {
@@ -88,15 +292,15 @@
             "deprecationReason": null
           },
           {
-            "name": "room",
+            "name": "identifier",
             "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Room",
-                "kind": "OBJECT",
+                "name": "String",
+                "kind": "SCALAR",
                 "ofType": null
               }
             },
@@ -134,10 +338,34 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ChatInput",
-        "description": "A chat message input",
+        "description": "A chat completion request",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "frequencyPenalty",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "maxTokens",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "messages",
             "description": null,
@@ -175,11 +403,79 @@
             "deprecationReason": null
           },
           {
+            "name": "n",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "presencePenalty",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "responseFormat",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "JSON",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "stop",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "String",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "temperature",
             "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "toolChoice",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "JSON",
               "ofType": null
             },
             "defaultValue": "null",
@@ -201,6 +497,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topP",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -623,16 +931,12 @@
         "fields": [
           {
             "name": "count",
-            "description": null,
+            "description": "The number of documents stored in this collection, or null if the vector database cannot be reached",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -670,6 +974,22 @@
             "deprecationReason": null
           },
           {
+            "name": "embedder",
+            "description": "The model used to embed this collection's documents",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "LLMModel",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": null,
             "args": [],
@@ -687,7 +1007,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The human-readable name of the collection, unique within its organization",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -706,13 +1026,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "User",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "User",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -818,7 +1134,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ChromaCollectionInput",
-        "description": null,
+        "description": "A collection of documents searchable by string",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -851,18 +1167,6 @@
             "deprecationReason": null
           },
           {
-            "name": "isPublic",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "false",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "name",
             "description": null,
             "type": {
@@ -885,8 +1189,116 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "CreateRoomInput",
+        "name": "ChromaCollectionOrder",
         "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Client",
+        "description": "An Oauth2 Client\n\nAn Oauth2 Client is a model to represent an Oauth2 client that is\nregistered when a JWT token is authenticated. It retrieves\nthe client_id from the token and uses it to create a new\napp or retrieve an existing app. This allows for the grouping\nof users by app.",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "clientId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "release",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Release",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CreateRoomInput",
+        "description": "The room to create",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -951,6 +1363,36 @@
         "possibleTypes": null
       },
       {
+        "kind": "ENUM",
+        "name": "DefaultKind",
+        "description": "A task a model can be made the default for",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "EMBEDDING",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "IMAGE_GENERATION",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "TEXT_GENERATION",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "DefaultUse",
         "description": "A default use for a model",
@@ -1012,8 +1454,152 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "DeleteProviderInput",
+        "name": "DefaultUseFilter",
+        "description": "Filter for DefaultUse",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "DefaultUseFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "DefaultUseFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "DefaultUseFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DefaultUseOrder",
         "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "kind",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DeleteCollectionInput",
+        "description": "The collection to delete",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DeleteProviderInput",
+        "description": "The provider to delete",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -1041,7 +1627,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DeleteRoomInput",
-        "description": null,
+        "description": "The room to delete",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -1069,7 +1655,7 @@
       {
         "kind": "OBJECT",
         "name": "Document",
-        "description": null,
+        "description": "A document stored in a collection",
         "isOneOf": null,
         "fields": [
           {
@@ -1118,7 +1704,7 @@
           },
           {
             "name": "metadata",
-            "description": null,
+            "description": "The metadata stored alongside the document",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -1130,7 +1716,7 @@
           },
           {
             "name": "structure",
-            "description": "A function definition for a large language model",
+            "description": "The object this document was derived from, if any",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1213,7 +1799,7 @@
       {
         "kind": "ENUM",
         "name": "FeatureType",
-        "description": "The type of the thinking block",
+        "description": "A capability a model supports",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -1226,13 +1812,13 @@
             "deprecationReason": null
           },
           {
-            "name": "CHATTING",
+            "name": "EMBEDDING",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "EMBEDDING",
+            "name": "VISION",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -1492,8 +2078,8 @@
       },
       {
         "kind": "OBJECT",
-        "name": "ImageReponse",
-        "description": null,
+        "name": "ImageResponse",
+        "description": "A generated image, base64 encoded",
         "isOneOf": null,
         "fields": [
           {
@@ -1516,42 +2102,6 @@
         "inputFields": null,
         "interfaces": [],
         "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "InputModality",
-        "description": "Modalities",
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "AUDIO",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "IMAGE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "TEXT",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "VIDEO",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
         "possibleTypes": null
       },
       {
@@ -1595,6 +2145,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ChromaCollectionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -1673,7 +2247,7 @@
           },
           {
             "name": "inputModalities",
-            "description": "The input modalities",
+            "description": "The modalities this model accepts as input",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1685,7 +2259,7 @@
                   "name": null,
                   "kind": "NON_NULL",
                   "ofType": {
-                    "name": "InputModality",
+                    "name": "Modality",
                     "kind": "ENUM",
                     "ofType": null
                   }
@@ -1745,7 +2319,7 @@
           },
           {
             "name": "outputModalities",
-            "description": "The input modalities",
+            "description": "The modalities this model produces as output",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1757,7 +2331,7 @@
                   "name": null,
                   "kind": "NON_NULL",
                   "ofType": {
-                    "name": "InputModality",
+                    "name": "Modality",
                     "kind": "ENUM",
                     "ofType": null
                   }
@@ -1845,6 +2419,26 @@
             "deprecationReason": null
           },
           {
+            "name": "features",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "FeatureType",
+                  "kind": "ENUM",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -1874,7 +2468,7 @@
                 "name": null,
                 "kind": "NON_NULL",
                 "ofType": {
-                  "name": "InputModality",
+                  "name": "Modality",
                   "kind": "ENUM",
                   "ofType": null
                 }
@@ -1894,11 +2488,23 @@
                 "name": null,
                 "kind": "NON_NULL",
                 "ofType": {
-                  "name": "InputModality",
+                  "name": "Modality",
                   "kind": "ENUM",
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "provider",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -1910,6 +2516,42 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "LLMModelOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "label",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "modelId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
               "ofType": null
             },
             "defaultValue": null,
@@ -1945,7 +2587,7 @@
           },
           {
             "name": "attachedStructures",
-            "description": "The collections that can be embedded with this model",
+            "description": "The objects this message was posted about",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2033,6 +2675,22 @@
             "deprecationReason": null
           },
           {
+            "name": "descendants",
+            "description": "The rich-text representation of the message",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "JSON",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": null,
             "args": [],
@@ -2049,6 +2707,107 @@
             "deprecationReason": null
           },
           {
+            "name": "isReplyTo",
+            "description": "The message this one replies to, if any",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Message",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "isStreaming",
+            "description": "Whether this message is still being written",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Boolean",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "replies",
+            "description": "The messages replying to this one",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "MessageFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "MessageOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Message",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "room",
             "description": null,
             "args": [],
@@ -2059,6 +2818,79 @@
                 "name": "Room",
                 "kind": "OBJECT",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "targets",
+            "description": "The agents this message is addressed to",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AgentFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "AgentOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Agent",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -2219,14 +3051,50 @@
         "possibleTypes": null
       },
       {
+        "kind": "ENUM",
+        "name": "Modality",
+        "description": "A modality a model can read or emit",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "AUDIO",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "IMAGE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "TEXT",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "VIDEO",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Mutation",
-        "description": null,
+        "description": "The root mutation type",
         "isOneOf": null,
         "fields": [
           {
             "name": "addDocumentsToCollection",
-            "description": null,
+            "description": "Embed documents and add them to a collection",
             "args": [
               {
                 "name": "input",
@@ -2267,7 +3135,7 @@
           },
           {
             "name": "chat",
-            "description": null,
+            "description": "Send a chat completion request",
             "args": [
               {
                 "name": "input",
@@ -2300,7 +3168,7 @@
           },
           {
             "name": "createCollection",
-            "description": null,
+            "description": "Create a searchable collection of documents",
             "args": [
               {
                 "name": "input",
@@ -2333,7 +3201,7 @@
           },
           {
             "name": "createProvider",
-            "description": null,
+            "description": "Configure a new LLM provider and list the models it offers",
             "args": [
               {
                 "name": "input",
@@ -2366,7 +3234,7 @@
           },
           {
             "name": "createRoom",
-            "description": null,
+            "description": "Open a new room",
             "args": [
               {
                 "name": "input",
@@ -2399,7 +3267,7 @@
           },
           {
             "name": "deleteCollection",
-            "description": null,
+            "description": "Delete a collection and its documents",
             "args": [
               {
                 "name": "input",
@@ -2408,7 +3276,7 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "name": "AddDocumentsToCollectionInput",
+                    "name": "DeleteCollectionInput",
                     "kind": "INPUT_OBJECT",
                     "ofType": null
                   }
@@ -2432,7 +3300,7 @@
           },
           {
             "name": "deleteProvider",
-            "description": null,
+            "description": "Delete a provider and the models it offers",
             "args": [
               {
                 "name": "input",
@@ -2465,7 +3333,7 @@
           },
           {
             "name": "deleteRoom",
-            "description": null,
+            "description": "Delete a room and its messages",
             "args": [
               {
                 "name": "input",
@@ -2498,7 +3366,7 @@
           },
           {
             "name": "ensureCollection",
-            "description": null,
+            "description": "Create a collection, or update it if it already exists",
             "args": [
               {
                 "name": "input",
@@ -2531,7 +3399,7 @@
           },
           {
             "name": "generateImage",
-            "description": null,
+            "description": "Generate an image from a text description",
             "args": [
               {
                 "name": "input",
@@ -2554,7 +3422,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "ImageReponse",
+                "name": "ImageResponse",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -2564,7 +3432,7 @@
           },
           {
             "name": "pull",
-            "description": null,
+            "description": "Pull a model into an Ollama provider",
             "args": [
               {
                 "name": "input",
@@ -2596,8 +3464,41 @@
             "deprecationReason": null
           },
           {
+            "name": "refreshProvider",
+            "description": "Re-list the models a provider offers",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "RefreshProviderInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Provider",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "send",
-            "description": null,
+            "description": "Post a message into a room",
             "args": [
               {
                 "name": "input",
@@ -2629,8 +3530,41 @@
             "deprecationReason": null
           },
           {
+            "name": "updateProvider",
+            "description": "Update a provider in place, e.g. to rotate its credential",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "UpdateProviderInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Provider",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "useModelFor",
-            "description": null,
+            "description": "Register a model as the caller's default for a kind of task",
             "args": [
               {
                 "name": "input",
@@ -2710,7 +3644,7 @@
       {
         "kind": "OBJECT",
         "name": "OllamaPullResult",
-        "description": null,
+        "description": "The outcome of pulling a model",
         "isOneOf": null,
         "fields": [
           {
@@ -2809,7 +3743,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "ID",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -2847,16 +3781,12 @@
         "fields": [
           {
             "name": "additionalConfig",
-            "description": null,
+            "description": "Provider configuration, with credential-bearing keys redacted.",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "JSON",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "JSON",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2866,26 +3796,22 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "apiKey",
-            "description": null,
+            "name": "hasApiKey",
+            "description": "Whether an API key is configured for this provider. The key itself is never exposed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "Boolean",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -2901,7 +3827,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "ID",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -2938,6 +3864,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "LLMModelOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3316,8 +4266,44 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "PullInput",
+        "name": "ProviderOrder",
         "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PullInput",
+        "description": "The model to pull, and the provider to pull it into",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -3336,6 +4322,18 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "provider",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -3349,8 +4347,69 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "chromaCollection",
+            "name": "_entities",
             "description": null,
+            "args": [
+              {
+                "name": "representations",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "_Any",
+                        "kind": "SCALAR",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": "_Entity",
+                  "kind": "UNION",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "_service",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "_Service",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "chromaCollection",
+            "description": "Get a single Chroma collection by ID",
             "args": [
               {
                 "name": "id",
@@ -3383,7 +4442,7 @@
           },
           {
             "name": "chromaCollections",
-            "description": null,
+            "description": "List this organization's Chroma collections",
             "args": [
               {
                 "name": "filters",
@@ -3394,6 +4453,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ChromaCollectionOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3431,66 +4514,124 @@
             "deprecationReason": null
           },
           {
-            "name": "documents",
-            "description": null,
+            "name": "defaultModelFor",
+            "description": "The model the caller uses by default for one kind of task, if any",
             "args": [
               {
-                "name": "collection",
+                "name": "kind",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "name": "ID",
-                    "kind": "SCALAR",
+                    "name": "DefaultKind",
+                    "kind": "ENUM",
                     "ofType": null
                   }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
-              },
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "LLMModel",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "defaultUses",
+            "description": "The models the caller has registered as defaults",
+            "args": [
               {
-                "name": "nResults",
+                "name": "filters",
                 "description": null,
                 "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
+                  "kind": "INPUT_OBJECT",
+                  "name": "DefaultUseFilter",
                   "ofType": null
                 },
-                "defaultValue": "3",
+                "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
               },
               {
-                "name": "queryTexts",
+                "name": "ordering",
                 "description": null,
                 "type": {
-                  "kind": "LIST",
+                  "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
                     "name": null,
-                    "kind": "NON_NULL",
+                    "kind": "LIST",
                     "ofType": {
-                      "name": "String",
-                      "kind": "SCALAR",
-                      "ofType": null
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "DefaultUseOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
                     }
                   }
                 },
-                "defaultValue": "null",
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
               {
-                "name": "where",
+                "name": "pagination",
                 "description": null,
                 "type": {
-                  "kind": "SCALAR",
-                  "name": "JSON",
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
                   "ofType": null
                 },
-                "defaultValue": "null",
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "DefaultUse",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "documents",
+            "description": "Search a collection for the documents most similar to some text",
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "QueryInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
               }
@@ -3517,7 +4658,7 @@
           },
           {
             "name": "llmModel",
-            "description": null,
+            "description": "Get a single LLM model by ID",
             "args": [
               {
                 "name": "id",
@@ -3550,7 +4691,7 @@
           },
           {
             "name": "llmModels",
-            "description": null,
+            "description": "List the LLM models reachable through this organization's providers",
             "args": [
               {
                 "name": "filters",
@@ -3561,6 +4702,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "LLMModelOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3599,7 +4764,7 @@
           },
           {
             "name": "message",
-            "description": null,
+            "description": "Get a single message by ID",
             "args": [
               {
                 "name": "id",
@@ -3632,7 +4797,7 @@
           },
           {
             "name": "messages",
-            "description": null,
+            "description": "List the messages in this organization's rooms",
             "args": [
               {
                 "name": "filters",
@@ -3705,7 +4870,7 @@
           },
           {
             "name": "provider",
-            "description": null,
+            "description": "Get a single provider by ID",
             "args": [
               {
                 "name": "id",
@@ -3738,7 +4903,7 @@
           },
           {
             "name": "providers",
-            "description": null,
+            "description": "List the LLM providers configured for this organization",
             "args": [
               {
                 "name": "filters",
@@ -3749,6 +4914,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "ProviderOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3787,7 +4976,7 @@
           },
           {
             "name": "room",
-            "description": null,
+            "description": "Get a single room by ID",
             "args": [
               {
                 "name": "id",
@@ -3820,7 +5009,7 @@
           },
           {
             "name": "roomStats",
-            "description": null,
+            "description": "Aggregate statistics over this organization's rooms",
             "args": [
               {
                 "name": "filters",
@@ -3849,7 +5038,7 @@
           },
           {
             "name": "rooms",
-            "description": null,
+            "description": "List the rooms in this organization",
             "args": [
               {
                 "name": "filters",
@@ -3860,6 +5049,30 @@
                   "ofType": null
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "RoomOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -3891,6 +5104,174 @@
                     "ofType": null
                   }
                 }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "QueryInput",
+        "description": "A similarity query against a collection",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "collection",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nResults",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": "3",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "queryTexts",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "String",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "where",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "JSON",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "RefreshProviderInput",
+        "description": "The provider whose model list should be re-synced",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Release",
+        "description": "A Release model to represent a release of an application in the system",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "app",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "App",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "version",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
               }
             },
             "isDeprecated": false,
@@ -3947,13 +5328,49 @@
       {
         "kind": "OBJECT",
         "name": "Room",
-        "description": "Room(id, title, description, creator, organization, created_at)",
+        "description": "A room agents and users converse in",
         "isOneOf": null,
         "fields": [
           {
             "name": "agents",
             "description": null,
             "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AgentFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ordering",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "AgentOrder",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": "[]",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
               {
                 "name": "pagination",
                 "description": null,
@@ -3988,17 +5405,41 @@
             "deprecationReason": null
           },
           {
-            "name": "description",
-            "description": null,
+            "name": "createdAt",
+            "description": "The time this room got created",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "DateTime",
                 "kind": "SCALAR",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "creator",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "User",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4133,7 +5574,7 @@
       {
         "kind": "OBJECT",
         "name": "RoomEvent",
-        "description": null,
+        "description": "Something that happened in a room",
         "isOneOf": null,
         "fields": [
           {
@@ -4289,6 +5730,42 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "StructureInput",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "RoomOrder",
+        "description": null,
+        "isOneOf": true,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "title",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
               "ofType": null
             },
             "defaultValue": null,
@@ -4571,7 +6048,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "SendMessageInput",
-        "description": null,
+        "description": "The message to send",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -4686,7 +6163,7 @@
       {
         "kind": "OBJECT",
         "name": "Structure",
-        "description": "The type of the tool",
+        "description": "A reference to an object held by another Arkitekt service",
         "isOneOf": null,
         "fields": [
           {
@@ -4713,7 +6190,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4730,7 +6207,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "StructureInput",
-        "description": "A function definition for a large language model",
+        "description": "A reference to an object held by another Arkitekt service",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -4757,7 +6234,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4774,12 +6251,12 @@
       {
         "kind": "OBJECT",
         "name": "Subscription",
-        "description": null,
+        "description": "The root subscription type",
         "isOneOf": null,
         "fields": [
           {
             "name": "room",
-            "description": null,
+            "description": "Join a room and receive its messages as they are posted",
             "args": [
               {
                 "name": "agentId",
@@ -5213,6 +6690,94 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateProviderInput",
+        "description": "The provider to update, and the fields to change",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "additionalConfig",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "JSON",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "apiBase",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "apiKey",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Usage",
         "description": null,
@@ -5310,8 +6875,8 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
+                "name": "DefaultKind",
+                "kind": "ENUM",
                 "ofType": null
               }
             },
@@ -5359,6 +6924,22 @@
             "deprecationReason": null
           },
           {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "preferredUsername",
             "description": null,
             "args": [],
@@ -5376,6 +6957,97 @@
           },
           {
             "name": "sub",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
+        "name": "_Any",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "UNION",
+        "name": "_Entity",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "Agent",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "App",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Client",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Message",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Organization",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Release",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Room",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "User",
+            "ofType": null
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "_Service",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "sdl",
             "description": null,
             "args": [],
             "type": {

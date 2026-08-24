@@ -16,6 +16,7 @@ import {
   Type,
   Underline,
 } from "lucide-react";
+import { StructureInput } from "@/alpaka/api/graphql";
 import { Plate, PlateContent, usePlateEditor } from "platejs/react";
 import React, { useState } from "react";
 import { EmojiPicker } from "../emoji-picker";
@@ -25,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 interface ChatBottombarProps {
   sendMessage: (text: string) => void;
   isMobile: boolean;
-  stagedStructures: { identifier: string; object: string }[];
+  stagedStructures: StructureInput[];
   onRemoveStructure: (index: number) => void;
   prefillText?: string;
   replyerControl?: React.ReactNode;

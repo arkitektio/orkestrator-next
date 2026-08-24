@@ -3,7 +3,7 @@ import { StringField } from "@/components/fields/StringField";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { Form } from "@/components/ui/form";
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { AlpakaCollection } from "@/linkers";
+import { AlpakaCollection, AlpakaLLMModel } from "@/linkers";
 import { PortKind } from "@/rekuest/api/graphql";
 import { useDebounce } from "@uidotdev/usehooks";
 import { useEffect } from "react";
@@ -15,6 +15,37 @@ import {
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
+
+export const CollectionSummary = (props: {
+  collection: ChromaCollectionFragment;
+}) => {
+  const { description, count, embedder } = props.collection;
+
+  return (
+    <div className="mb-4 space-y-2">
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          {/* `count` is null when the vector database cannot be reached. */}
+          {count == null
+            ? "Document count unavailable"
+            : `${count} ${count === 1 ? "document" : "documents"}`}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          Embedded with
+          <AlpakaLLMModel.DetailLink
+            object={embedder}
+            className="text-foreground hover:underline"
+          >
+            {embedder.label}
+          </AlpakaLLMModel.DetailLink>
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export const DocumentsExplorer = (props: {
   collection: ChromaCollectionFragment;
@@ -34,8 +65,10 @@ export const DocumentsExplorer = (props: {
   const handleSearch = async () => {
     await search({
       variables: {
-        queryTexts: [query],
-        collection: props.collection.id,
+        input: {
+          collection: props.collection.id,
+          queryTexts: [query],
+        },
       },
     });
   };
@@ -71,7 +104,7 @@ export const DocumentsExplorer = (props: {
                     kind: PortKind.Structure,
                     identifier: doc.structure.identifier,
                   }}
-                  value={doc.structure.object}
+                  value={doc.structure}
                 />
               ) : (
                 <>{doc.content}</>
@@ -104,7 +137,7 @@ const TPage = asDetailQueryRoute(
           </Sidebars>
         }
       >
-        {data.chromaCollection.id}
+        <CollectionSummary collection={data.chromaCollection} />
         <DocumentsExplorer collection={data.chromaCollection} />
       </AlpakaCollection.ModelPage>
     );

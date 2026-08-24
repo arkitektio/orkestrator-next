@@ -203,6 +203,28 @@ export const classColorFor = (
   // as, and is the same scatter the id hash itself uses.
   instancePaletteColor(qualitativePalette(colormap) ?? DEFAULT_INSTANCE_COLORMAP, ordinalOfValue);
 
+/**
+ * What an object the rule's source never MENTIONED is worth.
+ *
+ * The two sources answer this differently, and the difference decides whether a
+ * rule hides half the scene:
+ *
+ *  - a COLUMN rule reads a table, and an object with no row there has no value.
+ *    `undefined` is right: `ruleKeeps` reads it as "does not match", which is
+ *    the honest answer for a bound over a value that does not exist.
+ *  - a SPARSE rule reads one slice of a matrix, which stores its NONZEROS. An
+ *    object missing from the read has value exactly ZERO — the slice is the
+ *    complete truth for its feature — so `undefined` would be a lie, and an
+ *    expensive one: the widest legal rule a picker can seed is the slice's own
+ *    range, which contains 0, and reading the absent objects as "no value"
+ *    would hide every cell the ion was not detected in the moment that rule was
+ *    switched on.
+ *
+ * Derived from the entry rather than passed in, so a caller cannot forget it.
+ */
+export const absentValueOf = (rule: ColumnLutEntryFilterBy): unknown =>
+  rule.dataset != null ? 0 : undefined;
+
 /** Does this rule KEEP the object? `exclude` inverts the answer, not the test. */
 export const ruleKeeps = (rule: ColumnLutEntryFilterBy, raw: unknown): boolean => {
   let matches: boolean;
@@ -458,11 +480,12 @@ export const paintColumnLut = ({
   // mentions once — it is a constant — and then correct only the slots some
   // rule does mention.
   //
-  // `ruleKeeps(rule, undefined)` IS that constant, and deriving it that way
-  // rather than reasoning about the rule's shape keeps the two in step: a
-  // bounds rule fails `Number.isFinite(NaN)` and a values rule fails the
-  // null check, both landing on `exclude ? true : false`, while an
-  // unconfigured rule keeps everything.
+  // `ruleKeeps(rule, absentValueOf(rule))` IS that constant, and deriving it
+  // that way rather than reasoning about the rule's shape keeps the two in
+  // step: for a COLUMN rule the absent value is `undefined`, so a bounds rule
+  // fails `Number.isFinite(NaN)` and a values rule fails the null check, both
+  // landing on `exclude ? true : false`, while an unconfigured rule keeps
+  // everything. For a SPARSE rule it is 0 — see `absentValueOf`.
   const active = filterBys
     .map((rule, index) => ({ rule, values: ruleValues[index] }))
     // A rule whose column could not be read applies to nothing rather than to
@@ -473,7 +496,7 @@ export const paintColumnLut = ({
     );
 
   if (active.length > 0) {
-    const baseline = active.every(({ rule }) => ruleKeeps(rule, undefined));
+    const baseline = active.every(({ rule }) => ruleKeeps(rule, absentValueOf(rule)));
     if (!baseline) {
       // Every slot starts hidden; the loop below re-admits the ones some rule
       // actually mentions. One strided write over the buffer, not one per rule.
@@ -490,7 +513,11 @@ export const paintColumnLut = ({
       if (slot < 0) continue;
       let keeps = true;
       for (const { rule, values } of active) {
-        if (!ruleKeeps(rule, values.get(objectId))) {
+        // An id THIS rule does not mention still has to be put to it — the
+        // union is over every rule — and what it is worth to this rule is its
+        // own source's business.
+        const raw = values.has(objectId) ? values.get(objectId) : absentValueOf(rule);
+        if (!ruleKeeps(rule, raw)) {
           keeps = false;
           break;
         }

@@ -148,20 +148,22 @@ export const ColumnOptionPicker = ({
   );
 
   /**
-   * The sparse half, offered in COLOUR mode only.
+   * The sparse half, offered in BOTH modes.
    *
-   * Not a gap waiting to be closed: `LabelFilterByInput.table` and `column` are
-   * non-null, so a sparse filter is not expressible in the mutation at all.
-   * Offering one here would produce an input the server refuses and throw in
-   * the add handler, which is a worse failure than not offering it.
+   * It used to be colour-only, on the grounds that `LabelFilterByInput.table`
+   * and `column` were non-null and a sparse rule therefore had no arm of the
+   * mutation to go through. That is no longer true: both filter inputs now take
+   * `kind: SPARSE` with a `dataset` and an `at`, so "keep the cells where this
+   * ion is above x" is expressible, and dropping these here was the only reason
+   * a mask whose one candidate is a matrix showed an EMPTY filter picker.
    *
    * A row here is one MATRIX, never one gene: the position along the identified
    * axis is chosen afterwards, from the table that axis references. That is why
    * a 19,059-feature matrix costs one row.
    */
   const sparseOptions = useMemo<SparseOption[]>(
-    () => (mode === "color" ? (result.data?.options ?? []).filter(isSparseOption) : []),
-    [result.data, mode],
+    () => (result.data?.options ?? []).filter(isSparseOption),
+    [result.data],
   );
 
   /** Grouped by the table the value is READ FROM — the option's own `table`. */
@@ -206,8 +208,8 @@ export const ColumnOptionPicker = ({
                 {search
                   ? "No column matches."
                   : isLabel
-                    ? "This mask's ids reach no table worth colouring by."
-                    : "This collection's ids reach no table worth colouring by."}
+                    ? `This mask's ids reach nothing worth ${mode === "color" ? "colouring" : "filtering"} by.`
+                    : `This collection's ids reach nothing worth ${mode === "color" ? "colouring" : "filtering"} by.`}
               </CommandEmpty>
             )}
             {sparseOptions.length > 0 && (

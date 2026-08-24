@@ -503,3 +503,90 @@ describe("buildLabelColorLut — columnar and row reads agree", () => {
     expect(visibleAt(data, 2)).toBe(255); // id 3: area 30
   });
 });
+
+describe("buildLabelColorLut — a rule over a sparse matrix", () => {
+  /** Reads one canned slice, whichever matrix and position is asked for. */
+  const fakeReadSparse = (values: Map<number, number>, slotCount: number) => async () => ({
+    values,
+    slotCount,
+  });
+
+  const sparseRule = (min: number, max: number) => ({
+    dataset: "ds",
+    at: [{ axis: "ion", value: 7 }],
+    min,
+    max,
+    exclude: false,
+    joinPath: [],
+  });
+
+  it("hides the objects a bound excludes, the absent ones read as zero", async () => {
+    // Six objects in the matrix, two of them detected. The bound starts above
+    // zero, so the four the slice never mentions are dropped with the low one.
+    const result = await buildLabelColorLut({
+      colorBy: null,
+      filterBys: [sparseRule(5, 100)],
+      readSparse: fakeReadSparse(
+        new Map([
+          [1, 40],
+          [2, 1],
+        ]),
+        6,
+      ),
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+    });
+    const data = dataOf(result.texture);
+
+    // The table spans the matrix's whole object axis: the absent objects need
+    // slots to be hidden in.
+    expect(result.idOffset).toBe(0);
+    expect(visibleAt(data, 1)).toBe(255); // detected, inside the band
+    expect(visibleAt(data, 2)).toBe(0); // detected, below it
+    expect(visibleAt(data, 5)).toBe(0); // absent -> zero -> below it
+  });
+
+  it("keeps the absent objects when the bound contains zero", async () => {
+    // The widest legal rule a picker can seed is the slice's own range, which
+    // contains 0. Adding one must hide nothing.
+    const result = await buildLabelColorLut({
+      colorBy: null,
+      filterBys: [sparseRule(0, 100)],
+      readSparse: fakeReadSparse(new Map([[1, 40]]), 4),
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+    });
+    const data = dataOf(result.texture);
+    for (const slot of [0, 1, 2, 3]) expect(visibleAt(data, slot)).toBe(255);
+  });
+
+  it("badges a sparse rule it has no reader for instead of applying it to nothing", async () => {
+    const result = await buildLabelColorLut({
+      colorBy: null,
+      filterBys: [sparseRule(5, 100)],
+      readSparse: null,
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+    });
+    expect(result.texture).toBeNull();
+    expect(result.skipped.join(" ")).toContain("no datalayer connection");
+  });
+
+  it("says so when a sparse COLOURING is what silences the rules", async () => {
+    const result = await buildLabelColorLut({
+      colorBy: { dataset: "ds", at: [{ axis: "gene", value: 1 }], colormap: ColorMap.Viridis, joinPath: [] },
+      sparse: {
+        source: { name: "expression" },
+        read: async () => ({ values: new Map([[1, 3]]), slotCount: 4 }),
+      } as unknown as NonNullable<Parameters<typeof buildLabelColorLut>[0]["sparse"]>,
+      filterBys: [sparseRule(5, 100)],
+      plans: PLANS,
+      storeId: MASK_STORE,
+      engine: fakeEngine({}),
+    });
+    expect(result.skipped.join(" ")).toContain("no filter is applied");
+  });
+});

@@ -15,7 +15,7 @@ import { useDetailActionQuery, PortKind } from "@/rekuest/api/graphql";
 import { useCreateRoomMutation, useSendMessageMutation } from "@/alpaka/api/graphql";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { submittedDataToRekuestFormat } from "@/rekuest/widgets/utils";
-import { storeRoomTalkingAbout } from "../roomTalkingAbout";
+import { storeRoomTalkingAbout, toStructureInputs } from "../roomTalkingAbout";
 import { useNavigate } from "react-router-dom";
 import { AlpakaRoom } from "@/linkers";
 import { toast } from "sonner";
@@ -87,12 +87,11 @@ export const AlpakaReplyerAssignForm = (props: {
 
     try {
       // 1. Format talking about structures
-      const talkingAbout = props.objects
-        .filter((structure) => structure.object?.id)
-        .map((structure) => ({
-          identifier: structure.identifier,
-          object: structure.object.id,
-        }));
+      const talkingAbout = toStructureInputs(props.objects);
+
+      if (props.objects.length > 0 && talkingAbout.length === 0) {
+        throw new Error("None of the selected structures can be attached");
+      }
 
       // 2. Create room
       const roomRes = await createRoom({

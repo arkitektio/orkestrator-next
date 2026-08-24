@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isTypingTarget } from "../../platform/input/keyboardTarget";
-import { SCENE_SHORTCUTS } from "./sceneShortcuts";
+import { SCENE_SHORTCUTS } from "./sceneShortcutDefs";
 
 const Keycap = ({ children }: { children: string }) => (
   <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5 font-mono text-[0.6875rem] leading-none text-white">

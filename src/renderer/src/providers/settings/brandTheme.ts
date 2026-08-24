@@ -1,15 +1,19 @@
 /**
  * The single writer of `--brand-hue` / `--brand-chroma` on `<html>`.
  *
- * Two independent sources want those variables:
- *   - the BASE, from user settings (ThemeCustomizer → settingsStore), and
+ * Three independent sources want those variables:
+ *   - the BASE, from user settings (ThemeCustomizer → settingsStore),
+ *   - the REMOTE brand, from the caller's lok membership in the active
+ *     organization (falling back to the organization's own default), and
  *   - an OVERRIDE, from whatever scene is currently open (its main layer's
  *     colormap tints the whole app).
  *
  * They must not write the inline style directly or the last writer wins by
  * accident — saving an unrelated setting mid-scene would snap the hue back, and
- * leaving a scene would wipe the user's chosen brand color. Both go through
- * here instead, and the effective value is always `override ?? base`.
+ * leaving a scene would wipe the user's chosen brand color. All three go
+ * through here instead, and the effective value is
+ * `override ?? remote ?? base`, resolved PER FIELD: a membership that sets only
+ * a hue still takes its chroma from the layer below.
  */
 
 export type Brand = {
@@ -32,12 +36,15 @@ export type BrandTarget = {
 
 /** Fallback when neither source has a value — the stylesheet's own cascade
  * (`:root` / `.dark`) takes over, so we remove the inline property. */
-type PartialBrand = {
+export type PartialBrand = {
   hue: number | undefined;
   chroma: number | undefined;
 };
 
-let base: PartialBrand = { hue: undefined, chroma: undefined };
+const EMPTY: PartialBrand = { hue: undefined, chroma: undefined };
+
+let base: PartialBrand = EMPTY;
+let remote: PartialBrand = EMPTY;
 let override: Brand | null = null;
 
 const writeProperty = (name: string, value: number | undefined) => {
@@ -52,8 +59,8 @@ const apply = () => {
   if (typeof document === "undefined") {
     return;
   }
-  writeProperty("--brand-hue", override?.hue ?? base.hue);
-  writeProperty("--brand-chroma", override?.chroma ?? base.chroma);
+  writeProperty("--brand-hue", override?.hue ?? remote.hue ?? base.hue);
+  writeProperty("--brand-chroma", override?.chroma ?? remote.chroma ?? base.chroma);
 };
 
 /** The user's configured brand, from settings. `undefined` fields fall back to
@@ -64,7 +71,20 @@ export const setBrandBase = (next: PartialBrand) => {
   apply();
 };
 
-/** A scene's tint, or `null` to hand control back to the base. */
+/**
+ * The brand carried by the caller's membership in the active organization,
+ * already resolved against the organization's own default. Outranks the local
+ * settings brand: it is the user's own choice too, just stored server-side, so
+ * it should follow them onto whatever machine they sign in from. Pass an empty
+ * brand (or call with both fields undefined) when lok is unavailable or has
+ * nothing set — the local settings brand then takes over again.
+ */
+export const setBrandRemote = (next: PartialBrand) => {
+  remote = next;
+  apply();
+};
+
+/** A scene's tint, or `null` to hand control back to the layers below. */
 export const setBrandOverride = (next: Brand | null) => {
   override = next;
   apply();
@@ -75,13 +95,14 @@ export const setBrandOverride = (next: Brand | null) => {
  * round rather than sweeping backwards through the whole circle. `oklch()`
  * treats hue as modulo-360, so an unwrapped value renders identically. */
 export const getEffectiveBrand = (): PartialBrand => ({
-  hue: override?.hue ?? base.hue,
-  chroma: override?.chroma ?? base.chroma,
+  hue: override?.hue ?? remote.hue ?? base.hue,
+  chroma: override?.chroma ?? remote.chroma ?? base.chroma,
 });
 
-/** Test seam — resets both sources without touching the DOM state semantics. */
+/** Test seam — resets every source without touching the DOM state semantics. */
 export const resetBrandTheme = () => {
-  base = { hue: undefined, chroma: undefined };
+  base = EMPTY;
+  remote = EMPTY;
   override = null;
   apply();
 };

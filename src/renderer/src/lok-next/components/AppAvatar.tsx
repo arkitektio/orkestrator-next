@@ -1,4 +1,5 @@
 import { useClientQuery } from "../api/graphql";
+import { clientAppIdentifier } from "../lib/clientLabels";
 
 export const AppAvatar = (props: { clientId: string }) => {
   const { data } = useClientQuery({
@@ -9,7 +10,7 @@ export const AppAvatar = (props: { clientId: string }) => {
 
   return (
     <div className="px-2 bg-slate-200 rounded rounded-md inline">
-      {data?.client?.release.app.identifier}
+      {data?.client && clientAppIdentifier(data.client)}
     </div>
   );
 };

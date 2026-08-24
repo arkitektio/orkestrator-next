@@ -4,6 +4,7 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient } from "@/linkers";
 import { useDetailClientQuery } from "../api/graphql";
 import CompositionGraph from "../components/graphs/CompositionGraph";
+import { clientAppIdentifier, clientAppVersion } from "@/lok-next/lib/clientLabels";
 
 export const ClientPage = asDetailQueryRoute(useDetailClientQuery, ({ data }) => {
   const resolve = useResolve();
@@ -12,15 +13,14 @@ export const ClientPage = asDetailQueryRoute(useDetailClientQuery, ({ data }) =>
     <LokClient.ModelPage
       object={data.client}
       actions={<LokClient.Actions object={data?.client} />}
-      title={data?.client?.release.app.identifier}
+      title={data?.client && clientAppIdentifier(data.client)}
       sidebars={<LokClient.Knowledge object={data?.client} />}
     >
       <div className="grid grid-cols-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
             <div className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.client.release.app.identifier}:{" "}
-              {data.client.release.version} @ {data.client.user?.username}
+              {clientAppVersion(data.client)} @ {data.client.user?.username}
             </div>
           </div>
         </div>

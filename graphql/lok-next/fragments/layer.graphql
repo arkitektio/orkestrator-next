@@ -1,18 +1,17 @@
 fragment Layer on Layer {
   id
   name
+  identifier
   description
   logo {
     presignedUrl
-  }
-  instances {
-    ...ListServiceInstance
   }
 }
 
 fragment ListLayer on Layer {
   id
   name
+  identifier
   description
   logo {
     presignedUrl

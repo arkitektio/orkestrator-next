@@ -1,6 +1,10 @@
+import { Guard } from "@/app/Arkitekt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import MembershipBrandWriter, {
+  type EditedBrand,
+} from "@/lok-next/components/MembershipBrandWriter";
 import { defaultSettings, Settings } from "@/providers/settings/validator";
 import React from "react";
 import { Control, useController } from "react-hook-form";
@@ -16,17 +20,29 @@ export const ThemeCustomizer: React.FC<Props> = ({ control }) => {
   const currentHue = hueField.value ?? defaultSettings.brandHue!;
   const currentChroma = chromaField.value ?? defaultSettings.brandChroma!;
 
+  // Only edits made HERE may reach the backend. Watching the field values
+  // instead would also fire when the form is seeded from local settings, which
+  // would push those over the membership brand the user picked elsewhere.
+  const [edited, setEdited] = React.useState<EditedBrand | null>(null);
+
+  const applyBrand = (hue: number, chroma: number) => {
+    hueField.onChange(hue);
+    chromaField.onChange(chroma);
+    if (Number.isFinite(hue) && Number.isFinite(chroma)) {
+      setEdited({ hue, chroma });
+    }
+  };
+
   const handleHueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    hueField.onChange(parseFloat(e.target.value));
+    applyBrand(parseFloat(e.target.value), currentChroma);
   };
 
   const handleChromaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    chromaField.onChange(parseFloat(e.target.value));
+    applyBrand(currentHue, parseFloat(e.target.value));
   };
 
   const reset = () => {
-    hueField.onChange(defaultSettings.brandHue);
-    chromaField.onChange(defaultSettings.brandChroma);
+    applyBrand(defaultSettings.brandHue!, defaultSettings.brandChroma!);
   };
 
   // Pre-mapped OKLCH approximate equivalents for standard Tailwind colors
@@ -124,6 +140,11 @@ export const ThemeCustomizer: React.FC<Props> = ({ control }) => {
           <Button variant="outline" onClick={reset}>
             Reset to Default
           </Button>
+          {/* Guarded from the outside — the writer's mutation hook must never
+              mount without lok's Apollo client. */}
+          <Guard.Lok notConnectedFallback={<></>} connectingFallback={<></>}>
+            <MembershipBrandWriter brand={edited} />
+          </Guard.Lok>
         </div>
       </div>
 
@@ -136,10 +157,7 @@ export const ThemeCustomizer: React.FC<Props> = ({ control }) => {
               key={p.name}
               className="w-8 h-8 rounded-full border border-input ring-offset-background hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
               style={{ backgroundColor: `oklch(60% ${p.chroma} ${p.hue})` }}
-              onClick={() => {
-                hueField.onChange(p.hue);
-                chromaField.onChange(p.chroma);
-              }}
+              onClick={() => applyBrand(p.hue, p.chroma)}
               aria-label={`Set color to ${p.name}`}
               title={p.name}
             />

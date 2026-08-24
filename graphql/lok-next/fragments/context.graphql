@@ -3,10 +3,20 @@ fragment Context on Context {
     id
     name
     slug
+    brandHue
+    brandChroma
   }
   user {
     id
     username
+    memberships {
+      id
+      brandHue
+      brandChroma
+      organization {
+        id
+      }
+    }
   }
   roles
   scope

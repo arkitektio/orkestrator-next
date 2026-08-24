@@ -43,7 +43,7 @@ type App {
   releases(ordering: [ReleaseOrdering!]! = []): [Release!]!
 }
 
-"""App(id, name, identifier, logo)"""
+"""App(id, name, identifier, organization, logo)"""
 input AppFilter {
   AND: AppFilter
   DISTINCT: Boolean
@@ -74,6 +74,9 @@ A client is a way of authenticating users with a release.
  but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
 """
 type Client {
+  """The OAuth2 client id this client authenticates as."""
+  clientId: String!
+
   """
   Is this client functional? A functional client is a client that is able to authenticate users. If a client is not functional, it will not be able to authenticate users.
   """
@@ -86,7 +89,7 @@ type Client {
   issueUrl: String
 
   """
-  The configuration of the client. This is the configuration that will be sent to the client. It should never contain sensitive information.
+  What kind of principal this client is (its authentication strategy): DEVELOPMENT, WEBSITE, DESKTOP, MOBILE, HUB or RELYING_PARTY.
   """
   kind: ClientKind!
 
@@ -109,11 +112,8 @@ type Client {
   node: Device
 
   """
-  The real oauth2 client that is used to authenticate users with this client.
+  Is this client public? A public client cannot keep a secret (desktop apps, mobile apps, SPAs, hub identities) and authenticates without one, relying on PKCE / device-code flows instead.
   """
-  oauth2Client: Oauth2Client!
-
-  """Is this client public? If a client is public """
   public: Boolean!
 
   """
@@ -121,30 +121,37 @@ type Client {
   """
   publicSources: [PublicSource!]!
 
-  """The release that this client belongs to."""
-  release: Release!
+  """
+  The release that this client belongs to. Null for clients that are not bound to an app release (hub identities, relying parties, pending registrations).
+  """
+  release: Release
 
   """
   The operational role of the client. INTERFACE clients are human interfaces operated by a user in real time. AGENT clients are authorized once and then run unattended, receiving and processing tasks on the user's behalf.
   """
   role: ClientRole!
 
-  """The user that manages this release."""
-  tenant: User!
-
-  """
-  The client's fakts token. Only visible to the organization that owns the client — it is a bearer credential, redeemable at `/f/claim/` for this client's OAuth `client_id` and `client_secret`.
-  """
-  token: String!
-
-  """
-  If the client is a DEVELOPMENT client, which requires no further authentication, this is the user that is authenticated with the client.
-  """
+  """The user this client acts for (derived from its membership)."""
   user: User
 }
 
 """
-Client(id, hub, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, last_healthy_report, manifest)
+The one client model: every OAuth2 principal is a row here.
+
+Kinds of rows and their lifecycle:
+
+- **App clients** (`development`/`website`/`desktop`/`mobile`): the row is created by
+  dynamic registration at ``/o/app-authorization/`` with identity fields
+  only; human approval *binds* it (membership, organization, release, hub,
+  mappings, scope). ``membership`` null == not yet approved.
+- **Hub identities** (`hub`): same lifecycle via ``/o/hub-authorization/``;
+  the created ``Hub`` links back via ``Hub.client`` (reverse:
+  ``client.hub_identity``).
+- **Relying parties** (`relying_party`): confidential OIDC clients
+  provisioned from config by ``ensureopenid``; global (no organization).
+
+Implements authlib's ``ClientMixin`` directly — there is no separate
+OAuth2 client table anymore.
 """
 input ClientFilter {
   AND: ClientFilter
@@ -159,6 +166,9 @@ input ClientFilter {
 enum ClientKind {
   DESKTOP
   DEVELOPMENT
+  HUB
+  MOBILE
+  RELYING_PARTY
   WEBSITE
 }
 
@@ -175,11 +185,21 @@ enum ClientRole {
 }
 
 """
-An Organization is a group of users that can work together on a project.
+A communication channel through which a user can be notified (e.g. a push token).
 """
 type ComChannel {
   id: ID!
   user: User!
+}
+
+"""__doc__"""
+input ComChannelFilter {
+  AND: ComChannelFilter
+  DISTINCT: Boolean
+  NOT: ComChannelFilter
+  OR: ComChannelFilter
+  ids: [ID!]
+  search: String
 }
 
 input ComChannelOrdering @oneOf {
@@ -381,9 +401,6 @@ input DeviceFilter {
 A DeviceGroup is a group of compute nodes that can be used to run clients. DeviceGroups can be used to group compute nodes by location, hardware type, or any other criteria.
 """
 type DeviceGroup {
-  """The description of the device group."""
-  description: String
-
   """The devices that belong to this device group."""
   devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]!
   id: ID!
@@ -410,10 +427,6 @@ input DeviceGroupOrdering @oneOf {
 input DeviceOrdering @oneOf {
   id: Ordering
   name: Ordering
-}
-
-type DjangoModelType {
-  pk: ID!
 }
 
 """The `Fakt` scalar type represents a reference to a fakt"""
@@ -454,7 +467,7 @@ input GroupOrdering @oneOf {
   name: Ordering
 }
 
-"\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n\n\n\n"
+"\nA Profile of a Group. A GroupProfile can be used to display information about a group,\nsuch as a display name, a short bio and an avatar.\n"
 type GroupProfile {
   """The avatar of the group"""
   avatar: MediaStore
@@ -532,7 +545,7 @@ type Invite {
   createdAt: DateTime!
   createdBy: User!
   createdFor: Organization!
-  createdMembershipts(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
+  createdMemberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
   declinedBy: User
   email: String
   expiresAt: DateTime
@@ -549,33 +562,46 @@ type Invite {
   valid: Boolean!
 }
 
+"""
+Invite(id, token, email, created_by, created_for, created_at, expires_at, public, status, accepted_by, declined_by, responded_at)
+"""
+input InviteFilter {
+  AND: InviteFilter
+  DISTINCT: Boolean
+  NOT: InviteFilter
+  OR: InviteFilter
+  ids: [ID!]
+  search: String
+  status: String
+}
+
 input InviteOrdering @oneOf {
   createdAt: Ordering
   id: Ordering
 }
 
 """
-A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself.
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""
+A Layer is a network through which service instances can be reached (e.g. the public web, a tailnet, a VPN, or a docker network). Instance aliases are resolved relative to the layer they belong to.
 """
 type Layer {
   """
-  The description of the service. This should be a human readable description of the service.
+  The description of the layer. This should be a human readable description of the layer.
   """
   description: String
   id: ID!
 
   """
-  The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`
+  The identifier of the layer. This should be a globally unique string that identifies the layer. We encourage you to use the reverse domain name notation. E.g. `com.example.mylayer`
   """
   identifier: ServiceIdentifier!
 
   """
-  The instances of the service. A service instance is a configured instance of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.
-  """
-  instances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
-
-  """
-  The logo of the service. This should be a url to a logo that can be used to represent the service.
+  The logo of the layer. This should be a url to a logo that can be used to represent the layer.
   """
   logo: MediaStore
 
@@ -653,14 +679,21 @@ type MediaStore {
   key: String!
 
   """The stodre of the image"""
-  path: String!
+  path: String
   presignedUrl(host: String = null): String!
 }
 
 "\nA Membership is a relation between a User and an Organization. It can have multiple Roles assigned to it.\n"
 type Membership {
-  """The groups that the user has in the organization"""
-  groups: [Group!]!
+  """
+  The member's personal brand chroma (0–1) for this organization, if set. Null means they have not overridden the organization's default — fall back to `organization.brandChroma`.
+  """
+  brandChroma: Float
+
+  """
+  The member's personal brand hue (0–360) for this organization, if set. Null means they have not overridden the organization's default — fall back to `organization.brandHue`.
+  """
+  brandHue: Float
   id: ID!
   organization: Organization!
 
@@ -676,7 +709,6 @@ input MembershipFilter {
   NOT: MembershipFilter
   OR: MembershipFilter
   ids: [ID!]
-  name: StrFilterLookup
   search: String
 }
 
@@ -728,6 +760,7 @@ type Mutation {
   resolveComment(input: ResolveCommentInput!): Comment!
   updateDevice(input: UpdateDeviceInput!): Device!
   updateGroupProfile(input: UpdateGroupProfileInput!): GroupProfile!
+  updateMembershipColors(input: UpdateMembershipColorsInput!): Membership!
   updateOrganization(input: UpdateOrganizationInput!): Organization!
   updateProfile(input: UpdateProfileInput!): Profile!
   updateServiceInstance(input: UpdateServiceInstanceInput!): ServiceInstance!
@@ -740,14 +773,6 @@ input NotifyUserInput {
   message: String!
   title: String = ""
   user: ID!
-}
-
-"""
-OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg, membership_is_subject, email_template)
-"""
-type Oauth2Client {
-  clientId: String!
-  id: String!
 }
 
 input OffsetPaginationInput {
@@ -774,12 +799,22 @@ type Organization {
   """The logo of the organization"""
   avatar: MediaStore
 
+  """
+  The organization's default brand chroma (0–1), if set. Members can override it per-membership.
+  """
+  brandChroma: Float
+
+  """
+  The organization's default brand hue (0–360), if set. Members can override it per-membership.
+  """
+  brandHue: Float
+
   """A short description of the organization"""
   description: String
   id: ID!
 
   """the invites for this organization"""
-  invites(filters: OrganizationFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
+  invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
 
   """the memberships of people"""
   memberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
@@ -793,7 +828,7 @@ type Organization {
   slug: String!
 
   """The users that are part of the organization"""
-  users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
+  users: [User!]!
 }
 
 """__doc__"""
@@ -812,16 +847,16 @@ input OrganizationOrdering @oneOf {
   name: Ordering
 }
 
-"\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n"
+"\nA Profile of an Organization. An OrganizationProfile can be used to display public information\nabout an organization, such as a display name, a short bio and an avatar (logo).\n"
 type OrganizationProfile {
-  """The avatar of the user"""
+  """The avatar (logo) of the organization"""
   avatar: MediaStore
 
-  """A short bio of the user"""
+  """A short bio of the organization"""
   bio: String
   id: ID!
 
-  """The name of the user"""
+  """The display name of the organization"""
   name: String
 }
 
@@ -852,7 +887,7 @@ type PresignedPostCredentials {
   xAmzSignature: String!
 }
 
-"\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n"
+"\nA Profile of a User. A Profile can be used to display personalised information about a user,\nsuch as a display name, a short bio and an avatar.\n"
 type Profile {
   """The avatar of the user"""
   avatar: MediaStore
@@ -893,6 +928,10 @@ type Query {
   comments(ordering: [CommentOrdering!]! = []): [Comment!]!
   commentsFor(identifier: Identifier!, object: ID!): [Comment!]!
   device(id: ID!): Device!
+
+  """
+  Look a device up by its raw device id, as reported by the client. Device ids are stored as a per-organization hash, so the raw id is hashed with the caller's organization before lookup.
+  """
   deviceByDeviceId(id: ID!): Device!
   deviceGroup(id: ID!): DeviceGroup!
   deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
@@ -900,13 +939,13 @@ type Query {
   group(id: ID!): Group!
   groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
   hallo: String!
-  invites(filters: OrganizationFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
+  invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
   layer(id: ID!): Layer!
   layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   me: User!
   message(id: ID!): SystemMessage!
   myActiveMessages: [SystemMessage!]!
-  myManagedClients(kind: ClientKind!): Client!
+  myManagedClients(kind: ClientKind!): [Client!]!
   myMentions: [Comment!]!
   myRedeemTokens: [RedeemToken!]!
   myStashes: [Stash!]!
@@ -1006,9 +1045,9 @@ type Release {
   name: String!
 
   """
-  The requirements of the release. Requirements are used to limit the access of a client to a user's data. They represent app-level permissions.
+  The requirements of the release: the services (by key and service identifier) a client of this release needs composed against it. Each entry is a manifest `Requirement` object (`key`, `service`, `optional`, `description`).
   """
-  requirements: [String!]!
+  requirements: [JSON!]!
 
   """
   The scopes of the release. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions.
@@ -1072,8 +1111,8 @@ input RoleFilter {
   DISTINCT: Boolean
   NOT: RoleFilter
   OR: RoleFilter
+  identifier: StrFilterLookup
   ids: [ID!]
-  name: StrFilterLookup
   search: String
 }
 
@@ -1115,7 +1154,7 @@ type Service {
   identifier: ServiceIdentifier!
 
   """
-  The logo of the app. This should be a url to a logo that can be used to represent the app.
+  The logo of the service. This should be a url to a logo that can be used to represent the service.
   """
   logo: MediaStore
 
@@ -1128,7 +1167,7 @@ type Service {
   releases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]!
 }
 
-"""Service(id, name, identifier, logo, description)"""
+"""Service(id, name, identifier, organization, logo, description)"""
 input ServiceFilter {
   AND: ServiceFilter
   DISTINCT: Boolean
@@ -1181,7 +1220,7 @@ type ServiceInstance {
   mappings(ordering: [ServiceInstanceMappingOrdering!]! = []): [ServiceInstanceMapping!]!
 
   """
-  The name of the instance. This is a human readable name of the instance.
+  A human readable name of the instance, derived from its service identifier and instance id.
   """
   name: String!
 
@@ -1202,18 +1241,18 @@ input ServiceInstanceFilter {
 }
 
 """
-A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.
+A ServiceInstanceMapping binds one of a client's requirements (by key) to the ServiceInstance that fulfils it. The set of mappings of a client is its composed configuration.
 """
 type ServiceInstanceMapping {
-  """The client that this instance belongs to."""
+  """The client whose requirement this mapping fulfils."""
   client: Client!
   id: ID!
 
-  """The service that this instance belongs to."""
+  """The service instance this requirement is mapped to."""
   instance: ServiceInstance!
 
   """
-  The key of the instance. This is a unique string that identifies the instance. It is used to identify the instance in the code and in the database.
+  The requirement key of the client that this mapping fulfils. Unique per client.
   """
   key: String!
 
@@ -1240,10 +1279,6 @@ input ServiceOrdering @oneOf {
 A ServiceRelease is a specific release of a Service. It contains the configuration for a particular version of the service.
 """
 type ServiceRelease {
-  """
-  The description of the service. This should be a human readable description of the service.
-  """
-  description: String
   id: ID!
 
   """
@@ -1283,7 +1318,7 @@ type Stash {
   items(filters: StashItemFilter, ordering: [StashItemOrdering!]! = [], pagination: OffsetPaginationInput): [StashItem!]!
   name: String!
 
-  """The number of items in the stash"""
+  """The owner of the stash"""
   owner: User!
   updatedAt: DateTime!
 }
@@ -1301,7 +1336,6 @@ input StashFilter {
 "\nA stashed item\n"
 type StashItem {
   addedAt: DateTime!
-  description: String
   id: ID!
   identifier: String!
   object: String!
@@ -1316,10 +1350,10 @@ input StashItemFilter {
   DISTINCT: Boolean
   NOT: StashItemFilter
   OR: StashItemFilter
+  identifier: StrFilterLookup
   ids: [ID!]
   search: String
   stashes: [ID!]
-  username: StrFilterLookup
 }
 
 input StashItemInput {
@@ -1370,8 +1404,8 @@ type SystemMessage {
   """The action to take (e.g. the node)"""
   action: String!
   id: ID!
-  message: String!
-  title: String!
+  message: String
+  title: String
   user: User!
 }
 
@@ -1399,6 +1433,11 @@ input UpdateGroupProfileInput {
   avatar: ID!
   id: ID!
   name: String!
+}
+
+input UpdateMembershipColorsInput {
+  brandChroma: Float
+  brandHue: Float
 }
 
 input UpdateOrganizationInput {
@@ -1434,7 +1473,7 @@ type User {
   avatar: String
 
   """The communication channels that the user has"""
-  comChannels(filters: OrganizationFilter, ordering: [ComChannelOrdering!]! = [], pagination: OffsetPaginationInput): [ComChannel!]!
+  comChannels(filters: ComChannelFilter, ordering: [ComChannelOrdering!]! = [], pagination: OffsetPaginationInput): [ComChannel!]!
   email: String
   firstName: String
 
@@ -1444,7 +1483,6 @@ type User {
   groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
   id: ID!
   lastName: String
-  managedClients: [DjangoModelType!]!
 
   """The memberships of the user in organizations"""
   memberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!

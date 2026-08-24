@@ -11,6 +11,7 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient } from "@/linkers";
 import { Server, User } from "lucide-react";
 import { ListClientFragment } from "../../api/graphql";
+import { clientAppIdentifier } from "@/lok-next/lib/clientLabels";
 
 interface Props {
   item: ListClientFragment;
@@ -28,22 +29,24 @@ const ClientCard = ({ item }: Props) => {
             <Avatar className="h-10 w-10 rounded-lg border bg-muted">
               <AvatarImage
                 src={resolve(item.logo?.presignedUrl)}
-                alt={item.release.app.identifier}
+                alt={clientAppIdentifier(item)}
                 className="object-contain"
               />
               <AvatarFallback className="rounded-lg">
-                {item.release.app.identifier.slice(0, 2).toUpperCase()}
+                {clientAppIdentifier(item).slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-1 overflow-hidden">
               <CardTitle className="text-base font-semibold truncate leading-none flex items-center gap-2">
-                <span className="truncate">{item.release.app.identifier}</span>
+                <span className="truncate">{clientAppIdentifier(item)}</span>
               </CardTitle>
-              <CardDescription className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
-                  v{item.release.version}
-                </Badge>
-              </CardDescription>
+              {item.release && (
+                <CardDescription className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
+                    v{item.release.version}
+                  </Badge>
+                </CardDescription>
+              )}
             </div>
           </CardHeader>
           <CardContent>

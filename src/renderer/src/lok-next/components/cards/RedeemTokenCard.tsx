@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { LokRedeemToken } from "@/linkers";
 import { ListRedeemTokenFragment } from "../../api/graphql";
+import { clientAppVersion } from "@/lok-next/lib/clientLabels";
 
 interface Props {
   item: ListRedeemTokenFragment;
@@ -24,8 +25,7 @@ const TheCard = ({ item }: Props) => {
           {item.client && <> Claimed</>}
           {item.client && (
             <div className="my-auto">
-              {item.client.release.version}
-              {item.client.release.app.identifier}
+              {clientAppVersion(item.client)}
             </div>
           )}
         </LokRedeemToken.DetailLink>

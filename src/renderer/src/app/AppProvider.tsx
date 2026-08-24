@@ -103,6 +103,7 @@ import { RekuestDashboardWidgets } from "@/providers/dashboard/widgets/RekuestDa
 import { MikroDashboardWidgets } from "@/providers/dashboard/widgets/MikroDashboardWidgets";
 import { LatestTasksDashboardWidget } from "@/providers/dashboard/widgets/LatestTasksDashboardWidget";
 import { LatestArrayDatasetsDashboardWidget } from "@/providers/dashboard/widgets/LatestArrayDatasetsDashboardWidget";
+import { OrganizationBrandSync } from "@/lok-next/components/OrganizationBrandSync";
 
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
@@ -136,6 +137,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                       <LatestTasksDashboardWidget />
                                       <TaskHookRunner />
                                     </Guard.Rekuest>
+                                    <Guard.Lok notConnectedFallback={<></>} connectingFallback={<></>}>
+                                      <OrganizationBrandSync />
+                                    </Guard.Lok>
                                     <Toaster />
                                     <Guard.Mikro unavailable={<></>} unconfigured={<></>} configuring={<></>} challenging={<></>}>
                                       <MikroDashboardWidgets />

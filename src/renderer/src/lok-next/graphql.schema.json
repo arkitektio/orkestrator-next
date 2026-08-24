@@ -329,7 +329,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "AppFilter",
-        "description": "App(id, name, identifier, logo)",
+        "description": "App(id, name, identifier, organization, logo)",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -511,6 +511,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "clientId",
+            "description": "The OAuth2 client id this client authenticates as.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "functional",
             "description": "Is this client functional? A functional client is a client that is able to authenticate users. If a client is not functional, it will not be able to authenticate users.",
             "args": [],
@@ -556,7 +572,7 @@
           },
           {
             "name": "kind",
-            "description": "The configuration of the client. This is the configuration that will be sent to the client. It should never contain sensitive information.",
+            "description": "What kind of principal this client is (its authentication strategy): DEVELOPMENT, WEBSITE, DESKTOP, MOBILE, HUB or RELYING_PARTY.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -660,24 +676,8 @@
             "deprecationReason": null
           },
           {
-            "name": "oauth2Client",
-            "description": "The real oauth2 client that is used to authenticate users with this client.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Oauth2Client",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "public",
-            "description": "Is this client public? If a client is public ",
+            "description": "Is this client public? A public client cannot keep a secret (desktop apps, mobile apps, SPAs, hub identities) and authenticates without one, relying on PKCE / device-code flows instead.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -717,16 +717,12 @@
           },
           {
             "name": "release",
-            "description": "The release that this client belongs to.",
+            "description": "The release that this client belongs to. Null for clients that are not bound to an app release (hub identities, relying parties, pending registrations).",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Release",
-                "kind": "OBJECT",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "Release",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -748,40 +744,8 @@
             "deprecationReason": null
           },
           {
-            "name": "tenant",
-            "description": "The user that manages this release.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "User",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "token",
-            "description": "The client's fakts token. Only visible to the organization that owns the client — it is a bearer credential, redeemable at `/f/claim/` for this client's OAuth `client_id` and `client_secret`.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "user",
-            "description": "If the client is a DEVELOPMENT client, which requires no further authentication, this is the user that is authenticated with the client.",
+            "description": "The user this client acts for (derived from its membership).",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -800,7 +764,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ClientFilter",
-        "description": "Client(id, hub, functional, name, release, oauth2_client, kind, role, user, organization, membership, redirect_uris, public, token, node, public_sources, tenant, created_at, requirements_hash, statuses, logo, last_reported_at, last_healthy_report, manifest)",
+        "description": "The one client model: every OAuth2 principal is a row here.\n\nKinds of rows and their lifecycle:\n\n- **App clients** (`development`/`website`/`desktop`/`mobile`): the row is created by\n  dynamic registration at ``/o/app-authorization/`` with identity fields\n  only; human approval *binds* it (membership, organization, release, hub,\n  mappings, scope). ``membership`` null == not yet approved.\n- **Hub identities** (`hub`): same lifecycle via ``/o/hub-authorization/``;\n  the created ``Hub`` links back via ``Hub.client`` (reverse:\n  ``client.hub_identity``).\n- **Relying parties** (`relying_party`): confidential OIDC clients\n  provisioned from config by ``ensureopenid``; global (no organization).\n\nImplements authlib's ``ClientMixin`` directly — there is no separate\nOAuth2 client table anymore.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -923,6 +887,24 @@
             "deprecationReason": null
           },
           {
+            "name": "HUB",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "MOBILE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "RELYING_PARTY",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "WEBSITE",
             "description": null,
             "isDeprecated": false,
@@ -1018,7 +1000,7 @@
       {
         "kind": "OBJECT",
         "name": "ComChannel",
-        "description": "An Organization is a group of users that can work together on a project.",
+        "description": "A communication channel through which a user can be notified (e.g. a push token).",
         "isOneOf": null,
         "fields": [
           {
@@ -1056,6 +1038,98 @@
         ],
         "inputFields": null,
         "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ComChannelFilter",
+        "description": "__doc__",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ComChannelFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ComChannelFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ComChannelFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
       },
@@ -2695,18 +2769,6 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "description",
-            "description": "The description of the device group.",
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "devices",
             "description": "The devices that belong to this device group.",
             "args": [
@@ -2978,34 +3040,6 @@
           }
         ],
         "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "DjangoModelType",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "pk",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -3302,7 +3336,7 @@
       {
         "kind": "OBJECT",
         "name": "GroupProfile",
-        "description": "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n\n\n\n",
+        "description": "\nA Profile of a Group. A GroupProfile can be used to display information about a group,\nsuch as a display name, a short bio and an avatar.\n",
         "isOneOf": null,
         "fields": [
           {
@@ -3655,7 +3689,7 @@
             "deprecationReason": null
           },
           {
-            "name": "createdMembershipts",
+            "name": "createdMemberships",
             "description": null,
             "args": [
               {
@@ -3936,6 +3970,110 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "InviteFilter",
+        "description": "Invite(id, token, email, created_by, created_for, created_at, expires_at, public, status, accepted_by, declined_by, responded_at)",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "InviteFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "InviteFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "InviteFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "ID",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "status",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "InviteOrdering",
         "description": null,
         "isOneOf": true,
@@ -3971,14 +4109,25 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "JSON",
+        "description": "The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Layer",
-        "description": "A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself.",
+        "description": "A Layer is a network through which service instances can be reached (e.g. the public web, a tailnet, a VPN, or a docker network). Instance aliases are resolved relative to the layer they belong to.",
         "isOneOf": null,
         "fields": [
           {
             "name": "description",
-            "description": "The description of the service. This should be a human readable description of the service.",
+            "description": "The description of the layer. This should be a human readable description of the layer.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -4006,7 +4155,7 @@
           },
           {
             "name": "identifier",
-            "description": "The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`",
+            "description": "The identifier of the layer. This should be a globally unique string that identifies the layer. We encourage you to use the reverse domain name notation. E.g. `com.example.mylayer`",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -4021,81 +4170,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instances",
-            "description": "The instances of the service. A service instance is a configured instance of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.",
-            "args": [
-              {
-                "name": "filters",
-                "description": null,
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "ServiceInstanceFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "ordering",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "LIST",
-                    "ofType": {
-                      "name": null,
-                      "kind": "NON_NULL",
-                      "ofType": {
-                        "name": "ServiceInstanceOrdering",
-                        "kind": "INPUT_OBJECT",
-                        "ofType": null
-                      }
-                    }
-                  }
-                },
-                "defaultValue": "[]",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "pagination",
-                "description": null,
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OffsetPaginationInput",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "ServiceInstance",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "logo",
-            "description": "The logo of the service. This should be a url to a logo that can be used to represent the service.",
+            "description": "The logo of the layer. This should be a url to a logo that can be used to represent the layer.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -4752,13 +4828,9 @@
             "description": "The stodre of the image",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4805,25 +4877,25 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "groups",
-            "description": "The groups that the user has in the organization",
+            "name": "brandChroma",
+            "description": "The member's personal brand chroma (0–1) for this organization, if set. Null means they have not overridden the organization's default — fall back to `organization.brandChroma`.",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "Group",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "brandHue",
+            "description": "The member's personal brand hue (0–360) for this organization, if set. Null means they have not overridden the organization's default — fall back to `organization.brandHue`.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -5025,18 +5097,6 @@
                   "ofType": null
                 }
               }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "name",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StrFilterLookup",
-              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -6017,6 +6077,39 @@
             "deprecationReason": null
           },
           {
+            "name": "updateMembershipColors",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "UpdateMembershipColorsInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Membership",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "updateOrganization",
             "description": null,
             "args": [
@@ -6211,50 +6304,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "OBJECT",
-        "name": "Oauth2Client",
-        "description": "OAuth2Client(id, membership, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types, id_token_signed_response_alg, membership_is_subject, email_template)",
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "clientId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "id",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "INPUT_OBJECT",
         "name": "OffsetPaginationInput",
         "description": null,
@@ -6434,6 +6483,30 @@
             "deprecationReason": null
           },
           {
+            "name": "brandChroma",
+            "description": "The organization's default brand chroma (0–1), if set. Members can override it per-membership.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "brandHue",
+            "description": "The organization's default brand hue (0–360), if set. Members can override it per-membership.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "description",
             "description": "A short description of the organization",
             "args": [],
@@ -6470,7 +6543,7 @@
                 "description": null,
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "OrganizationFilter",
+                  "name": "InviteFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -6682,56 +6755,7 @@
           {
             "name": "users",
             "description": "The users that are part of the organization",
-            "args": [
-              {
-                "name": "filters",
-                "description": null,
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "UserFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "ordering",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "LIST",
-                    "ofType": {
-                      "name": null,
-                      "kind": "NON_NULL",
-                      "ofType": {
-                        "name": "UserOrdering",
-                        "kind": "INPUT_OBJECT",
-                        "ofType": null
-                      }
-                    }
-                  }
-                },
-                "defaultValue": "[]",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "pagination",
-                "description": null,
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OffsetPaginationInput",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
+            "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6901,12 +6925,12 @@
       {
         "kind": "OBJECT",
         "name": "OrganizationProfile",
-        "description": "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n",
+        "description": "\nA Profile of an Organization. An OrganizationProfile can be used to display public information\nabout an organization, such as a display name, a short bio and an avatar (logo).\n",
         "isOneOf": null,
         "fields": [
           {
             "name": "avatar",
-            "description": "The avatar of the user",
+            "description": "The avatar (logo) of the organization",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -6918,7 +6942,7 @@
           },
           {
             "name": "bio",
-            "description": "A short bio of the user",
+            "description": "A short bio of the organization",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -6946,7 +6970,7 @@
           },
           {
             "name": "name",
-            "description": "The name of the user",
+            "description": "The display name of the organization",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -7207,7 +7231,7 @@
       {
         "kind": "OBJECT",
         "name": "Profile",
-        "description": "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n",
+        "description": "\nA Profile of a User. A Profile can be used to display personalised information about a user,\nsuch as a display name, a short bio and an avatar.\n",
         "isOneOf": null,
         "fields": [
           {
@@ -7816,7 +7840,7 @@
           },
           {
             "name": "deviceByDeviceId",
-            "description": null,
+            "description": "Look a device up by its raw device id, as reported by the client. Device ids are stored as a per-organization hash, so the raw id is hashed with the caller's organization before lookup.",
             "args": [
               {
                 "name": "id",
@@ -8157,7 +8181,7 @@
                 "description": null,
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "OrganizationFilter",
+                  "name": "InviteFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -8425,9 +8449,17 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "Client",
-                "kind": "OBJECT",
-                "ofType": null
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "Client",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -10065,7 +10097,7 @@
           },
           {
             "name": "requirements",
-            "description": "The requirements of the release. Requirements are used to limit the access of a client to a user's data. They represent app-level permissions.",
+            "description": "The requirements of the release: the services (by key and service identifier) a client of this release needs composed against it. Each entry is a manifest `Requirement` object (`key`, `service`, `optional`, `description`).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10077,7 +10109,7 @@
                   "name": null,
                   "kind": "NON_NULL",
                   "ofType": {
-                    "name": "String",
+                    "name": "JSON",
                     "kind": "SCALAR",
                     "ofType": null
                   }
@@ -10581,6 +10613,18 @@
             "deprecationReason": null
           },
           {
+            "name": "identifier",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "StrFilterLookup",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -10595,18 +10639,6 @@
                   "ofType": null
                 }
               }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "name",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StrFilterLookup",
-              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -10765,7 +10797,7 @@
           },
           {
             "name": "logo",
-            "description": "The logo of the app. This should be a url to a logo that can be used to represent the app.",
+            "description": "The logo of the service. This should be a url to a logo that can be used to represent the service.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -10873,7 +10905,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ServiceFilter",
-        "description": "Service(id, name, identifier, logo, description)",
+        "description": "Service(id, name, identifier, organization, logo, description)",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -11415,7 +11447,7 @@
           },
           {
             "name": "name",
-            "description": "The name of the instance. This is a human readable name of the instance.",
+            "description": "A human readable name of the instance, derived from its service identifier and instance id.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11546,12 +11578,12 @@
       {
         "kind": "OBJECT",
         "name": "ServiceInstanceMapping",
-        "description": "A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.",
+        "description": "A ServiceInstanceMapping binds one of a client's requirements (by key) to the ServiceInstance that fulfils it. The set of mappings of a client is its composed configuration.",
         "isOneOf": null,
         "fields": [
           {
             "name": "client",
-            "description": "The client that this instance belongs to.",
+            "description": "The client whose requirement this mapping fulfils.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11583,7 +11615,7 @@
           },
           {
             "name": "instance",
-            "description": "The service that this instance belongs to.",
+            "description": "The service instance this requirement is mapped to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11599,7 +11631,7 @@
           },
           {
             "name": "key",
-            "description": "The key of the instance. This is a unique string that identifies the instance. It is used to identify the instance in the code and in the database.",
+            "description": "The requirement key of the client that this mapping fulfils. Unique per client.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11725,18 +11757,6 @@
         "description": "A ServiceRelease is a specific release of a Service. It contains the configuration for a particular version of the service.",
         "isOneOf": null,
         "fields": [
-          {
-            "name": "description",
-            "description": "The description of the service. This should be a human readable description of the service.",
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
           {
             "name": "id",
             "description": null,
@@ -12137,7 +12157,7 @@
           },
           {
             "name": "owner",
-            "description": "The number of items in the stash",
+            "description": "The owner of the stash",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12288,18 +12308,6 @@
             "deprecationReason": null
           },
           {
-            "name": "description",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "id",
             "description": null,
             "args": [],
@@ -12425,6 +12433,18 @@
             "deprecationReason": null
           },
           {
+            "name": "identifier",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "StrFilterLookup",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -12471,18 +12491,6 @@
                   "ofType": null
                 }
               }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "username",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StrFilterLookup",
-              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -13000,13 +13008,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -13016,13 +13020,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -13258,6 +13258,42 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateMembershipColorsInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "brandChroma",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "brandHue",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -13595,7 +13631,7 @@
                 "description": null,
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "OrganizationFilter",
+                  "name": "ComChannelFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -13780,30 +13816,6 @@
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "managedClients",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "DjangoModelType",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
             },
             "isDeprecated": false,
             "deprecationReason": null

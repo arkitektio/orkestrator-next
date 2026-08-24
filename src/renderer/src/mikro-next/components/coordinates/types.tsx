@@ -90,7 +90,5 @@ export const describeTransformation = (
       return `sequence of ${childCount(transformation)}`;
     case "ByDimensionTransformation":
       return `by dimension (${childCount(transformation)})`;
-    case "BijectionTransformation":
-      return `bijection (${childCount(transformation)})`;
   }
 };

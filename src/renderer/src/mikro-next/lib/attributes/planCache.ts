@@ -59,7 +59,7 @@ const toStructuralPlans = (
   const executable = fragments.filter(isTablePlan);
   if (executable.length < fragments.length) {
     console.warn(
-      `[attributes] ${fragments.length - executable.length} sparse plan(s) ignored — reading a sparse matrix is not supported yet`,
+      `[attributes] ${fragments.length - executable.length} sparse plan(s) ignored — an attribute plan is the HOVER direction (one object's whole profile, over the object-major layout), which is not built. A sparse COLOURING reads the other layout and does not come through here.`,
     );
   }
   return executable;

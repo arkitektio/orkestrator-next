@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // (`columnOptions.ts` imports the ColumnControl enum from the generated
 // `graphql.ts`, whose Apollo hooks barrel touches `window` on load.)
+import { ColorMap } from "@/mikro-next/api/graphql";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -22,6 +23,9 @@ import {
   entryMatchesOption,
   filterByEntryToInput,
   isColumnColorBy,
+  isColumnOption,
+  toSparseColorByInput,
+  isSparseOption,
   isJoinedEntry,
   optionKey,
   toColorByInput,
@@ -298,12 +302,12 @@ describe("entry captions", () => {
 
   it("describes a colouring by which half of the split applies", () => {
     expect(describeColouring({ colormap: "VIRIDIS" as never })).toContain("viridis");
-    expect(describeColouring({ colormap: null, classColors: { a: [1, 2, 3] } })).toBe(
-      "explicit colours per value",
+    // A qualitative colormap is the categorical half now -- named, so the caption can say
+    // which palette rather than "explicit colours per value" over a map it had to inspect.
+    expect(describeColouring({ colormap: ColorMap.Distinct })).toBe(
+      '"distinct" palette, a colour per distinct value',
     );
-    expect(describeColouring({ colormap: null, classColors: null })).toBe(
-      "a colour per distinct value",
-    );
+    expect(describeColouring({ colormap: null })).toBe("a colour per distinct value");
   });
 
   it("describes a rule by its bounds or its value set", () => {
@@ -335,5 +339,86 @@ describe("active indices after a removal", () => {
     expect(activeFilterBysAfterRemoval([0, 1, 3], 1)).toEqual([0, 2]);
     expect(activeFilterBysAfterRemoval([0, 1], 2)).toEqual([0, 1]);
     expect(activeFilterBysAfterRemoval([], 0)).toEqual([]);
+  });
+});
+
+
+describe("the sparse arm of the picker", () => {
+  const sparseOption = {
+    __typename: "ColorByOption",
+    control: "MEASURE",
+    axes: ["gene"],
+    sparseDataset: { id: "d1", name: "expression" },
+    table: null,
+    column: null,
+    joinPath: [],
+  } as never;
+
+  const columnOption = {
+    __typename: "ColorByOption",
+    control: "MEASURE",
+    axes: [],
+    sparseDataset: null,
+    table: { id: "t1", name: "cells" },
+    column: { name: "area" },
+    joinPath: [],
+  } as never;
+
+  it("narrows the two arms apart", () => {
+    expect(isSparseOption(sparseOption)).toBe(true);
+    expect(isSparseOption(columnOption)).toBe(false);
+    expect(isColumnOption(columnOption)).toBe(true);
+    expect(isColumnOption(sparseOption)).toBe(false);
+  });
+
+  it("keys a sparse option on the MATRIX, not on a slice of it", () => {
+    // The position is not part of the option — a 19,059-feature matrix is one
+    // row — so "already added" has to mean "this matrix is in the picker".
+    expect(optionKey(sparseOption)).toBe("sparse|d1");
+  });
+
+  it("emits kind, dataset and at — the fields toColorByInput never had", () => {
+    const input = toSparseColorByInput(sparseOption, [{ axis: "gene", value: 4711 }]);
+    expect(input.kind).toBe(ColorSourceKind.Sparse);
+    expect(input.dataset).toBe("d1");
+    expect(input.at).toEqual([{ axis: "gene", value: 4711 }]);
+    // Always measured: a slice is a value per object, never a class map.
+    expect(input.colormap).toBe(ColorMap.Magma);
+  });
+
+  it("refuses an `at` that does not name every identified axis", () => {
+    // The server refuses this too; catching it here keeps a mutation from being
+    // sent that cannot succeed.
+    const rank3 = { ...sparseOption, axes: ["metabolite", "adduct"] } as never;
+    expect(() => toSparseColorByInput(rank3, [{ axis: "metabolite", value: 7 }])).toThrow(
+      /names a position along adduct, metabolite/,
+    );
+    expect(() =>
+      toSparseColorByInput(rank3, [
+        { axis: "metabolite", value: 7 },
+        { axis: "adduct", value: 0 },
+      ]),
+    ).not.toThrow();
+  });
+
+  it("round-trips a sparse entry back to an input without losing its arm", () => {
+    // The whole-array replace hazard: an entry read back and re-sent without
+    // `kind`/`dataset`/`at` would return as a COLUMN entry naming nothing.
+    const entry = {
+      kind: ColorSourceKind.Sparse,
+      dataset: "d1",
+      at: [{ axis: "gene", value: 4711 }],
+      table: null,
+      column: null,
+      joinPath: [],
+      colormap: ColorMap.Magma,
+      label: "expression",
+      min: null,
+      max: null,
+    } as never;
+    const back = colorByEntryToInput(entry);
+    expect(back.kind).toBe(ColorSourceKind.Sparse);
+    expect(back.dataset).toBe("d1");
+    expect(back.at).toEqual([{ axis: "gene", value: 4711 }]);
   });
 });

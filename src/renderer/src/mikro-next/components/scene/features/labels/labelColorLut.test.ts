@@ -8,6 +8,7 @@ import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTyp
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { accessForTable } from "../../platform/attributes/columnLut";
 import { buildLabelColorLut, LABEL_LUT_MAX_TEXELS } from "./labelColorLut";
+import { CODE_HIDDEN, CODE_NO_VALUE } from "../../platform/attributes/valueLut";
 
 /**
  * The label LUT differs from the mesh one in exactly one thing — the slot mapping
@@ -87,9 +88,10 @@ const fakeEngine = (byColumn: Record<string, Record<number, unknown>>) => {
 
 const PLANS = [arrayPlan("t1", "label_id", MASK_STORE)];
 
-const alphaAt = (data: Uint8Array, slot: number) => data[slot * 4 + 3];
-const rgbAt = (data: Uint8Array, slot: number) =>
-  [data[slot * 4], data[slot * 4 + 1], data[slot * 4 + 2]] as const;
+// The table holds a 16-bit code per slot now, not an RGBA colour — see
+// `valueLut.ts`. `code = G * 256 + R`, little-endian over the two RG8 bytes.
+const codeAt = (data: Uint8Array, slot: number) => data[slot * 2 + 1] * 256 + data[slot * 2];
+const visibleAt = (data: Uint8Array, slot: number) => (codeAt(data, slot) === CODE_HIDDEN ? 0 : 255);
 const dataOf = (texture: { image: { data: Uint8Array } } | null) =>
   (texture as unknown as { image: { data: Uint8Array } }).image.data;
 
@@ -155,7 +157,7 @@ describe("buildLabelColorLut — sparse id slots", () => {
 
     const data = dataOf(result.texture);
     // The lowest id sits at slot 0 and takes the bottom of the ramp.
-    expect(rgbAt(data, 0)).not.toEqual([255, 255, 255]);
+    expect(codeAt(data, 0)).not.toBe(CODE_NO_VALUE);
   });
 
   it("leaves an id the table never mentioned at the IDENTITY texel", async () => {
@@ -171,8 +173,8 @@ describe("buildLabelColorLut — sparse id slots", () => {
     const data = dataOf(result.texture);
     // Ids 1 and 5 at offset 1 → slots 0 and 4; slots 1..3 (ids 2..4) were never
     // mentioned and keep the identity.
-    expect(rgbAt(data, 2)).toEqual([255, 255, 255]);
-    expect(alphaAt(data, 2)).toBe(255);
+    // "visible, no value": the slot keeps its hue hash and stays drawn.
+    expect(codeAt(data, 2)).toBe(CODE_NO_VALUE);
   });
 
   it("REFUSES ids too sparse to index, and says so", async () => {
@@ -227,9 +229,9 @@ describe("buildLabelColorLut — filters over sparse ids", () => {
     });
     const data = dataOf(result.texture);
     expect(result.idOffset).toBe(100);
-    expect(alphaAt(data, 0)).toBe(0); // id 100, area 10 → out of bounds
-    expect(alphaAt(data, 1)).toBe(255); // id 101, area 20 → kept
-    expect(alphaAt(data, 2)).toBe(255); // id 102, area 30 → kept
+    expect(visibleAt(data, 0)).toBe(0); // id 100, area 10 → out of bounds
+    expect(visibleAt(data, 1)).toBe(255); // id 101, area 20 → kept
+    expect(visibleAt(data, 2)).toBe(255); // id 102, area 30 → kept
   });
 
   it("combines two rules with AND", async () => {
@@ -249,9 +251,9 @@ describe("buildLabelColorLut — filters over sparse ids", () => {
     const data = dataOf(result.texture);
     // Ids 1,2,3 at offset 1 → slots 0,1,2.
     expect(result.idOffset).toBe(1);
-    expect(alphaAt(data, 0)).toBe(255); // id 1: area 20, kind good → both pass
-    expect(alphaAt(data, 1)).toBe(0); // id 2: kind bad
-    expect(alphaAt(data, 2)).toBe(0); // id 3: area 5, out of bounds
+    expect(visibleAt(data, 0)).toBe(255); // id 1: area 20, kind good → both pass
+    expect(visibleAt(data, 1)).toBe(0); // id 2: kind bad
+    expect(visibleAt(data, 2)).toBe(0); // id 3: area 5, out of bounds
   });
 
   it("keeps everything when a rule's column could not be read", async () => {
@@ -265,7 +267,7 @@ describe("buildLabelColorLut — filters over sparse ids", () => {
       engine: fakeEngine({ area: { 1: 10, 2: 20 } }),
     });
     const data = dataOf(result.texture);
-    expect(alphaAt(data, 0)).toBe(255);
-    expect(alphaAt(data, 1)).toBe(255);
+    expect(visibleAt(data, 0)).toBe(255);
+    expect(visibleAt(data, 1)).toBe(255);
   });
 });

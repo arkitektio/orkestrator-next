@@ -2,6 +2,7 @@ import { MikroArrayDataset, MikroTableDataset } from "@/linkers";
 import {
   Aperture,
   Grid2x2,
+  Grid3x3,
   Layers,
   Shapes,
   Table2,
@@ -32,6 +33,7 @@ export const RESIDENT_ICON: Record<Kind, LucideIcon> = {
   MeshCollection: Shapes,
   Lens: Aperture,
   DataArray: Grid2x2,
+  SparseDataset: Grid3x3,
 };
 
 /** What to call the kind itself, in place of the raw `__typename`. */
@@ -42,6 +44,7 @@ export const RESIDENT_KIND_LABEL: Record<Kind, string> = {
   MeshCollection: "mesh collection",
   Lens: "lens",
   DataArray: "pyramid level",
+  SparseDataset: "sparse dataset",
 };
 
 /**

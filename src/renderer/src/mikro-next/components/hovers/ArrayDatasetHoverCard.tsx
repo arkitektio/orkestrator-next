@@ -74,7 +74,6 @@ export const ArrayDatasetHoverCard = ({ object }: { object: Object }) => {
               ? `Render of ${arrayDataset.defaultScene.name}`
               : ""
           }
-          tint={snapshot?.majorColor}
           /* The hover container is a fixed `w-80`, so a height is all this
              needs; the container's own `overflow-hidden` rounds the top
              corners for it. */

@@ -3,6 +3,7 @@ import type { AttributePlanLike } from "@/mikro-next/lib/attributes/attributeTyp
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import {
   allocateColumnLut,
+  columnLutTexels,
   columnLutTexture,
   isDirectEntry as isDirectColumnEntry,
   paintColumnLut,
@@ -12,6 +13,7 @@ import {
   type ColumnLutEntryFilterBy,
   type TableAccess,
 } from "../../../platform/attributes/columnLut";
+import type { SparseReadRequest } from "@/mikro-next/lib/sparse/sparseSource";
 import { readColumnByObjectIdCached } from "../../../platform/attributes/columnValueCache";
 import type { FabriksObjectEntry } from "./fabriksCatalogs";
 
@@ -65,7 +67,24 @@ export type ColorLutRequest = {
   /** The collection's attribute plans, for each table's store and key column. */
   plans: readonly AttributePlanLike[];
   engine: AttributeLookupEngine;
+  /**
+   * Present only when the active colouring reads a sparse matrix. Supplied by
+   * the caller rather than reached for here, so this module stays a pure
+   * builder — the same reason `readColumn` is injected.
+   */
+  sparse?: SparseReadRequest | null;
 };
+
+/**
+ * The budget for a mesh colour table.
+ *
+ * The label path has had one of these all along; this one never did, and its
+ * ordinal map below carries the assumption "which number in the thousands" as a
+ * comment rather than a limit. A collection large enough would therefore have
+ * silently allocated what the label builder loudly refuses. Same bytes, same
+ * discipline, said out loud.
+ */
+export const MESH_LUT_MAX_BYTES = 16 * 1024 * 1024;
 
 export type ColorLutResult = {
   texture: THREE.DataTexture;
@@ -92,10 +111,13 @@ export const accessForTable = (
  * Build the texture, indexed by the objects' dense ordinals.
  */
 export const buildColorLut = async (request: ColorLutRequest): Promise<ColorLutResult> => {
-  const { objects, colorBy, filterBys, plans, engine } = request;
+  const { objects, colorBy, filterBys, plans, engine, sparse } = request;
 
-  const { colorValues, ruleValues, skipped } = await resolveColumnValues({
-    colorBy,
+  // Rules always come from tables: a sparse FILTER is not expressible, because
+  // `MeshFilterByInput.table` and `column` are non-null. So the filter half goes
+  // through the column path either way, and only the colouring branches.
+  const { colorValues: columnValues, ruleValues, skipped } = await resolveColumnValues({
+    colorBy: sparse ? null : colorBy,
     filterBys,
     plans,
     engine,
@@ -106,13 +128,54 @@ export const buildColorLut = async (request: ColorLutRequest): Promise<ColorLutR
     readColumn: readColumnByObjectIdCached,
   });
 
+  // A SPARSE colouring reads a slice of a matrix rather than a column of a
+  // table — no SQL and no database in that path. Everything below is
+  // indifferent: the painter takes `objectId -> value` and does not care where
+  // it came from.
+  const colorValues = sparse
+    ? ((
+        await sparse.read(
+          sparse.source,
+          (colorBy?.at ?? []).map((position) => ({ axis: position.axis, value: position.value })),
+        )
+      ).values as Map<number, unknown>)
+    : columnValues;
+
   const ordinalCeiling = objects.reduce((max, object) => Math.max(max, object.ordinal), -1);
-  const { data, width, height } = allocateColumnLut(ordinalCeiling + 1);
+  const slotCount = ordinalCeiling + 1;
+
+  // The guard the label path has and this one never did. `allocateColumnLut`
+  // has no cap of its own, and the ordinal map below assumes "thousands" — so a
+  // collection large enough would silently allocate what the label builder
+  // loudly refuses. Same budget, stated the same way.
+  if (columnLutTexels(slotCount) * 4 > MESH_LUT_MAX_BYTES) {
+    skipped.push(
+      `this collection runs to ${slotCount} objects, so the lookup table is ${Math.round((slotCount * 4) / 1e6)} MB against a budget of ${Math.round(MESH_LUT_MAX_BYTES / 1e6)} MB — no colouring or filter is applied`,
+    );
+    // A 1x1 identity rather than null: this result type is non-nullable, and
+    // `setColorLut` disposes what it replaces, so handing back a real texture
+    // keeps that contract while colouring nothing.
+    const identity = allocateColumnLut(1);
+    return {
+      texture: columnLutTexture(identity.data, identity.width, identity.height),
+      width: identity.width,
+      height: identity.height,
+      skipped,
+    };
+  }
+
+  const { data, width, height } = allocateColumnLut(slotCount);
+
+  // The mesh slot mapping: the ordinal IS the slot. Unlike the label path this
+  // is a genuine lookup rather than arithmetic, so it stays a map — built once
+  // over the collection's objects, which number in the thousands.
+  const ordinals = new Map<number, number>();
+  for (const object of objects) ordinals.set(object.objectId, object.ordinal);
 
   paintColumnLut({
     data,
-    // The mesh slot mapping: the ordinal IS the slot.
-    targets: objects.map((object) => ({ objectId: object.objectId, slot: object.ordinal })),
+    slotCount,
+    slotOf: (objectId) => ordinals.get(objectId) ?? -1,
     colorBy,
     filterBys,
     colorValues,

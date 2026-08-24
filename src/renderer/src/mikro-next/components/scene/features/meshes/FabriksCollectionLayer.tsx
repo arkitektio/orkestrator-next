@@ -22,6 +22,7 @@ import { FabriksCollection } from "./fabriks/fabriksCollection";
 import { FabriksCollectionManager } from "./fabriks/fabriksManager";
 import { openFabriksCollection } from "./fabriks/fabriksSource";
 import { buildColorLut } from "./fabriks/fabriksColorLut";
+import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import {
@@ -223,19 +224,14 @@ const FabriksCollectionGroup = ({
   const storedColorBy =
     activeColorByIndex === null ? null : (layer.colorBys?.[activeColorByIndex] ?? null);
   /**
-   * A SPARSE colouring names a slice of a matrix rather than a column of a
-   * table, and the column LUT has no way to read one — so the collection
-   * draws uncoloured until it does, and says why rather than looking broken.
+   * Both arms render. A SPARSE entry names a matrix and a position rather than
+   * a table and a column, and is answered from the store directly.
    */
-  const colorBy = useMemo(() => {
-    if (!storedColorBy) return null;
-    if (isColumnColorBy(storedColorBy)) return storedColorBy;
-    console.warn(
-      "[mesh] the active colouring reads a sparse matrix, which does not render yet:",
-      storedColorBy,
-    );
-    return null;
-  }, [storedColorBy]);
+  const colorBy = storedColorBy;
+  const sparseDatasetId = useMemo(
+    () => (storedColorBy && !isColumnColorBy(storedColorBy) ? (storedColorBy.dataset ?? null) : null),
+    [storedColorBy],
+  );
   const filterBys = layer.filterBys;
   const activeFilterBys = layer.activeFilterBys;
   const activeRules = useMemo(
@@ -270,9 +266,17 @@ const FabriksCollectionGroup = ({
         attributeService.plansFor(systemId),
       ]);
       if (cancelled) return;
+      // Fetched here rather than in the builder, so the builder stays free of
+      // Apollo — the same seam `readColumn` uses on the column side.
+      const sparse =
+        sparseDatasetId && datalayer
+          ? await loadSparseSource(client, datalayer, sparseDatasetId)
+          : null;
+      if (cancelled) return;
       const lut = await buildColorLut({
         objects,
         colorBy,
+        sparse,
         filterBys: activeRules,
         plans,
         engine: attributeService.engine,
@@ -302,7 +306,11 @@ const FabriksCollectionGroup = ({
     // `colorBy` / `activeRules` are read inside the effect; `lutKey` is what
     // decides whether it re-runs. See the note on the key itself.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manager, attributeService, systemId, lutKey, invalidate]);
+    // `client` and `datalayer` are deliberately absent: they are infrastructure
+    // read inside, and a provider returning a fresh object per render would
+    // rebuild the table on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manager, attributeService, systemId, lutKey, sparseDatasetId, invalidate]);
 
   // Per-layer LOD preset: replans immediately against the last settle.
   useEffect(() => {

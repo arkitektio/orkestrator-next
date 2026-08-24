@@ -6,15 +6,19 @@
  * React state instead would mean recompiling the shader on every camera move,
  * which is exactly what the uniform-push contract exists to avoid. */
 import { useThree } from "@react-three/fiber";
+import { useDatalayerEndpoint, useMikro } from "@/app/Arkitekt";
 import { useEffect, useMemo } from "react";
 
 import { useAttributeServiceOrNull } from "@/mikro-next/lib/attributes/AttributeServiceProvider";
 import { level0StoreIdOf, systemIdOf } from "../../platform/model/layerLevel0";
 import type { LayerState } from "../../platform/model/layerModel";
-import { setLabelColorLut, type LabelLutNodes } from "./labelNodeMaterials";
+import { setLabelColorLut, setLabelColorStyle, type LabelLutNodes } from "./labelNodeMaterials";
 import { useViewerStoreApi } from "../../platform/stores/viewerStore";
 import { buildLabelColorLut } from "./labelColorLut";
+import { DEFAULT_MEASURE_COLORMAP, paletteRowFor } from "../../platform/attributes/valueLut";
+import { qualitativePalette } from "../../platform/layerui/colormap-utils";
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
+import { loadSparseSource } from "@/mikro-next/lib/sparse/sparseSource";
 
 /**
  * Resolve a label layer's ACTIVE colouring and filter rules into the material's
@@ -37,24 +41,22 @@ export const useLabelColorLut = (
   const attributeService = useAttributeServiceOrNull();
   const invalidate = useThree((state) => state.invalidate);
   const viewerStoreApi = useViewerStoreApi();
+  const client = useMikro();
+  const datalayer = useDatalayerEndpoint();
 
   const render = layer?.labelRender;
   const storedColorBy =
     render?.activeColorBy != null ? (render.colorBys?.[render.activeColorBy] ?? null) : null;
   /**
-   * A SPARSE colouring names a slice of a matrix rather than a column of a
-   * table, and the column LUT has no way to read one — so the mask draws
-   * uncoloured until it does, and says why rather than looking broken.
+   * Both arms render now. A SPARSE entry names a matrix and a position rather
+   * than a table and a column, and is answered from the store directly — there
+   * is no SQL and no database in that path.
    */
-  const activeColorBy = useMemo(() => {
-    if (!storedColorBy) return null;
-    if (isColumnColorBy(storedColorBy)) return storedColorBy;
-    console.warn(
-      "[label] the active colouring reads a sparse matrix, which does not render yet:",
-      storedColorBy,
-    );
-    return null;
-  }, [storedColorBy]);
+  const activeColorBy = storedColorBy;
+  const sparseDatasetId = useMemo(
+    () => (storedColorBy && !isColumnColorBy(storedColorBy) ? (storedColorBy.dataset ?? null) : null),
+    [storedColorBy],
+  );
   const activeRules = useMemo(
     () =>
       (render?.activeFilterBys ?? [])
@@ -69,9 +71,37 @@ export const useLabelColorLut = (
    * sharing's call — keying on it would re-run this for nothing, or miss a real
    * change. (Same reasoning as `FabriksCollectionLayer`'s `lutKey`.)
    */
-  const lutKey = useMemo(
-    () => JSON.stringify([activeColorBy, activeRules]),
+  // Two keys, not one. The table depends on WHICH values are read; the window
+  // and the palette depend only on how they are drawn. Keying both off one
+  // string meant a clim nudge rebuilt and re-uploaded the whole table — at a bin
+  // lattice's scale, tens of megabytes to change how a number becomes a hue.
+  //
+  // `columnLut.ts` already makes this argument for the base colour, refusing to
+  // bake it in because it would tie the texture to live uniforms; the value
+  // encoding is that argument applied to the colormap as well.
+  const dataKey = useMemo(
+    () =>
+      JSON.stringify([
+        activeColorBy && {
+          table: activeColorBy.table ?? null,
+          column: activeColorBy.column ?? null,
+          joinPath: activeColorBy.joinPath ?? null,
+          dataset: activeColorBy.dataset ?? null,
+          at: activeColorBy.at ?? null,
+        },
+        activeRules,
+      ]),
     [activeColorBy, activeRules],
+  );
+
+  const styleKey = useMemo(
+    () =>
+      JSON.stringify([
+        activeColorBy?.colormap ?? null,
+        activeColorBy?.min ?? null,
+        activeColorBy?.max ?? null,
+      ]),
+    [activeColorBy],
   );
 
   const systemId = layer ? systemIdOf(layer) : null;
@@ -82,7 +112,7 @@ export const useLabelColorLut = (
     const off = () => {
       setLabelColorLut(
         nodes,
-        { texture: null, width: 0, height: 0, idOffset: 0 },
+        { texture: null, width: 0, height: 0, idOffset: 0, valueMin: 0, valueMax: 1 },
         { colorize: false, filter: false },
       );
       viewerStoreApi.getState().volumeInputs.bump("label-lut");
@@ -98,8 +128,16 @@ export const useLabelColorLut = (
     void (async () => {
       const plans = await attributeService.plansFor(systemId);
       if (cancelled) return;
+      // Fetched here rather than in the builder so the builder stays free of
+      // Apollo — the same reason `readColumn` is injected on the column side.
+      const sparse =
+        sparseDatasetId && datalayer
+          ? await loadSparseSource(client, datalayer, sparseDatasetId)
+          : null;
+      if (cancelled) return;
       const lut = await buildLabelColorLut({
         colorBy: activeColorBy,
+        sparse,
         filterBys: activeRules,
         plans,
         storeId,
@@ -130,8 +168,31 @@ export const useLabelColorLut = (
     return () => {
       cancelled = true;
     };
-    // `activeColorBy` / `activeRules` are read inside; `lutKey` is what decides
+    // `activeColorBy` / `activeRules` are read inside; `dataKey` is what decides
     // whether this re-runs. See the note on the key itself.
+    // `client` and `datalayer` are deliberately NOT here. They are infrastructure
+    // read inside, and a provider that returns a fresh object per render would
+    // rebuild the whole table on every render — which is the cost this split
+    // exists to remove. What the table depends on is `dataKey` and the dataset.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, attributeService, systemId, storeId, lutKey, invalidate]);
+  }, [nodes, attributeService, systemId, storeId, dataKey, sparseDatasetId, invalidate]);
+
+  // The appearance half. Synchronous, no await, no allocation: two uniform
+  // writes and a 1 KB palette row, both of which the table is indifferent to.
+  useEffect(() => {
+    if (!nodes || !activeColorBy) return;
+    const palette = paletteRowFor(activeColorBy.colormap ?? DEFAULT_MEASURE_COLORMAP);
+    // A qualitative colouring writes its ranks normalised onto 0..1 already, so
+    // its window is the unit interval and a clim would only smear the classes
+    // into each other. The UI never offers one; this makes that structural.
+    const qualitative = qualitativePalette(activeColorBy.colormap) !== null;
+    setLabelColorStyle(nodes, {
+      palette,
+      climMin: qualitative ? 0 : (activeColorBy.min ?? Number.NEGATIVE_INFINITY),
+      climMax: qualitative ? 1 : (activeColorBy.max ?? Number.POSITIVE_INFINITY),
+    });
+    invalidate();
+    // `activeColorBy` is read inside; `styleKey` decides whether this re-runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, styleKey, invalidate]);
 };

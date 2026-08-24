@@ -17,15 +17,17 @@ import {
   type ColumnDomain,
 } from "@/mikro-next/lib/attributes/columnStats";
 import {
-  COLORMAP_OPTIONS,
-  classColorsForPalette,
+  CONTINUOUS_COLORMAPS,
   colormapGradientCSS,
+  colormapOfPalette,
   instancePaletteCSS,
-  paletteOfClassColors,
+  qualitativePalette,
   sampleColormapCSS,
 } from "./colormap-utils";
 import { ColormapSelect, type ColormapChoice } from "./ColormapSelect";
+import { SparsePositionPicker } from "./SparsePositionPicker";
 import {
+  DEFAULT_INSTANCE_COLORMAP,
   INSTANCE_COLORMAPS,
   type FabriksInstanceColormap,
 } from "../gpu/instanceColormaps";
@@ -94,6 +96,8 @@ const clampToDomain = (
 };
 
 type Draft = {
+  /** (SPARSE) which slice of the matrix to read. */
+  at?: { axis: string; value: number }[];
   colormap?: ColorMap | null;
   classColors?: unknown;
   min?: number | null;
@@ -411,10 +415,10 @@ export const ColumnEntrySettings = ({
   );
 
   // ------------------------------------------------- colormap select choices
-  /** Continuous ramps for a measure colouring. */
+  /** Continuous ramps for a measure colouring -- every member that is not a palette. */
   const measureChoices: ColormapChoice[] = useMemo(
     () =>
-      COLORMAP_OPTIONS.map((cm) => ({
+      CONTINUOUS_COLORMAPS.map((cm) => ({
         value: cm,
         label: cm.toLowerCase(),
         css: colormapGradientCSS(cm, 18),
@@ -423,46 +427,65 @@ export const ColumnEntrySettings = ({
   );
 
   /**
-   * The instance palettes for a categorical colouring — the SAME set the
-   * default instance-id mode offers, so "categorical" always means these
-   * whichever entry hosts it. "auto" is the derived colour-per-value (a null
-   * `classColors`); a palette pick is persisted as an explicit map over the
-   * distinct values, so it needs them read first.
+   * The instance palettes for a categorical colouring — the SAME set the default instance-id
+   * mode offers, so "categorical" always means these whichever entry hosts it.
+   *
+   * A pick is now one enum member on the entry's own `colormap`, where a measure column's ramp
+   * also lives. It used to be persisted as an explicit `classColors` map over the column's
+   * distinct values, which meant the control could not be offered until they had been read,
+   * covered only the first `DISTINCT_LIMIT` of them, and needed a reserved `__palette` key
+   * smuggled into the map so this select could tell which palette it was looking at. A
+   * qualitative colormap is a function of a value's rank, so none of that is needed: no read,
+   * no cap, and the "custom" state a hand-made map used to leave behind cannot arise.
    */
-  const activePalette = paletteOfClassColors(colouring.classColors);
-  const categoricalValue = activePalette ?? (colouring.classColors ? "custom" : "auto");
-  const categoricalChoices: ColormapChoice[] = useMemo(() => {
-    const choices: ColormapChoice[] = [
-      {
-        value: "auto",
-        label: "auto",
-        css: "linear-gradient(90deg, #e879f9, #22d3ee, #a3e635)",
-      },
-      ...INSTANCE_COLORMAPS.map((name) => ({
+  const categoricalValue = qualitativePalette(colouring.colormap) ?? DEFAULT_INSTANCE_COLORMAP;
+  const categoricalChoices: ColormapChoice[] = useMemo(
+    () =>
+      INSTANCE_COLORMAPS.map((name) => ({
         value: name,
         label: name,
         css: instancePaletteCSS(name),
-        disabled: !distinct,
       })),
-    ];
-    // A hand-made map (no palette stamp) is a real state the select has to be
-    // able to SHOW, even though it offers no way back into it.
-    if (categoricalValue === "custom") {
-      choices.push({ value: "custom", label: "custom", css: "none", disabled: true });
-    }
-    return choices;
-  }, [distinct, categoricalValue]);
+    [],
+  );
 
   const pickCategorical = (value: string) => {
-    if (value === "auto") {
-      onCommit({ classColors: null });
-      return;
-    }
-    if (!distinct) return;
-    onCommit({
-      classColors: classColorsForPalette(value as FabriksInstanceColormap, distinct.values),
-    });
+    onCommit({ colormap: colormapOfPalette(value as FabriksInstanceColormap) });
   };
+
+  // A SPARSE colouring names a matrix and a position rather than a table and a
+  // column, so it gets its own settings entirely: which slice to read, and the
+  // colormap window. There is no role to resolve and no column stats to scan —
+  // a slice is always measured.
+  if (!isFilter && colouring.dataset) {
+    return (
+      <div className="space-y-2 text-xs">
+        <SparsePositionPicker
+          dataset={colouring.dataset}
+          at={colouring.at ?? []}
+          onCommit={(at) => onCommit({ at: at.map((position) => ({ ...position })) })}
+        />
+        <div className="space-y-1.5">
+          <div className="text-[9px] uppercase tracking-[0.08em] text-white/35">colormap</div>
+          <ColormapSelect
+            value={colouring.colormap ?? ColorMap.Magma}
+            choices={measureChoices}
+            onChange={(value) => onCommit({ colormap: value as ColorMap })}
+          />
+        </div>
+        {/* No clim slider here, deliberately. A slider needs a domain, and a
+            slice's range is not known until it is read — the table is
+            quantised over the slice's OWN range at build time and the window
+            is a uniform over that, so every gene auto-scales to itself. That is
+            the right default (`picker.py`: a gene maxing at 3 sharing an
+            inherited range with one maxing at 400 renders black), and inventing
+            a domain to slide over would be worse than not offering one. */}
+        <div className="text-[9px] text-white/35">
+          scaled to this slice&rsquo;s own range
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2 text-xs">
@@ -527,12 +550,6 @@ export const ColumnEntrySettings = ({
             <div className="text-[9px] text-white/35">
               {distinct.values.length}
               {distinct.truncated ? "+" : ""} distinct values, a colour each
-            </div>
-          )}
-          {distinct?.truncated && activePalette && (
-            <div className="text-[9px] text-amber-300/80">
-              More than {DISTINCT_LIMIT} distinct values — the palette names only
-              the first {DISTINCT_LIMIT}; the rest keep their derived colour.
             </div>
           )}
         </div>

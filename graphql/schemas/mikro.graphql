@@ -1,4 +1,4 @@
-directive @auth(required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
+directive @auth(required_org_roles: [String!] = null, required_roles: [String!] = null, required_scopes: [String!] = null) on FIELD_DEFINITION
 
 directive @unionElementOf(discriminator: String!, key: String!, union: String!) repeatable on INPUT_OBJECT
 
@@ -52,7 +52,7 @@ type AffineTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -68,6 +68,11 @@ type AffineTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -409,7 +414,7 @@ input AnnotationFilter {
 }
 
 """
-The shape an annotation is drawn as. Unlike `RoiKind`, which this replaced, the members name geometry only: which axes a shape spans is a property of the coordinate system it is drawn in, not of the shape
+The physical unit used to express spatial dimensions, e.g. of pixel sizes or stage positions.
 """
 enum AnnotationKind {
   """
@@ -486,7 +491,7 @@ type AnnotationLayer implements Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -496,7 +501,7 @@ type AnnotationLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -1027,7 +1032,7 @@ input AxisPositionInput {
 }
 
 """
-The semantic kind of an axis. A system's axes must be ordered by type: time first, then channel and custom types, then space.
+The semantic kind of an axis. An array's axes must be ordered by type -- time first, then channel and custom types, then space -- because an array's axis order is its store's dimension order. A table's are not: a parquet column's position is arbitrary, so its coordinate columns are stored in the order they are declared.
 """
 enum AxisType {
   """
@@ -1197,53 +1202,6 @@ type BigFileUploadGrant {
   uploadFormField: String!
 }
 
-"""
-A pair of child transformations giving an explicit forward and inverse map
-"""
-type BijectionTransformation implements Transformation {
-  createdAt: DateTime!
-  creator: User
-  id: ID!
-  input: CoordinateSystem
-
-  """
-  The names of the input axes this edge's parameters are ordered by. `scale`, `translation` and the columns of `affine` follow this order -- which is the input system's axis order, NOT the reading layer's axis names, and the two differ often enough that indexing the arrays against them silently misplaces them. A BY_DIMENSION edge names only the subset of axes it acts on; the axes it does not name are the ones it leaves untouched
-  """
-  inputAxes: [String!]!
-
-  """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
-  """
-  invariance: TransformInvariance!
-  kind: TransformKind!
-  name: String
-  output: CoordinateSystem
-
-  """
-  The names of the output axes this edge produces. For a rank-changing BY_DIMENSION edge (placing a (c,y,x) dataset into a (t,z,y,x) world) this is the subset it maps onto; the world's other axes are untouched
-  """
-  outputAxes: [String!]!
-
-  """
-  Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
-  """
-  provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
-
-  """The forward transformation (order 0) and its inverse (order 1)"""
-  transformations: [Transformation!]!
-
-  """
-  How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
-  """
-  validity: PlacementValidity!
-
-  """
-  (derivation edges) What the operation this edge records did to the *values*, orthogonal to `kind`: IDENTICAL (a crop -- statistics transfer), TRANSFORMED (a deconvolution -- same quantity, new numbers), CATEGORIZED (a threshold -- values became labels, and a bootstrapped scene renders the data as a label map). Null when unstated, and never present on a registration -- values do not cross a claim between spaces
-  """
-  valueRelation: ValueRelation
-  version: Int!
-}
-
 """Composites its children using an in-layer blend mode"""
 type BlendNode implements LayerRenderNode {
   blending: Blending!
@@ -1349,7 +1307,7 @@ type ByDimensionTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -1365,6 +1323,11 @@ type ByDimensionTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   The child transformations. Each carries the `inputAxes` and `outputAxes` it acts on
@@ -1602,9 +1565,7 @@ type ColorByOption {
   table: TableDataset
 }
 
-"""
-The colormap used to map intensity values of a channel to display colors.
-"""
+"""The color space format used to interpret color component values."""
 enum ColorMap {
   """A colormap rendering all values as black."""
   BLACK
@@ -1621,11 +1582,21 @@ enum ColorMap {
   """A monochromatic colormap from black to cyan."""
   CYAN
 
+  """
+  Qualitative. The hue scatter with saturation and value tiered by rank as well, so two classes that happen to land on nearby hues still separate -- a palette-free take on glasbey. Reach for it when a mask has many classes.
+  """
+  DISTINCT
+
   """A monochromatic colormap from black to pure green."""
   GREEN
 
   """A grayscale colormap from black to white."""
   GREY
+
+  """
+  Qualitative. A colour per distinct value, scattered around the hue wheel by the golden ratio so consecutive classes land far apart. The default categorical palette, and the one the id hash itself paints with.
+  """
+  HUES
 
   """
   The perceptually uniform inferno colormap, ranging from black through red to yellow.
@@ -1645,6 +1616,11 @@ enum ColorMap {
 
   """A monochromatic colormap from black to orange."""
   ORANGE
+
+  """
+  Qualitative. The hue scatter at low saturation, for a colouring meant to sit under something else rather than carry the picture.
+  """
+  PASTEL
 
   """A monochromatic colormap from black to pink."""
   PINK
@@ -1670,6 +1646,11 @@ enum ColorMap {
   The perceptually uniform viridis colormap, ranging from dark purple to yellow.
   """
   VIRIDIS
+
+  """
+  Qualitative. The hue scatter at full saturation, for a colouring meant to carry the picture.
+  """
+  VIVID
 
   """A colormap of warm tones ranging from yellow to red."""
   WARM
@@ -1722,6 +1703,20 @@ type Column {
 }
 
 """
+The fields a COLUMN member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput
+"""
+input ColumnColorByInput {
+  colormap: ColorMap = null
+  column: String!
+  joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
+  label: String = null
+  max: Float = null
+  min: Float = null
+  table: ID!
+}
+
+"""
 Which kind of control a column admits, derived from its declared role. The one split that decides how a value becomes a colour and how it is filtered -- published here so a picker renders the control the write path will actually accept.
 """
 enum ColumnControl {
@@ -1737,16 +1732,15 @@ enum ColumnControl {
 }
 
 """
-One declared column of a table dataset: its name, dtype, and role. A COORDINATE column also carries an axis type and becomes an axis of the table's space; a COORDINATE or ATTRIBUTE column may state the unit its values are in
+One column of the table. **Every column of the Parquet is declared, and the declaration is checked against the file** -- same names, same order, same types -- so a declaration that has drifted from the data is refused rather than stored. That check is the whole reason `name` and `dtype` are here: they are facts about the file, and stating them is how a caller says which file they think they are describing. `dtype` is a **DuckDB** type name (`BIGINT`, `DOUBLE`, `VARCHAR`), which is what the server reads back off the Parquet -- not a pandas one, where a float64 is a `double`. A COORDINATE column is an axis and is declared in `axes` as well, which is where its type and its identification live
 """
 input ColumnInput {
-  axisType: AxisType = null
   description: String = null
   dtype: String!
   longName: String = null
   name: String!
   references: ID = null
-  role: ColumnRole! = ATTRIBUTE
+  role: ColumnRole = null
   unit: Unit = null
 }
 
@@ -1873,7 +1867,7 @@ type CoordinateGraph {
   systems: [CoordinateSystem!]!
 
   """
-  Every top-level edge with both endpoints in `systems`, ordered by ID. The children of a SEQUENCE / BY_DIMENSION / BIJECTION wrapper are not listed here; they hang off their wrapper
+  Every top-level edge with both endpoints in `systems`, ordered by ID. The children of a SEQUENCE / BY_DIMENSION wrapper are not listed here; they hang off their wrapper
   """
   transformations: [Transformation!]!
 }
@@ -1896,7 +1890,7 @@ type CoordinateSystem {
   annotations: [Annotation!]!
 
   """
-  The system's axes, in array order (slowest-varying first). RFC-5 requires them ordered by type: time, then channel and custom types, then space
+  The system's axes, in array order (slowest-varying first). For a system backed by an array these are ordered by type -- time, then channel and custom types, then space -- since that order is the store's dimension order. A table's system is not held to it; its axes are its coordinate columns in declared order. Either way the *spatial* axes are in array order, which is what the render axes are derived from
   """
   axes(filters: AxisFilter, pagination: OffsetPaginationInput): [Axis!]!
   createdAt: DateTime!
@@ -1999,7 +1993,7 @@ input CoordinateSystemOrder @oneOf {
 }
 
 """
-The kind of a transformation a client can author directly: the discriminator of `TransformInput`. SEQUENCE and BIJECTION are absent on purpose -- they are wrappers the ingest builds together with their children (pyramid levels, stepped lenses), never authored empty.
+The kind of a transformation a client can author directly: the discriminator of `TransformInput`. SEQUENCE is absent on purpose -- it is a wrapper the ingest builds together with its children (pyramid levels, stepped lenses), never authored empty.
 """
 enum CreatableTransformKind {
   """
@@ -2301,9 +2295,13 @@ input CreatePhasorLayerInput {
 Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from a table dataset
 """
 input CreatePointLayerInput {
+  activeColorBy: Int = null
+  activeFilterBys: [Int!] = null
   blending: Blending = null
+  colorBys: [LabelColorByInput!] = null
   colorColumn: String = null
   colormap: ColorMap = null
+  filterBys: [LabelFilterByInput!] = null
   opacity: Float = null
   order: Int = null
   pointSize: Float = null
@@ -2371,15 +2369,14 @@ input CreateSparseDatasetInput {
 Input for creating a table dataset from a Parquet store. Its coordinate columns become the axes of a coordinate system it owns; declare no coordinate columns for a pure measurement table (its rows enumerate objects and its lineage edge is UNMAPPABLE)
 """
 input CreateTableDatasetInput {
+  axes: [TableAxisInput!]! = []
   columns: [ColumnInput!]! = []
   data: ParquetLike!
   derivedFrom: [DerivedFromInput!] = null
   description: String = null
   folder: ID = null
-  keyedBy: [KeyedByInput!] = null
   name: String!
   sourceFiles: [SourceFileInput!] = null
-  validateSchema: Boolean! = false
 }
 
 """
@@ -2404,6 +2401,7 @@ input CreateTransformationInput {
   input: ID!
   name: String = null
   output: ID!
+  selector: SelectorInput = null
   transform: TransformInput!
   validity: PlacementValidity = null
   valueRelation: ValueRelation = null
@@ -2495,21 +2493,11 @@ input DatasetExportOfInput {
 }
 
 """
-The fields a DATASET identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+The fields a DATASET identification reads. Published for codegen; the wire type is the flat IdentificationInput
 """
 input DatasetIdentifiesInput {
   dataset: ID!
-  kind: SparseIdentificationKind! = DATASET
-  name: String = null
-  validity: PlacementValidity = null
-}
-
-"""
-The fields a DATASET keying reads. Published for codegen; the wire type is the flat KeyedByInput
-"""
-input DatasetKeyedByInput {
-  dataset: ID!
-  kind: KeyedBySourceKind! = DATASET
+  kind: IdentificationKind! = DATASET
   name: String = null
   validity: PlacementValidity = null
 }
@@ -3003,7 +2991,7 @@ type FieldTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -3019,6 +3007,11 @@ type FieldTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -3696,6 +3689,61 @@ enum HistoryKind {
 }
 
 """
+What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET` and `MESH_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
+"""
+input IdentificationInput {
+  """
+  (DATASET) The label dataset whose pixel values are the positions along this axis. Its own pixel grid is both the edge's input and its field, which is what a label mask is
+  """
+  dataset: ID = null
+
+  """
+  Which sort of thing identifies this axis. It fixes which id field below is read; any other is rejected
+  """
+  kind: IdentificationKind!
+
+  """
+  (MESH_COLLECTION) The mesh collection whose geometry rows carry the positions. Its vertex space is both the edge's input and its field, exactly as a mask's grid is
+  """
+  meshCollection: ID = null
+
+  """
+  What to call the edge this authors, in a graph a person has to read. Defaults to `<source> -> <dataset>`. Only meaningful for the kinds that author one
+  """
+  name: String = null
+
+  """
+  (TABLE) The table whose rows this axis' positions are. Must be keyed by exactly one INDEX coordinate column, which is where a position is looked up -- the same contract `Column.references` carries. A matrix with 19 059 features costs one picker entry because of this, not 19 059
+  """
+  table: ID = null
+
+  """
+  How far the edge this authors may be trusted. Only meaningful for the kinds that author one
+  """
+  validity: PlacementValidity = null
+}
+
+"""
+How one axis is identified -- the discriminator of `IdentificationInput`, and the same question whether the axis belongs to a sparse matrix or to a table. An axis of positions means nothing until something says what those positions *are*, and there are exactly these three ways to answer. Two of them author a FIELD edge, which is also what makes the data reachable from a layer over that source; `TABLE` authors none and states a foreign key instead, because a table is already in record-land
+"""
+enum IdentificationKind {
+  """
+  A label mask, through its intrinsic pixel grid: its pixel values are the positions along this axis. Authors a FIELD edge, so it is also what makes the data reachable from a layer over that mask.
+  """
+  DATASET
+
+  """
+  A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows, so a client that picked a surface is already holding one. Authors a FIELD edge, exactly as DATASET does.
+  """
+  MESH_COLLECTION
+
+  """
+  A table whose rows this axis' positions are -- the relation `Column.references` carries, said of the axis. Authors no edge and touches no coordinate system: a table is already in record-land, where the relation is a foreign key rather than a map between spaces. It is what lets a FIELD edge land beside it, because an axis identified this way is one the edge is not expected to supply. Valid on an INDEX axis only: a SPACE or TIME coordinate's values are positions, and a position in nanometres and a row id are different things.
+  """
+  TABLE
+}
+
+"""
 The fields an IDENTITY member of TransformInput reads -- only the discriminator, the map having no parameters. Published for codegen; the wire type is the flat TransformInput
 """
 input IdentityTransformInput {
@@ -3715,7 +3763,7 @@ type IdentityTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -3731,6 +3779,11 @@ type IdentityTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -3756,7 +3809,7 @@ type ImageLayer implements Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3772,7 +3825,7 @@ type ImageLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -3842,54 +3895,10 @@ input JoinStepInput {
 }
 
 """
-A source whose own contents are the ids this table is indexed by, as a discriminated union: `kind` selects which sort of source is being named, and only that member's id field is read -- any other is rejected. It authors the FIELD edge in the direction the map actually runs -- source -> table rows -- which is the direction attributePlans discovers, and the opposite of the lineage `derivedFrom` records
-"""
-input KeyedByInput {
-  """
-  (DATASET) The label dataset whose pixels are the map. Its own pixel grid is both the edge's input and its field, which is what a label mask is: the array being mapped is the array doing the mapping
-  """
-  dataset: ID = null
-
-  """
-  Which sort of thing the source is. It fixes which id field below is read; any other is rejected
-  """
-  kind: KeyedBySourceKind!
-
-  """
-  (MESH_COLLECTION) The mesh collection whose geometry carries the ids. Its own vertex space is both the edge's input and its field, exactly as a mask's grid is -- what differs is only where the id was materialised: on the geometry rows rather than in pixels, so a client that picked a surface is already holding one and samples nothing
-  """
-  meshCollection: ID = null
-
-  """An optional name for the edge. Defaults to '<source> -> <table>'"""
-  name: String = null
-
-  """
-  How much this dereference is actually known. Defaults to MANUAL -- someone authored it. Say VALIDATED when the ids the source carries were checked against the table's rows
-  """
-  validity: PlacementValidity = null
-}
-
-"""
-Which kind of thing keys a table: the discriminator of `KeyedByInput`. Two members, not the six `DerivationSourceKind` carries, because a keying source has to be something whose own contents identify an object -- a mask's pixels, a collection's geometry. A lens is a selection and owns neither; a table is already in record-land, where the relation is `Column.references` rather than an edge; a bare space holds nothing at all. Advertising those and refusing them at runtime would be a schema that says yes where the server says no
-"""
-enum KeyedBySourceKind {
-  """
-  A label mask, through its intrinsic pixel grid: the array being mapped is the array doing the mapping, and its pixel values are the ids.
-  """
-  DATASET
-
-  """
-  A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows, so a client that picked a surface is already holding one.
-  """
-  MESH_COLLECTION
-}
-
-"""
 One entry of a label layer's colour picker: colour the mask's objects by a column of the table its FIELD edge keys into, instead of by hashing their id. The table is named, never the join: which of its columns holds row identity is already declared there, and the edge that makes the lookup possible is already in the coordinate graph
 """
 type LabelColorBy {
   at: [AxisPosition!]!
-  classColors: JSON
   colormap: ColorMap
   column: String
   dataset: ID
@@ -3906,7 +3915,6 @@ One entry of a label layer's colour picker: colour objects by a column of the ta
 """
 input LabelColorByInput {
   at: [AxisPositionInput!]! = []
-  classColors: JSON = null
   colormap: ColorMap = null
   column: String = null
   dataset: ID = null
@@ -3922,13 +3930,16 @@ input LabelColorByInput {
 One entry of a label layer's filter picker: draw only the objects whose row in the keyed table satisfies this rule. The sibling of `LabelColorBy` over the same FIELD edge -- same table, same column check -- deciding whether an object is drawn rather than what colour it takes
 """
 type LabelFilterBy {
-  column: String!
+  at: [AxisPosition!]!
+  column: String
+  dataset: ID
   exclude: Boolean!
   joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
   label: String
   max: Float
   min: Float
-  table: ID!
+  table: ID
   values: [String!]
 }
 
@@ -3936,13 +3947,16 @@ type LabelFilterBy {
 One entry of a label layer's filter picker: draw only the objects whose row in a table this mask's FIELD edge keys into satisfies this rule. Which half applies follows from the column's declared role -- bounds for a measure column, an explicit value set for a categorical one
 """
 input LabelFilterByInput {
-  column: String!
+  at: [AxisPositionInput!]! = []
+  column: String = null
+  dataset: ID = null
   exclude: Boolean! = false
   joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
   label: String = null
   max: Float = null
   min: Float = null
-  table: ID!
+  table: ID = null
   values: [String!] = null
 }
 
@@ -3960,7 +3974,7 @@ type LabelLayer implements Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -3981,7 +3995,7 @@ type LabelLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -4027,22 +4041,73 @@ type LabelRender {
 }
 
 """
-How a label layer's discrete object ids become color. Every field is optional; omitted ones keep their current value on an update, and take their default on a create
+How a label layer's discrete object ids become color. OMITTED fields keep their current value on an update and take their default on a create; an explicit `null` CLEARS the ones whose null means something, which is what tells 'leave the colouring alone' apart from 'draw none of it'
 """
 input LabelRenderInput {
-  activeColorBy: Int = null
+  """
+  Which entry of `colorBys` is drawn, as an index into it. Null hashes each id to a colour -- what having no colouring has always meant. Re-checked against the picker being written, never the stored one: if a new `colorBys` no longer holds the entry that was active, the layer falls back to the hash -- name `activeColorBy` in the same call to point at another entry instead
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. Several at once is the normal case -- they combine with AND, and an object is drawn when every active rule keeps it. Empty applies none of them, so everything draws. Re-checked against the filters being written: a new `filterBys` that no longer holds an applied rule drops it from this set rather than leaving it dangling
+  """
   activeFilterBys: [Int!] = null
+
+  """
+  The id drawn fully transparent -- the 'not an object' value (default 0)
+  """
   background: Int = null
+
+  """
+  The colourings this layer offers, in the order a picker should show them -- area through a continuous colormap, cell type through a qualitative one -- instead of hashing each id to a colour. Each names a table reachable from the layer's lens by a FIELD edge (author it with `createTableDataset(keyedBy:)`) and a column that table declares, because a colorBy naming an unrelated table is not a preference to hold onto until the edge shows up, it is a join nothing can execute. Which entry is drawn is `activeColorBy`; publishing a picker is not the same as choosing within it. Replaces the published picker wholesale -- its order is the display order, so there is nothing to merge on. Pass `[]` to remove every colouring and fall back to the hash
+  """
   colorBys: [LabelColorByInput!] = null
+
+  """
+  Whether objects are drawn as outlines rather than filled, so the data underneath stays visible (default false)
+  """
   contour: Boolean = null
+
+  """The width of that outline, in pixels of the mask (default 1.0)"""
   contourWidth: Float = null
+
+  """
+  The filters this layer offers, in the order a picker should show them -- 'large cells', 'not debris' -- each keeping or dropping objects by a column of a table this mask's FIELD edge keys into. Which half of the rule applies follows from the column's declared role: `min`/`max` bounds over a measure column, an explicit `values` set over a categorical one. Two entries may share a column, because two ranges over one measure are two different rules. Which of them are actually applied is `activeFilterBys`. Replaces the published filters wholesale, as `colorBys` does; pass `[]` to remove every rule and draw all objects
+  """
   filterBys: [LabelFilterByInput!] = null
-  intensityAxis: String = null
+
+  """
+  The lens axis to index. Pass `null` to go back to reading the pixel value itself as the id (the common case for masks); omit to leave it alone
+  """
+  intensityAxis: String
+
+  """The index along that axis to render (default 0)"""
   intensityIndex: Int = null
+
+  """
+  Opacity applied to the colored ids within the layer, from 0 to 1 (default 1.0)
+  """
   opacity: Float = null
+
+  """
+  The seed of the hash mapping an id to its color. Changing it repaints every object, which is how two touching objects that happened to hash alike are separated (default 0)
+  """
   seed: Int = null
+
+  """
+  The ids singled out for emphasis. An empty list means nothing is selected, which is not the same as everything
+  """
   selected: [Int!] = null
-  selectionColor: [Int!] = null
+
+  """
+  The RGBA the selected ids take, overriding their hashed color: four components, each 0..255. Pass `null` to go back to the hashed colour; omit to leave it alone
+  """
+  selectionColor: [Int!]
+
+  """
+  Whether ids outside the selection still render. False isolates the selection (default true)
+  """
   showUnselected: Boolean = null
 }
 
@@ -4141,7 +4206,7 @@ interface Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
   id: ID!
   kind: LayerKind!
@@ -4151,7 +4216,7 @@ interface Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -4646,7 +4711,7 @@ type MapAxisTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -4660,6 +4725,11 @@ type MapAxisTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -4853,20 +4923,10 @@ input MeshCollectionFilter {
 }
 
 """
-The fields a MESH_COLLECTION identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+The fields a MESH_COLLECTION identification reads. Published for codegen; the wire type is the flat IdentificationInput
 """
 input MeshCollectionIdentifiesInput {
-  kind: SparseIdentificationKind! = MESH_COLLECTION
-  meshCollection: ID!
-  name: String = null
-  validity: PlacementValidity = null
-}
-
-"""
-The fields a MESH_COLLECTION keying reads. Published for codegen; the wire type is the flat KeyedByInput
-"""
-input MeshCollectionKeyedByInput {
-  kind: KeyedBySourceKind! = MESH_COLLECTION
+  kind: IdentificationKind! = MESH_COLLECTION
   meshCollection: ID!
   name: String = null
   validity: PlacementValidity = null
@@ -4877,7 +4937,6 @@ One entry of a mesh layer's picker: color the collection's objects by a column o
 """
 type MeshColorBy {
   at: [AxisPosition!]!
-  classColors: JSON
   colormap: ColorMap
   column: String
   dataset: ID
@@ -4894,7 +4953,6 @@ Color a mesh collection's objects by a column of the table its FIELD edge keys i
 """
 input MeshColorByInput {
   at: [AxisPositionInput!]! = []
-  classColors: JSON = null
   colormap: ColorMap = null
   column: String = null
   dataset: ID = null
@@ -4910,13 +4968,16 @@ input MeshColorByInput {
 One entry of a mesh layer's filter picker: draw only the objects whose row in the keyed table satisfies this rule. The sibling of `MeshColorBy` over the same FIELD edge -- same table, same column check -- deciding whether an object is drawn rather than what colour it takes
 """
 type MeshFilterBy {
-  column: String!
+  at: [AxisPosition!]!
+  column: String
+  dataset: ID
   exclude: Boolean!
   joinPath: [JoinStep!]!
+  kind: ColorSourceKind!
   label: String
   max: Float
   min: Float
-  table: ID!
+  table: ID
   values: [String!]
 }
 
@@ -4924,13 +4985,16 @@ type MeshFilterBy {
 Draw only the objects whose row in a table this collection's FIELD edge keys into satisfies this rule. Which half applies follows from the column's declared role -- bounds for a measure column, an explicit value set for a categorical one
 """
 input MeshFilterByInput {
-  column: String!
+  at: [AxisPositionInput!]! = []
+  column: String = null
+  dataset: ID = null
   exclude: Boolean! = false
   joinPath: [JoinStepInput!]! = []
+  kind: ColorSourceKind! = COLUMN
   label: String = null
   max: Float = null
   min: Float = null
-  table: ID!
+  table: ID = null
   values: [String!] = null
 }
 
@@ -4951,7 +5015,7 @@ type MeshLayer implements Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
 
   """
@@ -4983,7 +5047,7 @@ type MeshLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -5543,6 +5607,11 @@ type Mutation {
   Retune how a mesh layer is drawn: its material, wireframe, compositing, and which table column colours its objects. A patch -- an omitted field keeps its value
   """
   updateMeshLayer(input: UpdateMeshLayerInput!): MeshLayer!
+
+  """
+  Retune a point layer after creation -- above all, switch or republish its colour picker.
+  """
+  updatePointLayer(input: UpdatePointLayerInput!): PointLayer!
 
   """Set a scene's viewer preferences: how a client should open it"""
   updateScene(input: UpdateSceneInput!): Scene!
@@ -6363,12 +6432,32 @@ A layer that renders a point cloud (e.g. SMLM localisations, centroids) from a t
 """
 type PointLayer implements Layer {
   """
+  Which entry of `colorBys` is drawn, as an index into it. Null means every point takes the flat colour -- the distinction between a position and a measurement drawn at one
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. They combine with AND: a point is drawn when every active rule keeps it. Empty applies none of them, so everything draws
+  """
+  activeFilterBys: [Int!]!
+
+  """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
+
+  """
+  The colourings this layer offers, in the order a picker should show them. Each names a column of a table this layer's ids key into, or one slice of a sparse matrix they index, already checked to be reachable. Empty means there is nothing to pick
+  """
+  colorBys: [LabelColorBy!]!
   colorColumn: String
   colormap: ColorMap
+
+  """
+  The filters this layer offers, in the order a picker should show them. Each keeps or drops points by a column of a table this layer's ids key into. Empty means nothing is offered and every point draws
+  """
+  filterBys: [LabelFilterBy!]!
   id: ID!
 
   """The dataset's ID-role column identifying each point, if any"""
@@ -6380,7 +6469,7 @@ type PointLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -6900,7 +6989,7 @@ input RequestZarrUploadInput {
 """
 A piece of data living in a coordinate system. Data belongs to a space; the space belongs to nobody
 """
-union Resident = AnnotationCollection | ArrayDataset | DataArray | Lens | MeshCollection | TableDataset
+union Resident = AnnotationCollection | ArrayDataset | DataArray | Lens | MeshCollection | SparseDataset | TableDataset
 
 """Input for reverting a folder to a previous history revision"""
 input RevertInput {
@@ -6934,7 +7023,7 @@ type RotationTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -6950,6 +7039,11 @@ type RotationTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -7093,7 +7187,7 @@ type ScaleTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -7114,6 +7208,11 @@ type ScaleTransformation implements Transformation {
   The per-axis scale factors, in the axis order of the input system, expressed in the units of the output system's axes (dimensionless between pixel systems, e.g. within a pyramid). Absolute, not relative to another level
   """
   scale: [Float!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -7222,11 +7321,6 @@ type SceneSnapshot {
   createdThroughBy: User
   creator: User
   id: ID!
-
-  """
-  The dominant color of the image, for tinting a placeholder while it loads
-  """
-  majorColor: [Float!]
   name: String!
 
   """The composition this is a picture of"""
@@ -7309,6 +7403,23 @@ input SceneSnapshotOrder @oneOf {
   name: Ordering
 }
 
+"""Where along one axis a transformation applies"""
+type Selector {
+  """The axis of the input system this edge is scoped to"""
+  axis: String!
+
+  """The position along that axis at which this map holds"""
+  index: Int!
+}
+
+"""
+Where along one axis a transformation applies: the map holds at that index and makes no claim elsewhere
+"""
+input SelectorInput {
+  axis: String!
+  index: Int!
+}
+
 """An ordered composition of child transformations, applied first to last"""
 type SequenceTransformation implements Transformation {
   createdAt: DateTime!
@@ -7322,7 +7433,7 @@ type SequenceTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -7338,6 +7449,11 @@ type SequenceTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   The child transformations, applied first to last. They omit their own input and output: the sequence supplies them
@@ -7550,11 +7666,11 @@ type SparseArray {
 }
 
 """
-One axis of a sparse matrix, and what its positions **are**. Every axis carries exactly one `identifiedBy`, so an axis identified twice or not at all is not something this input can express -- which matters, because an axis nothing identifies is not a lax dataset, it is one no source could ever key. There is no `type` field: both axes of a sparse matrix enumerate and neither has a metric, so INDEX is the only thing it could ever be
+One axis of a sparse matrix, and what its positions **are**. `identifiedBy` is a list because fan-in is real -- a nucleus mask and a cell mask may key the same axis, one edge each -- and it may not be empty: an axis nothing identifies is not a lax dataset, it is one no source could ever key. There is no `type` field: both axes of a sparse matrix enumerate and neither has a metric, so INDEX is the only thing it could ever be
 """
 input SparseAxisInput {
   description: String = null
-  identifiedBy: SparseIdentificationInput!
+  identifiedBy: [IdentificationInput!]!
   longName: String = null
   name: String!
 }
@@ -7571,6 +7687,19 @@ type SparseAxisReference {
   The table whose rows this axis' positions are. Keyed by its single INDEX coordinate column, which is where a position is looked up
   """
   references: TableDataset!
+}
+
+"""
+The fields a SPARSE member of a colour picker entry reads. Published for codegen; the wire type is the flat LabelColorByInput / MeshColorByInput
+"""
+input SparseColorByInput {
+  at: [AxisPositionInput!]!
+  colormap: ColorMap = null
+  dataset: ID!
+  kind: ColorSourceKind! = SPARSE
+  label: String = null
+  max: Float = null
+  min: Float = null
 }
 
 """
@@ -7685,61 +7814,6 @@ input SparseDatasetOrder @oneOf {
   createdAt: Ordering
   id: Ordering
   name: Ordering
-}
-
-"""
-What one axis of a sparse dataset **is**, as a discriminated union: `kind` selects which sort of thing is being named, and only that member's id field is read -- any other is rejected. Every axis carries exactly one of these, which is what makes 'identified exactly once' a property of the input rather than a check on it. `DATASET` and `MESH_COLLECTION` author a FIELD edge from the source into this matrix, which is also what makes the matrix reachable from a layer over that source; `TABLE` authors no edge and states a foreign key instead
-"""
-input SparseIdentificationInput {
-  """
-  (DATASET) The label dataset whose pixel values are the positions along this axis. Its own pixel grid is both the edge's input and its field, which is what a label mask is
-  """
-  dataset: ID = null
-
-  """
-  Which sort of thing identifies this axis. It fixes which id field below is read; any other is rejected
-  """
-  kind: SparseIdentificationKind!
-
-  """
-  (MESH_COLLECTION) The mesh collection whose geometry rows carry the positions. Its vertex space is both the edge's input and its field, exactly as a mask's grid is
-  """
-  meshCollection: ID = null
-
-  """
-  What to call the edge this authors, in a graph a person has to read. Defaults to `<source> -> <dataset>`. Only meaningful for the kinds that author one
-  """
-  name: String = null
-
-  """
-  (TABLE) The table whose rows this axis' positions are. Must be keyed by exactly one INDEX coordinate column, which is where a position is looked up -- the same contract `Column.references` carries. A matrix with 19 059 features costs one picker entry because of this, not 19 059
-  """
-  table: ID = null
-
-  """
-  How far the edge this authors may be trusted. Only meaningful for the kinds that author one
-  """
-  validity: PlacementValidity = null
-}
-
-"""
-How one axis of a sparse dataset is identified: the discriminator of `SparseIdentificationInput`. A sparse matrix is a grid with no row labels and no column labels, so every axis has to say what its positions *are*, and there are exactly these ways to answer. A superset of `KeyedBySourceKind` rather than the same union, because `TABLE` is valid here and nowhere else: a table cannot key a table, but an axis whose positions are rows of one is the ordinary case
-"""
-enum SparseIdentificationKind {
-  """
-  A label mask, through its intrinsic pixel grid: its pixel values are the positions along this axis. Authors a FIELD edge, so it is also what makes the matrix reachable from a layer over that mask.
-  """
-  DATASET
-
-  """
-  A mesh collection, through its vertex coordinate system: the ids ride on the geometry rows. Authors a FIELD edge, exactly as DATASET does.
-  """
-  MESH_COLLECTION
-
-  """
-  A table whose rows this axis' positions are -- the same relation `Column.references` carries, said of an axis because a matrix has no columns to hang it on. Authors no edge and touches no coordinate system: a table is already in record-land. It is what lets a FIELD edge land beside it, because an axis identified this way is one the edge is not expected to supply.
-  """
-  TABLE
 }
 
 """
@@ -7903,6 +7977,18 @@ type Subscription {
 }
 
 """
+One axis of the table's own space: which Parquet column it is, what kind of position it holds, and what those positions **are**. The list's order is the axis order, so the space is stated rather than derived by filtering a column list. `identifiedBy` replaces the old sibling `keyedBy`: there the axis a source keyed was matched by subtraction inside the server, correct and invisible, and here the pairing is the input's own shape. It is a list because fan-in is real -- a nucleus mask and a cell mask may key one axis, one edge each -- and it may be empty, because a localization table's `x` axis is identified by nothing and should be
+"""
+input TableAxisInput {
+  column: String!
+  description: String = null
+  identifiedBy: [IdentificationInput!]! = []
+  longName: String = null
+  type: AxisType!
+  unit: Unit = null
+}
+
+"""
 A parquet-backed table whose rows are scientific records (segmented objects, localizations, cells). It owns a coordinate system whose axes are its coordinate columns, which is what makes a localization table placeable; a table with no coordinate columns enumerates its rows and its lineage edge is UNMAPPABLE. Its store, its columns and that coordinate system are fixed at creation -- only `name` and `description` can be updated, and a recomputation is a new table rather than an edit of this one. Read the rows directly from the Parquet store with a datalayer access grant rather than paginating through GraphQL
 """
 type TableDataset {
@@ -8054,10 +8140,10 @@ input TableDatasetOrder @oneOf {
 }
 
 """
-The fields a TABLE identification reads. Published for codegen; the wire type is the flat SparseIdentificationInput
+The fields a TABLE identification reads. Published for codegen; the wire type is the flat IdentificationInput
 """
 input TableIdentifiesInput {
-  kind: SparseIdentificationKind! = TABLE
+  kind: IdentificationKind! = TABLE
   table: ID!
 }
 
@@ -8165,7 +8251,7 @@ type TrackLayer implements Layer {
   """
   This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
   """
-  asAffine(strict: Boolean! = false): AffinePlacement
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
   blending: Blending!
   colorByColumn: String
   colormap: ColorMap
@@ -8178,7 +8264,7 @@ type TrackLayer implements Layer {
   """
   The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
   """
-  pathToWorld: [PlacementStep!]
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
 
   """
   Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means two different things -- nobody has registered this data yet, or its geometry did not survive the operation that produced it and it can never be placed -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge. Derived, never stored
@@ -8323,11 +8409,6 @@ enum TransformKind {
   AFFINE
 
   """
-  A pair of child transformations giving an explicit forward and inverse map. This is how an inverse that cannot be derived is instead *given*.
-  """
-  BIJECTION
-
-  """
   A composition of child transformations, each acting on a named subset of the axes.
   """
   BY_DIMENSION
@@ -8367,7 +8448,6 @@ enum TransformKind {
 
 enum TransformKindChoices {
   AFFINE
-  BIJECTION
   BY_DIMENSION
   FIELD
   IDENTITY
@@ -8394,7 +8474,7 @@ interface Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -8410,6 +8490,11 @@ interface Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -8487,7 +8572,7 @@ type TranslationTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -8503,6 +8588,11 @@ type TranslationTransformation implements Transformation {
   Provenance entries for this edge: who authored it, and every refinement since. A refinement rewrites the edge in place and bumps `version`, so this audit trail is where the placement's earlier states live
   """
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """The per-axis offsets, in the axis order of the input system"""
   translation: [Float!]!
@@ -8559,7 +8649,7 @@ type UnmappableTransformation implements Transformation {
   inputAxes: [String!]!
 
   """
-  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE, BY_DIMENSION or BIJECTION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
+  Which geometric properties survive this edge's map, derived from `kind`: ISOMETRY (distances, angles and areas all transfer), SIMILARITY (angles and length ratios transfer, absolute lengths scale by one common factor), AFFINE (parallelism and area ratios transfer, angles and distances do not), DIFFEOMORPHIC (topology at best, and only locally -- the Jacobian varies with position), NONE (nothing corresponds). A SEQUENCE or BY_DIMENSION is the weakest of its children. Stated by kind, never by inspecting the numbers: an AFFINE edge reads AFFINE even when its matrix happens to be rigid, because separating those needs an SVD. A layer's `placementInvariance` is the minimum of this over its whole path to world
   """
   invariance: TransformInvariance!
   kind: TransformKind!
@@ -8580,6 +8670,11 @@ type UnmappableTransformation implements Transformation {
   Why the geometry does not survive, if the author said. Purely descriptive: the kind is what the graph acts on, and an absent reason does not make the edge any less of a statement
   """
   reason: String
+
+  """
+  Where along one axis this edge applies, or null for an edge that holds everywhere -- which is almost every edge. A per-channel correction is scoped to {axis: "c", index: 2}; several such edges over one axis are one piecewise map. A path query crosses a scoped edge only when it fixes that coordinate with `at`
+  """
+  selector: Selector
 
   """
   How much this map is actually known: VALIDATED for a map the server derived (or one someone checked), INFERRED for numbers read from metadata, MANUAL for an authored registration, UNKNOWN for one its author marked as a guess. A layer's validity is the weakest edge on its path to world
@@ -8691,22 +8786,76 @@ input UpdateLayerInput {
 }
 
 """
-Retune how a mesh layer is drawn. A patch: every field is optional and an omitted one keeps its current value, so switching the colouring cannot silently drop the material or the wireframe. The collection and the scene are not editable -- a layer renders what it was created to render
+Retune how a mesh layer is drawn. A patch: an OMITTED field keeps its current value, so switching the colouring cannot silently drop the material or the wireframe -- while an explicit `null` CLEARS the fields whose null means something. The collection and the scene are not editable -- a layer renders what it was created to render
 """
 input UpdateMeshLayerInput {
+  """
+  Which entry of `colorBys` is drawn, as an index into it. Null draws the flat `materialColor` -- what having no colouring has always meant. Pass `null` to publish the picker and draw none of it; omit to leave the choice alone. Re-checked against the picker being written, never the stored one. If a new `colorBys` no longer holds the entry that was active, the layer falls back to `materialColor` -- name `activeColorBy` in the same call to point at another entry instead
+  """
+  activeColorBy: Int
+
+  """
+  Which entries of `filterBys` are applied, as indices into it. Several at once is the normal case -- they combine with AND, and an object is drawn when every active rule keeps it. Empty applies none of them, so everything draws. Re-checked against the filters being written: a new `filterBys` that no longer holds an applied rule drops it from this set rather than leaving it dangling
+  """
+  activeFilterBys: [Int!] = null
+
+  """Layer-level blend mode"""
+  blending: Blending = null
+
+  """
+  The colourings this layer offers, in the order a picker should show them -- volume through a continuous colormap, cell type through a qualitative one -- instead of the flat `materialColor`. Each names a table reachable from this collection by a FIELD edge (author it with `createTableDataset(keyedBy: {kind: MESH_COLLECTION})`) and a column that table declares, because a colorBy naming an unrelated table is not a preference to hold onto until the edge shows up, it is a join nothing can execute. Which entry is drawn is `activeColorBy`; publishing a picker is not the same as choosing within it. Replaces the published picker wholesale: its order is the display order, so there is nothing to merge on. Pass `[]` to remove every colouring and fall back to `materialColor`
+  """
+  colorBys: [MeshColorByInput!] = null
+
+  """
+  The filters this layer offers, in the order a picker should show them -- 'large cells', 'not debris' -- each keeping or dropping objects by a column of a table this collection's FIELD edge keys into. Which half of the rule applies follows from the column's declared role: `min`/`max` bounds over a measure column, an explicit `values` set over a categorical one. Two entries may share a column, because two ranges over one measure are two different rules. Which of them are actually applied is `activeFilterBys`. Replaces the published filters wholesale, as `colorBys` does. Pass `[]` to remove every rule and draw all objects
+  """
+  filterBys: [MeshFilterByInput!] = null
+
+  """The ID of the mesh layer to update"""
+  id: ID!
+
+  """Material (surface) color of the mesh, as RGBA"""
+  materialColor: [Int!] = null
+
+  """
+  The deepest octree level this layer may load, capping detail against the collection's declared `grid.levels`. A budget, not a choice of level: which level a viewer fetches still follows from the zoom. Null lets the viewer decide. Raising, lowering AND removing all work now: an omitted field keeps the cap, an explicit `null` removes it. That distinction used to be unavailable to a scalar -- the pickers escaped it by being lists, where `[]` is a value that says 'none'
+  """
+  maxLevel: Int
+
+  """
+  Layer alpha for alpha-over compositing, from 0 (transparent) to 1 (opaque)
+  """
+  opacity: Float = null
+
+  """Explicit z-index for back-to-front compositing"""
+  order: Int = null
+
+  """How the surface is lit"""
+  shading: MeshShading = null
+
+  """Whether the layer participates in compositing"""
+  visible: Boolean = null
+
+  """Whether to render the mesh as a wireframe"""
+  wireframe: Boolean = null
+}
+
+"""
+Retune a point layer after creation -- above all, switch or republish its colour picker
+"""
+input UpdatePointLayerInput {
   activeColorBy: Int = null
   activeFilterBys: [Int!] = null
-  blending: Blending = null
-  colorBys: [MeshColorByInput!] = null
-  filterBys: [MeshFilterByInput!] = null
+  colorBys: [LabelColorByInput!] = null
+  colormap: ColorMap = null
+  filterBys: [LabelFilterByInput!] = null
   id: ID!
-  materialColor: [Int!] = null
-  maxLevel: Int = null
   opacity: Float = null
   order: Int = null
-  shading: MeshShading = null
+  pointSize: Float = null
+  sizeColumn: String = null
   visible: Boolean = null
-  wireframe: Boolean = null
 }
 
 """
@@ -8940,7 +9089,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | BijectionTransformation | ByDimensionTransformation | ChannelLabel | Client | Column | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | SparseArray | SparseAxisReference | SparseDataset | SparseStore | TableDataset | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
+union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | ByDimensionTransformation | ChannelLabel | Client | Column | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | SparseArray | SparseAxisReference | SparseDataset | SparseStore | TableDataset | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
 
 type _Service {
   sdl: String!

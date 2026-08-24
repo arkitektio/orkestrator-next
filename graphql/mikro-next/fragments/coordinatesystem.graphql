@@ -56,6 +56,13 @@ fragment Resident on Resident {
     id
     level
   }
+  # Added by the backend after this fragment was written. Without an arm here the union
+  # member selects only `__typename`, which is what made every consumer's `resident.id`
+  # a type error.
+  ... on SparseDataset {
+    id
+    name
+  }
 }
 
 fragment CoordinateSystem on CoordinateSystem {
@@ -173,11 +180,6 @@ fragment Transformation on Transformation {
           ...LeafTransformation
         }
       }
-    }
-  }
-  ... on BijectionTransformation {
-    transformations {
-      ...LeafTransformation
     }
   }
 }

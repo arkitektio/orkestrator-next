@@ -1,11 +1,15 @@
 /**
- * Placeholder renderers for the layer types the backend has that we do not draw
- * yet (Point/Track). They render nothing, but registering them in
+ * Placeholder renderer for the layer type the backend has that we do not draw
+ * yet (Track). It renders nothing, but registering it in
  * `shell/layerRegistry.ts` means implementing a type later is a one-component change
  * that never touches the image path.
  *
- * Each will grow into its own module (features/points, …) with its own data path:
- * Point/Track read table columns.
+ * It will grow into its own module with its own data path: Track reads table columns.
+ *
+ * POINT GRADUATED from here to `features/points/`, taking the table-column data path with
+ * it — positions read columnar through `lib/attributes/columnarReads`, per-object position and
+ * value in storage buffers indexed by `instanceIndex`. Track is the same data path and can
+ * follow the same way.
  *
  * LABEL GRADUATED from here to `features/labels/` + `features/labels/labelNodeMaterials.ts`.
  * The note that used to live here — that pointing a mask at the image renderers
@@ -17,5 +21,4 @@
  */
 type LayerRendererProps = { layerId: string };
 
-export const PointLayerRenderer = (_props: LayerRendererProps) => null;
 export const TrackLayerRenderer = (_props: LayerRendererProps) => null;

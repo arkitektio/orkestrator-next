@@ -35,6 +35,7 @@ const {
   If,
   Loop,
   bool,
+  clamp,
   float,
   floor,
   fract,
@@ -44,10 +45,12 @@ const {
   length,
   max,
   mix,
+  step,
   texture,
   textureLoad,
   uniform,
   uv,
+  vec2,
   vec3,
   vec4,
 } = TSL;
@@ -103,30 +106,116 @@ export type LabelMaterialNodes = TraversalNodesPublic & {
   uLutIdOffset: UniformNodeLike<number>;
   uLutWidth: UniformNodeLike<number>;
   uLutHeight: UniformNodeLike<number>;
+  /** The range the codes were quantised over, at build time. */
+  uLutValueMin: UniformNodeLike<number>;
+  uLutValueMax: UniformNodeLike<number>;
+  /** The window the user is looking through. Live — moving it is not a rebuild. */
+  uLutClimMin: UniformNodeLike<number>;
+  uLutClimMax: UniformNodeLike<number>;
 };
 
 export type LabelMaterialBundle = { material: NodeMaterial; nodes: LabelMaterialNodes };
 
 /**
- * A 1x1 white opaque LUT — the identity, bound from the start.
+ * A 1x1 "visible, no value" LUT — the identity, bound from the start.
  *
  * Always having a texture bound is deliberate: swapping a texture is a uniform
- * write, whereas adding one to the graph later would be a recompile. White and
- * opaque means "leave the hue hash alone and hide nothing", so a mask with no
- * colouring renders identically whether the real LUT has arrived or not.
+ * write, whereas adding one to the graph later would be a recompile. The code is
+ * `CODE_NO_VALUE`, which means "leave the hue hash alone and hide nothing", so a
+ * mask with no colouring renders identically whether the real LUT has arrived
+ * or not.
+ *
+ * It must share the real table's FORMAT as well as its meaning: the LUT is RG8
+ * now, and rebinding an RGBA8 placeholder when a colouring is switched off would
+ * be a format mismatch on every switch-off.
+ *
+ * (This also makes the old docstring true for the first time. It claimed an
+ * uncovered id "keeps the identity texel and therefore its hue hash"; with a
+ * white RGBA texel and `uLutColorize = 1`, `mix(hashed, vec3(1), 1)` is white,
+ * so uncovered ids actually rendered WHITE. The sentinel zeroes the mix instead.)
  */
+/**
+ * A 1x1 white palette — bound from the start for the same reason the identity
+ * LUT is: the sampler must exist in the graph before any colouring arrives, or
+ * binding one later is a recompile.
+ *
+ * White rather than a real ramp because `uLutColorize` is 0 until a colouring
+ * lands, so nothing samples it; and if anything did, white is the identity the
+ * old RGBA table used.
+ */
+const createIdentityPalette = (): THREE.DataTexture => {
+  const texture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+};
+
 const createIdentityLut = (): THREE.DataTexture => {
   const texture = new THREE.DataTexture(
-    new Uint8Array([255, 255, 255, 255]),
+    // CODE_NO_VALUE = 65534 = 0xFFFE, little-endian: R = 0xFE, G = 0xFF.
+    new Uint8Array([0xfe, 0xff]),
     1,
     1,
-    THREE.RGBAFormat,
+    THREE.RGFormat,
   );
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
   texture.generateMipmaps = false;
   texture.needsUpdate = true;
   return texture;
+};
+
+/**
+ * Decode a value LUT texel into a colour, and say whether the fragment survives.
+ *
+ * The table holds a 16-bit code per slot, `code = G * 256 + R`, split across the
+ * two bytes of an RG8 texel:
+ *
+ *     0 … 65533   a value, quantised over [uLutValueMin, uLutValueMax]
+ *     65534       visible, no value  -> keep the hue hash
+ *     65535       hidden
+ *
+ * The window is applied HERE rather than at build time, which is the whole point
+ * of the encoding: `uLutClimMin`/`uLutClimMax` move without the table changing,
+ * so dragging a contrast slider is a uniform write instead of a rebuild and a
+ * multi-megabyte re-upload. See `valueLut.ts`.
+ *
+ * The float comparisons are exact — an RG8 texel decodes to `k/255` in f32 and
+ * `round(x * 255)` recovers `k` exactly for those — and the half-unit
+ * tolerances make them robust regardless.
+ */
+const emitLutColor = (
+  lutTexel: any,
+  palette: any,
+  hashed: any,
+  // `any` for the same reason `emitHueColor` takes it: a TSL uniform node
+  // carries the whole operator surface at runtime, and `UniformNodeLike` only
+  // ever described the `.value` a setter writes.
+  uniforms: {
+    uLutColorize: any;
+    uLutValueMin: any;
+    uLutValueMax: any;
+    uLutClimMin: any;
+    uLutClimMax: any;
+  },
+): { code: any; rgb: any } => {
+  const code = lutTexel.g
+    .mul(255)
+    .round()
+    .mul(256)
+    .add(lutTexel.r.mul(255).round())
+    .toVar("lblCode");
+  // 1 while the code carries a value, 0 for the two sentinels — so a slot no
+  // read covered keeps its hash instead of decoding a sentinel as data.
+  const hasValue = step(code, float(65533.5));
+  const raw = mix(uniforms.uLutValueMin, uniforms.uLutValueMax, code.div(float(65533.0)));
+  const span = max(uniforms.uLutClimMax.sub(uniforms.uLutClimMin), float(1e-9));
+  const t = clamp(raw.sub(uniforms.uLutClimMin).div(span), 0.0, 1.0);
+  // A 256-entry row; the sample lands on a texel centre.
+  const mapped = palette.sample(vec2(t, 0.5)).rgb;
+  return { code, rgb: mix(hashed, mapped, uniforms.uLutColorize.mul(hasValue)) };
 };
 
 /**
@@ -255,6 +344,15 @@ export function createLabelPlaneNodeMaterial(
   const uLutIdOffset = uniform(0, "float");
   const uLutWidth = uniform(1, "float");
   const uLutHeight = uniform(1, "float");
+  // The build-time quantisation range and the live window. Created
+  // unconditionally: a conditional node is a graph change and therefore a
+  // recompile, which is exactly the contract this module keeps.
+  const uLutValueMin = uniform(0, "float");
+  const uLutValueMax = uniform(1, "float");
+  const uLutClimMin = uniform(0, "float");
+  const uLutClimMax = uniform(1, "float");
+  const identityPalette = createIdentityPalette();
+  const lutPalette = texture(identityPalette);
   const identityLut = createIdentityLut();
   const lut = texture(identityLut);
 
@@ -332,17 +430,23 @@ export function createLabelPlaneNodeMaterial(
       ),
     ).toVar("lblLut");
 
-    // A filter drops the fragment entirely rather than dimming it: the object is
-    // not being de-emphasised, it is not being drawn. Why visibility rides in
-    // ALPHA rather than as a colour sentinel, and why `uLutColorize` cannot be
-    // folded into the texel the same way: `columnLut.ts`'s header.
-    Discard(uLutFilter.greaterThan(0.5).and(lutTexel.a.lessThan(0.5)));
-
     const hue = fract(id.add(uSeed).mul(GOLDEN_RATIO_CONJUGATE));
     const hashed = emitHueColor(hue, uSaturation, uValue);
     // A colouring REPLACES the hash rather than tinting it — the mask is showing
     // a measurement now, not object identity.
-    const rgb = mix(hashed, lutTexel.rgb, uLutColorize);
+    const { code, rgb } = emitLutColor(lutTexel, lutPalette, hashed, {
+      uLutColorize,
+      uLutValueMin,
+      uLutValueMax,
+      uLutClimMin,
+      uLutClimMax,
+    });
+
+    // A filter drops the fragment entirely rather than dimming it: the object is
+    // not being de-emphasised, it is not being drawn. Visibility is a sentinel
+    // code now rather than an alpha channel, because the table holds a value and
+    // has no spare channel — see `valueLut.ts`.
+    Discard(uLutFilter.greaterThan(0.5).and(code.greaterThan(float(65534.5))));
 
     return vec4(rgb, uOpacity);
   })();
@@ -366,10 +470,16 @@ export function createLabelPlaneNodeMaterial(
       uLutIdOffset,
       uLutWidth,
       uLutHeight,
+      uLutValueMin,
+      uLutValueMax,
+      uLutClimMin,
+      uLutClimMax,
+      lutPalette,
       lut,
       // Kept on the handle so `setLabelColorLut` can rebind it when the LUT is
       // switched off, and so it is never mistaken for a built texture to dispose.
       identityLut,
+      identityPalette,
     } as unknown as LabelMaterialNodes,
   };
 }
@@ -399,6 +509,12 @@ export type LabelLutNodes = {
   uLutIdOffset: UniformNodeLike<number>;
   uLutWidth: UniformNodeLike<number>;
   uLutHeight: UniformNodeLike<number>;
+  /** The range the codes were quantised over, at build time. */
+  uLutValueMin: UniformNodeLike<number>;
+  uLutValueMax: UniformNodeLike<number>;
+  /** The window the user is looking through. Live — moving it is not a rebuild. */
+  uLutClimMin: UniformNodeLike<number>;
+  uLutClimMax: UniformNodeLike<number>;
 };
 
 /**
@@ -411,7 +527,15 @@ export type LabelLutNodes = {
  */
 export function setLabelColorLut(
   nodes: LabelLutNodes,
-  lut: { texture: THREE.DataTexture | null; width: number; height: number; idOffset: number },
+  lut: {
+    texture: THREE.DataTexture | null;
+    width: number;
+    height: number;
+    idOffset: number;
+    /** The range the codes were quantised over. See `valueLut.ts`. */
+    valueMin?: number;
+    valueMax?: number;
+  },
   modes: { colorize: boolean; filter: boolean },
 ): void {
   const handle = nodes as unknown as {
@@ -425,8 +549,61 @@ export function setLabelColorLut(
   nodes.uLutIdOffset.value = lut.idOffset;
   nodes.uLutWidth.value = Math.max(1, lut.width);
   nodes.uLutHeight.value = Math.max(1, lut.height);
+  // The quantisation range belongs to the TABLE, so it is written here and not
+  // in `setLabelColorStyle`. Forgetting it is the one way a gene switch can
+  // decode correctly and still be wrong — every value would be read against the
+  // previous gene's range.
+  nodes.uLutValueMin.value = lut.valueMin ?? 0;
+  nodes.uLutValueMax.value = lut.valueMax ?? 1;
   nodes.uLutColorize.value = lut.texture && modes.colorize ? 1 : 0;
   nodes.uLutFilter.value = lut.texture && modes.filter ? 1 : 0;
+}
+
+/**
+ * The APPEARANCE half: the window and the palette, neither of which touches the
+ * table.
+ *
+ * This split is the point of the value encoding. Dragging a contrast slider or
+ * switching a colormap used to rebuild the whole LUT and re-upload it — at a bin
+ * lattice's scale, tens of megabytes to change how a number becomes a hue. Both
+ * are now two uniform writes and a 1 KB palette row.
+ *
+ * The palette is ADOPTED IN PLACE rather than rebound when the size matches, for
+ * the reason `brickNodeMaterials.adoptColormapAtlas` records: under WebGPU,
+ * rebinding and disposing leaves the bind group pointing at a destroyed
+ * GPUTexture, which three silently replaces with white.
+ */
+export function setLabelColorStyle(
+  nodes: LabelLutNodes,
+  style: { palette: THREE.DataTexture | null; climMin: number; climMax: number },
+): void {
+  nodes.uLutClimMin.value = style.climMin;
+  nodes.uLutClimMax.value = style.climMax;
+  if (!style.palette) return;
+
+  const handle = nodes as unknown as {
+    lutPalette: { value: THREE.DataTexture };
+    identityPalette?: THREE.DataTexture;
+  };
+  const bound = handle.lutPalette.value;
+  const incoming = style.palette;
+  if (bound === incoming) return;
+
+  const boundImage = bound.image as { data?: Uint8Array } | undefined;
+  const nextImage = incoming.image as { data?: Uint8Array } | undefined;
+  if (
+    bound !== handle.identityPalette &&
+    boundImage?.data &&
+    nextImage?.data &&
+    boundImage.data.length === nextImage.data.length
+  ) {
+    boundImage.data.set(nextImage.data);
+    bound.needsUpdate = true;
+    incoming.dispose();
+    return;
+  }
+  if (bound !== handle.identityPalette) bound.dispose();
+  handle.lutPalette.value = incoming;
 }
 
 // ---------------------------------------------------------------- 3D --------
@@ -453,6 +630,12 @@ export type LabelVolumeMaterialNodes = TraversalNodesPublic & {
   uLutIdOffset: UniformNodeLike<number>;
   uLutWidth: UniformNodeLike<number>;
   uLutHeight: UniformNodeLike<number>;
+  /** The range the codes were quantised over, at build time. */
+  uLutValueMin: UniformNodeLike<number>;
+  uLutValueMax: UniformNodeLike<number>;
+  /** The window the user is looking through. Live — moving it is not a rebuild. */
+  uLutClimMin: UniformNodeLike<number>;
+  uLutClimMax: UniformNodeLike<number>;
 };
 
 export type LabelVolumeMaterialBundle = {
@@ -516,6 +699,15 @@ export function createLabelVolumeNodeMaterial(
   const uLutIdOffset = uniform(0, "float");
   const uLutWidth = uniform(1, "float");
   const uLutHeight = uniform(1, "float");
+  // The build-time quantisation range and the live window. Created
+  // unconditionally: a conditional node is a graph change and therefore a
+  // recompile, which is exactly the contract this module keeps.
+  const uLutValueMin = uniform(0, "float");
+  const uLutValueMax = uniform(1, "float");
+  const uLutClimMin = uniform(0, "float");
+  const uLutClimMax = uniform(1, "float");
+  const identityPalette = createIdentityPalette();
+  const lutPalette = texture(identityPalette);
   const identityLut = createIdentityLut();
   const lut = texture(identityLut);
 
@@ -648,19 +840,25 @@ export function createLabelVolumeNodeMaterial(
       ivec2(int(slot.mod(uLutWidth)), int(floor(slot.div(uLutWidth)))),
     ).toVar("lblVolLut");
 
+    const hue = fract(hitId.add(uSeed).mul(GOLDEN_RATIO_CONJUGATE));
+    const hashed = emitHueColor(hue, uSaturation, uValue);
+    // A colouring REPLACES the hash rather than tinting it, and the hash is why
+    // this is a uniform and not another LUT channel — `columnLut.ts`'s header.
+    const { code, rgb } = emitLutColor(lutTexel, lutPalette, hashed, {
+      uLutColorize,
+      uLutValueMin,
+      uLutValueMax,
+      uLutClimMin,
+      uLutClimMax,
+    });
+
     // A filtered-out object is not a surface: the ray should have passed THROUGH
     // it. Discarding the fragment is not that — it drops the pixel entirely
     // rather than revealing whatever is behind — but resuming the march past a
     // filtered hit would need the LUT read inside the loop, which is a texture
     // fetch per step. The trade is stated here rather than hidden: a filter in 3D
     // punches holes rather than peeling layers.
-    Discard(uLutFilter.greaterThan(0.5).and(lutTexel.a.lessThan(0.5)));
-
-    const hue = fract(hitId.add(uSeed).mul(GOLDEN_RATIO_CONJUGATE));
-    const hashed = emitHueColor(hue, uSaturation, uValue);
-    // A colouring REPLACES the hash rather than tinting it, and the hash is why
-    // this is a uniform and not another LUT channel — `columnLut.ts`'s header.
-    const rgb = mix(hashed, lutTexel.rgb, uLutColorize);
+    Discard(uLutFilter.greaterThan(0.5).and(code.greaterThan(float(65534.5))));
 
     return vec4(rgb, uOpacity);
   })();
@@ -687,8 +885,14 @@ export function createLabelVolumeNodeMaterial(
       uLutIdOffset,
       uLutWidth,
       uLutHeight,
+      uLutValueMin,
+      uLutValueMax,
+      uLutClimMin,
+      uLutClimMax,
+      lutPalette,
       lut,
       identityLut,
+      identityPalette,
     } as unknown as LabelVolumeMaterialNodes,
   };
 }

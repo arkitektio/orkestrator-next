@@ -106,22 +106,111 @@ describe("ruleKeeps", () => {
 });
 
 describe("classColorFor", () => {
-  it("uses an explicit classColors entry when there is one", () => {
-    expect(classColorFor("cell", { cell: [10, 20, 30] }, 0)).toEqual([10, 20, 30]);
-  });
-
-  it("derives a stable hue from the VALUE's rank otherwise", () => {
+  it("derives a stable colour from the VALUE's rank", () => {
     // Keyed by the value's rank, not the object's, so every object sharing a
     // value shares its colour — the whole point of a categorical colouring.
-    const a = classColorFor("cell", null, 3);
-    const b = classColorFor("cell", null, 3);
+    const a = classColorFor(ColorMap.Hues, 3);
+    const b = classColorFor(ColorMap.Hues, 3);
     expect(a).toEqual(b);
-    expect(classColorFor("cell", null, 4)).not.toEqual(a);
+    expect(classColorFor(ColorMap.Hues, 4)).not.toEqual(a);
   });
 
-  it("ignores a malformed classColors entry", () => {
-    expect(classColorFor("cell", { cell: [1, 2] }, 0)).toEqual(classColorFor("cell", null, 0));
-    expect(classColorFor("cell", "nonsense", 0)).toEqual(classColorFor("cell", null, 0));
+  it("draws each palette differently at the same rank", () => {
+    // The palette is the entry's colormap now, not a map it carries, so two
+    // entries over one column separate by naming different ones.
+    expect(classColorFor(ColorMap.Pastel, 2)).not.toEqual(classColorFor(ColorMap.Vivid, 2));
+  });
+
+  it("falls back to the default palette when the entry names none", () => {
+    // Which is what a categorical entry with a null colormap has always drawn as,
+    // and the same scatter the bare id hash uses.
+    expect(classColorFor(null, 5)).toEqual(classColorFor(ColorMap.Hues, 5));
+    expect(classColorFor(undefined, 5)).toEqual(classColorFor(ColorMap.Hues, 5));
+  });
+});
+
+describe("paintColumnLut cost", () => {
+  // The property Phase 1 exists for: a bin lattice has millions of slots and a
+  // table that addresses a bounded number of them. Painting used to walk the
+  // slots; it now walks the rows, so a sparse-ish table over a huge id range
+  // costs what the table costs.
+  it("paints a huge id range from a handful of rows", () => {
+    const slotCount = 5_000_000;
+    const { data } = allocateColumnLut(slotCount);
+    let lookups = 0;
+    paintColumnLut({
+      data,
+      slotCount,
+      slotOf: (objectId: number) => {
+        lookups += 1;
+        return objectId;
+      },
+      colorBy: { table: "t", column: "expr", colormap: ColorMap.Viridis },
+      filterBys: [],
+      colorValues: new Map<number, unknown>([
+        [0, 0],
+        [2_500_000, 5],
+        [4_999_999, 10],
+      ]),
+      ruleValues: [],
+    });
+    // Three rows in, three slot lookups out — not five million.
+    expect(lookups).toBe(3);
+    expect(at(data, 0)).not.toEqual(at(data, 4_999_999));
+    // An id no row mentioned keeps the identity texel.
+    expect(at(data, 1_000_000)).toEqual([255, 255, 255, 255]);
+  });
+
+  it("keeps the AND of every rule, and the answer for an id no rule mentions", () => {
+    const slotCount = 6;
+    const { data } = allocateColumnLut(slotCount);
+    paintColumnLut({
+      data,
+      slotCount,
+      slotOf: (objectId: number) => objectId,
+      colorBy: null,
+      // A bounds rule: an id it never saw fails `Number(undefined)` and is
+      // dropped, which is the baseline the whole slot range starts at.
+      filterBys: [{ table: "t", column: "area", min: 10 }],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([
+          [1, 50],
+          [2, 5],
+        ]),
+      ],
+    });
+    expect(at(data, 1)[3]).toBe(255); // in range
+    expect(at(data, 2)[3]).toBe(0); // out of range
+    expect(at(data, 4)[3]).toBe(0); // never mentioned -> the baseline
+  });
+
+  it("re-admits nothing a second rule drops", () => {
+    const slotCount = 4;
+    const { data } = allocateColumnLut(slotCount);
+    paintColumnLut({
+      data,
+      slotCount,
+      slotOf: (objectId: number) => objectId,
+      colorBy: null,
+      filterBys: [
+        { table: "t", column: "area", min: 10 },
+        { table: "t", column: "kind", values: ["cell"] },
+      ],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([
+          [1, 50],
+          [2, 50],
+        ]),
+        new Map<number, unknown>([
+          [1, "cell"],
+          [2, "debris"],
+        ]),
+      ],
+    });
+    expect(at(data, 1)[3]).toBe(255); // passes both
+    expect(at(data, 2)[3]).toBe(0); // passes the first, fails the second
   });
 });
 
@@ -153,17 +242,20 @@ describe("allocateColumnLut", () => {
 });
 
 describe("paintColumnLut", () => {
-  const targets = [
-    { objectId: 10, slot: 0 },
-    { objectId: 20, slot: 1 },
-    { objectId: 30, slot: 2 },
-  ];
+  // objectId -> slot, the mapping the label path expresses as `id - idOffset`
+  // and the mesh path as an ordinal lookup.
+  const slots = new Map([
+    [10, 0],
+    [20, 1],
+    [30, 2],
+  ]);
 
   const paint = (over: Partial<Parameters<typeof paintColumnLut>[0]> = {}) => {
     const { data } = allocateColumnLut(3);
     paintColumnLut({
       data,
-      targets,
+      slotCount: 3,
+      slotOf: (objectId: number) => slots.get(objectId) ?? -1,
       colorBy: null,
       filterBys: [],
       colorValues: null,
@@ -215,6 +307,25 @@ describe("paintColumnLut", () => {
     });
     expect(at(data, 0)).toEqual(at(data, 2));
     expect(at(data, 0)).not.toEqual(at(data, 1));
+  });
+
+  it("honours a named palette over a column whose values parse as numbers", () => {
+    // The bug this replaced: the branch sniffed the VALUES, so a categorical column of
+    // integer class ids took the measure path and the palette was silently ignored. The
+    // server only lets a qualitative colormap onto a categorical column, so the entry is
+    // the authority and the values are not consulted at all.
+    const data = paint({
+      colorBy: { table: "t", column: "class_id", colormap: ColorMap.Vivid },
+      colorValues: new Map<number, unknown>([
+        [10, 1],
+        [20, 2],
+        [30, 1],
+      ]),
+    });
+    expect(at(data, 0)).toEqual(at(data, 2));
+    expect(at(data, 0)).not.toEqual(at(data, 1));
+    // Ranked, not ramped: rank 0 of the palette, never the bottom of a gradient.
+    expect(at(data, 0).slice(0, 3)).toEqual(classColorFor(ColorMap.Vivid, 0));
   });
 
   it("is stable across builds — the palette must not reshuffle", () => {

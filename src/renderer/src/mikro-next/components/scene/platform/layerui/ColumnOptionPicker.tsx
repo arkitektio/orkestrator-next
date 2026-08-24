@@ -18,9 +18,11 @@ import {
 import {
   isColumnOption,
   isMeasure,
+  isSparseOption,
   optionKey,
   optionLabel,
   type ColumnOption,
+  type SparseOption,
 } from "./columnOptions";
 
 /**
@@ -74,7 +76,7 @@ export const ColumnOptionPicker = ({
   mode: ColumnOptionPickerMode;
   /** `optionKey`s already stored on the layer — offered, but marked as added. */
   taken: ReadonlySet<string>;
-  onPick: (option: ColumnOption) => void;
+  onPick: (option: ColumnOption | SparseOption) => void;
   title?: string;
 }) => {
   const [open, setOpen] = useState(false);
@@ -138,21 +140,29 @@ export const ColumnOptionPicker = ({
   // Memoized because the `?? []` would otherwise mint a new array every render
   // and re-run the grouping below for nothing.
   //
-  // The same roots now also offer SPARSE candidates — a slice of a matrix
-  // rather than a column of a table. Nothing downstream can read one, so they
-  // are dropped HERE rather than half-rendered as a row with no table, and
-  // said out loud: an offer silently withheld is indistinguishable from one
-  // the server never made.
-  const options = useMemo<ColumnOption[]>(() => {
-    const offered = result.data?.options ?? [];
-    const columns = offered.filter(isColumnOption);
-    if (columns.length < offered.length) {
-      console.warn(
-        `[layer] ${offered.length - columns.length} sparse candidate(s) not offered — reading a sparse matrix is not supported yet`,
-      );
-    }
-    return columns;
-  }, [result.data]);
+  // The same roots also offer SPARSE candidates — a slice of a matrix rather
+  // than a column of a table.
+  const options = useMemo<ColumnOption[]>(
+    () => (result.data?.options ?? []).filter(isColumnOption),
+    [result.data],
+  );
+
+  /**
+   * The sparse half, offered in COLOUR mode only.
+   *
+   * Not a gap waiting to be closed: `LabelFilterByInput.table` and `column` are
+   * non-null, so a sparse filter is not expressible in the mutation at all.
+   * Offering one here would produce an input the server refuses and throw in
+   * the add handler, which is a worse failure than not offering it.
+   *
+   * A row here is one MATRIX, never one gene: the position along the identified
+   * axis is chosen afterwards, from the table that axis references. That is why
+   * a 19,059-feature matrix costs one row.
+   */
+  const sparseOptions = useMemo<SparseOption[]>(
+    () => (mode === "color" ? (result.data?.options ?? []).filter(isSparseOption) : []),
+    [result.data, mode],
+  );
 
   /** Grouped by the table the value is READ FROM — the option's own `table`. */
   const groups = useMemo(() => {
@@ -165,7 +175,7 @@ export const ColumnOptionPicker = ({
     return [...byTable.values()];
   }, [options]);
 
-  const empty = !result.loading && options.length === 0;
+  const empty = !result.loading && options.length === 0 && sparseOptions.length === 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -199,6 +209,35 @@ export const ColumnOptionPicker = ({
                     ? "This mask's ids reach no table worth colouring by."
                     : "This collection's ids reach no table worth colouring by."}
               </CommandEmpty>
+            )}
+            {sparseOptions.length > 0 && (
+              <CommandGroup heading="matrices">
+                {sparseOptions.map((option) => {
+                  const key = optionKey(option);
+                  const added = taken.has(key);
+                  return (
+                    <CommandItem
+                      key={key}
+                      value={key}
+                      onSelect={() => {
+                        if (added) return;
+                        onPick(option);
+                        setOpen(false);
+                      }}
+                      className="gap-2 text-xs"
+                      disabled={added}
+                    >
+                      <span className="flex-1 truncate">{option.sparseDataset.name}</span>
+                      {/* Which axes a position still has to be given along —
+                          the row is the matrix, not the slice. */}
+                      <span className="shrink-0 text-[9px] text-muted-foreground">
+                        per {option.axes.join(", ")}
+                      </span>
+                      {added && <Check className="h-3 w-3 shrink-0" />}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
             )}
             {groups.map((group) => (
               <CommandGroup key={group.name} heading={group.name}>

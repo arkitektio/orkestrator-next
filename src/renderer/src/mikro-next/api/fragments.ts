@@ -65,6 +65,7 @@
       "DataArray",
       "Lens",
       "MeshCollection",
+      "SparseDataset",
       "TableDataset"
     ],
     "SampleStep": [
@@ -73,7 +74,6 @@
     ],
     "Transformation": [
       "AffineTransformation",
-      "BijectionTransformation",
       "ByDimensionTransformation",
       "FieldTransformation",
       "IdentityTransformation",
@@ -94,7 +94,6 @@
       "ArrayDataset",
       "Axis",
       "BigFileStore",
-      "BijectionTransformation",
       "ByDimensionTransformation",
       "ChannelLabel",
       "Client",

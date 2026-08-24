@@ -18,6 +18,9 @@ import {
   entryLabel,
   filterByEntryToInput,
   isColumnColorBy,
+  isColumnOption,
+  toSparseColorByInput,
+  type SparseOption,
   isJoinedEntry,
   isMeasure,
   JOINED_NOTE,
@@ -215,13 +218,19 @@ export const ColorBySection = memo(function ColorBySection({
    * map, which the server derives when `classColors` is null.
    */
   const addColorBy = useCallback(
-    (option: ColumnOption) => {
-      const next = [
-        ...stateRef.current.colorBys.map(colorByEntryToInput),
-        toColorByInput(option, {
-          colormap: isMeasure(option) ? ColorMap.Viridis : null,
-        }),
-      ];
+    (option: ColumnOption | SparseOption) => {
+      // A sparse option is a MATRIX, and a colouring needs a position along
+      // every axis it identifies itself by. Position 0 is the opening move —
+      // a real slice, drawn immediately — and the entry editor is where a gene
+      // is chosen. Adding it "unpositioned" is not an option: the mutation
+      // refuses an `at` that does not name every axis.
+      const entry = isColumnOption(option)
+        ? toColorByInput(option, { colormap: isMeasure(option) ? ColorMap.Viridis : null })
+        : toSparseColorByInput(
+            option,
+            option.axes.map((axis) => ({ axis, value: 0 })),
+          );
+      const next = [...stateRef.current.colorBys.map(colorByEntryToInput), entry];
       void persistEntries({ colorBys: next, activeColorBy: next.length - 1 });
     },
     [persistEntries],
@@ -450,7 +459,17 @@ export const FilterBySection = memo(function FilterBySection({
    * intent, and the wide seed means applying it hides nothing yet.
    */
   const addFilterBy = useCallback(
-    (option: ColumnOption) => {
+    (option: ColumnOption | SparseOption) => {
+      // A sparse rule is not expressible: `LabelFilterByInput.table` and
+      // `column` are non-null, so there is no arm of the mutation to send one
+      // through. The picker does not offer these in filter mode — this is the
+      // structural guard behind that, so the two cannot drift apart silently.
+      if (!isColumnOption(option)) {
+        setRuleError(
+          `'${option.sparseDataset.name}' is a matrix, and a filter names a column of a table — colour by it instead`,
+        );
+        return;
+      }
       const engine = stateRef.current.attributeService?.engine;
       if (!engine) {
         setRuleError("no datalayer connection — cannot read the column's bounds");

@@ -43,7 +43,31 @@ import { bindSqlLiteral, escapeSqlIdentifier, escapeSqlLiteral } from "./sqlBind
  * tests drive it with a fake connection.
  */
 
-export type QueryResultLike = { toArray: () => unknown[] };
+/**
+ * What this engine needs of a query result.
+ *
+ * `toArray()` is the ROW view — one JS object per row — and is what every
+ * caller here has always wanted, because they read tens of rows for a hover or
+ * a rule editor.
+ *
+ * `getChild()` is the COLUMNAR view, and it is the whole of why this type grew.
+ * DuckDB-WASM answers with an Arrow table; `toArray()` destroys it, at roughly
+ * seven allocations per row (an Arrow proxy, a `toJSON` object, an
+ * `Object.entries` array and its pairs, a mapped array, a rebuilt object). That
+ * is the right trade for tens of rows and ruinous for millions: a point layer
+ * reading two coordinate columns over 5.5 M rows would allocate ~77 M objects
+ * and gigabytes of transient garbage before a single vertex existed.
+ * `getChild(name).toArray()` hands back a `Float64Array` view over the Arrow
+ * buffer instead — one allocation, no boxing.
+ *
+ * Optional, because the type is also satisfied by test doubles and by anything
+ * that only ever wanted rows.
+ */
+export type QueryResultLike = {
+  toArray: () => unknown[];
+  getChild?: (name: string) => { toArray: () => ArrayLike<number> } | null;
+  numRows?: number;
+};
 
 export type PreparedStatementLike = {
   query: (...params: unknown[]) => Promise<QueryResultLike>;
@@ -325,6 +349,70 @@ export class AttributeLookupEngine {
       });
       const result = await connection.query(sql);
       return result.toArray().map((row) => rowToRecord(row));
+    });
+  }
+
+  /**
+   * The same read, kept COLUMNAR.
+   *
+   * A sibling of `readAcross` rather than a replacement: the row shape is what
+   * a hover and a rule editor want, and rewriting them to walk typed arrays
+   * would be worse code for no gain at the sizes they read. This is for the
+   * one caller that reads a whole column — coordinates for a point layer —
+   * where the row shape is the cost. See `QueryResultLike`.
+   *
+   * Every named column comes back as a typed array of the same length, in the
+   * order DuckDB produced them, so `x[i]` and `y[i]` belong to the same row
+   * without anything having to pair them up.
+   *
+   * `castBigIntToDouble` is already set on the connection, so an int64 id
+   * column arrives as a `Float64Array` and needs no conversion here.
+   */
+  async readColumnsTyped(
+    stores: readonly ParquetStoreLike[],
+    buildSql: (urlOf: (storeId: string) => string) => string,
+    columns: readonly string[],
+  ): Promise<Record<string, ArrayLike<number>> | null> {
+    if (this.disposed) return null;
+    const distinct = new Map(stores.map((store) => [store.id, store]));
+    const grantsReady = new Map(
+      [...distinct.values()].map((store) => {
+        const pending = this.grantFor(store);
+        pending.catch(() => undefined);
+        return [store.id, pending] as const;
+      }),
+    );
+
+    return this.enqueue(async () => {
+      if (this.disposed) return null;
+      const connection = await this.ensureConnection();
+      const urls = new Map<string, string>();
+      for (const [storeId, store] of distinct) {
+        const grant = await grantsReady.get(storeId)!;
+        await this.installSecret(connection, store, grant);
+        urls.set(storeId, grantUrl(grant));
+      }
+      if (this.disposed) return null;
+      const sql = buildSql((storeId) => {
+        const url = urls.get(storeId);
+        if (!url) {
+          throw new Error(`readColumnsTyped was not given the store ${storeId} its SQL reads from`);
+        }
+        return url;
+      });
+      const result = await connection.query(sql);
+      if (!result.getChild) {
+        // A result that cannot answer columnwise. Null rather than silently
+        // falling back to the row path, whose cost is the reason this exists.
+        return null;
+      }
+      const out: Record<string, ArrayLike<number>> = {};
+      for (const name of columns) {
+        const child = result.getChild(name);
+        if (!child) return null;
+        out[name] = child.toArray();
+      }
+      return out;
     });
   }
 

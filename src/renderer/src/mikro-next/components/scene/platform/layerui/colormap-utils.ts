@@ -4,7 +4,6 @@ import {
   sampleColorMapCSS as sceneSampleColorMapCSS,
 } from "../gpu/colormaps";
 import {
-  INSTANCE_COLORMAPS,
   INSTANCE_COLORMAP_SPECS,
   instanceHue,
   type FabriksInstanceColormap,
@@ -49,6 +48,43 @@ export const instancePaletteColor = (
   return hslToRgb255(instanceHue(ordinal), s, l);
 };
 
+/**
+ * The `ColorMap` members that are QUALITATIVE — a colour per distinct value rather than a ramp
+ * over a range — mapped to the instance palette each one is.
+ *
+ * The server decides which sort a column admits, from the column's declared role, and refuses
+ * the wrong sort at the mutation boundary. So an entry's colormap *is* the control: a
+ * qualitative one can only have come from a categorical column. That is what lets the LUT
+ * painter branch on the entry instead of sniffing the runtime type of the values it read.
+ *
+ * The names are shared with `INSTANCE_COLORMAPS` deliberately — one set of palettes serves the
+ * id hash, a mesh collection's instance colouring and a categorical column entry, so the same
+ * class lands on the same colour whichever of the three is drawing it.
+ */
+export const QUALITATIVE_COLORMAPS: Partial<Record<ColorMap, FabriksInstanceColormap>> = {
+  [ColorMap.Hues]: "hues",
+  [ColorMap.Distinct]: "distinct",
+  [ColorMap.Pastel]: "pastel",
+  [ColorMap.Vivid]: "vivid",
+};
+
+/** The instance palette this colormap is, or null when it is a continuous ramp. */
+export const qualitativePalette = (
+  colormap: ColorMap | null | undefined,
+): FabriksInstanceColormap | null =>
+  (colormap != null ? QUALITATIVE_COLORMAPS[colormap] : undefined) ?? null;
+
+/** The `ColorMap` member an instance palette is, for a control that persists a pick. */
+export const colormapOfPalette = (name: FabriksInstanceColormap): ColorMap =>
+  (Object.keys(QUALITATIVE_COLORMAPS) as ColorMap[]).find(
+    (member) => QUALITATIVE_COLORMAPS[member] === name,
+  ) ?? ColorMap.Hues;
+
+/** The continuous ramps, for a control offering a measure column its choices. */
+export const CONTINUOUS_COLORMAPS: ColorMap[] = (Object.values(ColorMap) as ColorMap[]).filter(
+  (member) => QUALITATIVE_COLORMAPS[member] === undefined,
+);
+
 /** A palette's preview: the first six instance hues under its spec. */
 export const instancePaletteCSS = (name: FabriksInstanceColormap): string => {
   const colors = Array.from({ length: 6 }, (_, ordinal) => {
@@ -58,43 +94,6 @@ export const instancePaletteCSS = (name: FabriksInstanceColormap): string => {
   return `linear-gradient(to right, ${colors.join(", ")})`;
 };
 
-/**
- * The reserved key a palette-derived `classColors` map is stamped with, so the
- * editor can answer "which palette is this?" without reverse-engineering the
- * colours. Safe in-band: `classColorFor` looks values up by name and a string
- * under this key is not a colour triple, so the renderer ignores it.
- */
-export const PALETTE_STAMP = "__palette";
-
-/**
- * A palette made PERSISTENT: an explicit `value → [r, g, b]` map over the
- * column's distinct values, in their sorted rank order — the same rank the LUT
- * painter assigns, so the stored colours land where the derived ones would.
- * This is how a categorical column entry carries one of the instance palettes
- * through a `classColors` field that predates them.
- */
-export const classColorsForPalette = (
-  name: FabriksInstanceColormap,
-  values: readonly string[],
-): Record<string, unknown> => {
-  const map: Record<string, unknown> = { [PALETTE_STAMP]: name };
-  values.forEach((value, rank) => {
-    map[value] = instancePaletteColor(name, rank);
-  });
-  return map;
-};
-
-/** The stamped palette of a `classColors` map, or null for a hand-made map. */
-export const paletteOfClassColors = (
-  classColors: unknown,
-): FabriksInstanceColormap | null => {
-  if (!classColors || typeof classColors !== "object") return null;
-  const stamp = (classColors as Record<string, unknown>)[PALETTE_STAMP];
-  return typeof stamp === "string" &&
-    (INSTANCE_COLORMAPS as readonly string[]).includes(stamp)
-    ? (stamp as FabriksInstanceColormap)
-    : null;
-};
 
 /** HSL → 0-255 RGB, h/s/l all in 0..1. */
 const hslToRgb255 = (h: number, s: number, l: number): [number, number, number] => {

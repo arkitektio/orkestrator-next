@@ -9,7 +9,8 @@ import { isMeshSample } from "@/mikro-next/lib/attributes/attributeTypes";
 import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEngine";
 import { escapeSqlIdentifier, escapeSqlLiteral } from "@/mikro-next/lib/attributes/sqlBind";
 import { sampleColorMapRgb } from "../gpu/colormaps";
-import { instanceHue } from "../gpu/instanceColormaps";
+import { DEFAULT_INSTANCE_COLORMAP } from "../gpu/instanceColormaps";
+import { instancePaletteColor, qualitativePalette } from "../layerui/colormap-utils";
 
 /**
  * The `colorBys` / `filterBys` machinery, shared by MESH collections and LABEL
@@ -78,10 +79,13 @@ import { instanceHue } from "../gpu/instanceColormaps";
 export const LUT_WIDTH = 2048;
 
 export type ColumnLutEntryColorBy = {
-  table: string;
-  column: string;
+  /** A COLUMN entry names these; a SPARSE one leaves them null. */
+  table?: string | null;
+  column?: string | null;
+  /** (SPARSE) the matrix, and the position along the axes it identifies. */
+  dataset?: string | null;
+  at?: readonly { axis: string; value: number }[] | null;
   colormap?: ColorMap | null;
-  classColors?: unknown;
   /** Clims: the ramp runs between these instead of the data's own min/max. */
   min?: number | null;
   max?: number | null;
@@ -89,8 +93,12 @@ export type ColumnLutEntryColorBy = {
 };
 
 export type ColumnLutEntryFilterBy = {
-  table: string;
-  column: string;
+  /** A COLUMN rule names these; a SPARSE one names `dataset`/`at` instead. */
+  table?: string | null;
+  column?: string | null;
+  /** (SPARSE) the matrix, and the position along the axes it identifies itself by. */
+  dataset?: string | null;
+  at?: readonly { axis: string; value: number }[] | null;
   min?: number | null;
   max?: number | null;
   values?: readonly string[] | null;
@@ -186,24 +194,14 @@ export const looksNumeric = (values: Iterable<unknown>): boolean => {
 };
 
 export const classColorFor = (
-  value: string,
-  classColors: unknown,
+  colormap: ColorMap | null | undefined,
   ordinalOfValue: number,
-): [number, number, number] => {
-  const explicit =
-    classColors && typeof classColors === "object"
-      ? (classColors as Record<string, unknown>)[value]
-      : undefined;
-  if (Array.isArray(explicit) && explicit.length >= 3) {
-    return [Number(explicit[0]), Number(explicit[1]), Number(explicit[2])];
-  }
-  // No declared colour: the same golden-ratio hue scatter the instance palette
-  // uses, keyed by the VALUE's rank rather than the object's — so every object
-  // sharing a value shares its colour, which is the whole point of colouring by
-  // a categorical column.
-  const color = new THREE.Color().setHSL(instanceHue(ordinalOfValue), 0.72, 0.58);
-  return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
-};
+): [number, number, number] =>
+  // Keyed by the VALUE's rank rather than the object's, so every object sharing a value shares
+  // its colour — which is the whole point of colouring by a categorical column. The palette
+  // comes from the entry's colormap; `hues` is what an entry that names none has always drawn
+  // as, and is the same scatter the id hash itself uses.
+  instancePaletteColor(qualitativePalette(colormap) ?? DEFAULT_INSTANCE_COLORMAP, ordinalOfValue);
 
 /** Does this rule KEEP the object? `exclude` inverts the answer, not the test. */
 export const ruleKeeps = (rule: ColumnLutEntryFilterBy, raw: unknown): boolean => {
@@ -295,16 +293,27 @@ export const resolveColumnValues = async ({
   };
 
   const [colorValues, ruleValues] = await Promise.all([
-    colorBy ? resolve(colorBy, "colouring") : Promise.resolve(null),
-    Promise.all(filterBys.map((rule) => resolve(rule, "rule"))),
+    // A SPARSE entry names no table or column and never reaches here — the
+    // builder answers it from the matrix before calling this. Narrowing rather
+    // than asserting keeps that true if a caller ever forgets.
+    colorBy && colorBy.table != null && colorBy.column != null
+      ? resolve({ ...colorBy, table: colorBy.table, column: colorBy.column }, "colouring")
+      : Promise.resolve(null),
+    // A SPARSE rule reads a matrix and never reaches here, the same as a sparse colouring.
+    // Narrowing rather than asserting keeps that true if a caller forgets.
+    Promise.all(
+      filterBys.map((rule) =>
+        rule.table != null && rule.column != null
+          ? resolve({ ...rule, table: rule.table, column: rule.column }, "rule")
+          : Promise.resolve(null),
+      ),
+    ),
   ]);
 
   return { colorValues, ruleValues, skipped };
 };
 
 /** One object and the texel it owns. `slot` is the caller's own mapping. */
-export type ColumnLutTarget = { objectId: number; slot: number };
-
 /**
  * PHASE 2 — allocate the RGBA8 texel buffer, white and opaque.
  *
@@ -343,21 +352,37 @@ export const columnLutTexels = (slotCount: number): number => {
  */
 export const paintColumnLut = ({
   data,
-  targets,
+  slotCount,
+  slotOf,
   colorBy,
   filterBys,
   colorValues,
   ruleValues,
 }: {
   data: Uint8Array;
-  targets: readonly ColumnLutTarget[];
+  /** How many slots the buffer holds. Only used to bound the visibility baseline. */
+  slotCount: number;
+  /** An object id's slot, or -1 for an id this table does not address. */
+  slotOf: (objectId: number) => number;
   colorBy: ColumnLutEntryColorBy | null;
   filterBys: readonly ColumnLutEntryFilterBy[];
 } & Pick<ResolvedColumnValues, "colorValues" | "ruleValues">): void => {
   // ------------------------------------------------------------------ colour
   if (colorBy && colorValues) {
-    const present = [...colorValues.values()];
-    if (looksNumeric(present)) {
+    // Branch on the ENTRY where it says anything. Which sort of colormap a column admits
+    // follows from its declared role and is enforced server-side, so a colormap that IS named
+    // is authoritative: a qualitative one can only have come from a categorical column and a
+    // continuous one only from a measure column. Sniffing the values instead — which is what
+    // this did — silently ignored a colormap on a column whose ids happened to parse as
+    // numbers, and silently ignored a palette on one whose classes did.
+    //
+    // An entry naming NO colormap is the one case the entry cannot answer, and both roles
+    // allow it (the viewer picks). There the values are the only signal there is, so the old
+    // test stays as the fallback rather than as the rule.
+    const named = colorBy.colormap ?? null;
+    const measured =
+      named !== null ? qualitativePalette(named) === null : looksNumeric(colorValues.values());
+    if (measured) {
       // The range comes from the DATA unless the entry carries CLIMS: a
       // colormap over an unknown range would paint every object the same end
       // of the ramp, so the data's min/max is the fallback — and an entry
@@ -365,7 +390,7 @@ export const paintColumnLut = ({
       // values outside clamped to the ends rather than wrapped or hidden.
       let min = Number.POSITIVE_INFINITY;
       let max = Number.NEGATIVE_INFINITY;
-      for (const value of present) {
+      for (const value of colorValues.values()) {
         const candidate = Number(value);
         if (!Number.isFinite(candidate)) continue;
         if (candidate < min) min = candidate;
@@ -374,9 +399,14 @@ export const paintColumnLut = ({
       if (colorBy.min != null && Number.isFinite(colorBy.min)) min = colorBy.min;
       if (colorBy.max != null && Number.isFinite(colorBy.max)) max = colorBy.max;
       const span = max - min;
-      for (const target of targets) {
-        const raw = colorValues.get(target.objectId);
+      // Iterate the ROWS, not the slots. A table addresses a bounded number of
+      // objects; the slot space is the id range, which for a bin lattice is
+      // millions. Walking slots meant a `Map.get` per slot and an id array as
+      // long as the range — hundreds of MB before a texture existed.
+      for (const [objectId, raw] of colorValues) {
         if (raw === undefined || raw === null) continue;
+        const slot = slotOf(objectId);
+        if (slot < 0) continue;
         const value = Number(raw);
         if (!Number.isFinite(value)) continue;
         // A constant column is not a gradient; put it mid-ramp rather than
@@ -386,23 +416,23 @@ export const paintColumnLut = ({
         // and CSS gradients); this texture is RGBA8, and writing the float
         // straight into a Uint8Array truncates every channel to black.
         const [r, g, b] = sampleColorMapRgb(colorBy.colormap ?? ColorMap.Viridis, t);
-        const at = target.slot * 4;
+        const at = slot * 4;
         data[at] = Math.round(r * 255);
         data[at + 1] = Math.round(g * 255);
         data[at + 2] = Math.round(b * 255);
       }
     } else {
       // Stable value → rank, so the palette does not reshuffle between builds.
+      const distinct = new Set<string>();
+      for (const value of colorValues.values()) distinct.add(String(value));
       const ranks = new Map<string, number>();
-      for (const value of [...new Set(present.map((entry) => String(entry)))].sort()) {
-        ranks.set(value, ranks.size);
-      }
-      for (const target of targets) {
-        const raw = colorValues.get(target.objectId);
+      for (const value of [...distinct].sort()) ranks.set(value, ranks.size);
+      for (const [objectId, raw] of colorValues) {
         if (raw === undefined || raw === null) continue;
-        const value = String(raw);
-        const [r, g, b] = classColorFor(value, colorBy.classColors, ranks.get(value) ?? 0);
-        const at = target.slot * 4;
+        const slot = slotOf(objectId);
+        if (slot < 0) continue;
+        const [r, g, b] = classColorFor(colorBy.colormap, ranks.get(String(raw)) ?? 0);
+        const at = slot * 4;
         data[at] = r;
         data[at + 1] = g;
         data[at + 2] = b;
@@ -411,18 +441,50 @@ export const paintColumnLut = ({
   }
 
   // ------------------------------------------------------------- visibility
-  for (let index = 0; index < filterBys.length; index += 1) {
-    const rule = filterBys[index];
-    const values = ruleValues[index];
+  //
+  // The alpha channel is the AND of every rule. Walking slots per rule meant
+  // `rules x slots` map lookups; instead take the answer for an id NO rule
+  // mentions once — it is a constant — and then correct only the slots some
+  // rule does mention.
+  //
+  // `ruleKeeps(rule, undefined)` IS that constant, and deriving it that way
+  // rather than reasoning about the rule's shape keeps the two in step: a
+  // bounds rule fails `Number.isFinite(NaN)` and a values rule fails the
+  // null check, both landing on `exclude ? true : false`, while an
+  // unconfigured rule keeps everything.
+  const active = filterBys
+    .map((rule, index) => ({ rule, values: ruleValues[index] }))
     // A rule whose column could not be read applies to nothing rather than to
     // everything: silently hiding every object because a read failed is the
     // worst possible reading of "filter".
-    if (!values) continue;
-    for (const target of targets) {
-      if (data[target.slot * 4 + 3] === 0) continue; // already dropped (AND)
-      if (!ruleKeeps(rule, values.get(target.objectId))) {
-        data[target.slot * 4 + 3] = 0;
+    .filter((entry): entry is { rule: ColumnLutEntryFilterBy; values: Map<number, unknown> } =>
+      Boolean(entry.values),
+    );
+
+  if (active.length > 0) {
+    const baseline = active.every(({ rule }) => ruleKeeps(rule, undefined));
+    if (!baseline) {
+      // Every slot starts hidden; the loop below re-admits the ones some rule
+      // actually mentions. One strided write over the buffer, not one per rule.
+      for (let slot = 0; slot < slotCount; slot += 1) data[slot * 4 + 3] = 0;
+    }
+
+    // The union of ids any rule mentions. Bounded by the rows read, never by
+    // the slot count.
+    const mentioned = new Set<number>();
+    for (const { values } of active) for (const objectId of values.keys()) mentioned.add(objectId);
+
+    for (const objectId of mentioned) {
+      const slot = slotOf(objectId);
+      if (slot < 0) continue;
+      let keeps = true;
+      for (const { rule, values } of active) {
+        if (!ruleKeeps(rule, values.get(objectId))) {
+          keeps = false;
+          break;
+        }
       }
+      data[slot * 4 + 3] = keeps ? 255 : 0;
     }
   }
 };

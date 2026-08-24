@@ -1,0 +1,170 @@
+// @vitest-environment jsdom
+import { describe, expect, it } from "vitest";
+import { ColorMap } from "@/mikro-next/api/graphql";
+import {
+  CODE_HIDDEN,
+  CODE_NO_VALUE,
+  VALUE_CODE_MAX,
+  allocateValueLut,
+  decodeValue,
+  encodeValue,
+  paintValueLut,
+  valueLutTexels,
+} from "./valueLut";
+
+const identity = (objectId: number) => objectId;
+
+describe("the 16-bit code", () => {
+  it("packs G high, R low — the order the shader decodes", () => {
+    // The one thing here that fails SILENTLY if it is wrong: a reversed pair is
+    // a plausible number, not an error. The shader reads `G * 256 + R`, so the
+    // low byte must land in R, which is byte 0 of the pair.
+    const lut = allocateValueLut(4);
+    lut.view[0] = 0x1234;
+    expect(lut.data[0]).toBe(0x34); // R, low
+    expect(lut.data[1]).toBe(0x12); // G, high
+    expect(lut.data[1] * 256 + lut.data[0]).toBe(0x1234);
+  });
+
+  it("round-trips a value through the quantisation", () => {
+    for (const [value, min, max] of [
+      [0, 0, 10],
+      [10, 0, 10],
+      [3.7, 0, 10],
+      [-5, -5, 5],
+    ] as const) {
+      const back = decodeValue(encodeValue(value, min, max), min, max);
+      expect(Math.abs(back - value)).toBeLessThan((max - min) / VALUE_CODE_MAX + 1e-9);
+    }
+  });
+
+  it("keeps 16 bits of precision, which is why it is not one byte", () => {
+    // Counts 0..200 windowed to 0..5 is the case 8 bits would band: it would
+    // leave ~6 distinct levels across the window. Here the codes stay distinct.
+    const codes = new Set<number>();
+    for (let value = 0; value <= 5; value += 0.1) codes.add(encodeValue(value, 0, 200));
+    expect(codes.size).toBeGreaterThan(40);
+  });
+
+  it("puts a constant column mid-range instead of dividing by zero", () => {
+    expect(encodeValue(7, 7, 7)).toBe(Math.round(0.5 * VALUE_CODE_MAX));
+  });
+});
+
+describe("paintValueLut", () => {
+  it("starts every slot visible-with-no-value, and reports the data range", () => {
+    const lut = allocateValueLut(5);
+    expect([...lut.view]).toEqual(Array(5).fill(CODE_NO_VALUE));
+
+    const window = paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: { table: "t", column: "expr", colormap: ColorMap.Viridis },
+      filterBys: [],
+      colorValues: new Map<number, unknown>([
+        [1, 0],
+        [3, 20],
+      ]),
+      ruleValues: [],
+    });
+
+    // The window is the DATA's range, never a clim — the clim is a uniform.
+    expect(window).toEqual({ valueMin: 0, valueMax: 20 });
+    expect(lut.view[1]).toBe(0);
+    expect(lut.view[3]).toBe(VALUE_CODE_MAX);
+    expect(lut.view[2]).toBe(CODE_NO_VALUE); // no row -> keeps its hue hash
+  });
+
+  it("ignores the entry's clims when quantising", () => {
+    // The regression this guards: quantising to the window would make the table
+    // unusable the moment the window moved, which is the whole point of the change.
+    const lut = allocateValueLut(2);
+    const window = paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: { table: "t", column: "expr", colormap: ColorMap.Viridis, min: 100, max: 200 },
+      filterBys: [],
+      colorValues: new Map<number, unknown>([
+        [0, 0],
+        [1, 10],
+      ]),
+      ruleValues: [],
+    });
+    expect(window).toEqual({ valueMin: 0, valueMax: 10 });
+  });
+
+  it("hides a filtered slot and leaves an unmentioned one at the baseline", () => {
+    const lut = allocateValueLut(6);
+    paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: null,
+      filterBys: [{ table: "t", column: "area", min: 10 }],
+      colorValues: null,
+      ruleValues: [
+        new Map<number, unknown>([
+          [1, 50],
+          [2, 5],
+        ]),
+      ],
+    });
+    expect(lut.view[1]).toBe(CODE_NO_VALUE); // kept
+    expect(lut.view[2]).toBe(CODE_HIDDEN); // out of range
+    expect(lut.view[4]).toBe(CODE_HIDDEN); // never mentioned -> the baseline
+  });
+
+  it("keeps a value on a kept slot while a rule hides its neighbour", () => {
+    // The bug the shared 16-bit code invites: visibility and value live in the
+    // same bits, so hiding by blanket-fill erased the values it was meant to
+    // sit beside. Visibility is decided first and the value pass declines to
+    // write into a hidden slot.
+    const lut = allocateValueLut(4);
+    paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: { table: "t", column: "expr", colormap: ColorMap.Viridis },
+      filterBys: [{ table: "t", column: "area", min: 10 }],
+      colorValues: new Map<number, unknown>([
+        [1, 0],
+        [2, 100],
+      ]),
+      ruleValues: [
+        new Map<number, unknown>([
+          [1, 50], // passes
+          [2, 5], // fails
+        ]),
+      ],
+    });
+    expect(lut.view[1]).toBe(0); // kept, and carries its value
+    expect(lut.view[2]).toBe(CODE_HIDDEN); // hidden, and stayed hidden
+    expect(lut.view[3]).toBe(CODE_HIDDEN); // unmentioned -> the baseline
+  });
+
+  it("ranks a categorical colouring onto the palette row", () => {
+    const lut = allocateValueLut(3);
+    const window = paintValueLut({
+      lut,
+      slotOf: identity,
+      colorBy: { table: "t", column: "kind", colormap: ColorMap.Distinct },
+      filterBys: [],
+      colorValues: new Map<number, unknown>([
+        [0, "b"],
+        [1, "a"],
+        [2, "b"],
+      ]),
+      ruleValues: [],
+    });
+    // Normalised onto 0..1 so the shader keeps one path.
+    expect(window).toEqual({ valueMin: 0, valueMax: 1 });
+    expect(lut.view[0]).toBe(lut.view[2]); // same class, same code
+    expect(lut.view[0]).not.toBe(lut.view[1]);
+    // Sorted ranks, so the palette does not reshuffle between builds.
+    expect(lut.view[1]).toBe(encodeValue(0.5 / 256, 0, 1));
+  });
+
+  it("halves the table against RGBA8 — which is what brings 2 um inside the budget", () => {
+    const slots = 5_479_660;
+    expect(valueLutTexels(slots) * 2).toBeLessThan(16 * 1024 * 1024);
+    expect(valueLutTexels(slots) * 4).toBeGreaterThan(16 * 1024 * 1024);
+  });
+});

@@ -22,8 +22,24 @@ vi.mock("@/mikro-next/lib/attributes/AttributeServiceProvider", () => ({
 }));
 
 const setLabelColorLut = vi.fn();
+// The hook reaches for the client and the datalayer endpoint to answer a SPARSE
+// colouring. These cover the COLUMN arm, which touches neither.
+vi.mock("@/app/Arkitekt", () => ({
+  useMikro: () => ({ mutate: vi.fn(), query: vi.fn() }),
+  useDatalayerEndpoint: () => "https://datalayer.test",
+}));
+
+const setLabelColorStyle = vi.fn();
 vi.mock("./labelNodeMaterials", () => ({
   setLabelColorLut: (...args: unknown[]) => setLabelColorLut(...args),
+  setLabelColorStyle: (...args: unknown[]) => setLabelColorStyle(...args),
+}));
+
+// The appearance effect builds a palette row; the row itself is not what these
+// cover, and a real one wants a GPU-shaped texture.
+vi.mock("../../platform/attributes/valueLut", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  paletteRowFor: () => null,
 }));
 
 const buildLabelColorLut = vi.fn();
@@ -80,7 +96,7 @@ describe("useLabelColorLut", () => {
     );
     expect(setLabelColorLut).toHaveBeenCalledWith(
       NODES,
-      { texture: null, width: 0, height: 0, idOffset: 0 },
+      { texture: null, width: 0, height: 0, idOffset: 0, valueMin: 0, valueMax: 1 },
       { colorize: false, filter: false },
     );
     expect(buildLabelColorLut).not.toHaveBeenCalled();
@@ -114,6 +130,71 @@ describe("useLabelColorLut", () => {
     );
     expect(texture.dispose).not.toHaveBeenCalled();
     expect(invalidate).toHaveBeenCalled();
+  });
+
+  it("does NOT rebuild the table when only the window or the colormap moves", async () => {
+    // The point of the value encoding. The table used to be keyed on the whole
+    // entry, so nudging a clim re-ran the read, repainted every slot and
+    // re-uploaded the texture — at a bin lattice's scale, tens of megabytes to
+    // change how a number becomes a hue. Now it is two uniform writes.
+    buildLabelColorLut.mockResolvedValue({
+      texture: { dispose: vi.fn() },
+      width: 4,
+      height: 1,
+      idOffset: 1,
+      skipped: [],
+      valueMin: 0,
+      valueMax: 10,
+    });
+
+    const { rerender } = render(<Harness layer={ACTIVE} />);
+    await waitFor(() => expect(setLabelColorLut).toHaveBeenCalled());
+    expect(buildLabelColorLut).toHaveBeenCalledTimes(1);
+    expect(setLabelColorStyle).toHaveBeenCalledTimes(1);
+
+    // Same column, different appearance.
+    const restyled = layerWith({
+      colorBys: [
+        { table: "t", column: "area", joinPath: [], colormap: "MAGMA", min: 2, max: 8 },
+      ],
+      activeColorBy: 0,
+      filterBys: [],
+      activeFilterBys: [],
+    });
+    rerender(<Harness layer={restyled} />);
+    await waitFor(() => expect(setLabelColorStyle).toHaveBeenCalledTimes(2));
+
+    expect(buildLabelColorLut).toHaveBeenCalledTimes(1); // the table is untouched
+    expect(setLabelColorStyle).toHaveBeenLastCalledWith(
+      NODES,
+      expect.objectContaining({ climMin: 2, climMax: 8 }),
+    );
+  });
+
+  it("DOES rebuild when the column changes", async () => {
+    buildLabelColorLut.mockResolvedValue({
+      texture: { dispose: vi.fn() },
+      width: 4,
+      height: 1,
+      idOffset: 1,
+      skipped: [],
+      valueMin: 0,
+      valueMax: 10,
+    });
+    const { rerender } = render(<Harness layer={ACTIVE} />);
+    await waitFor(() => expect(buildLabelColorLut).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <Harness
+        layer={layerWith({
+          colorBys: [{ table: "t", column: "volume", joinPath: [] }],
+          activeColorBy: 0,
+          filterBys: [],
+          activeFilterBys: [],
+        })}
+      />,
+    );
+    await waitFor(() => expect(buildLabelColorLut).toHaveBeenCalledTimes(2));
   });
 
   it("DISPOSES a superseded build instead of binding it", async () => {

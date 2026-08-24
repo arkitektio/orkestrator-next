@@ -38,7 +38,6 @@ fragment LabelColorBy on LabelColorBy {
   # and send it back and the server stores nulls over what the card set.
   min
   max
-  classColors
   label
   # The SPARSE arm: `kind` says which of the two an entry is, and a SPARSE one
   # names a matrix and a position along its own axes instead of a column,
@@ -93,7 +92,6 @@ fragment MeshColorBy on MeshColorBy {
   # and send it back and the server stores nulls over what the card set.
   min
   max
-  classColors
   label
   # The SPARSE arm: `kind` says which of the two an entry is, and a SPARSE one
   # names a matrix and a position along its own axes instead of a column,
@@ -325,10 +323,33 @@ fragment SceneLayer on Layer {
     zColumn
     tColumn
     sizeColumn
-    colorColumn
     idColumn
     pointSize
     colormap
+    # The picker, the same one a label and a mesh layer publish. `colorColumn`
+    # above it is the flat single colouring that predates the picker and cannot
+    # name a sparse matrix; it stays selected only so a layer written before this
+    # still reads.
+    colorColumn
+    activeColorBy
+    colorBys {
+      ...LabelColorBy
+    }
+    activeFilterBys
+    filterBys {
+      ...LabelFilterBy
+    }
+    # A point layer has no lens, so the client cannot compose its affine the way it does for an
+    # image or a mask -- `composeLayerAffine` walks a lens's render axes. The server already
+    # composes `pathToWorld` into one map, so ask it rather than reimplementing the walk.
+    asAffine {
+      matrix
+      inputAxes
+      outputAxes
+      total
+    }
+    # Whether a world-space `pointSize` is a well-defined length at all: from SIMILARITY up.
+    placementInvariance
   }
   ... on TrackLayer {
     tableDataset {

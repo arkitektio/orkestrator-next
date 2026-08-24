@@ -38,6 +38,18 @@ fragment ColumnOptionJoinStep on ColumnOptionJoinStep {
 
 fragment ColorByOption on ColorByOption {
   control
+  # The SPARSE arm. An option is a table column OR a matrix, never both, so
+  # these are null exactly when `table`/`column` are set.
+  #
+  # ONE option per matrix, never one per position: a 19,059-feature matrix would
+  # otherwise be 19,059 rows in a dropdown. `axes` names the axes a position has
+  # to be given along, and the client finds the position in the table that axis
+  # references — which is why the gene list is a second interaction rather than
+  # part of this list.
+  axes
+  sparseDataset {
+    ...SparseColouringSource
+  }
   table {
     ...ListTableDataset
     store {
@@ -58,6 +70,14 @@ fragment ColorByOption on ColorByOption {
 # Same selection as ColorByOption — see the note above.
 fragment FilterByOption on FilterByOption {
   control
+  # Selected for symmetry and for the round trip, NOT because a sparse filter can
+  # be authored: `LabelFilterByInput.table` and `column` are non-null, so there is
+  # no sparse arm of a filter to send. The picker refuses these in filter mode.
+  axes
+  sparseDataset {
+    id
+    name
+  }
   table {
     ...ListTableDataset
     store {

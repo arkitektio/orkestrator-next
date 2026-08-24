@@ -1,7 +1,8 @@
 import {
+  ColorMap,
+  ColorSourceKind,
   ColumnControl,
   ColumnRole,
-  type ColorMap,
   type ColorByOptionFragment,
   type FilterByOptionFragment,
   type LabelColorByFragment,
@@ -13,7 +14,7 @@ import {
   type MeshFilterByFragment,
   type MeshFilterByInput,
 } from "@/mikro-next/api/graphql";
-import { paletteOfClassColors } from "./colormap-utils";
+import { qualitativePalette } from "./colormap-utils";
 
 /**
  * The bridge between what the server OFFERS and what a MESH OR LABEL layer
@@ -63,6 +64,23 @@ export type ColumnOption = OfferedOption & {
 
 export const isColumnOption = (option: OfferedOption): option is ColumnOption =>
   option.table != null && option.column != null;
+
+/**
+ * The other arm: one slice of a matrix rather than a column of a table.
+ *
+ * `axes` names the axes a position has to be given along — one for a rank-two
+ * matrix, two for a rank-three one — and the position itself is NOT part of the
+ * option. That is deliberate on the server's side: a 19,059-feature matrix is
+ * one row in the picker, and the position is looked up in the table the axis
+ * references. So picking a sparse option is picking a MATRIX; picking the gene
+ * is the step after.
+ */
+export type SparseOption = OfferedOption & {
+  sparseDataset: NonNullable<OfferedOption["sparseDataset"]>;
+};
+
+export const isSparseOption = (option: OfferedOption): option is SparseOption =>
+  option.sparseDataset != null && option.axes.length > 0;
 
 /**
  * A stored colouring, either layer kind. `MeshColorByFragment` and
@@ -144,8 +162,18 @@ const columnKey = (
 ): string =>
   `${joinPath.map((step) => `${step.table}.${step.column}`).join(">")}|${table}|${column}`;
 
-export const optionKey = (option: ColumnOption): string =>
-  columnKey(optionJoinPath(option), option.table.id, option.column.name);
+/**
+ * An offered option's identity, either arm.
+ *
+ * A sparse option keys on the MATRIX, not on a slice of it — the position is
+ * not part of the option, so two entries over one matrix at different positions
+ * are two entries and one option. That is what makes "already added" mean
+ * "this matrix is in the picker", which is the useful reading here.
+ */
+export const optionKey = (option: ColumnOption | SparseOption): string =>
+  isColumnOption(option)
+    ? columnKey(optionJoinPath(option), option.table.id, option.column.name)
+    : `sparse|${option.sparseDataset.id}`;
 
 /**
  * A stored entry's identity. A sparse entry names no column, so it keys on
@@ -222,23 +250,22 @@ export const describeFilterRule = (rule: {
 /**
  * A colouring in words, for its row's second line. Which half applies is the
  * measure/categorical split again: a colormap is a ramp over the column's
- * range, and a categorical column takes a colour per distinct value instead —
- * explicit ones when the entry carries a `classColors` map, derived otherwise.
+ * range, and a categorical column takes a qualitative one -- a colour per distinct value, with
+ * no range to run over and nothing to window.
  */
 export const describeColouring = (entry: {
   colormap?: ColorMap | null;
-  classColors?: unknown;
   min?: number | null;
   max?: number | null;
 }): string => {
+  const palette = qualitativePalette(entry.colormap);
+  if (palette) return `"${palette}" palette, a colour per distinct value`;
   if (entry.colormap) {
     return entry.min != null || entry.max != null
       ? `${entry.colormap.toLowerCase()} over ${entry.min ?? "…"} … ${entry.max ?? "…"}`
       : `${entry.colormap.toLowerCase()} over the column's range`;
   }
-  const palette = paletteOfClassColors(entry.classColors);
-  if (palette) return `"${palette}" palette per value`;
-  return entry.classColors ? "explicit colours per value" : "a colour per distinct value";
+  return "a colour per distinct value";
 };
 
 /**
@@ -254,8 +281,15 @@ export const isJoinedEntry = (entry: {
 /** What that badge says, appended to a row's tooltip. */
 export const JOINED_NOTE = " — reached through a join, not rendered yet";
 
-/** The same, for the SPARSE arm: stored and round-tripped, never drawn. */
-export const SPARSE_NOTE = " — reads a sparse matrix, not rendered yet";
+/**
+ * The same, for the SPARSE arm.
+ *
+ * It draws now — one slice of the matrix, a value per object — so this says what
+ * the row IS rather than what it cannot do. The distinction still matters to a
+ * reader: the value comes from a store read rather than a table lookup, so a
+ * colouring is offered only along an axis the matrix has a layout for.
+ */
+export const SPARSE_NOTE = " — one slice of a sparse matrix";
 
 /**
  * The control a column admits, from its declared role — the same rule the
@@ -278,12 +312,48 @@ export const toColorByInput = (
   option: ColumnOption,
   patch?: Partial<Omit<ColorByInputLike, "table" | "column" | "joinPath">>,
 ): ColorByInputLike => ({
+  kind: ColorSourceKind.Column,
   table: option.table.id,
   column: option.column.name,
   joinPath: optionJoinPath(option),
   label: optionEntryLabel(option),
   ...patch,
 });
+
+/**
+ * The SPARSE arm of the same mapping.
+ *
+ * Separate from `toColorByInput` rather than a branch inside it, because the
+ * two take different second arguments: a column colouring is fully determined
+ * by its option, and a sparse one is not — it needs a POSITION along each axis
+ * the matrix identifies itself by, which the option deliberately does not carry.
+ *
+ * `at` must name every one of `option.axes`. Naming fewer, or naming the axis
+ * the ids run along, is refused server-side — so it is refused here too, before
+ * a mutation is in flight.
+ */
+export const toSparseColorByInput = (
+  option: SparseOption,
+  at: readonly { axis: string; value: number }[],
+  patch?: Partial<Omit<ColorByInputLike, "kind" | "dataset" | "at">>,
+): ColorByInputLike => {
+  const named = [...at.map((position) => position.axis)].sort();
+  const wanted = [...option.axes].sort();
+  if (named.length !== wanted.length || named.some((axis, index) => axis !== wanted[index])) {
+    throw new Error(
+      `a colouring by '${option.sparseDataset.name}' names a position along ${wanted.join(", ")}, but got ${named.join(", ") || "none"}`,
+    );
+  }
+  return {
+    kind: ColorSourceKind.Sparse,
+    dataset: option.sparseDataset.id,
+    at: at.map((position) => ({ axis: position.axis, value: position.value })),
+    // A slice is a value per object, so it is always measured — never a class map.
+    colormap: ColorMap.Magma,
+    label: option.sparseDataset.name,
+    ...patch,
+  };
+};
 
 export const toFilterByInput = (
   option: ColumnOption,
@@ -316,7 +386,6 @@ export const colorByEntryToInput = (entry: ColorByEntry): ColorByInputLike => ({
   })),
   joinPath: entryJoinPath(entry),
   colormap: entry.colormap ?? null,
-  classColors: entry.classColors ?? null,
   label: entry.label ?? null,
   min: entry.min ?? null,
   max: entry.max ?? null,

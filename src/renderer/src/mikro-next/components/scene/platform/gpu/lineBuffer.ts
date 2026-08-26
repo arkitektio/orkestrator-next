@@ -58,6 +58,95 @@ export function writePolylinePairs(
   return segments;
 }
 
+/** Parallel coordinate columns, as a columnar read hands them back. */
+export type RunCoordinates = {
+  x: ArrayLike<number>;
+  y: ArrayLike<number>;
+  /** Null for a 2D table; every z is then written as 0. */
+  z: ArrayLike<number> | null;
+};
+
+/**
+ * Write ONE run of a multi-run buffer, at a segment offset.
+ *
+ * `writePolylinePairs` above writes a single polyline from row 0. A track layer
+ * draws many trajectories in one `LineSegments2` — one geometry, one material,
+ * one draw call instead of N — and that needs two things this adds:
+ *
+ *  - **An offset**, so run K starts where run K-1 ended.
+ *  - **A bounded slice** (`start`, `length`), so the last point of one
+ *    trajectory is never paired with the first point of the next. That pairing
+ *    is the failure mode this signature exists to make unrepresentable: it
+ *    draws a segment leaping across the field between two unrelated tracks,
+ *    and it looks enough like data to be believed.
+ *
+ * Coordinates are taken as PARALLEL COLUMNS rather than as `[x,y,z]` tuples,
+ * because that is how `readTrackPositions` returns them — materialising tuples
+ * for millions of rows is precisely the allocation cost the columnar read path
+ * exists to avoid.
+ *
+ * Returns the number of segments written, or -1 when `target` is too small for
+ * this run at this offset.
+ */
+export function writeRunPairs(
+  target: Float32Array,
+  segmentOffset: number,
+  coords: RunCoordinates,
+  start: number,
+  length: number,
+): number {
+  const segments = segmentCountFor(length);
+  if (segments === 0) return 0;
+  const base = segmentOffset * FLOATS_PER_SEGMENT;
+  if (target.length < base + segments * FLOATS_PER_SEGMENT) return -1;
+
+  const { x, y, z } = coords;
+  for (let index = 0; index < segments; index += 1) {
+    const from = start + index;
+    const to = from + 1;
+    const offset = base + index * FLOATS_PER_SEGMENT;
+
+    target[offset] = x[from];
+    target[offset + 1] = y[from];
+    target[offset + 2] = z ? z[from] : 0;
+    target[offset + 3] = x[to];
+    target[offset + 4] = y[to];
+    target[offset + 5] = z ? z[to] : 0;
+  }
+
+  return segments;
+}
+
+/**
+ * One scalar per segment, at a segment offset — the companion to
+ * `writeRunPairs` for a per-segment attribute (a time, a measure).
+ *
+ * The value taken is the segment's LATER endpoint, `source[from + 1]`. For a
+ * time that is what makes "has this segment happened yet" answerable with a
+ * single comparison: a segment exists once its far end does. Taking the near
+ * end would draw each segment one timepoint early.
+ *
+ * `source` is indexed in ROW space (parallel to the coordinates); `target` in
+ * SEGMENT space. Returns segments written, or -1 when `target` is too small.
+ */
+export function writeRunScalars(
+  target: Float32Array,
+  segmentOffset: number,
+  source: ArrayLike<number>,
+  start: number,
+  length: number,
+): number {
+  const segments = segmentCountFor(length);
+  if (segments === 0) return 0;
+  if (target.length < segmentOffset + segments) return -1;
+
+  for (let index = 0; index < segments; index += 1) {
+    target[segmentOffset + index] = source[start + index + 1];
+  }
+
+  return segments;
+}
+
 /**
  * Cumulative arc length per segment endpoint, in the `(d0, d1)` interleaved
  * layout the dash shader reads. Stride 2 per segment; `d1` of one segment is

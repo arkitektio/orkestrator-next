@@ -28,11 +28,10 @@ export const LABEL_ID_CEILING = 2 ** 24 - 1;
  *
  * For an IMAGE this is the intensity range used to normalize samples to [0,1]
  * before the render graph's (normalized) contrast limits are applied.
- * `mapDTypeToMinMax` returns [0,1] for float dtypes, which is a poor proxy when
- * the data isn't normalized (e.g. float32 valued 0..255 would clamp to the top
- * of the colormap everywhere). For float layers we instead use the real range
- * from the value histogram when it is available. Integer dtypes keep their
- * dtype range so existing scenes render unchanged.
+ * For dtypes whose declared range is a weak proxy for the values actually
+ * stored (`dtypeRangeIsWeakProxy`) we use the real range from the value
+ * histogram when it is available. `uint8`/`uint16` keep their dtype range —
+ * it is a workable proxy and existing scenes must render unchanged.
  *
  * For a LABEL mask it is `[0, LABEL_ID_CEILING]` regardless of dtype, and
  * nothing normalizes against it. It is here because the range is ALSO what the
@@ -53,7 +52,7 @@ export function resolveLayerDataRange(
   dtype: string,
 ): [number, number] {
   if (layer.__typename === "LabelLayer") return [0, LABEL_ID_CEILING];
-  if (dtype === "float32" || dtype === "float64") {
+  if (dtypeRangeIsWeakProxy(dtype)) {
     const range = serverHistogramRange(layer);
     if (range) return range;
   }
@@ -61,28 +60,84 @@ export function resolveLayerDataRange(
 }
 
 /**
- * The `[min, max]` from the layer's server-provided value histogram (the first
- * anchor that carries one), or `null` when absent/unusable. `null` for a float
- * layer means the dtype fallback `[0,1]` would be used — the case that
- * saturates non-normalized data to white and that client auto-contrast covers.
+ * Dtypes whose DECLARED range is a poor proxy for the values actually stored,
+ * so the real range (server histogram, else `LayerBrickPool.autoRange`) has to
+ * stand in for it.
+ *
+ * - **floats** declare `[0,1]` (`mapDTypeToMinMax`), which whites-out any data
+ *   valued >1.
+ * - **signed integers** declare a range centred on zero, so ordinary data
+ *   valued 0..4000 normalizes into `[0.500, 0.561]` — a flat mid-gray with no
+ *   black point, and raw 0 no longer reads as background (the `norm <= 0.001`
+ *   empty-space skip in `raymarchStep` never fires, so the volume renders as
+ *   opaque half-intensity fog and every brick is marched).
+ * - **uint32** declares 2^32 against data that never leaves the low thousands.
+ *
+ * `uint8`/`uint16` are deliberately absent: their dtype range is a workable
+ * proxy and existing scenes must render unchanged.
+ *
+ * This set is shared with `brickResidency`'s auto-range predicate and the two
+ * MUST agree — see the pool-key argument in `octree/poolKey.ts`. `autoRange` is
+ * not itself a pool-key field because it is implied by `dtype` (keyed) plus
+ * "the range fell back to the dtype's" (keyed as `dataRange`); that implication
+ * only holds while both gates test the same dtypes.
+ */
+export function dtypeRangeIsWeakProxy(dtype: string): boolean {
+  const d = dtype.toLowerCase();
+  // Canonical zarrita names, plus the numpy-style aliases the dtype string is
+  // not guaranteed to have been canonicalized out of (cf. `atlasFormat.ts`).
+  return (
+    d === "float32" ||
+    d === "float64" ||
+    d === "int8" ||
+    d === "int16" ||
+    d === "int32" ||
+    d === "uint32" ||
+    d.includes("f4") ||
+    d.includes("f8") ||
+    d.includes("i1") ||
+    d.includes("i2") ||
+    d.includes("i4") ||
+    d.includes("u4")
+  );
+}
+
+/**
+ * The `[min, max]` UNION of the layer's server-provided value histograms, or
+ * `null` when none are present/usable. `null` means the dtype fallback would be
+ * used — the case that mis-windows the data and that client auto-contrast
+ * (`LayerBrickPool.autoRange`) covers.
+ *
+ * The union, not the first anchor: anchors are per-coordinate (`{c: 0}`,
+ * `{c: 1}`, …), so the first one carrying a histogram is channel 0's. Standing
+ * it in for the whole pool clips every brighter channel — a 2-channel layer
+ * with c=0 at [0, 500] and c=1 reaching 30000 would normalize c=1 to 60 and
+ * clamp it to blown-out white. The pool range has to span every channel in it,
+ * exactly as `accumulateAutoRange` does from the decoded bricks.
  */
 export function serverHistogramRange(
   layer: ValueRangeLayer,
 ): [number, number] | null {
-  const vh = layer.lens?.activeAnchors?.find((a) => a.valueHistogram)
-    ?.valueHistogram;
-  const min = vh?.min;
-  const max = vh?.max;
-  if (
-    min != null &&
-    max != null &&
-    Number.isFinite(min) &&
-    Number.isFinite(max) &&
-    max > min
-  ) {
-    return [min, max];
+  let lo = Number.POSITIVE_INFINITY;
+  let hi = Number.NEGATIVE_INFINITY;
+
+  for (const anchor of layer.lens?.activeAnchors ?? []) {
+    const vh = anchor.valueHistogram;
+    const min = vh?.min;
+    const max = vh?.max;
+    if (
+      min != null &&
+      max != null &&
+      Number.isFinite(min) &&
+      Number.isFinite(max) &&
+      max > min
+    ) {
+      if (min < lo) lo = min;
+      if (max > hi) hi = max;
+    }
   }
-  return null;
+
+  return hi > lo ? [lo, hi] : null;
 }
 
 /**

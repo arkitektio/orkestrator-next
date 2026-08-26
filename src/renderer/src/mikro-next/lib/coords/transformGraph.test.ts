@@ -4,6 +4,8 @@ import {
   composePlacementPath,
   evalTransform,
   invert4,
+  placementToSpatialAffine,
+  spatialAxisTriple,
 } from "./transformGraph";
 import {
   absoluteLevelScale,
@@ -324,6 +326,150 @@ describe("composeLayerAffine", () => {
 
   it("returns null (identity) when nothing transforms", () => {
     expect(composeLayerAffine({}, makeLayer())).toBeNull();
+  });
+});
+
+/**
+ * `Layer.asAffine` reduction. The regression suite for the Visium HD non-overlap:
+ * the point layer read `asAffine.matrix` by POSITION, which transposes a world
+ * whose axes are `(y,x)` / `(z,y,x)` — mikro's convention, x last — and, on a
+ * 2×3 placement, wrote the translation into the z basis where a z=0 layer
+ * multiplies it away.
+ */
+describe("placementToSpatialAffine", () => {
+  it("puts a 2D placement's translation in the TRANSLATION column, not z", () => {
+    // 2 x (2+1): rows (y, x), columns (y, x), last column the translation.
+    const m = placementToSpatialAffine(
+      { matrix: [[1, 0, 40], [0, 1, 70]], inputAxes: ["y", "x"], outputAxes: ["y", "x"] },
+      ["x", "y", null],
+    )!;
+    expect(m[0][3]).toBeCloseTo(70); // x translation, from the x ROW
+    expect(m[1][3]).toBeCloseTo(40); // y translation, from the y ROW
+    // z is unconstrained by a 2D registration: identity pass-through, not zero.
+    expect(m[2][2]).toBe(1);
+    expect(m[2][3]).toBe(0);
+  });
+
+  it("maps rows by NAME for an x-last world (no transposition)", () => {
+    // rows/cols (z, y, x): reading row 0 as x would put the z scale on x.
+    const m = placementToSpatialAffine(
+      {
+        matrix: [
+          [5, 0, 0, 1],
+          [0, 3, 0, 2],
+          [0, 0, 0.5, 4],
+        ],
+        inputAxes: ["z", "y", "x"],
+        outputAxes: ["z", "y", "x"],
+      },
+      ["x", "y", "z"],
+    )!;
+    expect(m[0][0]).toBeCloseTo(0.5); // x scale
+    expect(m[1][1]).toBeCloseTo(3); // y scale
+    expect(m[2][2]).toBeCloseTo(5); // z scale
+    expect(m[0][3]).toBeCloseTo(4);
+    expect(m[2][3]).toBeCloseTo(1);
+  });
+
+  it("leaves an unconstrained axis identity for a partial placement (total: false)", () => {
+    // Registered on (y,x) into a (z,y,x) world: two rows, and z must PASS
+    // THROUGH rather than be pinned at the origin.
+    const m = placementToSpatialAffine(
+      { matrix: [[2, 0, 10], [0, 2, 20]], inputAxes: ["y", "x"], outputAxes: ["y", "x"] },
+      ["x", "y", "z"],
+    )!;
+    expect(m[2][2]).toBe(1);
+    expect(m[2][3]).toBe(0);
+    expect(m[0][0]).toBeCloseTo(2);
+    expect(m[0][3]).toBeCloseTo(20);
+  });
+
+  it("resolves when the input axes are table COLUMNS and the output axes are world axes", () => {
+    // A point layer's columns are its source axes and share no names with the
+    // world. A single-triple reducer indexOf's its way to -1 here and degrades
+    // to identity — the silent failure this signature exists to prevent.
+    const m = placementToSpatialAffine(
+      {
+        matrix: [[1, 0, 12], [0, 1, 34]],
+        inputAxes: ["pxl_row_in_fullres", "pxl_col_in_fullres"],
+        outputAxes: ["y", "x"],
+      },
+      ["pxl_col_in_fullres", "pxl_row_in_fullres", null], // xColumn, yColumn, zColumn
+      ["x", "y", null],
+    );
+    expect(m).not.toBeNull();
+    expect(m![0][0]).toBeCloseTo(1);
+    expect(m![0][3]).toBeCloseTo(34); // x row's translation
+    expect(m![1][3]).toBeCloseTo(12); // y row's translation
+  });
+
+  it("returns null for a null placement and for an identity one", () => {
+    expect(placementToSpatialAffine(null, ["x", "y", "z"])).toBeNull();
+    expect(
+      placementToSpatialAffine(
+        { matrix: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]], inputAxes: ["z", "y", "x"], outputAxes: ["z", "y", "x"] },
+        ["x", "y", "z"],
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("spatialAxisTriple", () => {
+  it("reads SPACE axes back to front (x is the LAST spatial axis)", () => {
+    expect(
+      spatialAxisTriple({
+        id: "cs:world",
+        axes: [
+          { name: "t", type: "TIME", order: 0 },
+          { name: "z", type: "SPACE", order: 1 },
+          { name: "y", type: "SPACE", order: 2 },
+          { name: "x", type: "SPACE", order: 3 },
+        ],
+      }),
+    ).toEqual(["x", "y", "z"]);
+  });
+
+  it("yields a null z for a 2D world", () => {
+    expect(
+      spatialAxisTriple({
+        id: "cs:world",
+        axes: [
+          { name: "c", type: "CHANNEL", order: 0 },
+          { name: "y", type: "SPACE", order: 1 },
+          { name: "x", type: "SPACE", order: 2 },
+        ],
+      }),
+    ).toEqual(["x", "y", null]);
+  });
+
+  it("is empty for a missing system", () => {
+    expect(spatialAxisTriple(null)).toEqual([null, null, null]);
+  });
+
+  it("degrades to identity rather than guessing when no axis is SPACE-typed", () => {
+    // Guessing "the last three" here would put `c` in the z slot and place the
+    // layer somewhere wrong. Also exercises the warn path.
+    expect(
+      spatialAxisTriple({
+        id: "cs:broken",
+        axes: [
+          { name: "c", type: "CHANNEL", order: 0 },
+          { name: "t", type: "TIME", order: 1 },
+        ],
+      }),
+    ).toEqual([null, null, null]);
+  });
+});
+
+describe("evalTransform with separate in/out spatial triples", () => {
+  it("defaults spatialOut to spatial (existing call sites unchanged)", () => {
+    const args = [
+      { __typename: "ScaleTransformation", scale: [100, 1, 0.5, 0.325, 0.325] },
+      DIMS,
+      DIMS,
+      SPATIAL,
+    ] as const;
+    expect(evalTransform(...args)).toEqual(evalTransform(...args, SPATIAL));
   });
 });
 

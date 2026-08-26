@@ -24,7 +24,11 @@ import {
 import { workerPool } from "../../../../../workers/pool";
 import { INTERACTIVE_FETCH_PRIORITY } from "@/lib/zarr/pool/types";
 import { getInitialVolumeTextureBudgetBytes } from "../../../platform/quality/lodPlanning";
-import { resolveLayerDataRange, serverHistogramRange } from "../../../platform/model/dataRange";
+import {
+  dtypeRangeIsWeakProxy,
+  resolveLayerDataRange,
+  serverHistogramRange,
+} from "../../../platform/model/dataRange";
 import { resolveFixedDimIndex } from "../../../platform/coords/selection";
 import {
   decodeEmptyValue,
@@ -46,6 +50,7 @@ import { buildPoolKey, buildStructureSignature, poolValueSemantics } from "../oc
 import {
   MIN_POOL_HEADROOM_SLOTS,
   getDecodedChunkCacheBytes,
+  poolHeadroomSlots,
   resolvePoolBudget,
 } from "../octree/poolBudget";
 import {
@@ -146,6 +151,64 @@ const occEncodeRangeOf = (pool: LayerBrickPool): { minValue: number; maxValue: n
   minValue: pool.occEncodeMin,
   maxValue: pool.occEncodeMax,
 });
+
+/**
+ * Whether a pool derives `minValue`/`maxValue` from the bricks that land rather
+ * than from the dtype (see `LayerBrickPool.autoRange`).
+ *
+ * Written ONCE and called from both derivation sites — fresh pool creation and
+ * the range-move re-derivation — because the two must never disagree.
+ *
+ * NEVER for a label pool, whatever its dtype: the EMPTY encoding quantizes
+ * against exactly this range, so a moving range would make every already-
+ * written uniform brick start decoding to a different id.
+ */
+const shouldAutoRange = (
+  valueSemantics: "intensity" | "labelIds",
+  dtype: string,
+  layer: Parameters<typeof serverHistogramRange>[0],
+): boolean =>
+  valueSemantics === "intensity" &&
+  dtypeRangeIsWeakProxy(dtype) &&
+  serverHistogramRange(layer) === null;
+
+/**
+ * How a REUSED pool's auto-range state carries across `ensurePool`'s movable
+ * path (a slice-signature change: T / dim slider, axis remap — never z, which
+ * `sliceSignature` deliberately excludes).
+ *
+ * **`keepRange`** — `derivation.dataRange` is the DTYPE range for an
+ * auto-ranging pool (the histogram branch found nothing to use), so taking it
+ * would throw away the measured range and re-run the whole ratchet on every
+ * slider step. For a SIGNED dtype the dtype range is the pathological one (raw
+ * 0 sits at mid-gray), so the layer would flash fogged AND lose empty-space
+ * skipping until the first brick lands again. Kept only when the pool was
+ * ALREADY auto-ranging, STAYS auto-ranging, and has a real measured range; a
+ * policy change — a late server histogram turning `autoRange` off — must take
+ * the derived range instead.
+ *
+ * **`autoRangeInitialized`** — the kept range is a SEED, not a floor. This
+ * branch is the only thing that ever clears the flag (`flushPool` does not
+ * touch it), and `accumulateAutoRange` only ever WIDENS while it is set. Keep
+ * it across a flush and one hot timepoint would permanently dim every other
+ * one: scrub to a t with a 30000 spike on otherwise 0..4000 data and every
+ * later slice renders windowed to [0, 30000] for the life of the pool.
+ * Photobleaching and per-timepoint exposure make that ordinary microscopy, not
+ * a corner case. So a FLUSHED pool clears it and the next brick re-FITS
+ * wholesale — while `minValue`/`maxValue` still hold the previous slice's
+ * range, so nothing ever renders at the dtype range in between. Without a
+ * flush the data is unchanged and there is nothing to re-fit.
+ *
+ * Exported for the vitest matrix, like `occPromotionWorthwhile`.
+ */
+export const resolveReusedAutoRange = (
+  pool: { autoRange: boolean; autoRangeInitialized: boolean },
+  nextAutoRange: boolean,
+  flushed: boolean,
+): { keepRange: boolean; autoRangeInitialized: boolean } => {
+  const keepRange = pool.autoRange && nextAutoRange && pool.autoRangeInitialized;
+  return { keepRange, autoRangeInitialized: keepRange && !flushed };
+};
 
 /** Encode work a drain still owes a pool: the two-drain occupancy-range
  * promotion (either phase) or a pending auto-range EMPTY re-encode. The
@@ -302,10 +365,12 @@ export type LayerBrickPool = {
   /** Layer data range (raw value space) — shader normalization + EMPTY encode. */
   minValue: number;
   maxValue: number;
-  /** Float layers with no server value histogram would normalize against the
-   * dtype fallback `[0,1]`, saturating any data valued >1 to white. When true,
-   * `minValue`/`maxValue` are instead derived from a running min/max over the
-   * per-brick ranges the repack pipeline already computes (auto-contrast). */
+  /** Weak-proxy-dtype layers with no server value histogram would normalize
+   * against a dtype fallback that does not describe the data — floats saturate
+   * anything valued >1 to white, signed integers put raw 0 at mid-gray (see
+   * `dtypeRangeIsWeakProxy`). When true, `minValue`/`maxValue` are instead
+   * derived from a running min/max over the per-brick ranges the repack
+   * pipeline already computes (auto-contrast). */
   autoRange: boolean;
   /** A range move requires re-encoding every EMPTY page entry (they store the
    * value quantized against the pool range). Marked here and applied ONCE per
@@ -849,7 +914,10 @@ export class BrickResidencyManager {
           // goal, not a guarantee — read these two together before concluding
           // the budget maths is wrong.
           freeSlots: pool.atlas.capacity - pool.pool.size,
-          headroomTarget: MIN_POOL_HEADROOM_SLOTS,
+          // The EFFECTIVE target (capped at half a small pool — reporting the
+          // raw constant read as "8 free of 64 wanted" on a 9-slot atlas that
+          // was in fact perfectly sized).
+          headroomTarget: poolHeadroomSlots(pool.atlas.capacity),
           residentByLevel,
           emptyBricks: pool.emptyValues.size,
           inFlight: pool.inFlight.size,
@@ -1630,15 +1698,20 @@ export class BrickResidencyManager {
     pool.minTargetLevel = minTargetLevel;
     if (minTargetLevel <= 0) return;
 
+    // Capped by the pool: a small pyramid's atlas can be smaller than the
+    // headroom TARGET, and comparing against the raw constant is then
+    // unconditionally true — every reconcile trimmed every unprotected brick
+    // of a 9-slot pool, refetching the whole pyramid on each zoom-out (P25).
+    const headroomSlots = poolHeadroomSlots(pool.pool.capacity);
     const free = pool.pool.capacity - pool.pool.size;
-    if (free >= MIN_POOL_HEADROOM_SLOTS) return;
+    if (free >= headroomSlots) return;
 
     const victims = selectTrimCandidates({
       keys: pool.pool.keys(),
       protectedKeys: pool.protectedKeys,
       levelOf: (key) => parseNodeKey(key).level,
       minTargetLevel,
-      needed: MIN_POOL_HEADROOM_SLOTS - free,
+      needed: headroomSlots - free,
     });
 
     for (const key of victims) {
@@ -1857,10 +1930,28 @@ export class BrickResidencyManager {
     if (movable) {
       this.pools.delete(movable.poolKey);
       this.prefetchedSlabMarker.delete(movable.poolKey);
-      if (movable.sliceSignature !== derivation.sliceSignature) {
+      const flushed = movable.sliceSignature !== derivation.sliceSignature;
+      if (flushed) {
         this.flushPool(movable, derivation.sliceSignature, layer, levels as LevelSource[]);
       }
-      if (
+      const nextAutoRange = shouldAutoRange(
+        derivation.valueSemantics,
+        geometry.levels[0].dtype,
+        layer,
+      );
+      const reuse = resolveReusedAutoRange(movable, nextAutoRange, flushed);
+      // See `resolveReusedAutoRange`. Keeping the range is safe on every
+      // invariant the reset was protecting: the range does not move, so no
+      // EMPTY entry needs re-encoding; `flushPool` above already reset
+      // `occObserved*`/`occEncode*` against this same range and cleared the
+      // page table; and a pool key holding the dtype range while the live range
+      // has drifted is the NORMAL auto-range state, exactly as it is for a
+      // fresh pool (see the `poolKey.ts` module doc).
+      if (reuse.keepRange) {
+        // Kept as a SEED: a flushed pool re-fits from its first brick rather
+        // than unioning the previous slice's range forever.
+        movable.autoRangeInitialized = reuse.autoRangeInitialized;
+      } else if (
         movable.minValue !== derivation.dataRange[0] ||
         movable.maxValue !== derivation.dataRange[1]
       ) {
@@ -1869,18 +1960,12 @@ export class BrickResidencyManager {
         movable.minValue = derivation.dataRange[0];
         movable.maxValue = derivation.dataRange[1];
         movable.autoRangeEncodeDirty = true;
-        // A range move also re-derives everything the fresh-pool branch
-        // derives from the range: the auto-range policy (a server histogram
-        // landing late is exactly this path — autoRange must turn OFF), and
-        // the occupancy encode/observed state, which must restart from the
-        // NEW pool range (flushPool above reset it against the OLD one —
-        // ordering matters). Encode ≡ decode stays intact because the
-        // decode uniforms ride the poolsVersion bump below.
-        movable.autoRange =
-          derivation.valueSemantics === "intensity" &&
-          (geometry.levels[0].dtype === "float32" ||
-            geometry.levels[0].dtype === "float64") &&
-          serverHistogramRange(layer) === null;
+        // A range move also restarts the auto-range fit and the occupancy
+        // encode/observed state, which must re-derive from the NEW pool range
+        // (flushPool above reset it against the OLD one — ordering matters).
+        // Encode ≡ decode stays intact because the decode uniforms ride the
+        // poolsVersion bump below. (The auto-range POLICY is re-derived below,
+        // outside this branch — it can flip without the range moving.)
         movable.autoRangeInitialized = false;
         movable.occObservedInitialized = false;
         movable.occEncodeMin = movable.minValue;
@@ -1888,6 +1973,10 @@ export class BrickResidencyManager {
         movable.occReencodePending = false;
         this.wakeDrain();
       }
+      // Outside the range branch: the policy can flip without the range moving
+      // (a pool seeded at the dtype range whose histogram arrives before any
+      // brick lands has autoRange to turn OFF while `dataRange` still matches).
+      movable.autoRange = nextAutoRange;
       // Re-capture the pool-creation-time flags: a toggle followed by a
       // slice/range change would otherwise pin this pool on the old policy
       // for its whole life.
@@ -2007,22 +2096,15 @@ export class BrickResidencyManager {
 
     const dtype = geometry.levels[0].dtype;
     const [minValue, maxValue] = derivation.dataRange;
-    // Float layers without a server histogram normalize against the `[0,1]`
-    // dtype fallback, which whites-out any data valued >1. Accumulate the real
+    // Weak-proxy dtypes without a server histogram normalize against a dtype
+    // fallback that does not describe the data: floats whites-out anything
+    // valued >1, and signed integers put raw 0 at mid-gray. Accumulate the real
     // range from decoded bricks instead (see `accumulateAutoRange`).
     //
     // Not a pool-key field: it is implied by dtype (keyed) plus "the range fell
     // back to the dtype's" (keyed as dataRange), so members always agree — see
     // the poolKey module doc.
-    // NEVER for a label pool, whatever its dtype. A float32-stored mask would
-    // otherwise mutate `minValue`/`maxValue` at runtime as bricks land — and the
-    // EMPTY encoding quantizes against exactly that range, so every already-
-    // written uniform brick would start decoding to a different id. The label
-    // range is a fixed `[0, LABEL_ID_CEILING]` for that reason.
-    const autoRange =
-      derivation.valueSemantics === "intensity" &&
-      (dtype === "float32" || dtype === "float64") &&
-      serverHistogramRange(layer) === null;
+    const autoRange = shouldAutoRange(derivation.valueSemantics, dtype, layer);
 
     const pool: LayerBrickPool = {
       poolKey,
@@ -2926,8 +3008,9 @@ export class BrickResidencyManager {
   }
 
   /**
-   * Fold one brick's raw min/max into the layer's auto-contrast range (float
-   * layers with no server histogram — see `LayerBrickPool.autoRange`). The
+   * Fold one brick's raw min/max into the layer's auto-contrast range
+   * (weak-proxy-dtype layers with no server histogram — see
+   * `LayerBrickPool.autoRange` and `shouldAutoRange`). The
    * per-brick min/max is already computed by both repack paths; this is the
    * only consumer of it for range purposes.
    *

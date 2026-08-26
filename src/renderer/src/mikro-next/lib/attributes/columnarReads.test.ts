@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { columnValueAt, readColumnValues, readPointPositions } from "./columnarReads";
+import {
+  columnValueAt,
+  readColumnValues,
+  readPointPositions,
+  readTrackPositions,
+} from "./columnarReads";
 import type { AttributeLookupEngine } from "./lookupEngine";
 
 const store = { id: "parquet-a", bucket: "b", key: "k" } as never;
@@ -151,4 +156,125 @@ describe("readColumnValues", () => {
     ).then((got) => {
       expect(got).toBeNull();
     }));
+});
+
+describe("readTrackPositions", () => {
+  const trackColumns = { trackId: "track", x: "x", y: "y", t: "frame" };
+
+  it("orders by (track, t) — the difference between a path and a scribble", () => {
+    // readPointPositions deliberately has no ORDER BY: a point cloud does not
+    // care. A polyline is nothing BUT the order, and an unsorted scan draws a
+    // scribble through the very same points with nothing downstream able to
+    // tell. This assertion is the guard on that.
+    const spy = vi.fn();
+    const engine = engineWith(
+      {
+        track_id: new Float64Array([1, 1]),
+        px: new Float64Array([0, 1]),
+        py: new Float64Array([0, 1]),
+        pt: new Float64Array([0, 1]),
+      },
+      spy,
+    );
+
+    return readTrackPositions(engine, store, trackColumns).then(() => {
+      const [sql, wanted] = spy.mock.calls[0];
+      expect(sql).toMatch(/ORDER BY track_id, pt\s*$/);
+      expect(sql.match(/read_parquet/g)).toHaveLength(1);
+      expect(wanted).toEqual(["track_id", "px", "py", "pt"]);
+    });
+  });
+
+  it("groups consecutive rows into runs, not a last-row-wins map", () => {
+    // The trap `readPointPositions` sets: `slots.set(id, index)` keeps the LAST
+    // row per id, which is right when one row is one object and collapses every
+    // trajectory to a single point here.
+    const engine = engineWith({
+      track_id: new Float64Array([7, 7, 7, 9, 9]),
+      px: new Float64Array([0, 1, 2, 10, 11]),
+      py: new Float64Array([0, 0, 0, 5, 5]),
+      pt: new Float64Array([0, 1, 2, 0, 1]),
+    });
+
+    return readTrackPositions(engine, store, trackColumns).then((got) => {
+      expect(got).not.toBeNull();
+      expect(got!.count).toBe(5);
+      expect(got!.runs).toEqual([
+        { id: 7, start: 0, length: 3 },
+        { id: 9, start: 3, length: 2 },
+      ]);
+      // Three points plus two points is two segments plus one: never four.
+      expect(got!.segmentCount).toBe(3);
+    });
+  });
+
+  it("groups a STRING track id the same way", () => {
+    // A track name is a perfectly good identity, and only adjacent equality is
+    // ever asked of it.
+    const engine = engineWith({
+      track_id: ["cell-a", "cell-a", "cell-b"],
+      px: new Float64Array([0, 1, 2]),
+      py: new Float64Array([0, 1, 2]),
+      pt: new Float64Array([0, 1, 0]),
+    });
+
+    return readTrackPositions(engine, store, trackColumns).then((got) => {
+      expect(got!.runs.map((run) => run.id)).toEqual(["cell-a", "cell-b"]);
+      expect(got!.segmentCount).toBe(1);
+    });
+  });
+
+  it("re-opens a run when an id recurs after another — adjacency, not identity", () => {
+    // If the scan ever hands back interleaved ids, two runs is the honest
+    // answer: joining them would draw a segment across the gap.
+    const engine = engineWith({
+      track_id: new Float64Array([1, 2, 1]),
+      px: new Float64Array([0, 5, 10]),
+      py: new Float64Array([0, 5, 10]),
+      pt: new Float64Array([0, 0, 1]),
+    });
+
+    return readTrackPositions(engine, store, trackColumns).then((got) => {
+      expect(got!.runs).toHaveLength(3);
+      expect(got!.segmentCount).toBe(0);
+    });
+  });
+
+  it("drops t from the projection and the ordering when there is no t column", () => {
+    const spy = vi.fn();
+    const engine = engineWith(
+      {
+        track_id: new Float64Array([1, 1]),
+        px: new Float64Array([0, 1]),
+        py: new Float64Array([0, 1]),
+      },
+      spy,
+    );
+
+    return readTrackPositions(engine, store, { trackId: "track", x: "x", y: "y" }).then((got) => {
+      expect(got!.t).toBeNull();
+      const [sql, wanted] = spy.mock.calls[0];
+      expect(sql).toMatch(/ORDER BY track_id\s*$/);
+      expect(sql).not.toContain("pt");
+      expect(wanted).toEqual(["track_id", "px", "py"]);
+    });
+  });
+
+  it("refuses a non-numeric coordinate rather than yielding NaNs", () => {
+    const engine = engineWith({
+      track_id: new Float64Array([1, 1]),
+      px: ["left", "right"],
+      py: new Float64Array([0, 1]),
+      pt: new Float64Array([0, 1]),
+    });
+    return readTrackPositions(engine, store, trackColumns).then((got) => {
+      expect(got).toBeNull();
+    });
+  });
+
+  it("refuses when the result cannot answer columnwise", () => {
+    return readTrackPositions(engineWith(null), store, trackColumns).then((got) => {
+      expect(got).toBeNull();
+    });
+  });
 });

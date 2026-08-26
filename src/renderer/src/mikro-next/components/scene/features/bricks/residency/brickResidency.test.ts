@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPendingEncodeWork, occPromotionWorthwhile } from "./brickResidency";
+import { hasPendingEncodeWork, occPromotionWorthwhile, resolveReusedAutoRange } from "./brickResidency";
 
 describe("hasPendingEncodeWork (the drain idle-latch guard)", () => {
   // The drain's idle latch (`drainNeeded = false`) must never clear while a
@@ -97,5 +97,57 @@ describe("occPromotionWorthwhile (drained-edge promotion decision)", () => {
     expect(
       occPromotionWorthwhile(pool({ occObservedMin: 5, occObservedMax: 5 })),
     ).toBe(false);
+  });
+});
+
+describe("resolveReusedAutoRange (movable-path auto-range carry-over)", () => {
+  const pool = (autoRange: boolean, autoRangeInitialized: boolean) => ({
+    autoRange,
+    autoRangeInitialized,
+  });
+
+  it("keeps the measured range when the pool was and stays auto-ranging", () => {
+    // The T/dim-slider case. `derivation.dataRange` is the DTYPE range here, so
+    // taking it would reset an int16 pool to [-32768, 32767] — mid-gray fog
+    // with empty-space skipping off — until the first brick lands again.
+    expect(resolveReusedAutoRange(pool(true, true), true, true).keepRange).toBe(true);
+    expect(resolveReusedAutoRange(pool(true, true), true, false).keepRange).toBe(true);
+  });
+
+  it("keeps a FLUSHED pool's range as a seed but re-fits it per slice", () => {
+    // The load-bearing half. accumulateAutoRange only WIDENS while initialized,
+    // and this branch is the only thing that ever clears the flag — so carrying
+    // it across a flush would let one hot timepoint (a 30000 spike on otherwise
+    // 0..4000 data) permanently dim every other timepoint in the series.
+    expect(resolveReusedAutoRange(pool(true, true), true, true)).toEqual({
+      keepRange: true,
+      autoRangeInitialized: false,
+    });
+  });
+
+  it("keeps the range AND the fit when nothing was flushed", () => {
+    // Same data, key moved for another reason — there is nothing to re-fit.
+    expect(resolveReusedAutoRange(pool(true, true), true, false)).toEqual({
+      keepRange: true,
+      autoRangeInitialized: true,
+    });
+  });
+
+  it("takes the derived range when a late histogram turns auto-range OFF", () => {
+    // The policy genuinely changed: the histogram range is the better one and
+    // the pool must adopt it (and re-encode its EMPTY entries against it).
+    expect(resolveReusedAutoRange(pool(true, true), false, true).keepRange).toBe(false);
+  });
+
+  it("takes the derived range when there is no measured range to keep", () => {
+    // Seeded at the dtype range, no brick has landed — the seed is provisional.
+    expect(resolveReusedAutoRange(pool(true, false), true, true).keepRange).toBe(false);
+  });
+
+  it("takes the derived range for a pool that was never auto-ranging", () => {
+    // A histogram-backed pool (or a label pool) has an authoritative range;
+    // preserving a stale one would decouple it from its own pool key.
+    expect(resolveReusedAutoRange(pool(false, false), true, false).keepRange).toBe(false);
+    expect(resolveReusedAutoRange(pool(false, true), false, true).keepRange).toBe(false);
   });
 });

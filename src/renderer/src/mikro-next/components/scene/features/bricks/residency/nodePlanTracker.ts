@@ -8,9 +8,9 @@ import { brickSlotBytes, resolveBrickSpec } from "../octree/brickSpec";
 import { atlasBytesPerVoxel, atlasKindForGeometry } from "../octree/atlasFormat";
 import { totalBrickCount } from "../octree/nodeAddress";
 import {
-  MIN_POOL_HEADROOM_SLOTS,
   getDecodedChunkCacheBytes,
   resolveDecodeCacheShareBytes,
+  resolvePlanBytesForAtlas,
   resolvePoolBudget,
 } from "../octree/poolBudget";
 import { assessPoolViability } from "../octree/poolViability";
@@ -285,29 +285,32 @@ export function startNodePlanTracking({
         spec,
         atlasBytesPerVoxel(atlasKindForGeometry(geometry)),
       );
+      const totalBrickBytes = totalBrickCount(geometry, spec) * slotBytes;
       const resolved = resolvePoolBudget({
         deviceBudgetBytes,
         poolCount: poolKeys.size,
         slotBytes,
-        totalBrickBytes: totalBrickCount(geometry, spec) * slotBytes,
+        totalBrickBytes,
       });
       // Clamp to the atlas that ACTUALLY exists. `maxPlanBytes` scales with the
       // pool count, so a pool allocated while 2 pools were open must not be
       // planned against the larger share a later 1-pool replan computes — the
       // plan would not fit its own atlas. Reading a static allocation size, NOT
-      // a replan trigger (P7).
+      // a replan trigger (P7). The headroom the clamp reserves is capped by the
+      // pyramid (`resolvePlanBytesForAtlas`) — a flat 64 slots subtracted from a
+      // small atlas left the plan ONE slot and pinned refinement at the coarsest
+      // level forever (P25).
       const liveAtlasBytes =
         viewerState.brickSystem?.poolAtlasBytes(members[0].poolKey) ?? null;
       const maxPlanBytes =
         liveAtlasBytes === null
           ? resolved.maxPlanBytes
-          : Math.max(
+          : resolvePlanBytesForAtlas({
+              liveAtlasBytes,
+              resolvedMaxPlanBytes: resolved.maxPlanBytes,
               slotBytes,
-              Math.min(
-                resolved.maxPlanBytes,
-                liveAtlasBytes - MIN_POOL_HEADROOM_SLOTS * slotBytes,
-              ),
-            );
+              totalBrickBytes,
+            });
       // Each EQUIVALENCE CLASS runs its own plan and spends its own share of
       // the decode cache; dividing by the (possibly smaller) pool count would
       // let multiple classes on one pool exceed the shared-cache cap.

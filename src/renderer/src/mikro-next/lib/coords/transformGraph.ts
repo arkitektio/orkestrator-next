@@ -38,7 +38,7 @@ export type TransformLike = {
 export type CoordinateSystemLike = {
   id: string;
   name?: string | null;
-  axes?: readonly { name: string }[] | null;
+  axes?: readonly { name: string; type?: string | null; order?: number | null }[] | null;
 } | null;
 
 /** Structural subset of the `Scene` fragment this module needs. */
@@ -72,6 +72,46 @@ export type LayerTransformSource = {
       }[];
     };
   };
+};
+
+/**
+ * The [x, y, z] axis NAMES of a coordinate system — the `spatial` triple every
+ * reduction in this module addresses rows and columns by.
+ *
+ * mikro writes spatial axes in array order with **x LAST** (`(c,y,x)`,
+ * `(z,y,x)`) — the rule `Lens.renderAxes` states as "spatial axes are in array
+ * order, so the last is x". So this takes the SPACE-typed axes in order and
+ * reads them back to front. A 2D system yields `z = null`, which the evaluator
+ * already treats as "leave that row/column identity".
+ *
+ * Reversing this is not a cosmetic slip: it transposes the placement, which is
+ * exactly the class of bug this helper exists to stop being re-derived per
+ * call site.
+ *
+ * `Axis.type` is required by the schema and always selected (the `Axis`
+ * fragment), so a payload without it is structurally broken rather than merely
+ * sparse. Guessing "the last three axes are spatial" there would put a CHANNEL
+ * or TIME axis in the z slot and place the layer somewhere wrong; this module
+ * degrades to identity instead, so an empty triple is the answer.
+ */
+export const spatialAxisTriple = (
+  cs: CoordinateSystemLike | undefined,
+): [string | null, string | null, string | null] => {
+  const axes = cs?.axes;
+  if (!axes?.length) return [null, null, null];
+  const ordered = axes.some((axis) => axis.order != null)
+    ? [...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    : [...axes];
+  const names = ordered.filter((axis) => axis.type === "SPACE").map((axis) => axis.name);
+  if (!names.length) {
+    warnOnce(
+      `spatialAxes:${cs?.id ?? "?"}`,
+      `coordinate system ${cs?.name ?? cs?.id ?? "?"} declares no SPACE axes; placements against it degrade to identity`,
+    );
+    return [null, null, null];
+  }
+  // Back to front: last spatial axis is x.
+  return [names.at(-1) ?? null, names.at(-2) ?? null, names.at(-3) ?? null];
 };
 
 /** Row-major 4×4, rows = [x', y', z', w] — the shape `affineToMatrix4` takes. */
@@ -125,7 +165,18 @@ export const invert4 = (m: Mat4): Mat4 | null => {
  * Evaluate one transformation edge into the spatial 4×4.
  *
  * `axesIn` / `axesOut` are the FULL axis-name orders of the edge's input and
- * output systems; `spatial` the [x, y, z] axis names (z null for 2D data).
+ * output systems. `spatial` names the [x, y, z] axes on the INPUT side (z null
+ * for 2D data); `spatialOut` the same three slots on the OUTPUT side, which
+ * defaults to `spatial` because an image's lens and its world share axis names.
+ *
+ * They are NOT always the same list. A point layer's input system is its
+ * table's coordinate COLUMNS (`TableDataset.coordinateSystem` — "its axes are
+ * the table's coordinate columns"), so its x/y/z are `PointLayer.xColumn` &c.
+ * while the output side is the world's own axis names. Collapsing the two is
+ * how a placement silently degrades to identity.
+ *
+ * Both lists are [x, y, z] slots, in that order — slot i means the same
+ * spatial direction on either side, only the NAME that finds it differs.
  * Returns null when the edge (or a composite child) cannot be interpreted.
  */
 export const evalTransform = (
@@ -133,12 +184,13 @@ export const evalTransform = (
   axesIn: readonly string[],
   axesOut: readonly string[],
   spatial: readonly (string | null | undefined)[],
+  spatialOut: readonly (string | null | undefined)[] = spatial,
 ): Mat4 | null => {
   if (!transform) return identity4();
   const typename = transform.__typename ?? "";
 
   const inPos = spatial.map((name) => (name ? axesIn.indexOf(name) : -1));
-  const outPos = spatial.map((name) => (name ? axesOut.indexOf(name) : -1));
+  const outPos = spatialOut.map((name) => (name ? axesOut.indexOf(name) : -1));
 
   switch (typename) {
     case "IdentityTransformation":
@@ -185,6 +237,13 @@ export const evalTransform = (
       // untouched, which the name-based extraction handles by leaving
       // identity rows). Fall back to the composite's own axes for payloads
       // predating self-description.
+      //
+      // Every child gets the SAME `spatial`/`spatialOut` pair, which assumes
+      // the intermediate systems of a chain name their spatial axes alike —
+      // unknowable otherwise, since a step's intermediate CS is not carried
+      // here. True today: the only caller that passes a differing pair
+      // (`placementToSpatialAffine`) hands over a flat AFFINE, never a
+      // composite.
       let m = identity4();
       for (const child of transform.transformations ?? []) {
         const cm = evalTransform(
@@ -192,6 +251,7 @@ export const evalTransform = (
           child?.inputAxes ?? axesIn,
           child?.outputAxes ?? axesOut,
           spatial,
+          spatialOut,
         );
         if (!cm) return null;
         m = mul4(cm, m);
@@ -270,6 +330,60 @@ export function composePlacementPath(
       continue;
     }
     m = mul4(em, m);
+  }
+  return isIdentity4(m) ? null : m;
+}
+
+/**
+ * Reduce a server-composed `AffinePlacement` to the spatial 4×4.
+ *
+ * `Layer.asAffine` hands back the whole `pathToWorld` already composed, as an
+ * `M × (N+1)` matrix with rows in `outputAxes` order, columns in `inputAxes`
+ * order and the translation in the last column — the SAME layout an
+ * `AffineTransformation` edge uses, so this is `evalTransform`'s affine case
+ * and no second implementation of the reduction exists.
+ *
+ * Two things this must not be short-cut into:
+ *  - Rows/columns are addressed BY NAME. `outputAxes` is the world's own axis
+ *    order, and mikro writes spatial axes with x LAST (`(c,y,x)`, `(z,y,x)`),
+ *    so reading row 0 as x is a transposition, not a simplification.
+ *  - The translation is at column `inputAxes.length`, NOT at index 3. A 2D
+ *    placement is `2 × 3`; taking column 3 (or clamping to `min(4, …)`) writes
+ *    the translation into the z basis, where a z=0 layer multiplies it away.
+ *
+ * `outputAxes` names only the axes the path CONSTRAINS, so a partial
+ * registration (`total: false`) leaves the unnamed axes as identity rows —
+ * an honest pass-through rather than pinning the data at their origin.
+ *
+ * Null in (unregistered layer) or an identity result → null out, matching
+ * `composeLayerAffine`'s contract that callers read null as identity.
+ */
+export function placementToSpatialAffine(
+  placement:
+    | {
+        matrix: readonly (readonly number[])[];
+        inputAxes: readonly string[];
+        outputAxes: readonly string[];
+      }
+    | null
+    | undefined,
+  spatialIn: readonly (string | null | undefined)[],
+  spatialOut: readonly (string | null | undefined)[] = spatialIn,
+): number[][] | null {
+  if (!placement?.matrix?.length) return null;
+  const m = evalTransform(
+    { __typename: "AffineTransformation", affine: placement.matrix },
+    placement.inputAxes,
+    placement.outputAxes,
+    spatialIn,
+    spatialOut,
+  );
+  if (!m) {
+    warnOnce(
+      `placement:${placement.inputAxes.join(",")}→${placement.outputAxes.join(",")}`,
+      `cannot reduce an AffinePlacement (${placement.inputAxes.join(",")} → ${placement.outputAxes.join(",")}) to a spatial affine; treating as identity`,
+    );
+    return null;
   }
   return isIdentity4(m) ? null : m;
 }

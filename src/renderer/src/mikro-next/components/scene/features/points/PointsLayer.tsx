@@ -23,6 +23,8 @@ import { paletteRowFor, DEFAULT_MEASURE_COLORMAP } from "../../platform/attribut
 import { isColumnColorBy } from "../../platform/layerui/columnOptions";
 import type { SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { useSceneStore } from "../../platform/stores/sceneStore";
+import { placementToSpatialAffine, spatialAxisTriple } from "@/mikro-next/lib/coords/transformGraph";
+import { affineToMatrix4 } from "../../platform/coords/worldTransform";
 import { StorageInstancedBufferAttribute } from "three/webgpu";
 import { createPointMaterial, setPointValues, type PointMaterialBundle } from "./pointsMaterial";
 import {
@@ -33,22 +35,8 @@ import {
   type PointCull,
   type PointScatter,
 } from "./pointsCompute";
-import { loadPointGeometry, scatterPointValues, valueWindowOf, type PointGeometry } from "./pointsSource";
-
-/** `asAffine.matrix` is row-major over the layer's output axes; three wants a Matrix4. */
-const toMatrix4 = (matrix: number[][] | null | undefined): THREE.Matrix4 => {
-  const out = new THREE.Matrix4().identity();
-  if (!matrix) return out;
-  const elements = out.elements;
-  for (let row = 0; row < Math.min(3, matrix.length); row += 1) {
-    const source = matrix[row] ?? [];
-    for (let column = 0; column < Math.min(4, source.length); column += 1) {
-      // three's Matrix4 is column-major in `elements`.
-      elements[column * 4 + row] = source[column];
-    }
-  }
-  return out;
-};
+import { loadPointGeometry, scatterPointValues, type PointGeometry } from "./pointsSource";
+import { valueWindowOf } from "../../platform/attributes/valueWindow";
 
 export const PointLayerRenderer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.sceneLayers.find((candidate) => candidate.id === layerId));
@@ -89,11 +77,38 @@ const PointCloud = ({ layer }: { layer: PointLayerView }) => {
     opacity?: number | null;
     activeColorBy?: number | null;
     colorBys?: readonly Record<string, unknown>[] | null;
-    asAffine?: { matrix: number[][] } | null;
+    asAffine?: { matrix: number[][]; inputAxes: string[]; outputAxes: string[] } | null;
     placementInvariance?: string | null;
   };
 
-  const affine = useMemo(() => toMatrix4(entity.asAffine?.matrix), [entity.asAffine]);
+  // The world's own axis order, needed to read `asAffine`'s ROWS. Not the
+  // scene's spatial unit — the names, which mikro writes with x last.
+  const worldSystem = useSceneStore((s) => s.transformContext.worldCoordinateSystem);
+
+  /**
+   * `asAffine` is `M × (N+1)` over NAMED axes, and both sides need naming
+   * separately here:
+   *  - COLUMNS are the table's coordinate columns (`TableDataset.coordinateSystem`
+   *    — "its axes are the table's coordinate columns"), and which of them is
+   *    x/y/z is this layer's own `xColumn`/`yColumn`/`zColumn`. That is also
+   *    the order `loadPointGeometry` writes the position buffer in.
+   *  - ROWS are the world's axes, in the world's order, and only the ones the
+   *    registration constrains.
+   * Addressing either side by POSITION transposes the placement, and clamping
+   * the translation to column 3 drops it into the z basis on a 2D layer, where
+   * z=0 multiplies it away.
+   */
+  const affine = useMemo(
+    () =>
+      affineToMatrix4(
+        placementToSpatialAffine(
+          entity.asAffine,
+          [entity.xColumn ?? null, entity.yColumn ?? null, entity.zColumn ?? null],
+          spatialAxisTriple(worldSystem),
+        ),
+      ),
+    [entity.asAffine, entity.xColumn, entity.yColumn, entity.zColumn, worldSystem],
+  );
 
   const colorBy = useMemo(() => {
     const index = entity.activeColorBy;

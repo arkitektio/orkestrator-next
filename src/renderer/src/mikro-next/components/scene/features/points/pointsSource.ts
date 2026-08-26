@@ -13,6 +13,7 @@ import type { AttributeLookupEngine } from "@/mikro-next/lib/attributes/lookupEn
 import type { ParquetStoreLike } from "@/mikro-next/lib/attributes/attributeTypes";
 import { readPointPositions } from "@/mikro-next/lib/attributes/columnarReads";
 import type { ColumnLutEntryColorBy } from "../../platform/attributes/columnLut";
+import { valueWindowOf } from "../../platform/attributes/valueWindow";
 
 /**
  * The byte budget for one point layer's GPU-resident data.
@@ -107,37 +108,6 @@ export const flatValues = (count: number): PointValues => ({
  * for a sparse slice that IS its value (absent means zero), and for a column it is the honest
  * reading of "no row", since hiding it would be a filter and this is not one.
  */
-/**
- * The range a colouring's values span.
- *
- * Split out of the scatter because the GPU path needs it WITHOUT building a per-point array —
- * that is the whole saving. Both paths take the window from here, so they cannot disagree
- * about what the ramp runs between.
- */
-export const valueWindowOf = (
-  byId: Map<number, unknown>,
-  entry: ColumnLutEntryColorBy | null,
-): { valueMin: number; valueMax: number } => {
-  if (!entry || byId.size === 0) return { valueMin: 0, valueMax: 1 };
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
-  for (const raw of byId.values()) {
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    if (value < min) min = value;
-    if (value > max) max = value;
-  }
-  // A sparse slice is the complete truth for its feature, so a point it omits is a real zero
-  // and the range has to include it or an all-positive gene would start its ramp at its own
-  // minimum. Harmless for a column, where the floor is the range's own end anyway.
-  if (entry.dataset) {
-    min = Math.min(min, 0);
-    max = Math.max(max, 0);
-  }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return { valueMin: 0, valueMax: 1 };
-  return { valueMin: min, valueMax: max === min ? min + 1 : max };
-};
-
 export const scatterPointValues = (
   geometry: PointGeometry,
   byId: Map<number, unknown>,

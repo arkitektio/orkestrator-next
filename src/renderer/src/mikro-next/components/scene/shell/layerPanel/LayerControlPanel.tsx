@@ -19,6 +19,8 @@ import { LayerRow } from "./LayerRow";
 import { AnnotationLayerCard } from "../../features/annotations/AnnotationLayerCard";
 import { LabelLayerCard } from "../../features/labels/LabelLayerCard";
 import { MeshLayerCard } from "../../features/meshes/MeshLayerCard";
+import { PointLayerCard } from "../../features/points/PointLayerCard";
+import { TrackLayerCard } from "../../features/tracks/TrackLayerCard";
 import { useRenderGraphEditor } from "../../features/volume/rendergraph/RenderNodeEditor";
 import {
   useBrickStore,
@@ -282,6 +284,29 @@ export const LayerControlPanel = ({
     [sceneLayers],
   );
 
+  // The two TABLE-backed kinds. Both come off `sceneLayers` for the same reason
+  // meshes and annotations do — they are consumed straight off their fragments
+  // rather than normalized into `layers`, which is the brick path. Neither had
+  // a card before: a point cloud or a trajectory could be created and then
+  // never touched again, which is why they are here now.
+  const pointLayers = useMemo(
+    () =>
+      sceneLayers.filter(
+        (layer): layer is Extract<typeof layer, { __typename: "PointLayer" }> =>
+          layer.__typename === "PointLayer",
+      ),
+    [sceneLayers],
+  );
+
+  const trackLayers = useMemo(
+    () =>
+      sceneLayers.filter(
+        (layer): layer is Extract<typeof layer, { __typename: "TrackLayer" }> =>
+          layer.__typename === "TrackLayer",
+      ),
+    [sceneLayers],
+  );
+
   // NO auto-expand: unfolding used to be space-derived (`fitsExpanded`), which
   // meant a rail resize could pop every editor open at once — mounting every
   // card's full render-graph editor subtree in a single commit and making
@@ -341,6 +366,12 @@ export const LayerControlPanel = ({
           ))}
           {meshLayers.map((layer) => (
             <MeshLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
+          ))}
+          {pointLayers.map((layer) => (
+            <PointLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
+          ))}
+          {trackLayers.map((layer) => (
+            <TrackLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
           ))}
           {annotationLayers.map((layer) => (
             <AnnotationLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />

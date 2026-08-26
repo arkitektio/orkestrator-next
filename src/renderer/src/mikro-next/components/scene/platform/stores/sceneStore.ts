@@ -116,6 +116,29 @@ export interface SceneState {
    * STRUCTURE key is unchanged — a re-emission that changed only a mesh
    * layer's content would otherwise be discarded.
    */
+  /**
+   * Per-track-layer tail length, in the track table's own time units.
+   *
+   * Session-local: `updateTrackLayer` carries the layer's line width, colouring
+   * and compositing, but a tail window is a property of how you are LOOKING at
+   * a trajectory rather than of the trajectory, and the server has no field for
+   * it. Missing entry = `DEFAULT_TAIL_WINDOW`.
+   */
+  trackTailWindows: Record<string, number>;
+  setTrackTailWindow: (layerId: string, window: number) => void;
+  /**
+   * The largest time index each track layer observed in its table, published by
+   * the renderer once the read lands.
+   *
+   * This exists so a T slider can exist at all. `DimSliderPanel` folds its
+   * scrubbers out of the normalized BRICK layers via `collapsibleDims`, which
+   * reads a lens; a table-backed layer has none, so without this a scene of
+   * only tracks offers nothing to scrub and the tail is frozen. Not derivable
+   * from the fragment — the extent is a fact about the DATA, known only after
+   * the parquet is read. Null clears the entry on unmount.
+   */
+  trackTimeExtents: Record<string, number>;
+  setTrackTimeExtent: (layerId: string, maxIndex: number | null) => void;
   patchSceneLayer: (id: string, patch: Partial<SceneLayer>) => void;
 }
 
@@ -148,6 +171,8 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
       transformContext: {
         worldCoordinateSystem: scene.worldCoordinateSystem,
       },
+      trackTailWindows: {},
+      trackTimeExtents: {},
       sceneLayers: scene.layers,
       layers: brickLayers.map((layer) =>
         isLabelLayer(layer)
@@ -164,6 +189,22 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
           if (index !== -1) {
             state.layers[index] = updatedLayer;
           }
+        }),
+      setTrackTailWindow: (layerId, window) =>
+        set((state) => {
+          state.trackTailWindows[layerId] = window;
+        }),
+      setTrackTimeExtent: (layerId, maxIndex) =>
+        set((state) => {
+          // Guard the no-op: this is written from an effect on every geometry
+          // reload, and a fresh object identity for an unchanged extent would
+          // re-run every selector reading it.
+          if (maxIndex === null) {
+            if (layerId in state.trackTimeExtents) delete state.trackTimeExtents[layerId];
+            return;
+          }
+          if (state.trackTimeExtents[layerId] === maxIndex) return;
+          state.trackTimeExtents[layerId] = maxIndex;
         }),
       patchSceneLayer: (id, patch) =>
         set((state) => {

@@ -63,6 +63,24 @@ mutation CreateTrackLayer($input: CreateTrackLayerInput!) {
   }
 }
 
+# Retunes a track layer's display choices. Which columns provide the
+# coordinates, the time and the track identity is NOT here: the dataset
+# declares them by role, so there is nothing per-layer to change.
+mutation UpdateTrackLayer($input: UpdateTrackLayerInput!) {
+  updateTrackLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+# Retunes a point layer -- above all its pickers, which are replaced wholesale
+# rather than merged: their order IS the display order, so there is nothing to
+# merge on. `[]` clears, an omitted field leaves alone.
+mutation UpdatePointLayer($input: UpdatePointLayerInput!) {
+  updatePointLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
 # Removes a layer from its scene. Returns the deleted id; the scene view
 # reinitializes its stores when GetScene refetches, so the layer disappears
 # without any store plumbing.

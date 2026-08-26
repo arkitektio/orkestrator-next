@@ -261,3 +261,49 @@ export function resolvePoolBudget(input: {
     headroomSlots: Math.floor((atlasBytes - maxPlanBytes) / Math.max(1, slotBytes)),
   };
 }
+
+/**
+ * Slots of headroom a pool of `atlasSlots` should keep free. The constant is a
+ * TARGET, not a floor: a pool smaller than it can never satisfy it, so every
+ * comparison against the raw constant is unconditionally true on small
+ * pyramids. Capped at half the atlas so the reserve can never starve what the
+ * pool exists to hold. See `resolvePlanBytesForAtlas` and
+ * `trimUnreachableResidents` — the two sites where an uncapped compare was the
+ * bug (P25).
+ */
+export const poolHeadroomSlots = (atlasSlots: number): number =>
+  Math.min(MIN_POOL_HEADROOM_SLOTS, Math.max(0, Math.floor(atlasSlots / 2)));
+
+/**
+ * Plan bytes for the atlas that ACTUALLY exists — `resolvePoolBudget` sizes the
+ * budget for the CURRENT pool count, but atlases are never resized, so a plan
+ * must additionally be clamped to the allocation it will land in.
+ *
+ * Headroom only means something when bricks can be out-of-plan: a pyramid that
+ * fits its atlas WHOLE has nothing to evict and reserves none, mirroring
+ * `resolvePoolBudget`'s `headroomSlots: 0` branch. On a starved atlas the
+ * reserve is additionally capped at half its slots (`poolHeadroomSlots`).
+ *
+ * Both caps exist because subtracting a flat 64 slots from a 9-slot atlas
+ * (a small image: 9 bricks, atlas sized to exactly the pyramid) went NEGATIVE,
+ * left the plan a single slot, and so zeroed `planLayerNodes`'
+ * `refineBudgetBytes` — pinning every small dataset at the coarsest level at
+ * every zoom.
+ */
+export function resolvePlanBytesForAtlas(input: {
+  /** `BrickResidencyManager.poolAtlasBytes` — a static allocation size. */
+  liveAtlasBytes: number;
+  /** `resolvePoolBudget().maxPlanBytes`. */
+  resolvedMaxPlanBytes: number;
+  slotBytes: number;
+  /** Bytes the ENTIRE pyramid would need if fully resident. */
+  totalBrickBytes: number;
+}): number {
+  const { liveAtlasBytes, resolvedMaxPlanBytes, slotBytes, totalBrickBytes } = input;
+  const atlasSlots = Math.floor(liveAtlasBytes / Math.max(1, slotBytes));
+  const headroomBytes =
+    totalBrickBytes <= liveAtlasBytes ? 0 : poolHeadroomSlots(atlasSlots) * slotBytes;
+  // The `max(slotBytes, …)` floor stays: a pool that can hold nothing renders
+  // nothing (same rule as resolvePoolBudget).
+  return Math.max(slotBytes, Math.min(resolvedMaxPlanBytes, liveAtlasBytes - headroomBytes));
+}

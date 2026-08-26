@@ -6,6 +6,8 @@ import {
   segmentCountFor,
   writeLineDistances,
   writePolylinePairs,
+  writeRunPairs,
+  writeRunScalars,
 } from "./lineBuffer";
 
 /**
@@ -141,5 +143,101 @@ describe("writeLineDistances", () => {
     writeLineDistances(distances, pairs, segments);
 
     expect(distances[1]).toBeCloseTo(5);
+  });
+});
+
+
+describe("writeRunPairs — packing many trajectories into one buffer", () => {
+  // Two tracks: (0,0)->(1,0)->(2,0) and (10,10)->(11,10).
+  const coords = {
+    x: [0, 1, 2, 10, 11],
+    y: [0, 0, 0, 10, 10],
+    z: null,
+  };
+
+  it("never joins the end of one run to the start of the next", () => {
+    // THE property. A joining segment leaps across the field between two
+    // unrelated tracks and looks enough like data to be believed, so it is
+    // checked directly rather than inferred from the segment count.
+    const target = new Float32Array(3 * FLOATS_PER_SEGMENT);
+
+    const first = writeRunPairs(target, 0, coords, 0, 3);
+    const second = writeRunPairs(target, first, coords, 3, 2);
+
+    expect(first).toBe(2);
+    expect(second).toBe(1);
+    expect(first + second).toBe(3);
+
+    // Segment 1 ends at (2,0); segment 2 starts at (10,10) — the next TRACK,
+    // not a bridge from (2,0) to (10,10).
+    expect([...target.slice(FLOATS_PER_SEGMENT, FLOATS_PER_SEGMENT * 2)]).toEqual([
+      1, 0, 0, 2, 0, 0,
+    ]);
+    expect([...target.slice(FLOATS_PER_SEGMENT * 2)]).toEqual([10, 10, 0, 11, 10, 0]);
+  });
+
+  it("matches writePolylinePairs for a single run at offset 0", () => {
+    // The offset variant must not be a second, subtly different layout.
+    const points: [number, number, number][] = [
+      [0, 0, 0],
+      [1, 0, 0],
+      [2, 0, 0],
+    ];
+    const viaTuples = new Float32Array(pairBufferLength(3));
+    const viaColumns = new Float32Array(pairBufferLength(3));
+
+    writePolylinePairs(viaTuples, points);
+    writeRunPairs(viaColumns, 0, coords, 0, 3);
+
+    expect([...viaColumns]).toEqual([...viaTuples]);
+  });
+
+  it("writes z as 0 for a 2D table", () => {
+    const target = new Float32Array(FLOATS_PER_SEGMENT);
+    writeRunPairs(target, 0, coords, 0, 2);
+    expect(target[2]).toBe(0);
+    expect(target[5]).toBe(0);
+  });
+
+  it("carries a real z when the table has one", () => {
+    const target = new Float32Array(FLOATS_PER_SEGMENT);
+    writeRunPairs(target, 0, { x: [0, 1], y: [0, 0], z: [7, 9] }, 0, 2);
+    expect(target[2]).toBe(7);
+    expect(target[5]).toBe(9);
+  });
+
+  it("writes nothing for a run of one point", () => {
+    // A single observation is a track with no segment. It must not borrow its
+    // neighbour's row to make one.
+    const target = new Float32Array(FLOATS_PER_SEGMENT).fill(-1);
+    expect(writeRunPairs(target, 0, coords, 3, 1)).toBe(0);
+    expect([...target]).toEqual([-1, -1, -1, -1, -1, -1]);
+  });
+
+  it("refuses rather than overrunning when the offset leaves too little room", () => {
+    const target = new Float32Array(2 * FLOATS_PER_SEGMENT);
+    expect(writeRunPairs(target, 1, coords, 0, 3)).toBe(-1);
+  });
+});
+
+describe("writeRunScalars", () => {
+  it("takes each segment's LATER endpoint", () => {
+    // A segment exists once its far end does; taking the near end would draw
+    // every segment one timepoint early.
+    const target = new Float32Array(2);
+    expect(writeRunScalars(target, 0, [10, 20, 30], 0, 3)).toBe(2);
+    expect([...target]).toEqual([20, 30]);
+  });
+
+  it("packs runs at a segment offset, in segment space not row space", () => {
+    const target = new Float32Array(3);
+    const times = [0, 1, 2, 100, 101];
+    const first = writeRunScalars(target, 0, times, 0, 3);
+    writeRunScalars(target, first, times, 3, 2);
+    expect([...target]).toEqual([1, 2, 101]);
+  });
+
+  it("refuses rather than overrunning", () => {
+    expect(writeRunScalars(new Float32Array(1), 1, [0, 1, 2], 0, 3)).toBe(-1);
   });
 });

@@ -7,6 +7,7 @@ import {
   resolveDecodeAllowanceBytes,
   resolveDecodeCacheShareBytes,
   resolveDecodeFloorBytes,
+  resolvePlanBytesForAtlas,
   resolvePoolBudget,
 } from "./poolBudget";
 import { MIN_LAYER_POOL_BYTES } from "../../../platform/quality/lodPlanning";
@@ -296,5 +297,70 @@ describe("decode budgets", () => {
     expect(
       resolveDecodeCacheShareBytes({ decodedChunkCacheBytes: 512 * MiB, poolCount: 0 }),
     ).toBe(512 * MiB);
+  });
+});
+
+/**
+ * The clamp `nodePlanTracker` applies on top of the split: atlases are never
+ * resized, so a plan must fit the allocation that actually exists. The headroom
+ * it withholds has to be capped by the pyramid, or a small pool's plan collapses
+ * to a single slot — which zeroes `planLayerNodes`' refineBudgetBytes and pins
+ * every small dataset at the coarsest level at every zoom (P25).
+ */
+describe("resolvePlanBytesForAtlas", () => {
+  const clamp = (over: Partial<Parameters<typeof resolvePlanBytesForAtlas>[0]> = {}) =>
+    resolvePlanBytesForAtlas({
+      liveAtlasBytes: 200 * SLOT_BYTES,
+      resolvedMaxPlanBytes: HUGE_PYRAMID,
+      slotBytes: SLOT_BYTES,
+      totalBrickBytes: HUGE_PYRAMID,
+      ...over,
+    });
+
+  it("withholds NOTHING when the whole pyramid fits the live atlas", () => {
+    // The reported dataset: 9 bricks, atlas sized to exactly the pyramid.
+    // Nothing can ever be out-of-plan, so headroom would only cost resolution.
+    const atlas = 9 * SLOT_BYTES;
+    expect(clamp({ liveAtlasBytes: atlas, totalBrickBytes: atlas })).toBe(atlas);
+  });
+
+  it("does not collapse a small atlas to one slot", () => {
+    // 9 slots minus a flat 64 went negative and floored at 1 — the bug.
+    const atlas = 9 * SLOT_BYTES;
+    expect(clamp({ liveAtlasBytes: atlas })).toBeGreaterThan(SLOT_BYTES);
+    expect(clamp({ liveAtlasBytes: atlas })).toBe(5 * SLOT_BYTES); // half withheld
+  });
+
+  it("keeps the FULL headroom on a pool big enough to have it", () => {
+    expect(clamp()).toBe((200 - MIN_POOL_HEADROOM_SLOTS) * SLOT_BYTES);
+  });
+
+  it("never exceeds the resolved plan budget", () => {
+    expect(clamp({ resolvedMaxPlanBytes: 4 * SLOT_BYTES })).toBe(4 * SLOT_BYTES);
+  });
+
+  it("is never STRICTER than the flat-64 reserve it replaced, at any pool size", () => {
+    // The invariant that keeps `ensurePool` (which still floors its allocation
+    // with the raw constant) and this clamp compatible: the cap only ever
+    // withholds LESS, so a plan can never shrink because of it. The 10..128
+    // slot band is where the two rules actually differ.
+    for (const atlasSlots of [10, 20, 40, 64, 100, 128, 200]) {
+      const liveAtlasBytes = atlasSlots * SLOT_BYTES;
+      const flat64 = Math.max(
+        SLOT_BYTES,
+        Math.min(HUGE_PYRAMID, liveAtlasBytes - MIN_POOL_HEADROOM_SLOTS * SLOT_BYTES),
+      );
+      expect(clamp({ liveAtlasBytes })).toBeGreaterThanOrEqual(flat64);
+    }
+    // …and above the band the two are byte-identical (full headroom kept).
+    expect(clamp({ liveAtlasBytes: 200 * SLOT_BYTES })).toBe(
+      (200 - MIN_POOL_HEADROOM_SLOTS) * SLOT_BYTES,
+    );
+    // A 40-slot atlas: 20 withheld instead of an impossible 64.
+    expect(clamp({ liveAtlasBytes: 40 * SLOT_BYTES })).toBe(20 * SLOT_BYTES);
+  });
+
+  it("never returns less than one slot", () => {
+    expect(clamp({ liveAtlasBytes: 0, totalBrickBytes: HUGE_PYRAMID })).toBe(SLOT_BYTES);
   });
 });

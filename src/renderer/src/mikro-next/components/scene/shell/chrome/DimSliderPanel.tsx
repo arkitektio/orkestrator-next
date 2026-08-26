@@ -19,7 +19,19 @@ import { useViewerStore } from '../../platform/stores/viewerStore'
  * pool flush + refetch (by design: a different t is different data in every
  * brick). Layers without the dim are untouched. Scrubbing back to a recently
  * visited index re-repacks from the decoded-chunk LRU without refetching.
+ *
+ * TWO SOURCES, because there are two kinds of layer. The brick layers declare
+ * their dims through a LENS (`collapsibleDims` reads its axis names, shape and
+ * slices), and that is where every dim but one comes from. A TRACK layer has no
+ * lens at all — it is a table, and its time is a column — so it publishes the
+ * extent it actually observed into `sceneStore.trackTimeExtents` once its read
+ * lands, and that is folded in below under the same `t`. Without that second
+ * fold a scene of only tracks would offer nothing to scrub, and its tail would
+ * be frozen at the end of the data.
  */
+
+/** The dim a track layer's time joins — the same one a brick layer's t uses. */
+const TIME_DIM = 't'
 
 type DimScrubber = {
   dim: string
@@ -44,6 +56,7 @@ export const DimSliderPanel = ({
   const dockOrientation = useSceneDockOrientation('horizontal')
   const orientation = orientationProp ?? dockOrientation
   const layers = useSceneStore((s) => s.layers)
+  const trackTimeExtents = useSceneStore((s) => s.trackTimeExtents)
   const dimSelections = useViewerStore((s) => s.dimSelections)
   const setDimSelection = useViewerStore((s) => s.setDimSelection)
 
@@ -75,8 +88,37 @@ export const DimSliderPanel = ({
         }
       }
     }
+    // The non-lens fold. A track layer joins whatever `t` scrubber the brick
+    // layers already produced rather than minting its own — a track and the
+    // image it was tracked on share one timeline, and two sliders labelled `t`
+    // would be a lie about that. Its extent widens the shared range where the
+    // table runs longer than the image.
+    for (const [layerId, maxIndex] of Object.entries(trackTimeExtents)) {
+      if (maxIndex < 1) continue
+      const selected = dimSelections[TIME_DIM]
+      const shown =
+        selected !== undefined
+          ? Math.max(0, Math.min(maxIndex, Math.round(selected)))
+          : maxIndex
+      const existing = byDim.get(TIME_DIM)
+      if (existing) {
+        existing.maxIndex = Math.max(existing.maxIndex, maxIndex)
+        existing.perLayer.push({ id: layerId, index: shown, maxIndex })
+      } else {
+        byDim.set(TIME_DIM, {
+          dim: TIME_DIM,
+          maxIndex,
+          // A track with no selection shows its whole trajectory, so the
+          // default index is the END of its timeline rather than 0 — opening a
+          // scene on an empty viewport would read as a broken layer.
+          defaultIndex: maxIndex,
+          perLayer: [{ id: layerId, index: shown, maxIndex }]
+        })
+      }
+    }
+
     return [...byDim.values()].sort((a, b) => a.dim.localeCompare(b.dim))
-  }, [layers, dimSelections])
+  }, [layers, dimSelections, trackTimeExtents])
 
   if (scrubbers.length === 0) return null
 

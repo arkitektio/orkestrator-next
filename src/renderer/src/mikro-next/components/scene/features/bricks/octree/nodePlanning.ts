@@ -82,6 +82,18 @@ export type LayerNodePlan = {
   decodeFloorBytes: number;
   /** Sub-floor allowance actually in force this plan. Debug only. */
   decodeAllowanceBytes: number;
+  /**
+   * GPU ATLAS SLOT bytes this plan was allowed (`maxPlanBytes`) and the part of
+   * it refinement could actually spend (slot currency — the decode pair above
+   * is the OTHER currency). Debug only, and for the same reason as
+   * `levelDecodeBytes`: when refinement stalls, "the plan had one slot" is the
+   * answer, and deriving it by hand means redoing the whole budget chain
+   * (device share → pool split → live-atlas clamp → coarsest reserve).
+   */
+  planBudgetBytes: number;
+  /** Slot bytes left for sub-coarsest nodes after the coarsest reservation.
+   * 0 means NO refinement was possible at any zoom (P25). Debug only. */
+  refineBudgetBytes: number;
   /** 2D only: base-voxel z of the displayed slab (null in 3D / no z axis). */
   slabZ: number | null;
   nodes: PlannedNode[];
@@ -372,6 +384,8 @@ export function planLayerNodes({
     levelDecodeBytes: [],
     decodeFloorBytes: 0,
     decodeAllowanceBytes: 0,
+    planBudgetBytes: maxPlanBytes,
+    refineBudgetBytes: 0,
     slabZ,
     nodes: [],
     planBytes: 0,
@@ -908,6 +922,8 @@ export function planLayerNodes({
     levelDecodeBytes: levels.map((_, i) => visibleBytesAtLevel(i)),
     decodeFloorBytes: floorBytes,
     decodeAllowanceBytes: allowanceBytes,
+    planBudgetBytes: maxPlanBytes,
+    refineBudgetBytes,
     slabZ: slabZOut,
     nodes,
     planBytes,

@@ -729,6 +729,49 @@ raw dtype units (e.g. 0..4000 for a uint16 layer, not a normalized 0..1). A
 normalized clim on a uint16 layer collapses to ~0 after `climToUnit` with
 `[0,65535]`. See [[clim-absolute-native-units]].
 
+**…and the dtype range is a WEAK PROXY for some dtypes.** `pool.minValue/maxValue`
+is what the shader normalizes against AND what the null-clim default resolves to,
+so a dtype range that does not describe the data mis-windows the layer before any
+contrast setting is involved. Floats declare `[0,1]` (whites-out data valued >1);
+**signed integers declare a range centred on zero**, so ordinary int16 data valued
+0..4000 normalizes into `[0.500, 0.561]` — flat mid-gray, and raw 0 stops reading
+as background, which silently defeats the `norm <= 0.001` empty-space skip in
+`raymarchStep` (opaque half-intensity fog + every brick marched) and makes a
+uniform-zero brick round-trip through the 8-bit EMPTY encode to `+128` instead of
+`0`. Two escape hatches cover it, and they MUST test the same dtype set
+(`dtypeRangeIsWeakProxy`, `platform/model/dataRange.ts`): the server value
+histogram (`serverHistogramRange`, unioned across ALL anchors — they are
+per-channel, and the first one alone would clip every brighter channel), else
+`LayerBrickPool.autoRange`, which accumulates the real range from decoded bricks
+(`shouldAutoRange` / `accumulateAutoRange`, `residency/brickResidency.ts`).
+Keeping the two gates in lockstep is what lets `poolKey` omit `autoRange` — it is
+implied by `dtype` (keyed) plus "the range fell back to the dtype's" (keyed as
+`dataRange`). `uint8`/`uint16` deliberately keep their dtype range.
+
+**A reused pool keeps its accumulated range as a SEED** (`resolveReusedAutoRange`,
+`residency/brickResidency.ts`). `ensurePool`'s movable path re-derives the range
+on a slice-signature change (T / dim slider, axis remap — never z, which
+`sliceSignature` deliberately excludes), and `derivation.dataRange` is the DTYPE
+range for an auto-ranging pool. Taking it would restart the ratchet on every
+slider step, and for a signed dtype that means flashing the fog range — mid-gray,
+skipping off — until the first brick lands again. So a pool that was auto-ranging
+and STAYS auto-ranging (with `autoRangeInitialized`) keeps `minValue`/`maxValue`;
+only a genuine policy change (a late server histogram turning `autoRange` off)
+takes the derived range. Safe because the range does not move: no EMPTY re-encode
+is owed, `flushPool` has already reset `occObserved*`/`occEncode*` against that
+same range, and a key holding the dtype range while the live range has drifted is
+the normal auto-range state.
+
+**But a FLUSHED pool clears `autoRangeInitialized`**, so the next brick re-FITS
+wholesale instead of unioning. This branch is the ONLY thing that ever clears that
+flag (`flushPool` does not touch it) and `accumulateAutoRange` only ever WIDENS
+while it is set — carry it across a flush and one hot timepoint permanently dims
+the rest of the series (a 30000 spike on otherwise 0..4000 data windows every
+later slice to `[0, 30000]` for the life of the pool). Keeping the range without
+the flag gives both properties: per-slice re-fit, and no frame ever rendered at
+the dtype range. Note `autoRange` itself is re-derived OUTSIDE the range branch —
+the policy can flip without the range moving.
+
 **P12 — Guard the coordinate frames.** Every frame is corner-anchored
 (COORDINATE_SYSTEMS.md §0): voxel v sits at world `affine(v)`, no centering,
 no flip, in 2D and 3D alike. A frame mismatch produces plans that look
@@ -1016,6 +1059,25 @@ planner unlocks has a working set the cache can hold. Symptom to recognise:
 `decodeBytesCharged: 0` forever while `budgetMinLevel` sits one level above what
 the view obviously wants.
 
+**P25 — A headroom CONSTANT must be capped by the pyramid it guards.**
+`MIN_POOL_HEADROOM_SLOTS` (64) is a target, not a floor, and a pool smaller than
+it can never satisfy it — so every comparison against the raw constant is
+unconditionally true on a small dataset. Two of its four consumers were
+uncapped. `nodePlanTracker`'s live-atlas clamp subtracted `64 × slotBytes` from a
+9-slot atlas (a 9-brick pyramid, which `resolvePoolBudget` correctly sizes the
+atlas to EXACTLY, returning `headroomSlots: 0`), went negative, floored at ONE
+slot — and `refineBudgetBytes = maxPlanBytes − coarsestReserveBytes` was then 0,
+so `visit()` rejected every child and the plan was a single coarsest target at
+every zoom, on every small image. `trimUnreachableResidents` compared `free`
+(max 8) against the same 64 and trimmed every unprotected resident on each
+reconcile, refetching the whole pyramid per zoom-out (113 fetches / 97 trims for
+9 bricks). Both now go through `poolHeadroomSlots` / `resolvePlanBytesForAtlas`:
+headroom is ZERO when the pyramid fits the atlas that exists, and at most half
+the slots otherwise; large pools are byte-identical. Symptom to recognise:
+`targetLevel` pinned at the coarsest level with `budgetMinLevel: 0` and
+`decodeBytesCharged: 0` (which rules out the decode floor, P24) — `nodeCount: 1`
+and `planBudgetBytes == slotBytes` name it outright.
+
 **P20 — Handler ATTACHMENT is the raycast gate, not the handler body.** R3F
 puts an object in `internal.interaction` as soon as it carries any event
 handler, and the raycast runs BEFORE the handler does — so a handler that
@@ -1297,7 +1359,9 @@ What changed:
 - **`poolAtlasBytes` + a tracker clamp.** `maxPlanBytes` now scales with the pool
   count, so closing a layer could size a plan for a share the existing atlas was
   never allocated for. The clamp reads a static allocation size — NOT a replan
-  trigger (P7).
+  trigger (P7). The headroom it withholds is capped by the pyramid
+  (`resolvePlanBytesForAtlas`) — subtracting a flat 64 slots from a small atlas
+  left the plan one slot and pinned refinement forever (P25).
 - **Diagnosability:** `plans[].levelDecodeBytes` (per-level decode cost, the
   exact quantity the floor compares) plus a `budget` block with the raw
   `deviceMemory` and both overrides. This question previously required deriving

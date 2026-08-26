@@ -5,7 +5,7 @@ import { ImageVolumeLayer } from "../features/volume/ImageVolumeLayer";
 import { FabriksCollectionLayer } from "../features/meshes/FabriksCollectionLayer";
 import { AnnotationLayerRenderer } from "../features/annotations/AnnotationLayer";
 import { LabelPlaneLayer, LabelVolumeLayer } from "../features/labels/LabelPlaneLayer";
-import { TrackLayerRenderer } from "./chrome/stubs";
+import { TrackLayerRenderer } from "../features/tracks/TracksLayer";
 import { PointLayerRenderer } from "../features/points/PointsLayer";
 
 export type LayerRendererProps = { layerId: string };

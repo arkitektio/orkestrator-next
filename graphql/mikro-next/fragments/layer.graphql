@@ -382,6 +382,19 @@ fragment SceneLayer on Layer {
     colorByColumn
     lineWidth
     colormap
+    # Same reason as the point layer above: a track layer has no lens, so
+    # `composeLayerAffine` -- which walks a lens's render axes -- cannot place
+    # it. The server already composes `pathToWorld` into one map, so ask it.
+    asAffine {
+      matrix
+      inputAxes
+      outputAxes
+      total
+    }
+    # Whether a world-space `lineWidth` is a well-defined length at all: from
+    # SIMILARITY up. The schema names `lineWidth` explicitly among the scalars
+    # this governs.
+    placementInvariance
   }
   ... on MeshLayer {
     collection {

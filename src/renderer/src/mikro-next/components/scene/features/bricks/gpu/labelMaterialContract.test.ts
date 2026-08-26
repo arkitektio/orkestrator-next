@@ -37,12 +37,25 @@ describe("label layer registry wiring", () => {
     expect(label.Layer2D).not.toBe(label.Layer3D);
   });
 
-  it("still stubs the types that really are unimplemented", () => {
-    // Point/Track are the remaining stubs; label graduated out of that file, and
-    // this is what catches it being quietly put back.
+  it("serves both modes from ONE component where the rendering does not differ", () => {
+    // Points and tracks are the same drawing in 2D and 3D — a billboard quad
+    // and a screen-space polyline both already face the camera — so one
+    // component for both modes is the honest registration, not a leftover stub.
+    // (It was a stub once: `shell/chrome/stubs.tsx` held both, and is now
+    // deleted, its last occupant having graduated to `features/tracks/`.)
     expect(LAYER_RENDERERS.PointLayer.Layer2D).toBe(LAYER_RENDERERS.PointLayer.Layer3D);
     expect(LAYER_RENDERERS.TrackLayer.Layer2D).toBe(LAYER_RENDERERS.TrackLayer.Layer3D);
     expect(LAYER_RENDERERS.LabelLayer.Layer2D).not.toBe(LAYER_RENDERERS.PointLayer.Layer2D);
     expect(LAYER_RENDERERS.LabelLayer.Layer3D).not.toBe(LAYER_RENDERERS.PointLayer.Layer3D);
+  });
+
+  it("draws every layer kind — nothing is registered to a null renderer", () => {
+    // The registry is exhaustive by its key type, which forced a placeholder for
+    // any kind without a renderer. There are none left; this is what catches a
+    // new kind being registered to `() => null` and quietly drawing nothing.
+    for (const [kind, renderers] of Object.entries(LAYER_RENDERERS)) {
+      expect(renderers.Layer2D, `${kind} has no 2D renderer`).toBeTruthy();
+      expect(renderers.Layer3D, `${kind} has no 3D renderer`).toBeTruthy();
+    }
   });
 });

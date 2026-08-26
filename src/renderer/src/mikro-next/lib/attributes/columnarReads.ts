@@ -110,6 +110,139 @@ export const readPointPositions = async (
   return { ids, x, y, z, count: ids.length };
 };
 
+/** Which columns a track layer's trajectories are read from. */
+export type TrackColumns = {
+  /** The TRACK_ID column: rows sharing a value are one trajectory. */
+  trackId: string;
+  x: string;
+  y: string;
+  /** Optional third dimension; a 2D table simply omits it. */
+  z?: string | null;
+  /**
+   * The time column. Optional, but a track without one has no ORDER within a
+   * trajectory beyond the file's own, and no tail to fade — the renderer draws
+   * it whole.
+   */
+  t?: string | null;
+  /**
+   * A measure column to colour by, read in the SAME scan as the coordinates.
+   *
+   * Not a separate read, deliberately. A point layer can align a colouring to
+   * its positions by object id; a track table has no id column, so two scans
+   * could only be lined up by trusting two `ORDER BY`s to have matched — the
+   * kind of coincidence `readColumnValues` says a painter cannot check
+   * cheaply. One projection makes the alignment structural.
+   */
+  value?: string | null;
+};
+
+/** One trajectory's slice of the shared coordinate arrays. */
+export type TrackRun = {
+  /** The trajectory's id, as it appeared in the TRACK_ID column. */
+  id: number | string;
+  /** First row of this run in the coordinate arrays. */
+  start: number;
+  /** How many rows it spans. Always >= 1; a run of 1 draws no segment. */
+  length: number;
+};
+
+export type TrackPositions = {
+  x: ArrayLike<number>;
+  y: ArrayLike<number>;
+  z: ArrayLike<number> | null;
+  /** Time per row, parallel to the coordinates. Null when there is no t column. */
+  t: ArrayLike<number> | null;
+  /** The colour measure per row, parallel to the coordinates. Null when unset. */
+  value: ArrayLike<number> | null;
+  /** Total rows across every trajectory. */
+  count: number;
+  /** The trajectories, in the order the scan returned them. */
+  runs: TrackRun[];
+  /** Drawable segments: `count - runs.length`. What the line buffer is sized by. */
+  segmentCount: number;
+};
+
+/**
+ * Every trajectory's coordinates, grouped into runs.
+ *
+ * **`ORDER BY` is the whole difference from `readPointPositions`.** That one
+ * has none, deliberately: a point cloud does not care what order its rows
+ * arrive in. A polyline is nothing BUT the order — an unsorted scan draws a
+ * scribble through the same set of points, and it is not a failure any later
+ * stage can detect. Ordering by `(track_id, t)` is what makes consecutive rows
+ * consecutive in time, and what makes a run a contiguous slice rather than a
+ * gather.
+ *
+ * Runs are found by scanning for boundaries in the already-sorted track column,
+ * NOT by a `Map` from id to row. `readPointPositions`' `slots.set(id, index)`
+ * keeps the LAST row for an id, which is exactly right when one row is one
+ * object and exactly wrong here, where many rows are one trajectory.
+ *
+ * The track id may be a string (a name) or a number; only equality of adjacent
+ * values is used, so both work without a branch.
+ *
+ * Null when the result cannot answer columnwise, or when a coordinate column is
+ * not numeric — the caller refuses rather than falling back to the row path.
+ */
+export const readTrackPositions = async (
+  engine: AttributeLookupEngine,
+  store: ParquetStoreLike,
+  columns: TrackColumns,
+): Promise<TrackPositions | null> => {
+  const wanted = [
+    "track_id",
+    "px",
+    "py",
+    ...(columns.z ? ["pz"] : []),
+    ...(columns.t ? ["pt"] : []),
+    ...(columns.value ? ["pv"] : []),
+  ];
+  const projection = [
+    `${escapeSqlIdentifier(columns.trackId)} AS track_id`,
+    `${escapeSqlIdentifier(columns.x)} AS px`,
+    `${escapeSqlIdentifier(columns.y)} AS py`,
+    ...(columns.z ? [`${escapeSqlIdentifier(columns.z)} AS pz`] : []),
+    ...(columns.t ? [`${escapeSqlIdentifier(columns.t)} AS pt`] : []),
+    ...(columns.value ? [`${escapeSqlIdentifier(columns.value)} AS pv`] : []),
+  ].join(", ");
+  // Ordering by t as well as by track is what puts a trajectory's rows in
+  // time order; without it the run is a set, not a path.
+  const ordering = columns.t ? "ORDER BY track_id, pt" : "ORDER BY track_id";
+
+  const read = await engine.readColumnsTyped(
+    [store],
+    (urlOf) =>
+      `SELECT ${projection} FROM read_parquet(${escapeSqlLiteral(urlOf(store.id))}) ${ordering}`,
+    wanted,
+  );
+  if (!read) return null;
+
+  const x = asNumeric(read.px);
+  const y = asNumeric(read.py);
+  const z = columns.z ? asNumeric(read.pz) : null;
+  const t = columns.t ? asNumeric(read.pt) : null;
+  // A non-numeric colour column is a category, not a ramp. Null rather than a
+  // refusal: the trajectories still draw, in the flat colour.
+  const value = columns.value ? asNumeric(read.pv) : null;
+  if (!x || !y || (columns.z && !z) || (columns.t && !t)) return null;
+
+  // The track column is NOT required to be numeric — a track name is a
+  // perfectly good identity — so it is read as-is and only compared.
+  const trackColumn = read.track_id as ArrayLike<number | string> | undefined;
+  if (!trackColumn) return null;
+
+  const count = x.length;
+  const runs: TrackRun[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const id = trackColumn[index];
+    const open = runs[runs.length - 1];
+    if (open && open.id === id) open.length += 1;
+    else runs.push({ id, start: index, length: 1 });
+  }
+
+  return { x, y, z, t, value, count, runs, segmentCount: Math.max(0, count - runs.length) };
+};
+
 /**
  * One column, as ids and values side by side — the colour table's read.
  *

@@ -329,6 +329,10 @@ export const DebugPanel = () => {
               levelDecodeBytes: plan.levelDecodeBytes,
               decodeFloorBytes: plan.decodeFloorBytes,
               decodeAllowanceBytes: plan.decodeAllowanceBytes,
+              // The SLOT budget the same question needs (refineBudgetBytes 0 =
+              // no refinement was possible at any zoom).
+              planBudgetBytes: plan.planBudgetBytes,
+              refineBudgetBytes: plan.refineBudgetBytes,
               slabZ: plan.slabZ,
               planBytes: plan.planBytes,
               nodeCount: plan.nodes.length,
@@ -782,6 +786,14 @@ export const DebugPanel = () => {
                   <span className="bg-accent px-1 rounded">{plan.mode}</span>
                   <span className="bg-accent px-1 rounded">target L{plan.targetLevel}</span>
                   <span className="bg-accent px-1 rounded">floor L{plan.budgetMinLevel}</span>
+                  {/* Slot currency: 0 refine bytes = pinned at the coarsest
+                      level regardless of zoom (P25). */}
+                  <span
+                    className="bg-accent px-1 rounded"
+                    title={`plan budget ${(plan.planBudgetBytes / (1024 * 1024)).toFixed(1)} MB, of which refinement may spend ${(plan.refineBudgetBytes / (1024 * 1024)).toFixed(1)} MB`}
+                  >
+                    refine {(plan.refineBudgetBytes / (1024 * 1024)).toFixed(1)} MB
+                  </span>
                   {/* The floor's own arithmetic, inline: L0 needs X, floor allows Y. */}
                   <span
                     className="ml-1 opacity-70"

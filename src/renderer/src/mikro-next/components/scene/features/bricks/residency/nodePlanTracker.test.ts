@@ -42,6 +42,11 @@ const ARRAYS: Record<string, { shape: number[]; chunks: number[]; dtype: string 
 
 const FULL_VIEW: LayerViewRange = { xRange: [0, 512], yRange: [0, 512], zRange: null, scale: 2 };
 
+/** The 2D spec this fixture resolves to: 256×256×1 payload, no border, one
+ * channel, float32 atlas. Five bricks in the pyramid (L0 2×2, L1 1×1). */
+const SLOT_BYTES = 256 * 256 * 1 * 1 * 4;
+const PYRAMID_BRICKS = 5;
+
 type ViewerSubset = Pick<
   ViewerState,
   | "layerViewRanges"
@@ -53,9 +58,14 @@ type ViewerSubset = Pick<
   | "getArrayForStoreId"
   | "setNodePlans"
   | "setUnplannableLayers"
->;
+> & { brickSystem: { poolAtlasBytes: (poolKey: string) => number | null } | null };
 
-const makeStores = (layers: LayerState[] = [layer]) => {
+const makeStores = (
+  layers: LayerState[] = [layer],
+  /** Bytes `BrickResidencyManager.poolAtlasBytes` reports for the live atlas —
+   * null (default) = no pool allocated yet, which skips the tracker's clamp. */
+  liveAtlasBytes: number | null = null,
+) => {
   const viewerStore = createStore<ViewerSubset>((set) => ({
     layerViewRanges: {},
     lodBias: 1,
@@ -63,6 +73,7 @@ const makeStores = (layers: LayerState[] = [layer]) => {
     residencyVersion: 0,
     nodePlans: {},
     unplannableLayers: {},
+    brickSystem: liveAtlasBytes === null ? null : { poolAtlasBytes: () => liveAtlasBytes },
     getArrayForStoreId: ((storeId: string) => {
       const arr = ARRAYS[storeId];
       if (!arr) throw new Error(`unknown store ${storeId}`);
@@ -111,6 +122,46 @@ describe("startNodePlanTracking", () => {
     expect(plan.targetLevel).toBe(0);
     expect(plan.nodes.filter((n) => n.role === "target")).toHaveLength(4);
     expect(plan.nodes.filter((n) => n.role === "keep").map((n) => n.key)).toEqual(["1:0:0:0"]);
+
+    stop();
+  });
+
+  it("refines a SMALL pyramid whose atlas is smaller than the headroom target", async () => {
+    // The reported regression: a 5-brick pyramid gets an atlas sized to exactly
+    // itself (resolvePoolBudget's "whole pyramid fits" branch, headroomSlots 0),
+    // and the tracker's live-atlas clamp then subtracted a flat
+    // MIN_POOL_HEADROOM_SLOTS (64) from it. That went negative, floored at ONE
+    // slot, which zeroed planLayerNodes' refineBudgetBytes (maxPlanBytes minus
+    // the coarsest reservation) — so every child was rejected and the plan sat
+    // at the coarsest level at every zoom, on every small image.
+    const stores = makeStores([layer], PYRAMID_BRICKS * SLOT_BYTES);
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await settle();
+
+    const plan = stores.viewerStore.getState().nodePlans[LAYER_ID];
+    expect(plan.targetLevel).toBe(0);
+    expect(plan.nodes.filter((n) => n.role === "target")).toHaveLength(4);
+    // The whole pyramid fits the atlas that exists, so the plan may spend all
+    // of it — no headroom is reserved when nothing can ever be out-of-plan.
+    expect(plan.planBudgetBytes).toBe(PYRAMID_BRICKS * SLOT_BYTES);
+    expect(plan.refineBudgetBytes).toBeGreaterThan(0);
+
+    stop();
+  });
+
+  it("still clamps the plan to a live atlas too small for the pyramid", async () => {
+    // The clamp's original job (a pool allocated while more pools were open)
+    // must survive the cap: 3 slots of atlas → headroom min(64, 1) = 1 slot →
+    // 2 slots of plan, which cannot hold all 4 L0 bricks.
+    const stores = makeStores([layer], 3 * SLOT_BYTES);
+    const stop = startNodePlanTracking(stores);
+    stores.viewerStore.setState({ layerViewRanges: { [LAYER_ID]: FULL_VIEW } });
+    await settle();
+
+    const plan = stores.viewerStore.getState().nodePlans[LAYER_ID];
+    expect(plan.planBudgetBytes).toBe(2 * SLOT_BYTES);
+    expect(plan.planBytes).toBeLessThanOrEqual(3 * SLOT_BYTES);
 
     stop();
   });

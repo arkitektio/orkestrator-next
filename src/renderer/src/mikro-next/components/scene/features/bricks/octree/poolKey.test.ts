@@ -108,10 +108,11 @@ describe("buildPoolKey — differences that must SPLIT a pool", () => {
 
 describe("buildPoolKey — autoRange is deliberately absent", () => {
   it("is implied by dtype + dataRange, so members always agree", () => {
-    // autoRange === (dtype is float) && (no server histogram). "No server
-    // histogram" is exactly what makes the range fall back to the dtype's, and
-    // both dtype and the resulting range are keyed — so two inputs that collide
-    // here cannot disagree on autoRange, and keying it would be dead weight.
+    // autoRange === dtypeRangeIsWeakProxy(dtype) && (no server histogram). "No
+    // server histogram" is exactly what makes the range fall back to the
+    // dtype's, and both dtype and the resulting range are keyed — so two inputs
+    // that collide here cannot disagree on autoRange, and keying it would be
+    // dead weight.
     const floatNoHistogram = {
       ...base(),
       levels: LEVELS.map((l) => ({ ...l, dtype: "float32" })),
@@ -122,8 +123,20 @@ describe("buildPoolKey — autoRange is deliberately absent", () => {
       dataRange: [12, 4096] as const, // a real histogram → autoRange false
     };
     expect(buildPoolKey(floatNoHistogram)).not.toBe(buildPoolKey(floatWithHistogram));
-    // Integer layers never auto-range; their dtype range is keyed as-is.
+    // uint8/uint16 never auto-range; their dtype range is keyed as-is.
     expect(buildPoolKey(base())).not.toBe(buildPoolKey(floatNoHistogram));
+  });
+
+  it("holds for signed integers too, which now take the same escape hatch", () => {
+    // The invariant is only load-bearing while resolveLayerDataRange and the
+    // autoRange predicate test the SAME dtype set. int16 joined both together:
+    // a histogram-less layer keeps the dtype range (autoRange true) and a
+    // histogram-bearing one gets the histogram range (autoRange false), so the
+    // two can never land in one pool.
+    const int16 = { ...base(), levels: LEVELS.map((l) => ({ ...l, dtype: "int16" })) };
+    const noHistogram = { ...int16, dataRange: [-32768, 32767] as const };
+    const withHistogram = { ...int16, dataRange: [0, 4000] as const };
+    expect(buildPoolKey(noHistogram)).not.toBe(buildPoolKey(withHistogram));
   });
 });
 

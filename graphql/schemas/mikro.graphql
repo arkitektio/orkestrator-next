@@ -1247,7 +1247,7 @@ The render recipe an image layer carries: which default graph createSceneFromCoo
 """
 enum BootstrapLayerKind {
   """
-  One colormapped source per channel, additively blended (grey for a single channel). The fluorescence default, and the fallback when nothing else is inferred.
+  One additively-blended layer per channel, each with its own colormap, order and visibility (a single grey layer when there is one channel). The fluorescence default, and the fallback when nothing else is inferred.
   """
   INTENSITY
 
@@ -1257,12 +1257,12 @@ enum BootstrapLayerKind {
   LABEL
 
   """
-  Composite three channels as red, green and blue. Inferred for a 2D dataset whose channel axis has exactly three positions -- a photograph, a brightfield slide.
+  Composite three channels as red, green and blue in a single layer -- a photograph, a brightfield slide. Never inferred, and stated for exactly that reason: a flat three-channel image is a three-marker fluorescence acquisition far more often than a photograph, and the two cannot be told apart by shape. Every other recipe gives each channel a layer of its own; this one keeps them together, because red, green and blue are components of one picture.
   """
   RGB
 
   """
-  The channel sources under a maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane.
+  One layer per channel as in `INTENSITY`, each under its own maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane.
   """
   VOLUME
 }
@@ -2337,7 +2337,7 @@ input CreateRgbLayerInput {
 }
 
 """
-Bootstrap a renderable scene over an existing coordinate system. Over an ownerless SHARED space the sources already registered into it become layers, up to the policy's nchildren -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's intrinsic pixels, a physical space, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. Rerunning makes another scene over the same space, which outlives them all
+Bootstrap a renderable scene over an existing coordinate system. Over an ownerless SHARED space the sources already registered into it become layers, up to the policy's nchildren sources -- each source's path to world is the one registration createCoordinateSystem authored. Over an owned system (a dataset's intrinsic pixels, a physical space, a collection's space) the container's own data becomes the layer: it is in its own space by construction, so no edge exists or is authored. A multi-channel image becomes one layer per channel, each with its own hue, order and visibility, so a viewer can control the channels separately; an RGB photograph stays one layer. Rerunning makes another scene over the same space, which outlives them all
 """
 input CreateSceneFromCoordinateSystemInput {
   coordinateSystem: ID!
@@ -5651,6 +5651,11 @@ type Mutation {
   """
   updateTableDataset(input: UpdateTableDatasetInput!): TableDataset!
 
+  """
+  Retune a track layer after creation -- its line width, its colouring column and the compositing it takes part in.
+  """
+  updateTrackLayer(input: UpdateTrackLayerInput!): TrackLayer!
+
   """Refine a transformation's parameters, bumping its version"""
   updateTransformation(input: UpdateTransformationInput!): Transformation!
 }
@@ -7337,7 +7342,7 @@ input SceneOrder @oneOf {
 }
 
 """
-The policy createSceneFromCoordinateSystem follows: at most `nchildren` layers, materialized from the sources living in or registered into the space, filtered by source kind and drawn by the recipe in `kind`
+The policy createSceneFromCoordinateSystem follows: at most `nchildren` sources, materialized from what lives in or is registered into the space, filtered by source kind and drawn by the recipe in `kind`. A source may become several layers -- a multi-channel image becomes one layer per channel
 """
 input ScenePolicyInput {
   includeMeshes: Boolean! = true
@@ -8937,6 +8942,20 @@ input UpdateTableDatasetInput {
   description: String = null
   id: ID!
   name: String = null
+}
+
+"""
+Retune a track layer after creation -- its line width, its colouring column and the compositing it takes part in
+"""
+input UpdateTrackLayerInput {
+  blending: Blending = null
+  colorByColumn: String = null
+  colormap: ColorMap = null
+  id: ID!
+  lineWidth: Float = null
+  opacity: Float = null
+  order: Int = null
+  visible: Boolean = null
 }
 
 """

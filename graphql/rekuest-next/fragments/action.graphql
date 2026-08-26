@@ -78,6 +78,7 @@ fragment DetailAction on Action {
     identifier
   }
   hash
+  allowProbe
 }
 
 fragment PrimaryAction on Action {

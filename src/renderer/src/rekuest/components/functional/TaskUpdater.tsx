@@ -82,8 +82,7 @@ export const TaskUpdater = () => {
           }
 
           void hydrateAndInsertMyTask(client, create).then((task) => {
-            if (!task || task.ephemeral) {
-              // Ephemeral tasks do not get a notification.
+            if (!task) {
               return;
             }
             if (

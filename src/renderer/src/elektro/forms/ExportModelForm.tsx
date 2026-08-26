@@ -195,7 +195,6 @@ const ExporterRunForm = (props: {
           action: props.actionId,
           args: data,
           reference,
-          ephemeral: false,
         }),
       );
 

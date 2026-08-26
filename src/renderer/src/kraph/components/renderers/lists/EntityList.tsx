@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { useDialog } from "@/app/dialog";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { FancyInput } from "@/components/ui/fancy-input";
@@ -509,7 +509,7 @@ export const EntityList = (props: {
   category: EntityCategoryFragment;
   options?: ViewOptions;
 }) => {
-  const { openDialog } = useDialog();
+  const navigate = useNavigate();
   const [search, setSearch] = React.useState<string>("");
   const [searchInput, setSearchInput] = React.useState<string>("");
   const [pagination, setPagination] = React.useState({
@@ -715,13 +715,20 @@ export const EntityList = (props: {
                     })}
                   <DropdownMenuSeparator />
                   <div className="p-2">
+                    {/*
+                      Properties are derived, so adding one means writing a
+                      derivation rule — the schema builder is where that lives.
+                      The old `addpropertydefinition` dialog offered a bare
+                      key+type and re-sent every sibling definition stripped of
+                      its rule, erasing them.
+                    */}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        openDialog("addpropertydefinition", {
-                          category: props.category,
-                        })
+                        navigate(
+                          `/kraph/entitycategories/${props.category.id}/schema`,
+                        )
                       }
                       className="w-full"
                     >

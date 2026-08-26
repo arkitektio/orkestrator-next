@@ -22,11 +22,21 @@ export const DEFAULT_AGGREGATION = AggregationFunction.Latest
 export const DEFAULT_CONFLICT_POLICY = ConflictPolicy.Combine
 
 /**
+ * Anything rule-shaped: the read type, the input type, or a partial being
+ * edited. The read type makes `conflictPolicy` required and the input type makes
+ * every field nullable, so neither one alone can describe both ends of a form
+ * that loads from the first and submits to the second.
+ */
+export type DerivationRuleLike = {
+  [K in keyof Omit<DerivationRule, "__typename">]?: DerivationRule[K] | null;
+};
+
+/**
  * `DerivationRule` gained required `conflictPolicy`, `subjectPriority` and
  * `toolPriority` fields. These mirror the server-side input defaults.
  */
 export const buildDerivationRule = (
-  rule?: Partial<DerivationRule> | null,
+  rule?: DerivationRuleLike | null,
 ): DerivationRule => ({
   aggregation: rule?.aggregation || DEFAULT_AGGREGATION,
   conflictPolicy: rule?.conflictPolicy || DEFAULT_CONFLICT_POLICY,

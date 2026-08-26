@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEntityNodesQuery, useGetEntityCategoryQuery, useUpdateEntityCategoryMutation } from "../api/graphql";
 import {
   buildDerivationRule,
-  DEFAULT_AGGREGATION,
   DEFAULT_DERIVATION,
   PropertyDefinition,
 } from "../components/schema-builder/utils";
@@ -60,18 +59,21 @@ export function EntityCategorySchemaBuilderPage() {
 
   const entityCategory = data.entityCategory;
 
+  // Seed from what the category actually holds. `propertyDefinitions` is a full
+  // replace on update, so a field dropped here is a field the next save erases —
+  // which is what happened to every derivation rule while the fragment selected
+  // only `rule { aggregation }`.
   const initialProperties: PropertyDefinition[] =
     entityCategory.propertyDefinitions.map((def) => ({
       key: def.key,
       label: def.label || def.key,
       description: def.description || undefined,
+      unit: def.unit,
       valueKind: def.valueKind,
-      derivation: DEFAULT_DERIVATION,
-      rule: buildDerivationRule({
-        aggregation: def.rule?.aggregation || DEFAULT_AGGREGATION,
-      }),
-      index: false,
-      searchable: false,
+      derivation: def.derivation || DEFAULT_DERIVATION,
+      rule: buildDerivationRule(def.rule),
+      index: def.index ?? false,
+      searchable: def.searchable ?? false,
     }));
 
   const handleSave = async (properties: PropertyDefinition[]) => {
@@ -87,14 +89,12 @@ export function EntityCategorySchemaBuilderPage() {
             key: prop.key,
             label: prop.label,
             description: prop.description || "",
+            unit: prop.unit,
             valueKind: prop.valueKind,
             derivation: prop.derivation || DEFAULT_DERIVATION,
             searchable: prop.searchable || false,
             index: prop.index || false,
-            rule: {
-              ...prop.rule,
-              aggregation: prop.rule?.aggregation || DEFAULT_AGGREGATION,
-            },
+            rule: buildDerivationRule(prop.rule),
           })),
         },
       },

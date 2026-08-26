@@ -22,6 +22,7 @@ import {
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
+import { buildAssignInput } from "@/rekuest/assign";
 import { trackTask } from "@/rekuest/lib/taskTracker";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Boxes, PlayCircle } from "lucide-react";
@@ -262,15 +263,11 @@ export const DirectImplementationAssignment = (
     });
 
     try {
-      await assign({
+      await assign(buildAssignInput({
         implementation: implementation.id,
         args: keys,
-        cached: false,
-        capture: false,
-        ephemeral: props.ephemeral ?? false,
-        log: false,
         reference,
-      });
+      }));
     } catch (error) {
       untrack();
       toast.error(getErrorMessage(error));
@@ -428,15 +425,11 @@ export const ImplementationAssignButton = (
     const untrack = trackTask(reference, onEvent);
 
     try {
-      await assign({
+      await assign(buildAssignInput({
         implementation: implementation.id,
         args: keys,
-        cached: false,
-        capture: false,
         reference,
-        ephemeral: props.ephemeral ?? false,
-        log: false,
-      });
+      }));
 
       setDoing(true);
       setError(null);
@@ -520,15 +513,11 @@ export const BatchImplementationAssignButton = (
       const untrack = trackTask(reference, onEvent);
 
       try {
-        await assign({
+        await assign(buildAssignInput({
           implementation: implementation.id,
           args: keys,
-          cached: false,
-          capture: false,
           reference,
-          ephemeral: props.ephemeral ?? false,
-          log: false,
-        });
+        }));
         setDoing(true);
         setError(null);
       } catch (error) {
@@ -604,15 +593,11 @@ export const AssignButton = (
     const untrack = trackTask(reference, onEvent);
 
     try {
-      await assign({
+      await assign(buildAssignInput({
         action: action.id,
         args: keys,
-        cached: false,
-        capture: false,
         reference,
-        ephemeral: props.ephemeral ?? false,
-        log: false,
-      });
+      }));
 
       setDoing(true);
       setError(null);
@@ -728,15 +713,11 @@ export const BatchAssignButton = (
       const untrack = trackTask(reference, onEvent);
 
       try {
-        await assign({
+        await assign(buildAssignInput({
           action: action.id,
           args: keys,
-          cached: false,
-          capture: false,
           reference,
-          ephemeral: props.ephemeral ?? false,
-          log: false,
-        });
+        }));
         setDoing(true);
         setError(null);
       } catch (error) {

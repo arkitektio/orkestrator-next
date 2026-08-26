@@ -9,17 +9,17 @@ import { DownloadIcon, FileIcon, Grid3x3 } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
 import { MoveToFolderButton } from "../components/folder/MoveToFolderButton";
 import ArrayDatasetList from "../components/lists/ArrayDatasetList";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
+import { FileInfoSidebar } from "../components/sidebars/FileInfoSidebar";
+import { formatBytes } from "../specs";
 
-// Helper for formatting file size
-const formatBytes = (bytes: number | null | undefined): string => {
-  if (bytes == null) return "Unknown Size";
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
+// The shared `specs.formatBytes` does the arithmetic — identical 1024 steps and
+// units to the copy that used to live here — so the body and the Info rail
+// cannot render the same byte count two different ways a few hundred pixels
+// apart. Only the null wording is this page's: `size` is nullable and the null
+// is meaningful, since a store that has not reported yet is not a zero-byte
+// file.
+const formatSize = (bytes: number | null | undefined): string =>
+  bytes == null ? "Unknown Size" : formatBytes(bytes);
 
 // Helper for getting clean file extension
 const getFileExtension = (filename: string) => {
@@ -96,16 +96,17 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
           <MikroFile.ObjectButton object={file} />
         </div>
       }
-      sidebars={
-        <Sidebars>
-          <Sidebars.Tab label="Knowledge">
-            <MikroFile.Knowledge object={file} />
-          </Sidebars.Tab>
-          <Sidebars.Tab label="Provenance">
-            <ProvenanceSidebar items={file.provenanceEntries} />
-          </Sidebars.Tab>
-        </Sidebars>
+      // `additionalSidebars` rather than an explicit `sidebars`: passing the
+      // latter takes over the whole rail, so Knowledge and Chat would have to be
+      // rebuilt here to keep them. The standalone Provenance tab is gone with
+      // it — the history is a section of Info now, next to the links it
+      // explains, exactly as on the array and table pages.
+      additionalSidebars={
+        <Sidebars.Tab label="Info">
+          <FileInfoSidebar file={file} />
+        </Sidebars.Tab>
       }
+      defaultSidebar="Info"
     >
       {/* Enhanced File Header / Title Area */}
       <div className="mb-6">
@@ -133,7 +134,7 @@ export const FilePage = asDetailQueryRoute(useGetFileQuery, ({ data }) => {
         <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 text-sm">
           <div>
             <dt className="text-muted-foreground text-xs mb-1">File Size</dt>
-            <dd className="font-medium text-base">{formatBytes(file.size)}</dd>
+            <dd className="font-medium text-base">{formatSize(file.size)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground text-xs mb-1">MIME Type</dt>

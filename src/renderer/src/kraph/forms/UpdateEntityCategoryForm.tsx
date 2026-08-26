@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Trash2 } from "lucide-react";
+import { buildDerivationRule } from "../components/schema-builder/utils";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -37,14 +38,20 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
       id: props.entityCategory.id,
       label: props.entityCategory.label,
       description: props.entityCategory.description,
+      // `propertyDefinitions` is a full replace, so every field the form does
+      // not carry is a field this save erases. Seed the whole definition,
+      // including the derivation rule, even where the form has no widget for it.
       propertyDefinitions: props.entityCategory.propertyDefinitions.map(
         (def) => ({
           key: def.key,
           label: def.label || "",
           description: def.description || "",
+          unit: def.unit,
           valueKind: def.valueKind,
-          derivation: DerivationType.Latest,
-          rule: def.rule ? { aggregation: def.rule.aggregation } : undefined,
+          derivation: def.derivation || DerivationType.Latest,
+          index: def.index ?? false,
+          searchable: def.searchable ?? false,
+          rule: buildDerivationRule(def.rule),
         })
       ),
     },
@@ -176,7 +183,9 @@ const TForm = (props: { entityCategory: EntityCategoryFragment, onSuccess?: () =
                       description: "",
                       valueKind: ValueKind.String,
                       derivation: DerivationType.Latest,
+                      index: false,
                       searchable: false,
+                      rule: buildDerivationRule(null),
                     })
                   }
                   className="w-full"

@@ -1,6 +1,5 @@
 import { UseModelForDialog } from "@/alpaka/dialogs/UseModelForDialog";
 import { AlpakaReplyerAssignForm } from "@/alpaka/forms/AlpakaReplyerAssignForm";
-import { AddPropertyDefinitionDialog } from "@/dialogs/AddPropertyDefinition";
 import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { ChatDialog } from "@/dialogs/ChatDialog";
 import { CreateEntityWithPropertiesDialog } from "@/dialogs/CreateEntityWithProperties";
@@ -53,7 +52,6 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   updateagent: UpdateAgentForm,
   notifyusers: NotifyDialog,
   addusertoorganization: AddUserToOrganizationDialog,
-  addpropertydefinition: AddPropertyDefinitionDialog,
   createentitywithproperties: CreateEntityWithPropertiesDialog,
   createentitycategory: CreateEntityCategoryForm,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,

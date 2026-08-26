@@ -33,7 +33,12 @@ export const GraphQLSearchField = ({
       }
       return queryResult.data?.options;
     },
-    [searchQuery],
+    // Serialized, not the object itself: callers pass an inline literal, so a
+    // fresh identity every render would make a fresh `search`, which
+    // `SearchField`'s options effect depends on — an endless re-query. Leaving
+    // it out entirely is worse: a scoped picker would never notice its scope
+    // changing.
+    [searchQuery, JSON.stringify(additionalVariables)],
   );
 
   return <SearchField {...props} search={search} />;

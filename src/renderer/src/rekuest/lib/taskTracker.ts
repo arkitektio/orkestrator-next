@@ -16,6 +16,17 @@ export const registeredCallbacks = new Map<
   (event: TaskEventFragment) => void
 >();
 
+/**
+ * Kinds that end a task. Drives the callback teardown in `TaskUpdater`, the
+ * `finishedAt` write in `taskCache`, and the stream teardown in `useProbe`.
+ *
+ * `UNASSIGN` (added to `TaskEventKind` in the probe-path API update) is
+ * deliberately NOT here: the schema declares the enum in lifecycle order and
+ * places it mid-flight, next to `DISCONNECTED`, which this client also treats
+ * as non-terminal — an unassigned task can be re-bound and keep streaming.
+ * The schema carries no per-member docstring, so this is an inference; if the
+ * backend confirms a task can *end* in UNASSIGN, add it here.
+ */
 export const TERMINAL_EVENT_KINDS = [
   TaskEventKind.Completed,
   TaskEventKind.Cancelled,

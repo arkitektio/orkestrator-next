@@ -38,10 +38,6 @@ const protectModule = (component: React.ReactNode, fallback?: React.ReactNode) =
   );
 };
 
-export const Fallback = () => {
-  return <div> Puh this doesnt exist really</div>;
-};
-
 function App() {
   return (
     <AppProvider>

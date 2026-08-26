@@ -23,3 +23,44 @@ fragment ListFile on File {
   size
   contentType
 }
+
+# One end of a file↔container link, as the Info rail draws it.
+#
+# `container` is the union `ArrayDataset | TableDataset | MeshCollection |
+# AnnotationCollection`, so the row is kind-blind by construction: this is why
+# the rail can say what a CZI produced when a converter wrote a table and a
+# mesh collection out of it, where the page body's `ArrayDatasetList` only ever
+# sees the datasets.
+#
+# `seriesIdentifier` is part of the link's IDENTITY, not decoration — one
+# multi-series LIF has one link per series, and without it two rows to the same
+# file read as a duplicate.
+#
+# MeshCollection has no `name` in the schema (id/version/specVersion only), so
+# its label has to be synthesized client-side; that is what `version` is for.
+fragment FileLink on FileLink {
+  id
+  direction
+  seriesIdentifier
+  valueRelation
+  createdAt
+  container {
+    __typename
+    ... on ArrayDataset {
+      id
+      name
+    }
+    ... on TableDataset {
+      id
+      name
+    }
+    ... on MeshCollection {
+      id
+      version
+    }
+    ... on AnnotationCollection {
+      id
+      name
+    }
+  }
+}

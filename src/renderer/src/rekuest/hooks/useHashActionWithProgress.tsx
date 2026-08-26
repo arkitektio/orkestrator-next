@@ -8,14 +8,13 @@ import {
   TaskEventKind,
   useActionByHashQuery
 } from "../api/graphql";
-import { trackTask } from "../lib/taskTracker";
+import { isTerminalEvent, trackTask } from "../lib/taskTracker";
 import { useAssign } from "./useAssign";
 
 export type useActionOptions = {
   hash?: string;
   onDone?: (event: TaskEventFragment) => void;
   onError?: (error: string) => void;
-  ephemeral?: boolean;
   object?: string;
 };
 
@@ -37,23 +36,28 @@ export const useHashActionWithProgress = (
 
   const doStuff = useCallback(
     (event: TaskEventFragment) => {
-      if (event.kind == TaskEventKind.Completed) {
-        setDoing(false);
-        setProgress(null);
-        options.onDone?.(event);
+      if (event.kind == TaskEventKind.Progress) {
+        setProgress(event.progress || 0);
+        return;
       }
+
+      // Gate on `isTerminalEvent` rather than hand-listing kinds: Cancelled and
+      // Interrupted also end the task, and used to leave `doing` stuck true.
+      if (!isTerminalEvent(event.kind)) return;
+
+      setDoing(false);
+      setProgress(null);
+
       if (
         event.kind == TaskEventKind.Failed ||
         event.kind == TaskEventKind.Critical
       ) {
-        setDoing(false);
-        setProgress(null);
         setError(event.message || "Unknown error");
         options.onError?.(event.message || "Unknown error");
+        return;
       }
-      if (event.kind == TaskEventKind.Progress) {
-        setProgress(event.progress || 0);
-      }
+
+      options.onDone?.(event);
     },
     [setDoing, setProgress, setError, options.onDone, options.onError],
   );
@@ -67,7 +71,6 @@ export const useHashActionWithProgress = (
         action: data?.action.id,
         args: args,
         reference: reference,
-        ephemeral: options.ephemeral ?? false,
       }));
 
       setDoing(true);

@@ -17,6 +17,7 @@ import {
 import { DatasetCalibrationSection } from "./DatasetCalibrationSection";
 import { DerivedDatasetsSection } from "./DerivedDatasetsSection";
 import { DerivedFromSection } from "./DerivedFromSection";
+import { FileLinksSection } from "./FileLinksSection";
 import { ProvenanceSection } from "./ProvenanceSection";
 
 type PageDataset = GetArrayDatasetQuery["arrayDataset"];
@@ -194,6 +195,26 @@ export const DatasetInfoSidebar = ({ dataset }: { dataset: PageDataset }) => {
             intrinsicSystem={data.arrayDataset.intrinsicSystem}
             lenses={data.lenses}
             derived={data.arrayDataset.derivedDatasets}
+          />
+
+          {/* Which BYTES this dataset came out of, next to which DATA it was
+              computed from — two different questions, and both can have an
+              answer. A file has no coordinate system, so these links place
+              nothing, which is why they are their own section rather than more
+              rows in `DerivedFromSection`. The other end of the same links is
+              what the file's own Info rail lists. */}
+          <FileLinksSection
+            title="Converted from"
+            links={data.arrayDataset.sourceFiles}
+            emptyTitle="No source file"
+            emptyDescription="These arrays were written directly rather than converted out of a file held here."
+          />
+
+          <FileLinksSection
+            title="Exported to"
+            links={data.arrayDataset.exports}
+            emptyTitle="Never exported"
+            emptyDescription="No file has been written out of this dataset."
           />
 
           <ProvenanceSection entries={data.arrayDataset.provenanceEntries} />

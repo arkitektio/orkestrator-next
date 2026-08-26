@@ -1,3 +1,4 @@
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
@@ -40,9 +41,8 @@ import {
   Type,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import {
-  AggregationFunction,
   CreateEntityCategoryMutation,
   CreateEntityCategoryMutationVariables,
   DerivationType,
@@ -50,9 +50,13 @@ import {
   ListEntitiesDocument,
   ValueKind,
   useCreateEntityCategoryMutation,
+  useCreateEntityTermInlineMutation,
+  useSearchEntityTermsLazyQuery,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
 import { keyify } from "./utils";
+import { DerivationRuleEditor } from "../components/schema-builder/DerivationRuleEditor";
+import { buildDerivationRule } from "../components/schema-builder/utils";
 import { useGraphQLDialog } from "@/app/hooks/useGraphQLDialog";
 
 type CreateEntityCategoryFormValues = CreateEntityCategoryMutationVariables["input"];
@@ -212,6 +216,31 @@ const PropertyItem = ({
               )}
             />
           </div>
+          <div className="col-span-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground mt-2">
+            <Settings className="w-4 h-4" /> Derivation
+          </div>
+          <div className="col-span-2 border p-3 rounded-md bg-muted/20">
+            <Controller
+              control={control}
+              name={`propertyDefinitions.${index}.rule`}
+              render={({ field: ruleField }) => (
+                <Controller
+                  control={control}
+                  name={`propertyDefinitions.${index}.derivation`}
+                  render={({ field: derivationField }) => (
+                    <DerivationRuleEditor
+                      derivation={derivationField.value}
+                      rule={ruleField.value}
+                      onChange={({ derivation, rule }) => {
+                        derivationField.onChange(derivation);
+                        ruleField.onChange(rule);
+                      }}
+                    />
+                  )}
+                />
+              )}
+            />
+          </div>
           <div className="col-span-2 flex justify-end mt-2">
             <Button
               variant="destructive"
@@ -254,9 +283,7 @@ export const PropertyDefinitions = () => {
               index: false,
               searchable: false,
               derivation: DerivationType.Latest,
-              rule: {
-                aggregation: AggregationFunction.Latest,
-              },
+              rule: buildDerivationRule(null),
             });
             setExpanded(`item-${fields.length}`);
           }}
@@ -301,6 +328,8 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
   });
 
   const [search] = useSearchGraphsLazyQuery();
+  const [searchTerms] = useSearchEntityTermsLazyQuery();
+  const [createTerm] = useCreateEntityTermInlineMutation();
   const  submit = useGraphQLDialog(add, {
     successMessage: "Entity Category created",
     onSuccess: (data) => {
@@ -312,27 +341,9 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
 
 
 
-  // 1. Watch the source field (title)
-  const titleValue = useWatch({
-    control: form.control,
-    name: "label",
-  });
-
-
-
-  // 3. Effect with Dirty Check
-  useEffect(() => {
-    const { isDirty } = form.getFieldState("key");
-
-    // Only update if the user hasn't manually edited the key field
-    if (!isDirty && titleValue !== undefined) {
-      form.setValue("key", keyify(titleValue), {
-        shouldValidate: true,
-        // We do NOT set shouldDirty: true here, because we want
-        // the field to stay "pristine" so it keeps following the title.
-      });
-    }
-  }, [titleValue, form]);
+  // No label -> key derivation here any more. `key` IS the organization's word,
+  // picked from the vocabulary rather than typed, and a picker fighting an
+  // auto-deriving effect over the same field only ever loses.
 
   return (
     <>
@@ -342,11 +353,10 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
             const propertyDefinitions = data.propertyDefinitions?.map((definition) => ({
               ...definition,
               derivation: definition.derivation || DerivationType.Latest,
-              rule: {
-                ...definition.rule,
-                aggregation:
-                  definition.rule?.aggregation || AggregationFunction.Latest,
-              },
+              // Fill the rule's required fields without overwriting what the
+              // derivation editor set — `conflictPolicy` and the two priority
+              // lists are non-null on the input.
+              rule: buildDerivationRule(definition.rule),
             }));
 
             submit({
@@ -371,25 +381,22 @@ const TForm = (props: Partial<CreateEntityCategoryFormValues> & { onSuccess?: (d
                   />
                 </>
               )}
+              <GraphQLCreatableSearchField
+                label="Word we trust"
+                name="key"
+                description="The organization's word this category declares, e.g. 'AIS'. This category draws every entity claimed under it. Type a new word to declare it."
+                searchQuery={searchTerms}
+                createMutation={createTerm}
+              />
               <StringField
                 label="Label"
                 name="label"
-                description="Whats the expression? (e.g. 'Person' or 'Connected to')"
-              />
-              <StringField
-                label="Key"
-                name="key"
-                description="What is the key of this expression? (e.g. 'person' or 'connected_to')"
+                description="What this graph calls the word. Defaults to the word itself."
               />
               <ParagraphField
                 label="Description"
                 name="description"
-                description="What describes your expression the best? (e.g. 'A person is a human being')"
-              />
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
+                description="What the word means here (e.g. 'A person is a human being')"
               />
             </div>
             <div className="col-span-1 flex-col gap-1 flex ">

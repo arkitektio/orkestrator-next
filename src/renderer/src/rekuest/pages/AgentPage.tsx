@@ -1,3 +1,4 @@
+import { useRekuest } from "@/app/Arkitekt";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { VerticalListRender } from "@/components/layout/VerticalListRender";
 import { Sidebars } from "@/components/layout/Sidebars";
@@ -20,7 +21,10 @@ import {
 import { Pin, PinOff } from "lucide-react";
 import { useEffect } from "react";
 import Timestamp from "react-timestamp";
-import { upsertById } from "../lib/taskCache";
+import {
+  applyTaskChangeScalars,
+  hydrateAndInsertAgentTask,
+} from "../lib/taskCache";
 import { AgentHeroScene } from "../components/AgentHeroScene";
 import { CopyAgentPythonButton } from "../components/copy-agent-python";
 import AgentImplementationCard from "../components/cards/AgentImplementationCard";
@@ -126,27 +130,41 @@ export const AgentPage = asDetailQueryRoute(
       });
     }, [subscribeToMore, data.agent.id]);
 
+    // `agentTasks` streams thin, non-traversable `TaskChange` deltas (scalar ids
+    // only), so this cannot go through `subscribeToMore` — a create has to be
+    // hydrated, and `updateQuery` is synchronous. Subscribe directly and merge
+    // into the cache, exactly like the global `TaskUpdater`.
+    const client = useRekuest();
+    const agentId = data.agent.id;
+
     useEffect(() => {
-      return subscribeToMore<
-        WatchAgentTasksSubscription,
-        WatchAgentTasksSubscriptionVariables
-      >({
-        document: WatchAgentTasksDocument,
-        variables: { agent: data.agent.id },
-        updateQuery: (prev, { subscriptionData }) => {
-          const change = subscriptionData.data?.agentTasks;
-          if (!change) return prev;
-          const item = change.create ?? change.update;
-          if (!item) return prev;
-          return {
-            agent: {
-              ...prev.agent,
-              tasks: upsertById(prev.agent.tasks, item, { prepend: true }),
-            },
-          };
-        },
-      });
-    }, [subscribeToMore, data.agent.id]);
+      if (!client) return undefined;
+
+      const subscription = client
+        .subscribe<
+          WatchAgentTasksSubscription,
+          WatchAgentTasksSubscriptionVariables
+        >({
+          query: WatchAgentTasksDocument,
+          variables: { agent: agentId },
+        })
+        .subscribe((res) => {
+          const change = res.data?.agentTasks;
+          if (!change) return;
+
+          // An update merges onto the normalized `Task:<id>` entity, which is
+          // what the list rows read — so they refresh in place.
+          if (change.update) {
+            applyTaskChangeScalars(client, change.update);
+          }
+
+          if (change.create) {
+            void hydrateAndInsertAgentTask(client, change.create, agentId);
+          }
+        });
+
+      return () => subscription.unsubscribe();
+    }, [client, agentId]);
 
     const recentTasks = data.agent.tasks.slice(0, 5);
 

@@ -1,4 +1,4 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { asGraphScopeQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Sidebars } from "@/components/layout/Sidebars";
 import { KraphGraph } from "@/linkers";
@@ -14,7 +14,9 @@ import { ProjectionBadge } from "../components/ProjectionBadge";
 import ScatterPlotList from "../components/lists/ScatterPlotList";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
-export const Page = asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
+// The index of `graphs/:graph`: the graph comes from scope, not from a `:id`
+// segment this route does not have.
+export const Page = asGraphScopeQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });

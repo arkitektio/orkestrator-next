@@ -1,5 +1,6 @@
+import { isModulePath } from "@/app/modules";
 import { useMeQuery } from "@/lok-next/api/graphql";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 
 export const NotFound = () => {
   const { data } = useMeQuery({
@@ -7,33 +8,67 @@ export const NotFound = () => {
   });
 
   const location = useLocation();
+  const params = useParams();
+  const navigate = useNavigate();
+
+  // When rendered from a module's catch-all route, `*` holds the part of the
+  // path that the module could not match. Outside of a module it is undefined.
+  const unmatched = params["*"];
+  const segment = location.pathname.split("/").filter(Boolean)[0];
+  const module = isModulePath(segment) ? segment : undefined;
 
   return (
-    <div className="flex flex-col w-full h-full flex items-center justify-center">
-      <div className="flex flex-col">
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
-            Hi {data?.me?.username || "Stranger"} :)
+    <div className="flex flex-col w-full h-full items-center justify-center p-6">
+      <div className="flex flex-col gap-6 max-w-[720px] w-full">
+        <div className="space-y-3">
+          <div className="text-sm uppercase tracking-widest text-muted-foreground">
+            404 — Not found
+          </div>
+          <h1 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
+            {module
+              ? `The ${module} module has no page at`
+              : "There is no page at"}
           </h1>
-          <h2 className="text-xl font-light tracking-tighter sm:text-2xl md:text-3xl text-foreground">
-            This route does not exist
-          </h2>
-          <h3 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
-            {location.pathname}
-          </h3>
-          <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-            Try another one
+          <div className="rounded-md border border-border bg-muted/40 px-4 py-3">
+            <div className="font-mono text-lg break-all text-foreground">
+              {location.pathname}
+              {location.search}
+              {location.hash}
+            </div>
+            {unmatched && (
+              <div className="mt-2 text-xs text-muted-foreground font-mono break-all">
+                unmatched within /{module}: {unmatched}
+              </div>
+            )}
+          </div>
+          <p className="text-gray-500 dark:text-gray-400">
+            Sorry {data?.me?.username || "Stranger"}, this route does not exist.
+            It may have been renamed, or the object it pointed to is gone.
           </p>
         </div>
 
-        <NavLink
-          to="/"
-          className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
-        >
-          Go Home
-        </NavLink>
-
-        <div className="flex flex-col gap-2 min-[400px]:flex-row"></div>
+        <div className="flex flex-col gap-2 min-[400px]:flex-row">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-muted"
+          >
+            Go back
+          </button>
+          {module && (
+            <NavLink
+              to={`/${module}`}
+              className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-muted"
+            >
+              {module} home
+            </NavLink>
+          )}
+          <NavLink
+            to="/"
+            className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
+          >
+            Go Home
+          </NavLink>
+        </div>
       </div>
     </div>
   );

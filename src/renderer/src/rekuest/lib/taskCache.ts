@@ -171,17 +171,41 @@ export const hydrateChildIntoDetailTask = async (
   );
 };
 
+/** How many tasks the agent fragment asks for (`agent.graphql`, `limit: 5`). */
+const AGENT_TASKS_LIMIT = 5;
+
 /**
- * Immutable upsert for subscription payloads that carry full list items
- * (e.g. `WatchAgentTasks`): replace the matching entry, or insert when new.
+ * `WatchAgentTasks` creates arrive as thin `TaskChange` deltas, so fetch the
+ * full task once and prepend a reference to it on the agent's `tasks` field.
+ * Writing a reference (rather than the payload) is what lets the agent list —
+ * which reads `ListTask` — resolve every field off the normalized entity.
  */
-export const upsertById = <T extends { id: string }>(
-  list: readonly T[],
-  item: T,
-  opts?: { prepend?: boolean },
-): T[] => {
-  if (list.some((x) => x.id === item.id)) {
-    return list.map((x) => (x.id === item.id ? item : x));
-  }
-  return opts?.prepend ? [item, ...list] : [...list, item];
+export const hydrateAndInsertAgentTask = async (
+  client: RekuestClient,
+  create: TaskChangeFragment,
+  agentId: string,
+): Promise<PostmanTaskFragment | undefined> => {
+  const task = await hydrateTask(client, create.id);
+  if (!task) return undefined;
+
+  // Apply any events that arrived during the hydration round-trip.
+  flushBufferedEvents(client, create.id);
+
+  client.cache.modify({
+    id: client.cache.identify({ __typename: "Agent", id: agentId }),
+    fields: {
+      tasks(existing, { toReference, readField }) {
+        const list: readonly Reference[] = Array.isArray(existing)
+          ? existing
+          : [];
+        if (list.some((ref) => readField("id", ref) === task.id)) {
+          return list;
+        }
+        const ref = toReference({ __typename: "Task", id: task.id });
+        return ref ? [ref, ...list].slice(0, AGENT_TASKS_LIMIT) : list;
+      },
+    },
+  });
+
+  return task;
 };

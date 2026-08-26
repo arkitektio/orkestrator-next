@@ -123,6 +123,65 @@ export const asDetailQueryRoute = <T extends any>(
   };
 };
 
+/**
+ * `asDetailQueryRoute` for the graph a route is scoped to.
+ *
+ * The layout route is `graphs/:graph`, so a page rendered *as its index* has no
+ * `:id` segment of its own — the graph's id is the scope, not a path param.
+ * `asDetailQueryRoute` reads `useParams().id`, finds nothing, and returns its
+ * fallback without ever firing the query, which is a blank page.
+ *
+ * A sibling rather than a widening, for the same reason as
+ * `asGraphDetailQueryRoute`: the single-variable shape is load-bearing for the
+ * ~40 pages that address a claim by a path id.
+ */
+export const asGraphScopeQueryRoute = <T extends any>(
+  hook: HookFunction<T, DetailVariables>,
+  Component: React.FC<{
+    id: string;
+    data: T;
+    refetch: (
+      variables?: Partial<DetailVariables> | undefined,
+    ) => Promise<ApolloQueryResult<T>>;
+  }>,
+  options: {
+    fallback?: React.ReactNode;
+    queryOptions?: QueryHookOptions<T, DetailVariables>;
+  } = { fallback: <></> },
+) => {
+  return () => {
+    const { debug } = useDebug();
+    const scope = useGraphScope();
+    const graphId = scope?.graphId;
+
+    const query = hook({
+      variables: { id: graphId ?? "" },
+      skip: !graphId,
+      ...options.queryOptions,
+    });
+
+    if (!graphId) {
+      return options.fallback ?? <> This route is illconfigured</>;
+    }
+
+    if (query.error) {
+      if (debug) return <DebugPage data={query.error} />;
+      return <ErrorPage error={query.error} />;
+    }
+
+    const data = query.data;
+    if (!data) return <LoadingPage />;
+
+    if (debug) return <DebugPage data={data} />;
+
+    return (
+      <RefetchProvider refetch={query.refetch}>
+        <Component {...query} data={data} id={graphId} />
+      </RefetchProvider>
+    );
+  };
+};
+
 export type GraphDetailVariables = {
   id: string;
   graph: string;

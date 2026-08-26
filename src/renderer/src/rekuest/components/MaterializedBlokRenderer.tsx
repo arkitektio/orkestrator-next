@@ -1,3 +1,4 @@
+import { buildAssignInput } from "@/rekuest/assign";
 import * as React from 'react';
 import BlokRenderer from '@/blok/renderer/BlokRenderer';
 import {useBlokRuntime, type BlokDispatchActionHandler} from '@/blok/renderer/runtime';
@@ -223,16 +224,12 @@ const useMaterializedDispatchAction = (
 
       void assign({
         variables: {
-          input: {
+          input: buildAssignInput({
             agent: agentId,
             action: action.operation,
             args: action.arguments ?? {},
             hooks: [],
-            cached: false,
-            capture: false,
-            ephemeral: false,
-            log: false,
-          },
+          }),
         },
       }).catch((error: unknown) => {
         toast.error(

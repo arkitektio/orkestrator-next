@@ -21,14 +21,15 @@ subscription WatchChildTasks($parentId: ID!) {
 }
 
 # Live create/update of tasks for ONE agent. Used by the agent detail page to keep
-# its "latest tasks" section current.
+# its "latest tasks" section current. Thin, non-traversable deltas (scalar ids
+# only) — creates must be hydrated, updates merge onto the normalized Task entity.
 subscription WatchAgentTasks($agent: ID!) {
   agentTasks(agent: $agent) {
     create {
-      ...ListTask
+      ...TaskChange
     }
     update {
-      ...ListTask
+      ...TaskChange
     }
   }
 }

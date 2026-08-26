@@ -1,23 +1,8 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -26,14 +11,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, CircleHelp, InfoIcon, Settings2, Trash2 } from "lucide-react";
+import { AlertCircle, CircleHelp, InfoIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { AggregationFunction, DerivationType } from "../../api/graphql";
 import { DataTypeSelector } from "./DataTypeSelector";
+import { DerivationRuleEditor } from "./DerivationRuleEditor";
 import {
-  buildDerivationRule,
-  DEFAULT_AGGREGATION,
-  DEFAULT_DERIVATION,
   isValidMachineKey,
   PropertyDefinition,
   toSnakeCase,
@@ -53,7 +35,6 @@ export function PropertyInspector({
   errors,
 }: PropertyInspectorProps) {
   const [autoGenerateKey, setAutoGenerateKey] = useState(true);
-  const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
 
   if (!property) {
     return (
@@ -255,110 +236,29 @@ export function PropertyInspector({
             />
           </div>
 
-          <div className="space-y-2 pt-2 border-t">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="font-medium flex items-center gap-1.5">
-                  Derivation Rule
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" className="text-muted-foreground hover:text-foreground">
-                          <CircleHelp className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Defines how supporting evidence fills this field.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Auto-fills from supporting evidence using <span className="font-medium lowercase">{(property.rule?.aggregation || DEFAULT_AGGREGATION).toLowerCase()}</span>.
-                </p>
-              </div>
-              <Dialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button type="button" variant="outline" size="sm">
-                    <Settings2 className="h-4 w-4 mr-2" />
-                    Configure
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Derivation Rule</DialogTitle>
-                    <DialogDescription>
-                      Choose how this field should be filled from supporting evidence. Aggregation defines which evidence values are used to compute the final value for this field.
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Derivation Type</Label>
-                      <Select
-                        value={property.derivation || DEFAULT_DERIVATION}
-                        onValueChange={(derivation) =>
-                          onUpdate({ derivation: derivation as DerivationType })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select derivation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.values(DerivationType).map((derivation) => (
-                            <SelectItem key={derivation} value={derivation}>
-                              {derivation}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Aggregation</Label>
-                      <Select
-                        value={
-                          property.rule?.aggregation || DEFAULT_AGGREGATION
-                        }
-                        onValueChange={(aggregation) =>
-                          onUpdate({
-                            derivation: property.derivation || DEFAULT_DERIVATION,
-                            rule: buildDerivationRule({
-                              ...property.rule,
-                              aggregation:
-                                aggregation as AggregationFunction,
-                            }),
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select aggregation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.values(AggregationFunction).map((aggregation) => (
-                            <SelectItem key={aggregation} value={aggregation}>
-                              {aggregation}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          {property.searchable && (
-            <Alert className="bg-yellow-50 border-yellow-200">
-              <InfoIcon className="h-4 w-4 text-yellow-800" />
-              <AlertDescription className="text-yellow-800 text-xs">
-                Enabling full-text search will create an index on this field,
-                which may impact storage and query performance.
-              </AlertDescription>
-            </Alert>
-          )}
         </fieldset>
+
+        {/* How this property gets its value */}
+        <fieldset className="space-y-4 border rounded-lg p-4">
+          <legend className="text-base font-semibold px-2">
+            Derivation
+          </legend>
+          <DerivationRuleEditor
+            derivation={property.derivation}
+            rule={property.rule}
+            onChange={({ derivation, rule }) => onUpdate({ derivation, rule })}
+          />
+        </fieldset>
+
+        {property.searchable && (
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <InfoIcon className="h-4 w-4 text-yellow-800" />
+            <AlertDescription className="text-yellow-800 text-xs">
+              Enabling full-text search will create an index on this field,
+              which may impact storage and query performance.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Delete Button */}
         <div className="pt-4 border-t">

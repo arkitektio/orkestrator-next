@@ -78,6 +78,15 @@ query GetArrayDatasetDerived($id: ID!) {
     provenanceEntries {
       ...ProvenanceEntry
     }
+    # Which BYTES, as opposed to which data — read alongside `derivedFrom`, not
+    # instead of it. A file has no coordinate system, so these links claim no
+    # geometry and place nothing; both relations can be non-empty and complete.
+    sourceFiles {
+      ...FileLink
+    }
+    exports {
+      ...FileLink
+    }
     derivedFrom {
       id
       kind

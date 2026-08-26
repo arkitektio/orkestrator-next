@@ -22,3 +22,16 @@ query ListStructureKinds(
     ...ListStructureKind
   }
 }
+
+# `DerivationRuleInput.sourceNode` is the describing structure's *label* — a
+# string on the wire, not an id. So this search yields identifiers as the value,
+# where `SearchStructureKinds` above yields ids for the pickers that want a row.
+query SearchStructureKindIdentifiers($search: String, $values: [String!]) {
+  options: structureKinds(
+    filters: { search: $search, identifiers: $values }
+    pagination: { limit: 20 }
+  ) {
+    value: identifier
+    label: identifier
+  }
+}

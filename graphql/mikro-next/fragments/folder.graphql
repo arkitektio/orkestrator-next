@@ -11,6 +11,12 @@ fragment Folder on Folder {
   children {
     ...ListFolder
   }
+  # Where this folder SITS, not what is in it: the Info rail names the parent so
+  # a folder reached by a link (rather than by walking down to it) still says
+  # where it hangs. Null for a root folder, which is a meaningful answer.
+  parent {
+    ...ListFolder
+  }
   isDefault
   pinned
   createdAt

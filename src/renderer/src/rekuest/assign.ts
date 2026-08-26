@@ -1,17 +1,17 @@
 import { AssignInput } from "./api/graphql";
 
 /**
- * `AssignInput` gained four required flags (`cached`, `capture`, `ephemeral`,
- * `log`) in the rekuest API update. This fills conservative defaults so call
- * sites only need to specify the flags they actually care about.
+ * `AssignInput` still carries one required flag (`capture`). This fills a
+ * conservative default so call sites only need to specify it when they
+ * actually want the task captured.
+ *
+ * The old `cached` / `ephemeral` / `log` flags were removed from the API —
+ * `ephemeral` in particular is superseded by the probe path (`useProbe`),
+ * which is genuinely zero-persistence.
  */
 export const buildAssignInput = (
-  input: Omit<AssignInput, "cached" | "capture" | "ephemeral" | "log"> &
-    Partial<Pick<AssignInput, "cached" | "capture" | "ephemeral" | "log">>,
+  input: Omit<AssignInput, "capture"> & Partial<Pick<AssignInput, "capture">>,
 ): AssignInput => ({
-  cached: false,
   capture: false,
-  ephemeral: false,
-  log: false,
   ...input,
 });

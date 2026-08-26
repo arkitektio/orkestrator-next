@@ -7,6 +7,7 @@ import StreamPage from "./pages/StreamPage";
 import StandardPane from "./panes/StandardPane";
 import SoloBroadcast from "./pages/SoloBroadcast";
 import SoloBroadcasts from "./pages/SoloBroadcasts";
+import { NotFound } from "@/app/components/fallbacks/NotFound";
 interface Props { }
 
 export const Module: React.FC<Props> = (_props) => {
@@ -17,7 +18,8 @@ export const Module: React.FC<Props> = (_props) => {
           <Route path="streams/:id" element={<StreamPage />} />
           <Route path="solobroadcasts/:id" element={<SoloBroadcast />} />
           <Route path="solobroadcasts" element={<SoloBroadcasts />} />
-          <Route path="*" element={<HomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </ModuleLayout>
     </Guard.Lovekit>

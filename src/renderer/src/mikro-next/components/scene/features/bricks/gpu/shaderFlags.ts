@@ -203,22 +203,25 @@ export function setSmoothZoomEnabled(enabled: boolean): void {
  * FIXED-SHAPE compositor specialization.
  *
  * A layer whose sources form a declared recipe — one plain scalar channel
- * (`LayerState.renderKind === "intensity"`) — makes at BUILD time every choice
- * the general compositor makes per fragment and per ray step: the 16-slot loop
- * with its `Break`/`Continue`, the two `chParamsA/B` uniform ARRAYS, the
- * `sourceParams` kind tap, the blend-mode branch, invert, per-slot opacity.
- * Specialised, the whole per-slot body becomes straight-line ALU over four
- * plain uniforms — and two uniform-buffer bindings plus two DataTextures per
- * layer are never allocated at all.
+ * (`LayerState.renderKind === "intensity"`) or three basis-tinted channels
+ * over one window (`"rgb"`) — makes at BUILD time every choice the general
+ * compositor makes per fragment and per ray step: the 16-slot loop with its
+ * `Break`/`Continue`, the two `chParamsA/B` uniform ARRAYS, the `sourceParams`
+ * kind tap, the blend-mode branch, invert, per-slot opacity — and, for rgb,
+ * the colormap LUT tap itself. Specialised, the whole per-slot body becomes
+ * straight-line ALU over a handful of plain uniforms; the same straight-line
+ * form replaces the per-slot loops of the occupancy skip predicates; and two
+ * uniform-buffer bindings plus two DataTextures per layer are never allocated
+ * at all (2D plane materials; 3D when every merged member is fixed-shape).
  *
  * It computes NOTHING the general material does not; it computes less of it.
- * `fixedShapeUniforms.test.ts` pins that numerically on the CPU, which is the
- * only place a GPU-free assertion can be made.
+ * `intensityUniforms.test.ts` / `rgbUniforms.test.ts` pin that numerically on
+ * the CPU (the uniform values), and `shaderspec/rgbComposite.test.ts` pins the
+ * composite arithmetic — the only places a GPU-free assertion can be made.
  *
- * Default **OFF** until live-validated, for the same reason `occHierarchy` is:
- * a new shader surface cannot be regression-tested here, and the flag IS the
- * bisect tool. Off, these layers render through the general materials, which
- * is a pixel-identical reference by construction.
+ * Default **ON** (since 2026-08-27). Off, these layers render through the
+ * general materials, which is a pixel-identical reference by construction —
+ * the flag remains the bisect tool for any suspected fast-path regression.
  *
  * Read at MATERIAL-BUILD time; the bundle memo keys on it, so toggling takes
  * effect on the next scene mount.
@@ -233,15 +236,43 @@ const FIXED_SHAPE_FAST_PATH_STORAGE_KEY = "orkestrator.fixedShapeFastPath";
 export function isFixedShapeFastPathEnabled(): boolean {
   try {
     if (!isShaderFastPathEnabled()) return false;
-    return window.localStorage.getItem(FIXED_SHAPE_FAST_PATH_STORAGE_KEY) === "on";
+    return window.localStorage.getItem(FIXED_SHAPE_FAST_PATH_STORAGE_KEY) !== "off";
   } catch {
-    return false;
+    return true;
   }
 }
 
 export function setFixedShapeFastPathEnabled(enabled: boolean): void {
   try {
     window.localStorage.setItem(FIXED_SHAPE_FAST_PATH_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
+}
+
+/**
+ * PER-SLAB occupancy (same pattern; read at POOL CREATION like
+ * `occObservedRange`): a multi-channel pool records one min/max bracket PER
+ * atlas slab instead of one union across all of them, and the occupancy /
+ * aggregate sidecars carry one plane per slab. Without it an RGB brick that
+ * is bright in red is never skippable — or EMPTY-detectable — in green or
+ * blue, because the union bracket is the red one. Single-slab pools are
+ * unaffected (one plane, byte-identical to before). Default ON; reopen the
+ * scene after toggling.
+ */
+const OCC_PER_SLAB_STORAGE_KEY = "orkestrator.occPerSlab";
+
+export function isOccPerSlabEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(OCC_PER_SLAB_STORAGE_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setOccPerSlabEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(OCC_PER_SLAB_STORAGE_KEY, enabled ? "on" : "off");
   } catch {
     /* storage unavailable: session keeps its current state */
   }

@@ -46,7 +46,7 @@ import {
   useVolumePassRegistration,
   useVolumeRayUniforms,
 } from "./useVolumeRayUniforms";
-import { buildMergedChannelUniformData } from "../gpu/mergedChannelUniforms";
+import { buildMergedChannelUniformData, fixedMemberUniforms } from "../gpu/mergedChannelUniforms";
 import {
   findMergeGroup,
   isVolumeMergeEnabled,
@@ -68,6 +68,15 @@ import { useBrickStore, useBrickStoreApi } from "../store/brickSlice";
  * accumulators lifted from VolumeTextureMesh (MIP / AttenuatedMIP / Volume /
  * Isosurface) plus the picking pass.
  */
+
+/**
+ * The material a NON-PRIMARY merge member's mesh carries. The mesh must exist
+ * (three raycasts invisible objects — probing/annotation/selection depend on
+ * it, and the planner measures the layer's box through it) but it draws
+ * nothing, so one shared, never-disposed material serves every such member
+ * instead of one `MeshBasicMaterial` allocated and disposed per member.
+ */
+const HIDDEN_RAYCAST_MATERIAL = new THREE.MeshBasicMaterial({ visible: false });
 
 const projectionModeToInt = (mode: ProjectionMode | undefined): number => {
   switch (mode) {
@@ -372,7 +381,10 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // whole reason this is a key and not a uniform.
   const specializationKey = channelData
     ? channelData.members
-        .map((m) => `${m.hasPhasorSources ? "p" : "-"}${m.isSimpleIntensity ? "s" : "-"}`)
+        .map(
+          (m) =>
+            `${m.hasPhasorSources ? "p" : "-"}${m.isSimpleIntensity ? "s" : "-"}${m.isRgb ? "r" : "-"}`,
+        )
         .join("")
     : "";
 
@@ -418,11 +430,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
    * measures this layer's box through it. It does NOT need the raymarcher: the
    * primary's merged pass already draws its channels.
    */
-  const hiddenMaterial = useMemo(
-    () => (isPrimary ? null : new THREE.MeshBasicMaterial({ visible: false })),
-    [isPrimary],
-  );
-  useEffect(() => () => hiddenMaterial?.dispose(), [hiddenMaterial]);
+  const hiddenMaterial = isPrimary ? null : HIDDEN_RAYCAST_MATERIAL;
 
   useEffect(() => {
     const material = bundle?.material;
@@ -430,8 +438,9 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
       material?.dispose();
       // Whatever textures are bound at teardown (adoption keeps them long-lived).
       bundle?.nodes.colormapAtlas.value?.dispose();
-      bundle?.nodes.sourceParams.value?.dispose();
-      bundle?.nodes.cursorParams.value?.dispose();
+      // Absent on a SLIM (all-fixed-shape) material.
+      bundle?.nodes.sourceParams?.value?.dispose();
+      bundle?.nodes.cursorParams?.value?.dispose();
     };
   }, [bundle]);
 
@@ -458,6 +467,8 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
         // default. Kept per-member so an iso threshold can be plumbed later
         // without touching the shader.
         isoThreshold: 0.5,
+        // The fixed-shape arms read these instead of the slot arrays.
+        fixed: fixedMemberUniforms(channelData, m),
       })),
     );
     viewerStoreApi.getState().volumeInputs.bump("channel-uniforms");

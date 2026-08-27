@@ -179,11 +179,24 @@ export function decideVolumeFrame(input: {
   resolved: VolumeFrameKey;
 } {
   const { cacheEnabled, hasTargetContent, streaming, key, trackerReason, previous } = input;
-  let structureKey: string | null = null;
-  const resolve = (): string => (structureKey ??= key.structureKey());
+  // ONE object per frame (it becomes next frame's `previous`); the thunk
+  // result lands in it lazily. `cameraElements` is kept by reference — the
+  // caller owns that buffer and must not overwrite it while it is `previous`.
+  const resolved: VolumeFrameKey = {
+    cameraElements: key.cameraElements,
+    structureKey: null,
+    residencyVersion: key.residencyVersion,
+    poolsVersion: key.poolsVersion,
+    qualityVersion: key.qualityVersion,
+    trackerVersion: key.trackerVersion,
+    targetWidth: key.targetWidth,
+    targetHeight: key.targetHeight,
+  };
+  const resolve = (): string => (resolved.structureKey ??= key.structureKey());
   const out = (decision: VolumeFrameDecision) => ({
-    ...decision,
-    resolved: { ...key, structureKey },
+    render: decision.render,
+    reason: decision.reason,
+    resolved,
   });
   if (!cacheEnabled) return out({ render: true, reason: "cache-off" });
   if (!hasTargetContent) return out({ render: true, reason: "no-content" });

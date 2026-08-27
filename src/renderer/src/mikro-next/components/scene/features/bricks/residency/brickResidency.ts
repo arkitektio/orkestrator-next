@@ -57,13 +57,16 @@ import {
   isFixedShapeFastPathEnabled,
   isOccHierarchyEnabled,
   isOccObservedRangeEnabled,
+  isOccPerSlabEnabled,
 } from "../gpu/shaderFlags";
 import {
   aggregateIfComplete,
+  aggregateSlabsIfComplete,
   parentCellsOf,
 } from "../octree/occupancyAggregate";
+import { normalizeSlabRanges, occSlabCountFor } from "../octree/occupancySlabs";
 import type { RepackDispatcher } from "../octree/repackDispatcher";
-import { brickSlotBytes, resolveBrickSpec, type BrickSpec } from "../octree/brickSpec";
+import { resolveBrickSpec, type BrickSpec } from "../octree/brickSpec";
 import {
   buildLayerLevelGeometry,
   buildLevelSources,
@@ -97,7 +100,7 @@ import {
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { SceneState } from "../../../platform/stores/sceneStore";
 import type { ViewerState } from "../../../platform/stores/viewerStore";
-import { atlasBytesPerVoxel, atlasKindForGeometry } from "../octree/atlasFormat";
+import { atlasKindForGeometry, atlasSlotBytes } from "../octree/atlasFormat";
 import {
   createBrickAtlas,
   disposeBrickAtlas,
@@ -152,6 +155,19 @@ const occEncodeRangeOf = (pool: LayerBrickPool): { minValue: number; maxValue: n
   minValue: pool.occEncodeMin,
   maxValue: pool.occEncodeMax,
 });
+
+type SlabRanges = readonly (readonly [number, number])[];
+
+/** Per-slab occupancy texels for a multi-plane pool (`orkestrator.occPerSlab`),
+ * or undefined when the pool has one plane / no per-slab measurement — the
+ * sidecar then takes the union texel for every plane. */
+const slabTexelsOf = (
+  pool: LayerBrickPool,
+  ranges: SlabRanges | null | undefined,
+): (readonly [number, number])[] | undefined =>
+  pool.occSlabs > 1 && ranges
+    ? ranges.map((range) => encodeOccupancyTexel(range[0], range[1], occEncodeRangeOf(pool)))
+    : undefined;
 
 /**
  * Whether a pool derives `minValue`/`maxValue` from the bricks that land rather
@@ -261,6 +277,9 @@ type PendingBrick = {
   /** Raw brick [min, max] from the repack scan (occupancy sidecar). Null on
    * the GPU path — its min/max arrives with the async readback. */
   range: [number, number] | null;
+  /** Per-slab [min, max] (`RepackResult.slabRanges`), normalized to the
+   * pool's slab count; null on the GPU path until the readback lands. */
+  slabRanges: SlabRanges | null;
   bytes: number;
   /** GPU path: raw decoded chunks; the repack runs as a compute dispatch at
    * drain time, once a slot is acquired. */
@@ -415,6 +434,16 @@ export type LayerBrickPool = {
   occHierarchy: boolean;
   measuredRanges: Map<string, readonly [number, number]>;
   aggregateRanges: Map<string, readonly [number, number]>;
+  /** Per-slab occupancy (`orkestrator.occPerSlab`, `octree/occupancySlabs.ts`):
+   * the sidecar plane count captured at pool creation (the page table's
+   * textures are sized by it, so unlike the other flags it cannot be
+   * re-captured on reuse), and the per-slab twins of `brickRanges` /
+   * `measuredRanges` / `aggregateRanges` — populated only when `occSlabs > 1`
+   * and cleared alongside their union maps. */
+  occSlabs: number;
+  brickSlabRanges: Map<string, SlabRanges>;
+  measuredSlabRanges: Map<string, SlabRanges>;
+  aggregateSlabRanges: Map<string, SlabRanges>;
   /** Keys whose slot was written by the GPU repack kernel: the CPU atlas
    * mirror never sees those writes, so `sampleResident` must read THESE bricks
    * from the decoded chunk cache instead (`sampleChunkCacheSync`). Scoped
@@ -910,6 +939,7 @@ export class BrickResidencyManager {
           })),
           atlas: {
             kind: pool.atlas.kind,
+            channelsPerTexel: pool.atlas.channelsPerTexel,
             size: pool.atlas.size,
             slotGrid: pool.atlas.slotGrid,
             capacity: pool.atlas.capacity,
@@ -943,6 +973,10 @@ export class BrickResidencyManager {
                 aggregatesComplete: pool.aggregateRanges.size,
               }
             : null,
+          // Per-slab occupancy: plane count (1 = union) and a sample of the
+          // per-channel brackets, to eyeball that channels really differ.
+          occSlabs: pool.occSlabs,
+          slabRangesSample: [...pool.brickSlabRanges.values()].slice(0, 3),
           sliceSignature: pool.sliceSignature,
           // Why bricks did (not) take the GPU repack path — "ready" above only
           // means the pipeline compiled; per-brick `supports()` can still
@@ -1731,6 +1765,7 @@ export class BrickResidencyManager {
       // Same bookkeeping as eviction: brickRanges is bounded by slot count
       // only if released keys leave it (measuredRanges deliberately stays).
       pool.brickRanges.delete(key);
+      pool.brickSlabRanges.delete(key);
       this.stats.trimmed += 1;
     }
     // The page writes land in the dirty region; drainUploads flushes every
@@ -2010,8 +2045,7 @@ export class BrickResidencyManager {
     // the cache headroom the plan is not allowed to spend — without it a plan
     // that maxes the budget leaves zero free slots and the pool thrashes.
     const atlasKind = atlasKindForGeometry(geometry);
-    const bytesPerVoxel = atlasBytesPerVoxel(atlasKind);
-    const slotBytes = brickSlotBytes(spec, bytesPerVoxel);
+    const slotBytes = atlasSlotBytes(spec, atlasKind);
     const maxUsefulSlotsForBudget = totalBrickCount(geometry, spec);
     const deviceBudgetBytes = getInitialVolumeTextureBudgetBytes();
     const { atlasBytes } = resolvePoolBudget({
@@ -2081,7 +2115,15 @@ export class BrickResidencyManager {
       // depend on whether the device exists yet. (OCTREE_RENDERER.md P23.)
       computeStorage: isGpuRepackEnabled() && !hasPhasorSlabs(geometry),
     });
-    const pageTable = createPageTableTexture(layout);
+    // One occupancy plane per slab where the flag and the texture extent
+    // allow it (intensity pools only — a label's id-space has no windowing).
+    const occSlabs = occSlabCountFor(
+      spec.channelCount,
+      layout.size[2],
+      PAGE_TEXTURE_MAX_EXTENT,
+      derivation.valueSemantics === "intensity" && isOccPerSlabEnabled(),
+    );
+    const pageTable = createPageTableTexture(layout, occSlabs);
 
     // Create the backend GPUTexture now, for EVERY pool (it used to be
     // compute-repack pools only): compute dispatches must not race the first
@@ -2160,6 +2202,10 @@ export class BrickResidencyManager {
       occHierarchy: isOccHierarchyEnabled(),
       measuredRanges: new Map(),
       aggregateRanges: new Map(),
+      occSlabs,
+      brickSlabRanges: new Map(),
+      measuredSlabRanges: new Map(),
+      aggregateSlabRanges: new Map(),
       // (aggregate sidecar is allocated below only when the flag is on)
       gpuStaleKeys: new Set(),
       minTargetLevel: 0,
@@ -2423,7 +2469,8 @@ export class BrickResidencyManager {
           data: null,
           uniformValue: null,
           range: null,
-          bytes: elementCount * atlasBytesPerVoxel(pool.atlas.kind),
+          slabRanges: null,
+          bytes: atlasSlotBytes(pool.spec, pool.atlas.kind),
           gpu: { chunks },
         };
       } else {
@@ -2456,6 +2503,8 @@ export class BrickResidencyManager {
           data: result.data,
           uniformValue: result.uniformValue,
           range: [result.min, result.max],
+          slabRanges:
+            pool.occSlabs > 1 ? normalizeSlabRanges(result.slabRanges, pool.spec.channelCount) : null,
           bytes: result.data.byteLength,
           gpu: null,
         };
@@ -2582,6 +2631,7 @@ export class BrickResidencyManager {
       pool.gpuStaleKeys.delete(acquired.evictedKey);
       pool.coarsestResident.delete(acquired.evictedKey);
       pool.brickRanges.delete(acquired.evictedKey);
+      pool.brickSlabRanges.delete(acquired.evictedKey);
       this.stats.evictions += 1;
     }
     if (pending.level === pool.geometry.levels.length - 1) {
@@ -2666,6 +2716,7 @@ export class BrickResidencyManager {
     // range, and the re-encode pass writes the real texel from brickRanges.
     if (pending.range) {
       pool.brickRanges.set(pending.key, pending.range);
+      if (pending.slabRanges) pool.brickSlabRanges.set(pending.key, pending.slabRanges);
       this.accumulateOccRange(pool, pending.range[0], pending.range[1]);
       this.recordMeasuredRange(
         pool,
@@ -2674,6 +2725,7 @@ export class BrickResidencyManager {
         pending.coords,
         pending.range[0],
         pending.range[1],
+        pending.slabRanges,
       );
     }
     setPageEntry(
@@ -2685,6 +2737,7 @@ export class BrickResidencyManager {
       pending.range && !pool.occReencodePending
         ? encodeOccupancyTexel(pending.range[0], pending.range[1], occEncodeRangeOf(pool))
         : undefined,
+      pending.range && !pool.occReencodePending ? slabTexelsOf(pool, pending.slabRanges) : undefined,
     );
     progress.bytes += frameCostBytes;
     progress.bricks += 1;
@@ -3152,6 +3205,7 @@ export class BrickResidencyManager {
         slot.coords,
         PAGE_FLAG_RESIDENT,
         encodeOccupancyTexel(range[0], range[1], encodeRange),
+        slabTexelsOf(pool, pool.brickSlabRanges.get(key)),
       );
     }
     for (const [key, range] of pool.aggregateRanges) {
@@ -3161,6 +3215,7 @@ export class BrickResidencyManager {
         level,
         coords,
         encodeOccupancyTexel(range[0], range[1], encodeRange),
+        slabTexelsOf(pool, pool.aggregateSlabRanges.get(key)),
       );
     }
   }
@@ -3198,10 +3253,21 @@ export class BrickResidencyManager {
     coords: Vec3,
     brickMin: number,
     brickMax: number,
+    /** Per-slab ranges (multi-plane pools). Omitted — a uniform brick — means
+     * every slab is [brickMin, brickMax]. */
+    slabRanges?: SlabRanges | null,
   ): void {
     if (!pool.occHierarchy) return;
     if (!Number.isFinite(brickMin) || !Number.isFinite(brickMax) || brickMax < brickMin) return;
     pool.measuredRanges.set(key, [brickMin, brickMax]);
+    const perSlab = pool.occSlabs > 1;
+    if (perSlab) {
+      pool.measuredSlabRanges.set(
+        key,
+        slabRanges ??
+          Array.from({ length: pool.occSlabs }, () => [brickMin, brickMax] as const),
+      );
+    }
     const parentLevel = level + 1;
     for (const cell of parentCellsOf(pool.geometry, pool.spec, level, coords)) {
       const aggregate = aggregateIfComplete(
@@ -3212,7 +3278,19 @@ export class BrickResidencyManager {
         pool.measuredRanges,
       );
       if (!aggregate) continue;
-      pool.aggregateRanges.set(nodeKey(parentLevel, cell), aggregate);
+      const parentKey = nodeKey(parentLevel, cell);
+      pool.aggregateRanges.set(parentKey, aggregate);
+      const slabAggregate = perSlab
+        ? aggregateSlabsIfComplete(
+            pool.geometry,
+            pool.spec,
+            parentLevel,
+            cell,
+            pool.measuredSlabRanges,
+            pool.occSlabs,
+          )
+        : null;
+      if (slabAggregate) pool.aggregateSlabRanges.set(parentKey, slabAggregate);
       setAggregateEntry(
         pool.pageTable,
         parentLevel,
@@ -3220,6 +3298,7 @@ export class BrickResidencyManager {
         pool.occReencodePending
           ? null
           : encodeOccupancyTexel(aggregate[0], aggregate[1], occEncodeRangeOf(pool)),
+        pool.occReencodePending ? null : slabTexelsOf(pool, slabAggregate),
       );
       this.stats.aggregateWrites += 1;
     }
@@ -3248,8 +3327,21 @@ export class BrickResidencyManager {
         const slot = pool.pool.slotOf(result.token.key);
         if (slot) {
           pool.brickRanges.set(result.token.key, [result.min, result.max]);
+          const slabRanges =
+            pool.occSlabs > 1
+              ? normalizeSlabRanges(result.slabRanges, pool.spec.channelCount)
+              : null;
+          if (slabRanges) pool.brickSlabRanges.set(result.token.key, slabRanges);
           this.accumulateOccRange(pool, result.min, result.max);
-          this.recordMeasuredRange(pool, result.token.key, level, coords, result.min, result.max);
+          this.recordMeasuredRange(
+            pool,
+            result.token.key,
+            level,
+            coords,
+            result.min,
+            result.max,
+            slabRanges,
+          );
           setPageEntry(
             pool.pageTable,
             level,
@@ -3260,6 +3352,7 @@ export class BrickResidencyManager {
             pool.occReencodePending
               ? undefined
               : encodeOccupancyTexel(result.min, result.max, occEncodeRangeOf(pool)),
+            pool.occReencodePending ? undefined : slabTexelsOf(pool, slabRanges),
           );
           touchedPools.add(pool);
         }
@@ -3274,6 +3367,7 @@ export class BrickResidencyManager {
       pool.gpuStaleKeys.delete(result.token.key);
       pool.coarsestResident.delete(result.token.key);
       pool.brickRanges.delete(result.token.key);
+      pool.brickSlabRanges.delete(result.token.key);
       pool.emptyValues.set(result.token.key, result.uniformValue);
       // See the CPU EMPTY-demotion site: uniforms feed the observed range.
       this.accumulateOccRange(pool, result.uniformValue, result.uniformValue);
@@ -3301,6 +3395,7 @@ export class BrickResidencyManager {
       pool.gpuStaleKeys.delete(token.key);
       pool.coarsestResident.delete(token.key);
       pool.brickRanges.delete(token.key);
+      pool.brickSlabRanges.delete(token.key);
       this.stats.fetchErrors += 1;
       if (pool.protectedKeys.has(token.key)) {
         this.wakeDrain();
@@ -3501,6 +3596,7 @@ export class BrickResidencyManager {
     pool.queuedKeys.clear();
     pool.emptyValues.clear();
     pool.brickRanges.clear();
+    pool.brickSlabRanges.clear();
     pool.pool.clear();
     pool.gpuStaleKeys.clear();
     pool.coarsestResident.clear();
@@ -3515,6 +3611,8 @@ export class BrickResidencyManager {
     // event that invalidates them (they deliberately survive eviction).
     pool.measuredRanges.clear();
     pool.aggregateRanges.clear();
+    pool.measuredSlabRanges.clear();
+    pool.aggregateSlabRanges.clear();
     clearPageTable(pool.pageTable);
     pool.sliceSignature = nextSliceSignature;
     // The signature changed because the SELECTION changed (slices or a dim

@@ -1,5 +1,11 @@
 import * as THREE from "three";
-import { atlasKindForDtype, type AtlasKind } from "../octree/atlasFormat";
+import {
+  atlasBytesPerVoxel,
+  atlasChannelsPerTexel,
+  atlasKindForDtype,
+  atlasSlotDepth,
+  type AtlasKind,
+} from "../octree/atlasFormat";
 import type { BrickArray } from "../octree/brickRepack";
 import type { BrickSpec } from "../octree/brickSpec";
 import type { Vec3 } from "../../../platform/coords/levelGeometry";
@@ -43,7 +49,11 @@ export const setAtlasMirrorEnabled = (enabled: boolean): void => {
 export type BrickAtlas = {
   texture: THREE.Data3DTexture;
   kind: AtlasKind;
-  /** Texels one slot occupies ([stored.x, stored.y, stored.z × channels]). */
+  /** Channel slabs packed into one texel: 4 for rgba8, else 1 — the shader's
+   * tap selects `slab mod channelsPerTexel` and offsets z by
+   * `floor(slab / channelsPerTexel)` slab depths (`shaderspec/atlasTap.ts`). */
+  channelsPerTexel: number;
+  /** Texels one slot occupies ([stored.x, stored.y, stored.z × ceil(channels / channelsPerTexel)]). */
   slotSize: Vec3;
   slotGrid: Vec3;
   capacity: number;
@@ -135,11 +145,7 @@ export function createBrickAtlas(opts: {
 }): BrickAtlas {
   const { spec, dtype, desiredSlots, maxExtent, filter } = opts;
   const kind = opts.kind ?? atlasKindForDtype(dtype);
-  const slotSize: Vec3 = [
-    spec.stored[0],
-    spec.stored[1],
-    spec.stored[2] * spec.channelCount,
-  ];
+  const slotSize: Vec3 = [spec.stored[0], spec.stored[1], atlasSlotDepth(spec, kind)];
 
   const maxSlots: Vec3 = [
     Math.max(1, Math.floor(maxExtent / slotSize[0])),
@@ -155,14 +161,16 @@ export function createBrickAtlas(opts: {
 
   const size: Vec3 = [gx * slotSize[0], gy * slotSize[1], gz * slotSize[2]];
   const elementCount = size[0] * size[1] * size[2];
-  const bytesPerVoxel = kind === "r8" ? 1 : kind === "r16f" ? 2 : 4;
+  const bytesPerVoxel = atlasBytesPerVoxel(kind);
   // Lazy mirror (default): NO CPU backing — WebGPU textures are zero-
   // initialized by spec, so a null-data Data3DTexture starts black and every
   // byte arrives via writeTexture; this also skips the one-time full zero
   // upload the eager path paid. R16F never mirrors (half-float BITS in the
-  // backing would corrupt raw probe reads).
+  // backing would corrupt raw probe reads), nor does RGBA8 (interleaved
+  // texels — the probe's slab-stride read assumes one channel per texel;
+  // probes read these pools through the decoded-chunk cache).
   const backing: BrickArray | null =
-    isAtlasMirrorEnabled() && kind !== "r16f"
+    isAtlasMirrorEnabled() && kind !== "r16f" && kind !== "rgba8"
       ? kind === "r8"
         ? new Uint8Array(elementCount)
         : new Float32Array(elementCount)
@@ -173,9 +181,9 @@ export function createBrickAtlas(opts: {
   // (r8unorm/r16float/r32float). Setting a WebGL enum string here would be
   // passed verbatim to GPUDevice.createTexture, which throws and silently
   // degrades the texture to a 1x1 2D placeholder.
-  texture.format = THREE.RedFormat;
+  texture.format = kind === "rgba8" ? THREE.RGBAFormat : THREE.RedFormat;
   texture.type =
-    kind === "r8"
+    kind === "r8" || kind === "rgba8"
       ? THREE.UnsignedByteType
       : kind === "r16f"
         ? THREE.HalfFloatType
@@ -213,11 +221,12 @@ export function createBrickAtlas(opts: {
   return {
     texture,
     kind,
+    channelsPerTexel: atlasChannelsPerTexel(kind),
     slotSize,
     slotGrid,
     capacity,
     size,
-    dataScale: kind === "r8" ? 255 : kind === "r16f" ? 65535 : 1,
+    dataScale: kind === "r8" || kind === "rgba8" ? 255 : kind === "r16f" ? 65535 : 1,
     byteLength: elementCount * bytesPerVoxel,
     backing,
   };

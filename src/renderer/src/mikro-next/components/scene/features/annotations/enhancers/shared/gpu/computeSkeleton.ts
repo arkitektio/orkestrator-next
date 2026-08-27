@@ -439,6 +439,11 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
   run(job: SkeletonRunJob): Promise<SkeletonRunResult | null> {
     const next = this.chain.then(() => {
       if (!this.ready()) return null;
+      // The cost kernel reads `textureLoad(atlas).r` at `channel * stored_z`
+      // — one channel per texel. An rgba8 atlas (channels interleaved in one
+      // texel) needs a component select the kernel does not have yet; null
+      // hands the stroke to the CPU path, exactly like a pending pipeline.
+      if (job.atlas.channelsPerTexel !== 1) return null;
       return this.runExclusive(job).catch((error) => {
         if (!this.disposed) {
           this.broken = true;
@@ -454,6 +459,7 @@ class GpuSkeletonizerImpl implements GpuSkeletonizer {
   extractTube(job: SkeletonTubeJob): Promise<SkeletonTubeResult | null> {
     const next = this.chain.then(() => {
       if (!this.tubeReady()) return null;
+      if (job.atlas.channelsPerTexel !== 1) return null; // see run()
       return this.runTubeExclusive(job).catch((error) => {
         if (!this.disposed) {
           this.tubeBroken = true;

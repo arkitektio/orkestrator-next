@@ -19,7 +19,7 @@ import CoordinateSystemNode, {
   Occupancy,
 } from "./CoordinateSystemNode";
 import { facingHandles, sourceHandleId, targetHandleId } from "./handles";
-import { LAYOUT_OPTIONS } from "./layout";
+import { layoutOptionsFor } from "./layout";
 import { NODE_DIAMETER, NODE_SIZE } from "./nodeSize";
 import ResidentNode, { RESIDENT_SWATCH } from "./ResidentNode";
 import { describeTransformation, GraphEdge, GraphNode } from "./types";
@@ -30,6 +30,12 @@ const nodeTypes = {
   coordinateSystem: CoordinateSystemNode,
   resident: ResidentNode,
 };
+
+// One engine, module-scoped — the same thing the kraph path graph has always
+// done. `new ELK()` per effect meant every mounted graph on a page (a dataset
+// page shows several) built its own, and they all contended for the one thread
+// they share. Constructed once, reused, and it serialises its own work.
+const elk = new ELK();
 
 // `currentColor`, not `hsl(var(--muted-foreground))`: this app's design tokens
 // are Tailwind v4 oklch() values, so wrapping one in hsl() yields an invalid
@@ -84,8 +90,10 @@ const residentNodeId = (systemId: string, resident: { __typename: string; id: st
  * Coordinate systems and their residents are the nodes; the transformations
  * between systems are the edges, labelled with what the map actually does and
  * drawn in their true stored direction (input → output). An edge whose input or
- * output falls outside the returned component (the walk is depth-bounded) is
- * dropped rather than drawn dangling.
+ * output falls outside the returned component is dropped rather than drawn
+ * dangling — which is a live case now that CoordinateGraphView bounds the walk
+ * (DEFAULT_MAX_DEPTH). While the walk was unbounded it returned whole connected
+ * components, so nothing could fall outside one and `dropped` was always 0.
  */
 const buildGraph = (
   graph: CoordinateGraph,
@@ -243,25 +251,31 @@ export const CoordinateGraphFlow = ({
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<GraphEdge>([]);
   const [dropped, setDropped] = React.useState(0);
+  const [laidOut, setLaidOut] = React.useState(false);
 
   React.useEffect(() => {
     const { nodes: rawNodes, edges: rawEdges, dropped } = buildGraph(graph);
     let cancelled = false;
 
-    // Nodes and edges go in BEFORE the layout resolves, and the layout only
-    // moves them afterwards. Gating them on ELK means one rejected promise
-    // renders a graph with no connections — which reads as "this data has no
-    // edges" rather than "the layout failed".
-    setNodes(rawNodes);
-    setEdges(rawEdges);
+    // Nothing is painted until ELK answers. The previous version put the nodes
+    // in FIRST so that a rejected layout would still show the graph — but every
+    // node starts at {x:0,y:0}, so what that actually rendered was the whole
+    // graph in one stack at the origin, held there for as long as the layout
+    // took. The failure it was guarding against is handled in `catch` instead,
+    // where it costs nothing on the path that works.
     setDropped(dropped);
+    setLaidOut(false);
 
-    new ELK()
+    elk
       .layout({
         id: "root",
-        layoutOptions: LAYOUT_OPTIONS,
-        // One size for everything — that is what lets a size-blind layout be
-        // safe.
+        // Chosen by size: the stress layout tells the truth about a web of
+        // registrations but stalls the thread superlinearly, so it is used
+        // only while that stall is affordable. See layout.ts.
+        layoutOptions: layoutOptionsFor(rawNodes.length),
+        // One size for everything — see nodeSize.ts. Stress ignores these
+        // outright (the uniform footprint is what compensates); mrtree honours
+        // them.
         children: rawNodes.map((node) => ({ id: node.id, ...NODE_SIZE })),
         edges: rawEdges.map((edge) => ({
           id: edge.id,
@@ -288,8 +302,9 @@ export const CoordinateGraphFlow = ({
         );
 
         // Which side each edge attaches to is only knowable once everything has
-        // settled — that is the price of a layout with no fixed direction. Same
-        // size for every node, so the centre is the position plus one radius.
+        // settled. Same size for every node, so the centre is the position plus
+        // one radius. This is O(edges) bookkeeping over ELK's answer, not a
+        // layout of its own — the placement is entirely ELK's.
         const centre = (id: string) => {
           const position = positions.get(id)!;
           return {
@@ -311,16 +326,29 @@ export const CoordinateGraphFlow = ({
           }),
         );
 
-        instance?.fitView({ padding: 0.2 });
+        setLaidOut(true);
       })
       .catch((error) => {
+        if (cancelled) return;
         console.error("[CoordinateGraph] ELK layout failed", error);
+        // A failed layout should read as "these are the nodes, badly placed",
+        // not as an empty canvas that never resolves.
+        setNodes(rawNodes);
+        setEdges(rawEdges);
+        setLaidOut(true);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [graph, instance]);
+    // NOT `instance`: including it re-ran the entire layout a second time the
+    // moment React Flow mounted, doubling the cost of the thing that was
+    // already too slow. Fitting the view is a separate concern, below.
+  }, [graph]);
+
+  React.useEffect(() => {
+    if (laidOut) instance?.fitView({ padding: 0.2 });
+  }, [laidOut, nodes, instance]);
 
   const residents = React.useMemo(
     () =>
@@ -348,6 +376,15 @@ export const CoordinateGraphFlow = ({
         proOptions={{ hideAttribution: true }}
       >
         <Background gap={16} size={1} />
+        {/* The canvas is genuinely empty until ELK answers, and an empty canvas
+            and an empty graph look identical. Says which one this is. */}
+        {!laidOut && (
+          <Panel position="top-center">
+            <span className="rounded-md border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
+              Laying out {graph.systems.length} systems…
+            </span>
+          </Panel>
+        )}
         <Controls showInteractive={false} />
         <Panel position={legendPosition}>
           <Legend

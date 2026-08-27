@@ -25,10 +25,17 @@ import {
 import { perfMonitor, type PerfSessionReport } from "../../platform/perf/perfMonitor";
 import { isEarlyBricksEnabled, setEarlyBricksEnabled } from "../bricks/residency/brickSystem";
 import type { FabriksCollectionManager } from "../meshes/fabriks/fabriksManager";
-import { isGpuRepackEnabled, setGpuRepackEnabled } from "../bricks/gpu/computeRepack";
+import {
+  isGpuRepackEnabled,
+  isGpuRepackR16Enabled,
+  setGpuRepackEnabled,
+  setGpuRepackR16Enabled,
+} from "../bricks/gpu/computeRepack";
 import {
   isR16AtlasesEnabled,
+  isRgbaAtlasesEnabled,
   setR16AtlasesEnabled,
+  setRgbaAtlasesEnabled,
 } from "../bricks/octree/atlasFormat";
 import {
   isAtlasMirrorEnabled,
@@ -44,6 +51,7 @@ import {
   isFixedShapeFastPathEnabled,
   isOccHierarchyEnabled,
   isOccObservedRangeEnabled,
+  isOccPerSlabEnabled,
   isShaderFastPathEnabled,
   isSmoothZoomEnabled,
   isWorldLodEnabled,
@@ -52,6 +60,7 @@ import {
   setFixedShapeFastPathEnabled,
   setOccHierarchyEnabled,
   setOccObservedRangeEnabled,
+  setOccPerSlabEnabled,
   setShaderFastPathEnabled,
   setSmoothZoomEnabled,
   setWorldLodEnabled,
@@ -93,11 +102,13 @@ export const DebugPanel = () => {
   const recording = usePerfRecording();
   const [lastSession, setLastSession] = useState<PerfSessionReport | null>(null);
   const [gpuRepackOn, setGpuRepackOn] = useState(isGpuRepackEnabled);
+  const [gpuRepackR16On, setGpuRepackR16On] = useState(isGpuRepackR16Enabled);
   const [volumeMergeOn, setVolumeMergeOn] = useState(isVolumeMergeEnabled);
   const [shaderFastPathOn, setShaderFastPathOn] = useState(isShaderFastPathEnabled);
   const [smoothZoomOn, setSmoothZoomOn] = useState(isSmoothZoomEnabled);
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
+  const [rgbaAtlasOn, setRgbaAtlasOn] = useState(isRgbaAtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
   const [earlyBricksOn, setEarlyBricksOn] = useState(isEarlyBricksEnabled);
@@ -111,6 +122,7 @@ export const DebugPanel = () => {
   const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
   const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
   const [occHierarchyOn, setOccHierarchyOn] = useState(isOccHierarchyEnabled);
+  const [occPerSlabOn, setOccPerSlabOn] = useState(isOccPerSlabEnabled);
   const [fixedShapeOn, setFixedShapeOn] = useState(isFixedShapeFastPathEnabled);
   const [settleRefineOn, setSettleRefineOn] = useState(isSettleRefineEnabled);
   const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
@@ -131,6 +143,12 @@ export const DebugPanel = () => {
     const next = !gpuRepackOn;
     setGpuRepackEnabled(next);
     setGpuRepackOn(next);
+  };
+
+  const toggleGpuRepackR16 = () => {
+    const next = !gpuRepackR16On;
+    setGpuRepackR16Enabled(next);
+    setGpuRepackR16On(next);
   };
 
   const toggleVolumeMerge = () => {
@@ -161,6 +179,12 @@ export const DebugPanel = () => {
     const next = !r16AtlasOn;
     setR16AtlasesEnabled(next);
     setR16AtlasOn(next);
+  };
+
+  const toggleRgbaAtlas = () => {
+    const next = !rgbaAtlasOn;
+    setRgbaAtlasesEnabled(next);
+    setRgbaAtlasOn(next);
   };
 
   const toggleAtlasMirror = () => {
@@ -198,6 +222,11 @@ export const DebugPanel = () => {
     setAnisoLodOn(next);
   };
 
+  const toggleOccPerSlab = () => {
+    const next = !occPerSlabOn;
+    setOccPerSlabEnabled(next);
+    setOccPerSlabOn(next);
+  };
   const toggleOccHierarchy = () => {
     const next = !occHierarchyOn;
     setOccHierarchyEnabled(next);
@@ -645,6 +674,13 @@ export const DebugPanel = () => {
                 gpu repack: {gpuRepackOn ? "on" : "off"}
               </button>
               <button
+                onClick={toggleGpuRepackR16}
+                title="r16f GPU repack: uint16 intensity pools (half-float atlases) take the compute path through the r16 arena kernel instead of the CPU worker (scalar copy + float32 scratch + half-encode per brick). Needs gpu repack + r16 atlas on. Pool report gpuPath should read 'gpu' instead of 'cpu:unsupported:r16f'. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                r16 gpu repack: {gpuRepackR16On ? "on" : "off"}
+              </button>
+              <button
                 onClick={toggleVolumeMerge}
                 title="Raymarch layers that share a brick pool in ONE pass instead of one each. Off = one pass per layer (the pre-merge path). Takes effect on the next scene mount."
                 className="px-1 rounded border border-border/50 hover:bg-accent"
@@ -678,6 +714,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 r16 atlas: {r16AtlasOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleRgbaAtlas}
+                title="RGBA8 atlases for 3/4-channel uint8 pools (RGB images): channels interleaved in one texel instead of z-stacked slabs, so an rgb layer samples ONE texel per step instead of three; GPU repack writes the interleaved layout directly. Pool report atlas.kind should read 'rgba8'. Takes effect for pools created after the toggle (reopen the scene)."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                rgba atlas: {rgbaAtlasOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleAtlasMirror}
@@ -722,6 +765,13 @@ export const DebugPanel = () => {
                 world lod: {worldLodOn ? "on" : "off"}
               </button>
               <button
+                onClick={toggleOccPerSlab}
+                title="Per-slab occupancy: multi-channel pools record one min/max bracket PER atlas slab (and one sidecar plane per slab) instead of the union across channels, so an RGB brick bright in red can still be skipped / EMPTY-detected in green and blue. Single-slab pools unaffected. Default ON; reopen the scene after toggling."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                occ per-slab: {occPerSlabOn ? "on" : "off"}
+              </button>
+              <button
                 onClick={toggleOccHierarchy}
                 title="Hierarchical occupancy (R4): aggregate brick min/max one level up and hop whole coarse cells the aggregate proves invisible or mip-beaten. Default OFF until live-validated. Takes effect on the next scene mount."
                 className="px-1 rounded border border-border/50 hover:bg-accent"
@@ -730,7 +780,7 @@ export const DebugPanel = () => {
               </button>
               <button
                 onClick={toggleFixedShape}
-                title="Fixed-shape compositor: a layer whose sources are one plain scalar channel (renderKind 'intensity') compiles a specialised material — no 16-slot loop, no chParamsA/B uniform arrays, no source-kind tap, no blend branch. Off renders the same layers through the general compositor, which is a pixel-identical reference. Default OFF until live-validated; needs shader fast path on. Takes effect on the next scene mount."
+                title="Fixed-shape compositor: a layer whose sources are one plain scalar channel (renderKind 'intensity') or three basis-tinted channels over one window ('rgb') compiles a specialised material — no 16-slot loop, no chParamsA/B uniform arrays, no source-kind tap, no blend branch, no LUT tap for rgb, straight-line occupancy skips. Off renders the same layers through the general compositor, which is a pixel-identical reference (the bisect tool). Default ON; needs shader fast path on. Takes effect on the next scene mount."
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 fixed-shape: {fixedShapeOn ? "on" : "off"}

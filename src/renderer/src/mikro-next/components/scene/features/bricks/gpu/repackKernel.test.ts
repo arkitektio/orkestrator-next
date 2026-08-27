@@ -3,6 +3,9 @@ import { repackBrick, type RepackChunk } from "../octree/brickRepack";
 import type { BrickSpec } from "../octree/brickSpec";
 import { buildLayerLevelGeometry } from "../../../platform/coords/levelGeometry";
 import { fetchVoxelBox, nodeVoxelBox } from "../octree/nodeAddress";
+import { R16F_DATA_SCALE } from "../octree/atlasFormat";
+import { encodeHalfArray, floatToHalfBits } from "../octree/halfFloat";
+import { interleaveSlabsRgba8 } from "../octree/rgbaPack";
 import {
   MINMAX_INIT_MAX,
   MINMAX_INIT_MIN,
@@ -10,10 +13,17 @@ import {
   decodeMinMax,
   decodeMinMaxU8,
   decodeOrderedF32,
+  decodeSlabRanges,
   dispatchWorkgroups,
   encodeOrderedF32,
   ownedGridBox,
+  REPACK_KERNEL_R16_WGSL,
+  REPACK_KERNEL_R8_WGSL,
+  REPACK_KERNEL_RGBA8_WGSL,
+  REPACK_KERNEL_WGSL,
   REPACK_WORKGROUP_SIZE,
+  arenaJobLayout,
+  arenaJobLayoutForKind,
   packKernelParams,
   r8JobLayout,
   type KernelDispatch,
@@ -514,7 +524,7 @@ describe("packKernelParams", () => {
     expect(words[4 + 7]).toBe(3); // brick_index
     expect([words[4 + 28], words[4 + 29], words[4 + 30]]).toEqual([12, 18, 24]); // slot_origin
     expect([words[4 + 33], words[4 + 34]]).toEqual([0, 0]); // r8 addressing defaults
-    expect(words[4 + 35]).toBe(0); // vec3 alignment pad before grid_origin
+    expect(words[4 + 35]).toBe(3); // minmax_base (defaults to brick_index)
     expect([words[4 + 36], words[4 + 37], words[4 + 38]]).toEqual([...d.gridOrigin]);
     expect(words[4 + 39]).toBe(d.gridSize[2]); // z_span
     expect(words[0]).toBe(0); // untouched before the offset
@@ -592,5 +602,289 @@ describe("ownedGridBox", () => {
   it("returns null when the chunk owns no texel of this brick", () => {
     // Overlap sits entirely beyond the brick's destination window.
     expect(box({ lo: [16, 0, 0], hi: [24, 8, 8] })).toBeNull();
+  });
+});
+
+describe("per-slab min/max (minmax_base + decodeSlabRanges)", () => {
+  it("lays a batch out by running slab count, not brick × slabs", () => {
+    // Two bricks: 2 slabs then 3 slabs — the second brick's entries start at 2.
+    const a = buildKernelDispatches(makeInput([0, 0, 0]), [0, 0, 0], 0, 0);
+    const b = buildKernelDispatches(makeInput([1, 1, 0]), [0, 0, 0], 1, 2);
+    expect(a.every((d) => d.minmaxBase === 0)).toBe(true);
+    expect(b.every((d) => d.minmaxBase === 2)).toBe(true);
+    const words = new Uint32Array(40);
+    packKernelParams(b[0], words, 0);
+    expect(words[35]).toBe(2);
+  });
+
+  it("decodes per-slab brackets and their union, with sentinel slabs taking the union", () => {
+    const words = new Uint32Array(3 * 2);
+    // slab 0: [encode(2), encode(9)]; slab 1: sentinels; slab 2: [encode(-1), encode(4)]
+    words[0] = encodeOrderedF32(2);
+    words[1] = encodeOrderedF32(9);
+    words[2] = MINMAX_INIT_MIN;
+    words[3] = MINMAX_INIT_MAX;
+    words[4] = encodeOrderedF32(-1);
+    words[5] = encodeOrderedF32(4);
+    expect(decodeSlabRanges(words, 0, 3, decodeMinMax)).toEqual({
+      min: -1,
+      max: 9,
+      uniformValue: null,
+      slabRanges: [
+        [2, 9],
+        [-1, 9],
+        [-1, 4],
+      ],
+    });
+  });
+
+  it("reads from `base`, decodes u8 words raw, and reports uniform bricks", () => {
+    const words = new Uint32Array([99, 99, 7, 7, 7, 7]);
+    expect(decodeSlabRanges(words, 1, 2, decodeMinMaxU8)).toEqual({
+      min: 7,
+      max: 7,
+      uniformValue: 7,
+      slabRanges: [
+        [7, 7],
+        [7, 7],
+      ],
+    });
+  });
+
+  it("all-sentinel entries map to the {0, 0, uniform 0} outcome of the single-entry decodes", () => {
+    const words = new Uint32Array([MINMAX_INIT_MIN, MINMAX_INIT_MAX, MINMAX_INIT_MIN, MINMAX_INIT_MAX]);
+    expect(decodeSlabRanges(words, 0, 2, decodeMinMax)).toEqual({
+      min: 0,
+      max: 0,
+      uniformValue: 0,
+      slabRanges: [
+        [0, 0],
+        [0, 0],
+      ],
+    });
+  });
+
+  it("the kernel source addresses minmax by minmax_base + channel and reduces per channel", () => {
+    for (const source of [REPACK_KERNEL_WGSL, REPACK_KERNEL_R8_WGSL]) {
+      expect(source).toContain("minmax_base: u32");
+      expect(source).toContain("(P.minmax_base + P.chan_start + k) * 2u");
+      expect(source).toContain("wg_min[slab]");
+      expect(source).not.toContain("P.brick_index * 2u");
+    }
+  });
+});
+
+describe("r16f arena kernel parity with the worker's half-float encode", () => {
+  /** Execute the r16 kernel's per-invocation algorithm over the arena. */
+  function simulateBrickR16(input: RepackDispatchInput) {
+    const [sx, sy, sz] = input.spec.stored;
+    const { rowBytes, imageRows, images, jobBytes } = arenaJobLayout(
+      input.spec.stored,
+      input.spec.channelCount,
+      2,
+    );
+    const rowWords = rowBytes / 4;
+    const baseWord = 64;
+    const arena = new Uint32Array(baseWord + jobBytes / 4);
+    const elementCount = brickElementCount(input);
+    const writes = new Uint8Array(elementCount);
+    const minmax = { min: MINMAX_INIT_MIN, max: MINMAX_INIT_MAX };
+    const dispatches = buildKernelDispatches(input, [0, 0, 0], 0);
+    for (const d of dispatches) {
+      const data = input.chunks[d.chunkIndex].data as Float32Array;
+      for (let gz = 0; gz < sz * d.channelCount; gz++) {
+        const c = Math.floor(gz / sz);
+        const z = gz % sz;
+        for (let y = 0; y < sy; y++) {
+          for (let x = 0; x < sx; x++) {
+            const g = [
+              clampI(d.destOrigin[0] + x, d.fetchMin[0], d.fetchMax[0] - 1),
+              clampI(d.destOrigin[1] + y, d.fetchMin[1], d.fetchMax[1] - 1),
+              clampI(d.destOrigin[2] + z, d.fetchMin[2], d.fetchMax[2] - 1),
+            ];
+            const owned =
+              g[0] >= d.lo[0] && g[0] < d.hi[0] &&
+              g[1] >= d.lo[1] && g[1] < d.hi[1] &&
+              g[2] >= d.lo[2] && g[2] < d.hi[2] &&
+              c >= d.chanStart && c < d.chanEnd;
+            if (!owned) continue;
+            const src =
+              d.fixedBase +
+              (c - d.chanStart) * d.strideC +
+              (g[2] - d.chunkOrigin[2]) * d.strideZ +
+              (g[1] - d.chunkOrigin[1]) * d.strideY +
+              (g[0] - d.chunkOrigin[0]) * d.strideX;
+            const value = data[src];
+            const half = floatToHalfBits(value / R16F_DATA_SCALE) & 0xffff;
+            const word = baseWord + ((c * sz + z) * sy + y) * rowWords + (x >> 1);
+            arena[word] |= half << (16 * (x & 1));
+            writes[((c * sz + z) * sy + y) * sx + x] += 1;
+            if (value === value) {
+              const e = encodeOrderedF32(value);
+              if (e < minmax.min) minmax.min = e;
+              if (e > minmax.max) minmax.max = e;
+            }
+          }
+        }
+      }
+    }
+    // Unpack the padded rows the way copyBufferToTexture reads them.
+    const out = new Uint16Array(elementCount);
+    for (let image = 0; image < images; image++)
+      for (let y = 0; y < imageRows; y++)
+        for (let x = 0; x < sx; x++) {
+          out[(image * sy + y) * sx + x] =
+            (arena[baseWord + (image * sy + y) * rowWords + (x >> 1)] >>> (16 * (x & 1))) & 0xffff;
+        }
+    return { out, writes, ...decodeMinMax(minmax.min, minmax.max) };
+  }
+
+  it.each([[[0, 0, 0]], [[1, 1, 0]], [[2, 2, 0]]] as [[number, number, number]][])(
+    "brick %j reproduces the worker's encodeHalfArray output bit-for-bit through the arena",
+    (brickCoords) => {
+      const input = makeInput(brickCoords);
+      const gpu = simulateBrickR16(input);
+      // The CPU worker path: raw repack into a float scratch, then half-encode.
+      const scratch = new Float32Array(brickElementCount(input));
+      const cpu = repackBrick({ ...input, output: scratch });
+      const expected = new Uint16Array(scratch.length);
+      encodeHalfArray(scratch, expected, 1 / R16F_DATA_SCALE);
+      expect([...gpu.out]).toEqual([...expected]);
+      expect([...gpu.writes].every((count) => count === 1)).toBe(true);
+      // Min/max are reduced on the RAW value, exactly like the f32 kernel.
+      expect(gpu.min).toBe(cpu.min);
+      expect(gpu.max).toBe(cpu.max);
+      expect(gpu.uniformValue).toBe(cpu.uniformValue);
+    },
+  );
+
+  it("arenaJobLayout pads rows to 256 bytes per texel size and keeps r8JobLayout as the 1-byte case", () => {
+    expect(arenaJobLayout([66, 66, 66], 1, 2)).toEqual({ rowBytes: 256, imageRows: 66, images: 66, jobBytes: 256 * 66 * 66 });
+    expect(arenaJobLayout([256, 256, 1], 3, 2)).toEqual({ rowBytes: 512, imageRows: 256, images: 3, jobBytes: 512 * 256 * 3 });
+    expect(arenaJobLayout([66, 66, 38], 4, 1)).toEqual(r8JobLayout([66, 66, 38], 4));
+  });
+
+  it("the r16 kernel packs two halves per word and shares the params/epilogue", () => {
+    expect(REPACK_KERNEL_R16_WGSL).toContain("pack2x16float");
+    expect(REPACK_KERNEL_R16_WGSL).toContain("(px >> 1u)");
+    expect(REPACK_KERNEL_R16_WGSL).toContain("16u * (px & 1u)");
+    expect(REPACK_KERNEL_R16_WGSL).toContain("(P.minmax_base + P.chan_start + k) * 2u");
+    expect(REPACK_KERNEL_R16_WGSL).toContain(`R16_INV_SCALE: f32 = ${1 / R16F_DATA_SCALE}`);
+  });
+});
+
+describe("rgba8 arena kernel parity with the CPU interleave", () => {
+  const SPEC3: BrickSpec = { payload: [4, 4, 4], border: 1, stored: [6, 6, 6], channelCount: 3 };
+  const makeU8Input3 = (brickCoords: [number, number, number]): RepackDispatchInput => {
+    const chunks: RepackChunk[] = [];
+    for (let channel = 0; channel < 3; channel++)
+      for (const cy of [0, 1])
+        for (const cx of [0, 1]) {
+          const [w, h, d] = [8, 8, 4];
+          const data = new Uint8Array(d * h * w);
+          for (let z = 0; z < d; z++)
+            for (let y = 0; y < h; y++)
+              for (let x = 0; x < w; x++) {
+                const gx = cx * 8 + x;
+                const gy = cy * 8 + y;
+                data[(z * h + y) * w + x] =
+                  gx < 12 && gy < 12 ? (channel * 80 + z * 20 + gy * 5 + gx) & 0xff : 250;
+              }
+          chunks.push({ coords: [cx, cy, 0], channelChunk: channel, data, shape: [1, 4, 8, 8], stride: [256, 64, 8, 1] });
+        }
+    const geo = buildLayerLevelGeometry(DIMS, LAYER, [
+      { shape: [3, 4, 12, 12], chunks: [1, 4, 8, 8], dtype: "uint8", storeId: "s0" },
+    ])!;
+    return {
+      spec: SPEC3,
+      level: geo.levels[0],
+      axes: geo.axes,
+      brickBox: nodeVoxelBox(geo, SPEC3, 0, brickCoords),
+      fetchBox: fetchVoxelBox(geo, SPEC3, 0, brickCoords),
+      fixedOffsets: [0, 0, 0, 0],
+      chunks,
+    };
+  };
+
+  function simulateBrickRgba8(input: RepackDispatchInput) {
+    const [sx, sy, sz] = input.spec.stored;
+    const { rowBytes, imageRows, images, jobBytes } = arenaJobLayoutForKind("rgba8", input.spec.stored, input.spec.channelCount);
+    const rowWords = rowBytes / 4;
+    const baseWord = 32;
+    const arena = new Uint32Array(baseWord + jobBytes / 4);
+    const writes = new Uint8Array(brickElementCount(input));
+    const minmax = { min: MINMAX_INIT_MIN, max: MINMAX_INIT_MAX };
+    for (const d of buildKernelDispatches(input, [0, 0, 0], 0)) {
+      const bytes = input.chunks[d.chunkIndex].data as Uint8Array;
+      for (let gz = 0; gz < sz * d.channelCount; gz++) {
+        const c = Math.floor(gz / sz);
+        const z = gz % sz;
+        for (let y = 0; y < sy; y++)
+          for (let x = 0; x < sx; x++) {
+            const g = [
+              clampI(d.destOrigin[0] + x, d.fetchMin[0], d.fetchMax[0] - 1),
+              clampI(d.destOrigin[1] + y, d.fetchMin[1], d.fetchMax[1] - 1),
+              clampI(d.destOrigin[2] + z, d.fetchMin[2], d.fetchMax[2] - 1),
+            ];
+            const owned =
+              g[0] >= d.lo[0] && g[0] < d.hi[0] && g[1] >= d.lo[1] && g[1] < d.hi[1] &&
+              g[2] >= d.lo[2] && g[2] < d.hi[2] && c >= d.chanStart && c < d.chanEnd;
+            if (!owned) continue;
+            const src =
+              d.fixedBase + (c - d.chanStart) * d.strideC + (g[2] - d.chunkOrigin[2]) * d.strideZ +
+              (g[1] - d.chunkOrigin[1]) * d.strideY + (g[0] - d.chunkOrigin[0]) * d.strideX;
+            const value = bytes[src];
+            const word = baseWord + (((c >> 2) * sz + z) * sy + y) * rowWords + x;
+            arena[word] |= value << (8 * (c & 3));
+            writes[((c * sz + z) * sy + y) * sx + x] += 1;
+            if (value < minmax.min) minmax.min = value;
+            if (value > minmax.max) minmax.max = value;
+          }
+      }
+    }
+    // Unpack as copyBufferToTexture reads it: one rgba8 texel per word.
+    const out = new Uint8Array(sx * sy * images * 4);
+    for (let image = 0; image < images; image++)
+      for (let y = 0; y < imageRows; y++)
+        for (let x = 0; x < sx; x++) {
+          const word = arena[baseWord + (image * sy + y) * rowWords + x];
+          const o = ((image * sy + y) * sx + x) * 4;
+          out[o] = word & 0xff;
+          out[o + 1] = (word >>> 8) & 0xff;
+          out[o + 2] = (word >>> 16) & 0xff;
+          out[o + 3] = (word >>> 24) & 0xff;
+        }
+    return { out, writes, ...decodeMinMaxU8(minmax.min, minmax.max) };
+  }
+
+  it.each([[[0, 0, 0]], [[1, 1, 0]], [[2, 2, 0]]] as [[number, number, number]][])(
+    "brick %j matches the CPU planar repack + interleave byte-for-byte",
+    (brickCoords) => {
+      const input = makeU8Input3(brickCoords);
+      const gpu = simulateBrickRgba8(input);
+      const planar = new Uint8Array(brickElementCount(input));
+      const cpu = repackBrick({ ...input, output: planar });
+      const voxels = 6 * 6 * 6;
+      const expected = interleaveSlabsRgba8(planar, voxels, 3, new Uint8Array(voxels * 4));
+      expect([...gpu.out]).toEqual([...expected]);
+      expect([...gpu.writes].every((count) => count === 1)).toBe(true);
+      expect(gpu.min).toBe(cpu.min);
+      expect(gpu.max).toBe(cpu.max);
+    },
+  );
+
+  it("lays out ceil(channels / 4) images of 4-byte texels", () => {
+    expect(arenaJobLayoutForKind("rgba8", [66, 66, 66], 3)).toEqual({
+      rowBytes: 512, // 66 × 4 = 264 → 512
+      imageRows: 66,
+      images: 66,
+      jobBytes: 512 * 66 * 66,
+    });
+    expect(arenaJobLayoutForKind("r8", [66, 66, 66], 3).images).toBe(66 * 3);
+  });
+
+  it("the rgba8 kernel addresses one word per texel and ORs the channel byte", () => {
+    expect(REPACK_KERNEL_RGBA8_WGSL).toContain("(((c >> 2u) * sz + z) * P.stored_xy.y + py) * P.row_words");
+    expect(REPACK_KERNEL_RGBA8_WGSL).toContain("value << (8u * (c & 3u))");
   });
 });

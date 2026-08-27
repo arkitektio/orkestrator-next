@@ -11,7 +11,9 @@ import {
   useGetCoordinateSystemQuery,
 } from "../api/graphql";
 import SceneCard from "../components/cards/SceneCard";
-import CoordinateGraphView from "../components/coordinates/CoordinateGraphView";
+import CoordinateGraphView, {
+  DEFAULT_MAX_DEPTH,
+} from "../components/coordinates/CoordinateGraphView";
 import EdgeTable, { assumedCount } from "../components/coordinates/EdgeTable";
 import { isReferenceFrame, residentLabel } from "../components/coordinates/residents";
 import { AnyTransformation } from "../components/coordinates/types";
@@ -47,7 +49,11 @@ export const CoordinateSystemPage = asDetailQueryRoute(
     // the graph walk is the schema's own answer, so partition its result rather
     // than adding a transformations(filters:) round trip.
     const { data: graphData } = useGetCoordinateGraphQuery({
-      variables: { coordinateSystem: system.id },
+      // DEFAULT_MAX_DEPTH, not omitted: the dedup this comment relies on is by
+      // query AND variables, so leaving maxDepth off here while the view passes
+      // it would make these two different queries — a second, unbounded walk
+      // fired alongside the bounded one, which is the exact cost being avoided.
+      variables: { coordinateSystem: system.id, maxDepth: DEFAULT_MAX_DEPTH },
     });
 
     const edges: AnyTransformation[] =

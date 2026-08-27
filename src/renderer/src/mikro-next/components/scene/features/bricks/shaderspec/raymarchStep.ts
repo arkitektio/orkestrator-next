@@ -222,3 +222,30 @@ export function attenuationAt(depthFrac: number): number {
 function clamp01(value: number): number {
   return Math.min(Math.max(value, 0), 1);
 }
+
+/**
+ * Per-slab twin of `occupancyUpperNorm` (`orkestrator.occPerSlab`): each
+ * visible slot reads the bracket of ITS OWN atlas slab (`slot.slab`) — the
+ * shader's per-slab sidecar plane at `z + slab · uOccSlabDepth` — instead of
+ * the brick-wide union. With every slab sharing one bracket this equals
+ * `occupancyUpperNorm` (pinned in the tests), and per slab it can only be
+ * tighter: a slab's own bracket is contained in the union.
+ */
+export function occupancyUpperNormPerSlab(
+  bounds: readonly { min: number; max: number }[],
+  dataMin: number,
+  dataMax: number,
+  slots: readonly (SlotTransfer & { slab: number })[],
+): number {
+  let upper = 0;
+  for (const slot of slots) {
+    if (!slot.visible) continue;
+    const bracket = bounds[slot.slab] ?? bounds[0];
+    upper = Math.max(
+      upper,
+      normalizeSlotValue(bracket.min, dataMin, dataMax, slot),
+      normalizeSlotValue(bracket.max, dataMin, dataMax, slot),
+    );
+  }
+  return upper;
+}

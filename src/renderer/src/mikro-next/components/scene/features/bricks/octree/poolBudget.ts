@@ -214,7 +214,7 @@ export function resolvePoolBudget(input: {
   deviceBudgetBytes: number;
   /** Number of DISTINCT POOLS (not layers) sharing that device budget. */
   poolCount: number;
-  /** Bytes one atlas slot occupies — `brickSlotBytes(spec, bytesPerVoxel)`. */
+  /** Bytes one atlas slot occupies — `atlasSlotBytes(spec, kind)`. */
   slotBytes: number;
   /** Bytes the ENTIRE pyramid would need if fully resident. */
   totalBrickBytes: number;

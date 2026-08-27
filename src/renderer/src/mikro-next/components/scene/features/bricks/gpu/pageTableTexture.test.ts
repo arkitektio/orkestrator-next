@@ -168,3 +168,75 @@ describe("hierarchical-occupancy aggregate sidecar (lazy)", () => {
     expect(writeTexture).toHaveBeenCalledTimes(3); // page + occupancy + aggregate
   });
 });
+
+describe("per-slab occupancy planes (orkestrator.occPerSlab)", () => {
+  it("stacks one RG8 plane per slab and uploads each plane with the shared dirty box", () => {
+    const { renderer, writeTexture } = makeRenderer();
+    const pageTable = createPageTableTexture(LAYOUT, 3);
+    expect(pageTable.occSlabs).toBe(3);
+    expect(pageTable.occupancy.image.depth).toBe(LAYOUT.size[2] * 3);
+    expect(pageTable.occMirrors[0].byteLength).toBe(4 * 4 * 2 * 3 * 2);
+
+    setPageEntry(pageTable, 0, [1, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT, [1, 2], [
+      [10, 20],
+      [30, 40],
+      [50, 60],
+    ]);
+    // Entry index of brick [1,0,0] is 1; plane stride is 32 entries.
+    const plane = 4 * 4 * 2;
+    expect([pageTable.occMirrors[0][2], pageTable.occMirrors[0][3]]).toEqual([10, 20]);
+    expect([pageTable.occMirrors[0][(plane + 1) * 2], pageTable.occMirrors[0][(plane + 1) * 2 + 1]]).toEqual([
+      30, 40,
+    ]);
+    expect([pageTable.occMirrors[0][(2 * plane + 1) * 2], pageTable.occMirrors[0][(2 * plane + 1) * 2 + 1]]).toEqual([
+      50, 60,
+    ]);
+    // Full-texture backing: plane s lives at z + s·d.
+    const texel = 17; // level offset [16,0,0] + brick [1,0,0], z 0
+    const planeTexels = 20 * 4 * 2;
+    expect(pageTable.occBacking[(planeTexels * 2 + texel) * 2]).toBe(50);
+
+    expect(flushPageTable(renderer, pageTable)).toBe(true);
+    // page + 3 occupancy planes (no lazy aggregate).
+    expect(writeTexture).toHaveBeenCalledTimes(4);
+    const [dest1, data1, layout1] = writeTexture.mock.calls[2];
+    expect(dest1.origin).toEqual([17, 0, 0 + LAYOUT.size[2]]);
+    expect(data1).toBe(pageTable.occMirrors[0]);
+    expect(layout1.offset).toBe(plane * 2 + ((0 * 4 + 0) * 4 + 1) * 2);
+  });
+
+  it("a missing per-slab texel falls back to the union texel, and a reset zeroes every plane", async () => {
+    const { PAGE_FLAG_UNMAPPED } = await import("../octree/pageTableLayout");
+    const pageTable = createPageTableTexture(LAYOUT, 2);
+    const plane = 4 * 4 * 2;
+    setPageEntry(pageTable, 0, [1, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT, [5, 6]);
+    expect([pageTable.occMirrors[0][2], pageTable.occMirrors[0][(plane + 1) * 2]]).toEqual([5, 5]);
+    setPageEntry(pageTable, 0, [1, 0, 0], null, PAGE_FLAG_UNMAPPED);
+    expect([pageTable.occMirrors[0][2], pageTable.occMirrors[0][(plane + 1) * 2]]).toEqual([0, 0]);
+  });
+
+  it("the aggregate sidecar carries the same planes", async () => {
+    const { setAggregateEntry } = await import("./pageTableTexture");
+    const pageTable = createPageTableTexture(LAYOUT, 2);
+    setAggregateEntry(pageTable, 0, [1, 0, 0], [1, 1], [
+      [2, 3],
+      [4, 5],
+    ]);
+    expect(pageTable.aggregate!.image.depth).toBe(LAYOUT.size[2] * 2);
+    const plane = 4 * 4 * 2;
+    expect([pageTable.aggMirrors![0][2], pageTable.aggMirrors![0][3]]).toEqual([2, 3]);
+    expect([pageTable.aggMirrors![0][(plane + 1) * 2], pageTable.aggMirrors![0][(plane + 1) * 2 + 1]]).toEqual([
+      4, 5,
+    ]);
+  });
+
+  it("a single-plane page table is byte-identical to the pre-flag layout", () => {
+    const { renderer, writeTexture } = makeRenderer();
+    const pageTable = createPageTableTexture(LAYOUT);
+    expect(pageTable.occSlabs).toBe(1);
+    setPageEntry(pageTable, 0, [1, 0, 0], [0, 0, 0], PAGE_FLAG_RESIDENT, [12, 200], [[1, 2]]);
+    expect([pageTable.occMirrors[0][2], pageTable.occMirrors[0][3]]).toEqual([1, 2]);
+    flushPageTable(renderer, pageTable);
+    expect(writeTexture).toHaveBeenCalledTimes(2);
+  });
+});

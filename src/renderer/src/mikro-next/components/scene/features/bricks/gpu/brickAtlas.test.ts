@@ -181,3 +181,38 @@ describe("lazy-mirror texture creation (the initTexture crash regression)", () =
     }
   });
 });
+
+describe("createBrickAtlas — rgba8", () => {
+  it("packs four slabs per texel: RGBA format, slot depth stored.z, 4 bytes/texel, no mirror", async () => {
+    const THREE = await import("three");
+    const { createBrickAtlas } = await import("./brickAtlas");
+    const spec = { payload: [4, 4, 4], border: 1, stored: [6, 6, 6], channelCount: 3 } as const;
+    const atlas = createBrickAtlas({
+      spec: spec as never,
+      dtype: "uint8",
+      kind: "rgba8",
+      desiredSlots: 2,
+      maxExtent: 64,
+      filter: "nearest",
+    });
+    expect(atlas.kind).toBe("rgba8");
+    expect(atlas.channelsPerTexel).toBe(4);
+    expect(atlas.slotSize).toEqual([6, 6, 6]);
+    expect(atlas.texture.format).toBe(THREE.RGBAFormat);
+    expect(atlas.texture.type).toBe(THREE.UnsignedByteType);
+    expect(atlas.dataScale).toBe(255);
+    expect(atlas.byteLength).toBe(atlas.size[0] * atlas.size[1] * atlas.size[2] * 4);
+    expect(atlas.backing).toBeNull();
+    // The r8 twin stacks the three slabs along z.
+    const r8 = createBrickAtlas({
+      spec: spec as never,
+      dtype: "uint8",
+      desiredSlots: 2,
+      maxExtent: 64,
+      filter: "nearest",
+    });
+    expect(r8.kind).toBe("r8");
+    expect(r8.channelsPerTexel).toBe(1);
+    expect(r8.slotSize).toEqual([6, 6, 18]);
+  });
+});

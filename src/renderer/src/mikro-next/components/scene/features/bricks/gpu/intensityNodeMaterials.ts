@@ -7,18 +7,29 @@ import * as TSLTyped from "three/tsl";
 // components write to) is hand-typed below.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TSL = TSLTyped as any;
-const { Fn, If, clamp, float, max, pow, uniform, uv, vec2, vec3, vec4 } = TSL;
+const { Fn, If, float, uniform, uv, vec2, vec3, vec4 } = TSL;
 
 import {
   commonMaterialSettings,
   emitChannelTap,
   emitResolveBrickResidency,
+  emitRgbTaps,
+  emitScalarNormalize,
   makeTraversalNodes,
   type TraversalNodesPublic,
   type UniformNodeLike,
 } from "./brickNodeMaterials";
 import type { LayerBrickPool } from "../residency/brickResidency";
 import { INTENSITY_ATLAS_ROW, type IntensityUniformData } from "./intensityUniforms";
+import type { RgbUniformData } from "./rgbUniforms";
+
+// FIXED-SHAPE materials: the 2D plane compositors for the recipe shapes
+// `resolveRenderKind` can declare — "intensity" (one scalar channel) and "rgb"
+// (three basis-tinted channels over one window). The 3D counterparts are the
+// `emitSimple` / `emitRgb` member arms of the volume raymarcher in
+// `brickNodeMaterials.ts`; the uniform data they are all handed comes from
+// `intensityUniforms.ts` / `rgbUniforms.ts`, each pinned equal to the general
+// builder's slots by its own test.
 
 /**
  * The compositor for a layer whose recipe shape is DECLARED.
@@ -112,30 +123,15 @@ export function updateIntensityNodes(
 }
 
 /**
- * The scalar transfer, inlined.
- *
- * A straight-line port of `makeChannelNormalize` MINUS the two things
- * `renderKind === "intensity"` rules out: the `chParamsA.element(i)` array read
- * (four plain uniforms instead) and the `invert` branch. The arithmetic — the
- * two clamps, the `max(…, 1e-5)` guards against a degenerate window, the
- * `0.999` ceiling, the `max(gamma, 1e-4)` — is IDENTICAL, deliberately: any
- * difference here would be a colour difference between the two paths, which is
- * exactly what the kill switch exists to bisect and what must never actually
- * happen.
+ * The scalar transfer for the intensity path: the SHARED `emitScalarNormalize`
+ * (the same emitter `makeChannelNormalize` wraps for the general path) fed
+ * plain uniforms instead of a `chParamsA.element(i)` read, and without the
+ * `invert` branch `renderKind === "intensity"` rules out. Sharing the emitter
+ * is what keeps the arithmetic identical by construction rather than by
+ * discipline.
  */
-const emitNormalize = (n: any, raw: any) => {
-  const baseNorm = clamp(
-    float(raw).sub(n.minValue).div(max(float(n.maxValue).sub(n.minValue), 0.00001)),
-    0.0,
-    1.0,
-  );
-  const climRange = max(n.uClimMax.sub(n.uClimMin), 0.00001);
-  const normalized = clamp(baseNorm.sub(n.uClimMin).div(climRange), 0.0, 0.999).toVar(
-    "iNorm",
-  );
-  normalized.assign(pow(normalized, max(n.uGamma, 0.0001)));
-  return normalized;
-};
+const emitNormalize = (n: any, raw: any) =>
+  emitScalarNormalize(n, { climMin: n.uClimMin, climMax: n.uClimMax, gamma: n.uGamma }, raw);
 
 /**
  * 2D plane compositor for a fixed-shape intensity layer.
@@ -194,5 +190,123 @@ export function createIntensityPlaneMaterial(
   return {
     material,
     nodes: { ...t, ...n, uDesiredLevel, uSlabBaseZ, uBaseShape } as IntensityPlaneNodes,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// RGB
+// ---------------------------------------------------------------------------
+
+export type RgbPlaneNodes = TraversalNodesPublic & {
+  /** The pool's base-native value range — it MOVES on an auto-range pool. */
+  minValue: UniformNodeLike<number>;
+  maxValue: UniformNodeLike<number>;
+  /** The ONE contrast window all three channels share. */
+  uClimMin: UniformNodeLike<number>;
+  uClimMax: UniformNodeLike<number>;
+  /** Atlas-slab index of the red / green / blue channel. */
+  uSlabR: UniformNodeLike<number>;
+  uSlabG: UniformNodeLike<number>;
+  uSlabB: UniformNodeLike<number>;
+  uDesiredLevel: UniformNodeLike<number>;
+  uSlabBaseZ: UniformNodeLike<number>;
+  uBaseShape: UniformNodeLike<THREE.Vector3>;
+};
+
+export type RgbPlaneBundle = {
+  material: NodeMaterial;
+  nodes: RgbPlaneNodes;
+};
+
+const makeRgbNodes = (data: RgbUniformData): any => ({
+  minValue: uniform(0, "float"),
+  maxValue: uniform(1, "float"),
+  uClimMin: uniform(data.climMin, "float"),
+  uClimMax: uniform(data.climMax, "float"),
+  uSlabR: uniform(data.slabR, "int"),
+  uSlabG: uniform(data.slabG, "int"),
+  uSlabB: uniform(data.slabB, "int"),
+});
+
+/** Push fresh uniform data into an existing RGB bundle (no rebuild). Nothing
+ * to adopt: this material owns no textures beyond the pool's. */
+export function updateRgbNodes(nodes: RgbPlaneNodes, data: RgbUniformData): void {
+  nodes.uClimMin.value = data.climMin;
+  nodes.uClimMax.value = data.climMax;
+  nodes.uSlabR.value = data.slabR;
+  nodes.uSlabG.value = data.slabG;
+  nodes.uSlabB.value = data.slabB;
+}
+
+/**
+ * The RGB transfer: the shared `emitScalarNormalize` per slab with the ONE
+ * window and NO gamma (`pow(x, 1)` is `x`; the omission is exact).
+ * CPU mirror: `shaderspec/rgbComposite.ts` `rgbSampleContribution`.
+ */
+export const emitRgbNormalize = (n: any, raw: { r: any; g: any; b: any }): any => {
+  const window = { climMin: n.uClimMin, climMax: n.uClimMax, gamma: null };
+  return vec3(
+    emitScalarNormalize(n, window, raw.r),
+    emitScalarNormalize(n, window, raw.g),
+    emitScalarNormalize(n, window, raw.b),
+  );
+};
+
+/**
+ * 2D plane compositor for a fixed-shape RGB layer.
+ *
+ * Same traversal as the intensity plane (one residency resolve per pixel, then
+ * taps), and the composite is the identity: the general path's contribution
+ * for slot k is a CONSTANT basis tint × (opacity 1 · norm_k) summed additively
+ * over a zero accumulator — see `rgbUniforms.ts` for why the tint rows are
+ * constant — so three taps and three normalizes ARE the colour. Dropped
+ * relative to the general plane material, per pixel: the 16-slot loop with its
+ * `Break`/`Continue`, both `chParamsA/B` uniform-array bindings, the
+ * `sourceParams` kind tap, the `cursorParams` binding, THREE colormap-atlas
+ * samples and the colormap atlas texture itself, three blend branches, three
+ * `pow`s. Bindings: the three traversal `uniformArray`s only.
+ */
+export function createRgbPlaneMaterial(
+  pool: LayerBrickPool,
+  dataRange: { minValue: number; maxValue: number },
+  data: RgbUniformData,
+): RgbPlaneBundle {
+  const t = makeTraversalNodes(pool, dataRange);
+  const n = makeRgbNodes(data);
+  n.minValue.value = dataRange.minValue;
+  n.maxValue.value = dataRange.maxValue;
+
+  const uDesiredLevel = uniform(0, "int");
+  const uSlabBaseZ = uniform(0, "float");
+  const uBaseShape = uniform(new THREE.Vector3(1, 1, 1), "vec3");
+
+  const material = new NodeMaterial();
+  commonMaterialSettings(material);
+  material.depthTest = false;
+
+  material.fragmentNode = Fn(() => {
+    const baseVoxel = vec3(
+      uv().x.mul(uBaseShape.x),
+      uv().y.mul(uBaseShape.y),
+      uSlabBaseZ,
+    ).toVar("pxBaseVoxel");
+
+    const accum = vec3(0.0).toVar("accum");
+
+    const resolved = emitResolveBrickResidency(t, baseVoxel, uDesiredLevel, {
+      slabZ: true,
+    });
+
+    If(resolved.status.greaterThanEqual(0.5), () => {
+      // ONE tap on an rgba8 atlas, three otherwise (emitRgbTaps).
+      accum.assign(emitRgbNormalize(n, emitRgbTaps(t, resolved, [n.uSlabR, n.uSlabG, n.uSlabB], "ch")));
+    });
+
+    return vec4(accum, 1.0);
+  })();
+
+  return {
+    material,
+    nodes: { ...t, ...n, uDesiredLevel, uSlabBaseZ, uBaseShape } as RgbPlaneNodes,
   };
 }

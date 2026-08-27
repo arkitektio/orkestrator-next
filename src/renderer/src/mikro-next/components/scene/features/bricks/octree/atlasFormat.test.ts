@@ -77,3 +77,45 @@ describe("atlasKindForGeometry (planner ↔ pool slot-byte agreement)", () => {
     expect(atlasBytesPerVoxel("r8")).toBe(1);
   });
 });
+
+describe("rgba8 atlases (3/4-channel uint8 pools)", () => {
+  const rgbGeo = (dtype: string, slabs: number, exact = false): LayerLevelGeometry =>
+    ({
+      phasorBins: 0,
+      slabs: Array.from({ length: slabs }, (_, channel) => ({ kind: "channel", channel })),
+      channelCount: slabs,
+      channelSlabCount: slabs,
+      exactValues: exact,
+      levels: [{ dtype }],
+    }) as unknown as LayerLevelGeometry;
+
+  it("picks rgba8 for 3- and 4-channel uint8 intensity geometries only", async () => {
+    const { atlasChannelsPerTexel, atlasSlotBytes, atlasSlotDepth } = await import("./atlasFormat");
+    expect(atlasKindForGeometry(rgbGeo("uint8", 3))).toBe("rgba8");
+    expect(atlasKindForGeometry(rgbGeo("uint8", 4))).toBe("rgba8");
+    expect(atlasKindForGeometry(rgbGeo("uint8", 1))).toBe("r8");
+    expect(atlasKindForGeometry(rgbGeo("uint8", 2))).toBe("r8"); // would double bytes
+    expect(atlasKindForGeometry(rgbGeo("uint8", 5))).toBe("r8");
+    expect(atlasKindForGeometry(rgbGeo("uint16", 3))).toBe("r16f");
+    expect(atlasKindForGeometry(rgbGeo("uint8", 3, true))).toBe("r8"); // labels
+    expect(atlasChannelsPerTexel("rgba8")).toBe(4);
+    expect(atlasChannelsPerTexel("r8")).toBe(1);
+    const spec = { payload: [64, 64, 64], border: 1, stored: [66, 66, 66], channelCount: 3 } as const;
+    // Three slabs in one 4-byte texel: slot depth = stored.z, bytes = 4/3 of r8.
+    expect(atlasSlotDepth(spec, "rgba8")).toBe(66);
+    expect(atlasSlotDepth(spec, "r8")).toBe(66 * 3);
+    expect(atlasSlotBytes(spec, "rgba8")).toBe(66 * 66 * 66 * 4);
+    expect(atlasSlotBytes(spec, "r8")).toBe(66 * 66 * 66 * 3);
+    expect(atlasSlotBytes(spec, "r16f")).toBe(66 * 66 * 66 * 3 * 2);
+  });
+
+  it("the rgba kill switch restores r8", async () => {
+    const { setRgbaAtlasesEnabled } = await import("./atlasFormat");
+    setRgbaAtlasesEnabled(false);
+    try {
+      expect(atlasKindForGeometry(rgbGeo("uint8", 3))).toBe("r8");
+    } finally {
+      setRgbaAtlasesEnabled(true);
+    }
+  });
+});

@@ -5,6 +5,8 @@ import { getWebGPUDevice, type SceneRenderer } from "../../../platform/gpu/scene
 import { createBrickAtlas, disposeBrickAtlas, type BrickAtlas } from "./brickAtlas";
 import { createGpuRepacker, type GpuRepacker } from "./computeRepack";
 import type { RepackDispatchInput } from "./repackKernel";
+import { R16F_DATA_SCALE, type AtlasKind } from "../octree/atlasFormat";
+import { encodeHalfArray } from "../octree/halfFloat";
 
 /**
  * Dev-only GPU↔CPU repack parity check, run from the DebugPanel on the LIVE
@@ -48,7 +50,9 @@ const BYTES_PER_ROW_ALIGN = 256;
 type Fixture = {
   input: RepackDispatchInput;
   elementCount: number;
-  dtype: "float32" | "uint8";
+  dtype: "float32" | "uint8" | "uint16";
+  /** Atlas kind override (r16f: the dtype alone would pick r32f). */
+  kind?: AtlasKind;
 };
 
 /** Synthetic f32 brick: 4³ payload + border, 2 channels, 2×2 spatial chunks
@@ -188,6 +192,14 @@ function makeU8Fixture(): Fixture {
   };
 }
 
+/** The f32 fixture's data through an r16f atlas: uint16-range values (plus
+ * the -999 fill outside the volume, which the half encode carries as a
+ * negative half exactly like the worker path does). */
+function makeR16Fixture(): Fixture {
+  const base = makeF32Fixture();
+  return { ...base, dtype: "uint16", kind: "r16f" };
+}
+
 export async function runGpuRepackSelfTest(
   renderer: SceneRenderer,
 ): Promise<GpuRepackSelfTestResult> {
@@ -204,7 +216,13 @@ export async function runGpuRepackSelfTest(
     if (!f32.pass) return { ...f32, detail: `f32: ${f32.detail}` };
     const r8 = await runFixture(renderer, repacker, makeU8Fixture());
     if (!r8.pass) return { ...r8, detail: `r8: ${r8.detail}` };
-    return { supported: true, pass: true, detail: `f32: ${f32.detail}; r8: ${r8.detail}` };
+    const r16 = await runFixture(renderer, repacker, makeR16Fixture());
+    if (!r16.pass) return { ...r16, detail: `r16f: ${r16.detail}` };
+    return {
+      supported: true,
+      pass: true,
+      detail: `f32: ${f32.detail}; r8: ${r8.detail}; r16f: ${r16.detail}`,
+    };
   } finally {
     repacker.dispose();
   }
@@ -223,6 +241,7 @@ async function runFixture(
     maxExtent: 64,
     filter: "nearest",
     computeStorage: true,
+    kind: fixture.kind,
   });
 
   try {
@@ -254,10 +273,19 @@ async function runFixture(
       return { supported: true, pass: false, detail: "dispatch failed (see console)" };
     }
 
-    // CPU truth.
-    const cpuOut =
+    // CPU truth. r16f: the worker path — raw repack into a float scratch,
+    // then the half encode — compared as half BITS with 1-ulp tolerance
+    // (pack2x16float's rounding is implementation-defined among the nearest).
+    const cpuScratch =
       dtype === "uint8" ? new Uint8Array(elementCount) : new Float32Array(elementCount);
-    const cpuResult = repackBrick({ ...input, output: cpuOut });
+    const cpuResult = repackBrick({ ...input, output: cpuScratch });
+    let cpuOut: Uint8Array | Uint16Array | Float32Array = cpuScratch;
+    if (atlas.kind === "r16f") {
+      const half = new Uint16Array(elementCount);
+      encodeHalfArray(cpuScratch as Float32Array, half, 1 / R16F_DATA_SCALE);
+      cpuOut = half;
+    }
+    const tolerance = atlas.kind === "r16f" ? 1 : 0;
 
     // Read the slot back (the atlas is exactly one slot).
     const gpuOut = await readAtlasSlot(renderer, atlas, [
@@ -270,7 +298,9 @@ async function runFixture(
     let firstMismatch = "";
     for (let i = 0; i < elementCount; i++) {
       const same =
-        cpuOut[i] === gpuOut[i] || (Number.isNaN(cpuOut[i]) && Number.isNaN(gpuOut[i]));
+        cpuOut[i] === gpuOut[i] ||
+        Math.abs(cpuOut[i] - gpuOut[i]) <= tolerance ||
+        (Number.isNaN(cpuOut[i]) && Number.isNaN(gpuOut[i]));
       if (!same && mismatches++ === 0) {
         firstMismatch = ` first@${i}: cpu=${cpuOut[i]} gpu=${gpuOut[i]}`;
       }
@@ -279,7 +309,13 @@ async function runFixture(
     const statsMatch =
       gpu.min === cpuResult.min &&
       gpu.max === cpuResult.max &&
-      gpu.uniformValue === cpuResult.uniformValue;
+      gpu.uniformValue === cpuResult.uniformValue &&
+      // Per-slab brackets (orkestrator.occPerSlab): the kernel's per-channel
+      // reduction must agree with the CPU scan slab for slab.
+      gpu.slabRanges.length === cpuResult.slabRanges.length &&
+      gpu.slabRanges.every(
+        (range, s) => range[0] === cpuResult.slabRanges[s][0] && range[1] === cpuResult.slabRanges[s][1],
+      );
 
     const pass = mismatches === 0 && statsMatch;
     return {
@@ -289,7 +325,8 @@ async function runFixture(
         ? `voxels + min/max identical (min ${gpu.min}, max ${gpu.max})`
         : `${mismatches}/${elementCount} voxel mismatches${firstMismatch};` +
           ` minmax gpu=[${gpu.min},${gpu.max},${gpu.uniformValue}]` +
-          ` cpu=[${cpuResult.min},${cpuResult.max},${cpuResult.uniformValue}]`,
+          ` cpu=[${cpuResult.min},${cpuResult.max},${cpuResult.uniformValue}]` +
+          ` slabs gpu=${JSON.stringify(gpu.slabRanges)} cpu=${JSON.stringify(cpuResult.slabRanges)}`,
     };
   } catch (error) {
     return { supported: true, pass: false, detail: String(error) };
@@ -302,14 +339,14 @@ async function readAtlasSlot(
   renderer: SceneRenderer,
   atlas: BrickAtlas,
   size: [number, number, number],
-): Promise<Float32Array | Uint8Array> {
+): Promise<Float32Array | Uint16Array | Uint8Array> {
   const device = getWebGPUDevice(renderer) as unknown as ReadbackDevice;
   const backend = (renderer as unknown as { backend: { get(o: object): { texture?: unknown } } })
     .backend;
   const gpuTexture = backend.get(atlas.texture)?.texture;
   if (!gpuTexture) throw new Error("atlas GPUTexture missing after initTexture");
 
-  const bytesPerTexel = atlas.kind === "r8" ? 1 : 4;
+  const bytesPerTexel = atlas.kind === "r8" ? 1 : atlas.kind === "r16f" ? 2 : 4;
   const bytesPerRow =
     Math.ceil((size[0] * bytesPerTexel) / BYTES_PER_ROW_ALIGN) * BYTES_PER_ROW_ALIGN;
   const buffer = device.createBuffer({
@@ -327,17 +364,22 @@ async function readAtlasSlot(
     device.queue.submit([encoder.finish()]);
     await buffer.mapAsync(0x0001); // MAP_MODE_READ
     const mapped = buffer.getMappedRange();
+    const count = size[0] * size[1] * size[2];
     const out =
       atlas.kind === "r8"
-        ? new Uint8Array(size[0] * size[1] * size[2])
-        : new Float32Array(size[0] * size[1] * size[2]);
+        ? new Uint8Array(count)
+        : atlas.kind === "r16f"
+          ? new Uint16Array(count)
+          : new Float32Array(count);
     for (let z = 0; z < size[2]; z++) {
       for (let y = 0; y < size[1]; y++) {
         const offset = (z * size[1] + y) * bytesPerRow;
         const row =
           atlas.kind === "r8"
             ? new Uint8Array(mapped, offset, size[0])
-            : new Float32Array(mapped, offset, size[0]);
+            : atlas.kind === "r16f"
+              ? new Uint16Array(mapped, offset, size[0])
+              : new Float32Array(mapped, offset, size[0]);
         out.set(row as never, (z * size[1] + y) * size[0]);
       }
     }

@@ -73,7 +73,54 @@ export type MergedMemberUniforms = {
    * when this flips, which the layer's bundle memo keys on.
    */
   isSimpleIntensity: boolean;
+  /**
+   * Whether this member is THREE basis-tinted channels over one window —
+   * `LayerState.renderKind === "rgb"` AND exactly three used slots (a member
+   * truncated by the merged 16 keeps the general path, as above).
+   *
+   * Third compile-time input. The `emitRgb` arm emits three taps assembled
+   * straight into a vec3 — no LUT sample, no `pow`, no loop — exact because
+   * the general path's tint rows are constant (see `rgbUniforms.ts`).
+   */
+  isRgb: boolean;
 };
+
+/**
+ * The plain-scalar uniforms a FIXED-SHAPE member (simple intensity / rgb)
+ * reads instead of indexing `chParamsA/B` — sliced out of the merged arrays
+ * for that member's slots, so they are byte-identical to what the general
+ * arm would have read at `slotFirst..slotFirst+slotCount`. The layer pushes
+ * these through `updateMergedMemberNodes`; the material never touches the
+ * arrays for such a member (and, when EVERY member is fixed-shape, does not
+ * allocate them at all).
+ */
+export type FixedMemberUniforms = {
+  /** Up to three slab indices (slot order). Unused entries are 0. */
+  slabs: [number, number, number];
+  climMin: number;
+  climMax: number;
+  gamma: number;
+  /** Colormap-atlas row of slot 0 (intensity only; rgb samples no LUT). */
+  row: number;
+};
+
+export function fixedMemberUniforms(
+  data: Pick<ChannelUniformData, "channelIndex" | "climMin" | "climMax" | "gamma" | "row">,
+  member: Pick<MergedMemberUniforms, "slotFirst" | "slotCount">,
+): FixedMemberUniforms {
+  const at = (k: number) => member.slotFirst + Math.min(k, Math.max(0, member.slotCount - 1));
+  return {
+    slabs: [
+      data.channelIndex[at(0)] ?? 0,
+      data.channelIndex[at(1)] ?? 0,
+      data.channelIndex[at(2)] ?? 0,
+    ],
+    climMin: data.climMin[member.slotFirst] ?? 0,
+    climMax: data.climMax[member.slotFirst] ?? 1,
+    gamma: data.gamma[member.slotFirst] ?? 1,
+    row: data.row[member.slotFirst] ?? 0,
+  };
+}
 
 export type MergedChannelUniformData = Omit<
   ChannelUniformData,
@@ -225,6 +272,7 @@ export function buildMergedChannelUniformData(
       // removable — a truncated member (its slots did not fit the merged 16)
       // must keep the general path.
       isSimpleIntensity: input.layer?.renderKind === "intensity" && slotCount === 1,
+      isRgb: input.layer?.renderKind === "rgb" && slotCount === 3,
     });
 
     single.atlas.dispose();

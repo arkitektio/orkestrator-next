@@ -1,5 +1,6 @@
 import type { RepackBrickInput } from "../octree/brickRepack";
 import type { Vec3 } from "../../../platform/coords/levelGeometry";
+import { R16F_DATA_SCALE } from "../octree/atlasFormat";
 
 /**
  * The fused GPU brick-repack kernel (compute-shader port of `repackBrick`):
@@ -85,12 +86,35 @@ struct Params {
   stride_z: u32,
   out_base_word: u32,
   row_words: u32,
+  // First min/max entry of this brick: entry (minmax_base + c) holds channel
+  // slab c's pair (per-slab occupancy). Occupies what was the vec3 alignment
+  // pad before grid_origin, so the struct is still 160 bytes.
+  minmax_base: u32,
   // Origin of the dispatch grid inside the stored brick, and the number of z
   // texels this chunk owns. gid is relative to these, so the grid covers only
   // the box this dispatch can actually write.
   grid_origin: vec3<u32>,
   z_span: u32,
 }
+`;
+
+/** Per-workgroup min/max accumulators, one per channel of the chunk's range
+ * (a 4×4×4 workgroup can straddle channels along z). Bounded by the brick's
+ * slab cap (`MAX_BRICK_CHANNELS`). */
+const MAX_KERNEL_CHANNELS = 16;
+
+/** The per-slab reduction epilogue both kernels share: flush this workgroup's
+ * per-channel accumulators into the brick's `minmax_base + c` entries.
+ * Untouched sentinels are global no-ops, so no per-channel branch. */
+const REDUCE_EPILOGUE_WGSL = /* wgsl */ `
+  if (lidx == 0u) {
+    let count = min(P.chan_end - P.chan_start, ${MAX_KERNEL_CHANNELS}u);
+    for (var k = 0u; k < count; k = k + 1u) {
+      let entry = (P.minmax_base + P.chan_start + k) * 2u;
+      atomicMin(&minmax[entry], atomicLoad(&wg_min[k]));
+      atomicMax(&minmax[entry + 1u], atomicLoad(&wg_max[k]));
+    }
+  }
 `;
 
 export const REPACK_KERNEL_WGSL = /* wgsl */ `
@@ -100,8 +124,8 @@ ${PARAMS_STRUCT_WGSL}
 @group(0) @binding(2) var out_atlas: texture_storage_3d<r32float, write>;
 @group(1) @binding(0) var<storage, read> chunk_data: array<f32>;
 
-var<workgroup> wg_min: atomic<u32>;
-var<workgroup> wg_max: atomic<u32>;
+var<workgroup> wg_min: array<atomic<u32>, 16>;
+var<workgroup> wg_max: array<atomic<u32>, 16>;
 
 // Order-preserving f32 → u32 map: monotone for all non-NaN values.
 fn encode_order(v: f32) -> u32 {
@@ -114,15 +138,16 @@ fn main(
   @builtin(global_invocation_id) gid: vec3<u32>,
   @builtin(local_invocation_index) lidx: u32,
 ) {
-  if (lidx == 0u) {
-    atomicStore(&wg_min, ${MINMAX_INIT_MIN}u);
-    atomicStore(&wg_max, ${MINMAX_INIT_MAX}u);
+  if (lidx < ${MAX_KERNEL_CHANNELS}u) {
+    atomicStore(&wg_min[lidx], ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max[lidx], ${MINMAX_INIT_MAX}u);
   }
   workgroupBarrier();
 
   let sz = P.stored_z;
   var contributes = false;
   var value = 0.0;
+  var slab = 0u; // c - chan_start of the owned texel (per-slab accumulator)
 
   // No early returns before the barriers (uniform control flow); out-of-range
   // and non-owned invocations just skip the work.
@@ -150,6 +175,7 @@ fn main(
         + local.y * P.stride_y
         + local.x * P.stride_x;
       value = chunk_data[src];
+      slab = c - P.chan_start;
       textureStore(
         out_atlas,
         P.slot_origin + vec3<u32>(px, py, c * sz + z),
@@ -161,16 +187,11 @@ fn main(
 
   if (contributes) {
     let e = encode_order(value);
-    atomicMin(&wg_min, e);
-    atomicMax(&wg_max, e);
+    atomicMin(&wg_min[slab], e);
+    atomicMax(&wg_max[slab], e);
   }
   workgroupBarrier();
-
-  if (lidx == 0u) {
-    // Flushing the untouched sentinels is a global no-op — no branch needed.
-    atomicMin(&minmax[P.brick_index * 2u], atomicLoad(&wg_min));
-    atomicMax(&minmax[P.brick_index * 2u + 1u], atomicLoad(&wg_max));
-  }
+${REDUCE_EPILOGUE_WGSL}
 }
 `;
 
@@ -188,23 +209,24 @@ ${PARAMS_STRUCT_WGSL}
 // element index below is a BYTE index into this array.
 @group(1) @binding(0) var<storage, read> chunk_data: array<u32>;
 
-var<workgroup> wg_min: atomic<u32>;
-var<workgroup> wg_max: atomic<u32>;
+var<workgroup> wg_min: array<atomic<u32>, 16>;
+var<workgroup> wg_max: array<atomic<u32>, 16>;
 
 @compute @workgroup_size(${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE})
 fn main(
   @builtin(global_invocation_id) gid: vec3<u32>,
   @builtin(local_invocation_index) lidx: u32,
 ) {
-  if (lidx == 0u) {
-    atomicStore(&wg_min, ${MINMAX_INIT_MIN}u);
-    atomicStore(&wg_max, ${MINMAX_INIT_MAX}u);
+  if (lidx < ${MAX_KERNEL_CHANNELS}u) {
+    atomicStore(&wg_min[lidx], ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max[lidx], ${MINMAX_INIT_MAX}u);
   }
   workgroupBarrier();
 
   let sz = P.stored_z;
   var contributes = false;
   var value = 0u;
+  var slab = 0u; // c - chan_start of the owned texel (per-slab accumulator)
 
   // No early returns before the barriers (uniform control flow); out-of-range
   // and non-owned invocations just skip the work.
@@ -232,6 +254,7 @@ fn main(
         + local.y * P.stride_y
         + local.x * P.stride_x;
       value = extractBits(chunk_data[src >> 2u], 8u * (src & 3u), 8u);
+      slab = c - P.chan_start;
       let word = P.out_base_word
         + ((c * sz + z) * P.stored_xy.y + py) * P.row_words
         + (px >> 2u);
@@ -242,16 +265,175 @@ fn main(
 
   if (contributes) {
     // Raw u8 values are already order-preserving as u32 — no bit trick.
-    atomicMin(&wg_min, value);
-    atomicMax(&wg_max, value);
+    atomicMin(&wg_min[slab], value);
+    atomicMax(&wg_max[slab], value);
+  }
+  workgroupBarrier();
+${REDUCE_EPILOGUE_WGSL}
+}
+`;
+
+/**
+ * r16f variant (uint16 intensity pools, roadmap R3 atlases): the r8 ARENA
+ * kernel's structure with TWO half-float texels per u32 word. `r16float` is
+ * not a storage-texture format, so — exactly like r8 — the output rides a
+ * zero-cleared u32 arena that the device half `copyBufferToTexture`s into
+ * the atlas (any format is a valid copy destination). Each owned texel packs
+ * `raw / R16F_DATA_SCALE` with `pack2x16float` into its 16-bit lane and ORs
+ * it in: word-exclusive ownership does NOT hold here either (`dest_origin.x`
+ * carries the border offset, so x-parity flips at chunk seams and one word
+ * can straddle two dispatches), which is what keeps the OR load-bearing.
+ * Min/max reduce the RAW f32 value through `encode_order`, per slab, so the
+ * readback decodes with the f32 path's `decodeMinMax`. CPU lockstep:
+ * `halfFloat.ts` `encodeHalfArray(scratch, out, 1 / R16F_DATA_SCALE)` — the
+ * worker path; `pack2x16float`'s rounding is implementation-defined among
+ * the nearest halves, so the GPU self-test tolerates 1 ulp there.
+ */
+export const REPACK_KERNEL_R16_WGSL = /* wgsl */ `
+${PARAMS_STRUCT_WGSL}
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage, read_write> minmax: array<atomic<u32>>;
+// Output arena: 2 half-float texels per word, rows padded to P.row_words.
+@group(0) @binding(2) var<storage, read_write> out_words: array<atomic<u32>>;
+@group(1) @binding(0) var<storage, read> chunk_data: array<f32>;
+
+var<workgroup> wg_min: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+var<workgroup> wg_max: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+
+// Order-preserving f32 → u32 map: monotone for all non-NaN values.
+fn encode_order(v: f32) -> u32 {
+  let b = bitcast<u32>(v);
+  return select(b | 0x80000000u, ~b, (b & 0x80000000u) != 0u);
+}
+
+const R16_INV_SCALE: f32 = ${1 / R16F_DATA_SCALE};
+
+@compute @workgroup_size(${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE})
+fn main(
+  @builtin(global_invocation_id) gid: vec3<u32>,
+  @builtin(local_invocation_index) lidx: u32,
+) {
+  if (lidx < ${MAX_KERNEL_CHANNELS}u) {
+    atomicStore(&wg_min[lidx], ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max[lidx], ${MINMAX_INIT_MAX}u);
   }
   workgroupBarrier();
 
-  if (lidx == 0u) {
-    // Flushing the untouched sentinels is a global no-op — no branch needed.
-    atomicMin(&minmax[P.brick_index * 2u], atomicLoad(&wg_min));
-    atomicMax(&minmax[P.brick_index * 2u + 1u], atomicLoad(&wg_max));
+  let sz = P.stored_z;
+  var contributes = false;
+  var value = 0.0;
+  var slab = 0u;
+
+  let span = max(1u, P.z_span);
+  let px = P.grid_origin.x + gid.x;
+  let py = P.grid_origin.y + gid.y;
+  let c = P.chan_start + gid.z / span;
+  let z = P.grid_origin.z + gid.z % span;
+  if (px < P.stored_xy.x && py < P.stored_xy.y && z < sz && c < P.chan_end) {
+    let g = clamp(
+      P.dest_origin + vec3<i32>(i32(px), i32(py), i32(z)),
+      P.fetch_min,
+      P.fetch_max - vec3<i32>(1),
+    );
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start) {
+      let local = vec3<u32>(g - P.chunk_origin);
+      let src = P.fixed_base
+        + (c - P.chan_start) * P.stride_c
+        + local.z * P.stride_z
+        + local.y * P.stride_y
+        + local.x * P.stride_x;
+      value = chunk_data[src];
+      slab = c - P.chan_start;
+      let half = pack2x16float(vec2<f32>(value * R16_INV_SCALE, 0.0)) & 0xffffu;
+      let word = P.out_base_word
+        + ((c * sz + z) * P.stored_xy.y + py) * P.row_words
+        + (px >> 1u);
+      atomicOr(&out_words[word], half << (16u * (px & 1u)));
+      contributes = value == value; // NaN never enters min/max (CPU parity)
+    }
   }
+
+  if (contributes) {
+    let e = encode_order(value);
+    atomicMin(&wg_min[slab], e);
+    atomicMax(&wg_max[slab], e);
+  }
+  workgroupBarrier();
+${REDUCE_EPILOGUE_WGSL}
+}
+`;
+
+/**
+ * rgba8 variant (3/4-channel uint8 pools — `atlasFormat.ts` `rgba8`): the r8
+ * ARENA kernel with the channel slabs INTERLEAVED — texel `(px, py, z)` of
+ * slab group `c >> 2` holds slab `c` in byte `c & 3`. Word math is therefore
+ * one word per texel (`+ px`, not `px >> 2`), the image count is
+ * `stored.z · ceil(channels / 4)`, and the OR is load-bearing for a new
+ * reason: the channel axis is commonly chunked per channel (OME-Zarr c=1
+ * chunks), so the four bytes of one texel arrive from up to four dispatches.
+ * Min/max reduce raw bytes per slab, exactly like r8 (`decodeMinMaxU8`).
+ */
+export const REPACK_KERNEL_RGBA8_WGSL = /* wgsl */ `
+${PARAMS_STRUCT_WGSL}
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage, read_write> minmax: array<atomic<u32>>;
+// Output arena: one rgba8 texel per word, rows padded to P.row_words.
+@group(0) @binding(2) var<storage, read_write> out_words: array<atomic<u32>>;
+@group(1) @binding(0) var<storage, read> chunk_data: array<u32>;
+
+var<workgroup> wg_min: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+var<workgroup> wg_max: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+
+@compute @workgroup_size(${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE})
+fn main(
+  @builtin(global_invocation_id) gid: vec3<u32>,
+  @builtin(local_invocation_index) lidx: u32,
+) {
+  if (lidx < ${MAX_KERNEL_CHANNELS}u) {
+    atomicStore(&wg_min[lidx], ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max[lidx], ${MINMAX_INIT_MAX}u);
+  }
+  workgroupBarrier();
+
+  let sz = P.stored_z;
+  var contributes = false;
+  var value = 0u;
+  var slab = 0u;
+
+  let span = max(1u, P.z_span);
+  let px = P.grid_origin.x + gid.x;
+  let py = P.grid_origin.y + gid.y;
+  let c = P.chan_start + gid.z / span;
+  let z = P.grid_origin.z + gid.z % span;
+  if (px < P.stored_xy.x && py < P.stored_xy.y && z < sz && c < P.chan_end) {
+    let g = clamp(
+      P.dest_origin + vec3<i32>(i32(px), i32(py), i32(z)),
+      P.fetch_min,
+      P.fetch_max - vec3<i32>(1),
+    );
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start) {
+      let local = vec3<u32>(g - P.chunk_origin);
+      let src = P.fixed_base
+        + (c - P.chan_start) * P.stride_c
+        + local.z * P.stride_z
+        + local.y * P.stride_y
+        + local.x * P.stride_x;
+      value = extractBits(chunk_data[src >> 2u], 8u * (src & 3u), 8u);
+      slab = c - P.chan_start;
+      let word = P.out_base_word
+        + (((c >> 2u) * sz + z) * P.stored_xy.y + py) * P.row_words
+        + px;
+      atomicOr(&out_words[word], value << (8u * (c & 3u)));
+      contributes = true; // u8 has no NaN — every owned texel contributes
+    }
+  }
+
+  if (contributes) {
+    atomicMin(&wg_min[slab], value);
+    atomicMax(&wg_max[slab], value);
+  }
+  workgroupBarrier();
+${REDUCE_EPILOGUE_WGSL}
 }
 `;
 
@@ -265,6 +447,10 @@ export type KernelDispatch = {
   stored: Vec3;
   channelCount: number;
   brickIndex: number;
+  /** First `minmax` entry of this brick; slab c reduces into entry
+   * `minmaxBase + c` (per-slab occupancy). Defaults to `brickIndex` for the
+   * single-entry-per-brick layout the tests simulate. */
+  minmaxBase: number;
   fetchMin: Vec3;
   fetchMax: Vec3;
   chanStart: number;
@@ -353,6 +539,7 @@ export function buildKernelDispatches(
   input: RepackDispatchInput,
   slotOrigin: Vec3,
   brickIndex: number,
+  minmaxBase: number = brickIndex,
 ): KernelDispatch[] {
   const { spec, level, axes, brickBox, fetchBox, fixedOffsets, chunks } = input;
   const { xPos, yPos, zPos, intensityPos } = axes;
@@ -418,6 +605,7 @@ export function buildKernelDispatches(
       stored,
       channelCount,
       brickIndex,
+      minmaxBase,
       fetchMin,
       fetchMax,
       chanStart,
@@ -503,7 +691,7 @@ export function packKernelParams(
   w[32] = d.strideZ;
   w[33] = r8Out?.outBaseWord ?? 0;
   w[34] = r8Out?.rowWords ?? 0;
-  w[35] = 0; // vec3 alignment pad before grid_origin
+  w[35] = d.minmaxBase; // (was the vec3 alignment pad before grid_origin)
   w[36] = d.gridOrigin[0];
   w[37] = d.gridOrigin[1];
   w[38] = d.gridOrigin[2];
@@ -531,7 +719,36 @@ export function r8JobLayout(
   stored: Vec3,
   channelCount: number,
 ): { rowBytes: number; imageRows: number; images: number; jobBytes: number } {
-  const rowBytes = Math.ceil(stored[0] / 256) * 256;
+  return arenaJobLayout(stored, channelCount, 1);
+}
+
+/**
+ * `r8JobLayout` generalised over the texel size: the r16f kernel packs 2-byte
+ * halves (rows of 66 texels → 132 B → 256 B, 1.94× padding; 2D 256-wide
+ * rows → 512 B, none). Both arena kernels and the device half's
+ * `copyBufferToTexture` must use THIS for a job, never a hand-derived row.
+ */
+/**
+ * The arena layout for a job by atlas kind: r8 = 1 B texels, r16f = 2 B,
+ * rgba8 = 4 B texels holding FOUR slabs (so `ceil(channels / 4)` images per
+ * z instead of `channels`). The device half's `copyBufferToTexture` and the
+ * kernels' `row_words` must both come from here.
+ */
+export function arenaJobLayoutForKind(
+  kind: "r8" | "r16f" | "rgba8",
+  stored: Vec3,
+  channelCount: number,
+): { rowBytes: number; imageRows: number; images: number; jobBytes: number } {
+  if (kind === "rgba8") return arenaJobLayout(stored, Math.ceil(channelCount / 4), 4);
+  return arenaJobLayout(stored, channelCount, kind === "r16f" ? 2 : 1);
+}
+
+export function arenaJobLayout(
+  stored: Vec3,
+  channelCount: number,
+  bytesPerTexel: number,
+): { rowBytes: number; imageRows: number; images: number; jobBytes: number } {
+  const rowBytes = Math.ceil((stored[0] * bytesPerTexel) / 256) * 256;
   const imageRows = stored[1];
   const images = stored[2] * channelCount;
   return { rowBytes, imageRows, images, jobBytes: rowBytes * imageRows * images };
@@ -585,4 +802,55 @@ export function decodeMinMax(
   const min = decodeOrderedF32(minWord);
   const max = decodeOrderedF32(maxWord);
   return { min, max, uniformValue: min === max ? min : null };
+}
+
+/**
+ * Decode one brick's PER-SLAB min/max entries (`slabCount` consecutive pairs
+ * from `base`) into a `RepackResult`-shaped outcome: the union is what the
+ * single-entry decode used to produce, and `slabRanges` carries each slab's
+ * own bracket. A slab whose pair still holds the init sentinels (no owned
+ * texel — cannot happen when the chunks tile the channel range, but the
+ * contract is conservative) takes the union; all-sentinel → `{0, 0, uniform
+ * 0}` exactly like the single-entry decodes.
+ */
+export function decodeSlabRanges(
+  words: Uint32Array,
+  base: number,
+  slabCount: number,
+  decode: (minWord: number, maxWord: number) => { min: number; max: number },
+): {
+  min: number;
+  max: number;
+  uniformValue: number | null;
+  slabRanges: (readonly [number, number])[];
+} {
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  const perSlab: ([number, number] | null)[] = [];
+  for (let s = 0; s < slabCount; s++) {
+    const minWord = words[(base + s) * 2];
+    const maxWord = words[(base + s) * 2 + 1];
+    if (minWord === MINMAX_INIT_MIN && maxWord === MINMAX_INIT_MAX) {
+      perSlab.push(null);
+      continue;
+    }
+    const range = decode(minWord, maxWord);
+    perSlab.push([range.min, range.max]);
+    if (range.min < min) min = range.min;
+    if (range.max > max) max = range.max;
+  }
+  if (!Number.isFinite(min)) {
+    return {
+      min: 0,
+      max: 0,
+      uniformValue: 0,
+      slabRanges: Array.from({ length: slabCount }, () => [0, 0] as const),
+    };
+  }
+  return {
+    min,
+    max,
+    uniformValue: min === max ? min : null,
+    slabRanges: perSlab.map((range) => range ?? ([min, max] as const)),
+  };
 }

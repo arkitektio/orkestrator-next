@@ -2,12 +2,13 @@
  * Every node in the coordinate graph occupies the same square footprint, and
  * draws a circle inside it.
  *
- * The FOOTPRINT is uniform because the layout is a tension simulation and
- * nothing else: a stress layout places nodes so that drawn distance matches
- * graph distance, and it does not consider node sizes at all — boxes of
- * different sizes overlap, measurably. One footprint means one radius, so one
- * `desiredEdgeLength` comfortably larger than it keeps every node clear of every
- * other, and the centre of anything is its position plus half a footprint.
+ * The FOOTPRINT is uniform because one of the two layouts (see layout.ts) is a
+ * tension simulation that does not consider node sizes AT ALL — stress will put
+ * two boxes on top of each other, measurably. One footprint means one radius,
+ * so one `desiredEdgeLength` comfortably larger than it keeps every node clear
+ * of every other. It also means the centre of anything is its position plus
+ * half a footprint, which is what the edge-handle geometry in
+ * CoordinateGraphFlow relies on.
  *
  * The DRAWN circle is what the eye reads, and it is not uniform: a coordinate
  * system fills the footprint, a resident is a small disc in the middle of one.
@@ -16,9 +17,10 @@
  * is centred in a footprint that never changes, the layout and the edge geometry
  * are untouched by it.
  *
- * Circles because there is no direction here either. A box has a left edge and
- * a right edge and implies a flow across them; a circle attaches equally well
- * on any side, which is what a graph with no orientation actually needs.
+ * Circles because a circle attaches equally well on any side. A box has a left
+ * edge and a right edge and implies a flow across them, and under stress there
+ * is no flow to imply; under the tree fallback there is already more direction
+ * than the schema has, and round nodes keep that from being overstated.
  */
 export const NODE_DIAMETER = 112;
 
@@ -36,7 +38,8 @@ export const NODE_SIZE = {
 } as const;
 
 /**
- * The rest length of every spring. Comfortably more than a footprint, so nodes
- * settle clear of each other rather than being pushed apart afterwards.
+ * The rest length of every spring in the stress layout. Comfortably more than a
+ * footprint, so nodes settle clear of each other rather than being pushed apart
+ * afterwards. Unused by the tree fallback, which honours sizes itself.
  */
 export const DESIRED_EDGE_LENGTH = 200;

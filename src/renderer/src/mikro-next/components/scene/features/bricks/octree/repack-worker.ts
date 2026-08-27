@@ -1,6 +1,7 @@
 import { encodeHalfArray } from "./halfFloat";
 import { R16F_DATA_SCALE } from "./atlasFormat";
 import { repackBrick, type BrickArray, type RepackBrickInput } from "./brickRepack";
+import { interleaveSlabsRgba8, rgba8OutputBytes } from "./rgbaPack";
 
 /**
  * Worker entry for brick repack: runs the pure `repackBrick` (strided copy +
@@ -17,7 +18,7 @@ import { repackBrick, type BrickArray, type RepackBrickInput } from "./brickRepa
 
 export type RepackWorkerRequest = {
   id: number;
-  kind: "r8" | "r16f" | "r32f";
+  kind: "r8" | "r16f" | "r32f" | "rgba8";
   elementCount: number;
   input: Omit<RepackBrickInput, "output">;
   /** A previously returned output buffer, transferred back for reuse (the
@@ -27,7 +28,16 @@ export type RepackWorkerRequest = {
 };
 
 export type RepackWorkerResponse =
-  | { id: number; buffer: ArrayBuffer; min: number; max: number; uniformValue: number | null }
+  | {
+      id: number;
+      buffer: ArrayBuffer;
+      min: number;
+      max: number;
+      uniformValue: number | null;
+      /** Per-slab [min, max], flattened (`RepackResult.slabRanges`). */
+      slabMin: number[];
+      slabMax: number[];
+    }
   | { id: number; error: string };
 
 const ctx = self as unknown as Worker;
@@ -37,11 +47,16 @@ const ctx = self as unknown as Worker;
  * half-float encode happens after, into the transferable output. Grow-only
  * and worker-local — repacks are serialized per worker. */
 let r16fScratch = new Float32Array(0);
+/** Same for the RGBA8 path: planar bytes before the interleave. */
+let rgba8Scratch = new Uint8Array(0);
 
 ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
   const { id, kind, elementCount, input, recycled } = event.data;
   try {
-    const bytesNeeded = elementCount * (kind === "r8" ? 1 : kind === "r16f" ? 2 : 4);
+    const bytesNeeded =
+      kind === "rgba8"
+        ? rgba8OutputBytes(elementCount, input.spec.channelCount)
+        : elementCount * (kind === "r8" ? 1 : kind === "r16f" ? 2 : 4);
     let backing: ArrayBuffer;
     if (recycled && recycled.byteLength === bytesNeeded) {
       backing = recycled;
@@ -66,6 +81,19 @@ ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
       result = repackBrick({ ...input, output: scratch });
       output = new Uint16Array(backing);
       encodeHalfArray(scratch, output as Uint16Array, 1 / R16F_DATA_SCALE, elementCount);
+    } else if (kind === "rgba8") {
+      // Planar repack into a byte scratch (min/max per slab on the planar
+      // layout), then interleave four slabs per texel into the output.
+      if (rgba8Scratch.length < elementCount) rgba8Scratch = new Uint8Array(elementCount);
+      const scratch = rgba8Scratch.subarray(0, elementCount);
+      result = repackBrick({ ...input, output: scratch });
+      output = new Uint8Array(backing);
+      interleaveSlabsRgba8(
+        scratch,
+        elementCount / input.spec.channelCount,
+        input.spec.channelCount,
+        output as Uint8Array,
+      );
     } else {
       output = kind === "r8" ? new Uint8Array(backing) : new Float32Array(backing);
       result = repackBrick({ ...input, output });
@@ -76,6 +104,8 @@ ctx.onmessage = (event: MessageEvent<RepackWorkerRequest>) => {
       min: result.min,
       max: result.max,
       uniformValue: result.uniformValue,
+      slabMin: result.slabRanges.map((r) => r[0]),
+      slabMax: result.slabRanges.map((r) => r[1]),
     };
     ctx.postMessage(response, [output.buffer as ArrayBuffer]);
   } catch (error) {

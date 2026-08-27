@@ -72,10 +72,18 @@ const isOpaqueDepthWriter = (object: LeafRenderable): boolean => {
  * Leaves pruned by an invisible ancestor still classify (they render in
  * neither pass either way); compositor-internal objects classify nowhere.
  */
-export const collectPassSets = (root: THREE.Object3D): PassSets => {
-  const volumeMeshes: THREE.Mesh[] = [];
-  const occluders: THREE.Object3D[] = [];
-  const otherRenderables: THREE.Object3D[] = [];
+export const collectPassSets = (
+  root: THREE.Object3D,
+  /** Reuse these arrays (cleared first) instead of allocating three per call —
+   * the compositor runs this every frame. The result IS `into` when given. */
+  into?: PassSets,
+): PassSets => {
+  const volumeMeshes: THREE.Mesh[] = into?.volumeMeshes ?? [];
+  const occluders: THREE.Object3D[] = into?.occluders ?? [];
+  const otherRenderables: THREE.Object3D[] = into?.otherRenderables ?? [];
+  volumeMeshes.length = 0;
+  occluders.length = 0;
+  otherRenderables.length = 0;
   root.traverse((object) => {
     if (!object.visible) return;
     if (object.userData?.[COMPOSITOR_INTERNAL] === true) return;
@@ -88,6 +96,7 @@ export const collectPassSets = (root: THREE.Object3D): PassSets => {
       otherRenderables.push(object);
     }
   });
+  if (into) return into;
   return { volumeMeshes, occluders, otherRenderables };
 };
 

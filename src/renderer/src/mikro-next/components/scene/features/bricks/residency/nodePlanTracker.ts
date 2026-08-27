@@ -4,8 +4,8 @@ import { perfMonitor } from "../../../platform/perf/perfMonitor";
 import { coldOpenTimeline } from "../../../platform/perf/coldOpenTimeline";
 import { getInitialVolumeTextureBudgetBytes } from "../../../platform/quality/lodPlanning";
 import { isAnisoLodEnabled, isWorldLodEnabled } from "../gpu/shaderFlags";
-import { brickSlotBytes, resolveBrickSpec } from "../octree/brickSpec";
-import { atlasBytesPerVoxel, atlasKindForGeometry } from "../octree/atlasFormat";
+import { resolveBrickSpec } from "../octree/brickSpec";
+import { atlasKindForGeometry, atlasSlotBytes } from "../octree/atlasFormat";
 import { totalBrickCount } from "../octree/nodeAddress";
 import {
   getDecodedChunkCacheBytes,
@@ -281,10 +281,7 @@ export function startNodePlanTracking({
     const deviceBudgetBytes = getInitialVolumeTextureBudgetBytes();
     for (const members of classes.values()) {
       const { layer, geometry, spec } = members[0];
-      const slotBytes = brickSlotBytes(
-        spec,
-        atlasBytesPerVoxel(atlasKindForGeometry(geometry)),
-      );
+      const slotBytes = atlasSlotBytes(spec, atlasKindForGeometry(geometry));
       const totalBrickBytes = totalBrickCount(geometry, spec) * slotBytes;
       const resolved = resolvePoolBudget({
         deviceBudgetBytes,

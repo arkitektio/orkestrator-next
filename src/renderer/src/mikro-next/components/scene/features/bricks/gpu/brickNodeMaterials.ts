@@ -86,6 +86,7 @@ import {
   MAX_CURSOR_POINTS,
   type ChannelUniformData,
 } from "./channelUniforms";
+import { fixedMemberUniforms, type FixedMemberUniforms } from "./mergedChannelUniforms";
 
 /**
  * TSL (Three Shading Language) node materials for the brick-pool renderer —
@@ -139,6 +140,14 @@ export type TraversalNodesPublic = {
    * decode-≡-encode-range lockstep invariant. */
   uOccDecodeMin: UniformNodeLike<number>;
   uOccDecodeRange: UniformNodeLike<number>;
+  /** Per-slab occupancy (`orkestrator.occPerSlab`): the sidecar plane stride
+   * along z — slab `s`'s texel is at `pageTexel.z + s · uOccSlabDepth`. 0 on
+   * a single-plane page table (every slab reads plane 0 = the union). */
+  uOccSlabDepth: UniformNodeLike<number>;
+  /** BUILD-time constant (not a uniform — it selects which tap code is
+   * emitted): channel slabs per atlas texel, 4 for an rgba8 atlas, else 1.
+   * CPU mirror of the addressing: `shaderspec/atlasTap.ts`. */
+  atlasChannelsPerTexel: number;
 };
 
 /** Public (consumer-facing) shape of the channel-compositor nodes.
@@ -153,11 +162,17 @@ export type ChannelNodesPublic = {
   maxValue: UniformNodeLike<number>;
   numChannels: UniformNodeLike<number>;
   blendMode: UniformNodeLike<number>;
+  /**
+   * The four below are ABSENT on a SLIM material — a volume pass whose every
+   * member is fixed-shape (simple intensity / rgb) reads per-member plain
+   * uniforms instead and never allocates the two array bindings or the two
+   * DataTextures. `updateChannelNodes` and the dispose sites guard on presence.
+   */
   /** Per source: x = atlas-slab index (a channel's slab, or a phasor's INTENSITY
    * slab), y = climMin, z = climMax, w = gamma. */
-  chParamsA: UniformArrayNodeLike<THREE.Vector4>;
+  chParamsA?: UniformArrayNodeLike<THREE.Vector4>;
   /** Per source: x = opacity, y = visible, z = invert, w = colormap row. */
-  chParamsB: UniformArrayNodeLike<THREE.Vector4>;
+  chParamsB?: UniformArrayNodeLike<THREE.Vector4>;
   /**
    * The phasor half of a source slot, as TEXTURES rather than uniform arrays —
    * three more `uniformArray`s would each be another uniform-buffer binding and
@@ -168,10 +183,10 @@ export type ChannelNodesPublic = {
    *   (mode, phaseOffset, modulationFactor, omega)   omega 0 = uncalibrated
    *   (valueMin, valueMax, weightByIntensity, -)
    */
-  sourceParams: UniformNodeLike<THREE.Texture>;
+  sourceParams?: UniformNodeLike<THREE.Texture>;
   /** One cursor per row; see `writeCursors` in channelUniforms.ts. */
-  cursorParams: UniformNodeLike<THREE.Texture>;
-  cursorCount: UniformNodeLike<number>;
+  cursorParams?: UniformNodeLike<THREE.Texture>;
+  cursorCount?: UniformNodeLike<number>;
 };
 
 /** Shared traversal uniform nodes for one (layer, mode) pool (node graph —
@@ -222,19 +237,42 @@ export function makeTraversalNodes(
     uEmptyCodeMax: uniform(pool.emptyBits === 24 ? 0xffffff : 0xff, "float"),
     uOccDecodeMin: uniform(pool.occEncodeMin, "float"),
     uOccDecodeRange: uniform(pool.occEncodeMax - pool.occEncodeMin, "float"),
+    uOccSlabDepth: uniform(
+      pool.pageTable.occSlabs > 1 ? pool.pageTable.layout.size[2] : 0,
+      "int",
+    ),
+    atlasChannelsPerTexel: pool.atlas.channelsPerTexel ?? 1,
   };
 }
 
+/**
+ * Slab addressing inside a slot (CPU mirror: `shaderspec/atlasTap.ts`
+ * `atlasTapSlabAddress`): the z offset of slab `slab`'s texel and the
+ * component-select mask for `dot(tap, mask)`. At one channel per texel this
+ * is the legacy `z += slab · slabDepth` and `.r` — emitted verbatim.
+ */
+const slabAddress = (t: any, slabIndex: any): { zOffset: any; mask: any | null } => {
+  const cpt: number = t.atlasChannelsPerTexel ?? 1;
+  if (cpt === 1) {
+    return { zOffset: float(int(slabIndex).mul(t.uChannelSlabDepth)), mask: null };
+  }
+  const group = int(slabIndex).div(int(cpt));
+  const comp = int(slabIndex).sub(group.mul(int(cpt)));
+  const lane = (k: number) => select(comp.equal(int(k)), float(1.0), float(0.0));
+  return {
+    zOffset: float(group.mul(t.uChannelSlabDepth)),
+    mask: vec4(lane(0), lane(1), lane(2), lane(3)),
+  };
+};
+
+/** One texel's selected channel: `.r`, or `dot(rgba, mask)` on an rgba8 atlas. */
+const selectLane = (tap: any, mask: any | null): any =>
+  mask === null ? tap.r : TSL.dot(tap, mask);
+
 /** Channel-compositor uniform nodes; arrays are mutated in place on update
  * (node graph — dynamically typed; see module header). */
-function makeChannelNodes(data: ChannelUniformData): any {
-  const paramsA: THREE.Vector4[] = [];
-  const paramsB: THREE.Vector4[] = [];
-  for (let i = 0; i < MAX_CHANNELS; i++) {
-    paramsA.push(new THREE.Vector4());
-    paramsB.push(new THREE.Vector4());
-  }
-  const nodes = {
+function makeChannelNodes(data: ChannelUniformData, slim = false): any {
+  const nodes: any = {
     // A shared TextureNode so channel edits can swap the rebuilt colormap
     // atlas via `.value = newAtlas` without rebuilding the material.
     colormapAtlas: texture(data.atlas),
@@ -242,12 +280,22 @@ function makeChannelNodes(data: ChannelUniformData): any {
     maxValue: uniform(1, "float"),
     numChannels: uniform(data.numChannels, "int"),
     blendMode: uniform(data.blendMode, "int"),
-    chParamsA: uniformArray(paramsA, "vec4"),
-    chParamsB: uniformArray(paramsB, "vec4"),
-    sourceParams: texture(data.sourceParams),
-    cursorParams: texture(data.cursors),
-    cursorCount: uniform(data.cursorCount, "int"),
   };
+  // SLIM: every member is fixed-shape and reads its per-member scalars — the
+  // two uniform-buffer bindings and two textures below would be bound to a
+  // shader that never references them. Not allocated at all.
+  if (slim) return nodes;
+  const paramsA: THREE.Vector4[] = [];
+  const paramsB: THREE.Vector4[] = [];
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    paramsA.push(new THREE.Vector4());
+    paramsB.push(new THREE.Vector4());
+  }
+  nodes.chParamsA = uniformArray(paramsA, "vec4");
+  nodes.chParamsB = uniformArray(paramsB, "vec4");
+  nodes.sourceParams = texture(data.sourceParams);
+  nodes.cursorParams = texture(data.cursors);
+  nodes.cursorCount = uniform(data.cursorCount, "int");
   copyChannelArrays(nodes, data);
   return nodes;
 }
@@ -256,6 +304,7 @@ function copyChannelArrays(
   nodes: Pick<ChannelNodesPublic, "chParamsA" | "chParamsB">,
   data: ChannelUniformData,
 ): void {
+  if (!nodes.chParamsA || !nodes.chParamsB) return;
   for (let i = 0; i < MAX_CHANNELS; i++) {
     nodes.chParamsA.array[i].set(
       data.channelIndex[i] ?? 0,
@@ -281,10 +330,11 @@ export function updateChannelNodes(nodes: ChannelNodesPublic, data: ChannelUnifo
   // Same in-place adoption as the colormap atlas, and for the same reason: the
   // builders hand us NEW DataTextures on every edit, and swapping the object
   // would leave the compiled material's bind group pointing at a disposed
-  // texture. These two are fixed-size, so the copy always applies.
-  adoptDataTexture(nodes.sourceParams, data.sourceParams);
-  adoptDataTexture(nodes.cursorParams, data.cursors);
-  nodes.cursorCount.value = data.cursorCount;
+  // texture. These two are fixed-size, so the copy always applies. A SLIM
+  // material has none of them (see makeChannelNodes).
+  if (nodes.sourceParams) adoptDataTexture(nodes.sourceParams, data.sourceParams);
+  if (nodes.cursorParams) adoptDataTexture(nodes.cursorParams, data.cursors);
+  if (nodes.cursorCount) nodes.cursorCount.value = data.cursorCount;
 }
 
 function adoptDataTexture(
@@ -531,24 +581,86 @@ export function emitChannelTap(
     // COPY texelBase — addAssign on the shared var would leak this channel's
     // slab offset into the next channel's tap.
     const texel = vec3(resolved.texelBase).toVar(`${name}Texel`);
-    texel.z.addAssign(float(int(slabIndex).mul(t.uChannelSlabDepth)));
+    const address = slabAddress(t, slabIndex);
+    texel.z.addAssign(address.zOffset);
     const singleTap = () => {
       const tap = texture3D(t.brickAtlas, texel.div(t.uAtlasTexels));
       // Fast path: explicit-LOD tap (textureSampleLevel). The atlas has no
       // mips, so level 0 is the same texel data — but the implicit-derivative
       // textureSample this replaces costs derivative math on every tap and is
       // a WGSL uniformity hazard inside the divergent ray loop.
-      raw.assign((isShaderFastPathEnabled() ? tap.level(0) : tap).r.mul(t.uAtlasScale));
+      raw.assign(
+        selectLane(isShaderFastPathEnabled() ? tap.level(0) : tap, address.mask).mul(
+          t.uAtlasScale,
+        ),
+      );
     };
     if (smooth) {
       If(smooth, () => {
-        raw.assign(emitTricubicTap(t, resolved, texel, slabIndex, name));
+        raw.assign(emitTricubicTap(t, resolved, texel, slabIndex, name, address.mask));
       }).Else(singleTap);
     } else {
       singleTap();
     }
   });
   return raw;
+}
+
+/**
+ * The three taps of an rgb recipe. On a one-channel-per-texel atlas this is
+ * three `emitChannelTap`s; on an RGBA8 atlas (`atlasChannelsPerTexel === 4`)
+ * it is ONE `textureSampleLevel` whose `.rgb` lanes are selected per slab —
+ * exact because a 3/4-channel pool's slabs all share slab group 0, so the
+ * three slab z-offsets coincide (asserted by `atlasKindForGeometry`, which
+ * only picks rgba8 for `channelCount ∈ {3, 4}`). Zoom smoothing (tricubic)
+ * keeps three taps: the filter reconstructs one lane at a time.
+ * CPU mirror of the addressing: `shaderspec/atlasTap.ts`.
+ */
+export function emitRgbTaps(
+  t: any,
+  resolved: ResolvedResidency,
+  slabs: readonly [any, any, any],
+  name: string,
+  smooth: any = null,
+): { r: any; g: any; b: any } {
+  const cpt: number = t.atlasChannelsPerTexel ?? 1;
+  if (cpt === 1) {
+    return {
+      r: emitChannelTap(t, resolved, slabs[0], `${name}R`, smooth),
+      g: emitChannelTap(t, resolved, slabs[1], `${name}G`, smooth),
+      b: emitChannelTap(t, resolved, slabs[2], `${name}B`, smooth),
+    };
+  }
+  const r = float(0.0).toVar(`${name}RRaw`);
+  const g = float(0.0).toVar(`${name}GRaw`);
+  const b = float(0.0).toVar(`${name}BRaw`);
+  const a0 = slabAddress(t, slabs[0]);
+  const a1 = slabAddress(t, slabs[1]);
+  const a2 = slabAddress(t, slabs[2]);
+  If(resolved.status.greaterThan(1.5), () => {
+    r.assign(resolved.emptyValue);
+    g.assign(resolved.emptyValue);
+    b.assign(resolved.emptyValue);
+  }).Else(() => {
+    const texel = vec3(resolved.texelBase).toVar(`${name}Texel`);
+    texel.z.addAssign(a0.zOffset);
+    const singleTap = () => {
+      const tap = texture3D(t.brickAtlas, texel.div(t.uAtlasTexels)).level(0);
+      r.assign(selectLane(tap, a0.mask).mul(t.uAtlasScale));
+      g.assign(selectLane(tap, a1.mask).mul(t.uAtlasScale));
+      b.assign(selectLane(tap, a2.mask).mul(t.uAtlasScale));
+    };
+    if (smooth) {
+      If(smooth, () => {
+        r.assign(emitTricubicTap(t, resolved, texel, slabs[0], `${name}R`, a0.mask));
+        g.assign(emitTricubicTap(t, resolved, texel, slabs[1], `${name}G`, a1.mask));
+        b.assign(emitTricubicTap(t, resolved, texel, slabs[2], `${name}B`, a2.mask));
+      }).Else(singleTap);
+    } else {
+      singleTap();
+    }
+  });
+  return { r, g, b };
 }
 
 /**
@@ -571,6 +683,8 @@ function emitTricubicTap(
   texel: any,
   slabIndex: any,
   name: string,
+  /** rgba8 atlases: the component-select mask (`slabAddress`); null = `.r`. */
+  mask: any | null = null,
 ): any {
   // Texel centers sit at half-integers: split into base index + fraction.
   const tc = vec3(texel).sub(0.5).toVar(`${name}CubTc`);
@@ -591,9 +705,7 @@ function emitTricubicTap(
   const h1 = base.add(1.0).add(w3.div(w2.add(w3))).add(0.5).toVar(`${name}CubH1`);
 
   // Clamp to the slot interior / channel slab (border 1 < cubic support 1.5).
-  const slabStart = vec3(resolved.slotOriginTexel).z.add(
-    float(int(slabIndex).mul(t.uChannelSlabDepth)),
-  );
+  const slabStart = vec3(resolved.slotOriginTexel).z.add(slabAddress(t, slabIndex).zOffset);
   const clampMin = vec3(
     vec3(resolved.slotOriginTexel).x.add(0.5),
     vec3(resolved.slotOriginTexel).y.add(0.5),
@@ -609,7 +721,7 @@ function emitTricubicTap(
 
   const g1 = oneMinus(g0);
   const tap = (x: any, y: any, z: any) =>
-    texture3D(t.brickAtlas, vec3(x, y, z).div(t.uAtlasTexels)).level(0).r;
+    selectLane(texture3D(t.brickAtlas, vec3(x, y, z).div(t.uAtlasTexels)).level(0), mask);
   // 8 taps, weighted by the per-axis g products.
   const acc = tap(h0.x, h0.y, h0.z).mul(g0.x).mul(g0.y).mul(g0.z)
     .add(tap(h1.x, h0.y, h0.z).mul(g1.x).mul(g0.y).mul(g0.z))
@@ -729,21 +841,54 @@ function emitSourceSample(
   return { color, weight, norm };
 }
 
+/**
+ * The scalar transfer, as ONE emitter shared by every compositor: raw → range
+ * norm → clim window → gamma. CPU mirror: `shaderspec/raymarchStep.ts`
+ * `normalizeSlotValue` (minus its invert step, which only the general path
+ * emits — see `makeChannelNormalize`).
+ *
+ * The general path reads its window/gamma out of `chParamsA.element(slot)`;
+ * the fixed-shape paths (intensity, rgb) hand in plain uniform nodes instead.
+ * Both go through THIS function, so the arithmetic — the two clamps, the
+ * `max(…, 1e-5)` guards against a degenerate window, the `0.999` ceiling, the
+ * `max(gamma, 1e-4)` — cannot drift between them; any difference would be a
+ * colour difference between the two paths, which is exactly what the
+ * fixed-shape kill switch exists to bisect and what must never actually happen.
+ *
+ * `gamma === null` omits the `pow` entirely: an `"rgb"` recipe has gamma 1 by
+ * construction (`resolveRenderKind`), and `pow(x, 1)` is `x` exactly, so the
+ * omission is bit-identical, not an approximation.
+ */
+export const emitScalarNormalize = (
+  range: { minValue: any; maxValue: any },
+  window: { climMin: any; climMax: any; gamma: any | null },
+  rawValue: any,
+): any => {
+  const baseNorm = clamp(
+    float(rawValue)
+      .sub(range.minValue)
+      .div(max(float(range.maxValue).sub(range.minValue), 0.00001)),
+    0.0,
+    1.0,
+  );
+  const climMin = float(window.climMin);
+  const climRange = max(float(window.climMax).sub(climMin), 0.00001);
+  const normalized = clamp(baseNorm.sub(climMin).div(climRange), 0.0, 0.999).toVar();
+  if (window.gamma !== null) {
+    normalized.assign(pow(normalized, max(float(window.gamma), 0.0001)));
+  }
+  return normalized;
+};
+
 /** TSL port of `channelNormalize` (lockstep with core mirrors). */
 function makeChannelNormalize(c: any) {
   return Fn(([i, rawValue]: any[]) => {
     const paramsA = vec4(c.chParamsA.element(i)).toVar(); // (channel, climMin, climMax, gamma)
-    const baseNorm = clamp(
-      float(rawValue)
-        .sub(c.minValue)
-        .div(max(float(c.maxValue).sub(c.minValue), 0.00001)),
-      0.0,
-      1.0,
+    const normalized = emitScalarNormalize(
+      c,
+      { climMin: paramsA.y, climMax: paramsA.z, gamma: paramsA.w },
+      rawValue,
     );
-    const climMin = paramsA.y;
-    const climRange = max(paramsA.z.sub(climMin), 0.00001);
-    const normalized = clamp(baseNorm.sub(climMin).div(climRange), 0.0, 0.999).toVar();
-    normalized.assign(pow(normalized, max(paramsA.w, 0.0001)));
     If(vec4(c.chParamsB.element(i)).z.greaterThan(0.5), () => {
       normalized.assign(oneMinus(normalized));
     });
@@ -1089,6 +1234,22 @@ export type VolumeMaterialNodes = TraversalNodesPublic &
       blendMode: UniformNodeLike<number>;
       projectionMode: UniformNodeLike<number>;
       isoThreshold: UniformNodeLike<number>;
+      /**
+       * The FIXED-SHAPE member's transfer as plain uniforms (see
+       * `fixedMemberUniforms`): what the `emitSimple` / `emitRgb` arms read
+       * instead of `chParamsA/B.element(slot)`. Always present (plain uniforms
+       * cost no binding, and an unreferenced one is not emitted); only
+       * meaningful for a member compiled as fixed-shape.
+       */
+      fixed: {
+        uSlab0: UniformNodeLike<number>;
+        uSlab1: UniformNodeLike<number>;
+        uSlab2: UniformNodeLike<number>;
+        uClimMin: UniformNodeLike<number>;
+        uClimMax: UniformNodeLike<number>;
+        uGamma: UniformNodeLike<number>;
+        uRow: UniformNodeLike<number>;
+      };
     }[];
   };
 
@@ -1136,6 +1297,7 @@ export function createVolumeNodeMaterial(
       /** Compile-time FIXED-SHAPE specialization input (one plain scalar
        * channel); absent → assume the general shape. */
       isSimpleIntensity?: boolean;
+      isRgb?: boolean;
     }[];
   },
   memberCount = 1,
@@ -1156,7 +1318,21 @@ export function createVolumeNodeMaterial(
   const occHierarchy = isOccHierarchyEnabled();
   if (occHierarchy) ensureAggregate(pool.pageTable);
   const t = makeTraversalNodes(pool, dataRange);
-  const c = makeChannelNodes(channelData);
+  // Compile-time FIXED-SHAPE specialization (fast path + the flag): a member
+  // that is one plain scalar channel (`isSimpleIntensity`) or three basis-
+  // tinted channels over one window (`isRgb`) contributes through straight-
+  // line code reading per-member plain uniforms instead of a dynamic loop over
+  // `chParamsA/B`. Absent member info → conservative false (emit the loop).
+  const fixedShape = fastPath && isFixedShapeFastPathEnabled();
+  const memberShape = Array.from({ length: Math.max(1, memberCount) }, (_, m) => ({
+    simple: fixedShape && (channelData.members?.[m]?.isSimpleIntensity ?? false),
+    rgb: fixedShape && (channelData.members?.[m]?.isRgb ?? false),
+  }));
+  // Every member fixed-shape ⇒ the material never indexes the slot arrays or
+  // the params textures: build the SLIM node set (two bindings + two
+  // DataTextures fewer). With member info absent this is false.
+  const slim = memberShape.every((s) => s.simple || s.rgb);
+  const c = makeChannelNodes(channelData, slim);
   c.minValue.value = dataRange.minValue;
   c.maxValue.value = dataRange.maxValue;
   // One Fn set per MEMBER. `makePhasorValue` and `makeCursorHit` bake named
@@ -1181,14 +1357,9 @@ export function createVolumeNodeMaterial(
       // phasor sources gets the phasor branch omitted from its WGSL. Absent
       // member info → conservative true (emit the branch).
       emitPhasor: !fastPath || (channelData.members?.[m]?.hasPhasorSources ?? true),
-      // Compile-time FIXED-SHAPE specialization (fast path + the flag): a
-      // member that is one plain scalar channel contributes through
-      // straight-line code instead of a dynamic loop over its slots. Absent
-      // member info → conservative false (emit the loop).
-      emitSimple:
-        fastPath &&
-        isFixedShapeFastPathEnabled() &&
-        (channelData.members?.[m]?.isSimpleIntensity ?? false),
+      // See `memberShape` above.
+      emitSimple: memberShape[m].simple,
+      emitRgb: memberShape[m].rgb,
     };
   });
 
@@ -1201,6 +1372,13 @@ export function createVolumeNodeMaterial(
   // rendering every member's slots.
   const memberNodes = Array.from({ length: Math.max(1, memberCount) }, (_, m) => {
     const seed = channelData.members?.[m];
+    // Fixed-shape scalars, seeded from the same merged arrays the general arm
+    // would index (`fixedMemberUniforms` slices exactly that member's slots)
+    // so the first frame is already correct.
+    const fx = fixedMemberUniforms(
+      channelData,
+      seed ?? { slotFirst: 0, slotCount: m === 0 ? channelData.numChannels : 0 },
+    );
     return {
       slotFirst: uniform(seed?.slotFirst ?? 0, "int"),
       slotCount: uniform(
@@ -1211,8 +1389,109 @@ export function createVolumeNodeMaterial(
       // 0 MIP, 1 ATTENUATED_MIP, 2 VOLUME, 3 ISO
       projectionMode: uniform(seed?.projectionMode ?? 0, "int"),
       isoThreshold: uniform(0.5, "float"),
+      fixed: {
+        uSlab0: uniform(fx.slabs[0], "int"),
+        uSlab1: uniform(fx.slabs[1], "int"),
+        uSlab2: uniform(fx.slabs[2], "int"),
+        uClimMin: uniform(fx.climMin, "float"),
+        uClimMax: uniform(fx.climMax, "float"),
+        uGamma: uniform(fx.gamma, "float"),
+        uRow: uniform(fx.row, "float"),
+      },
     };
   });
+
+  /**
+   * The fixed-shape transfer for member `m`, straight-line: the SHARED
+   * `emitScalarNormalize` over the member's plain uniforms. rgb has gamma 1 by
+   * construction, so its `pow` is omitted (exact). CPU mirrors:
+   * `shaderspec/raymarchStep.ts` `normalizeSlotValue` (intensity) and
+   * `shaderspec/rgbComposite.ts` (rgb).
+   */
+  const fixedNormalize = (m: number, raw: any): any =>
+    emitScalarNormalize(
+      c,
+      {
+        climMin: memberNodes[m].fixed.uClimMin,
+        climMax: memberNodes[m].fixed.uClimMax,
+        gamma: memberFns[m].emitRgb ? null : memberNodes[m].fixed.uGamma,
+      },
+      raw,
+    );
+  /** Occupancy upper bound for a fixed-shape member from a raw bracket — the
+   * straight-line form of the `oc<m>` / `ag<m>` loops: no invert, so the
+   * larger endpoint image bounds the brick; ONE window across an rgb
+   * member's three slabs, so one pair of evaluations covers all of them. */
+  const fixedUpperNorm = (m: number, lo: any, hi: any): any =>
+    max(float(fixedNormalize(m, lo)), float(fixedNormalize(m, hi)));
+
+  // PER-SLAB occupancy (orkestrator.occPerSlab): the sidecars carry one RG8
+  // plane per atlas slab, stacked along z. Build-time: a single-plane page
+  // table emits exactly the pre-flag code (one load per step, shared by
+  // every slot); a multi-plane one loads each slot's OWN plane, so a channel
+  // that is dark in a brick another channel lights up is still skippable.
+  const perSlabOcc = pool.pageTable.occSlabs > 1;
+  /** The sidecar texel for `slab` of the page texel `base`. */
+  const occTexelAt = (base: any, slab: any): any =>
+    ivec3(base).add(ivec3(int(0), int(0), int(slab).mul(t.uOccSlabDepth)));
+  /**
+   * Load + decode one occupancy/aggregate texel into a raw [min, max]
+   * bracket, against the ENCODE range (uOccDecode*, = the pool range unless
+   * orkestrator.occObservedRange promoted the observed one). Byte 0 on
+   * either channel is the "unbounded on that side" sentinel and decodes to
+   * the POOL endpoint — the all-zero "unknown, never skip" texel stays
+   * airtight even while the observed range lags a brick whose readback has
+   * not landed. CPU lockstep: brickEncoding.decodeOccupancyBounds.
+   */
+  const emitOccBounds = (sidecar: any, texel: any, name: string): { min: any; max: any } => {
+    const occ = vec4(texture3DLoad(sidecar, ivec3(texel))).toVar(`${name}Texel`);
+    const range = max(float(t.uOccDecodeRange), 0.00001);
+    const min = select(
+      occ.r.lessThan(0.002), // code 0 = 0.0; code 1 = 1/255 ≈ 0.0039
+      float(c.minValue),
+      float(t.uOccDecodeMin).add(occ.r.mul(range)),
+    ).toVar(`${name}Min`);
+    const maxV = select(
+      occ.g.lessThan(0.002),
+      float(c.maxValue),
+      float(t.uOccDecodeMin).add(oneMinus(occ.g).mul(range)),
+    ).toVar(`${name}Max`);
+    return { min, max: maxV };
+  };
+  /**
+   * A fixed-shape member's occupancy upper bound from a sidecar at `base`:
+   * the union plane, or — per slab — its own plane(s): one for intensity,
+   * three for rgb (max over them). CPU mirror: raymarchStep.ts
+   * `occupancyUpperNormPerSlab`.
+   */
+  const fixedUpperNormAt = (
+    m: number,
+    sidecar: any,
+    base: any,
+    union: { min: any; max: any },
+    name: string,
+  ): any => {
+    if (!perSlabOcc) return fixedUpperNorm(m, union.min, union.max);
+    const nm = memberFns[m].nm;
+    const fx = memberNodes[m].fixed;
+    const at = (slab: any, tag: string) => {
+      const b = emitOccBounds(sidecar, occTexelAt(base, slab), nm(`${name}${tag}`));
+      return fixedUpperNorm(m, b.min, b.max);
+    };
+    if (!memberFns[m].emitRgb) return at(fx.uSlab0, "S0");
+    return max(at(fx.uSlab0, "R"), max(at(fx.uSlab1, "G"), at(fx.uSlab2, "B")));
+  };
+  /** A general slot's bounds: the union, or its own plane per slab. */
+  const slotBoundsAt = (
+    sidecar: any,
+    base: any,
+    slot: any,
+    union: { min: any; max: any },
+    name: string,
+  ): { min: any; max: any } =>
+    perSlabOcc
+      ? emitOccBounds(sidecar, occTexelAt(base, int(vec4(c.chParamsA.element(slot)).x)), name)
+      : union;
 
   // The four ray uniforms come from `volumeRayNodes` so the intensity and the
   // LABEL raymarchers drive the same LOD pick — see that module's header on why
@@ -1411,13 +1690,11 @@ export function createVolumeNodeMaterial(
         If(resolved.status.greaterThan(1.5), () => {
           const maxEmptyNorm = float(0.0).toVar("esMaxNorm");
           memberNodes.forEach((mem, m) => {
-            if (memberFns[m].emitSimple) {
-              // Same collapse as the sampling loop: one slot, known visible.
+            if (memberFns[m].emitSimple || memberFns[m].emitRgb) {
+              // Same collapse as the sampling arm: known-visible slot(s) over
+              // ONE window, so one normalize of the fill value bounds them all.
               maxEmptyNorm.assign(
-                max(
-                  maxEmptyNorm,
-                  float(memberFns[m].channelNormalize(int(mem.slotFirst), resolved.emptyValue)),
-                ),
+                max(maxEmptyNorm, float(fixedNormalize(m, resolved.emptyValue))),
               );
               return;
             }
@@ -1482,12 +1759,14 @@ export function createVolumeNodeMaterial(
                   const aggCell = ivec3(
                     floor(aggVoxel.div(vec3(t.uBrickPayload))),
                   ).toVar("aggCell");
-                  const aggTexel = vec4(
-                    texture3DLoad(
-                      t.aggregate,
-                      ivec3(t.uPageOffset.element(aggLevel)).add(aggCell),
-                    ),
-                  ).toVar("aggTexel");
+                  const aggBase = ivec3(t.uPageOffset.element(aggLevel))
+                    .add(aggCell)
+                    .toVar("aggBase");
+                  // Plane 0 (= the union, or slab 0 per slab) gates "known":
+                  // aggregates are written for every plane at once, and a
+                  // per-slab plane that happens to encode as all-zero decodes
+                  // to the full range below — never a hop, always safe.
+                  const aggTexel = vec4(texture3DLoad(t.aggregate, aggBase)).toVar("aggTexel");
                   If(aggTexel.r.add(aggTexel.g).greaterThan(0.001), () => {
                     const aggRange = max(float(t.uOccDecodeRange), 0.00001);
                     const aggMin = select(
@@ -1500,9 +1779,15 @@ export function createVolumeNodeMaterial(
                       float(c.maxValue),
                       float(t.uOccDecodeMin).add(oneMinus(aggTexel.g).mul(aggRange)),
                     ).toVar("aggMax");
+                    const aggUnion = { min: aggMin, max: aggMax };
                     const aggSkipAll = bool(true).toVar("aggSkipAll");
                     memberNodes.forEach((mem, m) => {
                       const upper = float(0.0).toVar();
+                      if (memberFns[m].emitSimple || memberFns[m].emitRgb) {
+                        // Straight-line: no loop header, no Break, no
+                        // visibility Continue, no array reads.
+                        upper.assign(fixedUpperNormAt(m, t.aggregate, aggBase, aggUnion, "ag"));
+                      } else {
                       Loop(
                         {
                           start: int(0),
@@ -1520,17 +1805,25 @@ export function createVolumeNodeMaterial(
                           If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
                             Continue();
                           });
+                          const b = slotBoundsAt(
+                            t.aggregate,
+                            aggBase,
+                            slot,
+                            aggUnion,
+                            memberFns[m].nm("agS"),
+                          );
                           upper.assign(
                             max(
                               upper,
                               max(
-                                float(memberFns[m].channelNormalize(slot, aggMin)),
-                                float(memberFns[m].channelNormalize(slot, aggMax)),
+                                float(memberFns[m].channelNormalize(slot, b.min)),
+                                float(memberFns[m].channelNormalize(slot, b.max)),
                               ),
                             ),
                           );
                         },
                       );
+                      }
                       const invisible = upper.lessThanEqual(0.001);
                       const mipBeaten = int(mem.projectionMode)
                         .equal(int(0))
@@ -1582,30 +1875,20 @@ export function createVolumeNodeMaterial(
         // have painted. Accepted as beneath quantization; documented, not
         // accidental.
         If(resolved.status.greaterThanEqual(0.5).and(resolved.status.lessThan(1.5)), () => {
-          const occ = vec4(
-            texture3DLoad(t.occupancy, ivec3(resolved.pageTexel)),
-          ).toVar("occTexel");
-          // Decode against the ENCODE range (uOccDecode*, = the pool range
-          // unless orkestrator.occObservedRange promoted the observed one).
-          // Byte 0 on either channel is the "unbounded on that side"
-          // sentinel and decodes to the POOL endpoint — the all-zero
-          // "unknown, never skip" texel stays airtight even while the
-          // observed range lags a brick whose readback has not landed.
-          // CPU lockstep: brickEncoding.decodeOccupancyBounds.
-          const occRange = max(float(t.uOccDecodeRange), 0.00001);
-          const occMin = select(
-            occ.r.lessThan(0.002), // code 0 = 0.0; code 1 = 1/255 ≈ 0.0039
-            float(c.minValue),
-            float(t.uOccDecodeMin).add(occ.r.mul(occRange)),
-          ).toVar("occMin");
-          const occMax = select(
-            occ.g.lessThan(0.002),
-            float(c.maxValue),
-            float(t.uOccDecodeMin).add(oneMinus(occ.g).mul(occRange)),
-          ).toVar("occMax");
+          // Union plane (= plane 0): what every slot reads on a single-plane
+          // page table, and the per-slab fallback (see emitOccBounds for the
+          // sentinel decode).
+          const occUnion = emitOccBounds(t.occupancy, resolved.pageTexel, "occ");
           const occSkipAll = bool(true).toVar("occSkipAll");
           memberNodes.forEach((mem, m) => {
             const upper = float(0.0).toVar();
+            if (memberFns[m].emitSimple || memberFns[m].emitRgb) {
+              // Straight-line form of the loop below (CPU mirror:
+              // rgbComposite.ts `rgbOccupancyUpperNorm` ≡ occupancyUpperNorm).
+              upper.assign(
+                fixedUpperNormAt(m, t.occupancy, resolved.pageTexel, occUnion, "oc"),
+              );
+            } else {
             Loop(
               {
                 start: int(0),
@@ -1623,17 +1906,25 @@ export function createVolumeNodeMaterial(
                 If(vec4(c.chParamsB.element(slot)).y.lessThan(0.5), () => {
                   Continue();
                 });
+                const b = slotBoundsAt(
+                  t.occupancy,
+                  resolved.pageTexel,
+                  slot,
+                  occUnion,
+                  memberFns[m].nm("ocS"),
+                );
                 upper.assign(
                   max(
                     upper,
                     max(
-                      float(memberFns[m].channelNormalize(slot, occMin)),
-                      float(memberFns[m].channelNormalize(slot, occMax)),
+                      float(memberFns[m].channelNormalize(slot, b.min)),
+                      float(memberFns[m].channelNormalize(slot, b.max)),
                     ),
                   ),
                 );
               },
             );
+            }
             const invisible = upper.lessThanEqual(0.001);
             const mipBeaten = int(mem.projectionMode)
               .equal(int(0))
@@ -1694,34 +1985,57 @@ export function createVolumeNodeMaterial(
         // A SIMPLE member seeds to zero unconditionally: its blend cannot be
         // MULTIPLICATIVE (that is what `resolveRenderKind` refuses), so the
         // `select` on the blend uniform is a known constant here.
-        const sampleColor = memberFns[m].emitSimple
+        const fixed = memberFns[m].emitSimple || memberFns[m].emitRgb;
+        const sampleColor = fixed
           ? vec3(0.0).toVar()
           : select(int(mem.blendMode).equal(1), vec3(1.0), vec3(0.0)).toVar();
         const sampleNorm = float(0.0).toVar();
+        const nm = memberFns[m].nm;
 
         if (memberFns[m].emitSimple) {
           // ONE slot, known visible, plain transfer, collapsing blend — so the
-          // whole per-slot region reduces to a tap and a multiply. Removed from
-          // the innermost (ray-step × slot) loop: the loop header, the
-          // `k >= slotCount` Break, the visibility Continue and the three-way
-          // blend branch. `emitSourceSample` is still the SAME emitter (with
-          // its phasor half compile-time off), so the tap, the normalize and
-          // the LUT lookup are bit-identical to the general path's.
+          // whole per-slot region reduces to a tap, the shared normalize and
+          // one LUT sample. Removed from the innermost (ray-step × slot) loop:
+          // the loop header, the `k >= slotCount` Break, the visibility
+          // Continue, the three-way blend branch, the `sourceParams` kind tap
+          // and FOUR `chParamsA/B.element()` reads (the member's window,
+          // gamma, slab and LUT row are plain uniforms — `fixed`).
           If(resolved.status.greaterThanEqual(0.5), () => {
-            const slot = int(mem.slotFirst).toVar(memberFns[m].nm("simpleSlot"));
-            const sample = emitSourceSample(
+            const raw = emitChannelTap(t, resolved, mem.fixed.uSlab0, nm("fxI"), smoothActive);
+            const norm = float(fixedNormalize(m, raw)).toVar(nm("fxNorm"));
+            sampleNorm.assign(norm);
+            // color × weight with opacity 1: additive (or normal) onto a zero
+            // accumulator IS assignment.
+            sampleColor.assign(
+              c.colormapAtlas.sample(vec2(norm, mem.fixed.uRow)).rgb.mul(norm),
+            );
+          });
+          maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
+          return { sampleColor, sampleNorm };
+        }
+
+        if (memberFns[m].emitRgb) {
+          // THREE basis-tinted slots over ONE window: the general path's
+          // per-slot contribution is a CONSTANT tint row × (opacity 1 · norm),
+          // summed additively — i.e. `vec3(normR, normG, normB)` with no LUT
+          // sample at all (`rgbUniforms.ts` explains and its test pins the
+          // constant rows). The ray ranks by the max per-slot norm, exactly as
+          // the general loop's `sampleNorm = max(...)` does. CPU mirror:
+          // `shaderspec/rgbComposite.ts`.
+          If(resolved.status.greaterThanEqual(0.5), () => {
+            // ONE tap on an rgba8 atlas, three otherwise (emitRgbTaps).
+            const raw = emitRgbTaps(
               t,
-              c,
               resolved,
-              slot,
-              memberFns[m],
-              memberFns[m].nm,
-              false,
+              [mem.fixed.uSlab0, mem.fixed.uSlab1, mem.fixed.uSlab2],
+              nm("fx"),
               smoothActive,
             );
-            sampleNorm.assign(sample.norm);
-            // Additive (or normal) onto a zero accumulator IS assignment.
-            sampleColor.assign(sample.color.mul(sample.weight));
+            const nR = float(fixedNormalize(m, raw.r)).toVar(nm("fxNr"));
+            const nG = float(fixedNormalize(m, raw.g)).toVar(nm("fxNg"));
+            const nB = float(fixedNormalize(m, raw.b)).toVar(nm("fxNb"));
+            sampleColor.assign(vec3(nR, nG, nB));
+            sampleNorm.assign(max(nR, max(nG, nB)));
           });
           maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
           return { sampleColor, sampleNorm };
@@ -1949,6 +2263,8 @@ export function updateMergedMemberNodes(
     blendMode: number;
     projectionMode: number;
     isoThreshold: number;
+    /** The fixed-shape scalars (`fixedMemberUniforms`); pushed whenever given. */
+    fixed?: FixedMemberUniforms;
   }[],
 ): void {
   const target = nodes.members ?? [];
@@ -1959,5 +2275,16 @@ export function updateMergedMemberNodes(
     target[m].blendMode.value = source?.blendMode ?? 0;
     target[m].projectionMode.value = source?.projectionMode ?? 0;
     target[m].isoThreshold.value = source?.isoThreshold ?? 0.5;
+    const fx = source?.fixed;
+    if (fx && target[m].fixed) {
+      const f = target[m].fixed;
+      f.uSlab0.value = fx.slabs[0];
+      f.uSlab1.value = fx.slabs[1];
+      f.uSlab2.value = fx.slabs[2];
+      f.uClimMin.value = fx.climMin;
+      f.uClimMax.value = fx.climMax;
+      f.uGamma.value = fx.gamma;
+      f.uRow.value = fx.row;
+    }
   }
 }

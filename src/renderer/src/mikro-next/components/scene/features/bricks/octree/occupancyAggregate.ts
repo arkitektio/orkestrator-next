@@ -69,6 +69,37 @@ export function parentCellsOf(
  * (parentLevel, parentCell) — or null when any child is unknown (or the
  * cell has no children at all): the "write only when complete" contract.
  */
+/**
+ * Per-slab twin of `aggregateIfComplete` (`orkestrator.occPerSlab`): the
+ * slab-wise union of every child's measured slab ranges, or null when any
+ * child is unknown. Same children enumeration, same completeness contract —
+ * a child measured only as a union (older entry) is unknown per slab.
+ */
+export function aggregateSlabsIfComplete(
+  geometry: LayerLevelGeometry,
+  spec: BrickSpec,
+  parentLevel: number,
+  parentCell: Vec3,
+  measuredSlabRanges: ReadonlyMap<string, readonly (readonly [number, number])[]>,
+  slabCount: number,
+): [number, number][] | null {
+  const children = childrenOf(geometry, spec, parentLevel, parentCell);
+  if (children.length === 0) return null;
+  const out: [number, number][] = Array.from({ length: slabCount }, () => [
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ]);
+  for (const child of children) {
+    const ranges = measuredSlabRanges.get(nodeKey(parentLevel - 1, child));
+    if (!ranges || ranges.length < slabCount) return null;
+    for (let s = 0; s < slabCount; s++) {
+      if (ranges[s][0] < out[s][0]) out[s][0] = ranges[s][0];
+      if (ranges[s][1] > out[s][1]) out[s][1] = ranges[s][1];
+    }
+  }
+  return out;
+}
+
 export function aggregateIfComplete(
   geometry: LayerLevelGeometry,
   spec: BrickSpec,

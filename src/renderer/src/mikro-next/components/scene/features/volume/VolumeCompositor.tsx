@@ -211,6 +211,13 @@ export const VolumeCompositor = () => {
   }, [viewerStoreApi, target, stats]);
 
   const previousKeyRef = useRef<VolumeFrameKey | null>(null);
+  // Per-frame scratch, allocated once: the pass-set arrays `collectPassSets`
+  // refills, and TWO camera-element buffers used ping-pong — the previous
+  // frame's key holds one by reference (see decideVolumeFrame), so this frame
+  // must write the other.
+  const passSetsRef = useRef<PassSets>({ volumeMeshes: [], occluders: [], otherRenderables: [] });
+  const cameraBuffersRef = useRef<[number[], number[]]>([new Array(16).fill(0), new Array(16).fill(0)]);
+  const cameraBufferIndexRef = useRef(0);
   const hasContentRef = useRef(false);
 
   // --- Settle refinement ladder (sole driver) ------------------------------
@@ -284,7 +291,7 @@ export const VolumeCompositor = () => {
     scene.updateMatrixWorld();
     camera.updateMatrixWorld();
 
-    const sets = collectPassSets(scene);
+    const sets = collectPassSets(scene, passSetsRef.current);
     if (sets.volumeMeshes.length === 0) {
       // No volume passes mounted: plain frame, forget the cache.
       hasContentRef.current = false;
@@ -321,8 +328,11 @@ export const VolumeCompositor = () => {
       .copy(camera.projectionMatrix)
       .multiply(scratchView.copy(camera.matrixWorld).invert());
     const viewer = viewerStoreApi.getState();
+    cameraBufferIndexRef.current ^= 1;
+    const cameraElements = cameraBuffersRef.current[cameraBufferIndexRef.current];
+    for (let i = 0; i < 16; i++) cameraElements[i] = scratchVP.elements[i];
     const key = {
-      cameraElements: scratchVP.elements.slice(),
+      cameraElements,
       // Thunk: `decideVolumeFrame` calls this only if the camera/size/version
       // compares all pass. During a gesture they never do, so the per-frame
       // string build below simply does not happen.

@@ -1,4 +1,5 @@
 import { hasPhasorSlabs, type LayerLevelGeometry } from "../../../platform/coords/levelGeometry";
+import type { BrickSpec } from "./brickSpec";
 
 /**
  * Atlas storage format for a layer's dtype — pure planning knowledge, shared
@@ -6,7 +7,12 @@ import { hasPhasorSlabs, type LayerLevelGeometry } from "../../../platform/coord
  * core so planning never imports GPU code.
  */
 
-export type AtlasKind = "r8" | "r16f" | "r32f";
+/**
+ * `rgba8`: FOUR channel slabs per texel (`.rgba`) instead of z-stacked — the
+ * atlas for 3/4-channel uint8 pools (an RGB image), so an rgb layer samples
+ * ONE texel per step instead of three (see `atlasChannelsPerTexel`).
+ */
+export type AtlasKind = "r8" | "r16f" | "r32f" | "rgba8";
 
 /** R16F atlases store `raw / R16F_DATA_SCALE`; the shader multiplies back
  * through `uAtlasScale` (= this), exactly like the R8 path's 255. */
@@ -29,6 +35,29 @@ try {
 }
 
 export const isR16AtlasesEnabled = (): boolean => r16AtlasesEnabled;
+
+/**
+ * RGBA8 atlases for 3/4-channel unsigned-8-bit intensity pools (an RGB
+ * image): channels interleaved in one texel instead of z-stacked slabs, so
+ * a sample is ONE tap. Same module-flag pattern as R16F (planner-pure).
+ * Kill switch `orkestrator.rgbaAtlas`, default ON; pool-creation time.
+ */
+let rgbaAtlasesEnabled = true;
+try {
+  rgbaAtlasesEnabled = window.localStorage.getItem("orkestrator.rgbaAtlas") !== "off";
+} catch {
+  /* no storage (worker/tests): default applies */
+}
+
+export const isRgbaAtlasesEnabled = (): boolean => rgbaAtlasesEnabled;
+export const setRgbaAtlasesEnabled = (enabled: boolean): void => {
+  rgbaAtlasesEnabled = enabled;
+  try {
+    window.localStorage.setItem("orkestrator.rgbaAtlas", enabled ? "on" : "off");
+  } catch {
+    /* session keeps its current state */
+  }
+};
 export const setR16AtlasesEnabled = (enabled: boolean): void => {
   r16AtlasesEnabled = enabled;
   try {
@@ -84,12 +113,44 @@ export const atlasKindForDtype = (dtype: string, allowHalf = false): AtlasKind =
  */
 export const atlasKindForGeometry = (geometry: LayerLevelGeometry): AtlasKind => {
   if (hasPhasorSlabs(geometry)) return "r32f";
-  return atlasKindForDtype(
+  const kind = atlasKindForDtype(
     geometry.levels[0].dtype,
     isR16AtlasesEnabled() && !geometry.exactValues,
   );
+  // CONTENT-based, not renderKind-based: an intensity layer over the same
+  // 3-channel array shares the pool (the tap selects the component), so the
+  // pool key needs no new field — the kind is a function of already-keyed
+  // fields plus the creation-time flag, exactly like r16f.
+  if (
+    kind === "r8" &&
+    isRgbaAtlasesEnabled() &&
+    !geometry.exactValues &&
+    (geometry.channelSlabCount === 3 || geometry.channelSlabCount === 4) &&
+    geometry.channelCount === geometry.channelSlabCount
+  ) {
+    return "rgba8";
+  }
+  return kind;
 };
 
-/** Bytes per stored voxel for an atlas kind. */
+/** Channel slabs packed into ONE texel: 4 for rgba8, 1 otherwise. */
+export const atlasChannelsPerTexel = (kind: AtlasKind): number => (kind === "rgba8" ? 4 : 1);
+
+/** Bytes per stored TEXEL for an atlas kind (an rgba8 texel is four slabs). */
 export const atlasBytesPerVoxel = (kind: AtlasKind): number =>
   kind === "r8" ? 1 : kind === "r16f" ? 2 : 4;
+
+/** Depth of one atlas slot in texels: the channel slabs stacked along z,
+ * `channelsPerTexel` of them sharing each texel. */
+export const atlasSlotDepth = (spec: BrickSpec, kind: AtlasKind): number =>
+  spec.stored[2] * Math.ceil(spec.channelCount / atlasChannelsPerTexel(kind));
+
+/**
+ * Bytes one atlas slot occupies — THE slot-size function. The planner's byte
+ * accounting (`planLayerNodes`, the plan tracker, pool viability) and the
+ * pool's allocation (`ensurePool`, `pending.bytes`) must all use it: when
+ * they disagreed (planner sized a uint8 phasor layer at 1 B/voxel, pool
+ * allocated r32f) plans requested ~4× the slots that existed.
+ */
+export const atlasSlotBytes = (spec: BrickSpec, kind: AtlasKind): number =>
+  spec.stored[0] * spec.stored[1] * atlasSlotDepth(spec, kind) * atlasBytesPerVoxel(kind);

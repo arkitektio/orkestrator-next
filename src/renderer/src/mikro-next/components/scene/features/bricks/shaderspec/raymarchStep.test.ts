@@ -11,6 +11,7 @@ import {
   emptyStepMaxNorm,
   normalizeSlotValue,
   occupancyUpperNorm,
+  occupancyUpperNormPerSlab,
   residentBrickSkippable,
   shouldSkipStep,
   type MemberSkipState,
@@ -428,5 +429,45 @@ describe("aggregate hop predicate (R4 reuses residentBrickSkippable)", () => {
       done: false,
     };
     expect(residentBrickSkippable([member])).toBe(false);
+  });
+});
+
+describe("occupancyUpperNormPerSlab", () => {
+  const slots = [
+    { ...slot({ climMin: 0.1, climMax: 0.8 }), slab: 0 },
+    { ...slot({ climMin: 0.1, climMax: 0.8 }), slab: 1 },
+    { ...slot({ climMin: 0.1, climMax: 0.8 }), slab: 2 },
+  ];
+
+  it("equals the union predicate when every slab shares the union bracket", () => {
+    const union = { min: 10, max: 200 };
+    expect(occupancyUpperNormPerSlab([union, union, union], 0, 255, slots)).toBe(
+      occupancyUpperNorm(10, 200, 0, 255, slots),
+    );
+  });
+
+  it("is never looser than the union, and tighter when one bright slab dominated it", () => {
+    // Red is bright; green and blue are dark. The union says "bright".
+    const perSlab = [
+      { min: 150, max: 200 },
+      { min: 0, max: 5 },
+      { min: 0, max: 5 },
+    ];
+    const union = occupancyUpperNorm(0, 200, 0, 255, slots);
+    const greenBlueOnly = slots.slice(1);
+    expect(occupancyUpperNormPerSlab(perSlab, 0, 255, greenBlueOnly)).toBeLessThan(union);
+    expect(occupancyUpperNormPerSlab(perSlab, 0, 255, slots)).toBeLessThanOrEqual(union);
+    // Under this window the dark slabs are invisible (≤ 0.001): skippable.
+    expect(occupancyUpperNormPerSlab(perSlab, 0, 255, greenBlueOnly)).toBeLessThanOrEqual(0.001);
+  });
+
+  it("skips invisible slots and falls back to slab 0 for an out-of-range slab index", () => {
+    const perSlab = [{ min: 0, max: 255 }];
+    expect(
+      occupancyUpperNormPerSlab(perSlab, 0, 255, [{ ...slot({ visible: false }), slab: 0 }]),
+    ).toBe(0);
+    expect(occupancyUpperNormPerSlab(perSlab, 0, 255, [{ ...slot(), slab: 7 }])).toBe(
+      occupancyUpperNorm(0, 255, 0, 255, [slot()]),
+    );
   });
 });

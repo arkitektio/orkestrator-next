@@ -53,6 +53,15 @@ export type PageTableTexture = {
   occMirrors: Uint8Array[];
   occBacking: Uint8Array;
   /**
+   * PER-SLAB occupancy (`orkestrator.occPerSlab`, `octree/occupancySlabs.ts`):
+   * the occupancy and aggregate textures carry this many PLANES stacked along
+   * their own z — slab `s` of page texel `(x, y, z)` is at `(x, y, z + s·d)`
+   * with `d = layout.size[2]` — and the per-level mirrors hold `occSlabs`
+   * consecutive grid-sized planes (`[slab][z][y][x]`). 1 = the union-only
+   * layout every pool had before, byte-identical.
+   */
+  occSlabs: number;
+  /**
    * Hierarchical-occupancy AGGREGATE sidecar (R4, `orkestrator.occHierarchy`):
    * an RG8 texture with the SAME layout where the texel at (level h, cell c)
    * carries the conservative union of the MEASURED ranges of every level-(h−1)
@@ -80,14 +89,17 @@ const configureTexture = (texture: THREE.Data3DTexture, format: THREE.PixelForma
   texture.needsUpdate = true;
 };
 
-export function createPageTableTexture(layout: PageTableLayout): PageTableTexture {
+export function createPageTableTexture(
+  layout: PageTableLayout,
+  occSlabs: number = 1,
+): PageTableTexture {
   const [w, h, d] = layout.size;
   const backing = new Uint8Array(w * h * d * 4); // all zero = UNMAPPED
-  const occBacking = new Uint8Array(w * h * d * 2); // all zero = full range
+  const occBacking = new Uint8Array(w * h * d * occSlabs * 2); // all zero = full range
 
   const texture = new THREE.Data3DTexture(backing, w, h, d);
   configureTexture(texture, THREE.RGBAFormat);
-  const occupancy = new THREE.Data3DTexture(occBacking, w, h, d);
+  const occupancy = new THREE.Data3DTexture(occBacking, w, h, d * occSlabs);
   configureTexture(occupancy, THREE.RGFormat);
 
   return {
@@ -100,9 +112,10 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
     backing,
     occupancy,
     occMirrors: layout.levelGrid.map(
-      (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
+      (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * occSlabs * 2),
     ),
     occBacking,
+    occSlabs,
     // LAZY: allocated by ensureAggregate on first use (pool has
     // orkestrator.occHierarchy on) — the third texture and its per-level
     // flush upload must cost nothing while the default-off flag is off.
@@ -118,36 +131,55 @@ export function createPageTableTexture(layout: PageTableLayout): PageTableTextur
 export function ensureAggregate(pageTable: PageTableTexture): THREE.Data3DTexture {
   if (pageTable.aggregate) return pageTable.aggregate;
   const [w, h, d] = pageTable.layout.size;
-  const aggBacking = new Uint8Array(w * h * d * 2); // all zero = unknown, never hop
-  const aggregate = new THREE.Data3DTexture(aggBacking, w, h, d);
+  const slabs = pageTable.occSlabs;
+  const aggBacking = new Uint8Array(w * h * d * slabs * 2); // all zero = unknown, never hop
+  const aggregate = new THREE.Data3DTexture(aggBacking, w, h, d * slabs);
   configureTexture(aggregate, THREE.RGFormat);
   pageTable.aggregate = aggregate;
   pageTable.aggBacking = aggBacking;
   pageTable.aggMirrors = pageTable.layout.levelGrid.map(
-    (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * 2),
+    (grid) => new Uint8Array(grid[0] * grid[1] * grid[2] * slabs * 2),
   );
   return aggregate;
 }
 
 /**
- * Write one aggregate texel at (level, cell) — `encodeOccupancyTexel` bytes
- * against the pool's occupancy ENCODE range, or `null` to reset the cell to
- * the all-zero "unknown, never hop" sentinel. Shares the page table's dirty
- * boxes, so the next `flushPageTable` uploads it.
+ * Write one RG8 sidecar texel for EVERY slab plane: plane `s` gets
+ * `slabTexels[s]` when given, else `texel`, else the all-zero sentinel. The
+ * per-level mirror is `[slab][z][y][x]` (plane stride = grid entries), the
+ * full-texture backing stacks planes at `z + s·d`.
  */
-export function setAggregateEntry(
+const writeSidecarTexel = (
   pageTable: PageTableTexture,
+  mirrors: Uint8Array[],
+  backing: Uint8Array,
   level: number,
   cell: Vec3,
-  texel: readonly [number, number] | null,
-): void {
-  ensureAggregate(pageTable);
+  texel: readonly [number, number] | null | undefined,
+  slabTexels: readonly (readonly [number, number])[] | null | undefined,
+): void => {
   const grid = pageTable.layout.levelGrid[level];
   const entry = pageEntryIndex(grid, cell);
-  const r = texel?.[0] ?? 0;
-  const g = texel?.[1] ?? 0;
-  pageTable.aggMirrors![level][entry * 2] = r;
-  pageTable.aggMirrors![level][entry * 2 + 1] = g;
+  const planeEntries = grid[0] * grid[1] * grid[2];
+  const offset = pageTable.layout.levelOffset[level];
+  const [w, h, d] = pageTable.layout.size;
+  const flat =
+    ((offset[2] + cell[2]) * h + (offset[1] + cell[1])) * w + (offset[0] + cell[0]);
+  const planeTexels = w * h * d;
+  for (let s = 0; s < pageTable.occSlabs; s++) {
+    const t = slabTexels?.[s] ?? texel;
+    const r = t?.[0] ?? 0;
+    const g = t?.[1] ?? 0;
+    const m = (s * planeEntries + entry) * 2;
+    mirrors[level][m] = r;
+    mirrors[level][m + 1] = g;
+    const b = (s * planeTexels + flat) * 2;
+    backing[b] = r;
+    backing[b + 1] = g;
+  }
+};
+
+const dirtyCell = (pageTable: PageTableTexture, level: number, cell: Vec3): void => {
   const box = pageTable.dirty[level];
   if (box === null) {
     pageTable.dirty[level] = {
@@ -160,12 +192,34 @@ export function setAggregateEntry(
       if (cell[axis] > box.max[axis]) box.max[axis] = cell[axis];
     }
   }
-  const offset = pageTable.layout.levelOffset[level];
-  const [w, h] = [pageTable.layout.size[0], pageTable.layout.size[1]];
-  const flat =
-    ((offset[2] + cell[2]) * h + (offset[1] + cell[1])) * w + (offset[0] + cell[0]);
-  pageTable.aggBacking![flat * 2] = r;
-  pageTable.aggBacking![flat * 2 + 1] = g;
+};
+
+/**
+ * Write one aggregate texel at (level, cell) — `encodeOccupancyTexel` bytes
+ * against the pool's occupancy ENCODE range, or `null` to reset the cell to
+ * the all-zero "unknown, never hop" sentinel. Shares the page table's dirty
+ * boxes, so the next `flushPageTable` uploads it.
+ */
+export function setAggregateEntry(
+  pageTable: PageTableTexture,
+  level: number,
+  cell: Vec3,
+  texel: readonly [number, number] | null,
+  /** Per-slab texels (`occSlabs` entries) — plane `s` takes `slabTexels[s]`,
+   * falling back to `texel` where absent. */
+  slabTexels?: readonly (readonly [number, number])[] | null,
+): void {
+  ensureAggregate(pageTable);
+  writeSidecarTexel(
+    pageTable,
+    pageTable.aggMirrors!,
+    pageTable.aggBacking!,
+    level,
+    cell,
+    texel,
+    slabTexels,
+  );
+  dirtyCell(pageTable, level, cell);
 }
 
 export function setPageEntry(
@@ -178,26 +232,24 @@ export function setPageEntry(
    * non-RESIDENT flag) resets the texel to the conservative all-zero
    * "unknown, never skip" default. */
   occupancy?: readonly [number, number],
+  /** Per-slab occupancy texels (`occSlabs` entries, `orkestrator.occPerSlab`):
+   * plane `s` takes `occupancySlabs[s]`, falling back to `occupancy`. On a
+   * single-plane page table only plane 0 exists and this is ignored. */
+  occupancySlabs?: readonly (readonly [number, number])[] | null,
 ): void {
   const grid = pageTable.layout.levelGrid[level];
   const entry = pageEntryIndex(grid, brick);
   encodePageEntry(pageTable.mirrors[level], entry, slot, flag);
-  const occR = occupancy?.[0] ?? 0;
-  const occG = occupancy?.[1] ?? 0;
-  pageTable.occMirrors[level][entry * 2] = occR;
-  pageTable.occMirrors[level][entry * 2 + 1] = occG;
-  const box = pageTable.dirty[level];
-  if (box === null) {
-    pageTable.dirty[level] = {
-      min: [brick[0], brick[1], brick[2]],
-      max: [brick[0], brick[1], brick[2]],
-    };
-  } else {
-    for (let axis = 0; axis < 3; axis++) {
-      if (brick[axis] < box.min[axis]) box.min[axis] = brick[axis];
-      if (brick[axis] > box.max[axis]) box.max[axis] = brick[axis];
-    }
-  }
+  writeSidecarTexel(
+    pageTable,
+    pageTable.occMirrors,
+    pageTable.occBacking,
+    level,
+    brick,
+    occupancy,
+    occupancySlabs,
+  );
+  dirtyCell(pageTable, level, brick);
 
   // Context-restore mirror (full-texture layout).
   const offset = pageTable.layout.levelOffset[level];
@@ -205,8 +257,6 @@ export function setPageEntry(
   const texel =
     ((offset[2] + brick[2]) * h + (offset[1] + brick[1])) * w + (offset[0] + brick[0]);
   encodePageEntry(pageTable.backing, texel, slot, flag);
-  pageTable.occBacking[texel * 2] = occR;
-  pageTable.occBacking[texel * 2 + 1] = occG;
 }
 
 /** Upload every dirty level's bounding box; returns whether anything was
@@ -247,35 +297,33 @@ export function flushPageTable(
     );
     // The occupancy sidecar shares the dirty box (writes only happen through
     // `setPageEntry`); both uploads go through the same device, so they
-    // succeed or fail together.
-    const occOk = uploadTexSubImage3D(
-      renderer,
-      pageTable.occupancy,
-      "rg8",
-      dest,
-      [extent[0], extent[1], extent[2]],
-      pageTable.occMirrors[level],
-      {
-        offsetBytes: ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
-        bytesPerRow: grid[0] * 2,
-        rowsPerImage: grid[1],
-      },
-    );
+    // succeed or fail together. One upload PER SLAB PLANE: plane `s` reads
+    // the mirror's s-th grid-sized block and lands at z + s·d.
+    const planeBytes = grid[0] * grid[1] * grid[2] * 2;
+    const boxOffsetBytes = ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2;
+    const uploadPlanes = (texture: THREE.Data3DTexture, mirror: Uint8Array): boolean => {
+      let ok = true;
+      for (let s = 0; s < pageTable.occSlabs; s++) {
+        ok =
+          uploadTexSubImage3D(
+            renderer,
+            texture,
+            "rg8",
+            [dest[0], dest[1], dest[2] + s * pageTable.layout.size[2]],
+            [extent[0], extent[1], extent[2]],
+            mirror,
+            {
+              offsetBytes: s * planeBytes + boxOffsetBytes,
+              bytesPerRow: grid[0] * 2,
+              rowsPerImage: grid[1],
+            },
+          ) && ok;
+      }
+      return ok;
+    };
+    const occOk = uploadPlanes(pageTable.occupancy, pageTable.occMirrors[level]);
     const aggOk = pageTable.aggregate
-      ? uploadTexSubImage3D(
-          renderer,
-          pageTable.aggregate,
-          "rg8",
-          dest,
-          [extent[0], extent[1], extent[2]],
-          pageTable.aggMirrors![level],
-          {
-            offsetBytes:
-              ((box.min[2] * grid[1] + box.min[1]) * grid[0] + box.min[0]) * 2,
-            bytesPerRow: grid[0] * 2,
-            rowsPerImage: grid[1],
-          },
-        )
+      ? uploadPlanes(pageTable.aggregate, pageTable.aggMirrors![level])
       : true; // not allocated (flag off): nothing to upload
     if (pageOk && occOk && aggOk) {
       pageTable.dirty[level] = null;

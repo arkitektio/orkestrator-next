@@ -1463,6 +1463,27 @@ path all GPU-repacked bricks already used. ≈4× memory for uint16 data.
 Kill switches: `orkestrator.r16Atlas`, `orkestrator.atlasMirror` (DebugPanel
 toggles). See §2.5.
 
+**R3 addendum — r16f GPU repack — DONE, default ON (2026-08-27,
+`orkestrator.gpuRepackR16`; needs `gpuRepack` + `r16Atlas`).** The R3
+half-float atlases used to forfeit the compute path entirely (`supports()`
+rejected `r16f`), so every uint16 intensity layer streamed through the CPU
+worker: strided scalar copy + float32 scratch + scalar `floatToHalfBits` per
+brick. `REPACK_KERNEL_R16_WGSL` (`gpu/repackKernel.ts`) is the r8 ARENA
+kernel with TWO half texels per u32 — `pack2x16float(raw / 65535)` ORed into
+its 16-bit lane, `arenaJobLayout(stored, channels, 2)` rows (66 → 256 B,
+1.94× padding; 2D 256-wide rows → 512 B, none), then
+`copyBufferToTexture` into the `r16float` atlas (not a storage format, hence
+the arena; any format is a valid copy destination). The OR stays
+load-bearing: `dest_origin.x` carries the border offset, so x-parity flips
+at chunk seams and one word can straddle two dispatches — word-exclusive
+ownership does NOT hold. Min/max reduce the RAW float (`decodeMinMax`), per
+slab (R8). Parity: `repackKernel.test.ts` (arena simulator bit-identical to
+the worker's `encodeHalfArray`), DebugPanel GPU self-test r16f fixture
+(half bits within 1 ulp — `pack2x16float` rounding is implementation-
+defined among the nearest). Follow-up (C3): a `'raw16'` texture fidelity so
+uint16 chunks stay `Uint16Array` end-to-end (halves decode-cache and upload
+bytes; kernel reads `array<u32>` with `extractBits`).
+
 **R4 — Hierarchical occupancy — SHIPPED DARK (2026-08-19,
 `orkestrator.occHierarchy`, default OFF pending live validation).**
 CPU: every landed brick range (uniform bricks as [v,v]) goes into a per-pool
@@ -1487,6 +1508,100 @@ site). Ray-entry/exit tightening (a prologue walking coarse cells before
 the march) is DEFERRED — the in-march hop already crosses entry regions
 cell-by-cell. Debug: pool report `occHierarchy {measured,
 aggregatesComplete}` + `stats.aggregateWrites`.
+
+**R7 — Fixed-shape materials — DONE, default ON (2026-08-27,
+`orkestrator.fixedShapeFastPath`; needs `shaderFastPath`).** The layer split
+into `IntensityLayer` / `RgbLayer` gives the compositor a DECLARED recipe
+(`LayerState.renderKind`, `platform/model/layerModel.ts` `resolveRenderKind` —
+structural, earned from the sources, so an edit that adds a curve/invert
+demotes the layer to the general path). Three specialisations, all pinned on
+the CPU because the shader cannot be:
+
+- **2D plane** — `gpu/intensityNodeMaterials.ts`: `createIntensityPlaneMaterial`
+  (one tap + one LUT sample, four plain uniforms) and `createRgbPlaneMaterial`
+  (three taps assembled straight into a vec3 — NO LUT texture at all: the
+  general path's tint rows are CONSTANT for a `colormap == null` channel, so
+  its per-slot contribution is `tint · norm`, which `rgbUniforms.test.ts` pins
+  by reading the baked rows). Bindings drop from 5 uniformArrays + 7 textures
+  to 3 + 1 (intensity) / 3 + 0 (rgb).
+- **3D volume** — `emitSimple` / `emitRgb` member arms in
+  `createVolumeNodeMaterial` (a single layer is a one-member group, so they
+  apply unmerged too). Per ray step the arm reads per-member PLAIN uniforms
+  (`members[m].fixed`, sliced from the merged arrays by
+  `fixedMemberUniforms`) instead of four `chParamsA/B.element()` reads, and
+  the EMPTY, occupancy-skip and R4 aggregate predicates emit a straight-line
+  `max(norm(lo), norm(hi))` instead of the 16-slot `Loop`+`Break`+`Continue`
+  with two normalizes per slot. When EVERY member is fixed-shape the material
+  is SLIM: `chParamsA/B`, `sourceParams`, `cursorParams` are never allocated
+  (`ChannelNodesPublic` marks them optional; dispose/update sites guard).
+- **One normalize emitter** — `emitScalarNormalize` is shared by the general
+  `makeChannelNormalize` and both fixed-shape paths, so the transfer
+  arithmetic cannot drift between reference and fast path. CPU mirrors:
+  `shaderspec/raymarchStep.ts` `normalizeSlotValue`, `shaderspec/rgbComposite.ts`
+  (rgb sample + occupancy bound ≡ the general per-slot derivation).
+
+Uniform-data contracts: `intensityUniforms.test.ts` (≡ slot 0),
+`rgbUniforms.test.ts` (≡ slots 0..2 + constant rows),
+`mergedChannelUniforms.test.ts` (`isSimpleIntensity` / `isRgb` /
+`fixedMemberUniforms`). Phasor (`renderKind === "phasor"`) is NOT
+specialised — it keeps the general path. Off, every layer renders through the
+general materials, a pixel-identical reference by construction: the flag is
+the bisect tool.
+
+**R8 — Per-slab occupancy — DONE, default ON (2026-08-27,
+`orkestrator.occPerSlab`, read at POOL creation; intensity pools only).**
+The repack scan and both GPU kernels now reduce one min/max bracket PER
+ATLAS SLAB (`RepackResult.slabRanges`; kernel: per-channel workgroup
+accumulators flushed into `minmax[(minmax_base + c)·2]`, `minmax_base` in
+what was Params word 35, batches laid out by running slab count so mixed
+channel counts pack). The occupancy and aggregate sidecars carry one RG8
+PLANE per slab stacked along z (`pageTableTexture.occSlabs`; slab `s` of
+page texel `(x,y,z)` at `(x,y,z + s·d)`; `octree/occupancySlabs.ts` decides
+the count — 1 whenever the flag is off, the pool has one slab, or
+`d·slabs` would exceed the 2048 extent — and 1 is byte-identical to the old
+layout). The shader (`uOccSlabDepth`) reads each slot's OWN plane: the
+fixed-shape arms one (intensity) or three (rgb) loads, the general loop one
+per slot; a single-plane pool emits exactly the pre-flag code. `min`/`max`/
+`uniformValue` stay the UNION, so EMPTY detection, auto-range and the
+observed-range promotion are unchanged; residency keeps parallel
+`brickSlabRanges` / `measuredSlabRanges` / `aggregateSlabRanges` maps
+(`aggregateSlabsIfComplete`) that are populated only when `occSlabs > 1`.
+CPU mirrors: `shaderspec/raymarchStep.ts` `occupancyUpperNormPerSlab` (≡ the
+union predicate when every slab shares one bracket, never looser). Kernel
+parity: `repackKernel.test.ts` (decodeSlabRanges, base layout) and the
+DebugPanel GPU self-test (slab-for-slab compare). Follow-ups: per-slab EMPTY
+fills (24 free page-entry bits for ≤3 slabs) and a per-slab OBSERVED encode
+range.
+
+**R9 — RGBA8 atlases — DONE, default ON (2026-08-27,
+`orkestrator.rgbaAtlas`, module flag in `octree/atlasFormat.ts` like r16;
+pool creation).** A 3/4-channel uint8 intensity pool (an RGB image) stores
+its channel slabs INTERLEAVED in one `rgba8unorm` texel instead of z-stacked
+(`atlasChannelsPerTexel = 4`, `atlasSlotDepth = stored.z`), so the rgb fast
+path samples ONE texel per step (`emitRgbTaps`) instead of three, and every
+tap through `emitChannelTap` / `emitTricubicTap` addresses `(slab >> 2)`
+slab-depths down and `dot(rgba, mask(slab & 3))` — at one channel per texel
+that emits the legacy `z += slab·depth` / `.r` verbatim (CPU mirror
+`shaderspec/atlasTap.ts`). Selection is CONTENT-based (`atlasKindForGeometry`:
+uint8, `channelSlabCount ∈ {3,4}`, no phasor, not a label), never
+renderKind-based, so an intensity layer over the same array shares the pool
+and `poolKey` is untouched. ONE slot-size function now feeds the planner and
+the pool — `atlasSlotBytes(spec, kind)` at `nodePlanning`, `nodePlanTracker`,
+`poolViability`, `ensurePool` and `pending.bytes` (a 3-slab rgba8 slot is
+4/3 of its r8 twin; 2-channel pools stay r8 for that reason). CPU path: the
+worker repacks planar into a byte scratch (per-slab min/max on the planar
+layout) then `interleaveSlabsRgba8` (`octree/rgbaPack.ts`); GPU path:
+`REPACK_KERNEL_RGBA8_WGSL` — the r8 arena kernel with one word per texel
+and the channel byte ORed in (`arenaJobLayoutForKind`: `ceil(channels/4)`
+images of 4 B texels, 1.94× row padding vs r8's 3.88×). Direct
+`textureStore` was deliberately NOT used: the channel axis is commonly
+chunked per channel (OME-Zarr c=1), so one texel's four bytes arrive from
+up to four dispatches and only the OR is race-free. Probes read rgba8 pools
+through the decoded-chunk cache (`backing` is always null); the skeleton
+compute kernels return null (CPU fallback) for `channelsPerTexel !== 1` —
+a component select there is a follow-up. Parity: `repackKernel.test.ts`
+(arena simulator ≡ planar repack + interleave), `atlasFormat.test.ts`,
+`brickAtlas.test.ts`, `shaderspec/atlasTap.test.ts`.
 
 **R5 — Governor rework.** The tier is still a persisted frame-time-streak
 machine label: a mixed 20↔30 ms scene never demotes (one in-band frame resets

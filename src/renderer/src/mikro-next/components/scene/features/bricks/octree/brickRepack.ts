@@ -81,6 +81,30 @@ export type RepackResult = {
   max: number;
   /** Set when every written voxel holds the same value. */
   uniformValue: number | null;
+  /**
+   * Raw [min, max] PER OUTPUT SLAB (`spec.channelCount` entries, slab order)
+   * — the per-slab occupancy sidecar's input (`orkestrator.occPerSlab`).
+   * `min`/`max` above are their union, exactly as before; a slab the scan
+   * never wrote carries the union (conservative). Zeros when nothing finite
+   * was written, matching `min`/`max`.
+   */
+  slabRanges: readonly (readonly [number, number])[];
+};
+
+type ScanResult = { min: number; max: number; slabMin: number[]; slabMax: number[] };
+
+const newScan = (slabCount: number): ScanResult => ({
+  min: Number.POSITIVE_INFINITY,
+  max: Number.NEGATIVE_INFINITY,
+  slabMin: new Array<number>(slabCount).fill(Number.POSITIVE_INFINITY),
+  slabMax: new Array<number>(slabCount).fill(Number.NEGATIVE_INFINITY),
+});
+
+const foldSlab = (scan: ScanResult, slab: number, lo: number, hi: number): void => {
+  if (lo < scan.slabMin[slab]) scan.slabMin[slab] = lo;
+  if (hi > scan.slabMax[slab]) scan.slabMax[slab] = hi;
+  if (lo < scan.min) scan.min = lo;
+  if (hi > scan.max) scan.max = hi;
 };
 
 /** Where one phasor node's three slabs live in the output. */
@@ -103,14 +127,31 @@ export function repackBrick(input: RepackBrickInput): RepackResult {
     : copyChunks(input);
   replicateEdges(input);
 
+  const slabCount = input.spec.channelCount;
   if (!Number.isFinite(written.min)) {
     input.output.fill(0);
-    return { min: 0, max: 0, uniformValue: 0 };
+    return {
+      min: 0,
+      max: 0,
+      uniformValue: 0,
+      slabRanges: Array.from({ length: slabCount }, () => [0, 0] as const),
+    };
+  }
+  const slabRanges: (readonly [number, number])[] = [];
+  for (let s = 0; s < slabCount; s++) {
+    const lo = written.slabMin[s];
+    const hi = written.slabMax[s];
+    // A slab nothing wrote (cannot happen when the chunks tile the channel
+    // range, but the contract is conservative either way) takes the union.
+    slabRanges.push(
+      Number.isFinite(lo) && Number.isFinite(hi) ? [lo, hi] : [written.min, written.max],
+    );
   }
   return {
     min: written.min,
     max: written.max,
     uniformValue: written.min === written.max ? written.min : null,
+    slabRanges,
   };
 }
 
@@ -153,7 +194,7 @@ const destOriginOf = (brickBox: VoxelBox, border: number): Vec3 => [
 ];
 
 /** The original path: one slab per channel, copied voxel for voxel. */
-function copyChunks(input: RepackBrickInput): { min: number; max: number } {
+function copyChunks(input: RepackBrickInput): ScanResult {
   const { spec, level, axes, brickBox, fetchBox, fixedOffsets, chunks, output } = input;
   const { xPos, yPos, zPos, intensityPos } = axes;
   const [sx, sy] = spec.stored;
@@ -163,8 +204,7 @@ function copyChunks(input: RepackBrickInput): { min: number; max: number } {
     intensityPos !== -1 ? Math.max(1, level.chunks[intensityPos] ?? 1) : 1;
   const destOrigin = destOriginOf(brickBox, spec.border);
 
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
+  const scan = newScan(channelCount);
 
   for (const chunk of chunks) {
     const overlap = chunkOverlap(chunk, level, fetchBox);
@@ -183,6 +223,10 @@ function copyChunks(input: RepackBrickInput): { min: number; max: number } {
 
     for (let c = chanStart; c < chanEnd; c++) {
       const srcChanBase = fixedBase + (c - chanStart) * strideC;
+      // Per-slab scan, folded once per (chunk, channel) — the inner loop
+      // stays as tight as the union-only scan it replaces.
+      let min = Number.POSITIVE_INFINITY;
+      let max = Number.NEGATIVE_INFINITY;
       for (let z = lo[2]; z < hi[2]; z++) {
         const srcZBase = srcChanBase + (z - chunkOrigin[2]) * strideZ;
         const destZBase = (c * sz + (z - destOrigin[2])) * sy;
@@ -200,10 +244,11 @@ function copyChunks(input: RepackBrickInput): { min: number; max: number } {
           }
         }
       }
+      foldSlab(scan, c, min, max);
     }
   }
 
-  return { min, max };
+  return scan;
 }
 
 /**
@@ -221,7 +266,7 @@ function reduceChunks(
   slabs: readonly SlabDesc[],
   phasorBins: number,
   phasors: PhasorSlabs[],
-): { min: number; max: number } {
+): ScanResult {
   const { spec, level, axes, brickBox, fetchBox, fixedOffsets, chunks, output } = input;
   const { xPos, yPos, zPos, intensityPos, phasorPos } = axes;
   const [sx, sy] = spec.stored;
@@ -317,19 +362,15 @@ function reduceChunks(
     }
   }
 
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
-  const observe = (value: number) => {
-    if (value < min) min = value;
-    if (value > max) max = value;
-  };
+  const scan = newScan(spec.channelCount);
+  const observe = (slab: number, value: number) => foldSlab(scan, slab, value, value);
 
   for (const { index } of channelSlabs) {
     const base = index * voxelsPerSlab;
     for (let voxel = 0; voxel < voxelsPerSlab; voxel++) {
       const mean = output[base + voxel] / phasorBins;
       output[base + voxel] = mean;
-      observe(mean);
+      observe(index, mean);
     }
   }
 
@@ -349,13 +390,13 @@ function reduceChunks(
       output[gBase + voxel] = g;
       output[sBase + voxel] = s;
       output[iBase + voxel] = intensity;
-      observe(g);
-      observe(s);
-      observe(intensity);
+      observe(phasor.gSlab, g);
+      observe(phasor.sSlab, s);
+      observe(phasor.iSlab, intensity);
     }
   }
 
-  return { min, max };
+  return scan;
 }
 
 /** Fill everything outside the valid (fetch) region by copying the nearest

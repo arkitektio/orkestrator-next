@@ -1,6 +1,7 @@
 import { atlasBytesPerVoxel, R16F_DATA_SCALE, type AtlasKind } from "./atlasFormat";
 import { encodeHalfArray } from "./halfFloat";
 import { repackBrick, type BrickArray, type RepackBrickInput, type RepackResult } from "./brickRepack";
+import { interleaveSlabsRgba8, rgba8OutputBytes } from "./rgbaPack";
 import type { RepackWorkerRequest, RepackWorkerResponse } from "./repack-worker";
 
 /**
@@ -28,6 +29,13 @@ export type RepackJob = {
 };
 
 export type RepackOutcome = RepackResult & { data: BrickArray };
+
+/** Bytes of one finished output brick — what the worker allocates and the
+ * free list is keyed by. rgba8 collapses the planar element count. */
+export const repackOutputBytes = (job: Pick<RepackJob, "kind" | "elementCount" | "input">): number =>
+  job.kind === "rgba8"
+    ? rgba8OutputBytes(job.elementCount, job.input.spec.channelCount)
+    : job.elementCount * atlasBytesPerVoxel(job.kind);
 
 export interface RepackDispatcher {
   repack(job: RepackJob): Promise<RepackOutcome>;
@@ -63,6 +71,19 @@ export function createSyncRepackDispatcher(): RepackDispatcher {
         const result = repackBrick({ ...job.input, output: scratch });
         const output = new Uint16Array(job.elementCount);
         encodeHalfArray(scratch, output, 1 / R16F_DATA_SCALE);
+        return Promise.resolve({ ...result, data: output });
+      }
+      if (job.kind === "rgba8") {
+        // Planar repack, then interleave — the worker's two-step (keep in lockstep).
+        const scratch = new Uint8Array(job.elementCount);
+        const result = repackBrick({ ...job.input, output: scratch });
+        const output = new Uint8Array(repackOutputBytes(job));
+        interleaveSlabsRgba8(
+          scratch,
+          job.elementCount / job.input.spec.channelCount,
+          job.input.spec.channelCount,
+          output,
+        );
         return Promise.resolve({ ...result, data: output });
       }
       const output: BrickArray =
@@ -154,7 +175,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       return;
     }
     const data: BrickArray =
-      entry.kind === "r8"
+      entry.kind === "r8" || entry.kind === "rgba8"
         ? new Uint8Array(response.buffer)
         : entry.kind === "r16f"
           ? new Uint16Array(response.buffer)
@@ -163,6 +184,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       min: response.min,
       max: response.max,
       uniformValue: response.uniformValue,
+      slabRanges: response.slabMin.map((lo, s) => [lo, response.slabMax[s]] as const),
       data,
     });
   };
@@ -218,7 +240,7 @@ function createWorkerRepackDispatcher(): RepackDispatcher {
       const id = nextId++;
       return new Promise<RepackOutcome>((resolve, reject) => {
         pending.set(id, { resolve, reject, kind: job.kind });
-        const recycled = freeList.take(job.elementCount * atlasBytesPerVoxel(job.kind));
+        const recycled = freeList.take(repackOutputBytes(job));
         const request: RepackWorkerRequest = {
           id,
           kind: job.kind,

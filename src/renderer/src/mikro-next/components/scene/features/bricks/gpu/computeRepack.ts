@@ -10,19 +10,23 @@ import {
   MINMAX_ENTRY_BYTES,
   MINMAX_INIT_MAX,
   MINMAX_INIT_MIN,
+  REPACK_KERNEL_R16_WGSL,
   REPACK_KERNEL_R8_WGSL,
+  REPACK_KERNEL_RGBA8_WGSL,
   REPACK_KERNEL_WGSL,
   REPACK_PARAMS_BYTES,
   REPACK_PARAMS_STRIDE,
   buildKernelDispatches,
   decodeMinMax,
   decodeMinMaxU8,
+  decodeSlabRanges,
   dispatchWorkgroups,
   packKernelParams,
-  r8JobLayout,
+  arenaJobLayoutForKind,
   type RepackDispatchInput,
 } from "./repackKernel";
 import type { BrickAtlas } from "./brickAtlas";
+import type { AtlasKind } from "../octree/atlasFormat";
 
 /**
  * GPU brick repack: runs the fused repack kernels (`repackKernel.ts`) on the
@@ -149,6 +153,36 @@ export function setGpuRepackEnabled(enabled: boolean): void {
   }
 }
 
+/**
+ * r16f GPU repack (same pattern, default ON): lets uint16 intensity pools —
+ * the R3 half-float atlases — take the compute path through the r16 arena
+ * kernel instead of the CPU worker (strided scalar copy + float32 scratch +
+ * scalar half-encode per brick). Effective only with `orkestrator.gpuRepack`
+ * and `orkestrator.r16Atlas` on. Read once per repacker (scene mount).
+ */
+const GPU_REPACK_R16_STORAGE_KEY = "orkestrator.gpuRepackR16";
+
+export function isGpuRepackR16Enabled(): boolean {
+  try {
+    return window.localStorage.getItem(GPU_REPACK_R16_STORAGE_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setGpuRepackR16Enabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(GPU_REPACK_R16_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
+}
+
+/** Kinds whose output rides the u32 arena + copyBufferToTexture path. */
+type ArenaKind = "r8" | "r16f" | "rgba8";
+const usesArena = (kind: AtlasKind): kind is ArenaKind =>
+  kind === "r8" || kind === "r16f" || kind === "rgba8";
+
 export type GpuRepackJob<Token> = {
   atlas: BrickAtlas;
   input: RepackDispatchInput;
@@ -163,6 +197,8 @@ export type GpuRepackResult<Token> = {
   min: number;
   max: number;
   uniformValue: number | null;
+  /** Per-slab [min, max] (`RepackResult.slabRanges`), slab order. */
+  slabRanges: readonly (readonly [number, number])[];
 };
 
 export type GpuFlushOutcome<Token> = {
@@ -201,9 +237,14 @@ type StagingBuffer = { buffer: GpuBuffer; size: number; free: boolean };
 class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
   private pipeline: GpuComputePipeline | null = null;
   private pipelineR8: GpuComputePipeline | null = null;
+  private pipelineR16: GpuComputePipeline | null = null;
+  private pipelineRgba8: GpuComputePipeline | null = null;
   private broken = false;
-  /** r8 module compile failure only — must not take the f32 path down. */
+  /** r8 / r16 / rgba8 module compile failures only — must not take the f32 path down. */
   private r8Broken = false;
+  private r16Broken = false;
+  private rgba8Broken = false;
+  private readonly r16Enabled = isGpuRepackR16Enabled();
   private disposed = false;
 
   private readonly group0Layout: GpuBindGroupLayout;
@@ -326,15 +367,67 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         this.r8Broken = true;
         console.warn("[bricks] r8 gpu repack pipeline failed to build; using CPU repack", error);
       });
+    {
+      // rgba8 shares r8's group0 layout and chunk dtype (Uint8Array); only the
+      // texel packing differs.
+      const moduleRgba8 = device.createShaderModule({
+        label: "brick-repack-rgba8",
+        code: REPACK_KERNEL_RGBA8_WGSL,
+      });
+      device
+        .createComputePipelineAsync({
+          label: "brick-repack-rgba8",
+          layout: device.createPipelineLayout({
+            bindGroupLayouts: [this.group0R8Layout, this.group1Layout],
+          }),
+          compute: { module: moduleRgba8, entryPoint: "main" },
+        })
+        .then((pipeline) => {
+          this.pipelineRgba8 = pipeline;
+        })
+        .catch((error) => {
+          this.rgba8Broken = true;
+          console.warn("[bricks] rgba8 gpu repack pipeline failed to build; using CPU repack", error);
+        });
+    }
+    if (this.r16Enabled) {
+      // Same group0 layout as r8 (params + minmax + arena) — the kernels
+      // differ only in texel packing.
+      const moduleR16 = device.createShaderModule({
+        label: "brick-repack-r16",
+        code: REPACK_KERNEL_R16_WGSL,
+      });
+      device
+        .createComputePipelineAsync({
+          label: "brick-repack-r16",
+          layout: device.createPipelineLayout({
+            bindGroupLayouts: [this.group0R8Layout, this.group1Layout],
+          }),
+          compute: { module: moduleR16, entryPoint: "main" },
+        })
+        .then((pipeline) => {
+          this.pipelineR16 = pipeline;
+        })
+        .catch((error) => {
+          this.r16Broken = true;
+          console.warn("[bricks] r16 gpu repack pipeline failed to build; using CPU repack", error);
+        });
+    }
   }
 
   ready(): boolean {
-    return (this.pipeline !== null || this.pipelineR8 !== null) && !this.broken && !this.disposed;
+    return (
+      (this.pipeline !== null || this.pipelineR8 !== null || this.pipelineR16 !== null) &&
+      !this.broken &&
+      !this.disposed
+    );
   }
 
   status(): "pending" | "ready" | "broken" {
     if (this.broken || this.disposed) return "broken";
-    return this.pipeline === null && this.pipelineR8 === null ? "pending" : "ready";
+    return this.pipeline === null && this.pipelineR8 === null && this.pipelineR16 === null
+      ? "pending"
+      : "ready";
   }
 
   supports(atlas: BrickAtlas, chunks: readonly RepackChunk[]): boolean {
@@ -354,6 +447,27 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         !this.r8Broken &&
         chunks.every(
           (chunk) => chunk.data instanceof Uint8Array && chunk.data.byteLength <= maxBinding,
+        )
+      );
+    }
+    if (atlas.kind === "rgba8") {
+      return (
+        this.pipelineRgba8 !== null &&
+        !this.rgba8Broken &&
+        chunks.every(
+          (chunk) => chunk.data instanceof Uint8Array && chunk.data.byteLength <= maxBinding,
+        )
+      );
+    }
+    if (atlas.kind === "r16f") {
+      // uint16 chunks arrive promoted to Float32Array (codec worker default
+      // fidelity — see atlasFormat.ts); the kernel halves them on the way in.
+      return (
+        this.r16Enabled &&
+        this.pipelineR16 !== null &&
+        !this.r16Broken &&
+        chunks.every(
+          (chunk) => chunk.data instanceof Float32Array && chunk.data.byteLength <= maxBinding,
         )
       );
     }
@@ -395,8 +509,14 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       dispatches: ReturnType<typeof buildKernelDispatches>;
       /** r8 jobs: 256-aligned byte offset of this brick in the output arena. */
       arenaBase: number | null;
+      /** First min/max entry of this brick; one entry PER SLAB follows. */
+      minmaxBase: number;
+      slabCount: number;
     }[] = [];
     let arenaBytes = 0;
+    // Batches mix pools with different channel counts, so entries are laid
+    // out by running sum, not brick × slabs.
+    let minmaxEntries = 0;
     for (let i = 0; i < jobs.length; i++) {
       const job = jobs[i];
       const slotOrigin: Vec3 = [
@@ -404,18 +524,24 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         job.slotCoords[1] * job.atlas.slotSize[1],
         job.slotCoords[2] * job.atlas.slotSize[2],
       ];
-      const dispatches = buildKernelDispatches(job.input, slotOrigin, live.length);
+      const slabCount = job.input.spec.channelCount;
+      const dispatches = buildKernelDispatches(job.input, slotOrigin, live.length, minmaxEntries);
       if (dispatches.length === 0) {
         failed.push(job.token); // no chunk overlaps the brick: nothing was written
         continue;
       }
       let arenaBase: number | null = null;
-      if (job.atlas.kind === "r8") {
-        const layout = r8JobLayout(job.input.spec.stored, job.input.spec.channelCount);
+      if (usesArena(job.atlas.kind)) {
+        const layout = arenaJobLayoutForKind(
+          job.atlas.kind,
+          job.input.spec.stored,
+          job.input.spec.channelCount,
+        );
         arenaBase = arenaBytes;
         arenaBytes += layout.jobBytes;
       }
-      live.push({ job, dispatches, arenaBase });
+      live.push({ job, dispatches, arenaBase, minmaxBase: minmaxEntries, slabCount });
+      minmaxEntries += slabCount;
     }
     if (live.length === 0) return { results: [], failed };
 
@@ -455,7 +581,12 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         arenaBase !== null
           ? {
               outBaseWord: arenaBase / 4,
-              rowWords: r8JobLayout(job.input.spec.stored, job.input.spec.channelCount).rowBytes / 4,
+              rowWords:
+                arenaJobLayoutForKind(
+                  job.atlas.kind as ArenaKind,
+                  job.input.spec.stored,
+                  job.input.spec.channelCount,
+                ).rowBytes / 4,
             }
           : undefined;
       for (const d of dispatches) {
@@ -466,9 +597,9 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
     device.queue.writeBuffer(this.paramsBuffer!, 0, paramsWords);
 
     // Min/max slots, initialized to the sentinels the kernel reduces into.
-    this.ensureMinmaxCapacity(live.length * MINMAX_ENTRY_BYTES);
-    const minmaxInit = new Uint32Array(live.length * 2);
-    for (let i = 0; i < live.length; i++) {
+    this.ensureMinmaxCapacity(minmaxEntries * MINMAX_ENTRY_BYTES);
+    const minmaxInit = new Uint32Array(minmaxEntries * 2);
+    for (let i = 0; i < minmaxEntries; i++) {
       minmaxInit[i * 2] = MINMAX_INIT_MIN;
       minmaxInit[i * 2 + 1] = MINMAX_INIT_MAX;
     }
@@ -476,16 +607,24 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
 
     if (arenaBytes > 0) this.ensureArenaCapacity(arenaBytes);
 
-    const staging = this.acquireStaging(live.length * MINMAX_ENTRY_BYTES);
+    const staging = this.acquireStaging(minmaxEntries * MINMAX_ENTRY_BYTES);
 
     const encoder = device.createCommandEncoder();
-    // The r8 kernel ORs bytes into the arena — it must start zeroed.
+    // The arena kernels OR lanes into the arena — it must start zeroed.
     if (arenaBytes > 0) encoder.clearBuffer(this.arenaBuffer!, 0, arenaBytes);
     const pass = encoder.beginComputePass();
     slice = 0;
     for (const { job, dispatches, arenaBase } of live) {
       const r8 = arenaBase !== null;
-      pass.setPipeline(r8 ? this.pipelineR8! : this.pipeline!);
+      pass.setPipeline(
+        r8
+          ? job.atlas.kind === "r16f"
+            ? this.pipelineR16!
+            : job.atlas.kind === "rgba8"
+              ? this.pipelineRgba8!
+              : this.pipelineR8!
+          : this.pipeline!,
+      );
       for (const d of dispatches) {
         pass.setBindGroup(
           0,
@@ -499,10 +638,15 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       }
     }
     pass.end();
-    // r8 bricks: arena → atlas slot, in the same submit as the dispatches.
+    // Arena bricks (r8 / r16f): arena → atlas slot, in the same submit as
+    // the dispatches.
     for (const { job, arenaBase } of live) {
       if (arenaBase === null) continue;
-      const layout = r8JobLayout(job.input.spec.stored, job.input.spec.channelCount);
+      const layout = arenaJobLayoutForKind(
+        job.atlas.kind as ArenaKind,
+        job.input.spec.stored,
+        job.input.spec.channelCount,
+      );
       encoder.copyBufferToTexture(
         {
           buffer: this.arenaBuffer!,
@@ -526,23 +670,30 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       0,
       staging.buffer,
       0,
-      live.length * MINMAX_ENTRY_BYTES,
+      minmaxEntries * MINMAX_ENTRY_BYTES,
     );
     device.queue.submit([encoder.finish()]);
 
     await staging.buffer.mapAsync(MAP_MODE_READ);
     const words = new Uint32Array(
-      staging.buffer.getMappedRange().slice(0, live.length * MINMAX_ENTRY_BYTES),
+      staging.buffer.getMappedRange().slice(0, minmaxEntries * MINMAX_ENTRY_BYTES),
     );
     staging.buffer.unmap();
     staging.free = true;
 
-    const results: GpuRepackResult<Token>[] = live.map(({ job, arenaBase }, i) => ({
-      token: job.token,
-      ...(arenaBase !== null
-        ? decodeMinMaxU8(words[i * 2], words[i * 2 + 1])
-        : decodeMinMax(words[i * 2], words[i * 2 + 1])),
-    }));
+    const results: GpuRepackResult<Token>[] = live.map(
+      ({ job, minmaxBase, slabCount }) => ({
+        token: job.token,
+        ...decodeSlabRanges(
+          words,
+          minmaxBase,
+          slabCount,
+          // The byte kernels (r8, rgba8) reduce raw bytes; f32 and r16
+          // reduce the ordered-encoded raw float.
+          job.atlas.kind === "r8" || job.atlas.kind === "rgba8" ? decodeMinMaxU8 : decodeMinMax,
+        ),
+      }),
+    );
     return { results, failed };
   }
 

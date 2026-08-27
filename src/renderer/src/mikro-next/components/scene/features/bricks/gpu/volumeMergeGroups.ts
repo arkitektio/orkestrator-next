@@ -136,7 +136,8 @@ export function planVolumeMergeGroups(
       cursors = 0;
     };
 
-    for (const member of ordered.filter((m) => bucket.includes(m))) {
+    // `bucket` was filled by walking `ordered`, so it IS in scene order.
+    for (const member of bucket) {
       // A member that cannot fit even alone still gets its own group: the
       // uniform builder truncates, exactly as the single-layer path already
       // does when a layer exceeds MAX_CHANNELS.

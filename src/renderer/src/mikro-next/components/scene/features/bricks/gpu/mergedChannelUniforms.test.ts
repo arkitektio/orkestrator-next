@@ -4,7 +4,7 @@ import { Blending, ColorMap, ProjectionMode } from "@/mikro-next/api/graphql";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { ChannelRenderNode } from "../../../platform/model/renderGraph";
 import { buildChannelUniformData, MAX_CHANNELS } from "./channelUniforms";
-import { buildMergedChannelUniformData } from "./mergedChannelUniforms";
+import { buildMergedChannelUniformData, fixedMemberUniforms } from "./mergedChannelUniforms";
 
 const channel = (over: Partial<ChannelRenderNode> = {}): ChannelRenderNode => ({
   type: "channel",
@@ -92,8 +92,65 @@ describe("buildMergedChannelUniformData — the golden invariant", () => {
         projectionMode: 0,
         hasPhasorSources: false,
         isSimpleIntensity: false,
+        isRgb: false,
       },
     ]);
+  });
+});
+
+describe("buildMergedChannelUniformData — rgb specialization input", () => {
+  const rgb = (over: Partial<LayerState> = {}) =>
+    layer(
+      [
+        channel({ intensityIndex: 0, transfer: { ...channel().transfer, colormap: null, color: [255, 0, 0] } }),
+        channel({ intensityIndex: 1, transfer: { ...channel().transfer, colormap: null, color: [0, 255, 0] } }),
+        channel({ intensityIndex: 2, transfer: { ...channel().transfer, colormap: null, color: [0, 0, 255] } }),
+      ],
+      { renderKind: "rgb", ...over },
+    );
+
+  it("marks a three-slot rgb member", () => {
+    expect(build([{ layerId: "a", layer: rgb(), slotOffset: 0 }]).members[0].isRgb).toBe(true);
+  });
+
+  it("does NOT mark it when renderKind was not earned", () => {
+    expect(build([{ layerId: "a", layer: rgb({ renderKind: "graph" }), slotOffset: 0 }]).members[0].isRgb).toBe(
+      false,
+    );
+  });
+
+  it("does NOT mark a member truncated below three slots", () => {
+    const fourteen = Array.from({ length: 14 }, (_, i) => ({
+      layerId: `c${i}`,
+      layer: layer([channel({ intensityIndex: i })]),
+      slotOffset: i,
+    }));
+    const merged = build([...fourteen, { layerId: "rgb", layer: rgb(), slotOffset: 14 }]);
+    const member = merged.members.find((m) => m.layerId === "rgb");
+    expect(member?.slotCount).toBe(2);
+    expect(member?.isRgb).toBe(false);
+  });
+
+  it("fixedMemberUniforms slices exactly the member's slots out of the merged arrays", () => {
+    const merged = build([
+      { layerId: "plain", layer: layer([channel({ intensityIndex: 3 })], { renderKind: "intensity" }), slotOffset: 0 },
+      { layerId: "rgb", layer: rgb(), slotOffset: 1 },
+    ]);
+    const [plain, rgbMember] = merged.members;
+    expect(fixedMemberUniforms(merged, plain)).toEqual({
+      slabs: [3, 3, 3],
+      climMin: merged.climMin[0],
+      climMax: merged.climMax[0],
+      gamma: merged.gamma[0],
+      row: merged.row[0],
+    });
+    expect(fixedMemberUniforms(merged, rgbMember)).toEqual({
+      slabs: [0, 1, 2],
+      climMin: merged.climMin[1],
+      climMax: merged.climMax[1],
+      gamma: 1,
+      row: merged.row[1],
+    });
   });
 });
 

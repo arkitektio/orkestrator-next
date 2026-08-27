@@ -222,52 +222,202 @@ export const useStepScaleUniform = (
 
   useEffect(() => {
     if (!nodes) return;
-    let lastStep: number | null = null;
-    let lastMaxSteps: number | null = null;
-    let lastSmooth: number | null = null;
     // Read once per effect, not per camera tick (localStorage): flipping the
     // flag rebuilds the material, which remounts this effect anyway.
     const smoothZoom = isSmoothZoomEnabled();
-    const apply = () => {
-      const profile = qualityGovernor.getProfile();
-      const active =
-        viewStoreApi.getState().cameraMoving || qualityGovernor.isStreaming();
-      const step = resolveStepScale({
-        base:
-          (active ? profile.activeStepScale : profile.settledStepScale) *
-          qualityGovernor.getLoadFactor(),
-        active,
-        canvasPass,
-      });
-      const maxSteps = resolveMaxRaySteps(
-        profile,
-        active,
-        qualityGovernor.getVolumePassCount(),
-        settleRefine ? qualityGovernor.getSettleRefineStage() : 0,
-      );
-      const smooth = smoothZoom
-        ? resolveSmoothThreshold(qualityGovernor.getTier(), active)
-        : 0;
-      if (step === lastStep && maxSteps === lastMaxSteps && smooth === lastSmooth) {
-        return; // the flags flip far more often than the values
-      }
-      lastStep = step;
-      lastMaxSteps = maxSteps;
-      lastSmooth = smooth;
-      nodes.uStepScale.value = step;
-      nodes.uMaxSteps.value = maxSteps;
-      if (nodes.uSmoothThreshold) nodes.uSmoothThreshold.value = smooth;
-      // Value-deduped edge — exactly the cadence the volume compositor's
-      // cache must re-render on (adaptive depth / tricubic / step changes).
-      viewerStoreApi.getState().volumeInputs.bump("step-uniforms");
-      invalidate();
-    };
-    apply();
-    const unsubscribeView = viewStoreApi.subscribe(apply);
-    const unsubscribeQuality = qualityGovernor.subscribe(apply);
-    return () => {
-      unsubscribeView();
-      unsubscribeQuality();
-    };
+    return stepScaleDriverFor(viewStoreApi).register(
+      nodes,
+      { settleRefine, canvasPass, smoothZoom },
+      { viewerStoreApi, invalidate },
+    );
   }, [nodes, settleRefine, canvasPass, viewStoreApi, viewerStoreApi, invalidate]);
+};
+
+// ---------------------------------------------------------------------------
+// The shared step-scale driver
+// ---------------------------------------------------------------------------
+
+/** What distinguishes the values one material needs from another's. */
+export type StepScaleVariant = {
+  settleRefine: boolean;
+  canvasPass: boolean;
+  smoothZoom: boolean;
+};
+
+export type StepScaleValues = { step: number; maxSteps: number; smooth: number };
+
+/** The governor + motion inputs `resolveStepValues` reads — a snapshot, so
+ * the resolution itself is pure and testable. */
+export type StepScaleInputs = {
+  profile: Parameters<typeof resolveMaxRaySteps>[0];
+  tier: Parameters<typeof resolveSmoothThreshold>[0];
+  /** `cameraMoving || streaming`. */
+  active: boolean;
+  loadFactor: number;
+  volumePassCount: number;
+  settleRefineStage: number;
+};
+
+/** The three values one variant's materials write, from one snapshot. Pure:
+ * exactly the arithmetic the per-material effect used to inline. */
+export const resolveStepValues = (
+  inputs: StepScaleInputs,
+  variant: StepScaleVariant,
+): StepScaleValues => {
+  const { profile, active } = inputs;
+  return {
+    step: resolveStepScale({
+      base: (active ? profile.activeStepScale : profile.settledStepScale) * inputs.loadFactor,
+      active,
+      canvasPass: variant.canvasPass,
+    }),
+    maxSteps: resolveMaxRaySteps(
+      profile,
+      active,
+      inputs.volumePassCount,
+      variant.settleRefine ? inputs.settleRefineStage : 0,
+    ),
+    smooth: variant.smoothZoom ? resolveSmoothThreshold(inputs.tier, active) : 0,
+  };
+};
+
+const sameStepValues = (a: StepScaleValues | null, b: StepScaleValues): boolean =>
+  a !== null && a.step === b.step && a.maxSteps === b.maxSteps && a.smooth === b.smooth;
+
+const writeStepValues = (handle: StepScaleUniformHandle, values: StepScaleValues): void => {
+  handle.uStepScale.value = values.step;
+  handle.uMaxSteps.value = values.maxSteps;
+  if (handle.uSmoothThreshold) handle.uSmoothThreshold.value = values.smooth;
+};
+
+const variantKeyOf = (v: StepScaleVariant): string =>
+  `${v.settleRefine ? 1 : 0}${v.canvasPass ? 1 : 0}${v.smoothZoom ? 1 : 0}`;
+
+type StepScaleSinks = {
+  viewerStoreApi: { getState(): { volumeInputs: { bump(reason: string): void } } };
+  invalidate: () => void;
+};
+
+type VariantState = {
+  variant: StepScaleVariant;
+  handles: Set<StepScaleUniformHandle>;
+  last: StepScaleValues | null;
+};
+
+/**
+ * ONE subscription to the view store + governor per scene, fanned out to every
+ * volume material's step uniforms.
+ *
+ * Before, each material registered its own pair of subscribers, so every
+ * camera emission (~16/s while orbiting) ran N copies of the same
+ * `resolveStepValues` and, on a change, N `volumeInputs.bump()` +
+ * `invalidate()` calls — for values that depend only on the governor, the
+ * motion flag and a two-bit variant. The driver computes each VARIANT once
+ * per emission, writes only the handles whose values changed, and bumps +
+ * invalidates ONCE per emission that changed anything. The dedupe edge is
+ * the same one as before (per variant, value-compared), so the compositor
+ * cache re-renders on exactly the same frames.
+ */
+export class StepScaleDriver {
+  private readonly variants = new Map<string, VariantState>();
+  private unsubscribe: (() => void) | null = null;
+  private sinks: StepScaleSinks | null = null;
+
+  constructor(
+    private readonly viewStoreApi: {
+      getState(): { cameraMoving: boolean };
+      subscribe(listener: () => void): () => void;
+    },
+    /** Injectable for tests; the module singleton in production. */
+    private readonly governor: typeof qualityGovernor = qualityGovernor,
+  ) {}
+
+  private snapshot(): StepScaleInputs {
+    const g = this.governor;
+    return {
+      profile: g.getProfile(),
+      tier: g.getTier(),
+      active: this.viewStoreApi.getState().cameraMoving || g.isStreaming(),
+      loadFactor: g.getLoadFactor(),
+      volumePassCount: g.getVolumePassCount(),
+      settleRefineStage: g.getSettleRefineStage(),
+    };
+  }
+
+  private bump(): void {
+    // Value-deduped edge — exactly the cadence the volume compositor's cache
+    // must re-render on (adaptive depth / tricubic / step changes).
+    this.sinks?.viewerStoreApi.getState().volumeInputs.bump("step-uniforms");
+    this.sinks?.invalidate();
+  }
+
+  private readonly apply = (): void => {
+    const inputs = this.snapshot();
+    let changed = false;
+    for (const state of this.variants.values()) {
+      const values = resolveStepValues(inputs, state.variant);
+      if (sameStepValues(state.last, values)) continue; // flags flip far more often than values
+      state.last = values;
+      for (const handle of state.handles) writeStepValues(handle, values);
+      changed = true;
+    }
+    if (changed) this.bump();
+  };
+
+  /** Seed `handle` with the current values (and request a frame, as the
+   * per-material effect's first apply did), then keep it updated until the
+   * returned function is called. */
+  register(handle: StepScaleUniformHandle, variant: StepScaleVariant, sinks: StepScaleSinks): () => void {
+    this.sinks = sinks;
+    const key = variantKeyOf(variant);
+    let state = this.variants.get(key);
+    if (!state) {
+      state = { variant, handles: new Set(), last: null };
+      this.variants.set(key, state);
+    }
+    state.handles.add(handle);
+    const values = resolveStepValues(this.snapshot(), variant);
+    state.last = values;
+    writeStepValues(handle, values);
+    this.bump();
+    if (!this.unsubscribe) {
+      const unsubscribeView = this.viewStoreApi.subscribe(this.apply);
+      const unsubscribeQuality = this.governor.subscribe(this.apply);
+      this.unsubscribe = () => {
+        unsubscribeView();
+        unsubscribeQuality();
+      };
+    }
+    return () => {
+      state.handles.delete(handle);
+      if (state.handles.size === 0) this.variants.delete(key);
+      if (this.variants.size === 0 && this.unsubscribe) {
+        this.unsubscribe();
+        this.unsubscribe = null;
+        this.sinks = null;
+      }
+    };
+  }
+
+  /** Test/diagnostic surface. */
+  get subscribed(): boolean {
+    return this.unsubscribe !== null;
+  }
+  get handleCount(): number {
+    let n = 0;
+    for (const state of this.variants.values()) n += state.handles.size;
+    return n;
+  }
+}
+
+/** One driver per scene — keyed on the scene's view store, which is what
+ * makes the driver's motion flag the right scene's. */
+const drivers = new WeakMap<object, StepScaleDriver>();
+const stepScaleDriverFor = (viewStoreApi: ConstructorParameters<typeof StepScaleDriver>[0]): StepScaleDriver => {
+  let driver = drivers.get(viewStoreApi);
+  if (!driver) {
+    driver = new StepScaleDriver(viewStoreApi);
+    drivers.set(viewStoreApi, driver);
+  }
+  return driver;
 };

@@ -4,8 +4,8 @@ import { PREFETCH_MARGIN, expandVoxelRange } from "./viewportPlanning";
 import { affineToMatrix4 } from "../../../platform/coords/worldTransform";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { LayerViewRange } from "../../../platform/visibility/visibility";
-import { atlasBytesPerVoxel, atlasKindForGeometry } from "./atlasFormat";
-import { brickSlotBytes, type BrickSpec } from "./brickSpec";
+import { atlasKindForGeometry, atlasSlotBytes } from "./atlasFormat";
+import type { BrickSpec } from "./brickSpec";
 import { resolveDecodeAllowanceBytes, resolveDecodeFloorBytes } from "./poolBudget";
 import type { LayerLevelGeometry, LevelGeometry, Vec3 } from "../../../platform/coords/levelGeometry";
 import {
@@ -401,7 +401,7 @@ export function planLayerNodes({
   // the atlas kind's width (r32f for phasor layers regardless of source
   // dtype — see atlasKindForGeometry). Sizing plan bytes per-level by source
   // dtype made the plan and the pool disagree on capacity.
-  const slotBytes = brickSlotBytes(spec, atlasBytesPerVoxel(atlasKindForGeometry(geometry)));
+  const slotBytes = atlasSlotBytes(spec, atlasKindForGeometry(geometry));
 
   // --- 2D slab selection (uncentered z mapping, parity with chunkPlanning) --
   const layerAffineInverse = affineToMatrix4(layer.affineMatrix).invert();

@@ -4,6 +4,9 @@ import * as THREE from "three";
 
 import { createPlaneNodeMaterial, updateChannelNodes } from "../gpu/brickNodeMaterials";
 import { buildChannelUniformData } from "../gpu/channelUniforms";
+import { createIntensityPlaneMaterial, updateIntensityNodes } from "../gpu/intensityNodeMaterials";
+import { buildIntensityUniformData } from "../gpu/intensityUniforms";
+import { isFixedShapeFastPathEnabled } from "../gpu/shaderFlags";
 import { buildAffineMatrix } from "../../../platform/coords/worldTransform";
 import { useViewerStore } from "../../../platform/stores/viewerStore";
 import { perfMonitor } from "../../../platform/perf/perfMonitor";
@@ -61,6 +64,17 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // shared with the label plane, which probes the same way over the same pool.
   const { groupRef, handlers } = useBrickPlaneProbe({ layerId, layer, pool });
 
+  // --- Which compositor -----------------------------------------------------
+  // Read ONCE per mount, like every other build-time shader flag: a material is
+  // specialised when it is compiled, so a mid-session toggle takes effect on the
+  // next scene mount rather than leaving a half-built material bound.
+  const fastPathEnabled = useMemo(() => isFixedShapeFastPathEnabled(), []);
+  // The layer's own `renderKind` is EARNED from its sources (layerModel.ts), so
+  // this demotes itself the moment an edit gives the layer something the
+  // specialised shader cannot express — and `variantKey` turns that into a
+  // rebuild.
+  const variant = fastPathEnabled && layer?.renderKind === "intensity" ? "intensity" : "graph";
+
   // --- Channel derivation (ChunkPlane parity) -------------------------------
   const channelData = useMemo(
     () =>
@@ -86,6 +100,33 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     ],
   );
 
+  // The slim counterpart: no `sourceParams`/`cursors` DataTextures at all, so
+  // the fast path also skips two RGBA32F allocations per transfer edit. Built
+  // only when the variant takes it — `null` otherwise, so the general path pays
+  // nothing for its existence.
+  const intensityData = useMemo(
+    () =>
+      variant === "intensity"
+        ? buildIntensityUniformData(
+            layer,
+            Math.max(0, (pool?.geometry.channelSlabCount ?? 1) - 1),
+            pool?.minValue ?? 0,
+            pool?.maxValue ?? 1,
+          )
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      variant,
+      layer?.channels,
+      layer?.sources,
+      layer?.colormap,
+      layer?.color,
+      pool?.geometry,
+      pool?.minValue,
+      pool?.maxValue,
+    ],
+  );
+
   // NOTE: the colormap atlas is NOT disposed per channelData change — the
   // material stays bound to one long-lived texture whose contents
   // `updateChannelNodes` refreshes in place (disposing a still-bound texture
@@ -99,19 +140,30 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
   // through the uniform NODES below.
   const bundle = useBrickMaterialBundle(
     pool,
-    (p) => createPlaneNodeMaterial(p, p, channelData),
+    (p) =>
+      intensityData
+        ? { variant: "intensity" as const, ...createIntensityPlaneMaterial(p, p, intensityData) }
+        : { variant: "graph" as const, ...createPlaneNodeMaterial(p, p, channelData) },
     (b) => {
       // Whatever textures are bound at teardown (adoption keeps them long-lived).
       b.nodes.colormapAtlas.value?.dispose();
-      b.nodes.sourceParams.value?.dispose();
-      b.nodes.cursorParams.value?.dispose();
+      // The fixed-shape material never allocated these.
+      if (b.variant === "graph") {
+        b.nodes.sourceParams.value?.dispose();
+        b.nodes.cursorParams.value?.dispose();
+      }
     },
+    variant,
   );
 
   // Push dynamic values straight to the uniform nodes (no material rebuild).
   useEffect(() => {
     if (!bundle || planTargetLevel === undefined) return;
-    updateChannelNodes(bundle.nodes, channelData);
+    if (bundle.variant === "intensity") {
+      if (intensityData) updateIntensityNodes(bundle.nodes, intensityData);
+    } else {
+      updateChannelNodes(bundle.nodes, channelData);
+    }
     bundle.nodes.minValue.value = pool?.minValue ?? 0;
     bundle.nodes.maxValue.value = pool?.maxValue ?? 1;
     // EMPTY page entries are re-encoded against the pool range whenever it
@@ -127,7 +179,30 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     // colormap-row state the shader consumes, one line per update. Pair with
     // the debug report's channelSlabProbe (atlas slab contents) to separate
     // LUT bugs / repack bugs / shader-tap bugs when channels look wrong.
-    if (isDebug) {
+    if (isDebug && bundle.variant === "intensity" && intensityData) {
+      // The fast path's counterpart of the channel-uniform dump below. Smaller
+      // because the state IS smaller — that is the point — but it must exist:
+      // the kill switch is the only GPU-regression tool here, and a bisect
+      // needs both sides to say what they were handed.
+      const atlasData = intensityData.atlas.image.data as Uint8Array;
+      console.log(`[bricks] ${layerId} intensity uniforms`, {
+        variant: "intensity",
+        slab: intensityData.slab,
+        climMin: intensityData.climMin,
+        climMax: intensityData.climMax,
+        gamma: intensityData.gamma,
+        // Centre texel of the single LUT row — the tint the shader multiplies
+        // by the normalized intensity.
+        rowColor: [atlasData[128 * 4], atlasData[128 * 4 + 1], atlasData[128 * 4 + 2]],
+        colormapAtlasOnGpu: !!getBackendTexture(
+          gl as unknown as SceneRenderer,
+          bundle.nodes.colormapAtlas.value,
+        ),
+        slabBaseZ,
+        targetLevel: planTargetLevel,
+      });
+    }
+    if (isDebug && bundle.variant === "graph") {
       const atlasData = channelData.atlas.image.data as Uint8Array;
       const rows = Math.max(1, channelData.numChannels);
       console.log(`[bricks] ${layerId} channel uniforms`, {
@@ -159,7 +234,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle, channelData, planTargetLevel, slabBaseZ, isDebug]);
+  }, [bundle, channelData, intensityData, planTargetLevel, slabBaseZ, isDebug]);
 
   // The traversal contract, shared with the other plane material.
   usePlaneTraversalUniforms(bundle?.nodes, {

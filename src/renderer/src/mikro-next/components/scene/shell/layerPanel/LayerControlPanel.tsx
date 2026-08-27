@@ -1,36 +1,14 @@
 import { useDialog } from "@/app/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
-import { useDeleteLayerMutation } from "@/mikro-next/api/graphql";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useDeleteLayerMutation, type SceneLayerFragment } from "@/mikro-next/api/graphql";
+import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LongCommitProfiler } from "../../platform/perf/commitProfiler";
-import { assessLayerPoolViability } from "../../features/bricks/octree/poolViability";
 import { perfMonitor } from "../../platform/perf/perfMonitor";
-import { useModeStore } from "../../platform/stores/modeStore";
 import { useSelectionStore } from "../../platform/stores/selectionStore";
-import { isLabelLayerState } from "../../platform/model/layerModel";
 import { LayerState, useSceneStore } from "../../platform/stores/sceneStore";
+import { LAYER_CARDS, renderLayerCard, type AnyLayerCardEntry } from "./cardRegistry";
 import { useViewerStore } from "../../platform/stores/viewerStore";
-import { LayerGraphFlyout } from "./LayerGraphFlyout";
-import { LayerRow } from "./LayerRow";
-import { AnnotationLayerCard } from "../../features/annotations/AnnotationLayerCard";
-import { LabelLayerCard } from "../../features/labels/LabelLayerCard";
-import { MeshLayerCard } from "../../features/meshes/MeshLayerCard";
-import { PointLayerCard } from "../../features/points/PointLayerCard";
-import { TrackLayerCard } from "../../features/tracks/TrackLayerCard";
-import { useRenderGraphEditor } from "../../features/volume/rendergraph/RenderNodeEditor";
-import {
-  useBrickStore,
-  type UnplannableLayerInfo,
-} from "../../features/bricks/store/brickSlice";
-
-const formatBytes = (bytes: number): string =>
-  bytes >= 1024 ** 3
-    ? `${(bytes / 1024 ** 3).toFixed(1)} GB`
-    : `${Math.round(bytes / 1024 ** 2)} MB`;
+import { useBrickStore } from "../../features/bricks/store/brickSlice";
 
 // Viewport coverage is deliberately GONE from this panel (and from
 // LayerViewRange entirely). It used to arrive as a bucketed Record and flow
@@ -38,133 +16,6 @@ const formatBytes = (bytes: number): string =>
 // `memo(LayerCard)`, so every bucket crossing during a zoom re-rendered the
 // card's whole render-graph editor subtree (measured 54–174 ms commits, the
 // sidebar's share of gesture jank).
-
-/**
- * Warning strip for a layer refused by the pool-viability guard (P18): its
- * coarsest pyramid level's pinned atlas floor exceeds the GPU budget — usually
- * a dataset with no multiscale pyramid. Offers a one-click mode switch when the
- * OTHER display mode is affordable. Numbers live in the tooltip.
- */
-const UnplannableNotice = ({
-  layer,
-  info,
-}: {
-  layer: LayerState;
-  info: UnplannableLayerInfo;
-}) => {
-  const getArrayForStoreId = useViewerStore((s) => s.getArrayForStoreId);
-  const setDisplayMode = useModeStore((s) => s.setDisplayMode);
-  const otherMode = info.mode === "3D" ? "2D" : "3D";
-  const otherViable = useMemo(
-    () => assessLayerPoolViability(layer, getArrayForStoreId, otherMode)?.viable === true,
-    [layer, getArrayForStoreId, otherMode],
-  );
-
-  return (
-    <div
-      className="flex items-center gap-2 border-t border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-200"
-      title={`This layer has no usable multiscale pyramid: keeping its coarsest level resident would need ${formatBytes(info.floorBytes)} of GPU memory (budget ${formatBytes(info.capBytes)}). Provide a pyramidal (multiscale) version of the data to render it in ${info.mode}.`}
-    >
-      <span className="min-w-0 flex-1 truncate">
-        ⚠ too large for {info.mode} — no usable pyramid
-      </span>
-      {otherViable && (
-        <button
-          className="shrink-0 rounded border border-amber-400/40 px-1.5 py-0.5 font-medium transition-colors hover:bg-amber-400/20"
-          onClick={() => setDisplayMode(otherMode)}
-        >
-          switch to {otherMode}
-        </button>
-      )}
-    </div>
-  );
-};
-
-/**
- * One expandable layer card. Owns the layer's render-graph editing state (so it
- * survives collapsing) and shares it between the header — which hosts the tiny
- * Save button — and the unfolded editor body.
- *
- * Memoized: the panel re-renders only when a layer's coarse coverage bucket
- * changes (see `layerCoverage`), but the card owns the heavy
- * `useRenderGraphEditor`
- * hook and subtree, so it must only re-render when ITS props change. All
- * callbacks are passed in already-stable (id-parameterized) so the shallow
- * prop compare actually skips.
- */
-const LayerCard = memo(function LayerCard({
-  layer,
-  expanded,
-  unplannable,
-  onSelect,
-  onUpdate,
-  onFocus,
-  onRemove,
-  onClose,
-}: {
-  layer: LayerState;
-  expanded: boolean;
-  unplannable?: UnplannableLayerInfo;
-  /**
-   * Toggle this card. Takes the CURRENT expanded state so the panel's handler
-   * can stay stable — the card already knows whether it is open, so the panel
-   * never has to read that back out of a ref during render.
-   */
-  onSelect: (id: string, currentlyExpanded: boolean) => void;
-  onUpdate: (updated: LayerState) => void;
-  onFocus: (layerId: string) => void;
-  onRemove: (id: string) => void;
-  onClose: () => void;
-}) {
-  perfMonitor.countRender("LayerCard"); // no-op unless a perf recording is armed
-  const editor = useRenderGraphEditor(layer);
-  // Adapt the stable id-parameterized panel handlers to the zero-arg forms the
-  // children expect. Created inside the memoized card, so they only churn when
-  // the card actually re-renders.
-  const handleSelect = () => onSelect(layer.id, expanded);
-  const handleRemove = () => onRemove(layer.id);
-  return (
-    <Collapsible
-      open={expanded}
-      // `@container/card`: the card is its own query context, so a row and its
-      // editor adapt to the width the CARD got — which in a multi-column list
-      // is not the panel's width. See the panel's container note below.
-      className={`@container/card overflow-hidden rounded-lg border backdrop-blur-md bg-black transition-colors ${
-        expanded
-          ? "border-black/10 bg-black/60"
-          : "border-black/10 bg-black/40 hover:border-black/20 hover:bg-black/70"
-      }`}
-    >
-      <LayerRow
-        embedded
-        layer={layer}
-        isSelected={expanded}
-        graphDirty={editor.dirty}
-        savingGraph={editor.loading}
-        onSaveGraph={editor.save}
-        onSelect={handleSelect}
-        onUpdate={onUpdate}
-        onFocus={onFocus}
-        onRemove={handleRemove}
-      />
-      {unplannable && <UnplannableNotice layer={layer} info={unplannable} />}
-      {/* NO open/close animation: the collapsible height animation forced
-          layout + paint of the whole editor subtree on every toggle and kept
-          animating during store-driven re-renders — the cards snap instead. */}
-      <CollapsibleContent className="overflow-hidden">
-        <div className="border-t border-white/10">
-          <LayerGraphFlyout
-            inline
-            editor={editor}
-            layer={layer}
-            onUpdate={onUpdate}
-            onClose={onClose}
-          />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-});
 
 export const LayerControlPanel = ({
   sceneId,
@@ -242,97 +93,48 @@ export const LayerControlPanel = ({
   // as you panned, so the layer you were reaching for slid out from under the
   // cursor. Coverage still shows as a per-row badge, it just no longer decides
   // position.
-  // IMAGE layers only. `layers` now also carries label masks (they share the
-  // brick path), but a label has its own card: `LayerCard` mounts the
-  // render-graph editor, which a layer with no render graph has nothing to say
-  // to. Listing them here as well would give one label two cards.
-  const shownLayers = useMemo(
-    () => layers.filter((layer) => layer.__typename === "ImageLayer"),
-    [layers],
-  );
-
-  // Listed after the image layers rather than interleaved by `order`: the two
-  // lists are normalized differently, and a stable "images, then meshes" split
-  // beats a merged order that would reshuffle as either side changes.
-  const meshLayers = useMemo(
-    () =>
-      sceneLayers.filter(
-        (layer): layer is Extract<typeof layer, { __typename: "MeshLayer" }> =>
-          layer.__typename === "MeshLayer",
-      ),
-    [sceneLayers],
-  );
-
-  // Off `layers`, NOT `sceneLayers`: a label mask is normalized like an image
-  // (it shares the brick path), and the renderer reads it from there — so the
-  // card has to edit the same objects or a picked colouring would never reach
-  // the material. Its own block all the same, because `LayerCard` mounts the
-  // render-graph editor and a label has no render graph. Right after the images,
-  // because a mask is almost always read AGAINST one.
-  const labelLayers = useMemo(() => layers.filter(isLabelLayerState), [layers]);
-
-  // Last, for the same reason meshes come after images: a separate normalized
-  // list with its own card, kept in a stable block rather than interleaved.
-  // A scene grows one of these the first time anyone draws on it, so the block
-  // appearing is itself the feedback that the annotation layer now exists.
-  const annotationLayers = useMemo(
-    () =>
-      sceneLayers.filter(
-        (layer): layer is Extract<typeof layer, { __typename: "AnnotationLayer" }> =>
-          layer.__typename === "AnnotationLayer",
-      ),
-    [sceneLayers],
-  );
-
-  // The two TABLE-backed kinds. Both come off `sceneLayers` for the same reason
-  // meshes and annotations do — they are consumed straight off their fragments
-  // rather than normalized into `layers`, which is the brick path. Neither had
-  // a card before: a point cloud or a trajectory could be created and then
-  // never touched again, which is why they are here now.
-  const pointLayers = useMemo(
-    () =>
-      sceneLayers.filter(
-        (layer): layer is Extract<typeof layer, { __typename: "PointLayer" }> =>
-          layer.__typename === "PointLayer",
-      ),
-    [sceneLayers],
-  );
-
-  const trackLayers = useMemo(
-    () =>
-      sceneLayers.filter(
-        (layer): layer is Extract<typeof layer, { __typename: "TrackLayer" }> =>
-          layer.__typename === "TrackLayer",
-      ),
-    [sceneLayers],
-  );
+  //
+  // Which card each typename gets, and which of the store's two lists it reads,
+  // is `cardRegistry.tsx`'s business — the panel owns ordering and chrome and
+  // knows nothing about the cards themselves. It used to spell one
+  // pre-partitioned array per typename here, which is what stopped scaling at
+  // nine of them.
+  //
+  // Cards are GROUPED BY RANK rather than interleaved by the scene's `order`:
+  // the two lists are normalized differently, and a stable block order beats a
+  // merged one that would reshuffle as either side changes.
+  const cards = useMemo(() => {
+    const entries: {
+      key: string;
+      rank: number;
+      entry: AnyLayerCardEntry;
+      layer: LayerState | SceneLayerFragment;
+    }[] = [];
+    // Normalized first, so a lens-backed card always edits the objects the
+    // RENDERER reads. A layer appears exactly once: `source` on its registry
+    // entry decides which list it is taken from, so the two passes cannot both
+    // claim it.
+    for (const layer of layers) {
+      const entry = LAYER_CARDS[layer.__typename];
+      if (entry.source !== "layerState") continue;
+      entries.push({ key: layer.id, rank: entry.rank, entry, layer });
+    }
+    for (const layer of sceneLayers) {
+      const entry = LAYER_CARDS[layer.__typename];
+      if (entry.source !== "fragment") continue;
+      entries.push({ key: layer.id, rank: entry.rank, entry, layer });
+    }
+    // Stable within a rank: `sort` preserves the order each list was walked in,
+    // which is scene order.
+    return entries.sort((a, b) => a.rank - b.rank);
+  }, [layers, sceneLayers]);
 
   // NO auto-expand: unfolding used to be space-derived (`fitsExpanded`), which
   // meant a rail resize could pop every editor open at once — mounting every
   // card's full render-graph editor subtree in a single commit and making
   // every subsequent layers-store write walk all of them. Cards open only on
   // an explicit click (or the selection), one at a time.
-  const isExpanded = (layer: LayerState) =>
-    expandOverrides[layer.id] ?? layer.id === selectedLayerId;
-
-  // The row IS the button: selecting it unfolds the editor inline within the
-  // same card (one border around header + body), rather than popping a
-  // separate flyout window.
-  const renderRow = (layer: LayerState) => {
-    return (
-      <LayerCard
-        key={layer.id}
-        layer={layer}
-        expanded={isExpanded(layer)}
-        unplannable={unplannableLayers[layer.id]}
-        onSelect={handleSelect}
-        onUpdate={updateLayer}
-        onFocus={fitToLayer}
-        onRemove={handleRemove}
-        onClose={handleClose}
-      />
-    );
-  };
+  const isExpanded = (id: string) => expandOverrides[id] ?? id === selectedLayerId;
 
   return (
     // `@container/layers`: the panel sizes itself to whatever hosts it — the
@@ -360,22 +162,21 @@ export const LayerControlPanel = ({
             width. `items-start` keeps an unfolded card from dragging its row
             mates taller. */}
         <div className="grid grid-cols-1 items-start gap-1 @2xl/layers:grid-cols-2 @5xl/layers:grid-cols-3">
-          {shownLayers.map(renderRow)}
-          {labelLayers.map((layer) => (
-            <LabelLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
-          ))}
-          {meshLayers.map((layer) => (
-            <MeshLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
-          ))}
-          {pointLayers.map((layer) => (
-            <PointLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
-          ))}
-          {trackLayers.map((layer) => (
-            <TrackLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
-          ))}
-          {annotationLayers.map((layer) => (
-            <AnnotationLayerCard key={layer.id} layer={layer} onRemove={handleRemove} />
-          ))}
+          {cards.map(({ key, entry, layer }) => {
+            // The row IS the button: selecting it unfolds the editor inline
+            // within the same card (one border around header + body), rather
+            // than popping a separate flyout window.
+            const common = {
+              expanded: isExpanded(key),
+              unplannable: unplannableLayers[key],
+              onSelect: handleSelect,
+              onUpdate: updateLayer,
+              onFocus: fitToLayer,
+              onRemove: handleRemove,
+              onClose: handleClose,
+            };
+            return <Fragment key={key}>{renderLayerCard(entry, layer, common)}</Fragment>;
+          })}
         </div>
 
         <button

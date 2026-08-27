@@ -91,8 +91,49 @@ describe("buildMergedChannelUniformData — the golden invariant", () => {
         blendMode: 0,
         projectionMode: 0,
         hasPhasorSources: false,
+        isSimpleIntensity: false,
       },
     ]);
+  });
+});
+
+describe("buildMergedChannelUniformData — fixed-shape specialization input", () => {
+  it("marks a one-slot intensity member simple", () => {
+    // What the material compiles against: one plain scalar channel means its
+    // contribution can be emitted straight-line instead of as a slot loop.
+    const only = layer([channel()], { renderKind: "intensity" });
+    const merged = build([{ layerId: "a", layer: only, slotOffset: 0 }]);
+    expect(merged.members[0].isSimpleIntensity).toBe(true);
+  });
+
+  it("does NOT mark a member whose renderKind was not earned", () => {
+    // `renderKind` is derived from the layer's sources, so a layer carrying a
+    // curve, an invert or a multiplicative blend arrives here as "graph" — and
+    // the specialised emission would be wrong for it.
+    const only = layer([channel()], { renderKind: "graph" });
+    expect(build([{ layerId: "a", layer: only, slotOffset: 0 }]).members[0].isSimpleIntensity).toBe(
+      false,
+    );
+  });
+
+  it("does NOT mark a multi-slot member, whatever its renderKind claims", () => {
+    // BOTH halves are required: the loop is only removable at one slot. This
+    // also covers a member TRUNCATED by the merged slot ceiling — it would
+    // still claim "intensity" while owning a different number of slots.
+    const two = layer([channel(), channel()], { renderKind: "intensity" });
+    expect(build([{ layerId: "a", layer: two, slotOffset: 0 }]).members[0].isSimpleIntensity).toBe(
+      false,
+    );
+  });
+
+  it("decides per MEMBER, so a mixed group specializes only the simple ones", () => {
+    const simple = layer([channel()], { renderKind: "intensity" });
+    const general = layer([channel(), channel()], { renderKind: "graph" });
+    const merged = build([
+      { layerId: "a", layer: simple, slotOffset: 0 },
+      { layerId: "b", layer: general, slotOffset: 1 },
+    ]);
+    expect(merged.members.map((m) => m.isSimpleIntensity)).toEqual([true, false]);
   });
 });
 

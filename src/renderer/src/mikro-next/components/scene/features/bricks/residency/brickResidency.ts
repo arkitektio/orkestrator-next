@@ -54,6 +54,7 @@ import {
   resolvePoolBudget,
 } from "../octree/poolBudget";
 import {
+  isFixedShapeFastPathEnabled,
   isOccHierarchyEnabled,
   isOccObservedRangeEnabled,
 } from "../gpu/shaderFlags";
@@ -864,6 +865,13 @@ export class BrickResidencyManager {
        * something it should not (compare the `poolKey`s). */
       poolCount: this.pools.size,
       layerCount: this.layerToPoolKey.size,
+      /** Which compositor this session compiled. The fixed-shape specialization
+       * is a build-time choice with no runtime trace, and it is bisected by a
+       * kill switch — so a pasted report has to SAY which side it was on, or
+       * the switch is not a bisect tool (pitfall P10: telemetry that lies is
+       * worse than none). "off" includes the case where `shaderFastPath` is
+       * off, which mutes it. */
+      fixedShapeFastPath: isFixedShapeFastPathEnabled() ? "on" : "off",
       /** Summed atlas GPU bytes across pools. In lazy-mirror mode (the
        * default, roadmap R3) this IS the footprint; with
        * `orkestrator.atlasMirror = "on"` a JS-heap copy costs the same again. */

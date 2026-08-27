@@ -29,9 +29,12 @@
     "Layer": [
       "AnnotationLayer",
       "ImageLayer",
+      "IntensityLayer",
       "LabelLayer",
       "MeshLayer",
+      "PhasorLayer",
       "PointLayer",
+      "RgbLayer",
       "TrackLayer"
     ],
     "LayerRenderNode": [
@@ -108,6 +111,7 @@
       "Folder",
       "IdentityTransformation",
       "ImageLayer",
+      "IntensityLayer",
       "LabelLayer",
       "Lens",
       "LightPath",
@@ -121,7 +125,9 @@
       "ParquetStore",
       "PhasorCalibration",
       "PhasorHistogram",
+      "PhasorLayer",
       "PointLayer",
+      "RgbLayer",
       "RotationTransformation",
       "ScaleTransformation",
       "Scene",

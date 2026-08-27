@@ -28,8 +28,15 @@ export const LayerGraphFlyout = ({
   inline = false,
 }: {
   layer: LayerState;
-  /** Lifted render-graph editing state (shared with the card header's Save). */
-  editor: RenderGraphEditor;
+  /**
+   * Lifted render-graph editing state (shared with the card header's Save).
+   *
+   * OMITTED by the fixed-shape kinds: an intensity, rgb or phasor layer has no
+   * render graph, so there is no graph section to mount — what it wants from
+   * this component is the metadata and the placement chain, which every
+   * lens-backed layer answers the same way.
+   */
+  editor?: RenderGraphEditor;
   onUpdate: (updated: LayerState) => void;
   onClose: () => void;
   /**
@@ -52,7 +59,7 @@ export const LayerGraphFlyout = ({
           : "flex min-w-0 flex-col gap-2 overflow-y-auto px-3 py-2 text-[10px] text-white/85"
       }
     >
-      <RenderGraphSection editor={editor} layer={layer} />
+      {editor && <RenderGraphSection editor={editor} layer={layer} />}
 
       <MetadataSection layer={layer} />
 

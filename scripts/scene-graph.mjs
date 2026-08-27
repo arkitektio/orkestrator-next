@@ -59,7 +59,15 @@ const resolveTarget = (fromFile, spec) => {
   return rel; // unresolved (e.g. a worker `.js` twin) — still a real edge
 };
 
-const IMPORT_RE = /(?:^|\n)\s*(?:import|export)[\s\S]{0,400}?from\s+["']([^"']+)["']/g;
+// The bound spans a whole named-import list, so it must clear the LONGEST one
+// in the tree — `DebugPanel`'s shader-flag block is already 417 chars. This is
+// a silent-failure cap: an import that overruns it is not reported as
+// unparseable, it simply stops being an edge, which reads as a layering
+// violation having been FIXED. (That is exactly how it bit us: adding two flag
+// names to that block made a real `features/debug -> features/bricks` edge
+// vanish and the sideways ratchet demand its budget be lowered.) Keep it well
+// clear of the longest block, and prefer raising it to trimming an import.
+const IMPORT_RE = /(?:^|\n)\s*(?:import|export)[\s\S]{0,2000}?from\s+["']([^"']+)["']/g;
 const TYPE_ONLY_RE = /(?:^|\n)\s*(?:import|export)\s+type\s/;
 
 const files = walk(SCENE);

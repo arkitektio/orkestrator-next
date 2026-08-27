@@ -360,12 +360,20 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
   // level. The actual per-sample step adapts to the LOD sampled at that point
   // (see stepLen in the shader); the in-shader rayLen/MAX_STEPS floor
   // guarantees every ray reaches its exit within the loop bound.
-  // Which members carry phasor sources — a COMPILE-TIME input: the material
-  // omits the phasor branch for members without them, so this key flipping
-  // must rebuild the material (unlike ordinary channel edits, which flow
-  // through the uniform nodes).
-  const phasorKey = channelData
-    ? channelData.members.map((m) => (m.hasPhasorSources ? "p" : "-")).join("")
+  // The per-member COMPILE-TIME specializations, as one key. The material omits
+  // the phasor branch for a member without phasor sources, and emits a simple
+  // member's contribution as straight-line code instead of a slot loop — so
+  // either flipping must REBUILD the material, unlike ordinary channel edits,
+  // which flow through the uniform nodes.
+  //
+  // `isSimpleIntensity` flips on an ordinary-looking edit: adding a transfer
+  // curve or an invert demotes a layer's `renderKind` from "intensity" to
+  // "graph", and the compiled shader cannot express the new shape. That is the
+  // whole reason this is a key and not a uniform.
+  const specializationKey = channelData
+    ? channelData.members
+        .map((m) => `${m.hasPhasorSources ? "p" : "-"}${m.isSimpleIntensity ? "s" : "-"}`)
+        .join("")
     : "";
 
   // TSL node material. Recreated only when
@@ -402,7 +410,7 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     // member gaining/losing phasor sources (compile-time specialization), not
     // on channel edits — those flow through the uniform nodes below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature, groupMemberIds.length, channelData === null, phasorKey]);
+  }, [pool, pool?.structureSignature, groupMemberIds.length, channelData === null, specializationKey]);
 
   /**
    * A non-primary member still needs a mounted mesh — three raycasts invisible

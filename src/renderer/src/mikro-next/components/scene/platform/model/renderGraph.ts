@@ -257,7 +257,13 @@ const parseCursor = (cursor: Partial<PhasorCursorDef>): PhasorCursorDef => ({
   points: cursor.points ?? null,
 });
 
-const parsePhasorTransfer = (
+/**
+ * Exported for `normalizePhasorLayer`: a `PhasorLayer` carries the identical
+ * `PhasorTransfer` as a FIELD rather than under a graph node, so it parses the
+ * same way. Sharing the parser is what keeps the two arms from drifting on
+ * defaults (`weightByIntensity`, the null min/max convention).
+ */
+export const parsePhasorTransfer = (
   transfer: Partial<FragmentPhasorTransfer> | null | undefined,
 ): PhasorTransferFn => ({
   colormap: transfer?.colormap ?? ColorMap.Viridis,
@@ -502,7 +508,9 @@ const serializeCursor = (cursor: PhasorCursorDef): PhasorCursorInput => ({
   points: cursor.points,
 });
 
-const serializePhasorTransfer = (transfer: PhasorTransferFn): PhasorTransferInput => ({
+/** Exported for the `PhasorLayer` card, which persists the identical transfer
+ * through `updatePhasorLayer` rather than inside a serialized graph. */
+export const serializePhasorTransfer = (transfer: PhasorTransferFn): PhasorTransferInput => ({
   colormap: transfer.colormap,
   mode: transfer.mode,
   min: transfer.min,

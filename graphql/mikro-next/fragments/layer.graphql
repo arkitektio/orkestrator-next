@@ -227,6 +227,20 @@ fragment PhasorNode on PhasorNode {
   }
 }
 
+# The fixed-shape phasor recipe a `PhasorLayer` carries as FIELDS, instead of a
+# PhasorNode buried in a render graph. Same reduction, same transfer — the
+# difference is only that the shape is declared rather than discovered, which is
+# what lets the client skip the graph walk and specialise the material.
+fragment PhasorRender on PhasorRender {
+  phasorAxis
+  intensityAxis
+  intensityIndex
+  harmonic
+  transfer {
+    ...PhasorTransfer
+  }
+}
+
 fragment RenderNodeCommon on LayerRenderNode {
   kind
   label
@@ -290,6 +304,7 @@ fragment SceneLayer on Layer {
   __typename
   id
   kind
+  name
   blending
   opacity
   visible
@@ -311,6 +326,55 @@ fragment SceneLayer on Layer {
     # placement lands (COORDINATE_SYSTEMS.md §3.1).
     renderGraph {
       ...LayerRenderGraph
+    }
+  }
+  # The three FIXED-SHAPE lens recipes. Each states its whole rendering as flat
+  # fields rather than a render graph, which is exactly what lets the client
+  # normalize them without a graph walk and specialise the material at build
+  # time (see platform/model/layerModel.ts `renderKind`). `levelPaths` is
+  # omitted for the same reason as on ImageLayer above.
+  ... on IntensityLayer {
+    lens {
+      ...SceneLens
+    }
+    intensityAxis
+    intensityIndex
+    # Aliased: `colormap` is `ColorMap!` here and `ColorMap` on Point/Track
+    # layers. Same response key, different nullability — GraphQL rejects the
+    # merge, so the non-null one gets its own key (as `phasorTransfer` does).
+    intensityColormap: colormap
+    # The channel TINT, the same one an ImageLayer's channel node carries. A
+    # monochrome acquisition shown in magenta is still ONE scalar source, so it
+    # stays the "intensity" recipe — the tint is baked into the colormap-atlas
+    # row exactly as a named ramp is (`buildColormapAtlas`).
+    color
+    climMin
+    climMax
+    gamma
+    # A projection collapses z, it does not composite anything — which is why
+    # `createVolumeLayer` returns an IntensityLayer with this set rather than a
+    # kind of its own.
+    projectionMode
+  }
+  ... on RgbLayer {
+    lens {
+      ...SceneLens
+    }
+    intensityAxis
+    redIndex
+    greenIndex
+    blueIndex
+    # ONE clim for all three planes: an RGB image is three views of one
+    # acquisition, so per-plane contrast would misrepresent it.
+    climMin
+    climMax
+  }
+  ... on PhasorLayer {
+    lens {
+      ...SceneLens
+    }
+    phasorRender {
+      ...PhasorRender
     }
   }
   # Shares ImageLayer's source (a Lens over an array) and none of its render

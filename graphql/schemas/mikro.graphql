@@ -499,6 +499,7 @@ type AnnotationLayer implements Layer {
   blending: Blending!
   id: ID!
   kind: LayerKind!
+  name: String
   opacity: Float!
   order: Int!
 
@@ -658,7 +659,7 @@ type ArrayDataset {
   provenanceEntries(pagination: OffsetPaginationInput): [ProvenanceEntry!]!
 
   """
-  Whether every downsampled level of this pyramid was built by a method that only ever returns a value already present in the input -- NEAREST or MODE. Only meaningful when the values are object ids, and only *reportable* rather than enforceable: `createArrayDataset` refuses a non-compliant pyramid on a dataset already declared CATEGORIZED, but a mask can be declared a mask afterwards, by the `keyedBy` FIELD edge authored when its object table is created -- and by then the levels exist. False means the levels above 0 hold ids that were interpolated into existence and belong to no object; treat level 0 as the only trustworthy one. Null when no level says how it was made, which is not the same as compliant. True for an unpyramided dataset: there is nothing that could be wrong
+  Whether every downsampled level of this pyramid was built by a method that only ever returns a value already present in the input -- NEAREST or MODE. Only meaningful when the values are object ids, and only *reportable* rather than enforceable: `createArrayDataset` refuses a non-compliant pyramid on a dataset already declared CATEGORIZED or carrying an INDEX axis, but a mask can be declared a mask afterwards, by the `keyedBy` FIELD edge authored when its object table is created -- and by then the levels exist. False means the levels above 0 hold ids that were interpolated into existence and belong to no object; treat level 0 as the only trustworthy one. Null when no level says how it was made, which is not the same as compliant. True for an unpyramided dataset: there is nothing that could be wrong
   """
   pyramidIsLabelCompliant: Boolean
 
@@ -1247,7 +1248,7 @@ The render recipe an image layer carries: which default graph createSceneFromCoo
 """
 enum BootstrapLayerKind {
   """
-  One additively-blended layer per channel, each with its own colormap, order and visibility (a single grey layer when there is one channel). The fluorescence default, and the fallback when nothing else is inferred.
+  One additively-blended INTENSITY layer per channel, each with its own colormap, order and visibility (a single grey layer when there is one channel). The fluorescence default, and the fallback when nothing else is inferred.
   """
   INTENSITY
 
@@ -1257,12 +1258,12 @@ enum BootstrapLayerKind {
   LABEL
 
   """
-  Composite three channels as red, green and blue in a single layer -- a photograph, a brightfield slide. Never inferred, and stated for exactly that reason: a flat three-channel image is a three-marker fluorescence acquisition far more often than a photograph, and the two cannot be told apart by shape. Every other recipe gives each channel a layer of its own; this one keeps them together, because red, green and blue are components of one picture.
+  Composite three channels as red, green and blue in a single layer -- a photograph, a brightfield slide. Never inferred from *shape*: a flat three-channel image is a three-marker fluorescence acquisition far more often than a photograph, and the two cannot be told apart that way. It is inferred from what ingest recorded -- three channels labelled red, green and blue (whose order then decides the components), or a source file that is a PNG or a JPEG -- so pass it for a photograph nothing recorded. Every other recipe gives each channel a layer of its own; this one keeps them together, because red, green and blue are components of one picture.
   """
   RGB
 
   """
-  One layer per channel as in `INTENSITY`, each under its own maximum-intensity projection over z. Inferred when the dataset has a z axis with more than one plane.
+  One INTENSITY layer per channel as above, each with `projectionMode` set to MIP. Inferred when the dataset has a z axis with more than one plane. The one member with no `LayerKind` of its own: a projection is a setting on one channel, not a kind of layer.
   """
   VOLUME
 }
@@ -2153,6 +2154,7 @@ input CreateIntensityLayerInput {
   blending: Blending = null
   climMax: Float = null
   climMin: Float = null
+  color: [Int!] = null
   colormap: ColorMap = null
   gamma: Float = null
   intensityAxis: String = null
@@ -2422,6 +2424,7 @@ input CreateVolumeLayerInput {
   blending: Blending = null
   climMax: Float = null
   climMin: Float = null
+  color: [Int!] = null
   colormap: ColorMap = null
   gamma: Float = null
   intensityAxis: String = null
@@ -3824,7 +3827,7 @@ The `ImageFileLike` scalar type represents a reference to a snapshot image previ
 scalar ImageFileLike
 
 """
-A layer that renders array (lens) data as an alpha-blended image. Its rendering is described entirely by the composable render graph; its placement, entirely by the coordinate graph.
+The general image layer: array (lens) data rendered through a composable render graph. The kind for a layer that actually **composites** -- several channels blended together, a hand-authored transfer curve, a solid tint, per-channel opacity. When the recipe's shape is fixed instead, one of IntensityLayer, RgbLayer or PhasorLayer says so directly and carries its settings as fields, which is why those are not this type with a flag. Its rendering is described entirely by the render graph; its placement, entirely by the coordinate graph.
 """
 type ImageLayer implements Layer {
   """
@@ -3840,6 +3843,7 @@ type ImageLayer implements Layer {
   Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
   """
   levelPaths: [LevelPlacement!]!
+  name: String
   opacity: Float!
   order: Int!
 
@@ -3892,6 +3896,58 @@ input IntFilterLookup {
   range: [Int!]
   regex: String
   startsWith: Int
+}
+
+"""
+One channel of a lens through one colormap -- or one solid tint -- with contrast limits and gamma, optionally projected over z. The fluorescence workhorse, and the layer a renderer can take straight to a single-channel texture and a LUT without walking a tree. Its settings are fields rather than a render graph because there is nothing here to composite: the graph form of this was a blend node with a single child, and additively blending one thing is that thing. Anything that *would* need the tree -- a second channel, an authored transfer curve, per-channel opacity -- is an ImageLayer. A tint is not among them: it names the hue one ramp ends at, which is what `colormap` does, so it is a field here rather than a reason to author a graph.
+"""
+type IntensityLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
+  blending: Blending!
+  climMax: Float
+  climMin: Float
+  color: [Int!]
+  colormap: ColorMap!
+  gamma: Float
+  id: ID!
+  intensityAxis: String
+  intensityIndex: Int!
+  kind: LayerKind!
+  lens: Lens!
+
+  """
+  Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
+  """
+  levelPaths: [LevelPlacement!]!
+  name: String
+  opacity: Float!
+  order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
+  """
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means three different things -- nobody has registered this data yet, its geometry did not survive the operation that produced it and it can never be placed, or it is registered per index and you have not said which index -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge; CONDITIONAL is a placement to ask again for with `at`. Pass the same `at` you would pass `pathToWorld` to be told about that coordinate. Derived, never stored
+  """
+  placement(at: [CoordinateInput!] = null): PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. A layer placed per index reports one of its scoped routes rather than NONE; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the reasons a NONE layer has
+  """
+  placementInvariance(at: [CoordinateInput!] = null): TransformInvariance!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed, and when there is no path at all; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. A layer placed per index reports one of its scoped routes rather than UNKNOWN; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity(at: [CoordinateInput!] = null): PlacementValidity!
+  projectionMode: ProjectionMode
+  scene: Scene!
+  visible: Boolean!
 }
 
 """
@@ -4007,9 +4063,10 @@ type LabelLayer implements Layer {
   lens: Lens!
 
   """
-  Per pyramid level, the path from that level's voxel grid to this scene's world system -- the same multiscale placement an image layer exposes. A level's path is null when the dataset is not registered into the scene
+  Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
   """
   levelPaths: [LevelPlacement!]!
+  name: String
   opacity: Float!
   order: Int!
 
@@ -4221,7 +4278,7 @@ input LaserElementInput {
 }
 
 """
-A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: a spatial fact is a coordinate system or a transformation edge, never a field here, and every spatial question a layer answers -- `pathToWorld`, `placement`, `placementValidity`, `placementInvariance` -- is derived from the graph on read and stored nowhere, so refining one edge updates every layer that looks through it. Which columns hold a point layer's coordinates is likewise the table dataset's declaration, not a per-layer copy. The concrete kind (ImageLayer, AnnotationLayer, PointLayer, TrackLayer, MeshLayer) carries its own data source and render settings.
+A layer placed in a scene and alpha-blended over the layers below it. It carries view state only: a spatial fact is a coordinate system or a transformation edge, never a field here, and every spatial question a layer answers -- `pathToWorld`, `placement`, `placementValidity`, `placementInvariance` -- is derived from the graph on read and stored nowhere, so refining one edge updates every layer that looks through it. Which columns hold a point layer's coordinates is likewise the table dataset's declaration, not a per-layer copy. The concrete kind carries its own data source and render settings: IntensityLayer, RgbLayer, PhasorLayer and LabelLayer each state a recipe of fixed shape as fields, ImageLayer carries a composable render graph for the layers that genuinely composite, and AnnotationLayer, PointLayer, TrackLayer and MeshLayer draw from a collection or a table rather than a lens.
 """
 interface Layer {
   """
@@ -4231,6 +4288,7 @@ interface Layer {
   blending: Blending!
   id: ID!
   kind: LayerKind!
+  name: String
   opacity: Float!
   order: Int!
 
@@ -4286,9 +4344,14 @@ enum LayerKind {
   ANNOTATION
 
   """
-  An image layer rendering array (lens) data through a composable render graph.
+  The general image layer: array (lens) data rendered through a composable render graph. The kind for a layer that actually composites -- several channels blended together, a hand-authored transfer curve, an inverted mapping, per-channel opacity. When the recipe's shape is fixed, one of INTENSITY, RGB or PHASOR says so directly and carries its settings as fields.
   """
   IMAGE
+
+  """
+  One channel of a lens through one colormap -- or one solid tint -- with contrast limits and gamma, optionally projected over z. The fluorescence workhorse. Its settings are fields rather than a render graph because there is nothing here to composite: the graph form of this was a blend node with a single child, and additively blending one thing is that thing.
+  """
+  INTENSITY
 
   """
   A label layer rendering array (lens) data whose values are discrete object ids -- a segmentation or instance map. It shares the image layer's source but none of its render settings: contrast limits, gamma, colormaps and intensity projections are all meaningless over ids, and what it carries instead is an id-to-color hashing, a transparent background id, contour-or-fill, a selection, and an optional `colorBy` dereferencing the FIELD edge that keys the mask's pixels to a table of objects.
@@ -4299,9 +4362,19 @@ enum LayerKind {
   MESH
 
   """
+  One axis of a lens -- MICROTIME or SPECTRUM -- reduced per pixel to a phasor and coloured by it: a lifetime, or a spectral centre of mass. Its recipe lives in `phasorRender`, as a label layer's lives in `labelRender`, because a phasor's transfer maps a (g, s) pair plus a photon count rather than a sampled scalar. A phasor may still appear as a node inside an IMAGE layer's graph, which is what composites one with an ordinary channel.
+  """
+  PHASOR
+
+  """
   A point layer rendering a point cloud (e.g. SMLM localisations, centroids) from columns of a table.
   """
   POINT
+
+  """
+  Three channels of a lens as the red, green and blue components of one picture -- a photograph, a brightfield slide -- sharing one pair of contrast limits. Its own kind rather than a three-child blend because the two are indistinguishable as graphs, and a three-marker fluorescence acquisition coloured red/green/blue is by far the commoner reading of that shape. Never inferred from that shape, for the same reason: a bootstrapped scene reaches this kind only on something ingest recorded -- channels *named* red, green and blue, or arrays read out of a PNG -- or on a caller saying so. Keeping the three together is the point: they are components of one picture, not three signals to hide and reorder separately.
+  """
+  RGB
 
   """
   A track layer rendering trajectories from columns of a table, grouped by a track id.
@@ -4312,9 +4385,12 @@ enum LayerKind {
 enum LayerKindChoices {
   ANNOTATION
   IMAGE
+  INTENSITY
   LABEL
   MESH
+  PHASOR
   POINT
+  RGB
   TRACK
 }
 
@@ -4487,18 +4563,33 @@ input LensFilter {
 }
 
 """
-The kind of layer a lens could source, for narrowing a picker: the two members of `LayerKind` that draw array data. Input-only, and deliberately not `LayerKind` itself -- an annotation, point, track or mesh layer sources from a collection or a table, never from a lens, so four of that enum's members could only ever answer 'no'.
+The kind of layer a lens could source, for narrowing a picker: the members of `LayerKind` that draw array data. Input-only, and deliberately not `LayerKind` itself -- an annotation, point, track or mesh layer sources from a collection or a table, never from a lens, so four of that enum's members could only ever answer 'no'.
 """
 enum LensLayerKind {
   """
-  Drawable as an image layer -- which is every lens with an x and a y axis of more than one pixel. It is the renderability gate alone, and deliberately *not* the complement of LABEL: a mask drawn through a render graph is a legitimate thing to want, and `createLayer` does not refuse one.
+  Drawable as a general image layer -- which is every lens with an x and a y axis of more than one pixel. It is the renderability gate alone, and deliberately *not* the complement of the others: a mask drawn through a render graph is a legitimate thing to want, and `createLayer` does not refuse one.
   """
   IMAGE
+
+  """
+  Drawable as an intensity layer: renderable, which is the whole condition. Every lens an image layer can draw, one channel of it can also be drawn on its own.
+  """
+  INTENSITY
 
   """
   Drawable as a label layer: renderable, and derived by an edge declaring CATEGORIZED -- the values became object ids. The same signal `createSceneFromCoordinateSystem` infers a label layer from, asked of a candidate instead of a source, so a picker and a bootstrapped scene cannot disagree about what a label is.
   """
   LABEL
+
+  """
+  Drawable as a phasor layer: renderable, and carrying a MICROTIME or SPECTRUM axis -- the continuous ones a phasor transform means anything over.
+  """
+  PHASOR
+
+  """
+  Drawable as an RGB layer: renderable, and carrying a channel axis with at least three positions. Structural capacity only -- whether those three channels *are* red, green and blue is a fact about the acquisition, which a shape cannot carry. `createSceneFromCoordinateSystem` answers it from what ingest recorded (channel labels, a photographic source file) and falls back to one layer per channel; this filter answers the narrower structural question and never guesses.
+  """
+  RGB
 }
 
 input LensOrder @oneOf {
@@ -4510,7 +4601,7 @@ What a lens picker is asking for: a destination space, and optionally which sort
 """
 input LensPlaceableFilter {
   """
-  Keep only the lenses that could source a layer of this kind. Both members require the lens to be drawable at all -- an x and a y axis of more than one pixel, the same gate layer creation applies -- and `LABEL` additionally requires a primary derivation declaring CATEGORIZED. Note that *omitting* this applies no renderability gate, so `IMAGE` is a real narrowing rather than a no-op: the unqualified filter answers what is placeable, which is a spatial question, not what is drawable
+  Keep only the lenses that could source a layer of this kind. Every member requires the lens to be drawable at all -- an x and a y axis of more than one pixel, the same gate layer creation applies. Three ask something further: `LABEL` a primary derivation declaring CATEGORIZED, `RGB` a channel axis with at least three positions, and `PHASOR` a MICROTIME or SPECTRUM axis. `RGB` is capacity only -- whether those three channels *are* red, green and blue is not a question any axis can answer, which is why RGB is never inferred. Note that *omitting* this applies no renderability gate, so `IMAGE` is a real narrowing rather than a no-op: the unqualified filter answers what is placeable, which is a spatial question, not what is drawable
   """
   asLayer: LensLayerKind = null
 
@@ -5066,6 +5157,7 @@ type MeshLayer implements Layer {
   kind: LayerKind!
   materialColor: [Int!]
   maxLevel: Int
+  name: String
   opacity: Float!
   order: Int!
 
@@ -5272,9 +5364,9 @@ type Mutation {
   createFolder(input: CreateFolderInput!): Folder!
 
   """
-  Create a single-channel intensity layer rendered through a colormap (e.g. a fluorescence channel)
+  Create an intensity layer: one channel of a lens through one colormap -- or one solid RGBA tint, for a colour that is a measured fact rather than a choice -- with contrast limits and gamma. The fluorescence workhorse, and its own kind -- its settings are fields, not a render graph, because there is nothing here to composite
   """
-  createIntensityLayer(input: CreateIntensityLayerInput!): ImageLayer!
+  createIntensityLayer(input: CreateIntensityLayerInput!): IntensityLayer!
 
   """
   Create a label layer that renders an instance / segmentation map -- an array whose values are discrete object ids. Its own layer kind, not an image layer: ids take a hashed colour, a transparent background value and an optional `colorBy` over the table they key into, and none of an image's contrast limits, gamma or colormaps
@@ -5282,7 +5374,7 @@ type Mutation {
   createLabelLayer(input: CreateLabelLayerInput!): LabelLayer!
 
   """
-  Create a new layer from an existing lens with optional affine transformation and colormap settings
+  Create a general image layer: array (lens) data rendered through a composable render graph. The kind for a layer that actually composites -- several channels together, an authored transfer curve, a tint, per-channel opacity. For a recipe of fixed shape, createIntensityLayer, createRgbLayer, createVolumeLayer and createPhasorLayer make a layer of that kind, whose settings are fields rather than a tree
   """
   createLayer(input: CreateLayerInput!): ImageLayer!
 
@@ -5310,9 +5402,9 @@ type Mutation {
   createPhasorHistogram(input: CreatePhasorHistogramInput!): PhasorHistogram!
 
   """
-  Create a layer that reduces one axis of a lens to a phasor and colors each pixel by it: a lifetime overlay over a FLIM (microtime) cube, or a spectral one over a hyperspectral cube
+  Create a phasor layer, reducing one axis of a lens to a phasor and coloring each pixel by it: a lifetime overlay over a FLIM (microtime) cube, or a spectral one over a hyperspectral cube. For a phasor composited *with* an ordinary intensity channel, use createLayer with a PhasorNode in the graph
   """
-  createPhasorLayer(input: CreatePhasorLayerInput!): ImageLayer!
+  createPhasorLayer(input: CreatePhasorLayerInput!): PhasorLayer!
 
   """
   Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table
@@ -5320,9 +5412,9 @@ type Mutation {
   createPointLayer(input: CreatePointLayerInput!): PointLayer!
 
   """
-  Create a layer that composites three channels of a lens as red, green and blue
+  Create an RGB layer: three channels of a lens as the red, green and blue components of one picture -- a photograph, a brightfield slide -- sharing one pair of contrast limits. Its own kind rather than a three-channel render graph, because as a graph it is indistinguishable from three fluorescence markers somebody tinted red, green and blue, which is the commoner reading. Never inferred, always stated
   """
-  createRgbLayer(input: CreateRgbLayerInput!): ImageLayer!
+  createRgbLayer(input: CreateRgbLayerInput!): RgbLayer!
 
   """
   Create a new scene over a world coordinate system: an adopted existing system, or an ordinary SHARED one created for it (never owned by the scene -- it outlives it)
@@ -5358,9 +5450,9 @@ type Mutation {
   createTransformation(input: CreateTransformationInput!): Transformation!
 
   """
-  Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface)
+  Create a single-channel layer rendered as a 3D volume projection (MIP / attenuated-MIP / volume / isosurface). Returns an IntensityLayer with `projectionMode` set, not a kind of its own: a projection collapses z, it does not composite anything, so it is a setting on one channel. Update it with updateIntensityLayer
   """
-  createVolumeLayer(input: CreateVolumeLayerInput!): ImageLayer!
+  createVolumeLayer(input: CreateVolumeLayerInput!): IntensityLayer!
 
   """Delete an existing camera tour"""
   deleteAnimation(input: DeleteAnimationInput!): ID!
@@ -5619,12 +5711,17 @@ type Mutation {
   updateFolder(input: ChangeFolderInput!): Folder!
 
   """
+  Update an intensity layer's channel, colormap or tint, contrast limits, gamma, projection and compositing settings. A patch: what is not sent keeps its current value
+  """
+  updateIntensityLayer(input: UpdateIntensityLayerInput!): IntensityLayer!
+
+  """
   Update a label layer's render settings -- the selection, contour, hashing seed or `colorBy`. A patch: what is not sent keeps its current value
   """
   updateLabelLayer(input: UpdateLabelLayerInput!): LabelLayer!
 
   """
-  Update an existing layer's lens, scene, affine transformation, and colormap settings
+  Update a general image layer's lens, scene, compositing settings and render graph. Refuses every other kind, naming the mutation that does write its settings -- a layer's kind is fixed for the life of the row
   """
   updateLayer(input: UpdateLayerInput!): ImageLayer!
 
@@ -5634,9 +5731,19 @@ type Mutation {
   updateMeshLayer(input: UpdateMeshLayerInput!): MeshLayer!
 
   """
+  Update a phasor layer's axis, harmonic, color transfer and compositing settings. A patch: what is not sent keeps its current value, except `transfer`, which replaces the whole transfer when given
+  """
+  updatePhasorLayer(input: UpdatePhasorLayerInput!): PhasorLayer!
+
+  """
   Retune a point layer after creation -- above all, switch or republish its colour picker.
   """
   updatePointLayer(input: UpdatePointLayerInput!): PointLayer!
+
+  """
+  Update an RGB layer's channel indices, contrast limits and compositing settings. A patch: what is not sent keeps its current value
+  """
+  updateRgbLayer(input: UpdateRgbLayerInput!): RgbLayer!
 
   """Set a scene's viewer preferences: how a client should open it"""
   updateScene(input: UpdateSceneInput!): Scene!
@@ -6278,6 +6385,55 @@ input PhasorHistogramInput {
 }
 
 """
+One axis of a lens -- MICROTIME or SPECTRUM -- reduced per pixel to a phasor and coloured by it: over microtime the phase reads as a fluorescence lifetime, over a spectrum as a spectral centre of mass. Its recipe lives in `phasorRender` rather than in fields, as a label layer's lives in `labelRender`, because a phasor's transfer maps the *reduction's* output -- a (g, s) pair plus a photon count -- and carries a list of cursors. A phasor composited *with* an ordinary intensity channel is still expressible: that is an ImageLayer whose graph carries a `PhasorNode`.
+"""
+type PhasorLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
+  blending: Blending!
+  id: ID!
+  kind: LayerKind!
+  lens: Lens!
+
+  """
+  Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
+  """
+  levelPaths: [LevelPlacement!]!
+  name: String
+  opacity: Float!
+  order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
+  """
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
+
+  """
+  Which axis is reduced to a phasor, at which harmonic, and how the resulting (g, s) becomes color
+  """
+  phasorRender: PhasorRender
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means three different things -- nobody has registered this data yet, its geometry did not survive the operation that produced it and it can never be placed, or it is registered per index and you have not said which index -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge; CONDITIONAL is a placement to ask again for with `at`. Pass the same `at` you would pass `pathToWorld` to be told about that coordinate. Derived, never stored
+  """
+  placement(at: [CoordinateInput!] = null): PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. A layer placed per index reports one of its scoped routes rather than NONE; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the reasons a NONE layer has
+  """
+  placementInvariance(at: [CoordinateInput!] = null): TransformInvariance!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed, and when there is no path at all; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. A layer placed per index reports one of its scoped routes rather than UNKNOWN; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity(at: [CoordinateInput!] = null): PlacementValidity!
+  scene: Scene!
+  visible: Boolean!
+}
+
+"""
 Reduces one axis of the lens to a phasor -- the DFT of each pixel's profile along it, at a harmonic -- and colors the pixel by the result. Over a microtime axis the phase reads as a fluorescence lifetime; over a spectrum axis, as a spectral centre of mass. Its output is a raster that composites into the scene like any other leaf, not a scatter plot
 """
 type PhasorNode implements LayerRenderNode {
@@ -6291,6 +6447,17 @@ type PhasorNode implements LayerRenderNode {
   phasorAxis: String!
   transfer: PhasorTransfer!
   visible: Boolean!
+}
+
+"""
+How a phasor layer draws: which axis is reduced to a phasor, at which harmonic, and how the resulting (g, s) becomes color. The whole recipe of a PHASOR layer, as `labelRender` is the whole recipe of a LABEL one -- for a phasor composited *with* other channels, an IMAGE layer's graph carries a `PhasorNode` instead
+"""
+type PhasorRender {
+  harmonic: Int!
+  intensityAxis: String
+  intensityIndex: Int!
+  phasorAxis: String!
+  transfer: PhasorTransfer!
 }
 
 """
@@ -6498,6 +6665,7 @@ type PointLayer implements Layer {
   """The dataset's ID-role column identifying each point, if any"""
   idColumn: String
   kind: LayerKind!
+  name: String
   opacity: Float!
   order: Int!
 
@@ -6618,7 +6786,7 @@ enum PreferredView {
 }
 
 """
-The 3D projection / rendering mode applied to a volumetric (z-stacked) render node.
+The 3D projection / rendering mode applied to a volumetric (z-stacked) render, whether that is an IMAGE layer's projection node or an INTENSITY layer's `projectionMode`.
 """
 enum ProjectionMode {
   """
@@ -7033,6 +7201,56 @@ input RevertInput {
 
   """The ID of the folder to revert"""
   id: ID!
+}
+
+"""
+Three channels of a lens as the red, green and blue components of one picture -- a photograph, a brightfield slide -- sharing one pair of contrast limits. A renderer can upload this as a single RGB texture in one pass. Its own kind rather than a three-child blend because the two are **indistinguishable as graphs**, and a three-marker fluorescence acquisition coloured red/green/blue is by far the commoner reading of that shape -- so as a graph the authored fact was destroyed at write time. Never inferred, for the same reason. There is no per-channel colormap here and no per-channel visibility: the channel *is* the colour, and the three are components of one picture rather than three signals to hide and reorder separately. Wanting to do that means wanting three layers, or an ImageLayer.
+"""
+type RgbLayer implements Layer {
+  """
+  This layer's whole `pathToWorld` composed into one affine map -- the same path, same edges, same order, with the flagged steps inverted. Derived on read and stored nowhere, exactly as the path itself is, so refining one registration moves it. **Null when `pathToWorld` is null** and for the same two reasons; `placement` is what tells them apart. It errors rather than returning null when a path exists but does not condense: a FIELD step gives its map as the values of an array and has no closed form, and a singular step cannot be walked backwards -- the error names the transformation that stopped it. Note that `placementInvariance` being AFFINE or stronger is necessary but not sufficient for this to succeed. `outputAxes` names only the destination axes the path constrains, so pass `strict: true` to be refused a partial map instead of handed one
+  """
+  asAffine(at: [CoordinateInput!] = null, strict: Boolean! = false): AffinePlacement
+  blending: Blending!
+  blueIndex: Int!
+  climMax: Float
+  climMin: Float
+  greenIndex: Int!
+  id: ID!
+  intensityAxis: String
+  kind: LayerKind!
+  lens: Lens!
+
+  """
+  Per pyramid level, the path from that level's voxel grid to this scene's world system. What a multiscale renderer consumes directly: pick a level by zoom and use its path -- every level stars into the same intrinsic system, so the registration tail is shared. A level's path is null when the dataset is not registered into the scene
+  """
+  levelPaths: [LevelPlacement!]!
+  name: String
+  opacity: Float!
+  order: Int!
+
+  """
+  The path of transformation edges from this layer's source coordinate system to its scene's world system. A layer belongs to exactly one scene, so this is the one 'to world' question with a single right answer -- the path uses the layer's dataset facts plus the world's registrations, which are the same for every scene over that space. Null when the layer is unregistered or has no source system; empty when the source already is the world system. Every step is here in full, with its own validity, invariance and provenance, which is what to ask for when you care *how* the data got placed; `asAffine` is the same path composed, for when you only need the map
+  """
+  pathToWorld(at: [CoordinateInput!] = null): [PlacementStep!]
+
+  """
+  Whether this layer has a place in its scene's world, and if not, why not. A null `pathToWorld` means three different things -- nobody has registered this data yet, its geometry did not survive the operation that produced it and it can never be placed, or it is registered per index and you have not said which index -- and a client should not have to guess which. UNREGISTERED is a gap to close; UNMAPPABLE is a fact to badge; CONDITIONAL is a placement to ask again for with `at`. Pass the same `at` you would pass `pathToWorld` to be told about that coordinate. Derived, never stored
+  """
+  placement(at: [CoordinateInput!] = null): PlacementState!
+
+  """
+  Which geometric properties survive the whole walk from this layer's data to its scene's world: the weakest edge on its path. ISOMETRY means a distance measured in the data IS that distance in world; SIMILARITY means shapes and angles transfer and every length needs one common factor; AFFINE means only parallelism and area ratios do, so an angle or a distance read in the data means nothing in world; DIFFEOMORPHIC means nothing metric survives anywhere; NONE means there is no path at all. This is what says whether a scalar length in scene units (`pointSize`, `lineWidth`, a stroke width, a camera zoom) is well defined for this layer: it is, from SIMILARITY up. A layer placed per index reports one of its scoped routes rather than NONE; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `invariance`, this being the minimum over the whole path. `placement` says which of the reasons a NONE layer has
+  """
+  placementInvariance(at: [CoordinateInput!] = null): TransformInvariance!
+
+  """
+  How much this layer's placement is actually known: the weakest edge on its path to world. UNKNOWN while the path rests on an edge a client marked as guessed, and when there is no path at all; MANUAL once someone authored the registration; VALIDATED once it was checked, and by construction when the path is empty -- data in its own space is placed exactly. A layer placed per index reports one of its scoped routes rather than UNKNOWN; pass `at` for that coordinate's exact answer. Derived, never stored -- and distinct from a single edge's `validity`: this is the minimum over the whole path
+  """
+  placementValidity(at: [CoordinateInput!] = null): PlacementValidity!
+  redIndex: Int!
+  scene: Scene!
+  visible: Boolean!
 }
 
 """
@@ -8305,6 +8523,7 @@ type TrackLayer implements Layer {
   id: ID!
   kind: LayerKind!
   lineWidth: Float
+  name: String
   opacity: Float!
   order: Int!
 
@@ -8822,6 +9041,26 @@ input UpdateCoordinateSystemInput {
 }
 
 """
+Update an intensity layer's render settings. Every field is a patch: what is not sent keeps its current value
+"""
+input UpdateIntensityLayerInput {
+  blending: Blending = null
+  climMax: Float = null
+  climMin: Float = null
+  color: [Int!] = null
+  colormap: ColorMap = null
+  gamma: Float = null
+  id: ID!
+  intensityAxis: String = null
+  intensityIndex: Int = null
+  name: String = null
+  opacity: Float = null
+  order: Int = null
+  projectionMode: ProjectionMode = null
+  visible: Boolean = null
+}
+
+"""
 Update a label layer's render settings. Every field is a patch: what is not sent keeps its current value
 """
 input UpdateLabelLayerInput {
@@ -8901,6 +9140,23 @@ input UpdateMeshLayerInput {
 }
 
 """
+Update a phasor layer's render settings. Every field is a patch: what is not sent keeps its current value, except `transfer`, which replaces the whole transfer when given
+"""
+input UpdatePhasorLayerInput {
+  blending: Blending = null
+  harmonic: Int = null
+  id: ID!
+  intensityAxis: String = null
+  intensityIndex: Int = null
+  name: String = null
+  opacity: Float = null
+  order: Int = null
+  phasorAxis: String = null
+  transfer: PhasorTransferInput = null
+  visible: Boolean = null
+}
+
+"""
 Retune a point layer after creation -- above all, switch or republish its colour picker
 """
 input UpdatePointLayerInput {
@@ -8914,6 +9170,23 @@ input UpdatePointLayerInput {
   order: Int = null
   pointSize: Float = null
   sizeColumn: String = null
+  visible: Boolean = null
+}
+
+"""
+Update an RGB layer's render settings. Every field is a patch: what is not sent keeps its current value
+"""
+input UpdateRgbLayerInput {
+  blueIndex: Int = null
+  climMax: Float = null
+  climMin: Float = null
+  greenIndex: Int = null
+  id: ID!
+  intensityAxis: String = null
+  name: String = null
+  opacity: Float = null
+  order: Int = null
+  redIndex: Int = null
   visible: Boolean = null
 }
 
@@ -9162,7 +9435,7 @@ type ZarrUploadGrant {
 
 scalar _Any
 
-union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | ByDimensionTransformation | ChannelLabel | Client | Column | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PointLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | SparseArray | SparseAxisReference | SparseDataset | SparseStore | TableDataset | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
+union _Entity = AffineTransformation | Animation | AnimationWaypoint | Annotation | AnnotationCollection | AnnotationLayer | ArrayDataset | Axis | BigFileStore | ByDimensionTransformation | ChannelLabel | Client | Column | CoordinateAnchor | CoordinateSystem | DataArray | FabriksStore | FieldTransformation | File | FileLink | Folder | IdentityTransformation | ImageLayer | IntensityLayer | LabelLayer | Lens | LightPath | MapAxisTransformation | MediaStore | Membership | MeshCollection | MeshLayer | OptikitState | Organization | ParquetStore | PhasorCalibration | PhasorHistogram | PhasorLayer | PointLayer | RgbLayer | RotationTransformation | ScaleTransformation | Scene | SceneSnapshot | SequenceTransformation | SparseArray | SparseAxisReference | SparseDataset | SparseStore | TableDataset | Task | TrackLayer | TranslationTransformation | UnmappableTransformation | User | ValueHistogram | ZarrStore
 
 type _Service {
   sdl: String!

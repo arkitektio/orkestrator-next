@@ -2,12 +2,11 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { AxisType, PreferredView, SceneFragment, SceneLayerFragment } from "@/mikro-next/api/graphql";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
-import { isBrickLayer, isLabelLayer, type BrickLayerFragment } from "../model/layerGuards";
+import { isBrickLayer, type BrickLayerFragment } from "../model/layerGuards";
 import { reconcileSceneLayers } from "../model/layerReconcile";
 import { layerStructureKey } from "../model/sceneStructure";
 import {
-  normalizeLabelLayer,
-  normalizeLayer,
+  normalizeBrickLayer,
   type LayerState,
   type SceneTransformContext,
 } from "../model/layerModel";
@@ -143,8 +142,9 @@ export interface SceneState {
 }
 
 export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
-  // Images AND label masks: both are a Lens over an array, so both plan, pool
-  // and stream through the same path (see `isBrickLayer`).
+  // Every LENS-backed layer — images, label masks and the three fixed-shape
+  // kinds alike: all are a Lens over an array, so all plan, pool and stream
+  // through the same path (see `isBrickLayer`).
   const brickLayers = scene.layers.filter(isBrickLayer);
   const defaultVolumeLods = planDefaultVolumeLods(brickLayers);
 
@@ -175,9 +175,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
       trackTimeExtents: {},
       sceneLayers: scene.layers,
       layers: brickLayers.map((layer) =>
-        isLabelLayer(layer)
-          ? normalizeLabelLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene)
-          : normalizeLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene),
+        normalizeBrickLayer(layer, defaultVolumeLods.get(layer.id) ?? null, scene),
       ),
       // The render graph is the single rendering truth: transfer edits flow
       // graph → store (RenderGraphSection derives the flat clim/colormap
@@ -225,9 +223,7 @@ export const createSceneStore = ({ scene }: { scene: SceneFragment }) => {
           structureKey: layerStructureKey,
           planDefaultLods: (bricks) => planDefaultVolumeLods(bricks as BrickLayerFragment[]),
           normalize: (layer, defaultVolumeLod) =>
-            isLabelLayer(layer)
-              ? normalizeLabelLayer(layer, defaultVolumeLod, transformContext)
-              : normalizeLayer(layer, defaultVolumeLod, transformContext),
+            normalizeBrickLayer(layer, defaultVolumeLod, transformContext),
           // New objects, never a mutation of the stored one: after any earlier
           // `updateLayer`/`patchSceneLayer` the stored objects are immer-frozen.
           carryImageSession: (previous, next) => ({

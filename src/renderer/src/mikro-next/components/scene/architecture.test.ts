@@ -90,7 +90,15 @@ const resolveTarget = (fromFile: string, spec: string): string | null => {
   return null;
 };
 
-const IMPORT_RE = /(?:^|\n)\s*(?:import|export)[\s\S]{0,400}?from\s+["']([^"']+)["']/g;
+// Keep in lockstep with `scripts/scene-graph.mjs`. The bound spans a whole
+// named-import list, so it must clear the LONGEST one in the tree
+// (`DebugPanel`'s shader-flag block is already 417 chars). It is a
+// SILENT-FAILURE cap: an import that overruns it is not reported as
+// unparseable, it just stops being an edge — which reads here as a layering
+// violation having been fixed, and makes this very ratchet demand that a budget
+// be lowered for a violation that never went away. Raise it rather than trim an
+// import.
+const IMPORT_RE = /(?:^|\n)\s*(?:import|export)[\s\S]{0,2000}?from\s+["']([^"']+)["']/g;
 
 const edges: Edge[] = [];
 for (const file of walk(SCENE)) {

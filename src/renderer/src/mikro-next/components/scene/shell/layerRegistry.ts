@@ -22,6 +22,14 @@ export type LayerRenderers = {
  */
 export const LAYER_RENDERERS: Record<SceneLayerFragment["__typename"], LayerRenderers> = {
   ImageLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
+  // The three FIXED-SHAPE lens kinds. They normalize into the same `LayerState`
+  // as an image (one channel, three tinted planes, one phasor source), so they
+  // ride the same components and the same brick engine — what their declared
+  // shape buys is on the material side, where `LayerState.renderKind` lets a
+  // specialised compositor be compiled instead of the general 16-slot one.
+  IntensityLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
+  RgbLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
+  PhasorLayer: { Layer2D: ImagePlaneLayer, Layer3D: ImageVolumeLayer },
   // 2D fills (or outlines, with `contour`); 3D marches to FIRST HIT — MIP over
   // object ids would keep the largest, which is an arbitrary object. See
   // `createLabelVolumeNodeMaterial`.

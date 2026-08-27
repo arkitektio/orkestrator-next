@@ -64,6 +64,7 @@ import { NameScope } from "./tslNames";
 import {
   isAnisoStrideEnabled,
   isOccHierarchyEnabled,
+  isFixedShapeFastPathEnabled,
   isShaderFastPathEnabled,
   isSmoothZoomEnabled,
 } from "./shaderFlags";
@@ -504,7 +505,14 @@ export function emitResolveBrickResidency(
  * channel's slab. Emitted inside the channel loop — `slabIndex` must be a
  * `.toVar()` (loop-dependent).
  */
-function emitChannelTap(
+/**
+ * Exported for the FIXED-SHAPE materials. They emit a different COMPOSITOR, not
+ * a different tap: the atlas addressing, the EMPTY decode and the tricubic
+ * clamp-to-slot-interior algebra (pinned by `shaderspec/tricubic.ts`) must stay
+ * single-sourced, or a specialised material would sample the atlas by its own
+ * slightly-different rules.
+ */
+export function emitChannelTap(
   t: any,
   resolved: ResolvedResidency,
   slabIndex: any,
@@ -1125,6 +1133,9 @@ export function createVolumeNodeMaterial(
       projectionMode: number;
       /** Compile-time phasor specialization input; absent → assume phasors. */
       hasPhasorSources?: boolean;
+      /** Compile-time FIXED-SHAPE specialization input (one plain scalar
+       * channel); absent → assume the general shape. */
+      isSimpleIntensity?: boolean;
     }[];
   },
   memberCount = 1,
@@ -1170,6 +1181,14 @@ export function createVolumeNodeMaterial(
       // phasor sources gets the phasor branch omitted from its WGSL. Absent
       // member info → conservative true (emit the branch).
       emitPhasor: !fastPath || (channelData.members?.[m]?.hasPhasorSources ?? true),
+      // Compile-time FIXED-SHAPE specialization (fast path + the flag): a
+      // member that is one plain scalar channel contributes through
+      // straight-line code instead of a dynamic loop over its slots. Absent
+      // member info → conservative false (emit the loop).
+      emitSimple:
+        fastPath &&
+        isFixedShapeFastPathEnabled() &&
+        (channelData.members?.[m]?.isSimpleIntensity ?? false),
     };
   });
 
@@ -1392,6 +1411,16 @@ export function createVolumeNodeMaterial(
         If(resolved.status.greaterThan(1.5), () => {
           const maxEmptyNorm = float(0.0).toVar("esMaxNorm");
           memberNodes.forEach((mem, m) => {
+            if (memberFns[m].emitSimple) {
+              // Same collapse as the sampling loop: one slot, known visible.
+              maxEmptyNorm.assign(
+                max(
+                  maxEmptyNorm,
+                  float(memberFns[m].channelNormalize(int(mem.slotFirst), resolved.emptyValue)),
+                ),
+              );
+              return;
+            }
             Loop(
               { start: int(0), end: int(MAX_CHANNELS), type: "int", condition: "<", name: `es${m}` },
               (args: any) => {
@@ -1662,8 +1691,42 @@ export function createVolumeNodeMaterial(
       // Per-sample composite, per member (ChunkPlane semantics).
       const maxSampleNorm = float(0.0).toVar();
       const samples = memberNodes.map((mem, m) => {
-        const sampleColor = select(int(mem.blendMode).equal(1), vec3(1.0), vec3(0.0)).toVar();
+        // A SIMPLE member seeds to zero unconditionally: its blend cannot be
+        // MULTIPLICATIVE (that is what `resolveRenderKind` refuses), so the
+        // `select` on the blend uniform is a known constant here.
+        const sampleColor = memberFns[m].emitSimple
+          ? vec3(0.0).toVar()
+          : select(int(mem.blendMode).equal(1), vec3(1.0), vec3(0.0)).toVar();
         const sampleNorm = float(0.0).toVar();
+
+        if (memberFns[m].emitSimple) {
+          // ONE slot, known visible, plain transfer, collapsing blend — so the
+          // whole per-slot region reduces to a tap and a multiply. Removed from
+          // the innermost (ray-step × slot) loop: the loop header, the
+          // `k >= slotCount` Break, the visibility Continue and the three-way
+          // blend branch. `emitSourceSample` is still the SAME emitter (with
+          // its phasor half compile-time off), so the tap, the normalize and
+          // the LUT lookup are bit-identical to the general path's.
+          If(resolved.status.greaterThanEqual(0.5), () => {
+            const slot = int(mem.slotFirst).toVar(memberFns[m].nm("simpleSlot"));
+            const sample = emitSourceSample(
+              t,
+              c,
+              resolved,
+              slot,
+              memberFns[m],
+              memberFns[m].nm,
+              false,
+              smoothActive,
+            );
+            sampleNorm.assign(sample.norm);
+            // Additive (or normal) onto a zero accumulator IS assignment.
+            sampleColor.assign(sample.color.mul(sample.weight));
+          });
+          maxSampleNorm.assign(max(maxSampleNorm, sampleNorm));
+          return { sampleColor, sampleNorm };
+        }
+
         If(resolved.status.greaterThanEqual(0.5), () => {
           Loop(
             {

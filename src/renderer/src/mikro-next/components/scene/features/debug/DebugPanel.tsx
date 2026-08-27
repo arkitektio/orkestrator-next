@@ -41,6 +41,7 @@ import {
 import {
   isAnisoLodEnabled,
   isAnisoStrideEnabled,
+  isFixedShapeFastPathEnabled,
   isOccHierarchyEnabled,
   isOccObservedRangeEnabled,
   isShaderFastPathEnabled,
@@ -48,6 +49,7 @@ import {
   isWorldLodEnabled,
   setAnisoLodEnabled,
   setAnisoStrideEnabled,
+  setFixedShapeFastPathEnabled,
   setOccHierarchyEnabled,
   setOccObservedRangeEnabled,
   setShaderFastPathEnabled,
@@ -109,6 +111,7 @@ export const DebugPanel = () => {
   const [anisoLodOn, setAnisoLodOn] = useState(isAnisoLodEnabled);
   const [worldLodOn, setWorldLodOn] = useState(isWorldLodEnabled);
   const [occHierarchyOn, setOccHierarchyOn] = useState(isOccHierarchyEnabled);
+  const [fixedShapeOn, setFixedShapeOn] = useState(isFixedShapeFastPathEnabled);
   const [settleRefineOn, setSettleRefineOn] = useState(isSettleRefineEnabled);
   const [volumeTargetOn, setVolumeTargetOn] = useState(isVolumeTargetEnabled);
   const [volumeCacheOn, setVolumeCacheOn] = useState(isVolumeCacheEnabled);
@@ -199,6 +202,12 @@ export const DebugPanel = () => {
     const next = !occHierarchyOn;
     setOccHierarchyEnabled(next);
     setOccHierarchyOn(next);
+  };
+
+  const toggleFixedShape = () => {
+    const next = !fixedShapeOn;
+    setFixedShapeFastPathEnabled(next);
+    setFixedShapeOn(next);
   };
 
   const toggleSettleRefine = () => {
@@ -718,6 +727,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 occ hierarchy: {occHierarchyOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleFixedShape}
+                title="Fixed-shape compositor: a layer whose sources are one plain scalar channel (renderKind 'intensity') compiles a specialised material — no 16-slot loop, no chParamsA/B uniform arrays, no source-kind tap, no blend branch. Off renders the same layers through the general compositor, which is a pixel-identical reference. Default OFF until live-validated; needs shader fast path on. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                fixed-shape: {fixedShapeOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleSettleRefine}

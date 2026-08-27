@@ -377,14 +377,28 @@ const TransferHistogram = ({
   );
 };
 
-const TransferEditor = ({
+/**
+ * Exported for the FIXED-SHAPE layer cards. An intensity layer's transfer is
+ * the identical `TransferFn` — window, curve, gamma, colormap AND tint — it is
+ * simply carried as fields instead of on a graph node, so the same editor is
+ * the right one. Sharing it is what keeps a tint editable in both places.
+ */
+export const TransferEditor = ({
   transfer,
   onChange,
   layer,
+  showColormap = true,
 }: {
   transfer: TransferFn;
   onChange: (t: TransferFn) => void;
   layer?: LayerState;
+  /**
+   * Hide the colormap/tint picker. For an RGB layer the three tints are FIXED
+   * basis vectors — that is what the type declares and what lets its material
+   * skip the LUT tap entirely — so offering the picker would show a control
+   * whose edits have nowhere to go.
+   */
+  showColormap?: boolean;
 }) => {
   const set = (patch: Partial<TransferFn>) => onChange({ ...transfer, ...patch });
   return (
@@ -421,7 +435,7 @@ const TransferEditor = ({
         </div>
       )}
 
-      <ColormapControl transfer={transfer} onChange={onChange} />
+      {showColormap && <ColormapControl transfer={transfer} onChange={onChange} />}
 
       {/* Gamma lives in the Levels editor (midtone stop) when a histogram is
           available; keep the plain slider only for the layer-less fallback. */}
@@ -596,7 +610,9 @@ const ChannelNodeEditor = ({
  * the layer's pool. The rest — mode, colormap, range, cursors — are shader
  * uniforms and update on the next frame.
  */
-const PhasorNodeEditor = ({
+/** Exported for the `PhasorLayer` card: its `phasorRender` normalizes to
+ * exactly this node, so it edits through exactly this editor. */
+export const PhasorNodeEditor = ({
   node,
   onChange,
   onRemove,

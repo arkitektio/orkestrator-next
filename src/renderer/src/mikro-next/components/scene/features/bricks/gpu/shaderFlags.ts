@@ -198,3 +198,51 @@ export function setSmoothZoomEnabled(enabled: boolean): void {
     /* storage unavailable: session keeps its current state */
   }
 }
+
+/**
+ * FIXED-SHAPE compositor specialization.
+ *
+ * A layer whose sources form a declared recipe — one plain scalar channel
+ * (`LayerState.renderKind === "intensity"`) — makes at BUILD time every choice
+ * the general compositor makes per fragment and per ray step: the 16-slot loop
+ * with its `Break`/`Continue`, the two `chParamsA/B` uniform ARRAYS, the
+ * `sourceParams` kind tap, the blend-mode branch, invert, per-slot opacity.
+ * Specialised, the whole per-slot body becomes straight-line ALU over four
+ * plain uniforms — and two uniform-buffer bindings plus two DataTextures per
+ * layer are never allocated at all.
+ *
+ * It computes NOTHING the general material does not; it computes less of it.
+ * `fixedShapeUniforms.test.ts` pins that numerically on the CPU, which is the
+ * only place a GPU-free assertion can be made.
+ *
+ * Default **OFF** until live-validated, for the same reason `occHierarchy` is:
+ * a new shader surface cannot be regression-tested here, and the flag IS the
+ * bisect tool. Off, these layers render through the general materials, which
+ * is a pixel-identical reference by construction.
+ *
+ * Read at MATERIAL-BUILD time; the bundle memo keys on it, so toggling takes
+ * effect on the next scene mount.
+ *
+ * COUPLING: emitted only when `orkestrator.shaderFastPath` is also on — the
+ * specialised emitters are written against the fast-path emission order
+ * (skip-before-sample, `textureSampleLevel`), and a legacy-order variant would
+ * double the surface for no value.
+ */
+const FIXED_SHAPE_FAST_PATH_STORAGE_KEY = "orkestrator.fixedShapeFastPath";
+
+export function isFixedShapeFastPathEnabled(): boolean {
+  try {
+    if (!isShaderFastPathEnabled()) return false;
+    return window.localStorage.getItem(FIXED_SHAPE_FAST_PATH_STORAGE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+export function setFixedShapeFastPathEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(FIXED_SHAPE_FAST_PATH_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    /* storage unavailable: session keeps its current state */
+  }
+}

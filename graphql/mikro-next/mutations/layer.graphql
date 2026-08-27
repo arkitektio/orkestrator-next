@@ -109,3 +109,26 @@ mutation UpdateMeshLayer($input: UpdateMeshLayerInput!) {
     ...SceneLayer
   }
 }
+
+# Retune a fixed-shape lens layer. These are patches — an omitted field keeps its
+# value. The generic `updateLayer` cannot serve them: it takes a `renderGraph`
+# and returns an `ImageLayer`, and none of these three HAS a graph. That is the
+# point of the split, so the client dispatches on `__typename` at the one
+# persistence site (`features/volume/rendergraph/RenderNodeEditor.tsx`).
+mutation UpdateIntensityLayer($input: UpdateIntensityLayerInput!) {
+  updateIntensityLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation UpdateRgbLayer($input: UpdateRgbLayerInput!) {
+  updateRgbLayer(input: $input) {
+    ...SceneLayer
+  }
+}
+
+mutation UpdatePhasorLayer($input: UpdatePhasorLayerInput!) {
+  updatePhasorLayer(input: $input) {
+    ...SceneLayer
+  }
+}

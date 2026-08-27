@@ -22,6 +22,14 @@ import { useEffect, useMemo } from "react";
  * with them, while a label material owns nothing beyond its own LUT (which
  * `setLabelColorLut` already manages). Rather than force one shape, the caller
  * says what else is its’.
+ *
+ * `variantKey` is the second rebuild trigger, and it is not optional where it
+ * applies. A material is specialised at BUILD time — on the kill switch and on
+ * the layer's `renderKind` — and both can change while a pool lives: an edit
+ * that adds a transfer curve demotes a layer from the fixed-shape path to the
+ * general one, and the compiled shader cannot express the new shape. Keying the
+ * memo on the variant is what makes that demotion a REBUILD rather than a
+ * silently-wrong picture.
  */
 export const useBrickMaterialBundle = <
   T extends {
@@ -34,6 +42,8 @@ export const useBrickMaterialBundle = <
   pool: { geometry: { levels: readonly { spatialShape: readonly number[] }[] }; structureSignature: string } | null,
   create: (pool: never) => T,
   extraDispose?: (bundle: T) => void,
+  /** Anything the BUILD specialised on. Changing it rebuilds the material. */
+  variantKey: string = "",
 ): T | null => {
   const bundle = useMemo(() => {
     if (!pool) return null;
@@ -45,7 +55,7 @@ export const useBrickMaterialBundle = <
     // same key, so the material and the geometry never disagree. Everything
     // dynamic flows through the uniform nodes instead.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, pool?.structureSignature]);
+  }, [pool, pool?.structureSignature, variantKey]);
 
   useEffect(() => {
     if (!bundle) return;

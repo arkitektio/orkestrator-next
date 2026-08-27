@@ -55,6 +55,24 @@ export type MergedMemberUniforms = {
    * its bundle memo on it.
    */
   hasPhasorSources: boolean;
+  /**
+   * Whether this member is ONE plain scalar channel — `LayerState.renderKind
+   * === "intensity"` AND exactly one used slot.
+   *
+   * A second compile-time input, alongside `hasPhasorSources` and read the same
+   * way: it lets the material emit this member's contribution as straight-line
+   * code instead of a dynamic loop over its slots. What that removes from the
+   * innermost (ray-step × slot) region is a loop header, the `k >= slotCount`
+   * `Break`, the per-slot visibility `Continue` and the three-way blend branch —
+   * exact, because at one slot additive and normal both reduce to
+   * `color * weight` over a zero-seeded accumulator (`resolveRenderKind` is what
+   * keeps MULTIPLICATIVE, which does NOT reduce, out of the arm).
+   *
+   * The `renderKind` half is EARNED from the layer's sources, so a layer that
+   * gains a curve or an invert demotes itself; the material must be REBUILT
+   * when this flips, which the layer's bundle memo keys on.
+   */
+  isSimpleIntensity: boolean;
 };
 
 export type MergedChannelUniformData = Omit<
@@ -202,6 +220,11 @@ export function buildMergedChannelUniformData(
       hasPhasorSources: memberSources
         .slice(0, slotCount)
         .some((source) => source?.type === "phasor"),
+      // BOTH halves are required. `renderKind` promises the transfer is plain
+      // and the blend collapses; `slotCount === 1` is what makes the loop
+      // removable — a truncated member (its slots did not fit the merged 16)
+      // must keep the general path.
+      isSimpleIntensity: input.layer?.renderKind === "intensity" && slotCount === 1,
     });
 
     single.atlas.dispose();

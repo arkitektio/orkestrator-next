@@ -50,6 +50,7 @@ the one folder other features may import.
 |---|---|
 | `bricks/` | `octree/` planning + addressing, `gpu/` atlas/page-table/materials/repack, `residency/` the streaming state machine, `layers/` the brick layer components, `shaderspec/` CPU mirrors of the TSL shaders |
 | `volume/` | intensity image layers, the two-pass compositor shell, levels + phasor editors, the render-graph editor |
+
 | `labels/` | label-mask layers, label materials and uniforms, the object-id colour LUT, the label card |
 | `annotations/` | ROI geometry, drawing gestures, the drawers and handles, annotation layers and panels, the ROI stores, and `enhancers/` (vector trace, brush skeleton, smooth blob) |
 | `meshes/` | the fabriks Parquet mesh-collection renderer end-to-end |
@@ -65,16 +66,31 @@ contributes one entry to each**:
 
 ```
 shell/layerRegistry.ts            __typename -> { Layer2D, Layer3D }   exists
-shell/layerPanel/cardRegistry.ts  __typename -> LayerCard              PLANNED
+shell/layerPanel/cardRegistry.ts  __typename -> LayerCard              exists
 shell/debugRegistry.ts            feature    -> DebugSection           PLANNED
 ```
 
-The two planned ones are what clear the last sideways edges: the card registry
-replaces `LayerControlPanel`'s four hard-coded, pre-partitioned card arrays, and
-the debug registry lets each feature contribute its own `DebugPanel` section
-instead of the panel reaching into brick and mesh internals.
+`cardRegistry.ts` landed when the schema split `ImageLayer` into the
+fixed-shape kinds and the panel's five hard-coded, pre-partitioned card arrays
+had to become nine. Its entries carry a `source` (`"layerState"` for the
+lens-backed kinds, which MUST edit the objects the renderer reads, vs
+`"fragment"` for the table- and collection-backed ones) and a `rank` (the
+block order the panel groups by). The panel owns ordering and chrome and knows
+nothing about which card is which.
 
-Adding a layer type is: one folder under `features/`, two registry lines.
+The remaining planned one, the debug registry, lets each feature contribute its
+own `DebugPanel` section instead of the panel reaching into brick and mesh
+internals — the last big sideways cluster.
+
+**Adding a LENS-backed layer type has a third, and it is the one that fails
+silently:** `platform/model/layerGuards.ts`'s `isBrickLayer`. The two registries
+are exhaustive `Record`s, so a missing typename is a compile error; a guard is
+just a boolean, and a lens layer missing from it opens no zarr store and renders
+NOTHING with no error anywhere. That file now states the invariant as a type
+(`MissingFromBrickLayers`) so the compiler catches it too — keep that assertion.
+
+Adding a layer type is otherwise: one folder under `features/`, two registry
+lines.
 `features/annotations/enhancers/registry.tsx` already follows the same shape.
 
 ## Import rules

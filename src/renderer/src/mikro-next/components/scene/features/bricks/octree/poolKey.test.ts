@@ -206,4 +206,42 @@ describe("poolValueSemantics", () => {
     expect(poolValueSemantics({ __typename: "ImageLayer" })).toBe("intensity");
     expect(poolValueSemantics({})).toBe("intensity");
   });
+
+  it("calls every FIXED-SHAPE lens layer an intensity", () => {
+    // Not incidental: `valueSemantics` decides the EMPTY code width (8 bits for
+    // an intensity, 24 for an id), so a fixed-shape layer that fell through to
+    // `labelIds` would decode its own uniform bricks at the wrong value.
+    for (const typename of ["IntensityLayer", "RgbLayer", "PhasorLayer"]) {
+      expect(poolValueSemantics({ __typename: typename })).toBe("intensity");
+    }
+  });
+});
+
+describe("fixed-shape layers share an image's pool", () => {
+  it("keys an IntensityLayer and an ImageLayer over one array identically", () => {
+    // The whole one-layer-per-channel economy. `buildPoolKey` deliberately
+    // excludes clim, colormap, gamma, projection and transform — everything
+    // that differs between a general image layer and the fixed-shape kind over
+    // the SAME data is shader-side — so both must land in one atlas rather than
+    // fetching, repacking and uploading the identical voxels twice.
+    const image = buildPoolKey({
+      ...base(),
+      valueSemantics: poolValueSemantics({ __typename: "ImageLayer" }),
+    });
+    const intensity = buildPoolKey({
+      ...base(),
+      valueSemantics: poolValueSemantics({ __typename: "IntensityLayer" }),
+    });
+    expect(intensity).toBe(image);
+  });
+
+  it("still splits an image from a LABEL over the same array", () => {
+    // The one distinction `valueSemantics` exists to make, pinned alongside so
+    // widening the intensity side cannot quietly widen this one too.
+    expect(
+      buildPoolKey({ ...base(), valueSemantics: poolValueSemantics({ __typename: "LabelLayer" }) }),
+    ).not.toBe(
+      buildPoolKey({ ...base(), valueSemantics: poolValueSemantics({ __typename: "ImageLayer" }) }),
+    );
+  });
 });

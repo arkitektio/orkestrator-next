@@ -206,8 +206,12 @@ otherwise kept serving the previous timepoint from cache).
 ### 2.5 Brick atlas + slot LRU (`features/bricks/gpu/brickAtlas.ts`, `features/bricks/octree/brickPoolState.ts`)
 
 One `Data3DTexture` per (layer, mode), format `R8`, `R16F` or `R32F`. The zarr
-worker emits only `Uint8Array` or `Float32Array` (uint16 is promoted to
-float32 in the CHUNKS) — but uint16 INTENSITY pools store their bricks as
+worker emits `Uint8Array` or `Float32Array` chunks (uint16 is promoted to
+float32 in the CHUNKS) — or, under `orkestrator.raw16` (C3, default OFF), raw
+`Uint16Array` for uint16 arrays: half the decode-cache/transfer/GPU-upload
+bytes, an ARRAY-level decision via `chunkFidelityForDtype` since the chunk
+cache carries no representation in its keys. Either way uint16 INTENSITY
+pools store their bricks as
 `R16F` half floats (roadmap R3): the repack writes raw values, then encodes
 `raw / 65535` (`encodeHalfArray`, `features/bricks/octree/halfFloat.ts` — precision
 analysis there) and the shader rescales through `uAtlasScale` (= 65535),
@@ -1560,9 +1564,14 @@ ownership does NOT hold. Min/max reduce the RAW float (`decodeMinMax`), per
 slab (R8). Parity: `repackKernel.test.ts` (arena simulator bit-identical to
 the worker's `encodeHalfArray`), DebugPanel GPU self-test r16f fixture
 (half bits within 1 ulp — `pack2x16float` rounding is implementation-
-defined among the nearest). Follow-up (C3): a `'raw16'` texture fidelity so
-uint16 chunks stay `Uint16Array` end-to-end (halves decode-cache and upload
-bytes; kernel reads `array<u32>` with `extractBits`).
+defined among the nearest). C3 — SHIPPED DARK (`orkestrator.raw16`, default
+OFF pending live validation): the `'raw16'` texture fidelity keeps uint16
+chunks `Uint16Array` end-to-end (halves decode-cache and upload bytes; the
+`REPACK_KERNEL_R16_U16_WGSL` kernel reads `array<u32>` with `extractBits`,
+and the CPU repack reads the u16 chunks through its generic element loops).
+The decode budget currency follows (`decodedBytesPerVoxel`, 2 B/voxel for
+uint16 under the flag), deliberately moving `budgetMinLevel` finer on uint16
+pyramids — the same cache holds twice the working set.
 
 **R4 — Hierarchical occupancy — SHIPPED DARK (2026-08-19,
 `orkestrator.occHierarchy`, default OFF pending live validation).**

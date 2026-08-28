@@ -19,7 +19,7 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope & {
 }
 
 type TextureCompatibleDataType = 'uint8' | 'uint16' | 'float32'
-type TextureFidelity = 'default' | 'low' | 'high'
+type TextureFidelity = 'default' | 'low' | 'high' | 'raw16'
 
 type TextureCompatibleChunk = Chunk<'uint8'> | Chunk<'uint16'> | Chunk<'float32'>
 
@@ -162,6 +162,17 @@ function promoteChunkForTexture(
     return {
       chunk: ensureSharedChunkIfNeeded(chunk as Chunk<'float32'>, useSharedArrayBuffer),
       promotedType: 'float32',
+    }
+  }
+
+  // 'raw16': uint16 passes through unwidened (RAW values — no rescale), so a
+  // 16-bit chunk costs 2 B/voxel in caches and transfers instead of the
+  // promoted float32's 4. Every other dtype falls through to the default
+  // widening below. Consumers opting in MUST read Uint16Array chunk data.
+  if (textureFidelity === 'raw16' && chunk.data instanceof Uint16Array) {
+    return {
+      chunk: ensureSharedChunkIfNeeded(chunk as Chunk<'uint16'>, useSharedArrayBuffer),
+      promotedType: 'uint16',
     }
   }
 

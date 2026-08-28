@@ -5,7 +5,19 @@
 import { WorkerPool } from '../pool/workerpool'
 import type { Chunk, CodecMetadata, DataType } from 'zarrita'
 
-export type TextureFidelity = 'default' | 'low' | 'high'
+/**
+ * Worker-side representation conversion before a chunk returns to the main
+ * thread:
+ * - 'default': uint8 stays Uint8Array, float32 stays Float32Array, everything
+ *   else is widened to Float32Array.
+ * - 'raw16': like 'default', but uint16 stays Uint16Array (RAW values, no
+ *   rescale) — halves cache/transfer bytes for 16-bit data whose consumers
+ *   can read Uint16Array chunks.
+ * - 'low' / 'high': per-chunk normalization into uint8/uint16. UNSUITABLE for
+ *   multi-chunk surfaces (each chunk gets its own window) — no production
+ *   caller passes these.
+ */
+export type TextureFidelity = 'default' | 'low' | 'high' | 'raw16'
 
 export interface TextureChunkBounds {
   localMin: number

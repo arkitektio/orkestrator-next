@@ -33,8 +33,10 @@ import {
 } from "../bricks/gpu/computeRepack";
 import {
   isR16AtlasesEnabled,
+  isRaw16ChunksEnabled,
   isRgbaAtlasesEnabled,
   setR16AtlasesEnabled,
+  setRaw16ChunksEnabled,
   setRgbaAtlasesEnabled,
 } from "../bricks/octree/atlasFormat";
 import {
@@ -108,6 +110,7 @@ export const DebugPanel = () => {
   const [smoothZoomOn, setSmoothZoomOn] = useState(isSmoothZoomEnabled);
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
+  const [raw16On, setRaw16On] = useState(isRaw16ChunksEnabled);
   const [rgbaAtlasOn, setRgbaAtlasOn] = useState(isRgbaAtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
@@ -179,6 +182,12 @@ export const DebugPanel = () => {
     const next = !r16AtlasOn;
     setR16AtlasesEnabled(next);
     setR16AtlasOn(next);
+  };
+
+  const toggleRaw16 = () => {
+    const next = !raw16On;
+    setRaw16ChunksEnabled(next);
+    setRaw16On(next);
   };
 
   const toggleRgbaAtlas = () => {
@@ -714,6 +723,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 r16 atlas: {r16AtlasOn ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleRaw16}
+                title="Raw uint16 chunks (C3): uint16 chunks stay Uint16Array end-to-end (decode cache, repack, GPU upload) instead of widening to float32 — 2x effective chunk-cache capacity and half the upload bytes for 16-bit data. Takes effect on the next scene mount."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                raw16 chunks: {raw16On ? "on" : "off"}
               </button>
               <button
                 onClick={toggleRgbaAtlas}

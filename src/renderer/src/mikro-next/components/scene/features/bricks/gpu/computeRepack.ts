@@ -10,6 +10,7 @@ import {
   MINMAX_ENTRY_BYTES,
   MINMAX_INIT_MAX,
   MINMAX_INIT_MIN,
+  REPACK_KERNEL_R16_U16_WGSL,
   REPACK_KERNEL_R16_WGSL,
   REPACK_KERNEL_R8_WGSL,
   REPACK_KERNEL_RGBA8_WGSL,
@@ -255,6 +256,8 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
   private pipeline: GpuComputePipeline | null = null;
   private pipelineR8: GpuComputePipeline | null = null;
   private pipelineR16: GpuComputePipeline | null = null;
+  /** r16f over RAW uint16 chunks (`orkestrator.raw16` fidelity). */
+  private pipelineR16U16: GpuComputePipeline | null = null;
   private pipelineRgba8: GpuComputePipeline | null = null;
   private broken = false;
   /** r8 / r16 / rgba8 module compile failures only — must not take the f32 path down. */
@@ -429,6 +432,31 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
           this.r16Broken = true;
           console.warn("[bricks] r16 gpu repack pipeline failed to build; using CPU repack", error);
         });
+      // Raw-uint16-source variant (orkestrator.raw16 chunks). Shares the r16
+      // broken flag: both serve the same atlas kind and fail for the same
+      // reasons (arena/copy support), so one failure reverts both.
+      const moduleR16U16 = device.createShaderModule({
+        label: "brick-repack-r16-u16",
+        code: REPACK_KERNEL_R16_U16_WGSL,
+      });
+      device
+        .createComputePipelineAsync({
+          label: "brick-repack-r16-u16",
+          layout: device.createPipelineLayout({
+            bindGroupLayouts: [this.group0R8Layout, this.group1Layout],
+          }),
+          compute: { module: moduleR16U16, entryPoint: "main" },
+        })
+        .then((pipeline) => {
+          this.pipelineR16U16 = pipeline;
+        })
+        .catch((error) => {
+          this.r16Broken = true;
+          console.warn(
+            "[bricks] r16-u16 gpu repack pipeline failed to build; using CPU repack",
+            error,
+          );
+        });
     }
   }
 
@@ -477,15 +505,20 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       );
     }
     if (atlas.kind === "r16f") {
-      // uint16 chunks arrive promoted to Float32Array (codec worker default
-      // fidelity — see atlasFormat.ts); the kernel halves them on the way in.
+      // uint16 chunks arrive either promoted to Float32Array (default codec
+      // fidelity) or as raw Uint16Array (orkestrator.raw16) — each has its own
+      // kernel, and one brick's chunks are homogeneous (the representation is
+      // an array-level decision; a mixed set falls back to the CPU repack).
+      if (!this.r16Enabled || this.r16Broken) return false;
       return (
-        this.r16Enabled &&
-        this.pipelineR16 !== null &&
-        !this.r16Broken &&
-        chunks.every(
-          (chunk) => chunk.data instanceof Float32Array && chunk.data.byteLength <= maxBinding,
-        )
+        (this.pipelineR16 !== null &&
+          chunks.every(
+            (chunk) => chunk.data instanceof Float32Array && chunk.data.byteLength <= maxBinding,
+          )) ||
+        (this.pipelineR16U16 !== null &&
+          chunks.every(
+            (chunk) => chunk.data instanceof Uint16Array && chunk.data.byteLength <= maxBinding,
+          ))
       );
     }
     return false;
@@ -588,7 +621,10 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
     for (const { job, dispatches } of live) {
       for (const d of dispatches) {
         const key = job.chunkKeys[d.chunkIndex];
-        this.ensureChunkEntry(key, job.input.chunks[d.chunkIndex].data as Float32Array | Uint8Array);
+        this.ensureChunkEntry(
+          key,
+          job.input.chunks[d.chunkIndex].data as Float32Array | Uint16Array | Uint8Array,
+        );
         pinned.add(key);
       }
     }
@@ -642,7 +678,9 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
       pass.setPipeline(
         r8
           ? job.atlas.kind === "r16f"
-            ? this.pipelineR16!
+            ? job.input.chunks[0]?.data instanceof Uint16Array
+              ? this.pipelineR16U16!
+              : this.pipelineR16!
             : job.atlas.kind === "rgba8"
               ? this.pipelineRgba8!
               : this.pipelineR8!
@@ -720,7 +758,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
     return { results, failed, unsupported };
   }
 
-  private ensureChunkEntry(key: string, data: Float32Array | Uint8Array): void {
+  private ensureChunkEntry(key: string, data: Float32Array | Uint16Array | Uint8Array): void {
     const existing = this.chunkCache.get(key);
     if (existing) {
       // LRU touch (Map insertion order).
@@ -751,7 +789,7 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
    * (AllowSharedBufferSource in the current spec); on the first rejection,
    * permanently switch to copying through a non-shared scratch.
    */
-  private writeChunkData(buffer: GpuBuffer, data: Float32Array | Uint8Array): void {
+  private writeChunkData(buffer: GpuBuffer, data: Float32Array | Uint16Array | Uint8Array): void {
     if (data.byteLength % 4 !== 0) {
       // writeBuffer contents must be a whole number of words: copy through a
       // padded scratch (also sidesteps the SAB question for these chunks).
@@ -775,12 +813,11 @@ class GpuRepackerImpl<Token> implements GpuRepacker<Token> {
         );
       }
     }
-    // Non-shared copy.
-    this.device.queue.writeBuffer(
-      buffer,
-      0,
-      data instanceof Float32Array ? new Float32Array(data) : new Uint8Array(data),
-    );
+    // Non-shared copy — of the BYTES, not the elements (an element-wise
+    // Uint8Array(view) constructor call would truncate u16/f32 values).
+    const copy = new Uint8Array(data.byteLength);
+    copy.set(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+    this.device.queue.writeBuffer(buffer, 0, copy);
   }
 
   private evictChunks(pinned: ReadonlySet<string>): void {

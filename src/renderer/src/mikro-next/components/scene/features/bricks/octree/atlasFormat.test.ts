@@ -119,3 +119,39 @@ describe("rgba8 atlases (3/4-channel uint8 pools)", () => {
     }
   });
 });
+
+/**
+ * raw16 (C3): the chunk REPRESENTATION and the planner's decode-byte currency
+ * must move together — a fidelity that halves uint16 chunk bytes without the
+ * planner charging 2 B/voxel (or vice versa) breaks the P5/P24 budget
+ * accounting.
+ */
+describe("raw16 chunk fidelity + decode currency (orkestrator.raw16)", () => {
+  it("defaults OFF: uint16 chunks widen to float32 and charge 4 B/voxel", async () => {
+    const { chunkFidelityForDtype, decodedBytesPerVoxel } = await import("./atlasFormat");
+    expect(chunkFidelityForDtype("uint16")).toBe("default");
+    expect(decodedBytesPerVoxel("uint16")).toBe(4);
+  });
+
+  it("flag ON: uint16 stays raw (2 B/voxel); other dtypes are untouched", async () => {
+    const { chunkFidelityForDtype, decodedBytesPerVoxel, setRaw16ChunksEnabled } =
+      await import("./atlasFormat");
+    setRaw16ChunksEnabled(true);
+    try {
+      expect(chunkFidelityForDtype("uint16")).toBe("raw16");
+      expect(chunkFidelityForDtype("|u2")).toBe("raw16");
+      expect(decodedBytesPerVoxel("uint16")).toBe(2);
+      // uint8 stays 1 B, signed/float widths stay at the promoted 4 B.
+      expect(chunkFidelityForDtype("uint8")).toBe("default");
+      expect(decodedBytesPerVoxel("uint8")).toBe(1);
+      expect(decodedBytesPerVoxel("|u1")).toBe(1);
+      expect(decodedBytesPerVoxel("int8")).toBe(1);
+      for (const dtype of ["int16", "uint32", "int32", "float32", "float64"]) {
+        expect(chunkFidelityForDtype(dtype)).toBe("default");
+        expect(decodedBytesPerVoxel(dtype)).toBe(4);
+      }
+    } finally {
+      setRaw16ChunksEnabled(false);
+    }
+  });
+});

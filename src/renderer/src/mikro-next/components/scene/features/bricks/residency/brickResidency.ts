@@ -101,7 +101,12 @@ import {
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { SceneState } from "../../../platform/stores/sceneStore";
 import type { ViewerState } from "../../../platform/stores/viewerStore";
-import { atlasKindForGeometry, atlasSlotBytes } from "../octree/atlasFormat";
+import {
+  atlasKindForGeometry,
+  atlasSlotBytes,
+  chunkFidelityForDtype,
+  decodedBytesPerVoxel,
+} from "../octree/atlasFormat";
 import {
   createBrickAtlas,
   disposeBrickAtlas,
@@ -2356,6 +2361,10 @@ export class BrickResidencyManager {
       signal: AbortSignal.any([this.fetchAbort.signal, chunkAbort.signal]),
       useSharedArrayBuffer: true,
       cache: this.chunkCache,
+      // ARRAY-level representation (dtype + orkestrator.raw16): every scene
+      // fetch of this array must agree, because the cache key and the
+      // in-flight key above carry no fidelity component.
+      textureFidelity: chunkFidelityForDtype(arr.dtype),
     })
       .then((chunk) => {
         if (!this.countedChunkKeys.has(key)) {
@@ -3692,10 +3701,11 @@ export class BrickResidencyManager {
       for (const node of plan.nodes) {
         if (node.level !== plan.targetLevel) continue;
         const level = pool.geometry.levels[node.level];
-        // Promoted footprint (uint8 stays 1 B/voxel, everything else → f32).
+        // Decoded footprint per the worker's representation: uint8 1 B/voxel,
+        // uint16 2 B under raw16, everything else widened to f32.
         const chunkBytes =
           level.chunks.reduce((total, extent) => total * Math.max(1, extent), 1) *
-          (pool.atlas.kind === "r8" ? 1 : 4);
+          decodedBytesPerVoxel(level.dtype);
         let arr: ReturnType<typeof state.getArrayForStoreId>;
         try {
           arr = state.getArrayForStoreId(level.storeId);
@@ -3785,10 +3795,11 @@ export class BrickResidencyManager {
       for (const node of plan.nodes) {
         if (node.level !== plan.targetLevel) continue;
         const level = pool.geometry.levels[node.level];
-        // Promoted footprint (uint8 stays 1 B/voxel, everything else → f32).
+        // Decoded footprint per the worker's representation: uint8 1 B/voxel,
+        // uint16 2 B under raw16, everything else widened to f32.
         const chunkBytes =
           level.chunks.reduce((total, extent) => total * Math.max(1, extent), 1) *
-          (pool.atlas.kind === "r8" ? 1 : 4);
+          decodedBytesPerVoxel(level.dtype);
         let arr: ReturnType<typeof state.getArrayForStoreId>;
         try {
           arr = state.getArrayForStoreId(level.storeId);

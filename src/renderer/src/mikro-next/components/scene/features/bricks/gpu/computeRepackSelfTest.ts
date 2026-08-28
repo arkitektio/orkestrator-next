@@ -200,6 +200,28 @@ function makeR16Fixture(): Fixture {
   return { ...base, dtype: "uint16", kind: "r16f" };
 }
 
+/** The same brick through the raw-uint16 kernel (`orkestrator.raw16`):
+ * chunks arrive UNWIDENED as Uint16Array, so the -999 fill is clamped to 0 —
+ * a real uint16 chunk cannot hold negatives. Exercises the extractBits
+ * 16-bit-lane read (odd strides included) end-to-end on the device. */
+function makeR16U16Fixture(): Fixture {
+  const base = makeF32Fixture();
+  return {
+    ...base,
+    input: {
+      ...base.input,
+      chunks: base.input.chunks.map((chunk) => {
+        const f32 = chunk.data as Float32Array;
+        const u16 = new Uint16Array(f32.length);
+        for (let i = 0; i < f32.length; i++) u16[i] = Math.max(0, f32[i]);
+        return { ...chunk, data: u16 as unknown as RepackChunk["data"] };
+      }),
+    },
+    dtype: "uint16",
+    kind: "r16f",
+  };
+}
+
 export async function runGpuRepackSelfTest(
   renderer: SceneRenderer,
 ): Promise<GpuRepackSelfTestResult> {
@@ -218,10 +240,12 @@ export async function runGpuRepackSelfTest(
     if (!r8.pass) return { ...r8, detail: `r8: ${r8.detail}` };
     const r16 = await runFixture(renderer, repacker, makeR16Fixture());
     if (!r16.pass) return { ...r16, detail: `r16f: ${r16.detail}` };
+    const r16u16 = await runFixture(renderer, repacker, makeR16U16Fixture());
+    if (!r16u16.pass) return { ...r16u16, detail: `r16f/u16: ${r16u16.detail}` };
     return {
       supported: true,
       pass: true,
-      detail: `f32: ${f32.detail}; r8: ${r8.detail}; r16f: ${r16.detail}`,
+      detail: `f32: ${f32.detail}; r8: ${r8.detail}; r16f: ${r16.detail}; r16f/u16: ${r16u16.detail}`,
     };
   } finally {
     repacker.dispose();

@@ -8,7 +8,7 @@ import {
 import { affineToMatrix4 } from "../../../platform/coords/worldTransform";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { LayerViewRange } from "../../../platform/visibility/visibility";
-import { atlasKindForGeometry, atlasSlotBytes } from "./atlasFormat";
+import { atlasKindForGeometry, atlasSlotBytes, decodedBytesPerVoxel } from "./atlasFormat";
 import type { BrickSpec } from "./brickSpec";
 import { resolveDecodeAllowanceBytes, resolveDecodeFloorBytes } from "./poolBudget";
 import type { LayerLevelGeometry, LevelGeometry, Vec3 } from "../../../platform/coords/levelGeometry";
@@ -572,8 +572,7 @@ export function planLayerNodes({
   // floor alone pinned refinement at a coarse level forever; the allowance
   // buys a bounded, focus-first chunk set past it. An explicit fixedLOD
   // overrides both tiers.
-  const decodedBytesPerVoxelOf = (dtype: string): number =>
-    dtype.includes("u1") || dtype.includes("i1") || dtype.includes("8") ? 1 : 4;
+  const decodedBytesPerVoxelOf = decodedBytesPerVoxel;
   const visibleBytesAtLevel = (levelIndex: number): number => {
     const level = levels[levelIndex];
     const decodedBytesPerVoxel = decodedBytesPerVoxelOf(level.dtype);

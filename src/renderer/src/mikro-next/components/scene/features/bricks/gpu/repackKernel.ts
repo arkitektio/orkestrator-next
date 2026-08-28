@@ -364,6 +364,92 @@ ${REDUCE_EPILOGUE_WGSL}
 `;
 
 /**
+ * r16f variant over RAW uint16 chunks (`orkestrator.raw16`,
+ * `chunkFidelityForDtype`): identical to `REPACK_KERNEL_R16_WGSL` except the
+ * source read — chunks arrive as unwidened Uint16Array data, bound as packed
+ * u32 words and read with `extractBits` (the strided element index addresses
+ * 16-bit lanes, exactly as the r8 kernel's byte index addresses 8-bit lanes).
+ * The extracted raw value converts exactly to f32 (u16 ⊂ f32), so min/max,
+ * the half encode, and the readback decode are bit-identical to the f32-source
+ * kernel's on the same data.
+ */
+export const REPACK_KERNEL_R16_U16_WGSL = /* wgsl */ `
+${PARAMS_STRUCT_WGSL}
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage, read_write> minmax: array<atomic<u32>>;
+// Output arena: 2 half-float texels per word, rows padded to P.row_words.
+@group(0) @binding(2) var<storage, read_write> out_words: array<atomic<u32>>;
+// The raw uint16 chunk, reinterpreted as packed u32 words — the strided
+// element index below addresses 16-bit lanes.
+@group(1) @binding(0) var<storage, read> chunk_data: array<u32>;
+
+var<workgroup> wg_min: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+var<workgroup> wg_max: array<atomic<u32>, ${MAX_KERNEL_CHANNELS}>;
+
+// Order-preserving f32 → u32 map: monotone for all non-NaN values.
+fn encode_order(v: f32) -> u32 {
+  let b = bitcast<u32>(v);
+  return select(b | 0x80000000u, ~b, (b & 0x80000000u) != 0u);
+}
+
+const R16_INV_SCALE: f32 = ${1 / R16F_DATA_SCALE};
+
+@compute @workgroup_size(${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE}, ${REPACK_WORKGROUP_SIZE})
+fn main(
+  @builtin(global_invocation_id) gid: vec3<u32>,
+  @builtin(local_invocation_index) lidx: u32,
+) {
+  if (lidx < ${MAX_KERNEL_CHANNELS}u) {
+    atomicStore(&wg_min[lidx], ${MINMAX_INIT_MIN}u);
+    atomicStore(&wg_max[lidx], ${MINMAX_INIT_MAX}u);
+  }
+  workgroupBarrier();
+
+  let sz = P.stored_z;
+  var contributes = false;
+  var value = 0.0;
+  var slab = 0u;
+
+  let span = max(1u, P.z_span);
+  let px = P.grid_origin.x + gid.x;
+  let py = P.grid_origin.y + gid.y;
+  let c = P.chan_start + gid.z / span;
+  let z = P.grid_origin.z + gid.z % span;
+  if (px < P.stored_xy.x && py < P.stored_xy.y && z < sz && c < P.chan_end) {
+    let g = clamp(
+      P.dest_origin + vec3<i32>(i32(px), i32(py), i32(z)),
+      P.fetch_min,
+      P.fetch_max - vec3<i32>(1),
+    );
+    if (all(g >= P.lo) && all(g < P.hi) && c >= P.chan_start) {
+      let local = vec3<u32>(g - P.chunk_origin);
+      let src = P.fixed_base
+        + (c - P.chan_start) * P.stride_c
+        + local.z * P.stride_z
+        + local.y * P.stride_y
+        + local.x * P.stride_x;
+      value = f32(extractBits(chunk_data[src >> 1u], 16u * (src & 1u), 16u));
+      slab = c - P.chan_start;
+      let half = pack2x16float(vec2<f32>(value * R16_INV_SCALE, 0.0)) & 0xffffu;
+      let word = P.out_base_word
+        + ((c * sz + z) * P.stored_xy.y + py) * P.row_words
+        + (px >> 1u);
+      atomicOr(&out_words[word], half << (16u * (px & 1u)));
+      contributes = true; // u16 has no NaN — every owned texel contributes
+    }
+  }
+
+  if (contributes) {
+    let e = encode_order(value);
+    atomicMin(&wg_min[slab], e);
+    atomicMax(&wg_max[slab], e);
+  }
+  workgroupBarrier();
+${REDUCE_EPILOGUE_WGSL}
+}
+`;
+
+/**
  * rgba8 variant (3/4-channel uint8 pools — `atlasFormat.ts` `rgba8`): the r8
  * ARENA kernel with the channel slabs INTERLEAVED — texel `(px, py, z)` of
  * slab group `c >> 2` holds slab `c` in byte `c & 3`. Word math is therefore

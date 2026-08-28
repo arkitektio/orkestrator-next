@@ -17,6 +17,7 @@ import {
   dispatchWorkgroups,
   encodeOrderedF32,
   ownedGridBox,
+  REPACK_KERNEL_R16_U16_WGSL,
   REPACK_KERNEL_R16_WGSL,
   REPACK_KERNEL_R8_WGSL,
   REPACK_KERNEL_RGBA8_WGSL,
@@ -707,7 +708,10 @@ describe("r16f arena kernel parity with the worker's half-float encode", () => {
     const minmax = { min: MINMAX_INIT_MIN, max: MINMAX_INIT_MAX };
     const dispatches = buildKernelDispatches(input, [0, 0, 0], 0);
     for (const d of dispatches) {
-      const data = input.chunks[d.chunkIndex].data as Float32Array;
+      // Element-indexed reads serve BOTH kernels: the f32 kernel indexes
+      // array<f32> directly and the u16 kernel's extractBits lane addressing
+      // is exactly Uint16Array element indexing.
+      const data = input.chunks[d.chunkIndex].data as Float32Array | Uint16Array;
       for (let gz = 0; gz < sz * d.channelCount; gz++) {
         const c = Math.floor(gz / sz);
         const z = gz % sz;
@@ -786,6 +790,46 @@ describe("r16f arena kernel parity with the worker's half-float encode", () => {
     expect(REPACK_KERNEL_R16_WGSL).toContain("16u * (px & 1u)");
     expect(REPACK_KERNEL_R16_WGSL).toContain("(P.minmax_base + P.chan_start + k) * 2u");
     expect(REPACK_KERNEL_R16_WGSL).toContain(`R16_INV_SCALE: f32 = ${1 / R16F_DATA_SCALE}`);
+  });
+
+  it("raw uint16 chunks (orkestrator.raw16) reproduce the worker's output through the arena", () => {
+    // The raw16 fidelity's representation: the SAME values, unwidened. The
+    // u16 kernel reads 16-bit lanes with extractBits — element-for-element
+    // what indexing a Uint16Array does — and f32(u16) is exact, so output,
+    // min/max and uniform must match the f32-chunk path bit-for-bit.
+    // (-999 out-of-bounds pad values can't exist in a real uint16 chunk; the
+    // fixture clamps them to 0.)
+    const input = makeInput([1, 1, 0]);
+    const u16Input: RepackDispatchInput = {
+      ...input,
+      chunks: input.chunks.map((chunk) => {
+        const f32 = chunk.data as Float32Array;
+        const u16 = new Uint16Array(f32.length);
+        for (let i = 0; i < f32.length; i++) u16[i] = Math.max(0, f32[i]);
+        return { ...chunk, data: u16 as unknown as RepackChunk["data"] };
+      }),
+    };
+    const gpu = simulateBrickR16(u16Input);
+    const scratch = new Float32Array(brickElementCount(u16Input));
+    const cpu = repackBrick({ ...u16Input, output: scratch });
+    const expected = new Uint16Array(scratch.length);
+    encodeHalfArray(scratch, expected, 1 / R16F_DATA_SCALE);
+    expect([...gpu.out]).toEqual([...expected]);
+    expect([...gpu.writes].every((count) => count === 1)).toBe(true);
+    expect(gpu.min).toBe(cpu.min);
+    expect(gpu.max).toBe(cpu.max);
+    expect(gpu.uniformValue).toBe(cpu.uniformValue);
+  });
+
+  it("the u16-source kernel reads 16-bit lanes and otherwise mirrors the r16 kernel", () => {
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain("array<u32>");
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain(
+      "f32(extractBits(chunk_data[src >> 1u], 16u * (src & 1u), 16u))",
+    );
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain("pack2x16float");
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain("(px >> 1u)");
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain("(P.minmax_base + P.chan_start + k) * 2u");
+    expect(REPACK_KERNEL_R16_U16_WGSL).toContain(`R16_INV_SCALE: f32 = ${1 / R16F_DATA_SCALE}`);
   });
 });
 

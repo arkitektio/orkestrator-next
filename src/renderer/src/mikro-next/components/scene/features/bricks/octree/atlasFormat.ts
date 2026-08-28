@@ -50,6 +50,67 @@ try {
 }
 
 export const isRgbaAtlasesEnabled = (): boolean => rgbaAtlasesEnabled;
+
+/**
+ * raw16 chunks (roadmap C3): uint16 chunks stay `Uint16Array` end-to-end —
+ * decode cache, repack input, GPU-repack upload — instead of being widened to
+ * Float32Array in the codec worker, halving those bytes. An ARRAY-level
+ * decision (dtype + this flag), NOT per pool: the decoded-chunk cache and the
+ * in-flight fetch keys carry no representation component, so every consumer
+ * of one array must agree on the chunk representation. Consumers are audited
+ * for Uint16Array reads: CPU repack (generic element loops), the GPU repack's
+ * u16 kernel (r32f/f32 GPU kernels reject u16 chunks and fall back to the CPU
+ * repack), and the chunk-cache probes (generic reads, raw values per P11).
+ * Same module-flag pattern as r16f (planner-pure). Kill switch
+ * `orkestrator.raw16`, default OFF pending live validation; pool-creation
+ * time.
+ */
+let raw16ChunksEnabled = false;
+try {
+  raw16ChunksEnabled = window.localStorage.getItem("orkestrator.raw16") === "on";
+} catch {
+  /* no storage (worker/tests): default applies */
+}
+
+export const isRaw16ChunksEnabled = (): boolean => raw16ChunksEnabled;
+export const setRaw16ChunksEnabled = (enabled: boolean): void => {
+  raw16ChunksEnabled = enabled;
+  try {
+    window.localStorage.setItem("orkestrator.raw16", enabled ? "on" : "off");
+  } catch {
+    /* session keeps its current state */
+  }
+};
+
+/** True when this dtype's chunks arrive as Uint16Array under the raw16 flag. */
+export const isRaw16Dtype = (dtype: string): boolean => {
+  const d = dtype.toLowerCase();
+  return d === "uint16" || d.includes("u2");
+};
+
+/**
+ * The fidelity the scene requests from `getChunkWorker` for an array of this
+ * dtype — 'raw16' for uint16 when the flag is on, 'default' otherwise. ONE
+ * call site rule: every scene fetch of pixel chunks must go through this, or
+ * the shared chunk cache holds mixed representations for one array.
+ */
+export const chunkFidelityForDtype = (dtype: string): "default" | "raw16" =>
+  raw16ChunksEnabled && isRaw16Dtype(dtype) ? "raw16" : "default";
+
+/**
+ * DECODE-cache bytes per voxel for a dtype — the planner's budget currency
+ * (chunk-aligned decoded bytes, P5/P24), which must track the codec worker's
+ * actual output representation: uint8 stays 1 B, uint16 is 2 B under raw16
+ * and 4 B (widened) otherwise, everything else 4 B. Moving uint16 from 4 → 2
+ * deliberately moves `budgetMinLevel` finer on uint16 pyramids: the same
+ * cache holds twice the working set.
+ */
+export const decodedBytesPerVoxel = (dtype: string): number => {
+  const d = dtype.toLowerCase();
+  if (d.includes("u1") || d.includes("i1") || d.includes("8")) return 1;
+  if (raw16ChunksEnabled && isRaw16Dtype(d)) return 2;
+  return 4;
+};
 export const setRgbaAtlasesEnabled = (enabled: boolean): void => {
   rgbaAtlasesEnabled = enabled;
   try {
@@ -81,10 +142,13 @@ export const setR16AtlasesEnabled = (enabled: boolean): void => {
  * truncating its values; signed 16-bit similarly cannot ride the
  * multiply-only `uAtlasScale` rescale and stays R32F.
  *
- * The scene never sets `textureFidelity`, so 'default' promotion is assumed.
- * If a caller ever requests 'low'/'high' fidelity (per-chunk-normalized
- * uint8/uint16), this decision would no longer match the worker's
- * `promotedType` and normalization would break — keep the two in lockstep.
+ * The scene requests fidelity through `chunkFidelityForDtype` only: 'default'
+ * promotion, or 'raw16' (uint16 stays Uint16Array, RAW values) under the
+ * `orkestrator.raw16` flag — which changes the CHUNK representation but not
+ * the atlas kind (the repack widens/encodes brick-side either way). The
+ * per-chunk-normalized 'low'/'high' fidelities would break this decision AND
+ * multi-chunk normalization; `getChunkWorker` refuses them — keep the
+ * promotion table and this function in lockstep.
  */
 export const atlasKindForDtype = (dtype: string, allowHalf = false): AtlasKind => {
   const d = dtype.toLowerCase();

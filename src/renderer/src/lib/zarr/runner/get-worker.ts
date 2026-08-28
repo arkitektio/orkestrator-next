@@ -29,7 +29,7 @@ import {
   createBuffer,
   get_strides,
 } from "./internals/util"
-import type { ChunkCache, CodecChunkMeta, GetWorkerOptions } from "./types"
+import type { ChunkCache, CodecChunkMeta, GetWorkerOptions, TextureFidelity } from "./types"
 import { disposeWorker, getMetaId, workerFetchDecode } from "./worker-rpc"
 import { isWorkerFetchCapableStore, workerFetchConfigFor } from "@/lib/zarr/store/types"
 import { serializeRequestInit } from "./s3-request"
@@ -201,10 +201,16 @@ function createWorkerTask<T>(
   }
 }
 
-function getTextureOutputConstructor(dataType: DataType):
-  | Uint8ArrayConstructor
-  | Float32ArrayConstructor {
-  return dataType === "uint8" ? Uint8Array : Float32Array
+/** Constructor matching `promoteChunkForTexture`'s output for this dtype and
+ * fidelity — fill-value substitute chunks must use the SAME representation as
+ * fetched chunks, or a cache can hold mixed types for one array. */
+function getTextureOutputConstructor(
+  dataType: DataType,
+  textureFidelity: TextureFidelity,
+): Uint8ArrayConstructor | Uint16ArrayConstructor | Float32ArrayConstructor {
+  if (dataType === "uint8") return Uint8Array
+  if (textureFidelity === "raw16" && dataType === "uint16") return Uint16Array
+  return Float32Array
 }
 
 function roundTiming(ms: number): number {
@@ -388,7 +394,16 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
 
   const actualChunkShape = codecMeta.chunk_shape
   const correctedCodecMeta = codecMeta
-  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
+  // 'raw16' and 'default' are the only fidelities a production caller passes;
+  // the per-chunk-normalizing 'low'/'high' would break multi-chunk surfaces
+  // (see TextureFidelity) and are refused here rather than silently honored.
+  const textureFidelity = opts.textureFidelity ?? "default"
+  if (textureFidelity === "low" || textureFidelity === "high") {
+    throw new Error(
+      "getChunkWorker: per-chunk-normalized fidelities ('low'/'high') window each chunk independently and cannot serve multi-chunk consumers",
+    )
+  }
+  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type, textureFidelity)
   const metaId = getMetaId(correctedCodecMeta)
 
   if (!isWorkerFetchCapableStore(arr.store)) {
@@ -455,7 +470,7 @@ export async function getChunkWorker<D extends DataType, Store extends Readable>
         // Explicit defaults for the trailing positionals: this call previously
         // stopped at 7 args, silently dropping the caller's useSharedArrayBuffer
         // (it defaulted to false and the SAB path never engaged).
-        'default',
+        textureFidelity,
         useShared,
       )
 
@@ -594,7 +609,9 @@ export async function getWorker<
   // Update codecMeta to use the actual chunk shape for codec pipeline
   const correctedCodecMeta = codecMeta
 
-  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type)
+  // getWorker always decodes at 'default' fidelity (its consumers assemble
+  // into uint8/float32 outputs); raw16 is a getChunkWorker concern.
+  const OutputCtr = getTextureOutputConstructor(correctedCodecMeta.data_type, "default")
   const outputBytesPerElement = OutputCtr.BYTES_PER_ELEMENT
 
   // Get stable metaId for the codec metadata (used by worker-rpc meta-init)

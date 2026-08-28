@@ -44,6 +44,10 @@ import {
   setAtlasMirrorEnabled,
 } from "../bricks/gpu/brickAtlas";
 import {
+  isLineBatchEnabled as isAnnotationBatchEnabled,
+  setLineBatchEnabled as setAnnotationBatchEnabled,
+} from "../../platform/draw/lineBatchFlag";
+import {
   isVolumeMergeEnabled,
   setVolumeMergeEnabled,
 } from "../bricks/gpu/volumeMergeGroups";
@@ -111,6 +115,7 @@ export const DebugPanel = () => {
   const [adaptiveDprOn, setAdaptiveDprOn] = useState(isAdaptiveDprEnabled);
   const [r16AtlasOn, setR16AtlasOn] = useState(isR16AtlasesEnabled);
   const [raw16On, setRaw16On] = useState(isRaw16ChunksEnabled);
+  const [annotationBatchOn, setAnnotationBatchOn] = useState(isAnnotationBatchEnabled);
   const [rgbaAtlasOn, setRgbaAtlasOn] = useState(isRgbaAtlasesEnabled);
   const [atlasMirrorOn, setAtlasMirrorOn] = useState(isAtlasMirrorEnabled);
   const [occObservedRangeOn, setOccObservedRangeOn] = useState(isOccObservedRangeEnabled);
@@ -188,6 +193,12 @@ export const DebugPanel = () => {
     const next = !raw16On;
     setRaw16ChunksEnabled(next);
     setRaw16On(next);
+  };
+
+  const toggleAnnotationBatch = () => {
+    const next = !annotationBatchOn;
+    setAnnotationBatchEnabled(next);
+    setAnnotationBatchOn(next);
   };
 
   const toggleRgbaAtlas = () => {
@@ -730,6 +741,13 @@ export const DebugPanel = () => {
                 className="px-1 rounded border border-border/50 hover:bg-accent"
               >
                 raw16 chunks: {raw16On ? "on" : "off"}
+              </button>
+              <button
+                onClick={toggleAnnotationBatch}
+                title="Merged annotation outlines: one LineSegments2 per (collection, stroke width) instead of one Line2 + material per shape; selection highlight becomes a color rewrite, picking maps the segment index back to the ROI. Takes effect for collections mounted after the toggle (reopen the scene)."
+                className="px-1 rounded border border-border/50 hover:bg-accent"
+              >
+                annotation batch: {annotationBatchOn ? "on" : "off"}
               </button>
               <button
                 onClick={toggleRgbaAtlas}

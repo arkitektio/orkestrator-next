@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 
@@ -33,15 +33,20 @@ import {
   type AnnotationCollectionRef,
   type AnnotationLayerVariant,
 } from "./annotationBounds";
+import { resolveStyle, type ShapeStyle } from "./annotationStyle";
 import {
-  ACTIVE_STROKE,
-  DEFAULT_STROKE,
-  IMPLIED_FILL_OPACITY,
-  rgbaToStyle,
-} from "./annotationStyle";
+  MIN_CROSS_SECTION_SCALE,
+  buildOutlineBatches,
+  isAnnotationBatchEnabled,
+  roiForSegment,
+  type OutlineBatch,
+} from "./annotationBatch";
+import { LineSegments2 } from "three/examples/jsm/lines/webgpu/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+import { Line2NodeMaterial } from "three/webgpu";
 import { useModeStore } from "../../platform/stores/modeStore";
 import { useRoiDrawingStore } from "./roiDrawingStore";
-import { useRoiSelectionStore } from "./roiSelectionStore";
+import { useRoiSelectionStore, type SelectedRoi } from "./roiSelectionStore";
 import { useSceneStore } from "../../platform/stores/sceneStore";
 import { useViewerStore } from "../../platform/stores/viewerStore";
 import { useViewStoreApi } from "../../platform/stores/viewStore";
@@ -60,34 +65,19 @@ import { useViewStoreApi } from "../../platform/stores/viewStore";
  * and fill live on each Annotation and are read off the query, not the layer.
  */
 
-/** Smallest cross-section drawn for an ellipsoid the plane barely grazes. */
-const MIN_CROSS_SECTION_SCALE = 0.05;
-
-type ShapeStyle = {
-  stroke: string;
-  strokeOpacity: number;
-  strokeWidth: number;
-  fill: string | null;
-  fillOpacity: number;
-};
-
 /**
- * A selected shape is drawn in the selection color regardless of its own — the
- * point of the highlight is that it overrides.
+ * Shared unit geometries, scaled per shape via the mesh transform instead of
+ * per-shape `args`. Module lifetime, never disposed (P13-safe by
+ * construction): with inline `args` every annotation minted its own GPU
+ * geometry, so a thousand-ROI collection held a thousand identical spheres.
  */
-function resolveStyle(annotation: SceneAnnotationFragment, isActive: boolean): ShapeStyle {
-  const stroke = rgbaToStyle(annotation.strokeColor);
-  const fill = rgbaToStyle(annotation.fillColor);
-  const strokeColor = isActive ? ACTIVE_STROKE : (stroke?.color ?? DEFAULT_STROKE);
+const UNIT_SPHERE = new THREE.SphereGeometry(1, 24, 16);
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
+const UNIT_PLANE = new THREE.PlaneGeometry(1, 1);
+const UNIT_CIRCLE_48 = new THREE.CircleGeometry(1, 48);
+const UNIT_CIRCLE_16 = new THREE.CircleGeometry(1, 16);
 
-  return {
-    stroke: strokeColor,
-    strokeOpacity: isActive ? 1 : (stroke?.opacity ?? 1),
-    strokeWidth: annotation.strokeWidth ?? 1.5,
-    fill: annotation.filled ? (fill?.color ?? strokeColor) : null,
-    fillOpacity: fill?.opacity ?? IMPLIED_FILL_OPACITY,
-  };
-}
+
 
 export const AnnotationLayerRenderer = ({ layerId }: { layerId: string }) => {
   const layer = useSceneStore((s) => s.sceneLayers.find((candidate) => candidate.id === layerId));
@@ -299,31 +289,171 @@ const AnnotationCollectionGroup = ({
     };
   }, [clearVisibleLayerRois, layerId, setVisibleLayerRois, visibleRois]);
 
+  // Identity-stable across renders so the memoized shapes below actually
+  // skip: the per-shape closure this replaces re-minted every shape's handler
+  // on every group render, defeating any memo.
+  const onSelectRoi = useCallback(
+    (roi: SelectedRoi, appendSelection: boolean) => {
+      if (appendSelection) {
+        toggleSelectedRoi(roi);
+        return;
+      }
+      selectOnlyRoi(roi);
+    },
+    [selectOnlyRoi, toggleSelectedRoi],
+  );
+
+  const selectable = interactionMode !== "PROBE";
+  const selectedRoiIds = useMemo(
+    () => new Set(selectedRois.map((roi) => roi.id)),
+    [selectedRois],
+  );
+
+  // Points draw as ONE InstancedMesh per opacity value instead of a React
+  // subtree + useFrame per point; everything else stays a memoized shape.
+  const { pointGroups, otherShapes } = useMemo(() => {
+    const points: PointEntry[] = [];
+    const others: typeof shown = [];
+    for (const entry of shown) {
+      const { annotation } = entry;
+      if (
+        annotation.kind === AnnotationKind.Point &&
+        (annotation.vectors?.length ?? 0) >= 1
+      ) {
+        const style = resolveStyle(annotation, selectedRoiIds.has(annotation.id));
+        points.push({
+          id: annotation.id,
+          position: getVectorPoint(annotation.vectors![0], flattenToPlane),
+          color: style.stroke,
+          opacity: style.strokeOpacity * 0.85,
+          roi: entry.roi,
+        });
+      } else {
+        others.push(entry);
+      }
+    }
+    // Opacity is a MATERIAL property, so instances batch per distinct value
+    // (in practice one group — per-shape stroke opacities are rare).
+    const byOpacity = new Map<number, PointEntry[]>();
+    for (const point of points) {
+      const bucket = byOpacity.get(point.opacity);
+      if (bucket) bucket.push(point);
+      else byOpacity.set(point.opacity, [point]);
+    }
+    return { pointGroups: [...byOpacity.entries()], otherShapes: others };
+  }, [shown, selectedRoiIds, flattenToPlane]);
+
+  // Merged outline batches (orkestrator.annotationBatch, read once per
+  // mount): one LineSegments2 per stroke width instead of one Line2 per
+  // shape. The per-shape components then suppress their own <Line>.
+  const batchOutlines = useMemo(isAnnotationBatchEnabled, []);
+  const outlineBatches = useMemo(
+    () =>
+      batchOutlines
+        ? buildOutlineBatches(otherShapes, flattenToPlane, planeZLocal, (id) =>
+            selectedRoiIds.has(id),
+          )
+        : [],
+    [batchOutlines, otherShapes, flattenToPlane, planeZLocal, selectedRoiIds],
+  );
+
   if (shown.length === 0) return null;
-  const selectedRoiIds = new Set(selectedRois.map((roi) => roi.id));
 
   return (
     <group matrix={affineMatrix} matrixAutoUpdate={false}>
-      {shown.map(({ annotation, roi }) => (
+      {pointGroups.map(([opacity, entries]) => (
+        <AnnotationPoints
+          key={opacity}
+          entries={entries}
+          opacity={opacity}
+          selectable={selectable}
+          onSelectRoi={onSelectRoi}
+        />
+      ))}
+      {outlineBatches.map((batch) => (
+        <AnnotationOutlineBatch
+          key={batch.lineWidth}
+          batch={batch}
+          selectable={selectable}
+          onSelectRoi={onSelectRoi}
+        />
+      ))}
+      {otherShapes.map(({ annotation, roi }) => (
         <AnnotationShape
           key={annotation.id}
           annotation={annotation}
+          roi={roi}
           flattenToPlane={flattenToPlane}
           planeZ={planeZLocal}
           isActive={selectedRoiIds.has(annotation.id)}
-          selectable={interactionMode !== "PROBE"}
-          onSelect={(appendSelection) => {
-            if (appendSelection) {
-              toggleSelectedRoi(roi);
-              return;
-            }
-
-            selectOnlyRoi(roi);
-          }}
+          selectable={selectable}
+          suppressOutlines={batchOutlines}
+          onSelectRoi={onSelectRoi}
         />
       ))}
     </group>
   );
+};
+
+/**
+ * One merged fat-line draw for a batch of shape outlines. Picking maps the
+ * raycast's `faceIndex` (the segment's instance index) back to the owning ROI
+ * through the batch's sorted ranges — same handler-attachment gating as the
+ * per-shape path (P20: no handler in PROBE mode, so the whole batch leaves
+ * the raycast set).
+ */
+const AnnotationOutlineBatch = ({
+  batch,
+  selectable,
+  onSelectRoi,
+}: {
+  batch: OutlineBatch<SelectedRoi>;
+  selectable: boolean;
+  onSelectRoi: (roi: SelectedRoi, appendSelection: boolean) => void;
+}) => {
+  const geometry = useMemo(() => new LineSegmentsGeometry(), []);
+  const material = useMemo(() => {
+    const created = new Line2NodeMaterial();
+    // Per-SEGMENT colors (instanceColorStart/End) carry each shape's stroke —
+    // and the selection highlight, which is a color-range rewrite, not a
+    // geometry rebuild.
+    created.vertexColors = true;
+    return created;
+  }, []);
+  const line = useMemo(() => new LineSegments2(geometry, material), [geometry, material]);
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material],
+  );
+
+  // Layout effect for the same reason as `Line`: the WGSL vertex layout is
+  // derived from the geometry's attributes, so positions must exist before
+  // the first frame draws.
+  useLayoutEffect(() => {
+    geometry.setPositions(batch.positions);
+    geometry.setColors(batch.colors);
+    line.computeLineDistances();
+  }, [batch, geometry, line]);
+
+  useEffect(() => {
+    material.linewidth = batch.lineWidth;
+    material.needsUpdate = true;
+  }, [material, batch.lineWidth]);
+
+  const handleClick = selectable
+    ? (event: ThreeEvent<MouseEvent>) => {
+        const roi = roiForSegment(batch.ranges, event.faceIndex);
+        if (!roi) return;
+        event.stopPropagation();
+        onSelectRoi(roi, event.nativeEvent.shiftKey);
+      }
+    : undefined;
+
+  return <primitive object={line} onClick={handleClick} />;
 };
 
 /**
@@ -438,65 +568,113 @@ const AnnotationSurface = ({
 };
 
 /**
- * A point annotation, held at a constant size on screen.
+ * Point annotations, held at a constant size on screen.
  *
- * It used to be a disc of 1.5 COLLECTION units, which on a 512 µm field is
- * sub-pixel as soon as you zoom out — invisible, and far too small to click. The
- * scaling is imperative in `useFrame` off the camera rather than through a
+ * A point used to be a disc of 1.5 COLLECTION units, which on a 512 µm field
+ * is sub-pixel as soon as you zoom out — invisible, and far too small to
+ * click. All of a collection's points now draw as ONE `InstancedMesh` (per
+ * opacity value): the previous per-point component ran a `useFrame` closure
+ * per point per frame and held its own geometry + material. The screen-size
+ * scaling stays imperative off the camera rather than through a
  * `worldUnitsPerPixel` subscription, the same reason `VertexHandles` does it
- * that way: the store field is throttled, and subscribing would re-render every
- * annotation in the scene on every camera move (P17).
+ * that way: the store field is throttled, and subscribing would re-render
+ * every annotation in the scene on every camera move (P17). The scale is
+ * written into the instance MATRICES (not a shader uniform) so the raycast —
+ * which reads the CPU-side matrices — picks exactly what is drawn.
  */
 const POINT_RADIUS_PX = 5;
 
-const AnnotationPoint = ({
-  position,
-  color,
-  opacity,
-  onSelect,
-}: {
+type PointEntry = {
+  id: string;
   position: [number, number, number];
   color: string;
   opacity: number;
-  /** Undefined in PROBE mode — see `AnnotationShape`'s `handleSelect`. */
-  onSelect?: (event: ThreeEvent<MouseEvent>) => void;
+  roi: SelectedRoi;
+};
+
+const POINT_SCRATCH_MATRIX = new THREE.Matrix4();
+const POINT_SCRATCH_COLOR = new THREE.Color();
+
+const AnnotationPoints = ({
+  entries,
+  opacity,
+  selectable,
+  onSelectRoi,
+}: {
+  entries: PointEntry[];
+  opacity: number;
+  selectable: boolean;
+  onSelectRoi: (roi: SelectedRoi, appendSelection: boolean) => void;
 }) => {
-  const group = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  /** Last written screen-size scale; 0 until the first frame (nothing draws
+   * at the wrong size before the first `useFrame`, like the old `scale={0}`). */
+  const scaleRef = useRef(0);
+
+  // Grow-only capacity so entry-count churn (z-scrub filtering) doesn't
+  // reconstruct the InstancedMesh every step; `count` trims the draw.
+  const capacity = useMemo(
+    () => Math.max(16, 2 ** Math.ceil(Math.log2(Math.max(1, entries.length)))),
+    [entries.length],
+  );
+
+  const writeMatrices = (mesh: THREE.InstancedMesh, scale: number) => {
+    for (let i = 0; i < entries.length; i++) {
+      const [x, y, z] = entries[i].position;
+      POINT_SCRATCH_MATRIX.makeScale(scale, scale, scale).setPosition(x, y, z);
+      mesh.setMatrixAt(i, POINT_SCRATCH_MATRIX);
+    }
+    mesh.count = entries.length;
+    mesh.instanceMatrix.needsUpdate = true;
+  };
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    writeMatrices(mesh, scaleRef.current);
+    for (let i = 0; i < entries.length; i++) {
+      mesh.setColorAt(i, POINT_SCRATCH_COLOR.set(entries[i].color));
+    }
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, capacity]);
 
   useFrame(({ camera, size }) => {
-    if (!group.current) return;
-    group.current.scale.setScalar(
-      computeWorldUnitsPerPixel(camera, size.height) * POINT_RADIUS_PX,
-    );
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const scale = computeWorldUnitsPerPixel(camera, size.height) * POINT_RADIUS_PX;
+    // One epsilon-gated batch rewrite instead of N per-frame closures: the
+    // scale is shared by every point (it depends only on the camera), so
+    // most frames skip entirely.
+    if (Math.abs(scale - scaleRef.current) <= scaleRef.current * 0.002) return;
+    scaleRef.current = scale;
+    writeMatrices(mesh, scale);
   });
 
+  const handleClick = selectable
+    ? (event: ThreeEvent<MouseEvent>) => {
+        const entry = event.instanceId !== undefined ? entries[event.instanceId] : undefined;
+        if (!entry) return;
+        event.stopPropagation();
+        onSelectRoi(entry.roi, event.nativeEvent.shiftKey);
+      }
+    : undefined;
+
   return (
-    // `scale={0}` at mount so nothing draws at the wrong size for a frame; the
-    // first useFrame sets the real radius before the first paint.
-    <group ref={group} position={position} scale={0}>
-      <mesh onClick={onSelect}>
-        <circleGeometry args={[1, 16]} />
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={opacity}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-    </group>
+    <instancedMesh
+      key={capacity}
+      ref={meshRef}
+      args={[UNIT_CIRCLE_16, undefined, capacity]}
+      onClick={handleClick}
+    >
+      <meshBasicMaterial transparent opacity={opacity} side={THREE.DoubleSide} />
+    </instancedMesh>
   );
 };
 
-/** One shape, in the collection's space (the parent group applies the affine). */
-const AnnotationShape = ({
-  annotation,
-  flattenToPlane,
-  planeZ,
-  isActive,
-  selectable,
-  onSelect,
-}: {
+type AnnotationShapeProps = {
   annotation: SceneAnnotationFragment | SceneSurfaceFragment;
+  roi: SelectedRoi;
   flattenToPlane: boolean;
   /**
    * The slice the flat view is drawing, in the COLLECTION's space — what a
@@ -507,8 +685,46 @@ const AnnotationShape = ({
   isActive: boolean;
   /** False in PROBE mode, so a shape can't swallow the click meant for a probe. */
   selectable: boolean;
-  onSelect: (appendSelection: boolean) => void;
-}) => {
+  /** True when the collection's merged outline batch draws the fat lines —
+   * the shape then renders only its interiors/wireframes (see
+   * `annotationBatch.ts`, whose `outlinePoints` mirrors these branches). */
+  suppressOutlines: boolean;
+  onSelectRoi: (roi: SelectedRoi, appendSelection: boolean) => void;
+};
+
+/**
+ * Only the ellipse/sphere branch reads `planeZ` (the cross-section it draws);
+ * every other kind renders identically for any plane, so the memo below can
+ * ignore z-scrub ticks for them — a scrub then re-renders ONLY the sectioned
+ * shapes instead of the whole collection.
+ */
+const shapeReadsPlaneZ = (annotation: SceneAnnotationFragment): boolean =>
+  annotation.kind === AnnotationKind.Ellipse || annotation.kind === AnnotationKind.Sphere;
+
+const shapePropsEqual = (
+  prev: AnnotationShapeProps,
+  next: AnnotationShapeProps,
+): boolean =>
+  prev.annotation === next.annotation &&
+  prev.roi === next.roi &&
+  prev.flattenToPlane === next.flattenToPlane &&
+  prev.isActive === next.isActive &&
+  prev.selectable === next.selectable &&
+  prev.suppressOutlines === next.suppressOutlines &&
+  prev.onSelectRoi === next.onSelectRoi &&
+  (prev.planeZ === next.planeZ || !shapeReadsPlaneZ(next.annotation));
+
+/** One shape, in the collection's space (the parent group applies the affine). */
+const AnnotationShape = memo(function AnnotationShape({
+  annotation,
+  roi,
+  flattenToPlane,
+  planeZ,
+  isActive,
+  selectable,
+  suppressOutlines,
+  onSelectRoi,
+}: AnnotationShapeProps) {
   const vectors = annotation.vectors; // Array of [x, y, z]
   if (!vectors || vectors.length === 0) return null;
 
@@ -526,22 +742,13 @@ const AnnotationShape = ({
   const handleSelect = selectable
     ? (event: ThreeEvent<MouseEvent>) => {
         event.stopPropagation();
-        onSelect(event.nativeEvent.shiftKey);
+        onSelectRoi(roi, event.nativeEvent.shiftKey);
       }
     : undefined;
 
-  if (annotation.kind === AnnotationKind.Point && vectors.length >= 1) {
-    return (
-      <AnnotationPoint
-        position={getVectorPoint(vectors[0], flattenToPlane)}
-        color={style.stroke}
-        opacity={style.strokeOpacity * 0.85}
-        onSelect={handleSelect}
-      />
-    );
-  }
-
   if (annotation.kind === AnnotationKind.Line && vectors.length >= 2) {
+    // The batch draws the stroke AND owns the pick (segment → roi mapping).
+    if (suppressOutlines) return null;
     return (
       <Line
         points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
@@ -574,8 +781,11 @@ const AnnotationShape = ({
       return (
         <group onClick={handleSelect}>
           {style.fill && (
-            <mesh position={[centerX, centerY, centerZ]}>
-              <boxGeometry args={[width, height, depth]} />
+            <mesh
+              position={[centerX, centerY, centerZ]}
+              scale={[width, height, depth]}
+              geometry={UNIT_BOX}
+            >
               <meshBasicMaterial
                 color={style.fill}
                 transparent
@@ -584,8 +794,11 @@ const AnnotationShape = ({
               />
             </mesh>
           )}
-          <mesh position={[centerX, centerY, centerZ]}>
-            <boxGeometry args={[width, height, depth]} />
+          <mesh
+            position={[centerX, centerY, centerZ]}
+            scale={[width, height, depth]}
+            geometry={UNIT_BOX}
+          >
             <meshBasicMaterial
               color={style.stroke}
               wireframe
@@ -601,21 +814,26 @@ const AnnotationShape = ({
       <group onClick={handleSelect}>
         {/* Always present, invisible when unfilled: the interior is what makes
             a rectangle clickable anywhere rather than only on its edge. */}
-        <mesh position={[(x0 + x1) / 2, (y0 + y1) / 2, z0]}>
-          <planeGeometry args={[width, height]} />
+        <mesh
+          position={[(x0 + x1) / 2, (y0 + y1) / 2, z0]}
+          scale={[width, height, 1]}
+          geometry={UNIT_PLANE}
+        >
           <InteriorMaterial style={style} />
         </mesh>
-        <Line
-          points={[
-            [x0, y0, z0],
-            [x1, y0, z0],
-            [x1, y1, z0],
-            [x0, y1, z0],
-            [x0, y0, z0],
-          ]}
-          color={style.stroke}
-          lineWidth={style.strokeWidth}
-        />
+        {!suppressOutlines && (
+          <Line
+            points={[
+              [x0, y0, z0],
+              [x1, y0, z0],
+              [x1, y1, z0],
+              [x0, y1, z0],
+              [x0, y0, z0],
+            ]}
+            color={style.stroke}
+            lineWidth={style.strokeWidth}
+          />
+        )}
       </group>
     );
   }
@@ -641,8 +859,7 @@ const AnnotationShape = ({
       return (
         <group onClick={handleSelect}>
           {style.fill && (
-            <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]}>
-              <sphereGeometry args={[1, 24, 16]} />
+            <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]} geometry={UNIT_SPHERE}>
               <meshBasicMaterial
                 color={style.fill}
                 transparent
@@ -651,8 +868,7 @@ const AnnotationShape = ({
               />
             </mesh>
           )}
-          <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]}>
-            <sphereGeometry args={[1, 24, 16]} />
+          <mesh position={[cx, cy, cz]} scale={[rx, ry, rz]} geometry={UNIT_SPHERE}>
             <meshBasicMaterial
               color={style.stroke}
               wireframe
@@ -689,11 +905,16 @@ const AnnotationShape = ({
         {/* Scaled to the SECTIONED radii, so what can be clicked is what is
             drawn — a sphere cut near its pole is a small target, not its
             equator's worth. */}
-        <mesh position={[cx, cy, z0]} scale={[rx * section, ry * section, 1]}>
-          <circleGeometry args={[1, 48]} />
+        <mesh
+          position={[cx, cy, z0]}
+          scale={[rx * section, ry * section, 1]}
+          geometry={UNIT_CIRCLE_48}
+        >
           <InteriorMaterial style={style} />
         </mesh>
-        <Line points={points} color={style.stroke} lineWidth={style.strokeWidth} />
+        {!suppressOutlines && (
+          <Line points={points} color={style.stroke} lineWidth={style.strokeWidth} />
+        )}
       </group>
     );
   }
@@ -723,16 +944,23 @@ const AnnotationShape = ({
     const interior = isPolygon ? [...pts] : null;
     if (isPolygon) pts.push(pts[0]); // close polygon
 
+    // A batched path has nothing left to draw here; a polygon keeps its
+    // pickable interior.
+    if (suppressOutlines && !interior) return null;
+
     return (
       <group onClick={handleSelect}>
         {interior && <PolygonInterior points={interior} style={style} />}
-        <Line points={pts} color={style.stroke} lineWidth={style.strokeWidth} />
+        {!suppressOutlines && (
+          <Line points={pts} color={style.stroke} lineWidth={style.strokeWidth} />
+        )}
       </group>
     );
   }
 
   // Fallback: render any shape as a polyline
   if (vectors.length >= 2) {
+    if (suppressOutlines) return null;
     return (
       <Line
         points={vectors.map((vector) => getVectorPoint(vector, flattenToPlane))}
@@ -744,4 +972,4 @@ const AnnotationShape = ({
   }
 
   return null;
-};
+}, shapePropsEqual);

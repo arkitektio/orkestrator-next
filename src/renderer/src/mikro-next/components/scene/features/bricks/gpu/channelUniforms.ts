@@ -136,6 +136,60 @@ const resolveValueRange = (
   return max > min ? [min, max] : [min, min + 1e-6];
 };
 
+/**
+ * The scalar WINDOW of one source — the fields a contrast drag moves. ONE
+ * implementation shared by the full rebuild below and the allocation-free
+ * fast path (`buildChannelWindows` / `buildMergedChannelWindows`), so the
+ * two cannot drift; `buildChannelWindowSignature` keys on exactly these.
+ */
+export function sourceScalarWindow(
+  source: { type: string; transfer: any },
+  minValue: number,
+  maxValue: number,
+): { climMin: number; climMax: number; gamma: number; opacity: number } {
+  // The transfer applied to the source's INTENSITY tap: a channel's own, or a
+  // phasor node's `intensity` transfer over its mean photon count. With a
+  // transfer CURVE the window becomes the curve's domain and gamma collapses
+  // to 1 — the curve itself is baked into the LUT row's x axis.
+  const transfer = source.type === "phasor" ? source.transfer.intensity : source.transfer;
+  const scalar = effectiveScalarTransfer(transfer);
+  return {
+    climMin: climToUnit(scalar.climMin, minValue, maxValue, 0),
+    climMax: climToUnit(scalar.climMax, minValue, maxValue, 1),
+    gamma: scalar.gamma,
+    opacity: transfer.opacity ?? 1,
+  };
+}
+
+/** The per-slot window scalars of ONE layer, in slot order — the fast-path
+ * counterpart of `buildChannelUniformData` for window-only edits. */
+export type ChannelWindowData = {
+  climMin: number[];
+  climMax: number[];
+  gamma: number[];
+  opacity: number[];
+};
+
+export function buildChannelWindows(
+  layer: LayerState | undefined,
+  minValue: number,
+  maxValue: number,
+): ChannelWindowData {
+  const sources = (layer?.sources ?? layer?.channels ?? []).slice(0, MAX_CHANNELS);
+  const climMin = new Array<number>(MAX_CHANNELS).fill(0);
+  const climMax = new Array<number>(MAX_CHANNELS).fill(1);
+  const gamma = new Array<number>(MAX_CHANNELS).fill(1);
+  const opacity = new Array<number>(MAX_CHANNELS).fill(1);
+  sources.forEach((source, i) => {
+    const window = sourceScalarWindow(source, minValue, maxValue);
+    climMin[i] = window.climMin;
+    climMax[i] = window.climMax;
+    gamma[i] = window.gamma;
+    opacity[i] = window.opacity;
+  });
+  return { climMin, climMax, gamma, opacity };
+}
+
 export function buildChannelUniformData(
   layer: LayerState | undefined,
   maxChannelIndex: number,
@@ -188,17 +242,13 @@ export function buildChannelUniformData(
 
   const rows = Math.max(1, numChannels);
   sources.forEach((source, i) => {
-    // The transfer applied to the source's INTENSITY tap: a channel's own, or a
-    // phasor node's `intensity` transfer over its mean photon count. With a
-    // transfer CURVE the window becomes the curve's domain and gamma collapses
-    // to 1 — the curve itself is baked into the LUT row's x axis.
     const transfer = source.type === "phasor" ? source.transfer.intensity : source.transfer;
-    const scalar = effectiveScalarTransfer(transfer);
+    const window = sourceScalarWindow(source, minValue, maxValue);
 
-    climMin[i] = climToUnit(scalar.climMin, minValue, maxValue, 0);
-    climMax[i] = climToUnit(scalar.climMax, minValue, maxValue, 1);
-    gamma[i] = scalar.gamma;
-    opacity[i] = transfer.opacity ?? 1;
+    climMin[i] = window.climMin;
+    climMax[i] = window.climMax;
+    gamma[i] = window.gamma;
+    opacity[i] = window.opacity;
     visible[i] = source.visible ? 1 : 0;
     invert[i] = transfer.invert ? 1 : 0;
     row[i] = (i + 0.5) / rows;

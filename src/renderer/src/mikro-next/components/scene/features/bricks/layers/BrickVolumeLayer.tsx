@@ -38,17 +38,25 @@ import { useViewerStore } from "../../../platform/stores/viewerStore";
 import {
   createVolumeNodeMaterial,
   updateChannelNodes,
+  updateChannelWindows,
   updateMergedMemberNodes,
   updateCinematicNodes,
 } from "../gpu/brickNodeMaterials";
-import { buildChannelDataSignature } from "../gpu/channelDataSignature";
+import {
+  buildChannelDataSignature,
+  buildChannelWindowSignature,
+} from "../gpu/channelDataSignature";
 import { buildMergeMembers } from "../gpu/mergeMembers";
 import {
   useStepScaleUniform,
   useVolumePassRegistration,
   useVolumeRayUniforms,
 } from "./useVolumeRayUniforms";
-import { buildMergedChannelUniformData, fixedMemberUniforms } from "../gpu/mergedChannelUniforms";
+import {
+  buildMergedChannelUniformData,
+  buildMergedChannelWindows,
+  fixedMemberUniforms,
+} from "../gpu/mergedChannelUniforms";
 import {
   findMergeGroup,
   isVolumeMergeEnabled,
@@ -484,6 +492,49 @@ export const BrickVolumeLayer = ({ layerId }: { layerId: string }) => {
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, planTargetLevel, layer?.projection, isoThreshold, invalidate]);
+
+  // WINDOW fast path: a clim/gamma/opacity drag moves only the window
+  // signature (buildChannelWindowSignature), which the structure-keyed
+  // `channelData` memo deliberately ignores — so the full rebuild above
+  // (colormap atlas + two DataTextures per member per tick) never runs for a
+  // drag. This effect writes the fresh scalars straight into the existing
+  // uniform nodes instead. Runs redundantly after a structural rebuild (both
+  // keys move) — a harmless double write of identical values.
+  const channelWindowKey = useMemo(
+    () =>
+      isPrimary
+        ? groupMemberIds
+            .map((id) => buildChannelWindowSignature(layers.find((l) => l.id === id)))
+            .join("|")
+        : "",
+    [isPrimary, groupMemberIds, layers],
+  );
+  useEffect(() => {
+    if (!bundle || !channelData) return;
+    const windows = buildMergedChannelWindows(
+      groupMemberIds.map((id, index) => ({
+        layerId: id,
+        layer: layers.find((l) => l.id === id),
+        slotOffset: index,
+      })),
+      channelData.members,
+      pool?.minValue ?? 0,
+      pool?.maxValue ?? 1,
+    );
+    updateChannelWindows(bundle.nodes, windows, channelData.members);
+    // Same contract as every uniform write: the compositor cache key must
+    // move or the cached composite serves the stale window (R1).
+    viewerStoreApi.getState().volumeInputs.bump("channel-window");
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    bundle,
+    channelData,
+    channelWindowKey,
+    pool?.minValue,
+    pool?.maxValue,
+    invalidate,
+  ]);
 
   // Range-decode uniforms, tracked on every poolsVersion bump: the pool's
   // ranges MOVE at runtime (float auto-contrast; occupancy observed-range

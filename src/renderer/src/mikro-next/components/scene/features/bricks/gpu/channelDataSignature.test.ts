@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { LayerState } from "../../../platform/model/layerModel";
-import { buildChannelDataSignature } from "./channelDataSignature";
+import {
+  buildChannelDataSignature,
+  buildChannelWindowSignature,
+} from "./channelDataSignature";
 
 const layer = (over: Record<string, unknown> = {}): LayerState =>
   ({
@@ -29,21 +32,23 @@ describe("buildChannelDataSignature", () => {
     expect(buildChannelDataSignature(layer())).toBe(buildChannelDataSignature(layer()));
   });
 
-  it("changes when a transfer field changes (clim drag reaches the GPU)", () => {
-    const a = buildChannelDataSignature(layer());
-    const b = buildChannelDataSignature(
-      layer({
-        sources: [
-          {
-            type: "channel",
-            visible: true,
-            intensityIndex: 0,
-            transfer: { colormap: "VIRIDIS", climMin: 10, climMax: 255, gamma: 1 },
-          },
-        ],
-      }),
-    );
-    expect(a).not.toBe(b);
+  it("a clim drag moves the WINDOW signature and leaves the structure one alone", () => {
+    // The split is the whole point: the structure signature keys the full
+    // rebuild (colormap atlas + DataTextures), the window signature keys the
+    // allocation-free scalar fast path — so a drag must move only the latter,
+    // and it is how the drag still reaches the GPU.
+    const dragged = layer({
+      sources: [
+        {
+          type: "channel",
+          visible: true,
+          intensityIndex: 0,
+          transfer: { colormap: "VIRIDIS", climMin: 10, climMax: 255, gamma: 1 },
+        },
+      ],
+    });
+    expect(buildChannelDataSignature(dragged)).toBe(buildChannelDataSignature(layer()));
+    expect(buildChannelWindowSignature(dragged)).not.toBe(buildChannelWindowSignature(layer()));
   });
 
   it("changes on blend / projection / colormap / phasor-lens edits", () => {

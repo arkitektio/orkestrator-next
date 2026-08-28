@@ -7,7 +7,9 @@ import { MAX_CHANNELS, MAX_CURSORS } from "./channelLimits";
 import {
   buildChannelUniformData,
   blendModeToInt,
+  sourceScalarWindow,
   type ChannelUniformData,
+  type ChannelWindowData,
 } from "./channelUniforms";
 
 /**
@@ -156,6 +158,47 @@ const dataTexture = (width: number, height: number): THREE.DataTexture => {
 const SOURCE_PARAM_TEXELS = 3;
 /** Texels per row of the cursor texture: 2 header + packed point pairs. */
 const CURSOR_TEXELS = 2 + 24 / 2;
+
+/**
+ * The merged per-slot WINDOW scalars — the allocation-free counterpart of
+ * `buildMergedChannelUniformData` for window-only edits (a clim/gamma drag).
+ * Slot layout comes from the LAST BUILT merged data's `members` (valid while
+ * the structure signature is unchanged — the layout is structural), and the
+ * per-source math is `sourceScalarWindow`, the exact code the full rebuild
+ * runs. `updateChannelWindows` (brickNodeMaterials) writes the result into
+ * the existing uniform nodes.
+ */
+export function buildMergedChannelWindows(
+  members: readonly MergedMemberInput[],
+  memberSlots: readonly Pick<MergedMemberUniforms, "slotFirst" | "slotCount">[],
+  minValue: number,
+  maxValue: number,
+): ChannelWindowData {
+  const climMin = new Array<number>(MAX_CHANNELS).fill(0);
+  const climMax = new Array<number>(MAX_CHANNELS).fill(1);
+  const gamma = new Array<number>(MAX_CHANNELS).fill(1);
+  const opacity = new Array<number>(MAX_CHANNELS).fill(1);
+
+  members.forEach((input, m) => {
+    const slots = memberSlots[m];
+    if (!slots) return;
+    const sources = (input.layer?.sources ?? input.layer?.channels ?? []).slice(
+      0,
+      slots.slotCount,
+    );
+    sources.forEach((source, i) => {
+      const to = slots.slotFirst + i;
+      if (to >= MAX_CHANNELS) return;
+      const window = sourceScalarWindow(source, minValue, maxValue);
+      climMin[to] = window.climMin;
+      climMax[to] = window.climMax;
+      gamma[to] = window.gamma;
+      opacity[to] = window.opacity;
+    });
+  });
+
+  return { climMin, climMax, gamma, opacity };
+}
 
 export function buildMergedChannelUniformData(
   members: readonly MergedMemberInput[],

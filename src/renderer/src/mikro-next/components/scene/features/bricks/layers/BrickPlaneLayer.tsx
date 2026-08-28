@@ -2,8 +2,16 @@ import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
-import { createPlaneNodeMaterial, updateChannelNodes } from "../gpu/brickNodeMaterials";
-import { buildChannelUniformData } from "../gpu/channelUniforms";
+import {
+  createPlaneNodeMaterial,
+  updateChannelNodes,
+  updateChannelWindows,
+} from "../gpu/brickNodeMaterials";
+import { buildChannelUniformData, buildChannelWindows } from "../gpu/channelUniforms";
+import {
+  buildChannelDataSignature,
+  buildChannelWindowSignature,
+} from "../gpu/channelDataSignature";
 import {
   createIntensityPlaneMaterial,
   createRgbPlaneMaterial,
@@ -84,6 +92,12 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     fastPathEnabled && (kind === "intensity" || kind === "rgb") ? kind : "graph";
 
   // --- Channel derivation (ChunkPlane parity) -------------------------------
+  // STRUCTURE-keyed (see channelDataSignature.ts): a clim/gamma drag moves
+  // only the window signature, so this rebuild — a colormap atlas plus two
+  // DataTextures per run — no longer fires per drag tick; the window effect
+  // below writes the fresh scalars into the existing nodes instead.
+  const channelStructureKey = useMemo(() => buildChannelDataSignature(layer), [layer]);
+  const channelWindowKey = useMemo(() => buildChannelWindowSignature(layer), [layer]);
   const channelData = useMemo(
     () =>
       buildChannelUniformData(
@@ -95,12 +109,7 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      layer?.channels,
-      layer?.phasors,
-      layer?.sources,
-      layer?.blend,
-      layer?.colormap,
-      layer?.color,
+      channelStructureKey,
       pool?.geometry,
       pool?.spec.channelCount,
       pool?.minValue,
@@ -272,6 +281,21 @@ export const BrickPlaneLayer = ({ layerId }: { layerId: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle, channelData, intensityData, rgbData, planTargetLevel, slabBaseZ, isDebug]);
+
+  // WINDOW fast path (graph variant): a clim/gamma/opacity drag moved only
+  // the window signature, so the structure-keyed rebuild above stayed put —
+  // write the fresh scalars into the existing uniform nodes instead. The
+  // intensity/rgb variants rebuild their slim scalar data per edit anyway
+  // (no textures), so they need no counterpart. Runs redundantly after a
+  // structural rebuild — a harmless double write of identical values.
+  useEffect(() => {
+    if (!bundle || bundle.variant !== "graph") return;
+    updateChannelWindows(
+      bundle.nodes,
+      buildChannelWindows(layer, pool?.minValue ?? 0, pool?.maxValue ?? 1),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle, channelWindowKey, pool?.minValue, pool?.maxValue]);
 
   // The traversal contract, shared with the other plane material.
   usePlaneTraversalUniforms(bundle?.nodes, {

@@ -91,6 +91,7 @@ import {
   CURSOR_KIND_POLYGON,
   MAX_CURSOR_POINTS,
   type ChannelUniformData,
+  type ChannelWindowData,
 } from "./channelUniforms";
 import { fixedMemberUniforms, type FixedMemberUniforms } from "./mergedChannelUniforms";
 
@@ -324,6 +325,44 @@ function copyChannelArrays(
       data.invert[i] ?? 0,
       data.row[i] ?? 0,
     );
+  }
+}
+
+/**
+ * Window-only fast path: write fresh clim/gamma/opacity scalars into the
+ * existing uniform nodes — no colormap-atlas rebuild, no DataTexture
+ * allocations, no `channelData` memo run. The layer calls this when ONLY the
+ * window signature moved (`buildChannelWindowSignature`); anything structural
+ * still goes through the full `updateChannelNodes` above. Lane layout mirrors
+ * `copyChannelArrays`: chParamsA = (slab, climMin, climMax, gamma), chParamsB
+ * = (opacity, visible, invert, row). `memberSlots` (the last built merged
+ * layout — structural, so still valid) routes the same scalars into the
+ * fixed-shape members' plain uniforms, which are all a SLIM material has.
+ */
+export function updateChannelWindows(
+  nodes: ChannelNodesPublic & { members?: VolumeMaterialNodes["members"] },
+  windows: ChannelWindowData,
+  memberSlots?: readonly { slotFirst: number; slotCount: number }[],
+): void {
+  if (nodes.chParamsA && nodes.chParamsB) {
+    for (let i = 0; i < MAX_CHANNELS; i++) {
+      const a = nodes.chParamsA.array[i];
+      a.y = windows.climMin[i] ?? 0;
+      a.z = windows.climMax[i] ?? 1;
+      a.w = windows.gamma[i] ?? 1;
+      nodes.chParamsB.array[i].x = windows.opacity[i] ?? 1;
+    }
+  }
+  const members = nodes.members;
+  if (members && memberSlots) {
+    for (let m = 0; m < members.length; m++) {
+      const fixed = members[m].fixed;
+      const slots = memberSlots[m];
+      if (!fixed || !slots) continue;
+      fixed.uClimMin.value = windows.climMin[slots.slotFirst] ?? 0;
+      fixed.uClimMax.value = windows.climMax[slots.slotFirst] ?? 1;
+      fixed.uGamma.value = windows.gamma[slots.slotFirst] ?? 1;
+    }
   }
 }
 

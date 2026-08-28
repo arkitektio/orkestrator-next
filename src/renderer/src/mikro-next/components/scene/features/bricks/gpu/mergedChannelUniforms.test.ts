@@ -4,7 +4,15 @@ import { Blending, ColorMap, ProjectionMode } from "@/mikro-next/api/graphql";
 import type { LayerState } from "../../../platform/model/layerModel";
 import type { ChannelRenderNode } from "../../../platform/model/renderGraph";
 import { buildChannelUniformData, MAX_CHANNELS } from "./channelUniforms";
-import { buildMergedChannelUniformData, fixedMemberUniforms } from "./mergedChannelUniforms";
+import {
+  buildMergedChannelUniformData,
+  buildMergedChannelWindows,
+  fixedMemberUniforms,
+} from "./mergedChannelUniforms";
+import {
+  buildChannelDataSignature,
+  buildChannelWindowSignature,
+} from "./channelDataSignature";
 
 const channel = (over: Partial<ChannelRenderNode> = {}): ChannelRenderNode => ({
   type: "channel",
@@ -333,5 +341,76 @@ describe("buildMergedChannelUniformData — overflow", () => {
     ]);
     expect(merged.members[1]).toMatchObject({ slotCount: 0 });
     expect(merged.numChannels).toBe(MAX_CHANNELS);
+  });
+});
+
+describe("window fast path ≡ full rebuild (updateChannelWindows contract)", () => {
+  const windowEdit = (transfer: ChannelRenderNode["transfer"]) =>
+    ({ ...transfer, climMin: 10, climMax: 200, gamma: 2, opacity: 0.5 }) as ChannelRenderNode["transfer"];
+
+  it("buildMergedChannelWindows reproduces the rebuilt scalar arrays after a window edit", () => {
+    const a = layer([channel({ intensityIndex: 1 })]);
+    const b = layer([channel({ intensityIndex: 2 }), channel({ intensityIndex: 0 })]);
+    const members = [
+      { layerId: "a", layer: a, slotOffset: 0 },
+      { layerId: "b", layer: b, slotOffset: 1 },
+    ];
+    const before = build(members);
+
+    // Drag clim/gamma/opacity on every channel of member b; a is untouched.
+    const editedB = layer([
+      channel({ intensityIndex: 2, transfer: windowEdit((b.sources![0] as ChannelRenderNode).transfer) }),
+      channel({ intensityIndex: 0, transfer: windowEdit((b.sources![1] as ChannelRenderNode).transfer) }),
+    ]);
+    const editedMembers = [
+      { layerId: "a", layer: a, slotOffset: 0 },
+      { layerId: "b", layer: editedB, slotOffset: 1 },
+    ];
+
+    // The fast path (slot layout from the LAST BUILT data) must equal the
+    // full rebuild's scalar arrays — this is what makes drift structurally
+    // impossible: both run sourceScalarWindow.
+    const after = build(editedMembers);
+    const windows = buildMergedChannelWindows(editedMembers, before.members, 0, 255);
+    expect(windows.climMin).toEqual(after.climMin);
+    expect(windows.climMax).toEqual(after.climMax);
+    expect(windows.gamma).toEqual(after.gamma);
+    expect(windows.opacity).toEqual(after.opacity);
+    // And the layout it relied on did not move.
+    expect(after.members.map((m) => [m.slotFirst, m.slotCount])).toEqual(
+      before.members.map((m) => [m.slotFirst, m.slotCount]),
+    );
+  });
+
+  it("a window edit moves ONLY the window signature; a colormap edit ONLY the structure one", () => {
+    const base = layer([channel()]);
+    const windowEdited = layer([channel({ transfer: windowEdit((base.sources![0] as ChannelRenderNode).transfer) })]);
+    const colormapEdited = layer([
+      channel({
+        transfer: {
+          ...(base.sources![0] as ChannelRenderNode).transfer,
+          colormap: ColorMap.Inferno,
+        } as ChannelRenderNode["transfer"],
+      }),
+    ]);
+
+    expect(buildChannelDataSignature(windowEdited)).toBe(buildChannelDataSignature(base));
+    expect(buildChannelWindowSignature(windowEdited)).not.toBe(buildChannelWindowSignature(base));
+
+    expect(buildChannelDataSignature(colormapEdited)).not.toBe(buildChannelDataSignature(base));
+    expect(buildChannelWindowSignature(colormapEdited)).toBe(buildChannelWindowSignature(base));
+  });
+
+  it("an invert or curve edit is STRUCTURAL (it can demote renderKind / rebake the LUT)", () => {
+    const base = layer([channel()]);
+    const inverted = layer([
+      channel({
+        transfer: {
+          ...(base.sources![0] as ChannelRenderNode).transfer,
+          invert: true,
+        } as ChannelRenderNode["transfer"],
+      }),
+    ]);
+    expect(buildChannelDataSignature(inverted)).not.toBe(buildChannelDataSignature(base));
   });
 });

@@ -1680,6 +1680,11 @@ export class BrickResidencyManager {
       }
     }
 
+    // --- Pass 4: dispatch globally ----------------------------------------
+    // One scene-wide k-way merge over every pool's sorted queue, so the
+    // in-flight set holds the best-ranked bricks ACROSS pools (R6a).
+    this.startNextFetchesGlobal();
+
     // Time-to-sharp: start the wall clock when a reconcile enqueues work
     // while the pipeline is idle (drainUploads stops it on the drained edge).
     if (this.streamStartedAt === null && this.anyPipelineWork()) {
@@ -1773,10 +1778,10 @@ export class BrickResidencyManager {
     // by distance to the view focus with coarse-first ties, margin prefetch
     // last. Only the tier profile's maxInflightBricks run concurrently; the
     // rest wait in pendingFetch.
-    // Reversed: startNextFetches pops from the tail.
+    // Reversed: the global dispatch (peekLiveFetch) pops from the tail.
     // Deduped by key across members — two layers planning the same brick must
     // enqueue one fetch, not two (the second would be dropped by the guards in
-    // startNextFetches anyway, but only after occupying a queue slot).
+    // peekLiveFetch anyway, but only after occupying a queue slot).
     const seen = new Set<string>();
     const pending: PlannedNode[] = [];
     for (const plan of plans) {
@@ -1801,10 +1806,11 @@ export class BrickResidencyManager {
     pool.fetchRetries.clear();
 
     // Reclaim headroom BEFORE dispatching, so this reconcile's fetches land in
-    // free slots instead of evicting each other.
+    // free slots instead of evicting each other. Dispatch itself happens ONCE,
+    // globally, after every pool has reconciled (reconcileAll) — per-pool
+    // dispatch here let the first pool fill the global in-flight cap before
+    // later pools' better-ranked bricks were even queued.
     this.trimUnreachableResidents(pool, plans);
-
-    this.startNextFetches(pool);
   }
 
   /**
@@ -1874,23 +1880,12 @@ export class BrickResidencyManager {
     return total;
   }
 
-  private startNextFetches(pool: LayerBrickPool): void {
-    const maxInflight = qualityGovernor.getProfile().maxInflightBricks;
-    const globalLimit = this.globalInFlightLimit();
-    let globalInFlight = this.totalInFlight();
-    while (
-      pool.inFlight.size < maxInflight &&
-      globalInFlight < globalLimit &&
-      pool.pendingFetch.length > 0 &&
-      // Pre-attach there is no drain, so the queue only grows — hold it at the
-      // in-flight ceiling until a renderer arrives to consume it.
-      shouldDispatchFetch({
-        detached: this.renderer === null,
-        queuedBricks: pool.queue.length,
-        cap: maxInflight,
-      })
-    ) {
-      const node = pool.pendingFetch.pop()!;
+  /** The live head of a pool's fetch queue (tail of the reversed array),
+   * dropping entries the guards would skip — dead entries must not win a
+   * cross-pool comparison. */
+  private peekLiveFetch(pool: LayerBrickPool): PlannedNode | null {
+    while (pool.pendingFetch.length > 0) {
+      const node = pool.pendingFetch[pool.pendingFetch.length - 1];
       if (
         !pool.protectedKeys.has(node.key) ||
         pool.pool.has(node.key) ||
@@ -1898,22 +1893,64 @@ export class BrickResidencyManager {
         pool.inFlight.has(node.key) ||
         pool.queuedKeys.has(node.key)
       ) {
+        pool.pendingFetch.pop();
         continue;
       }
-      globalInFlight += 1;
-      coldOpenTimeline.stamp("firstBrickRequested");
-      void this.fetchBrick(pool, node);
+      return node;
     }
+    return null;
   }
 
-  /** Kick every pool with pending work — needed once the GLOBAL in-flight cap
-   * exists: a completed fetch in pool A frees a global slot that pool B may be
-   * waiting on, but A's own `startNextFetches` cannot hand it over. Called
-   * from the fetch `finally`; cheap (pools are few, empty queues no-op). */
-  private startNextFetchesAll(): void {
+  /**
+   * GLOBAL fetch dispatch (roadmap R6a): a k-way merge over the per-pool
+   * sorted queues, so the scene-wide dispatch order IS `compareFetchOrder` —
+   * backdrop bands first, then on-screen bricks by foveated distance ACROSS
+   * pools. Per-pool dispatch filled the global in-flight cap arrival-order:
+   * on a multi-layer scene the first pool's screen-edge bricks starved every
+   * other pool's screen-center bricks, so the fovea sharpened layer by layer
+   * instead of scene-wide. (`fetchScore` units are each layer's base voxels,
+   * so cross-POOL ordering is approximate — already true across the members
+   * of one merged pool.) Ordering-only: the same guards, the same per-pool
+   * ceiling (it protects a pool's decode-cache share) and the same global cap
+   * admit exactly the bricks the per-pool loops admitted.
+   *
+   * Called after a full reconcile, from every fetch's `finally` (a completed
+   * fetch in pool A frees a global slot pool B may be waiting on), and from
+   * the GPU-repack retry requeue. Cheap: pools are few, empty queues no-op.
+   */
+  private startNextFetchesGlobal(): void {
     if (this.disposed) return;
-    for (const pool of this.pools.values()) {
-      if (pool.pendingFetch.length > 0) this.startNextFetches(pool);
+    const maxInflight = qualityGovernor.getProfile().maxInflightBricks;
+    const globalLimit = this.globalInFlightLimit();
+    let globalInFlight = this.totalInFlight();
+    while (globalInFlight < globalLimit) {
+      let bestPool: LayerBrickPool | null = null;
+      let bestNode: PlannedNode | null = null;
+      for (const pool of this.pools.values()) {
+        if (pool.inFlight.size >= maxInflight) continue;
+        if (
+          // Pre-attach there is no drain, so the queue only grows — hold it
+          // at the in-flight ceiling until a renderer arrives to consume it.
+          !shouldDispatchFetch({
+            detached: this.renderer === null,
+            queuedBricks: pool.queue.length,
+            cap: maxInflight,
+          })
+        ) {
+          continue;
+        }
+        const node = this.peekLiveFetch(pool);
+        if (!node) continue;
+        if (!bestNode || compareFetchOrder(node, bestNode) < 0) {
+          bestPool = pool;
+          bestNode = node;
+        }
+      }
+      if (!bestPool || !bestNode) return;
+      bestPool.pendingFetch.pop();
+      globalInFlight += 1;
+      coldOpenTimeline.stamp("firstBrickRequested");
+      void this.fetchBrick(bestPool, bestNode);
     }
   }
 
@@ -2663,8 +2700,8 @@ export class BrickResidencyManager {
         pool.pendingFetch.push(node); // tail = dispatched next
       }
       // ALL pools, not just this one: the freed global in-flight slot may be
-      // what another pool's queue is blocked on (see startNextFetchesAll).
-      if (!this.disposed) this.startNextFetchesAll();
+      // what another pool's queue is blocked on (see startNextFetchesGlobal).
+      if (!this.disposed) this.startNextFetchesGlobal();
     }
   }
 
@@ -3605,7 +3642,7 @@ export class BrickResidencyManager {
           fetchScore: 0,
           fetchBand: 0,
         });
-        this.startNextFetches(pool);
+        this.startNextFetchesGlobal();
       }
       touchedPools.add(pool);
     }

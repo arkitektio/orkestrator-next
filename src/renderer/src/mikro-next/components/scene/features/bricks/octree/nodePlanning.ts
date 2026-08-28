@@ -141,6 +141,31 @@ export const adjacentSlabBrickZ = (
   return Math.floor(levelZ / payloadZ);
 };
 
+/**
+ * Chunk coordinate of the selection `±delta` along a COLLAPSED dim (the t/τ
+ * prefetch): null when the neighbor index is outside the dim, or falls in the
+ * SAME chunk as the live selection (already fetched by the visible path —
+ * nothing to warm).
+ *
+ * Key parity with the real post-step fetch is load-bearing: after a dim step,
+ * `computeFixedIndices` derives `fixedChunkCoords[d]` from LEVEL-0 chunk
+ * extents and `enumerateBrickChunkCoords` applies that value at every level —
+ * so this helper must be fed level-0 chunking, or the warmed cache keys are
+ * never the keys the flush's refetch asks for.
+ */
+export const adjacentSelectionChunk = (
+  fixedChunkCoord: number,
+  fixedOffset: number,
+  chunkExtent0: number,
+  dimExtent: number,
+  delta: number,
+): number | null => {
+  const neighborIndex = fixedChunkCoord * chunkExtent0 + fixedOffset + delta;
+  if (neighborIndex < 0 || neighborIndex > dimExtent - 1) return null;
+  const neighborChunk = Math.floor(neighborIndex / chunkExtent0);
+  return neighborChunk === fixedChunkCoord ? null : neighborChunk;
+};
+
 export type NodeCamera = {
   /** Camera frustum transformed into the layer's base-voxel frame. */
   voxelFrustum: THREE.Frustum;

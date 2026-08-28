@@ -6,6 +6,7 @@ import { resolveBrickSpec } from "./brickSpec";
 import { buildLayerLevelGeometry, type LevelSource } from "../../../platform/coords/levelGeometry";
 import { chunksTouchingBrick, nodeBaseBox } from "./nodeAddress";
 import {
+  adjacentSelectionChunk,
   adjacentSlabBrickZ,
   anisoEffectiveFactor,
   compareFetchOrder,
@@ -164,6 +165,30 @@ describe("adjacentSlabBrickZ (z±1 prefetch targeting)", () => {
     // Truncated pyramid: level covers only z < 2·32 base slices.
     expect(adjacentSlabBrickZ(64, 1, 1, 32, 2, 1, 81)).toBeNull();
     expect(adjacentSlabBrickZ(64, -1, 1, 32, 2, 1, 81)).toBe(1);
+  });
+});
+
+describe("adjacentSelectionChunk (collapsed-dim ±1 prefetch targeting)", () => {
+  // Key parity: the returned chunk coord must be exactly what
+  // computeFixedIndices would derive for the neighbor index —
+  // floor(index / level-0 chunk extent).
+  it("targets the post-step fetch's chunk for the neighbor selection", () => {
+    // t chunked 5-per-chunk, 23 timepoints. Selection t=9 (chunk 1, offset 4):
+    // t=10 crosses into chunk 2; t=8 stays in chunk 1 → nothing to warm.
+    expect(adjacentSelectionChunk(1, 4, 5, 23, 1)).toBe(2);
+    expect(adjacentSelectionChunk(1, 4, 5, 23, -1)).toBeNull();
+    // t chunked 1-per-chunk (the common case): every step is a new chunk.
+    expect(adjacentSelectionChunk(9, 0, 1, 23, 1)).toBe(10);
+    expect(adjacentSelectionChunk(9, 0, 1, 23, -1)).toBe(8);
+  });
+
+  it("returns null outside the dim extent", () => {
+    expect(adjacentSelectionChunk(0, 0, 1, 23, -1)).toBeNull();
+    expect(adjacentSelectionChunk(22, 0, 1, 23, 1)).toBeNull();
+    // Last index inside the last (partial) chunk: t=22 in chunk 4 of 5-wide
+    // chunks; t=23 is out of range, t=21 is the same chunk.
+    expect(adjacentSelectionChunk(4, 2, 5, 23, 1)).toBeNull();
+    expect(adjacentSelectionChunk(4, 2, 5, 23, -1)).toBeNull();
   });
 });
 

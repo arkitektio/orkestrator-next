@@ -86,6 +86,7 @@ import {
 } from "../octree/nodeAddress";
 import { createNodeKeyMemo, type NodeKeyMemo } from "../octree/nodeKeyMemo";
 import {
+  adjacentSelectionChunk,
   adjacentSlabBrickZ,
   compareFetchOrder,
   type LayerNodePlan,
@@ -586,6 +587,10 @@ export type BrickSystemStats = {
    * fetchMs/repackMs are SUMS across concurrent bricks and overstate wall
    * time; judge streaming changes against this, not those. */
   timeToSharpMs: number;
+  /** WALL-CLOCK ms from the most recent slice-signature flush (t/τ slider
+   * step) to the pipeline draining — the perceived cost of a dim step. The
+   * adjacent-selection prefetch exists to shrink this on ±1 scrubs. */
+  lastFlushToDrainedMs: number;
   bricksUploaded: number;
   bytesUploaded: number;
   emptyBricks: number;
@@ -735,6 +740,7 @@ export class BrickResidencyManager {
     gpuRepackFlushes: 0,
     uploadMs: 0,
     timeToSharpMs: 0,
+    lastFlushToDrainedMs: 0,
     bricksUploaded: 0,
     bytesUploaded: 0,
     emptyBricks: 0,
@@ -784,6 +790,9 @@ export class BrickResidencyManager {
   private streamStartedAt: number | null = null;
   /** Last few timeToSharpMs values (newest last) for variance eyeballing. */
   private readonly timeToSharpRing: number[] = [];
+  /** Wall-clock time of the most recent pool flush (null = none pending);
+   * cleared on the drained edge into stats.lastFlushToDrainedMs. */
+  private flushedAt: number | null = null;
 
   /**
    * The renderer is LATE-BOUND: the manager is constructed (and starts
@@ -3009,13 +3018,19 @@ export class BrickResidencyManager {
     this.applyStreamingFlag(streaming);
 
     // Pipeline drained: stop the time-to-sharp clock started by reconcileAll,
-    // then use the idle workers to warm the chunk cache for adjacent z slabs.
+    // then use the idle workers to warm the chunk cache for adjacent z slabs
+    // and adjacent collapsed-dim (t/τ) selections.
     if (!streaming && this.streamStartedAt !== null) {
-      this.stats.timeToSharpMs = performance.now() - this.streamStartedAt;
+      const drainedAt = performance.now();
+      this.stats.timeToSharpMs = drainedAt - this.streamStartedAt;
       this.streamStartedAt = null;
       this.timeToSharpRing.push(this.stats.timeToSharpMs);
       if (this.timeToSharpRing.length > 5) this.timeToSharpRing.shift();
-      this.prefetchAdjacentSlabs();
+      if (this.flushedAt !== null) {
+        this.stats.lastFlushToDrainedMs = drainedAt - this.flushedAt;
+        this.flushedAt = null;
+      }
+      this.prefetchAdjacent();
     }
 
     if (progress.uploadedAny) {
@@ -3620,25 +3635,35 @@ export class BrickResidencyManager {
 
   /** One prefetch marker per POOL (key): `sliceSignature|slabZ` last prefetched. */
   private readonly prefetchedSlabMarker = new Map<string, string>();
+  /** One marker per POOL: the sliceSignature whose adjacent collapsed-dim
+   * selections were last prefetched. A dim step changes the signature (that is
+   * what flushes the pool), so a stale marker means "new selection → warm its
+   * neighbors once". */
+  private readonly prefetchedDimMarker = new Map<string, string>();
 
   /**
-   * z±1 adjacent-slab prefetch — decoded-chunk-cache warmth ONLY (no atlas
-   * slots, no page-table writes, no residency interaction). Runs exclusively
-   * on the streaming→idle edge, so it can never compete with visible fetches;
-   * within the worker pool its tasks sort BELOW everything visible
-   * (priority −1 vs generation-scaled priorities ≥ 1), so a new plan
-   * mid-prefetch jumps the queue naturally. A later scrub to the neighbor
-   * slab then costs
-   * repack+upload instead of network+decode. Capped by chunk count and
-   * (promoted) bytes so plane-chunked datasets can't evict the CURRENT slab
-   * out of the byte-budgeted chunk cache.
+   * Adjacent-data prefetch, run once per streaming→idle edge — decoded-chunk-
+   * cache warmth ONLY (no atlas slots, no page-table writes, no residency
+   * interaction, P7 intact). Both passes draw on ONE shared chunk/byte budget
+   * so plane-chunked datasets can't evict the CURRENT working set out of the
+   * byte-budgeted chunk cache; within the worker pool their tasks sort BELOW
+   * everything visible (priority −1 vs generation-scaled priorities ≥ 1), so
+   * a new plan mid-prefetch jumps the queue naturally.
    */
-  private prefetchAdjacentSlabs(): void {
-    const PREFETCH_MAX_CHUNKS = 32;
-    const PREFETCH_MAX_BYTES = 64 * 1024 * 1024;
+  private prefetchAdjacent(): void {
+    /** Remaining allowance, shared across both passes (decremented in place). */
+    const budget = { chunks: 32, bytes: 64 * 1024 * 1024 };
+    this.prefetchAdjacentSlabs(budget);
+    this.prefetchAdjacentSelections(budget);
+  }
+
+  /**
+   * z±1 adjacent-slab prefetch (2D mode): a later scrub to the neighbor slab
+   * costs repack+upload instead of network+decode. (3D z needs no prefetch —
+   * z is a brick axis there; the page table holds every slab.)
+   */
+  private prefetchAdjacentSlabs(budget: { chunks: number; bytes: number }): void {
     const state = this.deps.viewerStore.getState();
-    let chunksIssued = 0;
-    let bytesIssued = 0;
 
     for (const pool of this.pools.values()) {
       if (pool.mode !== "2D" || pool.geometry.axes.zPos === -1) continue;
@@ -3695,15 +3720,107 @@ export class BrickResidencyManager {
           for (const { chunkCoords } of this.enumerateBrickChunkCoords(pool, node.level, coords)) {
             const key = `${level.storeId}:${chunkCoords.join(",")}`;
             if (issued.has(key)) continue;
-            if (chunksIssued >= PREFETCH_MAX_CHUNKS || bytesIssued + chunkBytes > PREFETCH_MAX_BYTES) {
+            if (budget.chunks <= 0 || budget.bytes < chunkBytes) {
               return;
             }
             issued.add(key);
-            chunksIssued += 1;
-            bytesIssued += chunkBytes;
+            budget.chunks -= 1;
+            budget.bytes -= chunkBytes;
             // Fire-and-forget: results land in the chunk cache; failures
             // (abort on dispose, transient network) are non-events here.
             void this.fetchChunkShared(arr, level.storeId, chunkCoords, -1).catch(() => {});
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Collapsed-dim (t/τ/…) ±1 prefetch: warm the decoded-chunk cache with the
+   * chunks the CURRENT plan's target-level bricks would need at the adjacent
+   * selection index, so a dim-slider step (which flushes the pool wholesale)
+   * costs repack+upload instead of network+decode. Runs in BOTH 2D and 3D —
+   * unlike z, a collapsed dim always refetches on change.
+   *
+   * Key parity is load-bearing: after a step, `computeFixedIndices` derives
+   * `fixedChunkCoords[d]` from LEVEL-0 chunk extents and
+   * `enumerateBrickChunkCoords` applies that same value at every level — so
+   * the neighbor's chunk coordinate here must come from level-0 chunking too,
+   * or the warmed keys are never the keys the real fetch asks for.
+   */
+  private prefetchAdjacentSelections(budget: { chunks: number; bytes: number }): void {
+    const state = this.deps.viewerStore.getState();
+
+    for (const pool of this.pools.values()) {
+      const { xPos, yPos, zPos, intensityPos, phasorPos } = pool.geometry.axes;
+      const level0 = pool.geometry.levels[0];
+      // Collapsed dims with anywhere to step: same predicate as
+      // computeFixedIndices, minus extent-1 dims (no neighbor to warm).
+      const collapsedDims: number[] = [];
+      pool.geometry.dims.forEach((_, d) => {
+        if (d === xPos || d === yPos || d === zPos || d === intensityPos) return;
+        if (d === phasorPos && pool.geometry.phasorBins > 0) return;
+        if ((level0.shape[d] ?? 1) <= 1) return;
+        collapsedDims.push(d);
+      });
+      if (collapsedDims.length === 0) continue;
+      if (this.prefetchedDimMarker.get(pool.poolKey) === pool.sliceSignature) continue;
+
+      // Any member's plan will do — same reasoning as the slab prefetch.
+      let plan: LayerNodePlan | undefined;
+      for (const layerId of pool.members) {
+        const candidate = state.nodePlans[layerId];
+        if (candidate) {
+          plan = candidate;
+          break;
+        }
+      }
+      // No plan yet: leave the marker unset so a later idle edge (once a plan
+      // exists) still warms this signature's neighbors.
+      if (!plan) continue;
+      this.prefetchedDimMarker.set(pool.poolKey, pool.sliceSignature);
+
+      const issued = new Set<string>();
+
+      for (const node of plan.nodes) {
+        if (node.level !== plan.targetLevel) continue;
+        const level = pool.geometry.levels[node.level];
+        // Promoted footprint (uint8 stays 1 B/voxel, everything else → f32).
+        const chunkBytes =
+          level.chunks.reduce((total, extent) => total * Math.max(1, extent), 1) *
+          (pool.atlas.kind === "r8" ? 1 : 4);
+        let arr: ReturnType<typeof state.getArrayForStoreId>;
+        try {
+          arr = state.getArrayForStoreId(level.storeId);
+        } catch {
+          continue;
+        }
+
+        for (const d of collapsedDims) {
+          for (const delta of [1, -1]) {
+            const neighborChunk = adjacentSelectionChunk(
+              pool.fixedChunkCoords[d],
+              pool.fixedOffsets[d],
+              Math.max(1, level0.chunks[d] ?? 1),
+              Math.max(1, level0.shape[d] ?? 1),
+              delta,
+            );
+            if (neighborChunk === null) continue;
+
+            for (const spec of this.enumerateBrickChunkCoords(pool, node.level, node.coords)) {
+              const chunkCoords = [...spec.chunkCoords];
+              chunkCoords[d] = neighborChunk;
+              const key = `${level.storeId}:${chunkCoords.join(",")}`;
+              if (issued.has(key)) continue;
+              if (budget.chunks <= 0 || budget.bytes < chunkBytes) {
+                return;
+              }
+              issued.add(key);
+              budget.chunks -= 1;
+              budget.bytes -= chunkBytes;
+              // Fire-and-forget, exactly like the slab prefetch.
+              void this.fetchChunkShared(arr, level.storeId, chunkCoords, -1).catch(() => {});
+            }
           }
         }
       }
@@ -3796,6 +3913,7 @@ export class BrickResidencyManager {
     );
     pool.fixedChunkCoords = fixedChunkCoords;
     pool.fixedOffsets = fixedOffsets;
+    this.flushedAt = performance.now();
     // A flush changes what the volume LOOKS like (the previous slice's
     // bricks are gone) but moves none of the compositor's cache-key
     // counters — without this bump a t/z-slider change kept serving the
@@ -3809,6 +3927,7 @@ export class BrickResidencyManager {
     for (const controller of pool.inFlight.values()) controller.abort();
     pool.inFlight.clear();
     this.prefetchedSlabMarker.delete(pool.poolKey);
+    this.prefetchedDimMarker.delete(pool.poolKey);
     disposeBrickAtlas(pool.atlas);
     disposePageTable(pool.pageTable);
     // Pool lifecycle event — layer components must drop their pool handle.

@@ -126,6 +126,11 @@ export function getAnnotationSelectionPoints(
     return getEllipsisPoints(vectors[0], vectors[1], flattenToPlane);
   }
 
+  // Every remaining kind's vectors ARE its points: a path's and a polygon's
+  // vertices, a multi-point's marks, and a SURFACE's vertices — which is why a
+  // painted region needs no branch of its own here. Its `faces` say which of
+  // those vertices form triangles, and that changes what it looks like, never
+  // where it is or how far it reaches.
   return vectors.map((vector) => getVectorPoint(vector, flattenToPlane));
 }
 

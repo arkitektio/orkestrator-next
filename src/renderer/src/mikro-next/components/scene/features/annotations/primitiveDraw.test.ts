@@ -3,7 +3,6 @@ import {
   ellipsoidCrossSectionScale,
   planarRadius,
   primitiveCornerVectors,
-  SPHERE_KIND,
 } from "./primitiveDraw";
 
 describe("primitiveCornerVectors", () => {
@@ -62,14 +61,5 @@ describe("ellipsoidCrossSectionScale", () => {
 
   it("reads a negative radius as its magnitude", () => {
     expect(ellipsoidCrossSectionScale(12, 10, -4)).toBeCloseTo(Math.sqrt(0.75), 10);
-  });
-});
-
-describe("SPHERE_KIND bridge", () => {
-  it("is the literal the backend enum will carry", () => {
-    // When this fails after a `pnpm mikro`, the generated enum has gained
-    // Sphere — replace the widened literal with `AnnotationKind.Sphere` and delete
-    // this pin.
-    expect(SPHERE_KIND).toBe("SPHERE");
   });
 });

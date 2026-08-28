@@ -2,7 +2,6 @@ import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { createScopedStoreHooks } from "@/lib/generic/createScopedStore";
 import { AnnotationKind } from "@/mikro-next/api/graphql";
-import { SPHERE_KIND } from "./primitiveDraw";
 import { DEFAULT_TRACE_WEIGHTS, type TraceWeights } from "./enhancers/paths/vectorTrace/traceCost";
 
 /**
@@ -53,7 +52,7 @@ export const DRAWING_TOOL_TO_ROI_KIND: Record<DrawingTool, AnnotationKind> = {
   LINE: AnnotationKind.Line,
   POLYGON: AnnotationKind.Polygon,
   PATH: AnnotationKind.Path,
-  SPHERE: SPHERE_KIND,
+  SPHERE: AnnotationKind.Sphere,
   CUBE: AnnotationKind.Cube,
 };
 

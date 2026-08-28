@@ -11,8 +11,8 @@ import { backtrackPath } from "../../shared/geodesicReference";
 import { tubeClampValue } from "../../meshes/tubeMarch";
 import {
   MAX_TUBE_SAVE_TRIANGLES,
-  MESH_KIND,
-  tubeVectors,
+  SURFACE_KIND,
+  surfaceGeometry,
 } from "../../meshes/tubePersist";
 import { resampleStroke, type BrushSample, type Vec3 } from "../../shared/strokeModel";
 import type {
@@ -431,22 +431,29 @@ export const useBrushSkeleton = () => {
       persistedAny = true;
     }
 
-    // The tube rides along as a MESH annotation (SPHERE_KIND-precedent cast;
-    // see tubePersist.ts). A refusal must not fail the save — whatever DID
-    // persist stays persisted, the tube stays a local preview and says why.
+    // The tube rides along as a SURFACE annotation, into the same collection as
+    // the centerline above — which is the point of it being an annotation at all:
+    // the two halves of one stroke share a coordinate system and a registration,
+    // so they cannot drift apart in space.
+    //
+    // A refusal still must not fail the whole save: whatever DID persist stays
+    // persisted, and the tube falls back to a local preview that says why. The
+    // ceiling is the one case that is not an error — a surface past it is a
+    // legitimate extraction that is simply too big to send.
     let savedNote = "Saved";
     if (tube) {
       const prefix = hasPath ? "Centerline saved — tube" : "Tube";
       if (tube.triangles > MAX_TUBE_SAVE_TRIANGLES) {
         savedNote = `${prefix} too detailed to save (${tube.triangles} triangles), preview only`;
       } else {
-        const mesh = await createSceneAnnotation(MESH_KIND, tubeVectors(tube.positions));
+        const { vectors, faces } = surfaceGeometry(tube.positions);
+        const surface = await createSceneAnnotation(SURFACE_KIND, vectors, faces);
         after = brushApi.getState();
         if (after.candidate !== candidate) return;
-        if (mesh) {
+        if (surface) {
           persistedAny = true;
         } else {
-          savedNote = `${prefix} not saved (the server may not support MESH annotations yet)`;
+          savedNote = `${prefix} not saved — the server refused it`;
         }
       }
     }

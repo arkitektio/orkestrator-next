@@ -1,4 +1,3 @@
-import { AnnotationKind } from "@/mikro-next/api/graphql";
 
 /**
  * The center + radius math of the volumetric drawing tools (Sphere, Cube).
@@ -9,14 +8,6 @@ import { AnnotationKind } from "@/mikro-next/api/graphql";
  * already use, so `intrinsicBbox` derivation and XY marquee bounds need no
  * kind-specific cases.
  */
-
-/**
- * The SPHERE AnnotationKind, ahead of the generated enum: the backend kind is being
- * added, and until the next `pnpm mikro` pull includes it the literal is
- * widened here — in exactly one place. Replace with `AnnotationKind.Sphere` once the
- * regenerated enum carries it.
- */
-export const SPHERE_KIND = "SPHERE" as AnnotationKind;
 
 export type Vec3 = [number, number, number];
 

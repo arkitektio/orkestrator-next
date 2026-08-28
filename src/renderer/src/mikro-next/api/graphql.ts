@@ -224,6 +224,8 @@ export type Annotation = {
   coordinates: Array<Coordinate>;
   createdWithTransforms: Scalars['Int']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** (surface) The triangle topology: index triples into `vectors`, saying which three vertices each triangle joins. Null for every other kind, whose vectors are read directly as a shape. Heavy for a painted region -- select it where you will draw the surface, not in a list a viewport polls */
+  faces?: Maybe<Array<Array<Scalars['Int']['output']>>>;
   /** The fill color of the geometry, as RGBA, or null for no fill */
   fillColor?: Maybe<Array<Scalars['Int']['output']>>;
   /** Whether the geometry is filled with fill_color */
@@ -400,7 +402,9 @@ export enum AnnotationKind {
   /** An axis-aligned box across two axes, stored as the two opposite corners of its bounding box. Which two axes it spans is read from the coordinate system, not from this kind. */
   Rectangle = 'RECTANGLE',
   /** A round shape across three axes with one radius. Vectors are the two opposite corners of its bounding box. */
-  Sphere = 'SPHERE'
+  Sphere = 'SPHERE',
+  /** A surface of triangles, e.g. a region painted with a brush. Vectors are its vertices, in no meaningful order, and `faces` says which three of them each triangle joins -- the one kind whose geometry is indexed rather than read straight off the vector list. The vertices are still the whole of its extent, so its bounding box needs nothing but them. */
+  Surface = 'SURFACE'
 }
 
 export enum AnnotationKindChoices {
@@ -414,7 +418,8 @@ export enum AnnotationKindChoices {
   Point = 'POINT',
   Polygon = 'POLYGON',
   Rectangle = 'RECTANGLE',
-  Sphere = 'SPHERE'
+  Sphere = 'SPHERE',
+  Surface = 'SURFACE'
 }
 
 /** A layer that renders an annotation collection's drawn shapes (polygons, boxes, ellipses, lines, paths) in a scene. One layer per collection: per-shape styling lives on the annotations themselves. */
@@ -481,6 +486,7 @@ export type AnnotationOrder =
 export type AnnotationSpecInput = {
   coordinates?: InputMaybe<Array<CoordinateInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  faces?: InputMaybe<Array<Array<Scalars['Int']['input']>>>;
   fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   filled?: InputMaybe<Scalars['Boolean']['input']>;
   kind: AnnotationKind;
@@ -1607,6 +1613,7 @@ export type CreateAnnotationInput = {
   collection?: InputMaybe<Scalars['ID']['input']>;
   coordinates?: InputMaybe<Array<CoordinateInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  faces?: InputMaybe<Array<Array<Scalars['Int']['input']>>>;
   fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   filled?: InputMaybe<Scalars['Boolean']['input']>;
   kind: AnnotationKind;
@@ -4271,7 +4278,7 @@ export type Mutation = {
   createPhasorLayer: PhasorLayer;
   /** Create a layer that renders a point cloud (e.g. SMLM localisations, centroids) from columns of a table */
   createPointLayer: PointLayer;
-  /** Create an RGB layer: three channels of a lens as the red, green and blue components of one picture -- a photograph, a brightfield slide -- sharing one pair of contrast limits. Its own kind rather than a three-channel render graph, because as a graph it is indistinguishable from three fluorescence markers somebody tinted red, green and blue, which is the commoner reading. Never inferred, always stated */
+  /** Create an RGB layer: three channels of a lens as the red, green and blue components of one picture -- a photograph, a brightfield slide -- sharing one pair of contrast limits. Its own kind rather than a three-channel render graph, because as a graph it is indistinguishable from three fluorescence markers somebody tinted red, green and blue, which is the commoner reading. Never inferred from that shape: a bootstrapped scene reaches this kind only on evidence ingest recorded -- channels labelled red, green and blue, or arrays read out of a PNG -- so state it here for a photograph that arrived with neither */
   createRgbLayer: RgbLayer;
   /** Create a new scene over a world coordinate system: an adopted existing system, or an ordinary SHARED one created for it (never owned by the scene -- it outlives it) */
   createScene: Scene;
@@ -7777,6 +7784,7 @@ export type UpdateAnimationInput = {
 export type UpdateAnnotationInput = {
   coordinates?: InputMaybe<Array<CoordinateInput>>;
   description?: InputMaybe<Scalars['String']['input']>;
+  faces?: InputMaybe<Array<Array<Scalars['Int']['input']>>>;
   fillColor?: InputMaybe<Array<Scalars['Int']['input']>>;
   filled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
@@ -8161,6 +8169,8 @@ export type AnimationFragment = { __typename?: 'Animation', id: string, name: st
 export type AnnotationFragment = { __typename?: 'Annotation', id: any, name: string, description?: string | null, kind: AnnotationKind, vectors: Array<Array<number>>, createdWithTransforms: number, strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth: number, filled: boolean, collection: { __typename?: 'AnnotationCollection', id: string, name: string }, coordinateSystem?: { __typename?: 'CoordinateSystem', id: string, name: string, epoch?: any | null, residents: Array<{ __typename: 'AnnotationCollection', id: string, name: string } | { __typename: 'ArrayDataset', id: string, name: string } | { __typename: 'DataArray', id: string, level: number } | { __typename: 'Lens', id: string, dataset: { __typename?: 'ArrayDataset', id: string, name: string } } | { __typename: 'MeshCollection', id: string, version: string } | { __typename: 'SparseDataset', id: string, name: string } | { __typename: 'TableDataset', id: string, name: string }>, axes: Array<{ __typename?: 'Axis', id: string, order: number, name: string, type: AxisType, unit?: any | null, longName?: string | null }> } | null, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }>, intrinsicBbox?: { __typename?: 'BoundingBox', min: Array<number>, max: Array<number> } | null };
 
 export type SceneAnnotationFragment = { __typename?: 'Annotation', id: any, name: string, kind: AnnotationKind, vectors: Array<Array<number>>, strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth: number, filled: boolean, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }> };
+
+export type SceneSurfaceFragment = { __typename?: 'Annotation', id: any, name: string, kind: AnnotationKind, vectors: Array<Array<number>>, faces?: Array<Array<number>> | null, strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth: number, filled: boolean, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }> };
 
 export type ListAnnotationFragment = { __typename?: 'Annotation', id: any, name: string, kind: AnnotationKind, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }>, collection: { __typename?: 'AnnotationCollection', id: string, name: string, scene?: { __typename?: 'Scene', id: string, name: string } | null } };
 
@@ -8969,6 +8979,14 @@ export type GetSceneAnnotationsQueryVariables = Exact<{
 
 export type GetSceneAnnotationsQuery = { __typename?: 'Query', annotations: Array<{ __typename?: 'Annotation', id: any, name: string, kind: AnnotationKind, vectors: Array<Array<number>>, strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth: number, filled: boolean, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }> }> };
 
+export type GetSceneSurfacesQueryVariables = Exact<{
+  filters?: InputMaybe<AnnotationFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type GetSceneSurfacesQuery = { __typename?: 'Query', annotations: Array<{ __typename?: 'Annotation', id: any, name: string, kind: AnnotationKind, vectors: Array<Array<number>>, faces?: Array<Array<number>> | null, strokeColor?: Array<number> | null, fillColor?: Array<number> | null, strokeWidth: number, filled: boolean, coordinates: Array<{ __typename?: 'Coordinate', name: string, value: number }> }> };
+
 export type GetAnnotationsQueryVariables = Exact<{
   filters?: InputMaybe<AnnotationFilter>;
   ordering?: InputMaybe<Array<AnnotationOrder> | AnnotationOrder>;
@@ -9629,6 +9647,23 @@ export const SceneAnnotationFragmentDoc = gql`
   name
   kind
   vectors
+  strokeColor
+  fillColor
+  strokeWidth
+  filled
+  coordinates {
+    name
+    value
+  }
+}
+    `;
+export const SceneSurfaceFragmentDoc = gql`
+    fragment SceneSurface on Annotation {
+  id
+  name
+  kind
+  vectors
+  faces
   strokeColor
   fillColor
   strokeWidth
@@ -13493,6 +13528,42 @@ export function useGetSceneAnnotationsLazyQuery(baseOptions?: ApolloReactHooks.L
 export type GetSceneAnnotationsQueryHookResult = ReturnType<typeof useGetSceneAnnotationsQuery>;
 export type GetSceneAnnotationsLazyQueryHookResult = ReturnType<typeof useGetSceneAnnotationsLazyQuery>;
 export type GetSceneAnnotationsQueryResult = Apollo.QueryResult<GetSceneAnnotationsQuery, GetSceneAnnotationsQueryVariables>;
+export const GetSceneSurfacesDocument = gql`
+    query GetSceneSurfaces($filters: AnnotationFilter, $pagination: OffsetPaginationInput) {
+  annotations(filters: $filters, pagination: $pagination) {
+    ...SceneSurface
+  }
+}
+    ${SceneSurfaceFragmentDoc}`;
+
+/**
+ * __useGetSceneSurfacesQuery__
+ *
+ * To run a query within a React component, call `useGetSceneSurfacesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSceneSurfacesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSceneSurfacesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useGetSceneSurfacesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetSceneSurfacesQuery, GetSceneSurfacesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetSceneSurfacesQuery, GetSceneSurfacesQueryVariables>(GetSceneSurfacesDocument, options);
+      }
+export function useGetSceneSurfacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSceneSurfacesQuery, GetSceneSurfacesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetSceneSurfacesQuery, GetSceneSurfacesQueryVariables>(GetSceneSurfacesDocument, options);
+        }
+export type GetSceneSurfacesQueryHookResult = ReturnType<typeof useGetSceneSurfacesQuery>;
+export type GetSceneSurfacesLazyQueryHookResult = ReturnType<typeof useGetSceneSurfacesLazyQuery>;
+export type GetSceneSurfacesQueryResult = Apollo.QueryResult<GetSceneSurfacesQuery, GetSceneSurfacesQueryVariables>;
 export const GetAnnotationsDocument = gql`
     query GetAnnotations($filters: AnnotationFilter, $ordering: [AnnotationOrder!], $pagination: OffsetPaginationInput) {
   annotations(filters: $filters, ordering: $ordering, pagination: $pagination) {
